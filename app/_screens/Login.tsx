@@ -1,7 +1,7 @@
 import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import FastImage from "@d11/react-native-fast-image";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signInWithGoogle } from "../../services/login";
@@ -10,17 +10,11 @@ const LoginScreen = () => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const style = styles(colors);
-    const navigation = useNavigation<any>();
+    const router = useRouter();
 
     const handleGoogleLogin = async () => {
         try {
-            const session = await signInWithGoogle();
-            if (session) {
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: "MainTabs" }],
-                });
-            }
+            await signInWithGoogle();
         } catch (error) {
             console.warn("Google login error", error);
         }

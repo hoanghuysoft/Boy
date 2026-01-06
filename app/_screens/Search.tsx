@@ -26,7 +26,10 @@ import { createCommonStyles } from "../../styles/common";
 const FlashList = FlashListOriginal as any;
 
 
-const SearchScreen = ({ navigation }: { navigation: any }) => {
+import { useRouter } from "expo-router";
+
+const SearchScreen = () => {
+  const navigation = useRouter();
   const { colors, typography } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const insets = useSafeAreaInsets();
@@ -143,7 +146,7 @@ const SearchScreen = ({ navigation }: { navigation: any }) => {
       <TouchableOpacity
         style={[styles.profileCard, { backgroundColor: colors.containerContent }]}
         activeOpacity={0.7}
-        onPress={() => navigation.navigate("ProfileStack", { id: item.id, isMe: false })}
+        onPress={() => navigation.push({ pathname: '/profile/[id]', params: { id: item.id, isMe: 'false' } })}
       >
         <FastImage
           source={{ uri: item.avatar_url }}

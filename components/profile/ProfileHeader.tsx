@@ -111,9 +111,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     }
     // Memoize tabs array to prevent recreation on each render
     const tabs = useMemo(() => [
-        { name: "Information", onClick: handleInfoTab },
         { name: "Images", onClick: handleImagesTab },
         { name: "Videos", onClick: handleVideosTab },
+        { name: "Information", onClick: handleInfoTab },
     ], [handleInfoTab, handleImagesTab, handleVideosTab]);
 
     return (

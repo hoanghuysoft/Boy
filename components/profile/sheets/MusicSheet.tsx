@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useAudioPlayer } from 'expo-audio';
 import React, { forwardRef, memo, useEffect, useState } from "react";
-import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -102,20 +102,18 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data },
         >
             <View style={{ flex: 1, padding: 24, paddingBottom: inset.bottom + 20 }}>
                 <Text style={[common.heading, { marginBottom: 16 }]}>Music</Text>
-                <FlatList
-                    scrollEnabled={false}
-                    data={data}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
+                <ScrollView nestedScrollEnabled={true}>
+                    {data.map((item) => (
                         <MusicItem
+                            key={item.id}
                             item={item}
                             colors={colors}
                             common={common}
                             playingId={playingId}
                             setPlayingId={setPlayingId}
                         />
-                    )}
-                />
+                    ))}
+                </ScrollView>
             </View>
         </TrueSheet>
     );

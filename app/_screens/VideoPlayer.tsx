@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Layers1Solid, PauseSolid, PlaySolid, Volume1Solid, VolumeMuteSolid, XmarkSolid } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import * as IntentLauncher from 'expo-intent-launcher';
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from 'expo-screen-orientation';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Animated, BackHandler, Platform, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -18,8 +19,15 @@ interface VideoProgress {
     seekableDuration: number;
 }
 
-const VideoPlayer = ({ navigation, route }: { navigation: any; route: any }) => {
-    const { videoUrl, name, caption, portrait } = route.params;
+
+
+const VideoPlayer = () => {
+    const router = useRouter();
+    const params = useLocalSearchParams();
+    const videoUrl = params.videoUrl as string;
+    const name = params.name as string;
+    const caption = params.caption as string;
+    const portrait = params.portrait === 'true';
     const { colors, typography } = useThemeContext();
     const { setShowStatusBarFade } = useStatusBar();
     const common = createCommonStyles(colors, typography);
@@ -113,10 +121,10 @@ const VideoPlayer = ({ navigation, route }: { navigation: any; route: any }) => 
     };
 
     const handleClose = useCallback(() => {
-        navigation.goBack();
+        router.back();
         ScreenOrientation.unlockAsync();
         SystemNavigationBar.fullScreen(false);
-    }, [navigation]);
+    }, [router]);
 
     const openExternalLink = async () => {
         if (Platform.OS === 'android') {
@@ -307,7 +315,7 @@ const VideoPlayer = ({ navigation, route }: { navigation: any; route: any }) => 
                         style={{ paddingBottom: isLandscape ? 30 : 16, paddingRight: isLandscape ? 32 : 0, transform: [{ translateY: bottomBarTranslateY }] }}
                     >
                         <View style={[common.row, { justifyContent: 'space-between', alignItems: 'center' }]}>
-                            <View>
+                            <View style={{ flex: 1 }}>
                                 <Text style={[common.bodySmall, { color: 'white' }]}>{name}</Text>
                                 {caption && <Text style={{ marginBottom: 8, fontSize: 28, fontWeight: 'bold', color: 'white' }} numberOfLines={2} ellipsizeMode="tail">{caption}</Text>}
                             </View>

@@ -1,6 +1,7 @@
 import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
 import { Galeria } from "@nandorojo/galeria";
+import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ListRenderItem,
@@ -12,6 +13,7 @@ import {
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { Media } from "../../types/media";
+import QuickPreviewModal from "./QuickPreviewModal";
 
 // Constants
 const SPACING = 2;
@@ -64,6 +66,19 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
     const common = createCommonStyles(colors, typography);
     const { width: screenWidth } = useWindowDimensions();
 
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+
+    const handleLongPress = useCallback((url: string) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setPreviewUrl(url);
+        setIsPreviewVisible(true);
+    }, []);
+
+    const handlePressOut = useCallback(() => {
+        setIsPreviewVisible(false);
+    }, []);
+
     // Calculate item width
     const availableWidth = screenWidth - (containerPadding * 2) - (SPACING * 2);
     const itemWidth = (availableWidth / NUM_COLUMNS) - (SPACING * (NUM_COLUMNS - 1) / NUM_COLUMNS);
@@ -87,7 +102,7 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
             height: itemWidth * 1.7,
             marginRight: SPACING,
             marginBottom: SPACING,
-            borderRadius: 16,
+            borderRadius: 5,
             backgroundColor: colors.card,
             overflow: 'hidden' as const,
         }),
@@ -133,6 +148,9 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
                                 key={mediaItem.id}
                                 activeOpacity={0.7}
                                 onPress={() => onVideoPress?.(mediaItem)}
+                                onLongPress={() => handleLongPress(mediaItem.thumbnail_url || mediaItem.url)}
+                                onPressOut={handlePressOut}
+                                delayLongPress={300}
                                 style={[
                                     videoStyle,
                                     { marginRight: i === item.items.length - 1 ? 0 : SPACING, justifyContent: 'center', alignItems: 'center' }
@@ -155,6 +173,9 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
                             key={mediaItem.id}
                             activeOpacity={0.8}
                             onPress={() => onImagePress?.(true, item.startIndex + i)}
+                            onLongPress={() => handleLongPress(mediaItem.url)}
+                            onPressOut={handlePressOut}
+                            delayLongPress={300}
                         >
                             <Galeria.Image
                                 index={item.startIndex + i}
@@ -178,7 +199,7 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
                 ))}
             </View>
         );
-    }, [imageStyle, common, onVideoPress]);
+    }, [imageStyle, common, onVideoPress, handleLongPress, handlePressOut]);
 
     const keyExtractor = useCallback((item: GridItemType): string => {
         return `r-${item.startIndex}`;
@@ -207,6 +228,13 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
         keyExtractor,
         contentContainerStyle: styles.listContent,
         flatListProps,
+        renderQuickPreview: () => (
+            <QuickPreviewModal
+                visible={isPreviewVisible}
+                imageUrl={previewUrl}
+                onClose={() => setIsPreviewVisible(false)}
+            />
+        )
     };
 };
 

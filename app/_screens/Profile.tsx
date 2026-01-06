@@ -1,4 +1,6 @@
 import { Galeria } from "@nandorojo/galeria";
+import { useLocalSearchParams, useRouter } from "expo-router";
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -23,16 +25,21 @@ import { ProfileDetail } from "../../types/profiledetail";
 
 
 
-type TabType = "Information" | "Images" | "Videos";
+type TabType = "Images" | "Videos" | "Information";
 
-const ProfileScreen = ({ navigation, route }: { navigation: any; route: any }) => {
-  const { id, isMe = false } = route.params || {};
+
+const ProfileScreen = () => {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const isMe = params.isMe === 'true';
+
   const { colors, typography } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const inset = useSafeAreaInsets();
 
   // State
-  const [activeTab, setActiveTab] = useState<TabType>("Information");
+  const [activeTab, setActiveTab] = useState<TabType>("Images");
   const [profile, setProfile] = useState<ProfileDetail | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [galleryVisible, setGalleryVisible] = useState(false);
@@ -53,13 +60,16 @@ const ProfileScreen = ({ navigation, route }: { navigation: any; route: any }) =
   const handleTabChange = useCallback((tab: TabType) => setActiveTab(tab), []);
 
   const handleVideoPress = useCallback((video: Media) => {
-    navigation.navigate('VideoPlayer', {
-      videoUrl: video.url,
-      name: profile?.name || 'Video',
-      caption: video.caption || '',
-      portrait: true,
+    router.push({
+      pathname: '/video_player',
+      params: {
+        videoUrl: video.url,
+        name: profile?.name || 'Video',
+        caption: video.caption || '',
+        portrait: 'true',
+      }
     });
-  }, [navigation, profile?.name]);
+  }, [router, profile?.name]);
 
   const handleImagePress = useCallback((visible: boolean, index: number) => {
     setGalleryIndex(index);
@@ -95,6 +105,7 @@ const ProfileScreen = ({ navigation, route }: { navigation: any; route: any }) =
     renderItem: renderImageItem,
     keyExtractor: imageKeyExtractor,
     flatListProps: imageFlatListProps,
+    renderQuickPreview: renderImageQuickPreview,
   } = useImageGrid({ containerPadding: 10, photos: profile?.photos, onImagePress: handleImagePress });
 
   const {
@@ -103,6 +114,7 @@ const ProfileScreen = ({ navigation, route }: { navigation: any; route: any }) =
     keyExtractor: videoKeyExtractor,
     contentContainerStyle: videoContainerStyle,
     flatListProps: videoFlatListProps,
+    renderQuickPreview: renderVideoQuickPreview,
   } = useImageGrid({
     containerPadding: 10,
     photos: profile?.videos,
@@ -301,6 +313,8 @@ const ProfileScreen = ({ navigation, route }: { navigation: any; route: any }) =
 
   return (
     <View style={common.screen}>
+      {renderImageQuickPreview()}
+      {renderVideoQuickPreview()}
       <GalleryPreview
         isVisible={galleryVisible}
         onRequestClose={() => setGalleryVisible(false)}
