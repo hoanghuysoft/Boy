@@ -22,3 +22,11 @@ export const getMyProfileDetail = async () => {
     const response = await client.get("/api/profiles/me");
     return response.data.data;
 }
+
+export const useProfile = (id: string, isMe: boolean) => {
+    return useQuery({
+        queryKey: isMe ? ['profile', 'me'] : ['profile', id],
+        queryFn: () => (isMe ? getMyProfileDetail() : getProfileDetail(id)),
+        enabled: isMe || !!id,
+    });
+};

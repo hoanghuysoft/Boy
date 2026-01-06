@@ -5,7 +5,7 @@ import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
 import { useNavigation } from '@react-navigation/native';
 import { useAudioPlayer } from 'expo-audio';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import {
     Animated,
     Dimensions,
@@ -18,16 +18,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../context/ThemeContext";
-import { getWorkplace } from "../../services/workplace";
 import { createCommonStyles } from "../../styles/common";
 import { ProfileDetail } from "../../types/profiledetail";
 import { Workplace } from "../../types/profileworplace";
 import { TabPillGroup } from "../tabpill";
 import BirthdayCard from './BirthdayCard';
-import { AddressSheet } from './sheets/AddressSheet';
-import { MusicSheet } from './sheets/MusicSheet';
-import { SocialSheet } from './sheets/SocialSheet';
-import { WorkplaceSheet } from './sheets/WorkplaceSheet';
 
 
 const COVER_HEIGHT = 250;
@@ -42,6 +37,11 @@ interface ProfileHeaderProps {
     tabContent?: React.ReactNode;
     profile?: ProfileDetail | null;
     isMe?: boolean;
+    musicSheetRef?: React.RefObject<TrueSheet | null>;
+    socialSheetRef?: React.RefObject<TrueSheet | null>;
+    addressSheetRef?: React.RefObject<TrueSheet | null>;
+    workplaceSheetRef?: React.RefObject<TrueSheet | null>;
+    workplaces?: Workplace[];
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
@@ -51,6 +51,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     tabContent,
     profile,
     isMe = true,
+    musicSheetRef,
+    socialSheetRef,
+    addressSheetRef,
+    workplaceSheetRef,
+    workplaces = [],
 }) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -58,18 +63,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const inset = useSafeAreaInsets();
     const navigation = useNavigation();
     const [isPlaying, setIsPlaying] = useState(false);
-    const [workplaces, setWorkplaces] = useState<Workplace[]>([]);
-
-    useEffect(() => {
-        if (profile?.id) {
-            getWorkplace(profile.id).then(setWorkplaces).catch(console.error);
-        }
-    }, [profile?.id]);
-
-    const musicSheet = useRef<TrueSheet>(null);
-    const socialSheet = useRef<TrueSheet>(null);
-    const workplaceSheet = useRef<TrueSheet>(null);
-    const addressSheet = useRef<TrueSheet>(null);
 
     const coverTranslateY = scrollY.interpolate({
         inputRange: [0, COVER_HEIGHT],
@@ -79,7 +72,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
 
     const currentMusic = profile?.music?.[0];
     const currentAvatar = profile?.avatar_url;
-    const avatarUrls = profile?.avatars?.map(a => a.avatar_url) || [];
+    const avatarUrls = profile?.avatars?.map((a: any) => a.avatar_url) || [];
     const player = useAudioPlayer(currentMusic?.preview_url ? { uri: currentMusic.preview_url } : null);
 
     // Memoize tab callbacks to prevent re-renders
@@ -184,7 +177,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                             )}
                             {currentMusic && (
                                 <TouchableOpacity
-                                    onPress={() => musicSheet.current?.present()}
+                                    onPress={() => musicSheetRef?.current?.present()}
                                     activeOpacity={0.9}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
@@ -209,7 +202,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
 
                             {profile?.social_links && profile.social_links.length > 0 && (
                                 <TouchableOpacity
-                                    onPress={() => socialSheet.current?.present()}
+                                    onPress={() => socialSheetRef?.current?.present()}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
                                     <FastImage
@@ -226,7 +219,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
 
                             {profile?.addresses && profile.addresses.length > 0 && (
                                 <TouchableOpacity
-                                    onPress={() => addressSheet.current?.present()}
+                                    onPress={() => addressSheetRef?.current?.present()}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
                                     <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0, backgroundColor: colors.text, opacity: 0.1 }} />
@@ -241,7 +234,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
 
                             {workplaces.length > 0 && (
                                 <TouchableOpacity
-                                    onPress={() => workplaceSheet.current?.present()}
+                                    onPress={() => workplaceSheetRef?.current?.present()}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
                                     <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0, backgroundColor: colors.text, opacity: 0.1 }} />
@@ -266,26 +259,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                     </View>
                 </View>
             </View>
-
-            <MusicSheet
-                ref={musicSheet}
-                data={profile?.music || []}
-            />
-
-            <SocialSheet
-                ref={socialSheet}
-                data={profile?.social_links || []}
-            />
-
-            <AddressSheet
-                ref={addressSheet}
-                data={profile?.addresses || []}
-            />
-
-            <WorkplaceSheet
-                ref={workplaceSheet}
-                data={workplaces}
-            />
         </>
     );
 });

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Boy",
     "slug": "Boy",
-    "version": "2025.12.30",
+    "version": "2026.1.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",

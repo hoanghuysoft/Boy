@@ -39,17 +39,22 @@ const SearchScreen = () => {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
+  /* Helper to remove accents for Vietnamese search */
+  const normalizeString = (str: string) => {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  };
+
   const filteredProfiles = useMemo(() => {
     if (searchQuery.trim() === "") {
       return profiles;
     } else {
-      const query = searchQuery.toLowerCase();
+      const query = normalizeString(searchQuery);
       return profiles.filter(
         (profile: Profile) =>
-          profile.name.toLowerCase().includes(query) ||
-          profile.bio?.toLowerCase().includes(query) ||
-          profile.email?.toLowerCase().includes(query) ||
-          profile.hometown?.toLowerCase().includes(query)
+          normalizeString(profile.name).includes(query) ||
+          (profile.bio && normalizeString(profile.bio).includes(query)) ||
+          (profile.email && normalizeString(profile.email).includes(query)) ||
+          (profile.hometown && normalizeString(profile.hometown).includes(query))
       );
     }
   }, [searchQuery, profiles]);
@@ -194,7 +199,7 @@ const SearchScreen = () => {
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={[common.headline, { color: colors.text }]}>Search</Text>
         <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-          People {profiles.length}
+          {searchQuery ? `${filteredProfiles.length} result(s)` : `People ${profiles.length}`}
         </Text>
       </View>
 

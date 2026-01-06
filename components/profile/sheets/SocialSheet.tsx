@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo } from "react";
-import { FlatList, Linking, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -13,17 +13,17 @@ interface SocialSheetProps {
     data: ProfileLink[];
 }
 
-
-const getPlatformDetails = (platform: string, url: string, theme: 'light' | 'dark') => {
+// Helper to get brand colors and icons
+const getPlatformDetails = (platform: string, theme: 'light' | 'dark') => {
     const p = platform?.toLowerCase() || '';
 
-    // Default fallback
     let icon = 'link-outline';
     let color = theme === 'dark' ? '#ffffff' : '#000000';
 
     if (p.includes('twitter') || p.includes('x')) {
         icon = p.includes('x') ? 'logo-x' : 'logo-twitter';
-        color = '#1DA1F2';
+        color = '#1DA1F2'; // Twitter Blue
+        if (p.includes('x')) color = theme === 'dark' ? '#ffffff' : '#000000';
     } else if (p.includes('facebook')) {
         icon = 'logo-facebook';
         color = '#1877F2';
@@ -50,13 +50,14 @@ const getPlatformDetails = (platform: string, url: string, theme: 'light' | 'dar
     return { icon, color };
 };
 
-const FormattedLink = ({ url, username, common }: { url: string, username?: string, common: any }) => {
+// Clean URL formatter
+const FormattedLink = ({ url, username, common, color }: { url: string, username?: string, common: any, color: string }) => {
     let display = username || url;
 
     if (!username && url) {
         try {
             const urlObj = new URL(url);
-            if (urlObj.pathname.length > 1 && !urlObj.pathname.includes('/p/')) { // exclude instagram posts
+            if (urlObj.pathname.length > 1 && !urlObj.pathname.includes('/p/')) {
                 const segment = urlObj.pathname.split('/').filter(Boolean).pop() || '';
                 display = segment.startsWith('@') ? segment : '@' + segment;
             } else {
@@ -70,118 +71,193 @@ const FormattedLink = ({ url, username, common }: { url: string, username?: stri
     }
 
     return (
-        <Text style={[common.bodySmall, { opacity: 0.7 }]} numberOfLines={1}>
+        <Text style={[common.bodySmall, { color: color, opacity: 0.6, marginTop: 2 }]} numberOfLines={1}>
             {display}
         </Text>
     );
-}
+};
 
-
-const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLink, colors: any, common: any, theme: 'light' | 'dark' }) => {
-    const { icon, color } = getPlatformDetails(item.platform, item.url, theme);
-    const isGeneric = icon === 'link-outline';
-
-    if (isGeneric) {
-        return (
-            <View style={{ marginBottom: 12, overflow: 'hidden', }}>
-                <LinkPreview
-                    text={item.url}
-                    renderLinkPreview={({ previewData }) => (
-                        <TouchableOpacity
-                            onPress={() => Linking.openURL(item.url)}
-                            style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                            }}
-                        >
-                            {previewData?.image ? (
-                                <FastImage
-                                    source={{ uri: previewData.image.url }}
-                                    style={{ width: 44, height: 44, borderRadius: 8, marginRight: 12 }}
-                                    resizeMode={FastImage.resizeMode.cover}
-                                />
-                            ) : (
-                                <View style={{
-                                    width: 44,
-                                    height: 44,
-                                    borderRadius: 8,
-                                    backgroundColor: colors.card,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    marginRight: 12
-                                }}>
-                                    <Ionicons name="link" size={24} color={colors.text} />
-                                </View>
-                            )}
-
-                            <View style={{ flex: 1 }}>
-                                <Text style={common.heading} numberOfLines={1}>{previewData?.title || item.platform || 'Link'}</Text>
-                                <FormattedLink url={item.url} username={item.username} common={common} />
-                            </View>
-                            <Ionicons name="arrow-forward" size={20} color={colors.muted} />
-                        </TouchableOpacity>
-                    )}
-                />
-            </View>
-        );
-    }
-
+// Reusable Card Component
+const LinkCard = ({
+    onPress,
+    iconNode,
+    title,
+    url,
+    username,
+    colors,
+    common
+}: {
+    onPress: () => void,
+    iconNode: React.ReactNode,
+    title: string,
+    url: string,
+    username?: string,
+    colors: any,
+    common: any
+}) => {
     return (
         <TouchableOpacity
-            onPress={() => Linking.openURL(item.url)}
+            onPress={onPress}
+            activeOpacity={0.7}
             style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                paddingVertical: 12,
-                borderRadius: 9999,
+                paddingVertical: 8,
+                marginBottom: 12,
             }}
         >
-            <View style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: color + '20',
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginRight: 16
-            }}>
-                <Ionicons name={icon as any} size={24} color={color} />
+            {/* Icon Container */}
+            <View style={{ marginRight: 16 }}>
+                {iconNode}
             </View>
 
-            <View style={{ flex: 1 }}>
-                <Text style={common.heading}>{item.platform}</Text>
-                <FormattedLink url={item.url} username={item.username} common={common} />
+            {/* Text Content */}
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+                <Text style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
+                    {title}
+                </Text>
+                <FormattedLink url={url} username={username} common={common} color={colors.text} />
             </View>
 
-            <Ionicons name="arrow-forward" size={20} color={colors.muted} />
+            {/* Action Arrow */}
+            <Ionicons name="chevron-forward" size={20} color={colors.muted || '#999'} style={{ marginLeft: 8 }} />
         </TouchableOpacity>
     );
+};
+
+
+const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLink, colors: any, common: any, theme: 'light' | 'dark' }) => {
+    const { icon, color } = getPlatformDetails(item.platform, theme);
+    const isGeneric = icon === 'link-outline';
+
+    // 1. GENERIC LINK (With Preview Fetching)
+    if (isGeneric) {
+        return (
+            <LinkPreview
+                text={item.url}
+                enableAnimation={true}
+                renderLinkPreview={({ previewData }) => {
+                    const imageUrl = previewData?.image?.url;
+
+                    const IconNode = imageUrl ? (
+                        <FastImage
+                            source={{ uri: imageUrl }}
+                            style={{ width: 48, height: 48, borderRadius: 999 }}
+                            resizeMode={FastImage.resizeMode.cover}
+                        />
+                    ) : (
+                        <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
+                            <Ionicons name="link" size={24} color={colors.text} />
+                        </View>
+                    );
+
+                    return (
+                        <LinkCard
+                            onPress={() => Linking.openURL(item.url)}
+                            iconNode={IconNode}
+                            title={previewData?.title || item.platform || 'Website'}
+                            url={item.url}
+                            username={item.username}
+                            colors={colors}
+                            common={common}
+                        />
+                    );
+                }}
+            />
+        );
+    }
+
+    // 2. SOCIAL PLATFORM LINK (Specific Styling)
+    const IconNode = (
+        <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
+            <Ionicons name={icon as any} size={24} color={color} />
+        </View>
+    );
+
+    return (
+        <LinkCard
+            onPress={() => Linking.openURL(item.url)}
+            iconNode={IconNode}
+            title={item.platform}
+            url={item.url}
+            username={item.username}
+            colors={colors}
+            common={common}
+        />
+    );
 });
+
 
 export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
 
+    // Safety check for empty data
+    if (!data || data.length === 0) return null;
+
     return (
         <TrueSheet
             ref={ref}
             scrollable={true}
-            cornerRadius={24}
-            backgroundColor={theme === 'dark' ? colors.containerContent : 'white'}
+            backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
             grabberOptions={{
-                color: colors.text
+                color: colors.muted || '#C4C4C4',
+                height: 4,
+                width: 32,
             }}
         >
-            <View style={{ flex: 1, padding: 24, paddingBottom: inset.bottom + 20 }}>
-                <Text style={[common.heading, { marginBottom: 16 }]}>Social Links</Text>
+            <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
+
+                {/* Header */}
+                <View style={{ marginBottom: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View>
+                        <Text style={[common.heading, { fontSize: 24 }]}>Socials</Text>
+                        <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                            Connect with me on these platforms
+                        </Text>
+                    </View>
+                </View>
+
+                {/* List */}
                 <FlatList
                     scrollEnabled={false}
                     data={data}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => <SocialLinkItem item={item} colors={colors} common={common} theme={theme} />}
+                    keyExtractor={(item, index) => item.id || index.toString()}
+                    renderItem={({ item }) => (
+                        <SocialLinkItem
+                            item={item}
+                            colors={colors}
+                            common={common}
+                            theme={theme}
+                        />
+                    )}
+                    contentContainerStyle={{ paddingBottom: 20 }}
                 />
+
+                {/* Optional Close Button (Good UX for tall sheets) */}
+                <TouchableOpacity
+                    onPress={() => (ref as any)?.current?.dismiss()}
+                    style={{
+                        paddingVertical: 16,
+                        alignItems: 'center',
+                        marginTop: 8,
+                        marginBottom: inset.bottom > 0 ? 0 : 16
+                    }}
+                >
+                </TouchableOpacity>
+
             </View>
         </TrueSheet>
     );
 }));
+
+const styles = StyleSheet.create({
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 999,
+        justifyContent: 'center',
+        alignItems: 'center',
+    }
+});

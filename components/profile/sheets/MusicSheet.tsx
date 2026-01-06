@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useAudioPlayer } from 'expo-audio';
 import React, { forwardRef, memo, useEffect, useState } from "react";
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -13,10 +13,23 @@ interface MusicSheetProps {
     data: ProfileMusic[];
 }
 
-const MusicItem = memo(({ item, colors, common, playingId, setPlayingId }: { item: ProfileMusic, colors: any, common: any, playingId: string | null, setPlayingId: (id: string | null) => void }) => {
+const MusicItem = memo(({
+    item,
+    colors,
+    common,
+    playingId,
+    setPlayingId
+}: {
+    item: ProfileMusic,
+    colors: any,
+    common: any,
+    playingId: string | null,
+    setPlayingId: (id: string | null) => void
+}) => {
     const player = useAudioPlayer({ uri: item.preview_url || "" });
     const [isPlaying, setIsPlaying] = useState(false);
 
+    // Watch for other tracks playing to auto-pause this one
     useEffect(() => {
         if (playingId !== item.id && isPlaying) {
             player.pause();
@@ -28,6 +41,7 @@ const MusicItem = memo(({ item, colors, common, playingId, setPlayingId }: { ite
     const toggleMusic = () => {
         if (!item.preview_url) return;
 
+        // Check if track finished
         const isAtEnd = player.duration > 0 && (player.duration - player.currentTime < 0.2);
 
         if (isAtEnd) {
@@ -49,36 +63,58 @@ const MusicItem = memo(({ item, colors, common, playingId, setPlayingId }: { ite
         }
     };
 
+    const handleOpenLink = () => {
+        if (item.url) Linking.openURL(item.url);
+    };
+
     return (
         <TouchableOpacity
             onPress={toggleMusic}
-            style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}
+            activeOpacity={0.9}
+            style={[
+                styles.card
+            ]}
         >
-            <View style={{ width: 50, height: 50 }}>
+            {/* Album Art & Play Overlay */}
+            <View style={styles.artworkContainer}>
                 <FastImage
                     source={{ uri: item.cover_url }}
-                    style={{ width: 50, height: 50, borderRadius: 8 }}
+                    style={styles.artwork}
+                    resizeMode={FastImage.resizeMode.cover}
                 />
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 8, justifyContent: 'center', alignItems: 'center' }]}>
-                    <Ionicons
-                        name={isPlaying ? 'pause' : 'play'}
-                        size={20}
-                        color="white"
-                    />
+                {/* Overlay */}
+                <View style={[StyleSheet.absoluteFill, styles.artworkOverlay]}>
+                    <View style={[styles.playIconWrapper, { backgroundColor: isPlaying ? colors.primary : 'rgba(0,0,0,0.6)' }]}>
+                        <Ionicons
+                            name={isPlaying ? 'pause' : 'play'}
+                            size={16}
+                            color="#ffffff"
+                            style={{ marginLeft: isPlaying ? 0 : 2 }} // Optical adjustment for play triangle
+                        />
+                    </View>
                 </View>
             </View>
 
-            <View style={{ marginLeft: 12, flex: 1 }}>
-                <Text style={common.heading}>{item.title}</Text>
-                <Text style={common.bodySmall}>{item.artist}</Text>
+            {/* Text Info */}
+            <View style={styles.textContainer}>
+                <Text style={[common.heading, { fontSize: 16, marginBottom: 4 }]} numberOfLines={1}>
+                    {item.title}
+                </Text>
+                <Text style={[common.bodySmall, { color: colors.muted }]} numberOfLines={1}>
+                    {item.artist}
+                </Text>
             </View>
 
-            <TouchableOpacity
-                onPress={() => item.url && Linking.openURL(item.url)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-                <Ionicons name="open-outline" size={20} color={colors.text} />
-            </TouchableOpacity>
+            {/* External Link Button */}
+            {item.url && (
+                <TouchableOpacity
+                    onPress={handleOpenLink}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={styles.linkButton}
+                >
+                    <Ionicons name="open-outline" size={20} color={colors.muted} />
+                </TouchableOpacity>
+            )}
         </TouchableOpacity>
     );
 });
@@ -89,32 +125,89 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data },
     const inset = useSafeAreaInsets();
     const [playingId, setPlayingId] = useState<string | null>(null);
 
+    // Safety check
+    if (!data || data.length === 0) return null;
+
     return (
         <TrueSheet
             ref={ref}
             scrollable={true}
-            cornerRadius={24}
-            backgroundColor={theme === 'dark' ? colors.containerContent : 'white'}
+            backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
             grabberOptions={{
-                color: colors.text
+                color: colors.muted || '#C4C4C4',
+                height: 4,
+                width: 32,
             }}
             onDidDismiss={() => setPlayingId(null)}
         >
-            <View style={{ flex: 1, padding: 24, paddingBottom: inset.bottom + 20 }}>
-                <Text style={[common.heading, { marginBottom: 16 }]}>Music</Text>
-                <ScrollView nestedScrollEnabled={true}>
-                    {data.map((item) => (
+            <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
+
+                {/* Header */}
+                <View style={{ marginBottom: 24 }}>
+                    <Text style={[common.heading, { fontSize: 24 }]}>Music</Text>
+                    <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                        Listen to my latest tracks
+                    </Text>
+                </View>
+
+                {/* List */}
+                <FlatList
+                    nestedScrollEnabled={true}
+                    data={data}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
                         <MusicItem
-                            key={item.id}
                             item={item}
                             colors={colors}
                             common={common}
                             playingId={playingId}
                             setPlayingId={setPlayingId}
                         />
-                    ))}
-                </ScrollView>
+                    )}
+                    contentContainerStyle={{ paddingBottom: 20 }}
+                />
             </View>
         </TrueSheet>
     );
 }));
+
+const styles = StyleSheet.create({
+    card: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        marginBottom: 12,
+    },
+    artworkContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 12,
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    artwork: {
+        width: '100%',
+        height: '100%',
+    },
+    artworkOverlay: {
+        backgroundColor: 'rgba(0,0,0,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    playIconWrapper: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backdropFilter: 'blur(10px)', // IOS only property, ignored on android but nice to have
+    },
+    textContainer: {
+        marginLeft: 16,
+        flex: 1,
+        justifyContent: 'center',
+    },
+    linkButton: {
+        padding: 8,
+    }
+});

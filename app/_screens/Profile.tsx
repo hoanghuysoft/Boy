@@ -1,6 +1,8 @@
 import { Galeria } from "@nandorojo/galeria";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -15,13 +17,17 @@ import { Snackbar } from 'react-native-paper';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import InfoCard from '../../components/profile/InfoCard';
 import ProfileHeader, { COVER_HEIGHT } from '../../components/profile/ProfileHeader';
+import { AddressSheet } from "../../components/profile/sheets/AddressSheet";
+import { MusicSheet } from "../../components/profile/sheets/MusicSheet";
+import { SocialSheet } from "../../components/profile/sheets/SocialSheet";
+import { WorkplaceSheet } from "../../components/profile/sheets/WorkplaceSheet";
 import { useImageGrid } from '../../components/profile/useImageGrid';
 import { ShimmerEffect } from '../../components/shimmer/Shimmer';
 import { useThemeContext } from "../../context/ThemeContext";
-import { getMyProfileDetail, getProfileDetail } from "../../services/userprofile";
+import { useProfile } from "../../services/userprofile";
+import { getWorkplace } from "../../services/workplace";
 import { createCommonStyles } from "../../styles/common";
 import { Media } from '../../types/media';
-import { ProfileDetail } from "../../types/profiledetail";
 
 
 
@@ -40,11 +46,38 @@ const ProfileScreen = () => {
 
   // State
   const [activeTab, setActiveTab] = useState<TabType>("Images");
-  const [profile, setProfile] = useState<ProfileDetail | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
+
+  const {
+    data: profile,
+    isLoading: isProfileLoading,
+    isRefetching: isProfileRefetching,
+    refetch: refetchProfile,
+    isError: isProfileError
+  } = useProfile(id as string, isMe);
+
+  const { data: workplacesData, refetch: refetchWorkplaces } = useQuery({
+    queryKey: ['workplaces', profile?.id],
+    queryFn: () => getWorkplace(profile!.id),
+    enabled: !!profile?.id
+  });
+
+  const workplaces = workplacesData || [];
+
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+
+  useEffect(() => {
+    if (isProfileError) {
+      setSnackbarVisible(true);
+    }
+  }, [isProfileError]);
+
+  // Refs
+  const musicSheetRef = useRef<TrueSheet>(null);
+  const socialSheetRef = useRef<TrueSheet>(null);
+  const addressSheetRef = useRef<TrueSheet>(null);
+  const workplaceSheetRef = useRef<TrueSheet>(null);
 
   // Single scroll value
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -76,27 +109,13 @@ const ProfileScreen = () => {
     setGalleryVisible(visible);
   }, []);
 
-  // Data Fetching
-  const fetchProfile = useCallback(async () => {
-    try {
-      const data = isMe ? await getMyProfileDetail() : await getProfileDetail(id);
-      setProfile(data);
-    } catch (error) {
-      console.error("Failed to fetch profile:", error);
-      setSnackbarVisible(true);
-    }
-  }, [id, isMe]);
-
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
   // Pull to refresh handler
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchProfile();
-    setRefreshing(false);
-  }, [fetchProfile]);
+  const onRefresh = useCallback(() => {
+    refetchProfile();
+    if (profile?.id) {
+      refetchWorkplaces();
+    }
+  }, [refetchProfile, refetchWorkplaces, profile?.id]);
 
   // Grid Hooks
   const {
@@ -129,8 +148,13 @@ const ProfileScreen = () => {
       onTabChange={handleTabChange}
       profile={profile}
       isMe={isMe}
+      musicSheetRef={musicSheetRef}
+      socialSheetRef={socialSheetRef}
+      addressSheetRef={addressSheetRef}
+      workplaceSheetRef={workplaceSheetRef}
+      workplaces={workplaces}
     />
-  ), [scrollY, activeTab, handleTabChange, profile, isMe]);
+  ), [scrollY, activeTab, handleTabChange, profile, isMe, workplaces]);
 
   // Dynamic data based on tab
   const data = useMemo(() => {
@@ -191,7 +215,7 @@ const ProfileScreen = () => {
           contentContainerStyle={{ flexGrow: 1 }}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isProfileRefetching}
               onRefresh={onRefresh}
               tintColor={colors.text}
               colors={[colors.text]}
@@ -280,10 +304,11 @@ const ProfileScreen = () => {
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
-          refreshing={refreshing}
+          refreshing={isProfileRefetching}
           onRefresh={onRefresh}
           tintColor={colors.text}
           colors={[colors.text]}
+          progressBackgroundColor={colors.background}
         />
       }
       removeClippedSubviews={
@@ -341,6 +366,23 @@ const ProfileScreen = () => {
         }}>
         Failed to load profile
       </Snackbar>
+
+      <MusicSheet
+        ref={musicSheetRef}
+        data={profile?.music || []}
+      />
+      <SocialSheet
+        ref={socialSheetRef}
+        data={profile?.social_links || []}
+      />
+      <AddressSheet
+        ref={addressSheetRef}
+        data={profile?.addresses || []}
+      />
+      <WorkplaceSheet
+        ref={workplaceSheetRef}
+        data={workplaces}
+      />
     </View>
   );
 };
