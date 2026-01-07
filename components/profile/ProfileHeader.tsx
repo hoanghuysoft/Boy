@@ -113,7 +113,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
         <>
             <Animated.Image
                 source={{
-                    uri: profile?.cover_url || "https://pbs.twimg.com/media/GeMS4yjWIAA14OG.jpg"
+                    uri: profile?.cover_url || "https://pbs.twimg.com/media/GeMS4yjWIAA14OG.jpg",
+                    cache: 'force-cache'
                 }}
                 style={[
                     style.coverImage,
@@ -143,6 +144,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 <Image
                                     source={{
                                         uri: currentAvatar || "https://via.placeholder.com/150",
+                                        cache: 'force-cache'
                                     }}
                                     resizeMode="cover"
                                     style={common.avatarLarge}
@@ -206,7 +208,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
                                     <FastImage
-                                        source={{ uri: "https://womendobusiness.eu/wp-content/uploads/social-media.jpg" }}
+                                        source={{ uri: "https://womendobusiness.eu/wp-content/uploads/social-media.jpg", }}
                                         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
                                         resizeMode={FastImage.resizeMode.cover}
                                     />

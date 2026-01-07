@@ -154,7 +154,7 @@ const SearchScreen = () => {
         onPress={() => navigation.push({ pathname: '/profile/[id]', params: { id: item.id, isMe: 'false' } })}
       >
         <FastImage
-          source={{ uri: item.avatar_url }}
+          source={{ uri: item.avatar_url, }}
           style={styles.avatar}
           resizeMode={FastImage.resizeMode.cover}
         />
@@ -255,7 +255,7 @@ const SearchScreen = () => {
           style={[
             styles.searchBar,
             {
-              backgroundColor: colors.containerContent,
+              backgroundColor: colors.card,
             },
           ]}
         >

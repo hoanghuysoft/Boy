@@ -157,7 +157,7 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
                                 ]}
                             >
                                 <FastImage
-                                    source={{ uri: mediaItem.thumbnail_url || mediaItem.url }}
+                                    source={{ uri: mediaItem.thumbnail_url || mediaItem.url, }}
                                     style={StyleSheet.absoluteFill}
                                     resizeMode={FastImage.resizeMode.cover}
                                 />
@@ -240,7 +240,6 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
 
 const styles = StyleSheet.create({
     listContent: {
-        // padding: SPACING, // Removed double padding
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,

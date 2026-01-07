@@ -1,5 +1,5 @@
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
@@ -9,7 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
-import { queryClient } from "../services/client";
+import { clientPersister, queryClient } from "../services/client";
 import { supabase } from "../services/login";
 
 const StatusBarFade = () => {
@@ -123,7 +123,7 @@ export default function RootLayout() {
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <QueryClientProvider client={queryClient}>
+            <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: clientPersister }}>
                 <SafeAreaProvider>
                     <ThemeProvider>
                         <StatusBarProvider>
@@ -131,7 +131,7 @@ export default function RootLayout() {
                         </StatusBarProvider>
                     </ThemeProvider>
                 </SafeAreaProvider>
-            </QueryClientProvider>
+            </PersistQueryClientProvider>
         </GestureHandlerRootView>
     );
 }

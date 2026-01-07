@@ -25,7 +25,7 @@ const CaptionText = ({ caption, colors, common }: CaptionTextProps) => {
     return (
       <View>
         <Text
-          style={[common.body, { color: colors.text, marginTop: 10, marginBottom: 3 }]}
+          style={[common.body, { color: colors.text, marginTop: 10, marginBottom: 3, fontSize: 14 }]}
           onTextLayout={onTextLayout}
         >
           {caption}
@@ -37,14 +37,14 @@ const CaptionText = ({ caption, colors, common }: CaptionTextProps) => {
   return (
     <View>
       <Text
-        style={[common.body, { color: colors.text, marginTop: 10, marginBottom: showReadMore ? 0 : 10 }]}
+        style={[common.body, { color: colors.text, marginTop: 10, marginBottom: showReadMore ? 0 : 10, fontSize: 14 }]}
         numberOfLines={expanded ? undefined : 3}
       >
         {caption}
       </Text>
       {showReadMore && (
         <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-          <Text style={[common.body, { color: colors.primary || colors.text, marginTop: 4, fontWeight: '600' }, { marginBottom: 10 }]}>
+          <Text style={[common.body, { color: colors.primary || colors.text, marginTop: 4, fontWeight: '600', fontSize: 14 }, { marginBottom: 10 }]}>
             {expanded ? 'Read less' : 'Read more'}
           </Text>
         </TouchableOpacity>

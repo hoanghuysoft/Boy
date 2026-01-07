@@ -2,6 +2,7 @@ import { Galeria } from "@nandorojo/galeria";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from "@shopify/flash-list";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -33,6 +34,7 @@ import { Media } from '../../types/media';
 
 type TabType = "Images" | "Videos" | "Information";
 
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
 const ProfileScreen = () => {
   const router = useRouter();
@@ -287,13 +289,11 @@ const ProfileScreen = () => {
     );
   }
 
-  // Single FlatList
   const flatList = (
-    <Animated.FlatList<any>
+    <AnimatedFlashList
       data={data}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
-      style={styles.container}
       contentContainerStyle={[
         { paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }
       ]}
@@ -311,26 +311,7 @@ const ProfileScreen = () => {
           progressBackgroundColor={colors.background}
         />
       }
-      removeClippedSubviews={
-        activeTab === "Images" ? imageFlatListProps.removeClippedSubviews :
-          activeTab === "Videos" ? videoFlatListProps.removeClippedSubviews : undefined
-      }
-      maxToRenderPerBatch={
-        activeTab === "Images" ? imageFlatListProps.maxToRenderPerBatch :
-          activeTab === "Videos" ? videoFlatListProps.maxToRenderPerBatch : undefined
-      }
-      windowSize={
-        activeTab === "Images" ? imageFlatListProps.windowSize :
-          activeTab === "Videos" ? videoFlatListProps.windowSize : undefined
-      }
-      initialNumToRender={
-        activeTab === "Images" ? imageFlatListProps.initialNumToRender :
-          activeTab === "Videos" ? videoFlatListProps.initialNumToRender : undefined
-      }
-      getItemLayout={
-        activeTab === "Images" ? imageFlatListProps.getItemLayout :
-          activeTab === "Videos" ? videoFlatListProps.getItemLayout : undefined
-      }
+      estimatedItemSize={150}
     />
   );
 

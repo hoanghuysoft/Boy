@@ -146,7 +146,7 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data },
                 <View style={{ marginBottom: 24 }}>
                     <Text style={[common.heading, { fontSize: 24 }]}>Music</Text>
                     <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-                        Listen to my latest tracks
+                        Listen to my favorite tracks
                     </Text>
                 </View>
 

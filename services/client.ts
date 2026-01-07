@@ -1,8 +1,44 @@
-import { QueryClient } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
+import { onlineManager, QueryClient } from '@tanstack/react-query';
+import type { Persister } from '@tanstack/react-query-persist-client';
 import axios from 'axios';
+import { createMMKV } from 'react-native-mmkv';
 import { supabase } from './login';
 
-export const queryClient = new QueryClient();
+// 2. Network State Management
+onlineManager.setEventListener((setOnline) => {
+    return NetInfo.addEventListener((state) => {
+        setOnline(!!state.isConnected);
+    });
+});
+
+const storage = createMMKV();
+
+export const clientPersister: Persister = {
+    persistClient: async (client) => {
+        storage.set('REACT_QUERY_OFFLINE_CACHE', JSON.stringify(client));
+    },
+    restoreClient: async () => {
+        const client = storage.getString('REACT_QUERY_OFFLINE_CACHE');
+        return client ? JSON.parse(client) : undefined;
+    },
+    removeClient: async () => {
+        storage.remove('REACT_QUERY_OFFLINE_CACHE');
+    },
+};
+
+export const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            gcTime: 1000 * 60 * 60 * 24, // 24 hours
+            staleTime: 1000 * 60 * 5, // 5 minutes
+            networkMode: 'offlineFirst',
+        },
+        mutations: {
+            networkMode: 'offlineFirst',
+        },
+    },
+});
 
 export const client = axios.create({
     baseURL: 'https://boy-server.vercel.app',
