@@ -14,6 +14,7 @@ export type ThemeColors = {
   containerContent: string;
   divider: string;
   muted: string;
+  verify: string;
 };
 
 type ThemeContextValue = {
@@ -35,6 +36,7 @@ const lightColors: ThemeColors = {
   containerContent: "#ffffff",
   divider: "#e0e0e2",
   muted: "#888888",
+  verify: "#1c94e6"
 };
 
 const darkColors: ThemeColors = {
@@ -47,6 +49,7 @@ const darkColors: ThemeColors = {
   containerContent: "#171719",
   divider: "#363638",
   muted: "#888888",
+  verify: "#1c94e6"
 };
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);

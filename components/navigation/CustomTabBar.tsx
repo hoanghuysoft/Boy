@@ -15,6 +15,7 @@ import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
+import { useScrollStore } from "../../stores/scroll";
 
 type TabName = "index" | "search" | "chat" | "profile";
 
@@ -143,7 +144,7 @@ const AnimatedTabButton = ({
                     icon={isFocused ? tabConfig.iconSolid : tabConfig.iconOutlined}
                     size={24}
                     color={color}
-                    strokeWidth={3}
+                    strokeWidth={5}
                 />
                 <Text
                     style={[
@@ -193,6 +194,10 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
                                 target: route.key,
                                 canPreventDefault: true,
                             });
+
+                            if (isFocused) {
+                                useScrollStore.getState().triggerScrollToTop(route.name);
+                            }
 
                             if (!isFocused && !event.defaultPrevented) {
                                 navigation.navigate(route.name);

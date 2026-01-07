@@ -36,6 +36,8 @@ type TabType = "Images" | "Videos" | "Information";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
+import { useScrollStore } from "../../stores/scroll";
+
 const ProfileScreen = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -45,6 +47,15 @@ const ProfileScreen = () => {
   const { colors, typography } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const inset = useSafeAreaInsets();
+
+  const listRef = useRef<any>(null);
+  const trigger = useScrollStore((state) => state.triggers['profile']);
+
+  useEffect(() => {
+    if (trigger > 0 && listRef.current) {
+      listRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  }, [trigger]);
 
   // State
   const [activeTab, setActiveTab] = useState<TabType>("Images");
@@ -291,6 +302,7 @@ const ProfileScreen = () => {
 
   const flatList = (
     <AnimatedFlashList
+      ref={listRef}
       data={data}
       renderItem={renderItem}
       keyExtractor={keyExtractor}

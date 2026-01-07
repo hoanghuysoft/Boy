@@ -5,6 +5,7 @@ import FastImage from "@d11/react-native-fast-image";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
+import { debounce } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -28,6 +29,9 @@ const FlashList = FlashListOriginal as any;
 
 import { useRouter } from "expo-router";
 
+import VerifiedIcon from "@/icons/verified";
+import { useScrollStore } from "../../stores/scroll";
+
 const SearchScreen = () => {
   const navigation = useRouter();
   const { colors, typography } = useThemeContext();
@@ -36,19 +40,40 @@ const SearchScreen = () => {
 
   const { data: profiles = [], isLoading, refetch, isRefetching } = useAllProfiles();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const listRef = useRef<any>(null);
+
+  const trigger = useScrollStore((state) => state.triggers['search']);
+
+  useEffect(() => {
+    if (trigger > 0 && listRef.current) {
+      listRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  }, [trigger]);
 
   /* Helper to remove accents for Vietnamese search */
   const normalizeString = (str: string) => {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   };
 
+  const debouncedHandler = useMemo(
+    () => debounce((text: string) => setDebouncedSearchQuery(text), 300),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedHandler.cancel();
+    };
+  }, [debouncedHandler]);
+
   const filteredProfiles = useMemo(() => {
-    if (searchQuery.trim() === "") {
+    if (debouncedSearchQuery.trim() === "") {
       return profiles;
     } else {
-      const query = normalizeString(searchQuery);
+      const query = normalizeString(debouncedSearchQuery);
       return profiles.filter(
         (profile: Profile) =>
           normalizeString(profile.name).includes(query) ||
@@ -57,7 +82,7 @@ const SearchScreen = () => {
           (profile.hometown && normalizeString(profile.hometown).includes(query))
       );
     }
-  }, [searchQuery, profiles]);
+  }, [debouncedSearchQuery, profiles]);
 
   // Keyboard avoidance animation
   const searchBarBottomOffset = useRef(new Animated.Value(0)).current;
@@ -110,6 +135,7 @@ const SearchScreen = () => {
 
   const clearSearch = useCallback(() => {
     setSearchQuery("");
+    setDebouncedSearchQuery("");
     inputRef.current?.blur();
     Keyboard.dismiss();
   }, []);
@@ -159,9 +185,12 @@ const SearchScreen = () => {
           resizeMode={FastImage.resizeMode.cover}
         />
         <View style={styles.profileInfo}>
-          <Text style={[common.subheading, { color: colors.text }]} numberOfLines={1}>
-            {item.name}
-          </Text>
+          <View style={[common.row, { gap: 2 }]}>
+            <Text style={[common.subheading, { color: colors.text }]} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <VerifiedIcon size={18} fill={colors.verify} />
+          </View>
           {item.birthday && (
             <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
               {calculateAge(item.birthday)} years old
@@ -217,6 +246,7 @@ const SearchScreen = () => {
         />
       ) : (
         <FlashList
+          ref={listRef}
           data={filteredProfiles}
           renderItem={renderProfile}
           keyExtractor={(item: Profile) => item.id}
@@ -265,7 +295,11 @@ const SearchScreen = () => {
             placeholder="What are you looking for?"
             placeholderTextColor={colors.muted}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={(text) => {
+              setSearchQuery(text);
+              debouncedHandler(text);
+            }}
+
             onFocus={handleFocus}
             onBlur={handleBlur}
             returnKeyType="search"

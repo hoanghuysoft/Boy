@@ -1,3 +1,4 @@
+import VerifiedIcon from '@/icons/verified';
 import { getTiktokProfile } from '@/services/tiktok';
 import FastImage from '@d11/react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -153,7 +154,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                         </Galeria>
                     </View>
                     <View>
-                        <Text style={[common.heading, { marginTop: 8 }]}>{profile?.name || "Unknown"}</Text>
+                        <View style={[common.row, { gap: 2, marginTop: 8 }]}>
+                            <Text style={common.heading}>{profile?.name || "Boy not found"}</Text>
+                            <VerifiedIcon size={18} color={colors.verify} />
+                        </View>
                         {profile?.pronouns && (
                             <Text style={[common.muted, { fontSize: 12 }]}>
                                 {profile.pronouns}

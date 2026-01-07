@@ -8,7 +8,7 @@ import Galeria from "@nandorojo/galeria/build/GaleriaView";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CaptionText from "../../components/CaptionText";
 import { ShimmerEffect } from "../../components/shimmer/Shimmer";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -16,15 +16,23 @@ import { createCommonStyles } from "../../styles/common";
 
 const FlashList = FlashListOriginal as any;
 
+import { uniqBy } from "lodash";
+
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useRouter } from "expo-router";
 
 dayjs.extend(relativeTime);
 
+import VerifiedIcon from "@/icons/verified";
+import BlurView from "@sbaiahmed1/react-native-blur";
+import { useScrollStore } from "../../stores/scroll";
+
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+
 const HomeScreen = () => {
   const router = useRouter();
-  const { colors, theme, toggleTheme, typography } = useThemeContext();
+  const { colors, typography, theme } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<"Follow" | "This Day">("Follow");
@@ -40,7 +48,10 @@ const HomeScreen = () => {
     isFetchingNextPage
   } = useFeed(feedType);
 
-  const posts = data?.pages.flat() || [];
+  const posts = React.useMemo(() => {
+    const allPosts = data?.pages.flat() || [];
+    return uniqBy(allPosts, 'id');
+  }, [data?.pages]);
 
   const bottomNavHeight = 67;
   const bottomNavMargin = 13;
@@ -50,35 +61,15 @@ const HomeScreen = () => {
   const followIndicatorAnim = useRef(new Animated.Value(1)).current;
   const thisDayIndicatorAnim = useRef(new Animated.Value(0)).current;
 
-  // Scroll to top logic
   const listRef = useRef<any>(null);
-  const showScrollTop = useRef(new Animated.Value(0)).current;
-  const [isScrollTopVisible, setIsScrollTopVisible] = useState(false);
 
-  const handleScroll = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const show = offsetY > 500;
+  const trigger = useScrollStore((state) => state.triggers['index']);
 
-    if (show && !isScrollTopVisible) {
-      setIsScrollTopVisible(true);
-      Animated.spring(showScrollTop, {
-        toValue: 1,
-        useNativeDriver: true,
-        friction: 8,
-      }).start();
-    } else if (!show && isScrollTopVisible) {
-      setIsScrollTopVisible(false);
-      Animated.spring(showScrollTop, {
-        toValue: 0,
-        useNativeDriver: true,
-        friction: 8,
-      }).start();
+  useEffect(() => {
+    if (trigger > 0 && listRef.current) {
+      listRef.current.scrollToOffset({ offset: 0, animated: true });
     }
-  };
-
-  const scrollToTop = () => {
-    listRef.current?.scrollToOffset({ offset: 0, animated: true });
-  };
+  }, [trigger]);
 
   useEffect(() => {
     if (activeTab === "Follow") {
@@ -170,7 +161,10 @@ const HomeScreen = () => {
           <TouchableOpacity onPress={() => router.push({ pathname: '/profile/[id]', params: { id: post.profile_id } })} style={[common.row, { gap: 12 }]}>
             <FastImage source={{ uri: post.profile_avatar }} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.divider }} />
             <View>
-              <Text style={[common.heading, { fontSize: 16 }]}>{post.profile_name}</Text>
+              <View style={[common.row, { gap: 2 }]}>
+                <Text style={[common.heading, { fontSize: 16 }]}>{post.profile_name}</Text>
+                <VerifiedIcon size={16} color={colors.verify} />
+              </View>
               <Text style={[common.label, { color: colors.muted, fontSize: 12 }]}>{dayjs(post.created_at).fromNow()}</Text>
             </View>
           </TouchableOpacity>
@@ -241,89 +235,200 @@ const HomeScreen = () => {
     );
   };
 
+  // Scroll animation for floating header
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const diffClamp = useRef(Animated.diffClamp(scrollY, 0, 50)).current;
+
+  const tabTranslateY = diffClamp.interpolate({
+    inputRange: [0, 50],
+    outputRange: [0, -50],
+    extrapolate: 'clamp',
+  });
+
+  const tabOpacity = diffClamp.interpolate({
+    inputRange: [0, 50],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+  const headerBgOpacity = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const blurAmountAnim = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [0, 10],
+    extrapolate: 'clamp',
+  });
+
+  const onScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: false }
+  );
+
+  // Pill animations
+  const pillBgColor = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [colors.background, theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.5)'],
+    extrapolate: 'clamp',
+  });
+
+  const paddingAnim = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [0, 8],
+    extrapolate: 'clamp',
+  });
+
   const tabItems = () => {
     return (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[{ marginBottom: 12, flexGrow: 0, paddingHorizontal: 16 }]}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => setActiveTab("Follow")}
+      <View style={{ marginBottom: 12, paddingHorizontal: 16 }}>
+        <AnimatedBlurView
+          blurType={theme === 'dark' ? 'dark' : 'light'}
+          blurAmount={blurAmountAnim as any}
+          style={{
+            borderRadius: 999,
+            overflow: 'hidden',
+            transform: [{ translateY: tabTranslateY }],
+            opacity: tabOpacity,
+          }}
         >
-          <Text
-            style={[
-              common.label,
-              {
-                color: activeTab === "Follow" ? colors.text : colors.muted,
-                fontWeight: activeTab === "Follow" ? "600" : "400",
-              },
-            ]}
-          >
-            Follow
-          </Text>
           <Animated.View
-            style={[
-              styles.activeIndicator,
-              {
-                opacity: followIndicatorAnim,
-                transform: [{ scaleX: followIndicatorAnim }],
-              },
-            ]}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => setActiveTab("This Day")}
-        >
-          <Text
             style={{
-              color: activeTab === "This Day" ? colors.text : colors.muted,
-              fontWeight: activeTab === "This Day" ? "600" : "400",
+              backgroundColor: pillBgColor,
+              borderRadius: 999
             }}
           >
-            This Day
-          </Text>
-          <Animated.View
-            style={[
-              styles.activeIndicator,
-              {
-                opacity: thisDayIndicatorAnim,
-                transform: [{ scaleX: thisDayIndicatorAnim }],
-              },
-            ]}
-          />
-        </TouchableOpacity>
-      </ScrollView>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ flexGrow: 0 }}
+              contentContainerStyle={{ padding: 12 }}
+            >
+              <TouchableOpacity
+                style={styles.tabItem}
+                onPress={() => setActiveTab("Follow")}
+              >
+                <Text
+                  style={[
+                    common.label,
+                    {
+                      color: activeTab === "Follow" ? colors.text : colors.muted,
+                      fontWeight: activeTab === "Follow" ? "600" : "400",
+                    },
+                  ]}
+                >
+                  Follow
+                </Text>
+                <Animated.View
+                  style={[
+                    styles.activeIndicator,
+                    {
+                      opacity: followIndicatorAnim,
+                      transform: [{ scaleX: followIndicatorAnim }],
+                    },
+                  ]}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.tabItem}
+                onPress={() => setActiveTab("This Day")}
+              >
+                <Text
+                  style={{
+                    color: activeTab === "This Day" ? colors.text : colors.muted,
+                    fontWeight: activeTab === "This Day" ? "600" : "400",
+                  }}
+                >
+                  This Day
+                </Text>
+                <Animated.View
+                  style={[
+                    styles.activeIndicator,
+                    {
+                      opacity: thisDayIndicatorAnim,
+                      transform: [{ scaleX: thisDayIndicatorAnim }],
+                    },
+                  ]}
+                />
+              </TouchableOpacity>
+            </ScrollView>
+          </Animated.View>
+        </AnimatedBlurView>
+      </View>
     );
   };
 
+  const headerHeight = 75; // Approx height of the top logo/search row
+  const tabsHeight = 50;   // Approx height of the tab row
+  const totalHeaderHeight = headerHeight + tabsHeight;
+
   return (
-    <SafeAreaView style={[common.screen]}>
-      {/* Header */}
-      <View style={[common.row, { paddingHorizontal: 16, paddingTop: 16, justifyContent: "space-between", alignItems: "center", marginBottom: 12 }]}>
-        <View style={[common.row, { gap: 10 }]}>
-          <FastImage resizeMode="contain" source={require("../../assets/images/logo_head.png")} style={{ width: 40, height: 30, borderRadius: 100 }} />
+    <View style={[common.screen, { position: 'relative' }]}>
+      <Animated.View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: totalHeaderHeight + insets.top,
+          backgroundColor: colors.background,
+          zIndex: 1,
+          opacity: headerBgOpacity,
+        }}
+      />
+
+      <View style={{ position: 'absolute', top: insets.top, left: 0, right: 0, zIndex: 100 }}>
+        <View style={[common.row, {
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 8,
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 12,
+        }]}>
+          <AnimatedBlurView blurType={theme === 'dark' ? 'dark' : 'light'} blurAmount={blurAmountAnim as any} style={{ borderRadius: 100, overflow: 'hidden' }}>
+            <Animated.View style={[common.row, {
+              gap: 10,
+              padding: paddingAnim,
+              backgroundColor: pillBgColor,
+              borderRadius: 100,
+            }]}>
+              <FastImage resizeMode="contain" source={require("../../assets/images/logo_head.png")} style={{ width: 40, height: 30, borderRadius: 100 }} />
+            </Animated.View>
+          </AnimatedBlurView>
+
+          <AnimatedBlurView blurType={theme === 'dark' ? 'dark' : 'light'} blurAmount={blurAmountAnim as any} style={{ borderRadius: 100, overflow: 'hidden' }}>
+            <Animated.View style={[common.row, {
+              gap: 10,
+              padding: paddingAnim,
+              backgroundColor: pillBgColor,
+              borderRadius: 100,
+            }]}>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+                <Lineicons
+                  icon={Search1Outlined}
+                  size={24}
+                  color={colors.text}
+                  strokeWidth={3}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+                <Lineicons
+                  icon={MenuMeatballs1Outlined}
+                  size={24}
+                  color={colors.text}
+                  strokeWidth={3}
+                  style={{ transform: [{ rotate: "90deg" }] }}
+                />
+              </TouchableOpacity>
+            </Animated.View>
+          </AnimatedBlurView>
         </View>
-        <View style={[common.row, { gap: 10 }]}>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-            <Lineicons
-              icon={Search1Outlined}
-              size={24}
-              color={colors.text}
-              strokeWidth={3}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-            <Lineicons
-              icon={MenuMeatballs1Outlined}
-              size={24}
-              color={colors.text}
-              strokeWidth={3}
-              style={{ transform: [{ rotate: "90deg" }] }}
-            />
-          </TouchableOpacity>
-        </View>
+
+        {tabItems()}
       </View>
 
-      {tabItems()}
       {/* <FastImage resizeMode="cover" source={{uri: 'https://picsum.photos/1280/720'}} style={{ width: '100%', height: 200, borderRadius: 16, borderWidth: 1, borderColor: colors.divider, marginBottom: 12 }} /> */}
       {
         isLoading ? (
@@ -331,21 +436,21 @@ const HomeScreen = () => {
             data={[1, 2, 3]}
             renderItem={() => renderPostSkeleton()}
             keyExtractor={(item: number) => item.toString()}
-            contentContainerStyle={{ paddingBottom: bottomPadding }}
+            contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top }}
             estimatedItemSize={300}
             ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
           />
         ) : (
           <FlashList
             ref={listRef}
-            onScroll={handleScroll}
+            onScroll={onScroll}
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
             data={posts}
             ListEmptyComponent={renderEmptyState}
             renderItem={({ item }: { item: Post }) => renderPost(item)}
-            keyExtractor={(item: Post, index: number) => item.id + index.toString()}
-            contentContainerStyle={{ paddingBottom: bottomPadding }}
+            keyExtractor={(item: Post) => item.id.toString()}
+            contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top }}
             refreshControl={
               <RefreshControl
                 refreshing={isRefetching}
@@ -365,30 +470,11 @@ const HomeScreen = () => {
           />
         )
       }
-
-      {/* Scroll To Top Button */}
-      <Animated.View
-        style={[
-          styles.scrollTopButton,
-          {
-            backgroundColor: colors.containerContent,
-            opacity: showScrollTop,
-            transform: [{ scale: showScrollTop }],
-            marginBottom: bottomNavHeight + bottomNavMargin, // Position above tab bar
-          },
-        ]}
-        pointerEvents={isScrollTopVisible ? "auto" : "none"}
-      >
-        <TouchableOpacity onPress={scrollToTop} style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Ionicons name="arrow-up" size={24} color={colors.text} />
-        </TouchableOpacity>
-      </Animated.View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 export default HomeScreen;
-
 
 const styles = StyleSheet.create({
   tabItem: {
@@ -406,27 +492,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 60,
     paddingHorizontal: 24,
-  },
-  scrollTopButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)', // Glassmorphism-ish
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-    zIndex: 100,
   },
 });
