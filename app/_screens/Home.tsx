@@ -2,7 +2,7 @@ import { useFeed } from "@/services/feed";
 import { Post } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
-import { MenuMeatballs1Outlined, PlaySolid, Search1Outlined } from "@lineiconshq/free-icons";
+import { MenuMeatballs1Outlined, Search1Outlined } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import Galeria from "@nandorojo/galeria/build/GaleriaView";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
@@ -24,7 +24,13 @@ import { useRouter } from "expo-router";
 
 dayjs.extend(relativeTime);
 
+import BookmarkIcon from "@/icons/bookmark";
+import CommentIcon from "@/icons/comment";
+import LikeIcon from "@/icons/like";
+import PlayIcon from "@/icons/play";
+import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
+import { queryClient } from "@/services/client";
 import BlurView from "@sbaiahmed1/react-native-blur";
 import { useScrollStore } from "../../stores/scroll";
 
@@ -106,6 +112,11 @@ const HomeScreen = () => {
   }, [activeTab]);
 
   const onRefresh = () => {
+    handleRefresh();
+  };
+
+  const handleRefresh = async () => {
+    queryClient.removeQueries({ queryKey: ['feed', feedType] });
     refetch();
   };
 
@@ -202,7 +213,7 @@ const HomeScreen = () => {
                   <FastImage source={{ uri: post.media_url }} style={{ width: "100%", height: 350, backgroundColor: colors.divider }}>
                     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
                       <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0, 0, 0, 0.4)', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(10px)' }}>
-                        <Lineicons icon={PlaySolid} size={24} color={'#ffffff'} style={{ marginLeft: 4 }} />
+                        <PlayIcon size={24} color={'#ffffff'} style={{ marginLeft: 4 }} />
                       </View>
                     </View>
                   </FastImage>
@@ -216,19 +227,19 @@ const HomeScreen = () => {
         <View style={[common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
           <View style={[common.row, { gap: 20 }]}>
             <TouchableOpacity hitSlop={10} style={[common.row, { gap: 6, alignItems: 'center' }]}>
-              <Ionicons name="heart-outline" size={26} color={colors.text} />
+              <LikeIcon size={24} color={colors.text} />
               <Text style={[common.label, { color: colors.text, fontWeight: '600' }]}>1.2M</Text>
             </TouchableOpacity>
             <TouchableOpacity hitSlop={10} style={[common.row, { gap: 6, alignItems: 'center' }]}>
-              <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
+              <CommentIcon size={24} color={colors.text} />
               <Text style={[common.label, { color: colors.text, fontWeight: '600' }]}>800K</Text>
             </TouchableOpacity>
             <TouchableOpacity hitSlop={10}>
-              <Ionicons name="paper-plane-outline" size={24} color={colors.text} />
+              <ShareIcon size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
           <TouchableOpacity hitSlop={10}>
-            <Ionicons name="bookmark-outline" size={24} color={colors.text} />
+            <BookmarkIcon size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
       </View >
@@ -258,7 +269,7 @@ const HomeScreen = () => {
 
   const blurAmountAnim = scrollY.interpolate({
     inputRange: [0, 50],
-    outputRange: [0, 10],
+    outputRange: [0, 0],
     extrapolate: 'clamp',
   });
 
@@ -372,7 +383,6 @@ const HomeScreen = () => {
           left: 0,
           right: 0,
           height: totalHeaderHeight + insets.top,
-          backgroundColor: colors.background,
           zIndex: 1,
           opacity: headerBgOpacity,
         }}
@@ -443,6 +453,7 @@ const HomeScreen = () => {
         ) : (
           <FlashList
             ref={listRef}
+            key={activeTab}
             onScroll={onScroll}
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
@@ -457,7 +468,7 @@ const HomeScreen = () => {
                 onRefresh={onRefresh}
                 tintColor={colors.text}
                 colors={[colors.text]}
-                progressBackgroundColor={colors.background}
+                progressBackgroundColor={colors.card}
               />
             }
             onEndReached={() => {
@@ -494,3 +505,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
 });
+function setRefreshing(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+

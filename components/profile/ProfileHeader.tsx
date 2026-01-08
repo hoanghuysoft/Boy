@@ -20,7 +20,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
+import { ProfileAddress } from "../../types/profileaddress";
 import { ProfileDetail } from "../../types/profiledetail";
+import { ProfileLink } from "../../types/profilelink";
+import { ProfileMusic } from "../../types/profilemusic";
 import { Workplace } from "../../types/profileworplace";
 import { TabPillGroup } from "../tabpill";
 import BirthdayCard from './BirthdayCard';
@@ -43,6 +46,13 @@ interface ProfileHeaderProps {
     addressSheetRef?: React.RefObject<TrueSheet | null>;
     workplaceSheetRef?: React.RefObject<TrueSheet | null>;
     workplaces?: Workplace[];
+    music?: ProfileMusic[];
+    socialLinks?: ProfileLink[];
+    addresses?: ProfileAddress[];
+    onMusicEndReached?: () => void;
+    onSocialEndReached?: () => void;
+    onAddressesEndReached?: () => void;
+    onWorkplacesEndReached?: () => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
@@ -57,6 +67,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     addressSheetRef,
     workplaceSheetRef,
     workplaces = [],
+    music = [],
+    socialLinks = [],
+    addresses = [],
+    onMusicEndReached,
+    onSocialEndReached,
+    onAddressesEndReached,
+    onWorkplacesEndReached,
 }) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -71,9 +88,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
         extrapolate: "clamp",
     });
 
-    const currentMusic = profile?.music?.[0];
+    const currentMusic = music?.[0];
     const currentAvatar = profile?.avatar_url;
-    const avatarUrls = profile?.avatars?.map((a: any) => a.avatar_url) || [];
     const player = useAudioPlayer(currentMusic?.preview_url ? { uri: currentMusic.preview_url } : null);
 
     // Memoize tab callbacks to prevent re-renders
@@ -206,7 +222,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 </TouchableOpacity>
                             )}
 
-                            {profile?.social_links && profile.social_links.length > 0 && (
+                            {socialLinks && socialLinks.length > 0 && (
                                 <TouchableOpacity
                                     onPress={() => socialSheetRef?.current?.present()}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
@@ -218,12 +234,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                                     <Text numberOfLines={2} style={[common.label, { marginHorizontal: 10, flex: 1, color: 'white', textAlign: 'center' }]}>
-                                        {profile.social_links.length} social link{profile.social_links.length > 1 ? 's' : ''}
+                                        {socialLinks.length} social link{socialLinks.length > 1 ? 's' : ''}
                                     </Text>
                                 </TouchableOpacity>
                             )}
 
-                            {profile?.addresses && profile.addresses.length > 0 && (
+                            {addresses && addresses.length > 0 && (
                                 <TouchableOpacity
                                     onPress={() => addressSheetRef?.current?.present()}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
@@ -233,7 +249,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                         <Ionicons name="location" size={20} color={colors.text} />
                                     </View>
                                     <Text numberOfLines={2} style={[common.label, { marginHorizontal: 10, flex: 1 }]}>
-                                        {profile.addresses.length} address{profile.addresses.length > 1 ? 'es' : ''}
+                                        {addresses.length} address{addresses.length > 1 ? 'es' : ''}
                                     </Text>
                                 </TouchableOpacity>
                             )}

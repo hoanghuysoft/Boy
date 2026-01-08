@@ -11,6 +11,7 @@ import { ProfileMusic } from '../../../types/profilemusic';
 
 interface MusicSheetProps {
     data: ProfileMusic[];
+    onEndReached?: () => void;
 }
 
 const MusicItem = memo(({
@@ -119,7 +120,7 @@ const MusicItem = memo(({
     );
 });
 
-export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data }, ref) => {
+export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, onEndReached }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
@@ -153,6 +154,8 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data },
                 {/* List */}
                 <FlatList
                     nestedScrollEnabled={true}
+                    onEndReached={onEndReached}
+                    onEndReachedThreshold={0.5}
                     data={data}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (

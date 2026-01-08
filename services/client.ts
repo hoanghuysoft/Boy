@@ -5,7 +5,6 @@ import axios from 'axios';
 import { createMMKV } from 'react-native-mmkv';
 import { supabase } from './login';
 
-// 2. Network State Management
 onlineManager.setEventListener((setOnline) => {
     return NetInfo.addEventListener((state) => {
         setOnline(!!state.isConnected);
@@ -41,7 +40,7 @@ export const queryClient = new QueryClient({
 });
 
 export const client = axios.create({
-    baseURL: 'https://boy-server.vercel.app',
+    baseURL: process.env.EXPO_PUBLIC_SERVER_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -55,5 +54,3 @@ client.interceptors.request.use(async (config) => {
     }
     return config;
 });
-
-// apifyClient removed to avoid Node.js dependency issues in React Native

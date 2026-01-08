@@ -4,7 +4,7 @@ export type ShimmerEffectProps = {
   shimmerColors?: string[];
   duration?: number;
   className?: string;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   variant?: "shimmer" | "pulse";
   direction?: ShimmerDirection;
 };

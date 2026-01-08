@@ -1,15 +1,38 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { client } from "./client";
 
-export const getAllProfiles = async () => {
-    const response = await client.get("/api/profiles");
-    return response.data.data;
+import { Profile } from "@/types/profile";
+
+export interface ProfilesResponse {
+    data: Profile[];
+    pagination: {
+        total: number;
+        totalMatches: number;
+        limit: number;
+        hasNextPage: boolean;
+        nextCursor: string | null;
+    };
+    search?: {
+        query: string;
+        matchedField: string;
+    };
 }
 
-export const useAllProfiles = () => {
-    return useQuery({
-        queryKey: ["all-profiles"],
-        queryFn: getAllProfiles,
+export const getProfiles = async ({ pageParam, search }: { pageParam?: string; search?: string }) => {
+    const params: Record<string, any> = { limit: 20 };
+    if (pageParam) params.cursor = pageParam;
+    if (search) params.search = search;
+
+    const response = await client.get<ProfilesResponse>("/api/profiles", { params });
+    return response.data;
+};
+
+export const useInfiniteProfiles = (search: string = "") => {
+    return useInfiniteQuery({
+        queryKey: ["profiles", search],
+        queryFn: ({ pageParam }: { pageParam: string | undefined }) => getProfiles({ pageParam, search }),
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage: ProfilesResponse) => lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor : undefined,
     });
 };
 

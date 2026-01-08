@@ -1,17 +1,21 @@
-export type TextPart = {
+export interface TextPart {
     text: string;
     type: 'text' | 'hashtag' | 'mention' | 'url';
-};
+}
 
 export const parseCaption = (text: string): TextPart[] => {
     const parts: TextPart[] = [];
-    const regex = /(#\w+|@\w+|(?:https?:\/\/|www\.)[^\s]+)/g;
+
+    // Updated regex: 
+    // 1. Hashtags/Mentions: starts with # or @, followed by non-whitespace/non-special chars
+    // 2. URLs: standard pattern
+    // 3. Added 'u' flag for Unicode support
+    const regex = /(#[^\s#@!$%^&*()+,.;?]+|@[^\s#@!$%^&*()+,.;?]+|(?:https?:\/\/|www\.)[^\s]+)/gu;
 
     let lastIndex = 0;
     let match;
 
     while ((match = regex.exec(text)) !== null) {
-        // Add text before the match
         if (match.index > lastIndex) {
             parts.push({
                 text: text.substring(lastIndex, match.index),
@@ -19,7 +23,6 @@ export const parseCaption = (text: string): TextPart[] => {
             });
         }
 
-        // Add the match itself
         const matchText = match[0];
         let type: TextPart['type'] = 'text';
 
@@ -31,15 +34,10 @@ export const parseCaption = (text: string): TextPart[] => {
             type = 'url';
         }
 
-        parts.push({
-            text: matchText,
-            type,
-        });
-
+        parts.push({ text: matchText, type });
         lastIndex = regex.lastIndex;
     }
 
-    // Add remaining text after last match
     if (lastIndex < text.length) {
         parts.push({
             text: text.substring(lastIndex),

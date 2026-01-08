@@ -10,7 +10,6 @@ export const getFeed = async (type: "random" | "on_this_day", limit: number = 10
       offset,
     },
   });
-
   return response.data.data;
 };
 

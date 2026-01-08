@@ -10,6 +10,7 @@ import { Workplace } from '../../../types/profileworplace';
 
 interface WorkplaceSheetProps {
     data: Workplace[];
+    onEndReached?: () => void;
 }
 
 // --- Helpers ---
@@ -92,7 +93,7 @@ const WorkplaceItem = memo(({ item, colors, common }: { item: Workplace, colors:
     );
 });
 
-export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({ data }, ref) => {
+export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({ data, onEndReached }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
@@ -124,6 +125,8 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({
                 {/* List */}
                 <FlatList
                     nestedScrollEnabled
+                    onEndReached={onEndReached}
+                    onEndReachedThreshold={0.5}
                     data={data}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (

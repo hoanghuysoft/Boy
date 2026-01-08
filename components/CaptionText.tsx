@@ -18,7 +18,7 @@ const CaptionText = ({ caption, colors, common }: CaptionTextProps) => {
   const onTextLayout = (e: any) => {
     if (hasMeasured) return;
     const { lines } = e.nativeEvent;
-    if (lines && lines.length > 4) {
+    if (lines && lines.length > 3) {
       setShowReadMore(true);
     }
     setHasMeasured(true);

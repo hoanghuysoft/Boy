@@ -1,12 +1,10 @@
 import {
-    Comment1Outlined,
-    Comment1Solid,
     Home2Outlined,
     Home2Solid,
     Search1Outlined,
     Search1Solid,
     User4Outlined,
-    User4Solid,
+    User4Solid
 } from "@lineiconshq/free-icons";
 import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
@@ -39,12 +37,12 @@ const tabs: TabConfig[] = [
         iconOutlined: Search1Outlined,
         iconSolid: Search1Solid,
     },
-    {
-        name: "chat",
-        label: "Chat",
-        iconOutlined: Comment1Outlined,
-        iconSolid: Comment1Solid,
-    },
+    // {
+    //     name: "chat",
+    //     label: "Chat",
+    //     iconOutlined: Comment1Outlined,
+    //     iconSolid: Comment1Solid,
+    // },
     {
         name: "profile",
         label: "Profile",

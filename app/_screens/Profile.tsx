@@ -1,9 +1,7 @@
-import { Galeria } from "@nandorojo/galeria";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { FlashList } from "@shopify/flash-list";
-import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -25,8 +23,12 @@ import { WorkplaceSheet } from "../../components/profile/sheets/WorkplaceSheet";
 import { useImageGrid } from '../../components/profile/useImageGrid';
 import { ShimmerEffect } from '../../components/shimmer/Shimmer';
 import { useThemeContext } from "../../context/ThemeContext";
+import { useInfiniteAddresses } from "../../services/address";
+import { useInfiniteMedia } from "../../services/media";
+import { useInfiniteMusic } from "../../services/music";
+import { useInfiniteSocialLinks } from "../../services/sociallink";
 import { useProfile } from "../../services/userprofile";
-import { getWorkplace } from "../../services/workplace";
+import { useInfiniteWorkplaces } from "../../services/workplace";
 import { createCommonStyles } from "../../styles/common";
 import { Media } from '../../types/media';
 
@@ -68,13 +70,63 @@ const ProfileScreen = () => {
     isError: isProfileError
   } = useProfile(id as string, isMe);
 
-  const { data: workplacesData, refetch: refetchWorkplaces } = useQuery({
-    queryKey: ['workplaces', profile?.id],
-    queryFn: () => getWorkplace(profile!.id),
-    enabled: !!profile?.id
-  });
+  const profileId = profile?.id ?? "";
 
-  const workplaces = workplacesData || [];
+  const {
+    data: musicPaging,
+    refetch: refetchMusic,
+    fetchNextPage: fetchNextMusic,
+    hasNextPage: hasNextMusic,
+    isFetchingNextPage: isFetchingNextMusic
+  } = useInfiniteMusic(profileId);
+  const music = useMemo(() => musicPaging?.pages.flatMap(p => p.data) || [], [musicPaging]);
+
+  const {
+    data: socialPaging,
+    refetch: refetchSocial,
+    fetchNextPage: fetchNextSocial,
+    hasNextPage: hasNextSocial,
+    isFetchingNextPage: isFetchingNextSocial
+  } = useInfiniteSocialLinks(profileId);
+  const socialLinks = useMemo(() => socialPaging?.pages.flatMap(p => p.data) || [], [socialPaging]);
+
+  const {
+    data: addressPaging,
+    refetch: refetchAddresses,
+    fetchNextPage: fetchNextAddresses,
+    hasNextPage: hasNextAddresses,
+    isFetchingNextPage: isFetchingNextAddresses
+  } = useInfiniteAddresses(profileId);
+  const addresses = useMemo(() => addressPaging?.pages.flatMap(p => p.data) || [], [addressPaging]);
+
+  const {
+    data: workplacePaging,
+    refetch: refetchWorkplaces,
+    fetchNextPage: fetchNextWorkplaces,
+    hasNextPage: hasNextWorkplaces,
+    isFetchingNextPage: isFetchingNextWorkplaces
+  } = useInfiniteWorkplaces(profileId);
+  const workplaces = useMemo(() => workplacePaging?.pages.flatMap(p => p.data) || [], [workplacePaging]);
+
+  const {
+    data: photosPaging,
+    refetch: refetchPhotos,
+    fetchNextPage: fetchNextPhotos,
+    hasNextPage: hasNextPhotos,
+    isFetchingNextPage: isFetchingNextPhotos,
+    isLoading: isPhotosLoading
+  } = useInfiniteMedia(profileId, 'photo');
+  const photos = useMemo(() => photosPaging?.pages.flatMap(p => p.data) || [], [photosPaging]);
+
+  const {
+    data: videosPaging,
+    refetch: refetchVideos,
+    fetchNextPage: fetchNextVideos,
+    hasNextPage: hasNextVideos,
+    isFetchingNextPage: isFetchingNextVideos,
+    isLoading: isVideosLoading
+  } = useInfiniteMedia(profileId, 'video');
+  const videos = useMemo(() => videosPaging?.pages.flatMap(p => p.data) || [], [videosPaging]);
 
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -127,8 +179,37 @@ const ProfileScreen = () => {
     refetchProfile();
     if (profile?.id) {
       refetchWorkplaces();
+      refetchMusic();
+      refetchSocial();
+      refetchAddresses();
+      refetchPhotos();
+      refetchVideos();
     }
-  }, [refetchProfile, refetchWorkplaces, profile?.id]);
+  }, [refetchProfile, refetchWorkplaces, refetchMusic, refetchSocial, refetchAddresses, refetchPhotos, refetchVideos, profile?.id]);
+
+  const handleEndReached = useCallback(() => {
+    if (activeTab === "Images" && hasNextPhotos && !isFetchingNextPhotos) {
+      fetchNextPhotos();
+    } else if (activeTab === "Videos" && hasNextVideos && !isFetchingNextVideos) {
+      fetchNextVideos();
+    }
+  }, [activeTab, hasNextPhotos, isFetchingNextPhotos, fetchNextPhotos, hasNextVideos, isFetchingNextVideos, fetchNextVideos]);
+
+  const handleMusicEndReached = useCallback(() => {
+    if (hasNextMusic && !isFetchingNextMusic) fetchNextMusic();
+  }, [hasNextMusic, isFetchingNextMusic, fetchNextMusic]);
+
+  const handleSocialEndReached = useCallback(() => {
+    if (hasNextSocial && !isFetchingNextSocial) fetchNextSocial();
+  }, [hasNextSocial, isFetchingNextSocial, fetchNextSocial]);
+
+  const handleAddressesEndReached = useCallback(() => {
+    if (hasNextAddresses && !isFetchingNextAddresses) fetchNextAddresses();
+  }, [hasNextAddresses, isFetchingNextAddresses, fetchNextAddresses]);
+
+  const handleWorkplacesEndReached = useCallback(() => {
+    if (hasNextWorkplaces && !isFetchingNextWorkplaces) fetchNextWorkplaces();
+  }, [hasNextWorkplaces, isFetchingNextWorkplaces, fetchNextWorkplaces]);
 
   // Grid Hooks
   const {
@@ -138,7 +219,13 @@ const ProfileScreen = () => {
     keyExtractor: imageKeyExtractor,
     flatListProps: imageFlatListProps,
     renderQuickPreview: renderImageQuickPreview,
-  } = useImageGrid({ containerPadding: 10, photos: profile?.photos, onImagePress: handleImagePress });
+  } = useImageGrid({
+    containerPadding: 10,
+    photos: photos,
+    onImagePress: handleImagePress,
+    loading: isPhotosLoading,
+    fetchingMore: isFetchingNextPhotos
+  });
 
   const {
     gridData: videoData,
@@ -149,8 +236,10 @@ const ProfileScreen = () => {
     renderQuickPreview: renderVideoQuickPreview,
   } = useImageGrid({
     containerPadding: 10,
-    photos: profile?.videos,
+    photos: videos, // This hook expects Media[] in 'photos' prop
     onVideoPress: handleVideoPress,
+    loading: isVideosLoading,
+    fetchingMore: isFetchingNextVideos
   });
 
   // Single header
@@ -166,8 +255,11 @@ const ProfileScreen = () => {
       addressSheetRef={addressSheetRef}
       workplaceSheetRef={workplaceSheetRef}
       workplaces={workplaces}
+      music={music}
+      socialLinks={socialLinks}
+      addresses={addresses}
     />
-  ), [scrollY, activeTab, handleTabChange, profile, isMe, workplaces]);
+  ), [scrollY, activeTab, handleTabChange, profile, isMe, workplaces, music, socialLinks, addresses]);
 
   // Dynamic data based on tab
   const data = useMemo(() => {
@@ -196,9 +288,9 @@ const ProfileScreen = () => {
       case "Information":
         return 'info';
       case "Images":
-        return imageKeyExtractor(item);
+        return imageKeyExtractor(item, index);
       case "Videos":
-        return videoKeyExtractor(item);
+        return videoKeyExtractor(item, index);
       default:
         return String(index);
     }
@@ -320,10 +412,12 @@ const ProfileScreen = () => {
           onRefresh={onRefresh}
           tintColor={colors.text}
           colors={[colors.text]}
-          progressBackgroundColor={colors.background}
+          progressBackgroundColor={colors.card}
         />
       }
       estimatedItemSize={150}
+      onEndReached={handleEndReached}
+      onEndReachedThreshold={0.5}
     />
   );
 
@@ -343,11 +437,7 @@ const ProfileScreen = () => {
           </View>
         )}
       />
-      {sortedUrls.length > 0 ? (
-        <Galeria urls={sortedUrls}>{flatList}</Galeria>
-      ) : (
-        flatList
-      )}
+      {flatList}
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
@@ -362,19 +452,23 @@ const ProfileScreen = () => {
 
       <MusicSheet
         ref={musicSheetRef}
-        data={profile?.music || []}
+        data={music}
+        onEndReached={handleMusicEndReached}
       />
       <SocialSheet
         ref={socialSheetRef}
-        data={profile?.social_links || []}
+        data={socialLinks}
+        onEndReached={handleSocialEndReached}
       />
       <AddressSheet
         ref={addressSheetRef}
-        data={profile?.addresses || []}
+        data={addresses}
+        onEndReached={handleAddressesEndReached}
       />
       <WorkplaceSheet
         ref={workplaceSheetRef}
         data={workplaces}
+        onEndReached={handleWorkplacesEndReached}
       />
     </View>
   );

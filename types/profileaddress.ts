@@ -1,11 +1,11 @@
 export interface ProfileAddress {
     id: string;
     profile_id: string;
-    address_line1: string;
-    address_line2: string;
+    label: string;
+    street: string;
     city: string;
-    state: string;
-    postal_code: string;
+    state: string | null;
+    postal_code: string | null;
     country: string;
     is_primary: boolean;
     created_at: string;

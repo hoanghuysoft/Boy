@@ -11,6 +11,7 @@ import { ProfileLink } from '../../../types/profilelink';
 
 interface SocialSheetProps {
     data: ProfileLink[];
+    onEndReached?: () => void;
 }
 
 // Helper to get brand colors and icons
@@ -157,7 +158,7 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
                             iconNode={IconNode}
                             title={previewData?.title || item.platform || 'Website'}
                             url={item.url}
-                            username={item.username}
+                            username={item.label || undefined}
                             colors={colors}
                             common={common}
                         />
@@ -180,7 +181,7 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
             iconNode={IconNode}
             title={item.platform}
             url={item.url}
-            username={item.username}
+            username={item.label || undefined}
             colors={colors}
             common={common}
         />
@@ -188,7 +189,7 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
 });
 
 
-export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data }, ref) => {
+export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data, onEndReached }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
@@ -221,7 +222,9 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data 
 
                 {/* List */}
                 <FlatList
-                    scrollEnabled={false}
+                    nestedScrollEnabled
+                    onEndReached={onEndReached}
+                    onEndReachedThreshold={0.5}
                     data={data}
                     keyExtractor={(item, index) => item.id || index.toString()}
                     renderItem={({ item }) => (

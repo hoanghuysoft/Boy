@@ -9,13 +9,14 @@ import { ProfileAddress } from "../../../types/profileaddress";
 
 interface AddressSheetProps {
     data: ProfileAddress[];
+    onEndReached?: () => void;
 }
 
 const AddressItem = memo(({ item, colors, common }: { item: ProfileAddress, colors: any, common: any }) => {
 
     const handleOpenMaps = () => {
         // Construct the query string
-        const fullAddress = `${item.address_line1} ${item.address_line2 || ''}, ${item.city}, ${item.country}`;
+        const fullAddress = `${item.street}, ${item.city}, ${item.country}`;
         const encodedAddress = encodeURIComponent(fullAddress);
 
         // Platform specific map URL
@@ -53,14 +54,8 @@ const AddressItem = memo(({ item, colors, common }: { item: ProfileAddress, colo
                 </Text>
 
                 <Text style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
-                    {item.address_line1}
+                    {item.street}
                 </Text>
-
-                {item.address_line2 ? (
-                    <Text style={[common.bodySmall, { color: colors.muted }]}>
-                        {item.address_line2}
-                    </Text>
-                ) : null}
             </View>
 
             {/* Action Icon */}
@@ -71,7 +66,7 @@ const AddressItem = memo(({ item, colors, common }: { item: ProfileAddress, colo
     );
 });
 
-export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ data }, ref) => {
+export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ data, onEndReached }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
@@ -102,7 +97,9 @@ export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ dat
 
                 {/* List */}
                 <FlatList
-                    scrollEnabled={false}
+                    nestedScrollEnabled
+                    onEndReached={onEndReached}
+                    onEndReachedThreshold={0.5}
                     data={data}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (

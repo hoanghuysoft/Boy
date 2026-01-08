@@ -1,6 +1,6 @@
 import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
-import { Galeria } from "@nandorojo/galeria";
+
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -13,6 +13,7 @@ import {
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { Media } from "../../types/media";
+import { ShimmerEffect } from "../shimmer/Shimmer";
 import QuickPreviewModal from "./QuickPreviewModal";
 
 // Constants
@@ -20,14 +21,18 @@ const SPACING = 2;
 const NUM_COLUMNS = 3;
 const CONTAINER_PADDING = 16;
 
-// Types for grid data (only rows now)
-type GridItemType = { type: 'row'; items: Media[]; startIndex: number };
+// Types for grid data
+type GridItemType =
+    | { type: 'row'; items: Media[]; startIndex: number }
+    | { type: 'shimmer'; startIndex: number };
 
 interface UseImageGridOptions {
     containerPadding?: number;
     photos?: Media[];
     onVideoPress?: (video: Media) => void;
     onImagePress?: (visible: boolean, index: number) => void;
+    loading?: boolean;
+    fetchingMore?: boolean;
 }
 
 const processMediaToGrid = (media: Media[], numColumns: number): { gridData: GridItemType[]; sortedUrls: string[] } => {
@@ -57,11 +62,17 @@ const processMediaToGrid = (media: Media[], numColumns: number): { gridData: Gri
 };
 
 export const useImageGrid = (options: UseImageGridOptions = {}) => {
-    const { containerPadding = CONTAINER_PADDING, photos, onVideoPress, onImagePress } = options;
+    const {
+        containerPadding = CONTAINER_PADDING,
+        photos,
+        onVideoPress,
+        onImagePress,
+        loading = false,
+        fetchingMore = false
+    } = options;
 
     const [gridData, setGridData] = useState<GridItemType[]>([]);
     const [sortedUrls, setSortedUrls] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { width: screenWidth } = useWindowDimensions();
@@ -112,21 +123,62 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
 
     // Process photos from profile data
     useEffect(() => {
-        setLoading(true);
         try {
             const mediaList = photos || [];
             const result = processMediaToGrid(mediaList, NUM_COLUMNS);
+
+            let finalGridData: GridItemType[] = result.gridData;
+
+            if (loading && mediaList.length === 0) {
+                // Initial loading state - show full screen of shimmers
+                finalGridData = Array.from({ length: 6 }).map((_, index) => ({
+                    type: 'shimmer',
+                    startIndex: index // fake index for key
+                }));
+            } else if (fetchingMore) {
+                // Appending loading state - add one row of shimmers
+                finalGridData = [
+                    ...finalGridData,
+                    { type: 'shimmer', startIndex: -1 }
+                ];
+            }
+
             setSortedUrls(result.sortedUrls);
-            setGridData(result.gridData);
+            setGridData(finalGridData);
         } catch (error) {
             console.error("Error processing media:", error);
-        } finally {
-            setLoading(false);
         }
-    }, [photos]);
+    }, [photos, loading, fetchingMore]);
 
     // Render items
     const renderItem: ListRenderItem<GridItemType> = useCallback(({ item }) => {
+        if (item.type === 'shimmer') {
+            const isVideoGrid = onVideoPress !== undefined;
+            const style = isVideoGrid ? videoStyle : imageStyle;
+
+            return (
+                <View style={[common.row, { paddingHorizontal: containerPadding }]}>
+                    {Array.from({ length: NUM_COLUMNS }).map((_, i) => (
+                        <View
+                            key={`shimmer-${i}`}
+                            style={[
+                                style,
+                                {
+                                    marginRight: i === NUM_COLUMNS - 1 ? 0 : SPACING,
+                                    backgroundColor: colors.card
+                                }
+                            ]}
+                        >
+                            <ShimmerEffect
+                                isLoading={true}
+                                style={StyleSheet.absoluteFill}
+                            />
+                        </View>
+                    ))}
+                </View>
+            );
+        }
+
         return (
             <View style={[common.row, { paddingHorizontal: containerPadding }]}>
                 {item.items.map((mediaItem, i) => {
@@ -177,11 +229,7 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
                             onPressOut={handlePressOut}
                             delayLongPress={300}
                         >
-                            <Galeria.Image
-                                index={item.startIndex + i}
-                            >
-                                {content}
-                            </Galeria.Image>
+                            {content}
                         </TouchableOpacity>
                     );
                 })}
@@ -199,16 +247,18 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
                 ))}
             </View>
         );
-    }, [imageStyle, common, onVideoPress, handleLongPress, handlePressOut]);
+    }, [imageStyle, videoStyle, common, onVideoPress, onImagePress, handleLongPress, handlePressOut, containerPadding, colors.card]);
 
-    const keyExtractor = useCallback((item: GridItemType): string => {
+    const keyExtractor = useCallback((item: GridItemType, index: number): string => {
+        if (item.type === 'shimmer') return `shimmer-${index}`;
         return `r-${item.startIndex}`;
     }, []);
 
     // Simple getItemLayout since all rows are same height now
     const getItemLayout = useCallback((data: ArrayLike<GridItemType> | null | undefined, index: number) => {
-        return { length: rowHeight, offset: rowHeight * index, index };
-    }, [rowHeight]);
+        const height = onVideoPress ? (itemWidth * 1.7 + SPACING) : rowHeight;
+        return { length: height, offset: height * index, index };
+    }, [rowHeight, itemWidth, onVideoPress]);
 
     // FlatList optimization props
     const flatListProps = useMemo(() => ({
@@ -223,7 +273,6 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
     return {
         gridData,
         sortedUrls,
-        loading,
         renderItem,
         keyExtractor,
         contentContainerStyle: styles.listContent,

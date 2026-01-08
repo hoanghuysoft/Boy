@@ -1,11 +1,11 @@
-import { useAllProfiles } from "@/services/userprofile";
+import { ProfilesResponse, useInfiniteProfiles } from "@/services/userprofile";
 import { Profile } from "@/types/profile";
 import { calculateAge } from "@/utils/timeandage";
 import FastImage from "@d11/react-native-fast-image";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
-import { debounce } from "lodash";
+import { debounce, flatMap } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -30,6 +30,7 @@ const FlashList = FlashListOriginal as any;
 import { useRouter } from "expo-router";
 
 import VerifiedIcon from "@/icons/verified";
+import { queryClient } from "@/services/client";
 import { useScrollStore } from "../../stores/scroll";
 
 const SearchScreen = () => {
@@ -38,12 +39,34 @@ const SearchScreen = () => {
   const common = createCommonStyles(colors, typography);
   const insets = useSafeAreaInsets();
 
-  const { data: profiles = [], isLoading, refetch, isRefetching } = useAllProfiles();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const listRef = useRef<any>(null);
+  /* New pagination hooks */
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isRefetching,
+    isLoading,
+  } = useInfiniteProfiles(debouncedSearchQuery);
+
+  const profiles = useMemo(() => {
+    return flatMap(data?.pages, (page: ProfilesResponse) => page.data);
+  }, [data]);
+
+  const totalResults = useMemo(() => {
+    if (!data?.pages?.length) return 0;
+    const firstPage = data.pages[0];
+    if (debouncedSearchQuery && firstPage.pagination.totalMatches !== undefined) {
+      return firstPage.pagination.totalMatches;
+    }
+    return firstPage.pagination.total;
+  }, [data, debouncedSearchQuery]);
 
   const trigger = useScrollStore((state) => state.triggers['search']);
 
@@ -53,15 +76,15 @@ const SearchScreen = () => {
     }
   }, [trigger]);
 
-  /* Helper to remove accents for Vietnamese search */
-  const normalizeString = (str: string) => {
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  };
-
   const debouncedHandler = useMemo(
     () => debounce((text: string) => setDebouncedSearchQuery(text), 300),
     []
   );
+
+  const handleRefresh = async () => {
+    queryClient.removeQueries({ queryKey: ['profiles'] });
+    refetch();
+  };
 
   useEffect(() => {
     return () => {
@@ -69,20 +92,6 @@ const SearchScreen = () => {
     };
   }, [debouncedHandler]);
 
-  const filteredProfiles = useMemo(() => {
-    if (debouncedSearchQuery.trim() === "") {
-      return profiles;
-    } else {
-      const query = normalizeString(debouncedSearchQuery);
-      return profiles.filter(
-        (profile: Profile) =>
-          normalizeString(profile.name).includes(query) ||
-          (profile.bio && normalizeString(profile.bio).includes(query)) ||
-          (profile.email && normalizeString(profile.email).includes(query)) ||
-          (profile.hometown && normalizeString(profile.hometown).includes(query))
-      );
-    }
-  }, [debouncedSearchQuery, profiles]);
 
   // Keyboard avoidance animation
   const searchBarBottomOffset = useRef(new Animated.Value(0)).current;
@@ -219,6 +228,15 @@ const SearchScreen = () => {
     searchBarBottomOffset
   );
 
+  const renderFooter = () => {
+    if (!isFetchingNextPage) return null;
+    return (
+      <View style={{ paddingVertical: 20 }}>
+        {renderProfileSkeleton()}
+      </View>
+    );
+  };
+
   return (
     <KeyboardAvoidingView
       style={common.screen}
@@ -228,7 +246,7 @@ const SearchScreen = () => {
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={[common.headline, { color: colors.text }]}>Search</Text>
         <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-          {searchQuery ? `${filteredProfiles.length} result(s)` : `People ${profiles.length}`}
+          {searchQuery ? `${totalResults} result(s)` : `People ${totalResults}`}
         </Text>
       </View>
 
@@ -247,13 +265,13 @@ const SearchScreen = () => {
       ) : (
         <FlashList
           ref={listRef}
-          data={filteredProfiles}
+          data={profiles}
           renderItem={renderProfile}
           keyExtractor={(item: Profile) => item.id}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: contentBottomPadding },
-            filteredProfiles.length === 0 && styles.emptyListContent,
+            profiles.length === 0 && styles.emptyListContent,
           ]}
           ListEmptyComponent={renderEmptyState}
           showsVerticalScrollIndicator={false}
@@ -263,12 +281,17 @@ const SearchScreen = () => {
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
-              onRefresh={refetch}
+              onRefresh={handleRefresh}
               tintColor={colors.text}
               colors={[colors.text]}
-              progressBackgroundColor={colors.background}
+              progressBackgroundColor={colors.card}
             />
           }
+          onEndReached={() => {
+            if (hasNextPage) fetchNextPage();
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={renderFooter}
         />
       )}
 
