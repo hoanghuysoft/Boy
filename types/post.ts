@@ -1,11 +1,59 @@
+export type FeedMode = 'latest' | 'lucky' | 'this_day';
+
+export interface PostResponse {
+    data: Post[]
+    pagination: Pagination
+}
+
 export interface Post {
-    id: string;
-    profile_id: string;
-    profile_name: string;
-    profile_avatar: string;
-    media_url: string;
-    media_type: string;
-    thumbnail_url: string | null;
-    caption: string;
-    created_at: string;
+    id: string
+    profile_id: string
+    created_at: string
+    content: string
+    location: any
+    device: string
+    deezer_id: string
+    audio_url: string
+    links: Link[]
+    is_ghost: boolean
+    is_adult: boolean
+    profile_name: string
+    profile_avatar: string
+    profile_is_verified: boolean
+    media: Media[]
+    like_count: number
+    comment_count: number
+    view_count: number
+    share_count: number
+    music: Music
+}
+
+export interface Link {
+    url: string
+    label: string
+}
+
+export interface Media {
+    id: string
+    type: string
+    url: string
+    thumbnail_url: any
+    caption: string
+}
+
+export interface Music {
+    title: string
+    artist: string
+    album: string
+    cover: string
+    cover_url: string
+    preview_url: string
+    url: string
+}
+
+export interface Pagination {
+    total: number
+    limit: number
+    hasNextPage: boolean
+    nextCursor: string | null
 }

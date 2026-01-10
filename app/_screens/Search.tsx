@@ -198,7 +198,7 @@ const SearchScreen = () => {
             <Text style={[common.subheading, { color: colors.text }]} numberOfLines={1}>
               {item.name}
             </Text>
-            <VerifiedIcon size={18} fill={colors.verify} />
+            {item.is_verified && <VerifiedIcon size={18} fill={colors.verify} />}
           </View>
           {item.birthday && (
             <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>

@@ -27,9 +27,6 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
         });
     };
 
-    // Get primary address
-    const homeAddress = profile?.addresses?.find(a => a.is_primary) || profile?.addresses?.[0];
-
     return (
         <View style={[common.card, { marginTop: 16, marginHorizontal: 16 }]}>
             {/* Name */}
@@ -109,20 +106,6 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                 </>
             )}
 
-            {/* Address */}
-            {homeAddress && (
-                <>
-                    <View style={common.divider} />
-                    <Text style={[common.muted]}>Location</Text>
-                    <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify' }]}>
-                            {homeAddress.city}{homeAddress.country ? `, ${homeAddress.country}` : ''}
-                        </Text>
-                        <Lineicons size={22} color={colors.text} icon={MapMarker1Solid} strokeWidth={4} />
-                    </View>
-                </>
-            )}
-
             {/* Education - College */}
             {profile?.college && (
                 <>
@@ -151,24 +134,8 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                 </>
             )}
 
-            {/* Workplaces */}
-            {profile?.workplaces && profile.workplaces.length > 0 && (
-                <>
-                    <View style={common.divider} />
-                    <Text style={[common.muted]}>Workplace</Text>
-                    {profile.workplaces.map((workplace, index) => (
-                        <View key={workplace.id || index} style={[common.row, { gap: 8, justifyContent: 'space-between', marginTop: index > 0 ? 8 : 0 }]}>
-                            <Text style={[common.body, { textAlign: 'justify' }]}>
-                                {workplace.position ? `${workplace.position} at ` : ''}{workplace.company_name}
-                            </Text>
-                            <Ionicons name="briefcase" size={22} color={colors.text} />
-                        </View>
-                    ))}
-                </>
-            )}
-
             {/* Show message if no info available */}
-            {!profile?.gender && !profile?.birthday && !profile?.hometown && !homeAddress && !profile?.college && !profile?.highschool && (!profile?.workplaces || profile.workplaces.length === 0) && (
+            {!profile?.gender && !profile?.birthday && !profile?.hometown && !profile?.college && !profile?.highschool && (
                 <>
                     <View style={common.divider} />
                     <Text style={[common.muted, { textAlign: 'center', marginTop: 8 }]}>

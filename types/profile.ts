@@ -14,6 +14,7 @@ export interface Profile {
     gender: string;
     hometown: string;
     is_admin: boolean;
+    is_verified: boolean;
     created_at: string;
     updated_at: string;
 }

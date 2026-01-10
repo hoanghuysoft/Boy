@@ -172,7 +172,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                     <View>
                         <View style={[common.row, { gap: 2, marginTop: 8 }]}>
                             <Text style={common.heading}>{profile?.name || "Boy not found"}</Text>
-                            <VerifiedIcon size={18} color={colors.verify} />
+                            {profile?.is_verified && <VerifiedIcon size={18} color={colors.verify} />}
                         </View>
                         {profile?.pronouns && (
                             <Text style={[common.muted, { fontSize: 12 }]}>

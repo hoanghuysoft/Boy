@@ -1,15 +1,13 @@
 import { useFeed } from "@/services/feed";
 import { Post } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
-import { Ionicons } from "@expo/vector-icons";
 import { MenuMeatballs1Outlined, Search1Outlined } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
-import Galeria from "@nandorojo/galeria/build/GaleriaView";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import CaptionText from "../../components/CaptionText";
+import { PostItem } from "../../components/PostItem";
 import { ShimmerEffect } from "../../components/shimmer/Shimmer";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -24,26 +22,18 @@ import { useRouter } from "expo-router";
 
 dayjs.extend(relativeTime);
 
-import BookmarkIcon from "@/icons/bookmark";
-import CommentIcon from "@/icons/comment";
-import LikeIcon from "@/icons/like";
-import PlayIcon from "@/icons/play";
-import ShareIcon from "@/icons/share";
-import VerifiedIcon from "@/icons/verified";
 import { queryClient } from "@/services/client";
-import BlurView from "@sbaiahmed1/react-native-blur";
 import { useScrollStore } from "../../stores/scroll";
-
-const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 const HomeScreen = () => {
   const router = useRouter();
   const { colors, typography, theme } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<"Follow" | "This Day">("Follow");
+  const [activeTab, setActiveTab] = useState<"Following" | "Lucky" | "This Day">("Following");
+  // const ref = useRef<IWaveformRef>(null);
 
-  const feedType = activeTab === "Follow" ? "random" : "on_this_day";
+  const feedType = activeTab === "Following" ? "latest" : activeTab === "Lucky" ? "lucky" : "this_day";
   const {
     data,
     isLoading,
@@ -55,7 +45,7 @@ const HomeScreen = () => {
   } = useFeed(feedType);
 
   const posts = React.useMemo(() => {
-    const allPosts = data?.pages.flat() || [];
+    const allPosts = data?.pages.flatMap(page => page.data) || [];
     return uniqBy(allPosts, 'id');
   }, [data?.pages]);
 
@@ -66,6 +56,7 @@ const HomeScreen = () => {
 
   const followIndicatorAnim = useRef(new Animated.Value(1)).current;
   const thisDayIndicatorAnim = useRef(new Animated.Value(0)).current;
+  const luckyIndicatorAnim = useRef(new Animated.Value(0)).current;
 
   const listRef = useRef<any>(null);
 
@@ -78,37 +69,29 @@ const HomeScreen = () => {
   }, [trigger]);
 
   useEffect(() => {
-    if (activeTab === "Follow") {
-      Animated.parallel([
-        Animated.spring(followIndicatorAnim, {
-          toValue: 1,
-          useNativeDriver: true,
-          friction: 8,
-          tension: 100,
-        }),
-        Animated.spring(thisDayIndicatorAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-          friction: 8,
-          tension: 100,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.spring(followIndicatorAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-          friction: 8,
-          tension: 100,
-        }),
-        Animated.spring(thisDayIndicatorAnim, {
-          toValue: 1,
-          useNativeDriver: true,
-          friction: 8,
-          tension: 100,
-        }),
-      ]).start();
-    }
+    // Reset all animations
+    const animations = [
+      Animated.spring(followIndicatorAnim, {
+        toValue: activeTab === "Following" ? 1 : 0,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 100,
+      }),
+      Animated.spring(luckyIndicatorAnim, {
+        toValue: activeTab === "Lucky" ? 1 : 0,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 100,
+      }),
+      Animated.spring(thisDayIndicatorAnim, {
+        toValue: activeTab === "This Day" ? 1 : 0,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 100,
+      }),
+    ];
+
+    Animated.parallel(animations).start();
   }, [activeTab]);
 
   const onRefresh = () => {
@@ -158,215 +141,156 @@ const HomeScreen = () => {
           No posts yet
         </Text>
         <Text style={[common.label, { color: colors.muted, textAlign: 'center', marginTop: 8 }]}>
-          {activeTab === "Follow" ? "Follow some people to see their posts" : "No posts from this day"}
+          {activeTab === "Following" ? "Follow some people to see their posts" : activeTab === "Lucky" ? "No lucky posts yet" : "No posts from this day"}
         </Text>
       </View>
     );
   };
 
   const renderPost = (post: Post) => {
-    return (
-      <View style={{}}>
-        {/* Header */}
-        <View style={[common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-          <TouchableOpacity onPress={() => router.push({ pathname: '/profile/[id]', params: { id: post.profile_id } })} style={[common.row, { gap: 12 }]}>
-            <FastImage source={{ uri: post.profile_avatar }} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.divider }} />
-            <View>
-              <View style={[common.row, { gap: 2 }]}>
-                <Text style={[common.heading, { fontSize: 16 }]}>{post.profile_name}</Text>
-                <VerifiedIcon size={16} color={colors.verify} />
-              </View>
-              <Text style={[common.label, { color: colors.muted, fontSize: 12 }]}>{dayjs(post.created_at).fromNow()}</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity hitSlop={10} style={{ backgroundColor: colors.card, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}>
-            <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Caption */}
-        {post.caption ? (
-          <View style={{ paddingHorizontal: 16 }}>
-            <CaptionText caption={post.caption} colors={colors} common={common} />
-          </View>
-        ) : null}
-
-        {/* Media */}
-        {(post.media_type === 'photo' || post.media_type === 'video') && (
-          <View style={{ marginBottom: 16 }}>
-            {
-              post.media_type === 'photo' && (
-                <Galeria urls={[post.media_url]}>
-                  <Galeria.Image>
-                    <Image
-                      source={{ uri: post.media_url, cache: 'force-cache' }}
-                      resizeMode="cover"
-                      style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: colors.divider }}
-                    />
-                  </Galeria.Image>
-                </Galeria>
-              )
-            }
-            {
-              post.media_type === 'video' && (
-                <TouchableOpacity onPress={() => router.push({ pathname: '/video_player', params: { videoUrl: post.media_url, name: post.profile_name, caption: post.caption, portrait: 'true' } })}>
-                  <FastImage source={{ uri: post.media_url }} style={{ width: "100%", height: 350, backgroundColor: colors.divider }}>
-                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
-                      <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0, 0, 0, 0.4)', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(10px)' }}>
-                        <PlayIcon size={24} color={'#ffffff'} style={{ marginLeft: 4 }} />
-                      </View>
-                    </View>
-                  </FastImage>
-                </TouchableOpacity>
-              )
-            }
-          </View>
-        )}
-
-        {/* Action Bar */}
-        <View style={[common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
-          <View style={[common.row, { gap: 20 }]}>
-            <TouchableOpacity hitSlop={10} style={[common.row, { gap: 6, alignItems: 'center' }]}>
-              <LikeIcon size={24} color={colors.text} />
-              <Text style={[common.label, { color: colors.text, fontWeight: '600' }]}>1.2M</Text>
-            </TouchableOpacity>
-            <TouchableOpacity hitSlop={10} style={[common.row, { gap: 6, alignItems: 'center' }]}>
-              <CommentIcon size={24} color={colors.text} />
-              <Text style={[common.label, { color: colors.text, fontWeight: '600' }]}>800K</Text>
-            </TouchableOpacity>
-            <TouchableOpacity hitSlop={10}>
-              <ShareIcon size={24} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity hitSlop={10}>
-            <BookmarkIcon size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-      </View >
-    );
+    return <PostItem key={post.id} post={post} />;
   };
 
-  // Scroll animation for floating header
+  // Scroll animation for floating header - using direction-based approach
   const scrollY = useRef(new Animated.Value(0)).current;
-  const diffClamp = useRef(Animated.diffClamp(scrollY, 0, 50)).current;
+  const tabVisibility = useRef(new Animated.Value(1)).current; // 1 = visible, 0 = hidden
+  const lastScrollY = useRef(0);
+  const isTabVisible = useRef(true);
+  const scrollThreshold = 10; // Minimum scroll distance to trigger show/hide
 
-  const tabTranslateY = diffClamp.interpolate({
-    inputRange: [0, 50],
-    outputRange: [0, -50],
-    extrapolate: 'clamp',
-  });
+  const tabOpacity = tabVisibility; // Direct use for simple fade
 
-  const tabOpacity = diffClamp.interpolate({
-    inputRange: [0, 50],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
   const headerBgOpacity = scrollY.interpolate({
     inputRange: [0, 50],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
 
-  const blurAmountAnim = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [0, 0],
-    extrapolate: 'clamp',
-  });
+  // Header pill uses the same visibility as tabs (show/hide together)
+  const headerPillVisibility = tabVisibility;
 
-  const onScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: false }
-  );
+  // Use simple scroll handler for native driver animations
+  const onScroll = (event: any) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    const diff = currentScrollY - lastScrollY.current;
 
-  // Pill animations
-  const pillBgColor = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [colors.background, theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.5)'],
-    extrapolate: 'clamp',
-  });
+    // Only trigger if scroll exceeds threshold
+    if (Math.abs(diff) > scrollThreshold) {
+      if (diff > 0 && isTabVisible.current && currentScrollY > 50) {
+        // Scrolling down - hide tabs and header pills
+        isTabVisible.current = false;
+        Animated.spring(tabVisibility, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      } else if (diff < 0 && !isTabVisible.current) {
+        // Scrolling up - show tabs and header pills
+        isTabVisible.current = true;
+        Animated.spring(tabVisibility, {
+          toValue: 1,
+          useNativeDriver: true,
+        }).start();
+      }
 
-  const paddingAnim = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [0, 8],
-    extrapolate: 'clamp',
-  });
+      lastScrollY.current = currentScrollY;
+    }
+  };
 
   const tabItems = () => {
     return (
-      <View style={{ marginBottom: 12, paddingHorizontal: 16 }}>
-        <AnimatedBlurView
-          blurType={theme === 'dark' ? 'dark' : 'light'}
-          blurAmount={blurAmountAnim as any}
+      <Animated.View style={{
+        paddingHorizontal: 12,
+        marginTop: -15,
+        opacity: tabOpacity,
+      }}>
+        <View
           style={{
+            backgroundColor: colors.background,
             borderRadius: 999,
             overflow: 'hidden',
-            transform: [{ translateY: tabTranslateY }],
-            opacity: tabOpacity,
           }}
         >
-          <Animated.View
-            style={{
-              backgroundColor: pillBgColor,
-              borderRadius: 999
-            }}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ flexGrow: 0 }}
+            contentContainerStyle={{ padding: 12 }}
           >
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ flexGrow: 0 }}
-              contentContainerStyle={{ padding: 12 }}
+            <TouchableOpacity
+              style={styles.tabItem}
+              onPress={() => setActiveTab("Following")}
             >
-              <TouchableOpacity
-                style={styles.tabItem}
-                onPress={() => setActiveTab("Follow")}
+              <Text
+                style={[
+                  common.label,
+                  {
+                    color: activeTab === "Following" ? colors.text : colors.muted,
+                    fontWeight: activeTab === "Following" ? "600" : "400",
+                  },
+                ]}
               >
-                <Text
-                  style={[
-                    common.label,
-                    {
-                      color: activeTab === "Follow" ? colors.text : colors.muted,
-                      fontWeight: activeTab === "Follow" ? "600" : "400",
-                    },
-                  ]}
-                >
-                  Follow
-                </Text>
-                <Animated.View
-                  style={[
-                    styles.activeIndicator,
-                    {
-                      opacity: followIndicatorAnim,
-                      transform: [{ scaleX: followIndicatorAnim }],
-                    },
-                  ]}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.tabItem}
-                onPress={() => setActiveTab("This Day")}
+                Following
+              </Text>
+              <Animated.View
+                style={[
+                  styles.activeIndicator,
+                  {
+                    opacity: followIndicatorAnim,
+                    transform: [{ scaleX: followIndicatorAnim }],
+                  },
+                ]}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tabItem}
+              onPress={() => setActiveTab("Lucky")}
+            >
+              <Text
+                style={[
+                  common.label,
+                  {
+                    color: activeTab === "Lucky" ? colors.text : colors.muted,
+                    fontWeight: activeTab === "Lucky" ? "600" : "400",
+                  },
+                ]}
               >
-                <Text
-                  style={{
-                    color: activeTab === "This Day" ? colors.text : colors.muted,
-                    fontWeight: activeTab === "This Day" ? "600" : "400",
-                  }}
-                >
-                  This Day
-                </Text>
-                <Animated.View
-                  style={[
-                    styles.activeIndicator,
-                    {
-                      opacity: thisDayIndicatorAnim,
-                      transform: [{ scaleX: thisDayIndicatorAnim }],
-                    },
-                  ]}
-                />
-              </TouchableOpacity>
-            </ScrollView>
-          </Animated.View>
-        </AnimatedBlurView>
-      </View>
+                Lucky
+              </Text>
+              <Animated.View
+                style={[
+                  styles.activeIndicator,
+                  {
+                    opacity: luckyIndicatorAnim,
+                    transform: [{ scaleX: luckyIndicatorAnim }],
+                  },
+                ]}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tabItem}
+              onPress={() => setActiveTab("This Day")}
+            >
+              <Text
+                style={{
+                  color: activeTab === "This Day" ? colors.text : colors.muted,
+                  fontWeight: activeTab === "This Day" ? "600" : "400",
+                }}
+              >
+                This Day
+              </Text>
+              <Animated.View
+                style={[
+                  styles.activeIndicator,
+                  {
+                    opacity: thisDayIndicatorAnim,
+                    transform: [{ scaleX: thisDayIndicatorAnim }],
+                  },
+                ]}
+              />
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Animated.View>
     );
   };
 
@@ -397,43 +321,43 @@ const HomeScreen = () => {
           alignItems: "center",
           marginBottom: 12,
         }]}>
-          <AnimatedBlurView blurType={theme === 'dark' ? 'dark' : 'light'} blurAmount={blurAmountAnim as any} style={{ borderRadius: 100, overflow: 'hidden' }}>
-            <Animated.View style={[common.row, {
-              gap: 10,
-              padding: paddingAnim,
-              backgroundColor: pillBgColor,
-              borderRadius: 100,
-            }]}>
-              <FastImage resizeMode="contain" source={require("../../assets/images/logo_head.png")} style={{ width: 40, height: 30, borderRadius: 100 }} />
-            </Animated.View>
-          </AnimatedBlurView>
+          <Animated.View style={[common.row, {
+            gap: 10,
+            padding: 8,
+            backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255,255,255,0.8)',
+            borderRadius: 100,
+            opacity: headerPillVisibility,
+            transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+          }]}>
+            <FastImage resizeMode="contain" source={require("../../assets/images/logo_head.png")} style={{ width: 40, height: 30, borderRadius: 100 }} />
+          </Animated.View>
 
-          <AnimatedBlurView blurType={theme === 'dark' ? 'dark' : 'light'} blurAmount={blurAmountAnim as any} style={{ borderRadius: 100, overflow: 'hidden' }}>
-            <Animated.View style={[common.row, {
-              gap: 10,
-              padding: paddingAnim,
-              backgroundColor: pillBgColor,
-              borderRadius: 100,
-            }]}>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-                <Lineicons
-                  icon={Search1Outlined}
-                  size={24}
-                  color={colors.text}
-                  strokeWidth={3}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-                <Lineicons
-                  icon={MenuMeatballs1Outlined}
-                  size={24}
-                  color={colors.text}
-                  strokeWidth={3}
-                  style={{ transform: [{ rotate: "90deg" }] }}
-                />
-              </TouchableOpacity>
-            </Animated.View>
-          </AnimatedBlurView>
+          <Animated.View style={[common.row, {
+            gap: 10,
+            padding: 8,
+            backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255,255,255,0.8)',
+            borderRadius: 100,
+            opacity: headerPillVisibility,
+            transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+          }]}>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+              <Lineicons
+                icon={Search1Outlined}
+                size={24}
+                color={colors.text}
+                strokeWidth={3}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+              <Lineicons
+                icon={MenuMeatballs1Outlined}
+                size={24}
+                color={colors.text}
+                strokeWidth={3}
+                style={{ transform: [{ rotate: "90deg" }] }}
+              />
+            </TouchableOpacity>
+          </Animated.View>
         </View>
 
         {tabItems()}
@@ -505,7 +429,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
 });
-function setRefreshing(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}
 

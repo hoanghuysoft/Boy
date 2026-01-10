@@ -1,25 +1,33 @@
-import { Post } from "@/types/post";
+import { FeedMode, PostResponse } from "@/types/post";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { client } from "./client";
 
-export const getFeed = async (type: "random" | "on_this_day", limit: number = 10, offset: number = 0): Promise<Post[]> => {
-  const response = await client.get("/api/posts", {
-    params: {
-      type,
-      limit,
-      offset,
-    },
+export const getFeed = async ({
+  mode = 'latest',
+  limit = 20,
+  cursor,
+}: {
+  mode?: FeedMode;
+  limit?: number;
+  cursor?: string;
+}): Promise<PostResponse> => {
+  const params: Record<string, any> = { mode, limit };
+  if (cursor) params.cursor = cursor;
+
+  const response = await client.get<PostResponse>("/api/posts", {
+    params,
   });
-  return response.data.data;
+  return response.data;
 };
 
-export const useFeed = (type: "random" | "on_this_day") => {
+export const useFeed = (mode: FeedMode = 'latest') => {
   return useInfiniteQuery({
-    queryKey: ["feed", type],
-    queryFn: ({ pageParam }) => getFeed(type, 10, pageParam as number),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length === 10 ? allPages.length * 10 : undefined;
+    queryKey: ["feed", mode],
+    queryFn: ({ pageParam }) => getFeed({ mode, limit: 20, cursor: pageParam as string }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      // Check if we have a next cursor and if there are more items
+      return lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor : undefined;
     },
   });
 };
