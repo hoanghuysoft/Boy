@@ -43,6 +43,7 @@ type TabType = "Images" | "Videos" | "Feed" | "Information";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
+import { useGalleryStore } from "../../stores/gallery";
 import { useScrollStore } from "../../stores/scroll";
 
 const ProfileScreen = () => {
@@ -147,6 +148,9 @@ const ProfileScreen = () => {
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+
+  // Global gallery store for feed posts
+  const { isVisible: feedGalleryVisible, images: feedGalleryImages, initialIndex: feedGalleryIndex, closeGallery: closeFeedGallery } = useGalleryStore();
 
   useEffect(() => {
     if (isProfileError) {
@@ -505,6 +509,13 @@ const ProfileScreen = () => {
           <View>
           </View>
         )}
+      />
+      {/* Global gallery for feed posts */}
+      <GalleryPreview
+        isVisible={feedGalleryVisible}
+        onRequestClose={closeFeedGallery}
+        images={feedGalleryImages}
+        initialIndex={feedGalleryIndex}
       />
       {flatList}
 

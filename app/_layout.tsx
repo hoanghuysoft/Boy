@@ -1,7 +1,16 @@
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
+
+// Disable Reanimated strict mode warning
+configureReanimatedLogger({
+    level: ReanimatedLogLevel.warn,
+    strict: false,
+});
+
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from "react";
 import { StatusBar, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
@@ -11,6 +20,9 @@ import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
 import { clientPersister, queryClient } from "../services/client";
 import { supabase } from "../services/login";
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 const StatusBarFade = () => {
     const { theme } = useThemeContext();
@@ -85,6 +97,13 @@ const RootContent = () => {
             router.replace('/');
         }
     }, [isReady, segments, session]);
+
+    // Hide splash screen once ready
+    useEffect(() => {
+        if (isReady) {
+            SplashScreen.hideAsync();
+        }
+    }, [isReady]);
 
     if (!isReady) {
         return null;

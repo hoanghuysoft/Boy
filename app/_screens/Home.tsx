@@ -1,4 +1,5 @@
 import { useFeed } from "@/services/feed";
+import { useGalleryStore } from "@/stores/gallery";
 import { Post } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
 import { MenuMeatballs1Outlined, Search1Outlined } from "@lineiconshq/free-icons";
@@ -6,6 +7,7 @@ import Lineicons from "@lineiconshq/react-native-lineicons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import GalleryPreview from 'react-native-gallery-preview';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PostItem } from "../../components/PostItem";
 import { ShimmerEffect } from "../../components/shimmer/Shimmer";
@@ -31,7 +33,9 @@ const HomeScreen = () => {
   const common = createCommonStyles(colors, typography);
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<"Following" | "Lucky" | "This Day">("Following");
-  // const ref = useRef<IWaveformRef>(null);
+
+  // Global gallery state
+  const { isVisible: galleryVisible, images: galleryImages, initialIndex: galleryIndex, closeGallery } = useGalleryStore();
 
   const feedType = activeTab === "Following" ? "latest" : activeTab === "Lucky" ? "lucky" : "this_day";
   const {
@@ -299,113 +303,121 @@ const HomeScreen = () => {
   const totalHeaderHeight = headerHeight + tabsHeight;
 
   return (
-    <View style={[common.screen, { position: 'relative' }]}>
-      <Animated.View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: totalHeaderHeight + insets.top,
-          zIndex: 1,
-          opacity: headerBgOpacity,
-        }}
-      />
+    <>
+      <View style={[common.screen, { position: 'relative' }]}>
+        <Animated.View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: totalHeaderHeight + insets.top,
+            zIndex: 1,
+            opacity: headerBgOpacity,
+          }}
+        />
 
-      <View style={{ position: 'absolute', top: insets.top, left: 0, right: 0, zIndex: 100 }}>
-        <View style={[common.row, {
-          paddingHorizontal: 16,
-          paddingTop: 16,
-          paddingBottom: 8,
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 12,
-        }]}>
-          <Animated.View style={[common.row, {
-            gap: 10,
-            padding: 8,
-            backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255,255,255,0.8)',
-            borderRadius: 100,
-            opacity: headerPillVisibility,
-            transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+        <View style={{ position: 'absolute', top: insets.top, left: 0, right: 0, zIndex: 100 }}>
+          <View style={[common.row, {
+            paddingHorizontal: 16,
+            paddingTop: 16,
+            paddingBottom: 8,
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 12,
           }]}>
-            <FastImage resizeMode="contain" source={require("../../assets/images/logo_head.png")} style={{ width: 40, height: 30, borderRadius: 100 }} />
-          </Animated.View>
+            <Animated.View style={[common.row, {
+              gap: 10,
+              padding: 8,
+              backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255,255,255,0.8)',
+              borderRadius: 100,
+              opacity: headerPillVisibility,
+              transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+            }]}>
+              <FastImage resizeMode="contain" source={require("../../assets/images/logo_head.png")} style={{ width: 40, height: 30, borderRadius: 100 }} />
+            </Animated.View>
 
-          <Animated.View style={[common.row, {
-            gap: 10,
-            padding: 8,
-            backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255,255,255,0.8)',
-            borderRadius: 100,
-            opacity: headerPillVisibility,
-            transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
-          }]}>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-              <Lineicons
-                icon={Search1Outlined}
-                size={24}
-                color={colors.text}
-                strokeWidth={3}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-              <Lineicons
-                icon={MenuMeatballs1Outlined}
-                size={24}
-                color={colors.text}
-                strokeWidth={3}
-                style={{ transform: [{ rotate: "90deg" }] }}
-              />
-            </TouchableOpacity>
-          </Animated.View>
+            <Animated.View style={[common.row, {
+              gap: 10,
+              padding: 8,
+              backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255,255,255,0.8)',
+              borderRadius: 100,
+              opacity: headerPillVisibility,
+              transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+            }]}>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+                <Lineicons
+                  icon={Search1Outlined}
+                  size={24}
+                  color={colors.text}
+                  strokeWidth={3}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+                <Lineicons
+                  icon={MenuMeatballs1Outlined}
+                  size={24}
+                  color={colors.text}
+                  strokeWidth={3}
+                  style={{ transform: [{ rotate: "90deg" }] }}
+                />
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+
+          {tabItems()}
         </View>
 
-        {tabItems()}
+        {/* <FastImage resizeMode="cover" source={{uri: 'https://picsum.photos/1280/720'}} style={{ width: '100%', height: 200, borderRadius: 16, borderWidth: 1, borderColor: colors.divider, marginBottom: 12 }} /> */}
+        {
+          isLoading ? (
+            <FlashList
+              data={[1, 2, 3]}
+              renderItem={() => renderPostSkeleton()}
+              keyExtractor={(item: number) => item.toString()}
+              contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top }}
+              estimatedItemSize={300}
+              ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            />
+          ) : (
+            <FlashList
+              ref={listRef}
+              key={activeTab}
+              onScroll={onScroll}
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
+              data={posts}
+              ListEmptyComponent={renderEmptyState}
+              renderItem={({ item }: { item: Post }) => renderPost(item)}
+              keyExtractor={(item: Post) => item.id.toString()}
+              contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefetching}
+                  onRefresh={onRefresh}
+                  tintColor={colors.text}
+                  colors={[colors.text]}
+                  progressBackgroundColor={colors.card}
+                />
+              }
+              onEndReached={() => {
+                if (hasNextPage) fetchNextPage();
+              }}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={isFetchingNextPage ? renderPostSkeleton() : null}
+              estimatedItemSize={300}
+              ItemSeparatorComponent={() => <View style={{ height: 30 }} />}
+            />
+          )
+        }
       </View>
-
-      {/* <FastImage resizeMode="cover" source={{uri: 'https://picsum.photos/1280/720'}} style={{ width: '100%', height: 200, borderRadius: 16, borderWidth: 1, borderColor: colors.divider, marginBottom: 12 }} /> */}
-      {
-        isLoading ? (
-          <FlashList
-            data={[1, 2, 3]}
-            renderItem={() => renderPostSkeleton()}
-            keyExtractor={(item: number) => item.toString()}
-            contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top }}
-            estimatedItemSize={300}
-            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-          />
-        ) : (
-          <FlashList
-            ref={listRef}
-            key={activeTab}
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-            showsVerticalScrollIndicator={false}
-            data={posts}
-            ListEmptyComponent={renderEmptyState}
-            renderItem={({ item }: { item: Post }) => renderPost(item)}
-            keyExtractor={(item: Post) => item.id.toString()}
-            contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top }}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefetching}
-                onRefresh={onRefresh}
-                tintColor={colors.text}
-                colors={[colors.text]}
-                progressBackgroundColor={colors.card}
-              />
-            }
-            onEndReached={() => {
-              if (hasNextPage) fetchNextPage();
-            }}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={isFetchingNextPage ? renderPostSkeleton() : null}
-            estimatedItemSize={300}
-            ItemSeparatorComponent={() => <View style={{ height: 30 }} />}
-          />
-        )
-      }
-    </View>
+      <GalleryPreview
+        isVisible={galleryVisible}
+        onRequestClose={closeGallery}
+        images={galleryImages}
+        initialIndex={galleryIndex}
+      />
+    </>
   );
 };
 

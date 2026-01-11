@@ -4,7 +4,6 @@ import FastImage from '@d11/react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
-import { useNavigation } from '@react-navigation/native';
 import { useAudioPlayer } from 'expo-audio';
 import React, { memo, useCallback, useMemo, useState } from "react";
 import {
@@ -17,7 +16,6 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { ProfileAddress } from "../../types/profileaddress";
@@ -61,7 +59,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     onTabChange,
     tabContent,
     profile,
-    isMe = true,
     musicSheetRef,
     socialSheetRef,
     addressSheetRef,
@@ -78,8 +75,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const style = styles(colors);
-    const inset = useSafeAreaInsets();
-    const navigation = useNavigation();
     const [isPlaying, setIsPlaying] = useState(false);
 
     const coverTranslateY = scrollY.interpolate({
@@ -92,7 +87,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const currentAvatar = profile?.avatar_url;
     const player = useAudioPlayer(currentMusic?.preview_url ? { uri: currentMusic.preview_url } : null);
 
-    // Memoize tab callbacks to prevent re-renders
     const handleInfoTab = useCallback(() => onTabChange("Information"), [onTabChange]);
     const handleImagesTab = useCallback(() => onTabChange("Images"), [onTabChange]);
     const handleVideosTab = useCallback(() => onTabChange("Videos"), [onTabChange]);
@@ -120,7 +114,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const testTiktokProfile = async () => {
         const res = await getTiktokProfile("dreww_ohi7")
     }
-    // Memoize tabs array to prevent recreation on each render
+
     const tabs = useMemo(() => [
         { name: "Images", onClick: handleImagesTab },
         { name: "Videos", onClick: handleVideosTab },
@@ -156,7 +150,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 <Image
                                     source={{
                                         uri: currentAvatar || "https://via.placeholder.com/150",
-                                        cache: 'force-cache'
                                     }}
                                     resizeMode="cover"
                                     style={common.avatarLarge}

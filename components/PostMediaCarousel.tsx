@@ -1,15 +1,15 @@
 import { useVideoThumbnail } from "@/hooks/useVideoThumbnail";
 import PlayIcon from "@/icons/play";
+import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
-import Galeria from "@nandorojo/galeria/build/GaleriaView";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import { Blur, Canvas, Image as SkiaImage, useImage } from "@shopify/react-native-skia";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
-import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const FlashList = FlashListOriginal as any;
 
@@ -148,7 +148,7 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
     );
 });
 
-// Photo carousel item component
+// Photo carousel item component - now with onPress callback for gallery
 interface PhotoCarouselItemProps {
     item: Media;
     photoIndex: number;
@@ -156,6 +156,7 @@ interface PhotoCarouselItemProps {
     shouldBlur: boolean;
     onReveal: () => void;
     mediaHeight: number;
+    onPress: () => void;
 }
 
 const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
@@ -165,26 +166,25 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
     shouldBlur,
     onReveal,
     mediaHeight,
+    onPress,
 }) => {
     return (
         <View style={{ width: SCREEN_WIDTH }}>
-            <Galeria.Image index={photoIndex}>
-                <View>
-                    <Image
-                        source={{ uri: item.url, cache: 'force-cache' }}
-                        style={{ width: '100%', aspectRatio: ASPECT_RATIO, backgroundColor: colors.divider }}
-                        resizeMode="cover"
+            <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
+                <FastImage
+                    source={{ uri: item.url }}
+                    style={{ width: '100%', aspectRatio: ASPECT_RATIO, backgroundColor: colors.divider }}
+                    resizeMode={FastImage.resizeMode.cover}
+                />
+                {shouldBlur && (
+                    <BlurOverlay
+                        imageUrl={item.url}
+                        width={SCREEN_WIDTH}
+                        height={mediaHeight}
+                        onReveal={onReveal}
                     />
-                    {shouldBlur && (
-                        <BlurOverlay
-                            imageUrl={item.url}
-                            width={SCREEN_WIDTH}
-                            height={mediaHeight}
-                            onReveal={onReveal}
-                        />
-                    )}
-                </View>
-            </Galeria.Image>
+                )}
+            </TouchableOpacity>
         </View>
     );
 });
@@ -201,6 +201,7 @@ interface MediaCarouselItemProps {
     onReveal: () => void;
     placeholderImageVideo: string;
     mediaHeight: number;
+    onPhotoPress: (photoIndex: number) => void;
 }
 
 const MediaCarouselItem: React.FC<MediaCarouselItemProps> = React.memo(({
@@ -214,8 +215,9 @@ const MediaCarouselItem: React.FC<MediaCarouselItemProps> = React.memo(({
     onReveal,
     placeholderImageVideo,
     mediaHeight,
+    onPhotoPress,
 }) => {
-    // Calculate index for Galeria: count how many photos appeared before this item
+    // Calculate index for gallery: count how many photos appeared before this item
     const photoIndex = useMemo(() =>
         media.slice(0, index).filter(m => m.type === 'photo').length,
         [media, index]
@@ -243,6 +245,7 @@ const MediaCarouselItem: React.FC<MediaCarouselItemProps> = React.memo(({
             shouldBlur={shouldBlur}
             onReveal={onReveal}
             mediaHeight={mediaHeight}
+            onPress={() => onPhotoPress(photoIndex)}
         />
     );
 });
@@ -251,6 +254,7 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
     const router = useRouter();
     const [activeIndex, setActiveIndex] = useState(0);
     const { showSensitiveContent, setShowSensitiveContent } = useSettingsStore();
+    const openGallery = useGalleryStore(state => state.openGallery);
     const [isRevealed, setIsRevealed] = useState(false);
 
     // If "Everyone" setting is ON, we are revealed by default.
@@ -267,10 +271,15 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
         setShowSensitiveContent(true);
     }, [setShowSensitiveContent]);
 
-    // Filter urls for Galeria (only photos)
+    // Filter urls for gallery (only photos)
     const photoUrls = useMemo(() =>
         media.filter(m => m.type === 'photo').map(m => m.url),
         [media]);
+
+    // Open gallery with photo URLs when a photo is pressed
+    const handlePhotoPress = useCallback((photoIndex: number) => {
+        openGallery(photoUrls, photoIndex);
+    }, [openGallery, photoUrls]);
 
     const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
         if (viewableItems.length > 0) {
@@ -316,26 +325,25 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
             onReveal={onReveal}
             placeholderImageVideo={placeholderImageVideo}
             mediaHeight={mediaHeight}
+            onPhotoPress={handlePhotoPress}
         />
-    ), [media, profileName, content, colors, shouldBlur, onReveal, placeholderImageVideo, mediaHeight]);
+    ), [media, profileName, content, colors, shouldBlur, onReveal, placeholderImageVideo, mediaHeight, handlePhotoPress]);
 
     if (!media || media.length === 0) return null;
 
     return (
         <View style={{ marginBottom: 16 }}>
-            <Galeria urls={photoUrls}>
-                <FlashList
-                    data={media}
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    estimatedItemSize={SCREEN_WIDTH}
-                    keyExtractor={keyExtractor}
-                    onViewableItemsChanged={onViewableItemsChanged}
-                    viewabilityConfig={viewabilityConfig}
-                    renderItem={renderMediaItem}
-                />
-            </Galeria>
+            <FlashList
+                data={media}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                estimatedItemSize={SCREEN_WIDTH}
+                keyExtractor={keyExtractor}
+                onViewableItemsChanged={onViewableItemsChanged}
+                viewabilityConfig={viewabilityConfig}
+                renderItem={renderMediaItem}
+            />
 
             {/* Pagination Dots */}
             {media.length > 1 && (

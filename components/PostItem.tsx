@@ -219,6 +219,6 @@ export const PostItem = ({ post }: { post: Post }) => {
                     <BookmarkIcon size={24} color={colors.text} />
                 </TouchableOpacity>
             </View>
-        </View >
+        </View>
     );
 };
