@@ -1,0 +1,87 @@
+import { Ionicons } from "@expo/vector-icons";
+import { Layers1Solid, Volume1Solid, VolumeMuteSolid, XmarkSolid } from "@lineiconshq/free-icons";
+import Lineicons from "@lineiconshq/react-native-lineicons";
+import React from "react";
+import { Animated, StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
+
+interface VideoTopBarProps {
+    isLandscape: boolean;
+    isMute: boolean;
+    topBarTranslateY: Animated.Value;
+    videoPressed: boolean;
+    commonRowStyle: ViewStyle;
+    onClose: () => void;
+    onPipMode: () => void;
+    onOpenExternal: () => void;
+    onMuteToggle: () => void;
+}
+
+export const VideoTopBar: React.FC<VideoTopBarProps> = ({
+    isLandscape,
+    isMute,
+    topBarTranslateY,
+    videoPressed,
+    commonRowStyle,
+    onClose,
+    onPipMode,
+    onOpenExternal,
+    onMuteToggle,
+}) => {
+    return (
+        <Animated.View
+            pointerEvents={videoPressed ? 'auto' : 'none'}
+            style={[
+                commonRowStyle,
+                {
+                    justifyContent: 'space-between',
+                    paddingTop: isLandscape ? 30 : 16,
+                    paddingRight: isLandscape ? 32 : 0,
+                    transform: [{ translateY: topBarTranslateY }],
+                },
+            ]}
+        >
+            <View style={[commonRowStyle, { gap: 12 }]}>
+                <TouchableOpacity onPress={onClose} style={styles.smallButton}>
+                    <Lineicons
+                        icon={XmarkSolid}
+                        size={24}
+                        color={'white'}
+                        strokeWidth={3}
+                    />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.smallButton} onPress={onPipMode}>
+                    <Lineicons
+                        icon={Layers1Solid}
+                        size={24}
+                        color={'white'}
+                        strokeWidth={3}
+                    />
+                </TouchableOpacity>
+            </View>
+            <View style={[commonRowStyle, { gap: 12 }]}>
+                <TouchableOpacity style={styles.smallButton} onPress={onOpenExternal}>
+                    <Ionicons name="link" size={24} color={'white'} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.smallButton} onPress={onMuteToggle}>
+                    <Lineicons
+                        icon={isMute ? VolumeMuteSolid : Volume1Solid}
+                        size={24}
+                        color={'white'}
+                        strokeWidth={3}
+                    />
+                </TouchableOpacity>
+            </View>
+        </Animated.View>
+    );
+};
+
+const styles = StyleSheet.create({
+    smallButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 999,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+});

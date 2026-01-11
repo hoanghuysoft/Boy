@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 
+import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { FlashList } from "@shopify/flash-list";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -9,11 +10,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View
 } from "react-native";
 import GalleryPreview from 'react-native-gallery-preview';
 import { Snackbar } from 'react-native-paper';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PostItem } from '../../components/PostItem';
 import InfoCard from '../../components/profile/InfoCard';
 import ProfileHeader, { COVER_HEIGHT } from '../../components/profile/ProfileHeader';
 import { AddressSheet } from "../../components/profile/sheets/AddressSheet";
@@ -24,6 +27,7 @@ import { useImageGrid } from '../../components/profile/useImageGrid';
 import { ShimmerEffect } from '../../components/shimmer/Shimmer';
 import { useThemeContext } from "../../context/ThemeContext";
 import { useInfiniteAddresses } from "../../services/address";
+import { useProfileFeed } from "../../services/feed";
 import { useInfiniteMedia } from "../../services/media";
 import { useInfiniteMusic } from "../../services/music";
 import { useInfiniteSocialLinks } from "../../services/sociallink";
@@ -31,10 +35,11 @@ import { useProfile } from "../../services/userprofile";
 import { useInfiniteWorkplaces } from "../../services/workplace";
 import { createCommonStyles } from "../../styles/common";
 import { Media } from '../../types/media';
+import { Post } from '../../types/post';
 
 
 
-type TabType = "Images" | "Videos" | "Information";
+type TabType = "Images" | "Videos" | "Feed" | "Information";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
@@ -61,6 +66,7 @@ const ProfileScreen = () => {
 
   // State
   const [activeTab, setActiveTab] = useState<TabType>("Images");
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const {
     data: profile,
@@ -128,6 +134,16 @@ const ProfileScreen = () => {
   } = useInfiniteMedia(profileId, 'video');
   const videos = useMemo(() => videosPaging?.pages.flatMap(p => p.data) || [], [videosPaging]);
 
+  const {
+    data: feedPaging,
+    refetch: refetchFeed,
+    fetchNextPage: fetchNextFeed,
+    hasNextPage: hasNextFeed,
+    isFetchingNextPage: isFetchingNextFeed,
+    isLoading: isFeedLoading
+  } = useProfileFeed(profileId);
+  const feedPosts = useMemo(() => feedPaging?.pages.flatMap(p => p.data) || [], [feedPaging]);
+
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
@@ -146,13 +162,28 @@ const ProfileScreen = () => {
 
   // Single scroll value
   const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollTopButtonOpacity = useRef(new Animated.Value(0)).current;
 
   const onScroll = useMemo(() =>
     Animated.event(
       [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-      { useNativeDriver: true }
+      {
+        useNativeDriver: true,
+        listener: (event: any) => {
+          const offsetY = event.nativeEvent.contentOffset.y;
+          const shouldShow = offsetY > 300;
+          if (shouldShow !== showScrollTop) {
+            setShowScrollTop(shouldShow);
+            Animated.timing(scrollTopButtonOpacity, {
+              toValue: shouldShow ? 1 : 0,
+              duration: 200,
+              useNativeDriver: true,
+            }).start();
+          }
+        }
+      }
     ),
-    [scrollY]);
+    [scrollY, showScrollTop]);
 
   // Handlers
   const handleTabChange = useCallback((tab: TabType) => setActiveTab(tab), []);
@@ -184,16 +215,19 @@ const ProfileScreen = () => {
       refetchAddresses();
       refetchPhotos();
       refetchVideos();
+      refetchFeed();
     }
-  }, [refetchProfile, refetchWorkplaces, refetchMusic, refetchSocial, refetchAddresses, refetchPhotos, refetchVideos, profile?.id]);
+  }, [refetchProfile, refetchWorkplaces, refetchMusic, refetchSocial, refetchAddresses, refetchPhotos, refetchVideos, refetchFeed, profile?.id]);
 
   const handleEndReached = useCallback(() => {
     if (activeTab === "Images" && hasNextPhotos && !isFetchingNextPhotos) {
       fetchNextPhotos();
     } else if (activeTab === "Videos" && hasNextVideos && !isFetchingNextVideos) {
       fetchNextVideos();
+    } else if (activeTab === "Feed" && hasNextFeed && !isFetchingNextFeed) {
+      fetchNextFeed();
     }
-  }, [activeTab, hasNextPhotos, isFetchingNextPhotos, fetchNextPhotos, hasNextVideos, isFetchingNextVideos, fetchNextVideos]);
+  }, [activeTab, hasNextPhotos, isFetchingNextPhotos, fetchNextPhotos, hasNextVideos, isFetchingNextVideos, fetchNextVideos, hasNextFeed, isFetchingNextFeed, fetchNextFeed]);
 
   const handleMusicEndReached = useCallback(() => {
     if (hasNextMusic && !isFetchingNextMusic) fetchNextMusic();
@@ -267,8 +301,9 @@ const ProfileScreen = () => {
       case "Information": return [{ _type: 'info' as const }];
       case "Images": return imageData;
       case "Videos": return videoData;
+      case "Feed": return feedPosts;
     }
-  }, [activeTab, imageData, videoData]);
+  }, [activeTab, imageData, videoData, feedPosts]);
 
   // Dynamic renderItem based on tab
   const renderItem = useCallback(({ item, index }: { item: any; index: number }) => {
@@ -279,6 +314,8 @@ const ProfileScreen = () => {
         return renderImageItem({ item, index, separators: {} as any });
       case "Videos":
         return renderVideoItem({ item, index, separators: {} as any });
+      case "Feed":
+        return <PostItem post={item as Post} key={item.id} />;
     }
   }, [activeTab, profile, renderImageItem, renderVideoItem]);
 
@@ -291,6 +328,8 @@ const ProfileScreen = () => {
         return imageKeyExtractor(item, index);
       case "Videos":
         return videoKeyExtractor(item, index);
+      case "Feed":
+        return (item as Post).id || String(index);
       default:
         return String(index);
     }
@@ -299,10 +338,22 @@ const ProfileScreen = () => {
   // Empty component
   const ListEmpty = useMemo(() => {
     if (activeTab === "Information") return null;
-    const title = activeTab === "Images" ? "No Photos" : "No Videos";
-    const message = activeTab === "Images"
-      ? "No photos have been uploaded yet."
-      : "No videos have been uploaded yet.";
+    let title = "";
+    let message = "";
+    switch (activeTab) {
+      case "Images":
+        title = "No Photos";
+        message = "No photos have been uploaded yet.";
+        break;
+      case "Videos":
+        title = "No Videos";
+        message = "No videos have been uploaded yet.";
+        break;
+      case "Feed":
+        title = "No Posts";
+        message = "No posts have been published yet.";
+        break;
+    }
     return (
       <View style={[common.card, styles.emptyCard]}>
         <Text style={common.subheading}>{title}</Text>
@@ -425,6 +476,24 @@ const ProfileScreen = () => {
 
   return (
     <View style={common.screen}>
+      {/* Sticky Back Button */}
+      {!isMe && (
+        <View style={{ position: 'absolute', top: inset.top, left: 16, zIndex: 1000 }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              backgroundColor: colors.containerContent,
+              borderRadius: 999,
+              width: 40,
+              height: 40,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <Ionicons name='chevron-back' size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+      )}
       {renderImageQuickPreview()}
       {renderVideoQuickPreview()}
       <GalleryPreview
@@ -438,6 +507,39 @@ const ProfileScreen = () => {
         )}
       />
       {flatList}
+
+      {/* Floating Scroll to Top Button - Only for non-owner view */}
+      {!isMe && (
+        <Animated.View
+          pointerEvents={showScrollTop ? 'auto' : 'none'}
+          style={{
+            position: 'absolute',
+            bottom: inset.bottom + 20,
+            right: 16,
+            opacity: scrollTopButtonOpacity,
+            zIndex: 1000,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+            style={{
+              backgroundColor: colors.containerContent,
+              borderRadius: 999,
+              width: 48,
+              height: 48,
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 5,
+            }}
+          >
+            <Ionicons name='chevron-up' size={24} color={colors.text} />
+          </TouchableOpacity>
+        </Animated.View>
+      )}
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}

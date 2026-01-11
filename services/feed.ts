@@ -20,6 +20,24 @@ export const getFeed = async ({
   return response.data;
 };
 
+export const getProfileFeed = async ({
+  profileId,
+  limit = 20,
+  cursor,
+}: {
+  profileId: string;
+  limit?: number;
+  cursor?: string;
+}): Promise<PostResponse> => {
+  const params: Record<string, any> = { limit };
+  if (cursor) params.cursor = cursor;
+
+  const response = await client.get<PostResponse>(`/api/profiles/${profileId}/posts`, {
+    params,
+  });
+  return response.data;
+};
+
 export const useFeed = (mode: FeedMode = 'latest') => {
   return useInfiniteQuery({
     queryKey: ["feed", mode],
@@ -27,6 +45,17 @@ export const useFeed = (mode: FeedMode = 'latest') => {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
       // Check if we have a next cursor and if there are more items
+      return lastPage.pagination.hasMore ? lastPage.pagination.nextCursor : undefined;
+    },
+  });
+};
+
+export const useProfileFeed = (profileId: string) => {
+  return useInfiniteQuery({
+    queryKey: ["profileFeed", profileId],
+    queryFn: ({ pageParam }) => getProfileFeed({ profileId, limit: 20, cursor: pageParam as string }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor : undefined;
     },
   });

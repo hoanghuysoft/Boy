@@ -4,11 +4,13 @@ import Svg, { G, Path, SvgProps } from "react-native-svg";
 interface VerifiedIconProps extends SvgProps {
   size?: number;
   color?: string;
+  backgroundColor?: string;
 }
 
 const VerifiedIcon = ({
   size = 24,
-  color = "#000",
+  color = "#fff",
+  backgroundColor = "#fff",
   ...props
 }: VerifiedIconProps) => (
   <Svg
@@ -20,11 +22,11 @@ const VerifiedIcon = ({
   >
     <G>
       <Path
-        fill="#fff"
+        fill={backgroundColor}
         d="m12 1.5 3.214 2.74 4.21.335.337 4.21L22.5 12l-2.74 3.214-.335 4.21-4.21.337L12 22.5l-3.215-2.74-4.21-.335-.336-4.21L1.5 12l2.74-3.215.335-4.21 4.21-.336L12 1.5Z"
       />
       <Path
-        stroke={color}
+        stroke={backgroundColor}
         strokeLinecap="square"
         strokeWidth={2}
         d="m12 1.5 3.214 2.74 4.21.335.337 4.21L22.5 12l-2.74 3.214-.335 4.21-4.21.337L12 22.5l-3.215-2.74-4.21-.335-.336-4.21L1.5 12l2.74-3.215.335-4.21 4.21-.336L12 1.5Z"

@@ -54,6 +54,7 @@ export interface Music {
 export interface Pagination {
     total: number
     limit: number
+    hasMore: boolean
     hasNextPage: boolean
     nextCursor: string | null
 }

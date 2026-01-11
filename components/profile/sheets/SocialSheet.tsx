@@ -229,6 +229,7 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data,
                     keyExtractor={(item, index) => item.id || index.toString()}
                     renderItem={({ item }) => (
                         <SocialLinkItem
+                            key={item.id}
                             item={item}
                             colors={colors}
                             common={common}

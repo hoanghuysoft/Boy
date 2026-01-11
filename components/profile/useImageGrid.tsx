@@ -2,19 +2,21 @@ import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
 
 import * as Haptics from "expo-haptics";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ListRenderItem,
     StyleSheet,
     TouchableOpacity,
     View,
+    ViewStyle,
     useWindowDimensions
 } from "react-native";
 import { useThemeContext } from "../../context/ThemeContext";
+import { useVideoThumbnail } from "../../hooks/useVideoThumbnail";
 import { createCommonStyles } from "../../styles/common";
 import { Media } from "../../types/media";
 import { ShimmerEffect } from "../shimmer/Shimmer";
-import QuickPreviewModal from "./QuickPreviewModal";
+import QuickPreviewModal, { precacheAspectRatio } from "./QuickPreviewModal";
 
 // Constants
 const SPACING = 2;
@@ -61,6 +63,58 @@ const processMediaToGrid = (media: Media[], numColumns: number): { gridData: Gri
     return { gridData, sortedUrls };
 };
 
+// Separate component for video grid items - allows using hooks for thumbnail generation
+interface VideoGridItemProps {
+    mediaItem: Media;
+    videoStyle: ViewStyle;
+    marginRight: number;
+    placeholderImageVideo: string;
+    onPress: () => void;
+    onLongPress: () => void;
+    onPressOut: () => void;
+}
+
+const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
+    mediaItem,
+    videoStyle,
+    marginRight,
+    placeholderImageVideo,
+    onPress,
+    onLongPress,
+    onPressOut,
+}) => {
+    // Use hook to get thumbnail - generates one if not available from API
+    const thumbnailUrl = useVideoThumbnail(
+        mediaItem.url,
+        mediaItem.thumbnail_url,
+        placeholderImageVideo
+    );
+
+    return (
+        <TouchableOpacity
+            key={mediaItem.id}
+            activeOpacity={0.7}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            onPressOut={onPressOut}
+            delayLongPress={300}
+            style={[
+                videoStyle,
+                { marginRight, justifyContent: 'center', alignItems: 'center' }
+            ]}
+        >
+            <FastImage
+                source={{ uri: thumbnailUrl }}
+                style={StyleSheet.absoluteFill}
+                resizeMode={FastImage.resizeMode.cover}
+            />
+            <View style={styles.overlay}>
+                <Ionicons name="play" size={24} color="white" />
+            </View>
+        </TouchableOpacity>
+    );
+});
+
 export const useImageGrid = (options: UseImageGridOptions = {}) => {
     const {
         containerPadding = CONTAINER_PADDING,
@@ -76,6 +130,8 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { width: screenWidth } = useWindowDimensions();
+    const placeholderImageVideo = 'https://placehold.net/3-600x800.png';
+    const placeholderImage = 'https://placehold.net/default.png';
 
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isPreviewVisible, setIsPreviewVisible] = useState(false);
@@ -183,40 +239,32 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
             <View style={[common.row, { paddingHorizontal: containerPadding }]}>
                 {item.items.map((mediaItem, i) => {
                     const isVideo = mediaItem.type.toLowerCase().includes('video');
+                    const imageUrl = isVideo ? (mediaItem.thumbnail_url || mediaItem.url || placeholderImage) : mediaItem.url || placeholderImage;
                     const content = (
                         <FastImage
-                            source={{ uri: isVideo ? (mediaItem.thumbnail_url || mediaItem.url) : mediaItem.url }}
+                            key={mediaItem.id}
+                            source={{ uri: imageUrl }}
                             style={[
                                 imageStyle,
                                 { marginRight: i === item.items.length - 1 ? 0 : SPACING }
                             ]}
                             resizeMode={FastImage.resizeMode.cover}
+                            onLoad={(e) => precacheAspectRatio(imageUrl, e.nativeEvent.width, e.nativeEvent.height)}
                         />
                     );
 
                     if (isVideo) {
                         return (
-                            <TouchableOpacity
+                            <VideoGridItem
                                 key={mediaItem.id}
-                                activeOpacity={0.7}
+                                mediaItem={mediaItem}
+                                videoStyle={videoStyle}
+                                marginRight={i === item.items.length - 1 ? 0 : SPACING}
+                                placeholderImageVideo={placeholderImageVideo}
                                 onPress={() => onVideoPress?.(mediaItem)}
                                 onLongPress={() => handleLongPress(mediaItem.thumbnail_url || mediaItem.url)}
                                 onPressOut={handlePressOut}
-                                delayLongPress={300}
-                                style={[
-                                    videoStyle,
-                                    { marginRight: i === item.items.length - 1 ? 0 : SPACING, justifyContent: 'center', alignItems: 'center' }
-                                ]}
-                            >
-                                <FastImage
-                                    source={{ uri: mediaItem.thumbnail_url || mediaItem.url, }}
-                                    style={StyleSheet.absoluteFill}
-                                    resizeMode={FastImage.resizeMode.cover}
-                                />
-                                <View style={styles.overlay}>
-                                    <Ionicons name="play" size={24} color="white" />
-                                </View>
-                            </TouchableOpacity>
+                            />
                         );
                     }
 

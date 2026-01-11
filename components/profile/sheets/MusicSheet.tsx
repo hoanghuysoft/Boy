@@ -160,6 +160,7 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <MusicItem
+                            key={item.id}
                             item={item}
                             colors={colors}
                             common={common}

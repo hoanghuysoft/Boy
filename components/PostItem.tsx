@@ -93,7 +93,7 @@ export const PostItem = ({ post }: { post: Post }) => {
                     <View>
                         <View style={[common.row, { gap: 2 }]}>
                             <Text style={[common.heading, { fontSize: 16 }]}>{post.profile_name}</Text>
-                            {post.profile_is_verified && <VerifiedIcon size={16} color={colors.verify} />}
+                            {post.profile_is_verified && <VerifiedIcon size={16} backgroundColor={colors.verify} />}
                         </View>
                         <PostMetaInfo post={post} />
                     </View>
@@ -196,6 +196,8 @@ export const PostItem = ({ post }: { post: Post }) => {
                     />
                 </View>
             )}
+
+            {post.device && <Text style={[common.label, { color: colors.muted, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 }]}>This post was created on {post.device}</Text>}
 
             {/* Action Bar */}
             <View style={[common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>

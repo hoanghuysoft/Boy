@@ -32,7 +32,7 @@ import BirthdayCard from './BirthdayCard';
 const COVER_HEIGHT = 250;
 const { height } = Dimensions.get("window");
 
-type TabType = "Information" | "Images" | "Videos";
+type TabType = "Information" | "Images" | "Videos" | "Feed";
 
 interface ProfileHeaderProps {
     scrollY: Animated.Value;
@@ -96,6 +96,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const handleInfoTab = useCallback(() => onTabChange("Information"), [onTabChange]);
     const handleImagesTab = useCallback(() => onTabChange("Images"), [onTabChange]);
     const handleVideosTab = useCallback(() => onTabChange("Videos"), [onTabChange]);
+    const handleFeedTab = useCallback(() => onTabChange("Feed"), [onTabChange]);
 
     const toggleMusic = useCallback(() => {
         const isAtEnd = player.duration > 0 && (player.duration - player.currentTime < 0.2);
@@ -123,8 +124,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const tabs = useMemo(() => [
         { name: "Images", onClick: handleImagesTab },
         { name: "Videos", onClick: handleVideosTab },
+        { name: "Feed", onClick: handleFeedTab },
         { name: "Information", onClick: handleInfoTab },
-    ], [handleInfoTab, handleImagesTab, handleVideosTab]);
+    ], [handleInfoTab, handleImagesTab, handleVideosTab, handleFeedTab]);
 
     return (
         <>
@@ -141,13 +143,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                 ]}
                 resizeMode="cover"
             />
-            <View style={{ position: "absolute", top: inset.top, left: 0, right: 0, zIndex: 1000, paddingHorizontal: 16, backgroundColor: 'transparent' }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-                    {!isMe && <TouchableOpacity onPress={() => navigation.goBack()} style={{ backgroundColor: colors.containerContent, borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}>
-                        <Ionicons name='chevron-back' size={24} color={colors.text} />
-                    </TouchableOpacity>}
-                </View>
-            </View>
             <View style={{
                 borderRadius: 8,
                 marginTop: -8,
@@ -172,7 +167,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                     <View>
                         <View style={[common.row, { gap: 2, marginTop: 8 }]}>
                             <Text style={common.heading}>{profile?.name || "Boy not found"}</Text>
-                            {profile?.is_verified && <VerifiedIcon size={18} color={colors.verify} />}
+                            {profile?.is_verified && <VerifiedIcon size={18} backgroundColor={colors.verify} />}
                         </View>
                         {profile?.pronouns && (
                             <Text style={[common.muted, { fontSize: 12 }]}>
@@ -273,7 +268,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                         <TabPillGroup
                             tabs={tabs}
                             activeTab={activeTab}
-                            containerStyle={{ marginTop: 16 }}
+                            containerStyle={{ marginTop: 16, marginHorizontal: -16 }}
+                            scrollViewStyle={{ paddingHorizontal: 16 }}
                             renderContent={false}
                         />
 

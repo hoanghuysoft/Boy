@@ -1,3 +1,4 @@
+import { useVideoThumbnail } from "@/hooks/useVideoThumbnail";
 import PlayIcon from "@/icons/play";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
@@ -7,7 +8,7 @@ import Galeria from "@nandorojo/galeria/build/GaleriaView";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import { Blur, Canvas, Image as SkiaImage, useImage } from "@shopify/react-native-skia";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const FlashList = FlashListOriginal as any;
@@ -32,8 +33,19 @@ interface BlurOverlayProps {
 }
 
 const BlurOverlay = ({ imageUrl, width, height, onReveal }: BlurOverlayProps) => {
+    const [isPreloaded, setIsPreloaded] = useState(false);
     const image = useImage(imageUrl);
     const isLoading = !image;
+
+    // Preload with FastImage first so Skia can use the disk cache
+    React.useEffect(() => {
+        if (imageUrl) {
+            FastImage.preload([{ uri: imageUrl }]);
+            // Give FastImage a moment to cache before Skia tries to load
+            const timeout = setTimeout(() => setIsPreloaded(true), 100);
+            return () => clearTimeout(timeout);
+        }
+    }, [imageUrl]);
 
     return (
         <TouchableOpacity
@@ -71,6 +83,170 @@ const BlurOverlay = ({ imageUrl, width, height, onReveal }: BlurOverlayProps) =>
     );
 };
 
+// Video carousel item component - uses hook for thumbnail generation
+interface VideoCarouselItemProps {
+    item: Media;
+    profileName: string;
+    content?: string;
+    colors: any;
+    shouldBlur: boolean;
+    onReveal: () => void;
+    placeholderImageVideo: string;
+}
+
+const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
+    item,
+    profileName,
+    content,
+    colors,
+    shouldBlur,
+    onReveal,
+    placeholderImageVideo,
+}) => {
+    const router = useRouter();
+
+    // Use hook to get thumbnail - generates one if not available from API
+    const thumbnailUrl = useVideoThumbnail(
+        item.url,
+        item.thumbnail_url,
+        placeholderImageVideo
+    );
+
+    return (
+        <View style={{ width: SCREEN_WIDTH }}>
+            <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => router.push({ pathname: '/video_player', params: { videoUrl: item.url, name: profileName, caption: content, portrait: 'true' } })}
+                style={{ width: '100%', aspectRatio: ASPECT_RATIO }}
+            >
+                <FastImage
+                    source={{ uri: thumbnailUrl }}
+                    style={{ width: '100%', height: '100%', backgroundColor: colors.divider }}
+                    resizeMode="cover"
+                >
+                    {shouldBlur && (
+                        <TouchableOpacity
+                            onPress={onReveal}
+                            activeOpacity={1}
+                            style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 10, justifyContent: 'center', alignItems: 'center' }]}
+                        >
+                            <View style={{ alignItems: 'center', gap: 8 }}>
+                                <Ionicons name="eye-off-outline" size={32} color="white" />
+                                <Text style={{ color: 'white', fontWeight: '600' }}>Sensitive Content</Text>
+                                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Tap to see</Text>
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                        <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+                            <PlayIcon size={24} color="#ffffff" style={{ marginLeft: 4 }} />
+                        </View>
+                    </View>
+                </FastImage>
+            </TouchableOpacity>
+        </View>
+    );
+});
+
+// Photo carousel item component
+interface PhotoCarouselItemProps {
+    item: Media;
+    photoIndex: number;
+    colors: any;
+    shouldBlur: boolean;
+    onReveal: () => void;
+    mediaHeight: number;
+}
+
+const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
+    item,
+    photoIndex,
+    colors,
+    shouldBlur,
+    onReveal,
+    mediaHeight,
+}) => {
+    return (
+        <View style={{ width: SCREEN_WIDTH }}>
+            <Galeria.Image index={photoIndex}>
+                <View>
+                    <Image
+                        source={{ uri: item.url, cache: 'force-cache' }}
+                        style={{ width: '100%', aspectRatio: ASPECT_RATIO, backgroundColor: colors.divider }}
+                        resizeMode="cover"
+                    />
+                    {shouldBlur && (
+                        <BlurOverlay
+                            imageUrl={item.url}
+                            width={SCREEN_WIDTH}
+                            height={mediaHeight}
+                            onReveal={onReveal}
+                        />
+                    )}
+                </View>
+            </Galeria.Image>
+        </View>
+    );
+});
+
+// Main media item component - decides between video and photo
+interface MediaCarouselItemProps {
+    item: Media;
+    index: number;
+    media: Media[];
+    profileName: string;
+    content?: string;
+    colors: any;
+    shouldBlur: boolean;
+    onReveal: () => void;
+    placeholderImageVideo: string;
+    mediaHeight: number;
+}
+
+const MediaCarouselItem: React.FC<MediaCarouselItemProps> = React.memo(({
+    item,
+    index,
+    media,
+    profileName,
+    content,
+    colors,
+    shouldBlur,
+    onReveal,
+    placeholderImageVideo,
+    mediaHeight,
+}) => {
+    // Calculate index for Galeria: count how many photos appeared before this item
+    const photoIndex = useMemo(() =>
+        media.slice(0, index).filter(m => m.type === 'photo').length,
+        [media, index]
+    );
+
+    if (item.type === 'video') {
+        return (
+            <VideoCarouselItem
+                item={item}
+                profileName={profileName}
+                content={content}
+                colors={colors}
+                shouldBlur={shouldBlur}
+                onReveal={onReveal}
+                placeholderImageVideo={placeholderImageVideo}
+            />
+        );
+    }
+
+    return (
+        <PhotoCarouselItem
+            item={item}
+            photoIndex={photoIndex}
+            colors={colors}
+            shouldBlur={shouldBlur}
+            onReveal={onReveal}
+            mediaHeight={mediaHeight}
+        />
+    );
+});
+
 export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult = false }: PostMediaCarouselProps) => {
     const router = useRouter();
     const [activeIndex, setActiveIndex] = useState(0);
@@ -83,27 +259,65 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
 
     const shouldBlur = isAdult && !showSensitiveContent && !isRevealed;
 
-    const onReveal = () => {
+    const onReveal = useCallback(() => {
         setIsRevealed(true);
         // Requirement: "save the config". 
         // If users taps reveal, do we enable it GLOBALLY? 
         // "touching it will shows the content and save the config"
         setShowSensitiveContent(true);
-    };
+    }, [setShowSensitiveContent]);
 
     // Filter urls for Galeria (only photos)
     const photoUrls = useMemo(() =>
         media.filter(m => m.type === 'photo').map(m => m.url),
         [media]);
 
-    const onViewableItemsChanged = ({ viewableItems }: any) => {
+    const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
         if (viewableItems.length > 0) {
             setActiveIndex(viewableItems[0].index || 0);
         }
-    };
+    }, []);
 
     // Calculate media height based on aspect ratio
     const mediaHeight = SCREEN_WIDTH / ASPECT_RATIO;
+    const placeholderImageVideo = 'https://placehold.net/3-600x800.png';
+
+    // Prefetch all carousel images for smoother scrolling
+    React.useEffect(() => {
+        if (media && media.length > 0) {
+            const imagesToPrefetch = media
+                .map(m => m.type === 'video' ? m.thumbnail_url : m.url)
+                .filter(Boolean)
+                .map(uri => ({ uri: uri as string }));
+
+            if (imagesToPrefetch.length > 0) {
+                FastImage.preload(imagesToPrefetch);
+            }
+        }
+    }, [media]);
+
+    // Memoized keyExtractor
+    const keyExtractor = useCallback((item: Media) => item.id, []);
+
+    // Memoized viewabilityConfig
+    const viewabilityConfig = useMemo(() => ({ itemVisiblePercentThreshold: 50 }), []);
+
+    // Memoized renderItem
+    const renderMediaItem = useCallback(({ item, index }: { item: Media, index: number }) => (
+        <MediaCarouselItem
+            key={item.id}
+            item={item}
+            index={index}
+            media={media}
+            profileName={profileName}
+            content={content}
+            colors={colors}
+            shouldBlur={shouldBlur}
+            onReveal={onReveal}
+            placeholderImageVideo={placeholderImageVideo}
+            mediaHeight={mediaHeight}
+        />
+    ), [media, profileName, content, colors, shouldBlur, onReveal, placeholderImageVideo, mediaHeight]);
 
     if (!media || media.length === 0) return null;
 
@@ -116,73 +330,10 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
                     pagingEnabled
                     showsHorizontalScrollIndicator={false}
                     estimatedItemSize={SCREEN_WIDTH}
-                    keyExtractor={(item: Media) => item.id}
+                    keyExtractor={keyExtractor}
                     onViewableItemsChanged={onViewableItemsChanged}
-                    viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-                    renderItem={({ item, index }: { item: Media, index: number }) => {
-                        // Calculate index for Galeria: count how many photos appeared before this item
-                        const photoIndex = media.slice(0, index).filter(m => m.type === 'photo').length;
-
-                        if (item.type === 'video') {
-                            return (
-                                <View style={{ width: SCREEN_WIDTH }}>
-                                    <TouchableOpacity
-                                        activeOpacity={0.9}
-                                        onPress={() => router.push({ pathname: '/video_player', params: { videoUrl: item.url, name: profileName, caption: content, portrait: 'true' } })}
-                                        style={{ width: '100%', aspectRatio: ASPECT_RATIO }}
-                                    >
-                                        <FastImage
-                                            source={{ uri: item.thumbnail_url || item.url }}
-                                            style={{ width: '100%', height: '100%', backgroundColor: colors.divider }}
-                                            resizeMode="cover"
-                                        >
-                                            {shouldBlur && (
-                                                <TouchableOpacity
-                                                    onPress={onReveal}
-                                                    activeOpacity={1}
-                                                    style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 10, justifyContent: 'center', alignItems: 'center' }]}
-                                                >
-                                                    <View style={{ alignItems: 'center', gap: 8 }}>
-                                                        <Ionicons name="eye-off-outline" size={32} color="white" />
-                                                        <Text style={{ color: 'white', fontWeight: '600' }}>Sensitive Content</Text>
-                                                        <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Tap to see</Text>
-                                                    </View>
-                                                </TouchableOpacity>
-                                            )}
-                                            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
-                                                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
-                                                    <PlayIcon size={24} color="#ffffff" style={{ marginLeft: 4 }} />
-                                                </View>
-                                            </View>
-                                        </FastImage>
-                                    </TouchableOpacity>
-                                </View>
-                            );
-                        }
-
-                        // Photo
-                        return (
-                            <View style={{ width: SCREEN_WIDTH }}>
-                                <Galeria.Image index={photoIndex}>
-                                    <View>
-                                        <Image
-                                            source={{ uri: item.url }}
-                                            style={{ width: '100%', aspectRatio: ASPECT_RATIO, backgroundColor: colors.divider }}
-                                            resizeMode="cover"
-                                        />
-                                        {shouldBlur && (
-                                            <BlurOverlay
-                                                imageUrl={item.url}
-                                                width={SCREEN_WIDTH}
-                                                height={mediaHeight}
-                                                onReveal={onReveal}
-                                            />
-                                        )}
-                                    </View>
-                                </Galeria.Image>
-                            </View>
-                        );
-                    }}
+                    viewabilityConfig={viewabilityConfig}
+                    renderItem={renderMediaItem}
                 />
             </Galeria>
 

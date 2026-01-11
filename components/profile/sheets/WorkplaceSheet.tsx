@@ -53,7 +53,7 @@ const WorkplaceItem = memo(({ item, colors, common }: { item: Workplace, colors:
 
                 <View style={{ flex: 1 }}>
                     <Text style={[common.heading, { fontSize: 16 }]}>{item.company_name}</Text>
-                    <Text style={[common.body, { color: colors.primary, fontWeight: '600', marginTop: 2 }]}>
+                    <Text style={[common.body, { color: colors.text, fontWeight: '600', marginTop: 2 }]}>
                         {item.position}
                     </Text>
                 </View>
@@ -130,7 +130,7 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({
                     data={data}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <WorkplaceItem item={item} colors={colors} common={common} />
+                        <WorkplaceItem key={item.id} item={item} colors={colors} common={common} />
                     )}
                     contentContainerStyle={{ paddingBottom: 20 }}
                 />

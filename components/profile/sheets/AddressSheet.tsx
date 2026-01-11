@@ -12,14 +12,11 @@ interface AddressSheetProps {
     onEndReached?: () => void;
 }
 
-const AddressItem = memo(({ item, colors, common }: { item: ProfileAddress, colors: any, common: any }) => {
-
+const AddressItem = memo(({ item, colors, common }: { item: ProfileAddress; colors: any; common: any }) => {
     const handleOpenMaps = () => {
-        // Construct the query string
-        const fullAddress = `${item.street}, ${item.city}, ${item.country}`;
+        const fullAddress = [item.street, item.city, item.state, item.country].filter(Boolean).join(', ');
         const encodedAddress = encodeURIComponent(fullAddress);
 
-        // Platform specific map URL
         const url = Platform.select({
             ios: `maps:0,0?q=${encodedAddress}`,
             android: `geo:0,0?q=${encodedAddress}`,
@@ -30,15 +27,14 @@ const AddressItem = memo(({ item, colors, common }: { item: ProfileAddress, colo
         }
     };
 
+    const addressHeader = [item.street, item.city, item.state, item.country].filter(Boolean).join(', ');
+
     return (
         <TouchableOpacity
             onPress={handleOpenMaps}
             activeOpacity={0.7}
-            style={[
-                styles.card
-            ]}
+            style={styles.card}
         >
-            {/* Icon Container */}
             <View style={[styles.iconContainer, { backgroundColor: (colors.primary || colors.text) + '15' }]}>
                 <Ionicons
                     name="location"
@@ -47,18 +43,16 @@ const AddressItem = memo(({ item, colors, common }: { item: ProfileAddress, colo
                 />
             </View>
 
-            {/* Address Details */}
             <View style={styles.textContainer}>
                 <Text style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
-                    {item.city}, {item.country}
+                    {item.label}
                 </Text>
 
                 <Text style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
-                    {item.street}
+                    {addressHeader} {item.postal_code}
                 </Text>
             </View>
 
-            {/* Action Icon */}
             <View style={styles.actionIcon}>
                 <Ionicons name="navigate-circle-outline" size={28} color={colors.muted} />
             </View>
@@ -103,7 +97,7 @@ export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ dat
                     data={data}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <AddressItem item={item} colors={colors} common={common} />
+                        <AddressItem key={item.id} item={item} colors={colors} common={common} />
                     )}
                     contentContainerStyle={{ paddingBottom: 20 }}
                 />

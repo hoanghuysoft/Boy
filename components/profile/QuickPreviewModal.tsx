@@ -1,7 +1,7 @@
 import FastImage from "@d11/react-native-fast-image";
 import { BlurView } from "@sbaiahmed1/react-native-blur";
 import React, { useEffect, useState } from "react";
-import { Dimensions, Image, Modal, StyleSheet, View } from "react-native";
+import { Dimensions, Modal, StyleSheet, View } from "react-native";
 import Animated, {
     runOnJS,
     useAnimatedStyle,
@@ -11,6 +11,18 @@ import Animated, {
 } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+// Cache aspect ratios to avoid repeated network calls
+const aspectRatioCache = new Map<string, number>();
+
+// Pre-cache aspect ratio using dimensions from FastImage's onLoad event
+// This uses no extra bandwidth since FastImage already loaded the image
+export const precacheAspectRatio = (url: string, width: number, height: number) => {
+    if (!url || aspectRatioCache.has(url)) return;
+    if (width > 0 && height > 0) {
+        aspectRatioCache.set(url, width / height);
+    }
+};
 
 interface QuickPreviewModalProps {
     visible: boolean;
@@ -24,7 +36,10 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
     onClose,
 }) => {
     const [mounted, setMounted] = useState(visible);
-    const [aspectRatio, setAspectRatio] = useState(1);
+    // Initialize with cached ratio if available
+    const [aspectRatio, setAspectRatio] = useState(() =>
+        imageUrl ? aspectRatioCache.get(imageUrl) ?? 1 : 1
+    );
     const scale = useSharedValue(0.8);
     const opacity = useSharedValue(0);
 
@@ -45,12 +60,9 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
 
     useEffect(() => {
         if (imageUrl) {
-            Image.getSize(imageUrl, (width, height) => {
-                const ratio = width / height;
-                setAspectRatio(ratio);
-            }, () => {
-                setAspectRatio(1);
-            });
+            // Use cached ratio from FastImage's onLoad (populated by grid)
+            const cached = aspectRatioCache.get(imageUrl);
+            setAspectRatio(cached ?? 1);
         }
     }, [imageUrl]);
 
