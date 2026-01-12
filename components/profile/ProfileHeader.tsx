@@ -2,10 +2,11 @@ import VerifiedIcon from '@/icons/verified';
 import { getTiktokProfile } from '@/services/tiktok';
 import FastImage from '@d11/react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons';
+import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
-import { useAudioPlayer } from 'expo-audio';
-import React, { memo, useCallback, useMemo, useState } from "react";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
     Animated,
     Dimensions,
@@ -16,6 +17,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { getColors } from 'react-native-image-colors';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { ProfileAddress } from "../../types/profileaddress";
@@ -76,6 +78,77 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const common = createCommonStyles(colors, typography);
     const style = styles(colors);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [gradientColors, setGradientColors] = useState<string[]>([]);
+
+    const PLACEHOLDER_COVER = "https://pbs.twimg.com/media/GeMS4yjWIAA14OG.jpg";
+    const MESH_GRADIENT_DEFAULTS = {
+        speed: 5,
+        brightness: 0.8,
+        contrast: 1.2,
+        frequency: 5,
+        amplitude: 30,
+    };
+
+    const hasCover = !!profile?.cover_url;
+    const currentMusic = music?.[0];
+    const currentAvatar = profile?.avatar_url;
+
+    // Extract colors for mesh gradient when cover is not available
+    useEffect(() => {
+        if (hasCover) {
+            setGradientColors([]);
+            return;
+        }
+
+        const extractColors = async () => {
+            const imageSource = currentAvatar || PLACEHOLDER_COVER;
+            try {
+                const colorsData = await getColors(imageSource, {
+                    fallback: '#3b5998',
+                    cache: true,
+                    key: imageSource,
+                });
+
+                let extractedColors: string[] = [];
+
+                if (colorsData.platform === 'android') {
+                    // Prefer light colors for better visual effect
+                    let lightColors: string[] = Object.entries(colorsData)
+                        .filter(([key]) => key.includes('light_'))
+                        .map(([_, value]) => value as string);
+
+                    if (lightColors.length < 4) {
+                        lightColors = lightColors.concat([
+                            colorsData.average,
+                            colorsData.dominant,
+                            colorsData.vibrant,
+                            colorsData.muted,
+                        ].filter(Boolean) as string[]);
+                    }
+                    extractedColors = lightColors.slice(0, 4);
+                } else if (colorsData.platform === 'ios') {
+                    extractedColors = [
+                        colorsData.primary,
+                        colorsData.secondary,
+                        colorsData.background,
+                        colorsData.detail,
+                    ].filter(Boolean) as string[];
+                }
+
+                while (extractedColors.length < 4) {
+                    extractedColors.push(extractedColors[0] || '#3b5998');
+                }
+                extractedColors = extractedColors.slice(0, 4);
+
+                setGradientColors(extractedColors);
+            } catch (error) {
+                console.error('Failed to extract colors:', error);
+                setGradientColors(['#667eea', '#764ba2', '#f093fb', '#f5576c']);
+            }
+        };
+
+        extractColors();
+    }, [hasCover, currentAvatar]);
 
     const coverTranslateY = scrollY.interpolate({
         inputRange: [0, COVER_HEIGHT],
@@ -83,9 +156,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
         extrapolate: "clamp",
     });
 
-    const currentMusic = music?.[0];
-    const currentAvatar = profile?.avatar_url;
     const player = useAudioPlayer(currentMusic?.preview_url ? { uri: currentMusic.preview_url } : null);
+    const status = useAudioPlayerStatus(player);
+
+    // Update isPlaying when playback status changes
+    useEffect(() => {
+        if (status.playing !== isPlaying) {
+            setIsPlaying(status.playing);
+        }
+    }, [status.playing]);
 
     const handleInfoTab = useCallback(() => onTabChange("Information"), [onTabChange]);
     const handleImagesTab = useCallback(() => onTabChange("Images"), [onTabChange]);
@@ -98,18 +177,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
         if (isAtEnd) {
             player.seekTo(0);
             player.play();
-            setIsPlaying(true);
             return;
         }
 
         if (player.playing) {
             player.pause();
-            setIsPlaying(false);
         } else {
             player.play();
-            setIsPlaying(true);
         }
-    }, [player, setIsPlaying]);
+    }, [player]);
 
     const testTiktokProfile = async () => {
         const res = await getTiktokProfile("dreww_ohi7")
@@ -124,19 +200,42 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
 
     return (
         <>
-            <Animated.Image
-                source={{
-                    uri: profile?.cover_url || "https://pbs.twimg.com/media/GeMS4yjWIAA14OG.jpg",
-                    cache: 'force-cache'
-                }}
-                style={[
-                    style.coverImage,
-                    {
-                        transform: [{ translateY: coverTranslateY }],
-                    },
-                ]}
-                resizeMode="cover"
-            />
+            {hasCover ? (
+                <Animated.Image
+                    source={{
+                        uri: profile?.cover_url,
+                        cache: 'force-cache'
+                    }}
+                    style={[
+                        style.coverImage,
+                        {
+                            transform: [{ translateY: coverTranslateY }],
+                        },
+                    ]}
+                    resizeMode="cover"
+                />
+            ) : (
+                <Animated.View
+                    style={[
+                        style.coverImage,
+                        {
+                            transform: [{ translateY: coverTranslateY }],
+                        },
+                    ]}
+                >
+                    {gradientColors.length === 4 && (
+                        <MeshGradient
+                            brightness={MESH_GRADIENT_DEFAULTS.brightness}
+                            contrast={MESH_GRADIENT_DEFAULTS.contrast}
+                            speed={MESH_GRADIENT_DEFAULTS.speed}
+                            colors={gradientColors}
+                            frequency={MESH_GRADIENT_DEFAULTS.frequency}
+                            amplitude={MESH_GRADIENT_DEFAULTS.amplitude}
+                            style={style.meshGradient}
+                        />
+                    )}
+                </Animated.View>
+            )}
             <View style={{
                 borderRadius: 8,
                 marginTop: -8,
@@ -279,6 +378,17 @@ const styles = (colors: any) =>
         coverImage: {
             width: "100%",
             height: COVER_HEIGHT,
+            overflow: 'hidden',
+        },
+        meshGradient: {
+            flex: 1,
+            height: '100%',
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
         },
     });
 

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@d11/react-native-fast-image": "^8.13.0",
+    "@expo-google-fonts/google-sans-flex": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
     "@flyerhq/react-native-link-preview": "^1.6.0",
     "@hugeicons/core-free-icons": "^3.1.0",
@@ -46,6 +47,7 @@
     "expo-audio": "~1.1.1",
     "expo-auth-session": "~7.0.10",
     "expo-av": "~16.0.8",
+    "expo-build-properties": "~1.0.10",
     "expo-constants": "~18.0.11",
     "expo-crypto": "~15.0.8",
     "expo-dev-client": "~6.0.20",

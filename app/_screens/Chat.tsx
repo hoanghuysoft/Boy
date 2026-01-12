@@ -4,6 +4,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 
+
 const ChatScreen = () => {
   const { colors, theme, toggleTheme, typography } = useThemeContext();
   const common = createCommonStyles(colors, typography);
@@ -19,13 +20,6 @@ const ChatScreen = () => {
       <TouchableOpacity onPress={toggleShowSensitiveContent} style={[common.button, { backgroundColor: showSensitiveContent ? 'red' : 'green' }]}>
         <Text style={common.buttonText}>{showSensitiveContent ? 'Hide Sensitive Content' : 'Show Sensitive Content'}</Text>
       </TouchableOpacity>
-      {/* <Video
-        source={{ uri: 'https://www.w3schools.com/html/mov_bbb.mp4' }}
-        style={{ width: '100%', aspectRatio: 16 / 9 }}
-        enterPictureInPictureOnLeave
-        controls
-        playInBackground
-      /> */}
     </View>
   );
 };

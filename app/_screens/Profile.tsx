@@ -16,6 +16,7 @@ import {
 import GalleryPreview from 'react-native-gallery-preview';
 import { Snackbar } from 'react-native-paper';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GalleryOverlay } from '../../components/gallery/GalleryOverlay';
 import { PostItem } from '../../components/PostItem';
 import InfoCard from '../../components/profile/InfoCard';
 import ProfileHeader, { COVER_HEIGHT } from '../../components/profile/ProfileHeader';
@@ -505,9 +506,32 @@ const ProfileScreen = () => {
         onRequestClose={() => setGalleryVisible(false)}
         images={formattedImages}
         initialIndex={galleryIndex}
-        OverlayComponent={() => (
-          <View>
-          </View>
+        OverlayComponent={(props) => (
+          <GalleryOverlay
+            {...props}
+            profileName={profile?.name}
+            caption={photos[props.currentImageIndex]?.caption ?? undefined}
+            showBottomBar={true}
+            showDownload={true}
+            onShare={() => { }}
+            onPoster={() => {
+              const currentPhoto = photos[props.currentImageIndex];
+              const currentMusic = music?.[0];
+              setGalleryVisible(false);
+              router.push({
+                pathname: '/image_poster',
+                params: {
+                  imageUrl: currentPhoto?.url,
+                  name: profile?.name || '',
+                  description: currentPhoto?.caption || '',
+                  musicUrl: currentMusic?.preview_url || '',
+                  musicTitle: currentMusic ? `${currentMusic.artist} - ${currentMusic.title}` : '',
+                }
+              });
+            }}
+            onDownload={() => { }}
+            isVerified={profile?.is_verified}
+          />
         )}
       />
       {/* Global gallery for feed posts */}
@@ -516,6 +540,33 @@ const ProfileScreen = () => {
         onRequestClose={closeFeedGallery}
         images={feedGalleryImages}
         initialIndex={feedGalleryIndex}
+        OverlayComponent={(props) => {
+          const currentImage = feedGalleryImages[props.currentImageIndex];
+          return (
+            <GalleryOverlay
+              {...props}
+              profileName={currentImage?.profileName}
+              caption={currentImage?.caption ?? undefined}
+              showBottomBar={true}
+              showDownload={false}
+              onShare={() => { }}
+              onPoster={() => {
+                closeFeedGallery();
+                router.push({
+                  pathname: '/image_poster',
+                  params: {
+                    imageUrl: currentImage?.uri,
+                    name: currentImage?.profileName || '',
+                    description: currentImage?.caption || '',
+                    musicUrl: currentImage?.musicUrl || '',
+                    musicTitle: currentImage?.musicTitle || '',
+                  }
+                });
+              }}
+              isVerified={currentImage?.isVerified}
+            />
+          );
+        }}
       />
       {flatList}
 

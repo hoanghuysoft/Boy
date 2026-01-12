@@ -2,6 +2,7 @@ import { StyleSheet, TextStyle } from "react-native";
 import { ThemeColors } from "../context/ThemeContext";
 import { createTextStyle, createTypography } from "./typography";
 
+
 type TypographyType = ReturnType<typeof createTypography>;
 
 /**
@@ -21,23 +22,23 @@ export const createCommonStyles = (
       padding: 16,
     },
 
-    display: createTextStyle(typography.display, colors.text),
-    headline: createTextStyle(typography.headline, colors.text),
-    heading: createTextStyle(typography.title, colors.text),
+    display: createTextStyle(typography.display, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
+    headline: createTextStyle(typography.headline, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
+    heading: createTextStyle(typography.title, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
 
-    title: createTextStyle(typography.title, colors.text),
+    title: createTextStyle(typography.title, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
     subheading: createTextStyle(
       ("titleMedium" in typography ? typography.titleMedium : typography.subtitle1) as TextStyle,
-      colors.text
+      colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }
     ),
 
-    body: createTextStyle(typography.body, colors.text),
+    body: createTextStyle(typography.body, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
     bodySmall: createTextStyle(
       ("bodySmall" in typography ? typography.bodySmall : typography.body2) as TextStyle,
-      colors.text
+      colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }
     ),
 
-    label: createTextStyle(typography.label, colors.text),
+    label: createTextStyle(typography.label, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
     buttonText: createTextStyle(
       ("button" in typography ? typography.button : typography.label) as TextStyle,
       colors.text,
@@ -46,12 +47,14 @@ export const createCommonStyles = (
 
     caption: createTextStyle(
       typography.caption,
-      colors.text
+      colors.text,
+      { fontFamily: 'GoogleSansFlex_400Regular' }
     ),
     muted: {
       ...createTextStyle(
         ("bodySmall" in typography ? typography.bodySmall : typography.body2) as TextStyle,
-        colors.text
+        colors.text,
+        { fontFamily: 'GoogleSansFlex_400Regular' }
       ),
       opacity: 0.7,
     },

@@ -1,7 +1,7 @@
 import FastImage from '@d11/react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { useAudioPlayer } from 'expo-audio';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import React, { forwardRef, memo, useEffect, useState } from "react";
 import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,14 +28,25 @@ const MusicItem = memo(({
     setPlayingId: (id: string | null) => void
 }) => {
     const player = useAudioPlayer({ uri: item.preview_url || "" });
+    const status = useAudioPlayerStatus(player);
     const [isPlaying, setIsPlaying] = useState(false);
+
+    // Update isPlaying when playback status changes (handles audio end)
+    useEffect(() => {
+        if (status.playing !== isPlaying) {
+            setIsPlaying(status.playing);
+            // If audio stopped and we were the playing track, clear the playingId
+            if (!status.playing && playingId === item.id) {
+                setPlayingId(null);
+            }
+        }
+    }, [status.playing]);
 
     // Watch for other tracks playing to auto-pause this one
     useEffect(() => {
         if (playingId !== item.id && isPlaying) {
             player.pause();
             player.seekTo(0);
-            setIsPlaying(false);
         }
     }, [playingId]);
 
@@ -48,18 +59,15 @@ const MusicItem = memo(({
         if (isAtEnd) {
             player.seekTo(0);
             player.play();
-            setIsPlaying(true);
             setPlayingId(item.id);
             return;
         }
 
-        if (isPlaying) {
+        if (player.playing) {
             player.pause();
-            setIsPlaying(false);
             setPlayingId(null);
         } else {
             player.play();
-            setIsPlaying(true);
             setPlayingId(item.id);
         }
     };
@@ -85,7 +93,7 @@ const MusicItem = memo(({
                 />
                 {/* Overlay */}
                 <View style={[StyleSheet.absoluteFill, styles.artworkOverlay]}>
-                    <View style={[styles.playIconWrapper, { backgroundColor: isPlaying ? colors.primary : 'rgba(0,0,0,0.6)' }]}>
+                    <View style={[styles.playIconWrapper, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
                         <Ionicons
                             name={isPlaying ? 'pause' : 'play'}
                             size={16}

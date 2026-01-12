@@ -9,6 +9,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import GalleryPreview from 'react-native-gallery-preview';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GalleryOverlay } from '../../components/gallery/GalleryOverlay';
 import { PostItem } from "../../components/PostItem";
 import { ShimmerEffect } from "../../components/shimmer/Shimmer";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -416,6 +417,33 @@ const HomeScreen = () => {
         onRequestClose={closeGallery}
         images={galleryImages}
         initialIndex={galleryIndex}
+        OverlayComponent={(props) => {
+          const currentImage = galleryImages[props.currentImageIndex];
+          return (
+            <GalleryOverlay
+              {...props}
+              profileName={currentImage?.profileName}
+              caption={currentImage?.caption ?? undefined}
+              showBottomBar={true}
+              showDownload={false}
+              onShare={() => { }}
+              onPoster={() => {
+                closeGallery();
+                router.push({
+                  pathname: '/image_poster',
+                  params: {
+                    imageUrl: currentImage?.uri,
+                    name: currentImage?.profileName || '',
+                    description: currentImage?.caption || '',
+                    musicUrl: currentImage?.musicUrl || '',
+                    musicTitle: currentImage?.musicTitle || '',
+                  }
+                });
+              }}
+              isVerified={currentImage?.isVerified}
+            />
+          );
+        }}
       />
     </>
   );

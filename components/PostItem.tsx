@@ -118,6 +118,9 @@ export const PostItem = ({ post }: { post: Post }) => {
                     content={post.content}
                     colors={colors}
                     isAdult={post.is_adult}
+                    isVerified={post.profile_is_verified}
+                    musicUrl={post.music?.preview_url}
+                    musicTitle={post.music ? `${post.music.artist} - ${post.music.title}` : undefined}
                 />
 
                 {hasMedia && hasMusic && (

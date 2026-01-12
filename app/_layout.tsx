@@ -6,6 +6,7 @@ configureReanimatedLogger({
     strict: false,
 });
 
+import { GoogleSansFlex_700Bold, useFonts } from '@expo-google-fonts/google-sans-flex';
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { LinearGradient } from "expo-linear-gradient";
@@ -47,6 +48,14 @@ const StatusBarFade = () => {
         extraColorStopsPerTransition: 12,
     });
 
+    let [fontsLoaded] = useFonts({
+        GoogleSansFlex_700Bold,
+    });
+
+    if (!fontsLoaded) {
+        return null;
+    }
+
     return (
         <LinearGradient
             pointerEvents="none"
@@ -66,7 +75,7 @@ const StatusBarFade = () => {
     );
 };
 
-const RootContent = () => {
+const RootContent = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
     const { theme, colors } = useThemeContext();
     const segments = useSegments();
     const router = useRouter();
@@ -98,14 +107,14 @@ const RootContent = () => {
         }
     }, [isReady, segments, session]);
 
-    // Hide splash screen once ready
+    // Hide splash screen once session is ready AND fonts are loaded
     useEffect(() => {
-        if (isReady) {
+        if (isReady && fontsLoaded) {
             SplashScreen.hideAsync();
         }
-    }, [isReady]);
+    }, [isReady, fontsLoaded]);
 
-    if (!isReady) {
+    if (!isReady || !fontsLoaded) {
         return null;
     }
 
@@ -128,12 +137,17 @@ const RootContent = () => {
                 <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="video_player" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name='image_poster' options={{ headerShown: false }} />
             </Stack>
         </View>
     );
 };
 
 export default function RootLayout() {
+    const [fontsLoaded] = useFonts({
+        GoogleSansFlex_700Bold,
+    });
+
     useEffect(() => {
         GoogleSignin.configure({
             webClientId: '674603557783-tn1v0di2jpgp87af41b1t1rok9sqelc1.apps.googleusercontent.com',
@@ -146,7 +160,7 @@ export default function RootLayout() {
                 <SafeAreaProvider>
                     <ThemeProvider>
                         <StatusBarProvider>
-                            <RootContent />
+                            <RootContent fontsLoaded={fontsLoaded} />
                         </StatusBarProvider>
                     </ThemeProvider>
                 </SafeAreaProvider>

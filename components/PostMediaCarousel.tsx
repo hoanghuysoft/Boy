@@ -19,6 +19,9 @@ interface PostMediaCarouselProps {
     content?: string;
     colors: any;
     isAdult?: boolean;
+    isVerified?: boolean;
+    musicUrl?: string;
+    musicTitle?: string;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -250,7 +253,7 @@ const MediaCarouselItem: React.FC<MediaCarouselItemProps> = React.memo(({
     );
 });
 
-export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult = false }: PostMediaCarouselProps) => {
+export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult = false, isVerified, musicUrl, musicTitle }: PostMediaCarouselProps) => {
     const router = useRouter();
     const [activeIndex, setActiveIndex] = useState(0);
     const { showSensitiveContent, setShowSensitiveContent } = useSettingsStore();
@@ -271,15 +274,22 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
         setShowSensitiveContent(true);
     }, [setShowSensitiveContent]);
 
-    // Filter urls for gallery (only photos)
-    const photoUrls = useMemo(() =>
-        media.filter(m => m.type === 'photo').map(m => m.url),
-        [media]);
+    // Filter urls for gallery (only photos) - include metadata for poster
+    const galleryImages = useMemo(() =>
+        media.filter(m => m.type === 'photo').map(m => ({
+            uri: m.url,
+            caption: content,
+            profileName: profileName,
+            isVerified: isVerified,
+            musicUrl: musicUrl,
+            musicTitle: musicTitle,
+        })),
+        [media, content, profileName, isVerified, musicUrl, musicTitle]);
 
-    // Open gallery with photo URLs when a photo is pressed
+    // Open gallery with photo data when a photo is pressed
     const handlePhotoPress = useCallback((photoIndex: number) => {
-        openGallery(photoUrls, photoIndex);
-    }, [openGallery, photoUrls]);
+        openGallery(galleryImages, photoIndex);
+    }, [openGallery, galleryImages]);
 
     const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
         if (viewableItems.length > 0) {
