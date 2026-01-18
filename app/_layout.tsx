@@ -138,6 +138,7 @@ const RootContent = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
                 <Stack.Screen name="video_player" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name='image_poster' options={{ headerShown: false }} />
+                <Stack.Screen name='settings' options={{ headerShown: false, animation: 'slide_from_bottom' }} />
             </Stack>
         </View>
     );

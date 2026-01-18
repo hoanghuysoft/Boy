@@ -2,12 +2,97 @@ import { BlurMask } from "@/components/blur mask/BlurMask";
 import { Title } from "@/components/blur mask/Title";
 import { useStatusBar } from "@/context/StatusBarContext";
 import { Ionicons } from "@expo/vector-icons";
-import { Canvas, ImageShader, LinearGradient, useImage, vec } from "@shopify/react-native-skia";
+import { Canvas, ImageShader, LinearGradient, useAnimatedImageValue, useImage, vec } from "@shopify/react-native-skia";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Dimensions, StatusBar, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Helper to check if URL is a GIF
+const isGifUrl = (url: string | undefined): boolean => {
+    if (!url) return false;
+    const lowercaseUrl = url.toLowerCase();
+    return lowercaseUrl.endsWith('.gif') || lowercaseUrl.includes('.gif?');
+};
+
+// Component for static images
+const StaticPosterImage = memo(({ imageUrl, width, height, name, description }: {
+    imageUrl: string;
+    width: number;
+    height: number;
+    name: string;
+    description: string;
+}) => {
+    const image = useImage(imageUrl);
+
+    if (!image) return null;
+
+    return (
+        <Canvas style={styles.canvas}>
+            <BlurMask
+                mask={
+                    <LinearGradient
+                        start={vec(0, height * 0.5)}
+                        end={vec(0, height)}
+                        colors={["transparent", "black"]}
+                    />
+                }
+            >
+                <ImageShader
+                    image={image}
+                    x={0}
+                    width={width}
+                    height={height}
+                    fit="cover"
+                    tx="clamp"
+                    ty="clamp"
+                />
+            </BlurMask>
+            <Title name={name} description={description} />
+        </Canvas>
+    );
+});
+
+// Component for animated GIFs
+const AnimatedPosterImage = memo(({ imageUrl, width, height, name, description }: {
+    imageUrl: string;
+    width: number;
+    height: number;
+    name: string;
+    description: string;
+}) => {
+    const isPaused = useSharedValue(false);
+    const animatedImage = useAnimatedImageValue(imageUrl, isPaused);
+
+    if (!animatedImage) return null;
+
+    return (
+        <Canvas style={styles.canvas}>
+            <BlurMask
+                mask={
+                    <LinearGradient
+                        start={vec(0, height * 0.5)}
+                        end={vec(0, height)}
+                        colors={["transparent", "black"]}
+                    />
+                }
+            >
+                <ImageShader
+                    image={animatedImage}
+                    x={0}
+                    width={width}
+                    height={height}
+                    fit="cover"
+                    tx="clamp"
+                    ty="clamp"
+                />
+            </BlurMask>
+            <Title name={name} description={description} />
+        </Canvas>
+    );
+});
 
 const ImagePoster = () => {
     const router = useRouter();
@@ -22,7 +107,6 @@ const ImagePoster = () => {
     const musicTitle = Array.isArray(params.musicTitle) ? params.musicTitle[0] : params.musicTitle;
 
     const { height, width } = Dimensions.get("window");
-    const image = useImage(imageUrl || '');
     const { setShowStatusBarFade } = useStatusBar();
 
     // Music player
@@ -68,34 +152,28 @@ const ImagePoster = () => {
         }
         router.back();
     };
-
     return (
         <View style={styles.container}>
             <StatusBar hidden />
-            <Canvas style={styles.canvas}>
-                <BlurMask
-                    mask={
-                        <LinearGradient
-                            start={vec(0, height * 0.5)}
-                            end={vec(0, height)}
-                            colors={["transparent", "black"]}
-                        />
-                    }
-                >
-                    {image && (
-                        <ImageShader
-                            image={image}
-                            x={0}
-                            width={width}
-                            height={height}
-                            fit="cover"
-                            tx="clamp"
-                            ty="clamp"
-                        />
-                    )}
-                </BlurMask>
-                <Title name={name} description={description} />
-            </Canvas>
+            {imageUrl && (
+                isGifUrl(imageUrl) ? (
+                    <AnimatedPosterImage
+                        imageUrl={imageUrl}
+                        width={width}
+                        height={height}
+                        name={name}
+                        description={description}
+                    />
+                ) : (
+                    <StaticPosterImage
+                        imageUrl={imageUrl}
+                        width={width}
+                        height={height}
+                        name={name}
+                        description={description}
+                    />
+                )
+            )}
 
             {/* Close Button */}
             {/* <TouchableOpacity

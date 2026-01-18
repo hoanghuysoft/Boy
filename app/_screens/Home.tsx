@@ -2,7 +2,7 @@ import { useFeed } from "@/services/feed";
 import { useGalleryStore } from "@/stores/gallery";
 import { Post } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
-import { MenuMeatballs1Outlined, Search1Outlined } from "@lineiconshq/free-icons";
+import { Search1Outlined } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import React, { useEffect, useRef, useState } from "react";
@@ -25,7 +25,11 @@ import { useRouter } from "expo-router";
 
 dayjs.extend(relativeTime);
 
+import HomeCarousel from "@/components/HomeCarousel";
+import OptionModal from "@/components/HomeOptionModal";
+import SettingsIcon from "@/icons/settings";
 import { queryClient } from "@/services/client";
+import { useSettingsStore } from "@/stores/settings";
 import { useScrollStore } from "../../stores/scroll";
 
 const HomeScreen = () => {
@@ -37,6 +41,12 @@ const HomeScreen = () => {
 
   // Global gallery state
   const { isVisible: galleryVisible, images: galleryImages, initialIndex: galleryIndex, closeGallery } = useGalleryStore();
+
+  // Carousel settings
+  const { showCarousel: carouselEnabled } = useSettingsStore();
+  const [isAtTop, setIsAtTop] = useState(true);
+  const carouselVisibility = useRef(new Animated.Value(1)).current; // 1 = visible, 0 = hidden
+  const [modalVisible, setModalVisible] = useState(false);
 
   const feedType = activeTab === "Following" ? "latest" : activeTab === "Lucky" ? "lucky" : "this_day";
   const {
@@ -66,6 +76,14 @@ const HomeScreen = () => {
   const listRef = useRef<any>(null);
 
   const trigger = useScrollStore((state) => state.triggers['index']);
+
+  const openModal = () => {
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
 
   useEffect(() => {
     if (trigger > 0 && listRef.current) {
@@ -199,18 +217,31 @@ const HomeScreen = () => {
 
       lastScrollY.current = currentScrollY;
     }
+
+    // Animate carousel visibility based on scroll position
+    const shouldShowCarousel = currentScrollY <= 10;
+    if (shouldShowCarousel !== isAtTop) {
+      setIsAtTop(shouldShowCarousel);
+      // Animate carousel with native driver for GPU acceleration
+      Animated.spring(carouselVisibility, {
+        toValue: shouldShowCarousel ? 1 : 0,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 100,
+      }).start();
+    }
   };
 
   const tabItems = () => {
     return (
       <Animated.View style={{
         paddingHorizontal: 12,
-        marginTop: -15,
+        marginTop: -5,
         opacity: tabOpacity,
       }}>
         <View
           style={{
-            backgroundColor: colors.background,
+            backgroundColor: isAtTop ? 'transparent' : colors.background,
             borderRadius: 999,
             overflow: 'hidden',
           }}
@@ -306,6 +337,13 @@ const HomeScreen = () => {
   return (
     <>
       <View style={[common.screen, { position: 'relative' }]}>
+        {carouselEnabled && (
+          <HomeCarousel
+            isVisible={isAtTop}
+            animatedVisibility={carouselVisibility}
+          />
+        )}
+        <OptionModal modalVisible={modalVisible} setModalVisible={setModalVisible} />
         <Animated.View
           style={{
             position: "absolute",
@@ -317,7 +355,6 @@ const HomeScreen = () => {
             opacity: headerBgOpacity,
           }}
         />
-
         <View style={{ position: 'absolute', top: insets.top, left: 0, right: 0, zIndex: 100 }}>
           <View style={[common.row, {
             paddingHorizontal: 16,
@@ -330,7 +367,7 @@ const HomeScreen = () => {
             <Animated.View style={[common.row, {
               gap: 10,
               padding: 8,
-              backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255,255,255,0.8)',
+              backgroundColor: isAtTop ? 'transparent' : (theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)'),
               borderRadius: 100,
               opacity: headerPillVisibility,
               transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
@@ -341,7 +378,7 @@ const HomeScreen = () => {
             <Animated.View style={[common.row, {
               gap: 10,
               padding: 8,
-              backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255,255,255,0.8)',
+              backgroundColor: isAtTop ? 'transparent' : (theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)'),
               borderRadius: 100,
               opacity: headerPillVisibility,
               transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
@@ -354,14 +391,8 @@ const HomeScreen = () => {
                   strokeWidth={3}
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-                <Lineicons
-                  icon={MenuMeatballs1Outlined}
-                  size={24}
-                  color={colors.text}
-                  strokeWidth={3}
-                  style={{ transform: [{ rotate: "90deg" }] }}
-                />
+              <TouchableOpacity onPress={openModal}>
+                <SettingsIcon size={24} color={colors.text} />
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -376,7 +407,7 @@ const HomeScreen = () => {
               data={[1, 2, 3]}
               renderItem={() => renderPostSkeleton()}
               keyExtractor={(item: number) => item.toString()}
-              contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top }}
+              contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top + 10 }}
               estimatedItemSize={300}
               ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
             />
@@ -391,7 +422,7 @@ const HomeScreen = () => {
               ListEmptyComponent={renderEmptyState}
               renderItem={({ item }: { item: Post }) => renderPost(item)}
               keyExtractor={(item: Post) => item.id.toString()}
-              contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top }}
+              contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: totalHeaderHeight + insets.top + 10 }}
               refreshControl={
                 <RefreshControl
                   refreshing={isRefetching}
