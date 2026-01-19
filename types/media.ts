@@ -7,6 +7,7 @@ export interface Media {
     url: string;
     thumbnail_url: string | null;
     caption: string | null;
+    post_id: string | null;
     created_at: string;
     updated_at: string;
 }

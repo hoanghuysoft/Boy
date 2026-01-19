@@ -229,7 +229,6 @@ const HomeCarousel = memo(({ isVisible = true, animatedVisibility }: HomeCarouse
     // Auto-scroll effect - only runs when visible
     useEffect(() => {
         if (!isVisible || activeCarouselData.length === 0) {
-            // Clear interval when not visible or no data
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
@@ -250,7 +249,6 @@ const HomeCarousel = memo(({ isVisible = true, animatedVisibility }: HomeCarouse
         };
     }, [isVisible, getNextRandomIndex, activeCarouselData.length]);
 
-    // Interpolate animated value for smooth transitions
     const animatedStyle = useMemo(() => {
         if (!animatedVisibility) return {};
         return {
