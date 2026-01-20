@@ -2,10 +2,9 @@ import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Alert,
-    Animated,
     NativeScrollEvent,
     NativeSyntheticEvent,
-    View,
+    View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -76,17 +75,6 @@ const CreateScreen = () => {
     // Scroll tracking
     const scrollContentHeight = useRef(0);
     const scrollViewHeight = useRef(0);
-
-    // Animation
-    const fadeAnim = useState(new Animated.Value(0))[0];
-
-    useEffect(() => {
-        Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-        }).start();
-    }, []);
 
     // Reset form when navigate to this screen
     useEffect(() => {
@@ -272,7 +260,7 @@ const CreateScreen = () => {
     // ============================================================================
 
     return (
-        <Animated.View style={[common.screen, { opacity: fadeAnim }]}>
+        <View style={[common.screen]}>
             <View style={createStyles.container}>
                 {/* Header */}
                 <CreateScreenHeader
@@ -380,7 +368,7 @@ const CreateScreen = () => {
                     onAddLink={addLink}
                 />
             </View>
-        </Animated.View>
+        </View>
     );
 };
 
