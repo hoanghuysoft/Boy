@@ -1,0 +1,81 @@
+import { Ionicons } from "@expo/vector-icons";
+import React, { memo } from "react";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ThemeColors } from "../../context/ThemeContext";
+import { createStyles } from "./styles";
+
+// ============================================================================
+// ContentInput Component
+// ============================================================================
+
+interface ContentInputProps {
+    content: string;
+    onContentChange: (content: string) => void;
+    colors: ThemeColors;
+    common: any;
+    maxLength?: number;
+}
+
+export const ContentInput = memo(({
+    content,
+    onContentChange,
+    colors,
+    common,
+    maxLength = 2000,
+}: ContentInputProps) => (
+    <View style={createStyles.contentSection}>
+        <View style={styles.inputContainer}>
+            <TextInput
+                style={[
+                    common.body,
+                    createStyles.contentInput,
+                    styles.textInput,
+                    { color: colors.text },
+                ]}
+                placeholder="What's on your mind?"
+                placeholderTextColor={colors.muted}
+                value={content}
+                onChangeText={onContentChange}
+                multiline
+                maxLength={maxLength}
+            />
+            {content.length > 0 && (
+                <TouchableOpacity
+                    style={[styles.clearButton, { backgroundColor: colors.muted + "30" }]}
+                    onPress={() => onContentChange("")}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                    <Ionicons name="close" size={16} color={colors.muted} />
+                </TouchableOpacity>
+            )}
+        </View>
+        <Text style={[common.caption, createStyles.characterCount, { color: colors.muted }]}>
+            {content.length}/{maxLength}
+        </Text>
+    </View>
+));
+
+ContentInput.displayName = "ContentInput";
+
+// ============================================================================
+// Styles
+// ============================================================================
+
+const styles = StyleSheet.create({
+    inputContainer: {
+        position: "relative",
+    },
+    textInput: {
+        paddingRight: 40,
+    },
+    clearButton: {
+        position: "absolute",
+        top: 12,
+        right: 8,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+});

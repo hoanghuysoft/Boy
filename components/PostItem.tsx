@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Linking, Text, TouchableOpacity, View } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAudioStore } from "../stores/audio";
 import { createCommonStyles } from "../styles/common";
 import CaptionText from "./CaptionText";
 import { PostMediaCarousel } from "./PostMediaCarousel";
@@ -19,9 +20,12 @@ import { PostMetaInfo } from "./PostMetaInfo";
 
 const FlashList = FlashListOriginal as any;
 
-import { useAudioStore } from "../stores/audio";
+interface PostItemProps {
+    post: Post;
+    onOptionsPress?: (post: Post) => void;
+}
 
-export const PostItem = ({ post }: { post: Post }) => {
+export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
     const router = useRouter();
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -98,7 +102,11 @@ export const PostItem = ({ post }: { post: Post }) => {
                         <PostMetaInfo post={post} />
                     </View>
                 </TouchableOpacity>
-                <TouchableOpacity hitSlop={10} style={{ backgroundColor: colors.card, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}>
+                <TouchableOpacity
+                    hitSlop={10}
+                    style={{ backgroundColor: colors.card, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
+                    onPress={() => onOptionsPress?.(post)}
+                >
                     <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
                 </TouchableOpacity>
             </View>

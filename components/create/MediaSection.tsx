@@ -1,0 +1,94 @@
+import { Ionicons } from "@expo/vector-icons";
+import { XmarkSolid } from "@lineiconshq/free-icons";
+import { Lineicons } from "@lineiconshq/react-native-lineicons";
+import React, { memo } from "react";
+import { FlatList, Image, Text, TouchableOpacity, View } from "react-native";
+import { ThemeColors } from "../../context/ThemeContext";
+import { createStyles } from "./styles";
+import { COLORS, SelectedMedia } from "./types";
+
+// ============================================================================
+// MediaThumbnail Component
+// ============================================================================
+
+interface MediaThumbnailProps {
+    media: SelectedMedia;
+    onRemove: () => void;
+    colors: ThemeColors;
+    uploadProgress?: number;
+}
+
+const MediaThumbnail = memo(({
+    media,
+    onRemove,
+    uploadProgress,
+}: MediaThumbnailProps) => (
+    <View style={createStyles.mediaThumbnailContainer}>
+        <Image source={{ uri: media.uri }} style={createStyles.mediaThumbnail} />
+        {media.isVideo && (
+            <View style={createStyles.videoIndicator}>
+                <Ionicons name="play" size={16} color="#fff" />
+            </View>
+        )}
+        {uploadProgress !== undefined && uploadProgress < 100 && (
+            <View style={[createStyles.uploadOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+                <Text style={createStyles.uploadProgressText}>{uploadProgress}%</Text>
+            </View>
+        )}
+        <TouchableOpacity
+            style={[createStyles.removeButton, { backgroundColor: COLORS.error }]}
+            onPress={onRemove}
+        >
+            <Lineicons icon={XmarkSolid} size={10} color="#fff" />
+        </TouchableOpacity>
+    </View>
+));
+
+MediaThumbnail.displayName = "MediaThumbnail";
+
+// ============================================================================
+// MediaSection Component
+// ============================================================================
+
+interface MediaSectionProps {
+    selectedMedia: SelectedMedia[];
+    uploadProgress: Record<number, number>;
+    colors: ThemeColors;
+    common: any;
+    onRemoveMedia: (index: number) => void;
+}
+
+export const MediaSection = memo(({
+    selectedMedia,
+    uploadProgress,
+    colors,
+    common,
+    onRemoveMedia,
+}: MediaSectionProps) => {
+    if (selectedMedia.length === 0) return null;
+
+    return (
+        <View style={createStyles.mediaSection}>
+            <Text style={[common.label, { color: colors.text, marginBottom: 12 }]}>
+                Media ({selectedMedia.length}/10)
+            </Text>
+            <FlatList
+                data={selectedMedia}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(_, index) => index.toString()}
+                renderItem={({ item, index }) => (
+                    <MediaThumbnail
+                        media={item}
+                        onRemove={() => onRemoveMedia(index)}
+                        colors={colors}
+                        uploadProgress={uploadProgress[index]}
+                    />
+                )}
+                contentContainerStyle={createStyles.mediaList}
+            />
+        </View>
+    );
+});
+
+MediaSection.displayName = "MediaSection";

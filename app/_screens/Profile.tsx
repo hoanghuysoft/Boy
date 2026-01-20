@@ -44,6 +44,7 @@ type TabType = "Images" | "Videos" | "Feed" | "Information";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
+import { PostOptionsSheet } from "@/components/post";
 import { useGalleryStore } from "../../stores/gallery";
 import { useScrollStore } from "../../stores/scroll";
 
@@ -250,6 +251,20 @@ const ProfileScreen = () => {
     if (hasNextWorkplaces && !isFetchingNextWorkplaces) fetchNextWorkplaces();
   }, [hasNextWorkplaces, isFetchingNextWorkplaces, fetchNextWorkplaces]);
 
+  const optionsSheetRef = useRef<TrueSheet>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const { data: myProfile } = useProfile('me', true);
+
+  const handlePostDeleted = useCallback(() => {
+    setSelectedPost(null);
+  }, []);
+
+  const handlePostOptionsPress = useCallback((post: Post) => {
+    setSelectedPost(post);
+    optionsSheetRef.current?.present();
+  }, []);
+
+
   // Grid Hooks
   const {
     gridData: imageData,
@@ -320,7 +335,7 @@ const ProfileScreen = () => {
       case "Videos":
         return renderVideoItem({ item, index, separators: {} as any });
       case "Feed":
-        return <PostItem post={item as Post} key={item.id} />;
+        return <PostItem post={item as Post} key={item.id} onOptionsPress={handlePostOptionsPress} />;
     }
   }, [activeTab, profile, renderImageItem, renderVideoItem]);
 
@@ -633,6 +648,12 @@ const ProfileScreen = () => {
         ref={workplaceSheetRef}
         data={workplaces}
         onEndReached={handleWorkplacesEndReached}
+      />
+      <PostOptionsSheet
+        ref={optionsSheetRef}
+        post={selectedPost}
+        currentProfileId={myProfile?.id || null}
+        onDeleted={handlePostDeleted}
       />
     </View>
   );

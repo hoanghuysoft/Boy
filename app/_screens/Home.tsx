@@ -4,15 +4,18 @@ import { Post } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
 import { Search1Outlined } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import GalleryPreview from 'react-native-gallery-preview';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GalleryOverlay } from '../../components/gallery/GalleryOverlay';
+import { PostOptionsSheet } from "../../components/post/PostOptionsSheet";
 import { PostItem } from "../../components/PostItem";
 import { ShimmerEffect } from "../../components/shimmer/Shimmer";
 import { useThemeContext } from "../../context/ThemeContext";
+import { useProfile } from "../../services/userprofile";
 import { createCommonStyles } from "../../styles/common";
 
 const FlashList = FlashListOriginal as any;
@@ -38,6 +41,13 @@ const HomeScreen = () => {
   const common = createCommonStyles(colors, typography);
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<"Following" | "Lucky" | "This Day">("Following");
+
+  // Current user profile
+  const { data: myProfile } = useProfile('me', true);
+
+  // Post options sheet
+  const optionsSheetRef = useRef<TrueSheet>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   // Global gallery state
   const { isVisible: galleryVisible, images: galleryImages, initialIndex: galleryIndex, closeGallery } = useGalleryStore();
@@ -170,8 +180,17 @@ const HomeScreen = () => {
     );
   };
 
+  const handlePostOptionsPress = useCallback((post: Post) => {
+    setSelectedPost(post);
+    optionsSheetRef.current?.present();
+  }, []);
+
+  const handlePostDeleted = useCallback(() => {
+    setSelectedPost(null);
+  }, []);
+
   const renderPost = (post: Post) => {
-    return <PostItem key={post.id} post={post} />;
+    return <PostItem key={post.id} post={post} onOptionsPress={handlePostOptionsPress} />;
   };
 
   // Scroll animation for floating header - using direction-based approach
@@ -475,6 +494,12 @@ const HomeScreen = () => {
             />
           );
         }}
+      />
+      <PostOptionsSheet
+        ref={optionsSheetRef}
+        post={selectedPost}
+        currentProfileId={myProfile?.id || null}
+        onDeleted={handlePostDeleted}
       />
     </>
   );

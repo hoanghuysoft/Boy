@@ -1,8 +1,8 @@
 import {
     Home2Outlined,
     Home2Solid,
-    PlusBulk,
-    PlusStroke,
+    PlusOutlined,
+    PlusSolid,
     Search1Outlined,
     Search1Solid,
     User4Outlined,
@@ -42,8 +42,8 @@ const tabs: TabConfig[] = [
     {
         name: "chat",
         label: "Create",
-        iconOutlined: PlusStroke,
-        iconSolid: PlusBulk,
+        iconOutlined: PlusOutlined,
+        iconSolid: PlusSolid,
     },
     {
         name: "profile",

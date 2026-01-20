@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { StatusBar, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
@@ -159,11 +160,13 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: clientPersister }}>
                 <SafeAreaProvider>
-                    <ThemeProvider>
-                        <StatusBarProvider>
-                            <RootContent fontsLoaded={fontsLoaded} />
-                        </StatusBarProvider>
-                    </ThemeProvider>
+                    <KeyboardProvider>
+                        <ThemeProvider>
+                            <StatusBarProvider>
+                                <RootContent fontsLoaded={fontsLoaded} />
+                            </StatusBarProvider>
+                        </ThemeProvider>
+                    </KeyboardProvider>
                 </SafeAreaProvider>
             </PersistQueryClientProvider>
         </GestureHandlerRootView>
