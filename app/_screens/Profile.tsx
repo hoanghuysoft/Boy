@@ -13,10 +13,8 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import GalleryPreview from 'react-native-gallery-preview';
 import { Snackbar } from 'react-native-paper';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { GalleryOverlay } from '../../components/gallery/GalleryOverlay';
 import { PostItem } from '../../components/PostItem';
 import InfoCard from '../../components/profile/InfoCard';
 import ProfileHeader, { COVER_HEIGHT } from '../../components/profile/ProfileHeader';
@@ -45,8 +43,12 @@ type TabType = "Images" | "Videos" | "Feed" | "Information";
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
 import { PostOptionsSheet } from "@/components/post";
-import { useGalleryStore } from "../../stores/gallery";
+import { GalleryModal } from "../../components/gallery/GalleryModal";
+import { ProfileGalleryModal } from "../../components/gallery/ProfileGalleryModal";
 import { useScrollStore } from "../../stores/scroll";
+
+// Custom FastImage component for GalleryPreview
+
 
 const ProfileScreen = () => {
   const router = useRouter();
@@ -150,9 +152,6 @@ const ProfileScreen = () => {
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-
-  // Global gallery store for feed posts
-  const { isVisible: feedGalleryVisible, images: feedGalleryImages, initialIndex: feedGalleryIndex, closeGallery: closeFeedGallery } = useGalleryStore();
 
   useEffect(() => {
     if (isProfileError) {
@@ -516,73 +515,17 @@ const ProfileScreen = () => {
       )}
       {renderImageQuickPreview()}
       {renderVideoQuickPreview()}
-      <GalleryPreview
-        isVisible={galleryVisible}
-        onRequestClose={() => setGalleryVisible(false)}
-        images={formattedImages}
+      <ProfileGalleryModal
+        visible={galleryVisible}
+        photos={photos}
+        music={music}
         initialIndex={galleryIndex}
-        OverlayComponent={(props) => (
-          <GalleryOverlay
-            {...props}
-            profileName={profile?.name}
-            caption={photos[props.currentImageIndex]?.caption ?? undefined}
-            showBottomBar={true}
-            showDownload={true}
-            onShare={() => { }}
-            onPoster={() => {
-              const currentPhoto = photos[props.currentImageIndex];
-              const currentMusic = music?.[0];
-              setGalleryVisible(false);
-              router.push({
-                pathname: '/image_poster',
-                params: {
-                  imageUrl: currentPhoto?.url,
-                  name: profile?.name || '',
-                  description: currentPhoto?.caption || '',
-                  musicUrl: currentMusic?.preview_url || '',
-                  musicTitle: currentMusic ? `${currentMusic.artist} - ${currentMusic.title}` : '',
-                }
-              });
-            }}
-            onDownload={() => { }}
-            isVerified={profile?.is_verified}
-          />
-        )}
+        onClose={() => setGalleryVisible(false)}
+        profileName={profile?.name}
+        isVerified={profile?.is_verified}
       />
       {/* Global gallery for feed posts */}
-      <GalleryPreview
-        isVisible={feedGalleryVisible}
-        onRequestClose={closeFeedGallery}
-        images={feedGalleryImages}
-        initialIndex={feedGalleryIndex}
-        OverlayComponent={(props) => {
-          const currentImage = feedGalleryImages[props.currentImageIndex];
-          return (
-            <GalleryOverlay
-              {...props}
-              profileName={currentImage?.profileName}
-              caption={currentImage?.caption ?? undefined}
-              showBottomBar={true}
-              showDownload={false}
-              onShare={() => { }}
-              onPoster={() => {
-                closeFeedGallery();
-                router.push({
-                  pathname: '/image_poster',
-                  params: {
-                    imageUrl: currentImage?.uri,
-                    name: currentImage?.profileName || '',
-                    description: currentImage?.caption || '',
-                    musicUrl: currentImage?.musicUrl || '',
-                    musicTitle: currentImage?.musicTitle || '',
-                  }
-                });
-              }}
-              isVerified={currentImage?.isVerified}
-            />
-          );
-        }}
-      />
+      <GalleryModal />
       {flatList}
 
       {/* Floating Scroll to Top Button - Only for non-owner view */}

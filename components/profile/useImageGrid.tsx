@@ -1,6 +1,6 @@
-import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
 
+import { FasterImageView } from '@rraut/react-native-faster-image';
 import * as Haptics from "expo-haptics";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -11,12 +11,16 @@ import {
     ViewStyle,
     useWindowDimensions
 } from "react-native";
+import TurboImage from "react-native-turbo-image";
 import { useThemeContext } from "../../context/ThemeContext";
-import { useVideoThumbnail } from "../../hooks/useVideoThumbnail";
 import { createCommonStyles } from "../../styles/common";
 import { Media } from "../../types/media";
 import { ShimmerEffect } from "../shimmer/Shimmer";
-import QuickPreviewModal, { precacheAspectRatio } from "./QuickPreviewModal";
+import QuickPreviewModal from "./QuickPreviewModal";
+
+// TurboImage cache policy - use dataCache for aggressive local caching
+// This ignores server cache-control headers and caches everything locally
+const IMAGE_CACHE_POLICY = "dataCache" as const;
 
 // Constants
 const SPACING = 2;
@@ -83,30 +87,19 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
     onLongPress,
     onPressOut,
 }) => {
-    // Use hook to get thumbnail - generates one if not available from API
-    const thumbnailUrl = useVideoThumbnail(
-        mediaItem.url,
-        mediaItem.thumbnail_url,
-        placeholderImageVideo
-    );
-
     return (
         <TouchableOpacity
             key={mediaItem.id}
             activeOpacity={0.7}
             onPress={onPress}
-            onLongPress={onLongPress}
-            onPressOut={onPressOut}
-            delayLongPress={300}
             style={[
                 videoStyle,
                 { marginRight, justifyContent: 'center', alignItems: 'center' }
             ]}
         >
-            <FastImage
-                source={{ uri: thumbnailUrl }}
+            <FasterImageView
+                source={{ uri: mediaItem.thumbnail_url || mediaItem.url, resizeMode: 'cover' }}
                 style={StyleSheet.absoluteFill}
-                resizeMode={FastImage.resizeMode.cover}
             />
             <View style={styles.overlay}>
                 <Ionicons name="play" size={24} color="white" />
@@ -169,7 +162,6 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
             height: itemWidth * 1.7,
             marginRight: SPACING,
             marginBottom: SPACING,
-            borderRadius: 5,
             backgroundColor: colors.card,
             overflow: 'hidden' as const,
         }),
@@ -177,7 +169,7 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
     );
 
 
-    // Process photos from profile data
+    // Process photos from profile data and prefetch images
     useEffect(() => {
         try {
             const mediaList = photos || [];
@@ -201,6 +193,12 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
 
             setSortedUrls(result.sortedUrls);
             setGridData(finalGridData);
+
+            // Prefetch images for faster grid loading
+            if (result.sortedUrls.length > 0) {
+                const urlsToPreload = result.sortedUrls.slice(0, 12); // Prefetch first 12 images
+                TurboImage.prefetch(urlsToPreload.map(uri => ({ uri })));
+            }
         } catch (error) {
             console.error("Error processing media:", error);
         }
@@ -241,15 +239,16 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
                     const isVideo = mediaItem.type.toLowerCase().includes('video');
                     const imageUrl = isVideo ? (mediaItem.thumbnail_url || mediaItem.url || placeholderImage) : mediaItem.url || placeholderImage;
                     const content = (
-                        <FastImage
+                        <TurboImage
                             key={mediaItem.id}
                             source={{ uri: imageUrl }}
                             style={[
                                 imageStyle,
                                 { marginRight: i === item.items.length - 1 ? 0 : SPACING }
                             ]}
-                            resizeMode={FastImage.resizeMode.cover}
-                            onLoad={(e) => precacheAspectRatio(imageUrl, e.nativeEvent.width, e.nativeEvent.height)}
+                            resizeMode="cover"
+                            cachePolicy={IMAGE_CACHE_POLICY}
+                            fadeDuration={150}
                         />
                     );
 

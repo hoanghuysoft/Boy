@@ -3,10 +3,15 @@ import VerifiedIcon from '@/icons/verified';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { GalleryOverlayProps } from 'react-native-gallery-preview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export interface GalleryOverlayConfig extends GalleryOverlayProps {
+export interface GalleryOverlayProps {
+    /** Current image index (0-based) */
+    currentIndex: number;
+    /** Total number of images */
+    totalCount: number;
+    /** Callback when close button is pressed */
+    onClose: () => void;
     /** Profile or author name to display at the bottom */
     profileName?: string;
     /** Caption for the current image */
@@ -19,14 +24,16 @@ export interface GalleryOverlayConfig extends GalleryOverlayProps {
     onShare?: () => void;
     /** Callback when download button is pressed */
     onDownload?: () => void;
+    /** Callback when poster button is pressed */
     onPoster?: () => void;
+    /** Whether the profile is verified */
     isVerified?: boolean;
 }
 
-export const GalleryOverlay: React.FC<GalleryOverlayConfig> = ({
+export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
+    currentIndex,
+    totalCount,
     onClose,
-    currentImageIndex,
-    imagesLength,
     profileName,
     caption,
     showBottomBar = true,
@@ -37,7 +44,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayConfig> = ({
     isVerified,
 }) => {
     const inset = useSafeAreaInsets();
-    const { colors, typography } = useThemeContext();
+    const { colors } = useThemeContext();
 
     return (
         <View style={styles.galleryOverlay} pointerEvents="box-none">
@@ -52,7 +59,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayConfig> = ({
 
                 <View style={styles.galleryPagination}>
                     <Text style={styles.galleryPaginationText}>
-                        {currentImageIndex + 1} / {imagesLength}
+                        {currentIndex + 1} / {totalCount}
                     </Text>
                 </View>
 
@@ -82,7 +89,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayConfig> = ({
                         </TouchableOpacity>
                     )}
                     {/* Placeholder to maintain spacing when no buttons */}
-                    {!onShare && !showDownload && <View style={styles.galleryButton} />}
+                    {!onShare && !showDownload && !onPoster && <View style={styles.galleryButton} />}
                 </View>
             </View>
 
@@ -93,7 +100,6 @@ export const GalleryOverlay: React.FC<GalleryOverlayConfig> = ({
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
                             <Text style={styles.galleryProfileName}>{profileName}</Text>
                             {isVerified && <VerifiedIcon size={18} backgroundColor={colors.verify} />}
-
                         </View>
                     )}
                     {caption && (

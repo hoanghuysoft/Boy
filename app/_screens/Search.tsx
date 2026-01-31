@@ -1,14 +1,12 @@
 import { ProfilesResponse, useInfiniteProfiles } from "@/services/userprofile";
 import { Profile } from "@/types/profile";
 import { calculateAge } from "@/utils/timeandage";
-import FastImage from "@d11/react-native-fast-image";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import { debounce, flatMap } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Animated,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -19,6 +17,11 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ShimmerEffect } from "../../components/shimmer/Shimmer";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -31,7 +34,21 @@ import { useRouter } from "expo-router";
 
 import VerifiedIcon from "@/icons/verified";
 import { queryClient } from "@/services/client";
+import TurboImage from "react-native-turbo-image";
 import { useScrollStore } from "../../stores/scroll";
+
+// TurboImage cache policy - use dataCache for aggressive local caching
+const IMAGE_CACHE_POLICY = "dataCache" as const;
+
+// Native spring config for smoother keyboard animations
+const KEYBOARD_SPRING_CONFIG = {
+  damping: 20,
+  stiffness: 200,
+  mass: 0.8,
+  overshootClamping: false,
+  restDisplacementThreshold: 0.01,
+  restSpeedThreshold: 0.01,
+};
 
 const SearchScreen = () => {
   const navigation = useRouter();
@@ -58,6 +75,19 @@ const SearchScreen = () => {
   const profiles = useMemo(() => {
     return flatMap(data?.pages, (page: ProfilesResponse) => page.data);
   }, [data]);
+
+  useEffect(() => {
+    if (profiles && profiles.length > 0) {
+      const avatarsToPreload = profiles
+        .slice(0, 20)
+        .filter(p => p.avatar_url)
+        .map(p => ({ uri: p.avatar_url }));
+
+      if (avatarsToPreload.length > 0) {
+        TurboImage.prefetch(avatarsToPreload);
+      }
+    }
+  }, [profiles]);
 
   const totalResults = useMemo(() => {
     if (!data?.pages?.length) return 0;
@@ -93,8 +123,8 @@ const SearchScreen = () => {
   }, [debouncedHandler]);
 
 
-  // Keyboard avoidance animation
-  const searchBarBottomOffset = useRef(new Animated.Value(0)).current;
+  // Native keyboard avoidance animation using Reanimated
+  const searchBarTranslateY = useSharedValue(0);
 
   // Bottom navigation spacing
   const bottomNavHeight = 67;
@@ -111,21 +141,12 @@ const SearchScreen = () => {
       const keyboardHeight = e.endCoordinates.height;
       const bottomNavSpace = bottomNavHeight + bottomNavMargin + insets.bottom;
       const offset = keyboardHeight - bottomNavSpace + 8; // 8px padding above keyboard
-      Animated.spring(searchBarBottomOffset, {
-        toValue: offset,
-        useNativeDriver: false,
-        friction: 8,
-        tension: 100,
-      }).start();
+      // Use negative translateY to move up (since we're using bottom positioning)
+      searchBarTranslateY.value = withSpring(-offset, KEYBOARD_SPRING_CONFIG);
     });
 
     const hideSubscription = Keyboard.addListener(keyboardWillHide, () => {
-      Animated.spring(searchBarBottomOffset, {
-        toValue: 0,
-        useNativeDriver: false,
-        friction: 8,
-        tension: 100,
-      }).start();
+      searchBarTranslateY.value = withSpring(0, KEYBOARD_SPRING_CONFIG);
     });
 
     return () => {
@@ -188,10 +209,12 @@ const SearchScreen = () => {
         activeOpacity={0.7}
         onPress={() => navigation.push({ pathname: '/profile/[id]', params: { id: item.id, isMe: 'false' } })}
       >
-        <FastImage
-          source={{ uri: item.avatar_url, }}
+        <TurboImage
+          source={{ uri: item.avatar_url }}
           style={styles.avatar}
-          resizeMode={FastImage.resizeMode.cover}
+          resizeMode="cover"
+          cachePolicy={IMAGE_CACHE_POLICY}
+          fadeDuration={100}
         />
         <View style={styles.profileInfo}>
           <View style={[common.row, { gap: 2 }]}>
@@ -223,10 +246,13 @@ const SearchScreen = () => {
     [colors, common]
   );
 
-  const animatedSearchBarBottom = Animated.add(
-    baseSearchBarBottom,
-    searchBarBottomOffset
-  );
+  // Native animated style - runs on UI thread
+  const animatedSearchBarStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ translateY: searchBarTranslateY.value }],
+    };
+  });
 
   const renderFooter = () => {
     if (!isFetchingNextPage) return null;
@@ -299,9 +325,8 @@ const SearchScreen = () => {
       <Animated.View
         style={[
           styles.searchBarContainer,
-          {
-            bottom: animatedSearchBarBottom,
-          },
+          { bottom: baseSearchBarBottom },
+          animatedSearchBarStyle,
         ]}
       >
         <View

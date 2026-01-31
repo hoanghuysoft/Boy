@@ -1,6 +1,5 @@
 import VerifiedIcon from '@/icons/verified';
 import { getTiktokProfile } from '@/services/tiktok';
-import FastImage from '@d11/react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
@@ -18,6 +17,7 @@ import {
     View
 } from "react-native";
 import { getColors } from 'react-native-image-colors';
+import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { ProfileAddress } from "../../types/profileaddress";
@@ -27,7 +27,6 @@ import { ProfileMusic } from "../../types/profilemusic";
 import { Workplace } from "../../types/profileworplace";
 import { TabPillGroup } from "../tabpill";
 import BirthdayCard from './BirthdayCard';
-
 
 const COVER_HEIGHT = 250;
 const { height } = Dimensions.get("window");
@@ -271,9 +270,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 {profile.bio}
                             </Text>
                         )}
-                        {/* <Button mode="contained" onPress={testTiktokProfile}>
-                            Chat
-                        </Button> */}
                         <ScrollView
                             style={{ marginTop: 16, marginHorizontal: -16 }}
                             contentContainerStyle={{ paddingHorizontal: 16 }}
@@ -290,10 +286,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     activeOpacity={0.9}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
-                                    <FastImage
+                                    <TurboImage
                                         source={{ uri: currentMusic.cover_url }}
                                         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-                                        resizeMode={FastImage.resizeMode.cover}
+                                        resizeMode='cover'
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                                     <TouchableOpacity onPress={toggleMusic} style={{ borderRadius: 999, padding: 6, backgroundColor: colors.card, justifyContent: "center", alignItems: "center", marginLeft: 8 }}>
@@ -314,10 +310,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     onPress={() => socialSheetRef?.current?.present()}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
-                                    <FastImage
+                                    <TurboImage
                                         source={{ uri: "https://womendobusiness.eu/wp-content/uploads/social-media.jpg", }}
                                         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-                                        resizeMode={FastImage.resizeMode.cover}
+                                        resizeMode='cover'
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                                     <Text numberOfLines={2} style={[common.label, { marginHorizontal: 10, flex: 1, color: 'white', textAlign: 'center' }]}>

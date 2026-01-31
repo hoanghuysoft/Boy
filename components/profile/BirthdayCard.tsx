@@ -1,5 +1,4 @@
 import { calculateAge, calculateDaysLeft } from '@/utils/timeandage';
-import FastImage from '@d11/react-native-fast-image';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -9,6 +8,7 @@ import Animated, {
     useSharedValue,
     withSpring
 } from 'react-native-reanimated';
+import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
 
@@ -70,10 +70,10 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
 
     return (
         <View style={styles.cardContainer}>
-            <FastImage
+            <TurboImage
                 source={{ uri: "https://www.kudoboard.com/cdn-cgi/image/fit%3Dcover%2Cformat%3Dwebp%2Cquality%3D85%2Cwidth%3D1830%2Cheight%3D1041%2Conerror%3Dredirect/wp-content/uploads/2023/10/hero-bg-occasion-birthday.jpg" }}
                 style={StyleSheet.absoluteFill}
-                resizeMode={FastImage.resizeMode.cover}
+                resizeMode="cover"
             />
             {/* Dark overlay */}
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />

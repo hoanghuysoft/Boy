@@ -1,17 +1,18 @@
-import { useVideoThumbnail } from "@/hooks/useVideoThumbnail";
 import PlayIcon from "@/icons/play";
 import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
-import { Ionicons } from "@expo/vector-icons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
-import { Blur, Canvas, Image as SkiaImage, useImage } from "@shopify/react-native-skia";
 import { useRouter } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Dimensions, TouchableOpacity, View } from "react-native";
+import TurboImage from "react-native-turbo-image";
 
 const FlashList = FlashListOriginal as any;
+
+// TurboImage cache policy - use dataCache for aggressive local caching
+const IMAGE_CACHE_POLICY = "dataCache" as const;
 
 interface PostMediaCarouselProps {
     media: Media[];
@@ -26,65 +27,6 @@ interface PostMediaCarouselProps {
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const ASPECT_RATIO = 3 / 4;
-
-// Skia Blur Overlay Component
-interface BlurOverlayProps {
-    imageUrl: string;
-    width: number;
-    height: number;
-    onReveal: () => void;
-}
-
-const BlurOverlay = ({ imageUrl, width, height, onReveal }: BlurOverlayProps) => {
-    const [isPreloaded, setIsPreloaded] = useState(false);
-    const image = useImage(imageUrl);
-    const isLoading = !image;
-
-    // Preload with FastImage first so Skia can use the disk cache
-    React.useEffect(() => {
-        if (imageUrl) {
-            FastImage.preload([{ uri: imageUrl }]);
-            // Give FastImage a moment to cache before Skia tries to load
-            const timeout = setTimeout(() => setIsPreloaded(true), 100);
-            return () => clearTimeout(timeout);
-        }
-    }, [imageUrl]);
-
-    return (
-        <TouchableOpacity
-            onPress={onReveal}
-            activeOpacity={1}
-            style={[StyleSheet.absoluteFill, { zIndex: 10 }]}
-        >
-            {/* Dark overlay shown while blur is loading */}
-            {isLoading && (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.95)' }]} />
-            )}
-            {/* Skia blur shown when image is ready */}
-            {image && (
-                <Canvas style={StyleSheet.absoluteFill}>
-                    <SkiaImage
-                        x={0}
-                        y={0}
-                        width={width}
-                        height={height}
-                        image={image}
-                        fit="cover"
-                    >
-                        <Blur blur={30} mode="clamp" />
-                    </SkiaImage>
-                </Canvas>
-            )}
-            <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: isLoading ? 'transparent' : 'rgba(0,0,0,0.3)' }]}>
-                <View style={{ alignItems: 'center', gap: 8 }}>
-                    <Ionicons name="eye-off-outline" size={32} color="white" />
-                    <Text style={{ color: 'white', fontWeight: '600' }}>Sensitive Content</Text>
-                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Tap to see</Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
-};
 
 // Video carousel item component - uses hook for thumbnail generation
 interface VideoCarouselItemProps {
@@ -108,13 +50,6 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
 }) => {
     const router = useRouter();
 
-    // Use hook to get thumbnail - generates one if not available from API
-    const thumbnailUrl = useVideoThumbnail(
-        item.url,
-        item.thumbnail_url,
-        placeholderImageVideo
-    );
-
     return (
         <View style={{ width: SCREEN_WIDTH }}>
             <TouchableOpacity
@@ -123,29 +58,16 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
                 style={{ width: '100%', aspectRatio: ASPECT_RATIO }}
             >
                 <FastImage
-                    source={{ uri: thumbnailUrl }}
-                    style={{ width: '100%', height: '100%', backgroundColor: colors.divider }}
+                    source={{ uri: item.thumbnail_url || item.url }}
+                    style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
                     resizeMode="cover"
-                >
-                    {shouldBlur && (
-                        <TouchableOpacity
-                            onPress={onReveal}
-                            activeOpacity={1}
-                            style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 10, justifyContent: 'center', alignItems: 'center' }]}
-                        >
-                            <View style={{ alignItems: 'center', gap: 8 }}>
-                                <Ionicons name="eye-off-outline" size={32} color="white" />
-                                <Text style={{ color: 'white', fontWeight: '600' }}>Sensitive Content</Text>
-                                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Tap to see</Text>
-                            </View>
-                        </TouchableOpacity>
-                    )}
-                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
-                        <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
-                            <PlayIcon size={24} color="#ffffff" style={{ marginLeft: 4 }} />
-                        </View>
+                    blurRadius={shouldBlur ? 10 : undefined}
+                />
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                    <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+                        <PlayIcon size={24} color="#ffffff" style={{ marginLeft: 4 }} />
                     </View>
-                </FastImage>
+                </View>
             </TouchableOpacity>
         </View>
     );
@@ -174,19 +96,14 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
     return (
         <View style={{ width: SCREEN_WIDTH }}>
             <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
-                <FastImage
+                <TurboImage
                     source={{ uri: item.url }}
-                    style={{ width: '100%', aspectRatio: ASPECT_RATIO, backgroundColor: colors.divider }}
-                    resizeMode={FastImage.resizeMode.cover}
+                    style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
+                    resizeMode="cover"
+                    blur={shouldBlur ? 10 : undefined}
+                    cachePolicy={IMAGE_CACHE_POLICY}
+                    fadeDuration={150}
                 />
-                {shouldBlur && (
-                    <BlurOverlay
-                        imageUrl={item.url}
-                        width={SCREEN_WIDTH}
-                        height={mediaHeight}
-                        onReveal={onReveal}
-                    />
-                )}
             </TouchableOpacity>
         </View>
     );
@@ -301,8 +218,8 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
     const mediaHeight = SCREEN_WIDTH / ASPECT_RATIO;
     const placeholderImageVideo = 'https://placehold.net/3-600x800.png';
 
-    // Prefetch all carousel images for smoother scrolling
-    React.useEffect(() => {
+    // Prefetch all carousel images for smoother scrolling using TurboImage
+    useEffect(() => {
         if (media && media.length > 0) {
             const imagesToPrefetch = media
                 .map(m => m.type === 'video' ? m.thumbnail_url : m.url)
@@ -310,7 +227,7 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
                 .map(uri => ({ uri: uri as string }));
 
             if (imagesToPrefetch.length > 0) {
-                FastImage.preload(imagesToPrefetch);
+                TurboImage.prefetch(imagesToPrefetch);
             }
         }
     }, [media]);

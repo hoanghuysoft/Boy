@@ -2,7 +2,7 @@
   "expo": {
     "name": "Boy",
     "slug": "Boy",
-    "version": "2026.1.20",
+    "version": "2026.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -65,7 +65,8 @@
             ]
           }
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -74,14 +75,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "dac8585b-45f2-4ae7-a3b5-adfc3b76af46"
+        "projectId": "ddac2295-af33-4e05-b689-6caa80c1d9d3"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/dac8585b-45f2-4ae7-a3b5-adfc3b76af46"
+      "url": "https://u.expo.dev/ddac2295-af33-4e05-b689-6caa80c1d9d3"
     }
   }
 }

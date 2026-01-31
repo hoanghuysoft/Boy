@@ -10,7 +10,6 @@ import {
 } from "@lineiconshq/free-icons";
 import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { BlurView } from "@sbaiahmed1/react-native-blur";
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -120,7 +119,7 @@ const AnimatedTabButton = ({
             style={[
                 styles.tabBarItem,
                 isFocused && {
-                    backgroundColor: colors.card,
+                    backgroundColor: colors.card + "CC",
                 },
             ]}
             onPress={() => {
@@ -176,12 +175,8 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
                 },
             ]}
         >
-            <BlurView
-                blurAmount={theme === "dark" ? 60 : 50}
-                blurType={theme === "dark" ? "dark" : "light"}
-                style={styles.blurContainer}
-            >
-                <View style={[styles.tabBarContent, { backgroundColor: colors.tabBar + "40" }]}>
+            <View style={styles.blurContainer}>
+                <View style={[styles.tabBarContent, { backgroundColor: colors.tabBar + "E6" }]}>
                     {state.routes.map((route, index) => {
                         const isFocused = state.index === index;
                         // Map route names to tab config
@@ -226,7 +221,7 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
                         );
                     })}
                 </View>
-            </BlurView>
+            </View>
         </View>
     );
 };

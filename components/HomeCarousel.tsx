@@ -184,11 +184,10 @@ const ColorGradientOverlay = memo(() => {
 });
 
 interface HomeCarouselProps {
-    isVisible?: boolean; // Control auto-scroll based on visibility
-    animatedVisibility?: Animated.Value; // Animated value for smooth show/hide
+    animatedVisibility?: Animated.Value; // Animated value for smooth show/hide and auto-scroll control
 }
 
-const HomeCarousel = memo(({ isVisible = true, animatedVisibility }: HomeCarouselProps) => {
+const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const { theme } = useThemeContext();
@@ -205,6 +204,8 @@ const HomeCarousel = memo(({ isVisible = true, animatedVisibility }: HomeCarouse
 
     // Track remaining indices for random non-repeating selection
     const remainingIndicesRef = useRef<number[]>([]);
+    const currentIndexRef = useRef(currentIndex);
+    currentIndexRef.current = currentIndex;
 
     // Function to get next random index without repeating
     const getNextRandomIndex = useCallback(() => {
@@ -214,7 +215,7 @@ const HomeCarousel = memo(({ isVisible = true, animatedVisibility }: HomeCarouse
         }
 
         // Remove current index from remaining if present (to avoid showing same image twice in a row)
-        const indicesToUse = _.without(remainingIndicesRef.current, currentIndex);
+        const indicesToUse = _.without(remainingIndicesRef.current, currentIndexRef.current);
         const finalIndices = indicesToUse.length > 0 ? indicesToUse : remainingIndicesRef.current;
 
         // Pick random index from remaining using lodash sample
@@ -224,30 +225,56 @@ const HomeCarousel = memo(({ isVisible = true, animatedVisibility }: HomeCarouse
         _.pull(remainingIndicesRef.current, nextIndex);
 
         return nextIndex;
-    }, [currentIndex, activeCarouselData.length]);
+    }, [activeCarouselData.length]); // Only depend on data length, use ref for currentIndex
 
-    // Auto-scroll effect - only runs when visible
+    // Track visibility via animated value listener (avoids re-renders from state)
+    const isVisibleRef = useRef(true);
+
+    // Single effect for auto-scroll management
     useEffect(() => {
-        if (!isVisible || activeCarouselData.length === 0) {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
-            return;
-        }
+        if (activeCarouselData.length === 0) return;
 
-        intervalRef.current = setInterval(() => {
-            const nextIndex = getNextRandomIndex();
-            setCurrentIndex(nextIndex);
-        }, AUTO_SCROLL_INTERVAL);
+        const startAutoScroll = () => {
+            if (intervalRef.current) return; // Already running
+            intervalRef.current = setInterval(() => {
+                const nextIndex = getNextRandomIndex();
+                setCurrentIndex(nextIndex);
+            }, AUTO_SCROLL_INTERVAL);
+        };
 
-        return () => {
+        const stopAutoScroll = () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
         };
-    }, [isVisible, getNextRandomIndex, activeCarouselData.length]);
+
+        // Start initially
+        startAutoScroll();
+
+        // Listen to visibility changes
+        let listenerId: string | undefined;
+        if (animatedVisibility) {
+            listenerId = animatedVisibility.addListener(({ value }) => {
+                const shouldBeVisible = value > 0.5;
+                if (isVisibleRef.current !== shouldBeVisible) {
+                    isVisibleRef.current = shouldBeVisible;
+                    if (shouldBeVisible) {
+                        startAutoScroll();
+                    } else {
+                        stopAutoScroll();
+                    }
+                }
+            });
+        }
+
+        return () => {
+            stopAutoScroll();
+            if (listenerId && animatedVisibility) {
+                animatedVisibility.removeListener(listenerId);
+            }
+        };
+    }, [activeCarouselData.length, animatedVisibility, getNextRandomIndex]); // Include getNextRandomIndex
 
     const animatedStyle = useMemo(() => {
         if (!animatedVisibility) return {};

@@ -1,10 +1,10 @@
-import FastImage from '@d11/react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo } from "react";
 import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileLink } from '../../../types/profilelink';
@@ -141,10 +141,10 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
                     const imageUrl = previewData?.image?.url;
 
                     const IconNode = imageUrl ? (
-                        <FastImage
+                        <TurboImage
                             source={{ uri: imageUrl }}
                             style={{ width: 48, height: 48, borderRadius: 999 }}
-                            resizeMode={FastImage.resizeMode.cover}
+                            resizeMode="cover"
                         />
                     ) : (
                         <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>

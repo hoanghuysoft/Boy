@@ -5,7 +5,7 @@ import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 
 interface CustomTopTabBarProps extends MaterialTopTabBarProps {
-    isAtTop: boolean;
+    tabBgOpacity: Animated.AnimatedInterpolation<string | number>; // Animated background opacity (inverse of carousel visibility)
     tabOpacity: Animated.Value;
 }
 
@@ -13,7 +13,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
     state,
     descriptors,
     navigation,
-    isAtTop,
+    tabBgOpacity,
     tabOpacity,
 }) => {
     const { colors, typography } = useThemeContext();
@@ -46,11 +46,17 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
         }}>
             <View
                 style={{
-                    backgroundColor: isAtTop ? 'transparent' : colors.background,
                     borderRadius: 999,
                     overflow: 'hidden',
                 }}
             >
+                <Animated.View
+                    style={{
+                        ...StyleSheet.absoluteFillObject,
+                        backgroundColor: colors.tabBar + "E6",
+                        opacity: tabBgOpacity,
+                    }}
+                />
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}

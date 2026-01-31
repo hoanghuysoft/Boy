@@ -3,9 +3,9 @@
  * Uses the /client endpoints which verify profile ownership
  */
 
+import { Link, Post } from '@/types/post';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
-import { Post, Link, Media as PostMedia } from '@/types/post';
 
 // ============================================================================
 // Types
@@ -94,9 +94,10 @@ export const useCreatePost = (profileId: string) => {
         mutationFn: (data: CreatePostInput) => createPost(profileId, data),
         onSuccess: () => {
             // Invalidate posts cache to refetch
-            queryClient.invalidateQueries({ queryKey: ['posts', profileId] });
-            queryClient.invalidateQueries({ queryKey: ['feed'] });
+            queryClient.invalidateQueries({ queryKey: ['profileFeed', profileId] });
+            queryClient.invalidateQueries({ queryKey: ['feed'], exact: false }); // Matches ['feed', mode]
             queryClient.invalidateQueries({ queryKey: ['profile', profileId] });
+            queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
         },
     });
 };
@@ -111,9 +112,11 @@ export const useDeletePost = (profileId: string) => {
         mutationFn: ({ postId, deleteMedia = false }: { postId: string; deleteMedia?: boolean }) =>
             deletePost(profileId, postId, deleteMedia),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['posts', profileId] });
-            queryClient.invalidateQueries({ queryKey: ['feed'] });
+            queryClient.invalidateQueries({ queryKey: ['profileFeed', profileId] });
+            queryClient.invalidateQueries({ queryKey: ['feed'], exact: false });
             queryClient.invalidateQueries({ queryKey: ['media', profileId] });
+            queryClient.invalidateQueries({ queryKey: ['profile', profileId] });
+            queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
         },
     });
 };

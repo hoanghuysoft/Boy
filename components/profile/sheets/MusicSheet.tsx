@@ -1,10 +1,10 @@
-import FastImage from '@d11/react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import React, { forwardRef, memo, useEffect, useState } from "react";
 import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileMusic } from '../../../types/profilemusic';
@@ -86,10 +86,10 @@ const MusicItem = memo(({
         >
             {/* Album Art & Play Overlay */}
             <View style={styles.artworkContainer}>
-                <FastImage
+                <TurboImage
                     source={{ uri: item.cover_url }}
                     style={styles.artwork}
-                    resizeMode={FastImage.resizeMode.cover}
+                    resizeMode="cover"
                 />
                 {/* Overlay */}
                 <View style={[StyleSheet.absoluteFill, styles.artworkOverlay]}>

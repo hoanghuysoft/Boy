@@ -4,13 +4,13 @@ import LikeIcon from "@/icons/like";
 import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
 import { Link, Post } from "@/types/post";
-import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import { useAudioPlayer } from "expo-audio";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Linking, Text, TouchableOpacity, View } from "react-native";
+import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../context/ThemeContext";
 import { useAudioStore } from "../stores/audio";
 import { createCommonStyles } from "../styles/common";
@@ -19,6 +19,9 @@ import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 
 const FlashList = FlashListOriginal as any;
+
+// TurboImage cache policy - use dataCache for aggressive local caching
+const IMAGE_CACHE_POLICY = "dataCache" as const;
 
 interface PostItemProps {
     post: Post;
@@ -93,7 +96,12 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
             {/* Header */}
             <View style={[common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
                 <TouchableOpacity onPress={() => router.push({ pathname: '/profile/[id]', params: { id: post.profile_id } })} style={[common.row, { gap: 12 }]}>
-                    <FastImage source={{ uri: post.profile_avatar }} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.divider }} />
+                    <TurboImage
+                        source={{ uri: post.profile_avatar }}
+                        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.divider }}
+                        cachePolicy={IMAGE_CACHE_POLICY}
+                        fadeDuration={100}
+                    />
                     <View>
                         <View style={[common.row, { gap: 2 }]}>
                             <Text style={[common.heading, { fontSize: 16 }]}>{post.profile_name}</Text>

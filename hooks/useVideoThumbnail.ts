@@ -8,6 +8,9 @@ const thumbnailCache = new Map<string, string>();
 // Track pending generations to avoid duplicate requests
 const pendingGenerations = new Map<string, Promise<string | null>>();
 
+// Track failed URLs to avoid retrying
+const failedUrls = new Set<string>();
+
 /**
  * Generate a thumbnail for a video URL with caching
  * Returns the cached/generated thumbnail or null if failed
@@ -19,19 +22,33 @@ export const generateVideoThumbnail = async (videoUrl: string): Promise<string |
         return cached;
     }
 
+    // Skip if previously failed
+    if (failedUrls.has(videoUrl)) {
+        return null;
+    }
+
     // Check if there's already a pending generation for this URL
     const pending = pendingGenerations.get(videoUrl);
     if (pending) {
         return pending;
     }
 
-    // Create new generation promise
+    // Create new generation promise with timeout
     const generationPromise = (async () => {
         try {
-            const { uri } = await VideoThumbnails.getThumbnailAsync(videoUrl, {
-                time: 1000, // Get thumbnail at 1 second
-                quality: 0.7, // Good quality but not too heavy
+            // Create a promise that rejects after timeout
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error('Thumbnail generation timeout')), 8000);
             });
+
+            // Race between thumbnail generation and timeout
+            const { uri } = await Promise.race([
+                VideoThumbnails.getThumbnailAsync(videoUrl, {
+                    time: 500, // Get thumbnail at 0.5 second (faster seek)
+                    quality: 0.5, // Lower quality for faster generation
+                }),
+                timeoutPromise
+            ]);
 
             // Cache the result
             thumbnailCache.set(videoUrl, uri);
@@ -40,6 +57,7 @@ export const generateVideoThumbnail = async (videoUrl: string): Promise<string |
         } catch (error) {
             console.warn('Failed to generate video thumbnail:', error);
             pendingGenerations.delete(videoUrl);
+            failedUrls.add(videoUrl); // Don't retry failed URLs
             return null;
         }
     })();

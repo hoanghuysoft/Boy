@@ -1,8 +1,9 @@
-import FastImage from "@d11/react-native-fast-image";
-import { BlurView } from "@sbaiahmed1/react-native-blur";
+
+import { FasterImageView } from "@rraut/react-native-faster-image";
 import React, { useEffect, useState } from "react";
-import { Dimensions, Modal, StyleSheet, View } from "react-native";
+import { Dimensions, Image, Modal, StyleSheet, View } from "react-native";
 import Animated, {
+    Easing,
     runOnJS,
     useAnimatedStyle,
     useSharedValue,
@@ -12,23 +13,27 @@ import Animated, {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-// Cache aspect ratios to avoid repeated network calls
-const aspectRatioCache = new Map<string, number>();
-
-// Pre-cache aspect ratio using dimensions from FastImage's onLoad event
-// This uses no extra bandwidth since FastImage already loaded the image
-export const precacheAspectRatio = (url: string, width: number, height: number) => {
-    if (!url || aspectRatioCache.has(url)) return;
-    if (width > 0 && height > 0) {
-        aspectRatioCache.set(url, width / height);
-    }
-};
-
 interface QuickPreviewModalProps {
     visible: boolean;
     imageUrl: string | null;
     onClose: () => void;
 }
+
+// Native spring config for smoother animations
+const SPRING_CONFIG = {
+    damping: 20,
+    stiffness: 300,
+    mass: 0.8,
+    overshootClamping: false,
+    restDisplacementThreshold: 0.01,
+    restSpeedThreshold: 0.01,
+};
+
+// Native timing config
+const TIMING_CONFIG = {
+    duration: 200,
+    easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+};
 
 const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
     visible,
@@ -36,21 +41,28 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
     onClose,
 }) => {
     const [mounted, setMounted] = useState(visible);
-    // Initialize with cached ratio if available
-    const [aspectRatio, setAspectRatio] = useState(() =>
-        imageUrl ? aspectRatioCache.get(imageUrl) ?? 1 : 1
-    );
+    const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
     const scale = useSharedValue(0.8);
     const opacity = useSharedValue(0);
+
+    // Compute aspect ratio from dimensions
+    const aspectRatio = dimensions ? dimensions.width / dimensions.height : 1;
 
     useEffect(() => {
         if (visible) {
             setMounted(true);
-            scale.value = withSpring(1, { damping: 15, stiffness: 150 });
-            opacity.value = withTiming(1, { duration: 200 });
+            scale.value = withSpring(1, SPRING_CONFIG);
+            opacity.value = withTiming(1, TIMING_CONFIG);
         } else {
-            scale.value = withTiming(0.8, { duration: 150 });
-            opacity.value = withTiming(0, { duration: 150 }, (finished) => {
+            scale.value = withTiming(0.8, {
+                duration: 150,
+                easing: Easing.out(Easing.cubic),
+            });
+            opacity.value = withTiming(0, {
+                duration: 150,
+                easing: Easing.out(Easing.cubic),
+            }, (finished) => {
+                'worklet';
                 if (finished) {
                     runOnJS(setMounted)(false);
                 }
@@ -58,26 +70,37 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
         }
     }, [visible]);
 
+    // Fetch image dimensions when imageUrl changes
     useEffect(() => {
         if (imageUrl) {
-            // Use cached ratio from FastImage's onLoad (populated by grid)
-            const cached = aspectRatioCache.get(imageUrl);
-            setAspectRatio(cached ?? 1);
+            setDimensions(null);
+            Image.getSize(
+                imageUrl,
+                (width, height) => setDimensions({ width, height }),
+                () => setDimensions(null)
+            );
+        } else {
+            setDimensions(null);
         }
     }, [imageUrl]);
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-        opacity: opacity.value,
-    }));
+    const animatedStyle = useAnimatedStyle(() => {
+        'worklet';
+        return {
+            transform: [{ scale: scale.value }],
+            opacity: opacity.value,
+        };
+    });
 
-    const backdropStyle = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-    }));
+    const backdropStyle = useAnimatedStyle(() => {
+        'worklet';
+        return {
+            opacity: opacity.value,
+        };
+    });
 
     if (!mounted && !visible) return null;
 
-    // Calculate dimensions based on aspect ratio and screen size
     const maxWidth = SCREEN_WIDTH * 0.9;
     const maxHeight = SCREEN_HEIGHT * 0.7;
 
@@ -97,24 +120,18 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
             onRequestClose={onClose}
         >
             <View style={styles.container}>
-                <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
-                    <BlurView
-                        style={StyleSheet.absoluteFill}
-                        blurType="dark"
-                        blurAmount={24}
-                    />
-                </Animated.View>
+                <Animated.View style={[styles.backdrop, backdropStyle]} />
 
-                <Animated.View style={[
-                    styles.imageContainer,
-                    { width: containerWidth, height: containerHeight },
-                    animatedStyle
-                ]}>
-                    <FastImage
-                        source={{ uri: imageUrl || "" }}
-                        style={styles.image}
-                        resizeMode={FastImage.resizeMode.cover}
-                    />
+                <Animated.View style={[styles.contentWrapper, animatedStyle]}>
+                    <View style={[
+                        styles.imageContainer,
+                        { width: containerWidth, height: containerHeight },
+                    ]}>
+                        <FasterImageView
+                            source={{ uri: imageUrl || "" }}
+                            style={styles.image}
+                        />
+                    </View>
                 </Animated.View>
             </View>
         </Modal>
@@ -125,6 +142,13 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: "center",
+        alignItems: "center",
+    },
+    backdrop: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: "rgba(0,0,0,0.85)",
+    },
+    contentWrapper: {
         alignItems: "center",
     },
     imageContainer: {
@@ -143,6 +167,7 @@ const styles = StyleSheet.create({
         width: "100%",
         height: "100%",
     },
+
 });
 
 export default QuickPreviewModal;
