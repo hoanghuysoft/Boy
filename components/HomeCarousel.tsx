@@ -1,6 +1,7 @@
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useCarouselQuery } from "@/services/carousel";
+import { useCarouselColorStore } from "@/stores/carouselColor";
 import { Canvas, ImageShader, Image as SkiaImage, LinearGradient as SkiaLinearGradient, useAnimatedImageValue, useImage, vec } from "@shopify/react-native-skia";
 import { LinearGradient } from "expo-linear-gradient";
 import _ from "lodash";
@@ -193,6 +194,9 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
     const { theme } = useThemeContext();
     const { data: carouselData = [] } = useCarouselQuery();
 
+    // Get the analyze function from the store
+    const analyzeImageLuminance = useCarouselColorStore(state => state.analyzeImageLuminance);
+
     // Filter to only include active carousel items
     const activeCarouselData = useMemo(
         () => carouselData.filter(item => item.is_active),
@@ -201,6 +205,13 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
 
     // Get current image URL for carousel and blur overlay
     const currentImageUrl = activeCarouselData[currentIndex]?.image_url;
+
+    // Analyze image luminance when current image changes
+    useEffect(() => {
+        if (currentImageUrl) {
+            analyzeImageLuminance(currentImageUrl);
+        }
+    }, [currentImageUrl, analyzeImageLuminance]);
 
     // Track remaining indices for random non-repeating selection
     const remainingIndicesRef = useRef<number[]>([]);
@@ -227,6 +238,10 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
         return nextIndex;
     }, [activeCarouselData.length]); // Only depend on data length, use ref for currentIndex
 
+    // Keep a stable ref to the function to avoid effect re-runs
+    const getNextRandomIndexRef = useRef(getNextRandomIndex);
+    getNextRandomIndexRef.current = getNextRandomIndex;
+
     // Track visibility via animated value listener (avoids re-renders from state)
     const isVisibleRef = useRef(true);
 
@@ -237,7 +252,7 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
         const startAutoScroll = () => {
             if (intervalRef.current) return; // Already running
             intervalRef.current = setInterval(() => {
-                const nextIndex = getNextRandomIndex();
+                const nextIndex = getNextRandomIndexRef.current();
                 setCurrentIndex(nextIndex);
             }, AUTO_SCROLL_INTERVAL);
         };
@@ -274,7 +289,7 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
                 animatedVisibility.removeListener(listenerId);
             }
         };
-    }, [activeCarouselData.length, animatedVisibility, getNextRandomIndex]); // Include getNextRandomIndex
+    }, [activeCarouselData.length, animatedVisibility]); // Removed getNextRandomIndex from deps
 
     const animatedStyle = useMemo(() => {
         if (!animatedVisibility) return {};

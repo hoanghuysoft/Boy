@@ -18,6 +18,7 @@ import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import { GlobalAudioPlayer } from "../components/GlobalAudioPlayer";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
 import { clientPersister, queryClient } from "../services/client";
@@ -141,6 +142,7 @@ const RootContent = ({ fontsLoaded }: { fontsLoaded: boolean }) => {
                 <Stack.Screen name='image_poster' options={{ headerShown: false }} />
                 <Stack.Screen name='settings' options={{ headerShown: false, animation: 'slide_from_bottom' }} />
             </Stack>
+            <GlobalAudioPlayer />
         </View>
     );
 };

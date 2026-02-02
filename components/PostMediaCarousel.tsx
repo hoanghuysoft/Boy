@@ -3,13 +3,11 @@ import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
-import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Dimensions, TouchableOpacity, View } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
 import TurboImage from "react-native-turbo-image";
-
-const FlashList = FlashListOriginal as any;
 
 // TurboImage cache policy - use dataCache for aggressive local caching
 const IMAGE_CACHE_POLICY = "dataCache" as const;
@@ -241,7 +239,6 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
     // Memoized renderItem
     const renderMediaItem = useCallback(({ item, index }: { item: Media, index: number }) => (
         <MediaCarouselItem
-            key={item.id}
             item={item}
             index={index}
             media={media}
@@ -260,12 +257,11 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
 
     return (
         <View style={{ marginBottom: 16 }}>
-            <FlashList
+            <FlatList
                 data={media}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
-                estimatedItemSize={SCREEN_WIDTH}
                 keyExtractor={keyExtractor}
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewabilityConfig}

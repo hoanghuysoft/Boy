@@ -5,11 +5,9 @@ import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
 import { Link, Post } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
-import { FlashList as FlashListOriginal } from "@shopify/flash-list";
-import { useAudioPlayer } from "expo-audio";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { Linking, Text, TouchableOpacity, View } from "react-native";
+import React from "react";
+import { Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../context/ThemeContext";
 import { useAudioStore } from "../stores/audio";
@@ -18,7 +16,6 @@ import CaptionText from "./CaptionText";
 import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 
-const FlashList = FlashListOriginal as any;
 
 // TurboImage cache policy - use dataCache for aggressive local caching
 const IMAGE_CACHE_POLICY = "dataCache" as const;
@@ -32,59 +29,24 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
     const router = useRouter();
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
-    const [isPlaying, setIsPlaying] = useState(false);
 
     // Global store for single play enforcement
-    const { currentlyPlayingId, setCurrentlyPlayingId } = useAudioStore();
+    const { currentlyPlayingId, setCurrentlyPlayingId, currentAudioUrl, setCurrentAudioUrl } = useAudioStore();
 
-    // Only initialize player if preview_url exists
-    const audioSource = post.music?.preview_url ? { uri: post.music.preview_url } : null;
-    const player = useAudioPlayer(audioSource);
-
-    // Sync player state with store
-    useEffect(() => {
-        if (!player) return;
-
-        // If another post started playing, pause this one
-        if (currentlyPlayingId !== post.id && isPlaying) {
-            player.pause();
-            setIsPlaying(false);
-        }
-    }, [currentlyPlayingId, player, post.id, isPlaying]);
-
-    useEffect(() => {
-        // Poll for playing state to keep UI in sync
-        const interval = setInterval(() => {
-            if (player) {
-                // If player finished naturally
-                if (player.playing !== isPlaying) {
-                    setIsPlaying(player.playing);
-                    if (!player.playing && currentlyPlayingId === post.id) {
-                        // Optional: reset store if needed, or keep it as 'last played'
-                    }
-                }
-            }
-        }, 500);
-        return () => clearInterval(interval);
-    }, [player, isPlaying, currentlyPlayingId, post.id]);
+    // Check if this post's music is currently playing
+    const isPlaying = currentlyPlayingId === post.id;
 
     const toggleMusic = () => {
-        if (!player) return;
+        if (!post.music?.preview_url) return;
 
-        if (player.playing) {
-            player.pause();
-            setIsPlaying(false);
+        if (isPlaying) {
+            // Stop playing
             setCurrentlyPlayingId(null);
+            setCurrentAudioUrl(null);
         } else {
-            // Set this as the currently playing ID BEFORE playing
+            // Start playing this post's music
             setCurrentlyPlayingId(post.id);
-
-            // Restart if near end
-            if (player.duration > 0 && Math.abs(player.currentTime - player.duration) < 0.5) {
-                player.seekTo(0);
-            }
-            player.play();
-            setIsPlaying(true);
+            setCurrentAudioUrl(post.music.preview_url);
         }
     };
 
@@ -95,7 +57,7 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
         <View style={{}}>
             {/* Header */}
             <View style={[common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <TouchableOpacity onPress={() => router.push({ pathname: '/profile/[id]', params: { id: post.profile_id } })} style={[common.row, { gap: 12 }]}>
+                <TouchableOpacity onPress={() => router.push({ pathname: '/profile/[id]', params: { id: post.profile_id } })} style={[common.row, { gap: 12, flex: 1 }]}>
                     <TurboImage
                         source={{ uri: post.profile_avatar }}
                         style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.divider }}
@@ -183,14 +145,14 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
             {/* Links */}
             {post.links && post.links.length > 0 && (
                 <View style={{ marginBottom: 12 }}>
-                    <FlashList
-                        data={post.links}
+                    <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        estimatedItemSize={120}
                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                        renderItem={({ item }: { item: Link }) => (
+                    >
+                        {post.links.map((item: Link, index: number) => (
                             <TouchableOpacity
+                                key={item.url || index}
                                 onPress={() => Linking.openURL(item.url)}
                                 style={{
                                     backgroundColor: colors.card,
@@ -211,8 +173,8 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
                                 </Text>
                                 <Ionicons name="open-outline" size={14} color={colors.muted} style={{ marginLeft: 4 }} />
                             </TouchableOpacity>
-                        )}
-                    />
+                        ))}
+                    </ScrollView>
                 </View>
             )}
 

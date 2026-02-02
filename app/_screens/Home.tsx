@@ -4,7 +4,7 @@ import Lineicons from "@lineiconshq/react-native-lineicons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { useRouter } from "expo-router";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PostOptionsSheet } from "../../components/post/PostOptionsSheet";
@@ -15,6 +15,7 @@ import { createCommonStyles } from "../../styles/common";
 import HomeCarousel from "@/components/HomeCarousel";
 import OptionModal from "@/components/HomeOptionModal";
 import SettingsIcon from "@/icons/settings";
+import { useCarouselColorStore } from "@/stores/carouselColor";
 import { useSettingsStore } from "@/stores/settings";
 import FastImage from "@d11/react-native-fast-image";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
@@ -64,13 +65,45 @@ const HomeScreen = () => {
   const optionsSheetRef = useRef<TrueSheet>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
-
+  // Carousel color store for dynamic icon/text colors
+  const { overlayColor, isUsingCarouselColor } = useCarouselColorStore();
 
   // Carousel settings
   const { showCarousel: carouselEnabled } = useSettingsStore();
   const isCarouselVisible = useRef(true); // Use ref instead of state
   const carouselVisibility = useRef(new Animated.Value(1)).current;
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Track if we should use carousel color (at top + carousel enabled + has color)
+  const [useCarouselColor, setUseCarouselColor] = useState(false);
+
+  // Listen to carousel visibility changes
+  useEffect(() => {
+    const listenerId = carouselVisibility.addListener(({ value }) => {
+      const shouldShow = value > 0.5;
+      setUseCarouselColor(shouldShow && carouselEnabled && isUsingCarouselColor);
+    });
+
+    return () => {
+      carouselVisibility.removeListener(listenerId);
+    };
+  }, [carouselVisibility, carouselEnabled, isUsingCarouselColor]);
+
+  // Update when carousel color changes
+  useEffect(() => {
+    if (isCarouselVisible.current && carouselEnabled && isUsingCarouselColor) {
+      setUseCarouselColor(true);
+    }
+  }, [isUsingCarouselColor, carouselEnabled]);
+
+  // Compute the icon color - simple: either carousel contrast color or theme color
+  const iconColor = useMemo(() => {
+    if (useCarouselColor) {
+      // Only pure black or white
+      return overlayColor === '#000000' ? '#000000' : '#FFFFFF';
+    }
+    return colors.text;
+  }, [useCarouselColor, overlayColor, colors.text]);
 
   // Scroll animation for floating header
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -138,8 +171,11 @@ const HomeScreen = () => {
         friction: 8,
         tension: 100,
       }).start();
+
+      // Update color usage based on carousel visibility
+      setUseCarouselColor(shouldShowCarousel && carouselEnabled && isUsingCarouselColor);
     }
-  }, []);
+  }, [carouselEnabled, isUsingCarouselColor]);
 
   const handlePostOptionsPress = useCallback((post: Post) => {
     setSelectedPost(post);
@@ -227,12 +263,12 @@ const HomeScreen = () => {
                 <Lineicons
                   icon={Search1Outlined}
                   size={24}
-                  color={colors.text}
+                  color={iconColor}
                   strokeWidth={3}
                 />
               </TouchableOpacity>
               <TouchableOpacity onPress={openModal}>
-                <SettingsIcon size={24} color={colors.text} />
+                <SettingsIcon size={24} color={iconColor} />
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -246,6 +282,7 @@ const HomeScreen = () => {
                 {...props}
                 tabBgOpacity={pillBgOpacity}
                 tabOpacity={tabOpacity}
+                iconColor={iconColor}
               />
             </View>
           )}

@@ -7,6 +7,7 @@ import { createCommonStyles } from "../../../styles/common";
 interface CustomTopTabBarProps extends MaterialTopTabBarProps {
     tabBgOpacity: Animated.AnimatedInterpolation<string | number>; // Animated background opacity (inverse of carousel visibility)
     tabOpacity: Animated.Value;
+    iconColor?: string; // Static color for labels (black/white or theme color)
 }
 
 const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
@@ -15,6 +16,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
     navigation,
     tabBgOpacity,
     tabOpacity,
+    iconColor,
 }) => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -85,6 +87,10 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                             }
                         };
 
+                        // Use provided iconColor if available, otherwise use theme colors
+                        // For focused: full opacity, for unfocused: reduced opacity
+                        const textColor = iconColor || (isFocused ? colors.text : colors.muted);
+
                         return (
                             <TouchableOpacity
                                 key={route.key}
@@ -97,8 +103,9 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                                     style={[
                                         common.label,
                                         {
-                                            color: isFocused ? colors.text : colors.muted,
+                                            color: textColor,
                                             fontWeight: isFocused ? "600" : "400",
+                                            opacity: isFocused ? 1 : 0.6,
                                         },
                                     ]}
                                 >
