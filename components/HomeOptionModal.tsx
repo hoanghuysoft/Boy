@@ -1,8 +1,7 @@
 import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
-import BlurView from "@sbaiahmed1/react-native-blur";
 import { router } from "expo-router";
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const OptionModal = ({ modalVisible, setModalVisible }: { modalVisible: boolean, setModalVisible: (visible: boolean) => void }) => {
     const { colors, typography, theme } = useThemeContext();
@@ -17,7 +16,7 @@ const OptionModal = ({ modalVisible, setModalVisible }: { modalVisible: boolean,
         >
             <Pressable style={styles.modalContainer} onPress={() => setModalVisible(false)}>
                 <Pressable onPress={(e) => e.stopPropagation()} style={styles.modalContent}>
-                    <BlurView blurAmount={theme === "dark" ? 80 : 100} blurType={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"} style={styles.blurView}>
+                    <View style={[styles.blurView, { backgroundColor: colors.containerContent }]}>
                         <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
                             <Text style={common.label}>Demo1aaaaaaaaa</Text>
                         </TouchableOpacity>
@@ -30,7 +29,7 @@ const OptionModal = ({ modalVisible, setModalVisible }: { modalVisible: boolean,
                         <TouchableOpacity style={styles.modalButton} onPress={() => { router.push('/settings'); setModalVisible(false) }}>
                             <Text style={common.label}>Settings</Text>
                         </TouchableOpacity>
-                    </BlurView>
+                    </View>
                 </Pressable>
             </Pressable>
         </Modal>

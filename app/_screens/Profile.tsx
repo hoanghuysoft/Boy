@@ -311,8 +311,11 @@ const ProfileScreen = () => {
       music={music}
       socialLinks={socialLinks}
       addresses={addresses}
+      imageCount={photosPaging?.pages[0]?.pagination?.total || 0}
+      videoCount={videosPaging?.pages[0]?.pagination?.total || 0}
+      postCount={feedPaging?.pages[0]?.pagination?.total || 0}
     />
-  ), [scrollY, activeTab, handleTabChange, profile, isMe, workplaces, music, socialLinks, addresses]);
+  ), [scrollY, activeTab, handleTabChange, profile, isMe, workplaces, music, socialLinks, addresses, photosPaging, videosPaging, feedPaging]);
 
   // Dynamic data based on tab
   const data = useMemo(() => {

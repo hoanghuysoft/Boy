@@ -90,7 +90,6 @@ export const createStyles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 999,
-        borderWidth: 1,
     },
     musicSearchInput: {
         flex: 1,
@@ -154,7 +153,6 @@ export const createStyles = StyleSheet.create({
         fontSize: 14,
         padding: 10,
         borderRadius: 8,
-        borderWidth: 1,
     },
     removeLinkButton: {
         width: 40,
@@ -190,9 +188,8 @@ export const createStyles = StyleSheet.create({
         alignItems: "center",
         gap: 4,
         paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingVertical: 6,
         borderRadius: 999,
-        borderWidth: 1,
     },
     optionBadgeText: {
         fontSize: 12,
@@ -223,7 +220,6 @@ export const createStyles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 999,
-        borderWidth: 1,
         marginBottom: 16,
     },
     locationInput: {

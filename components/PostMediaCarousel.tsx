@@ -59,7 +59,7 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
                     source={{ uri: item.thumbnail_url || item.url }}
                     style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
                     resizeMode="cover"
-                    blurRadius={shouldBlur ? 10 : undefined}
+                    blurRadius={shouldBlur ? 25 : undefined}
                 />
                 <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
                     <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
@@ -98,7 +98,7 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
                     source={{ uri: item.url }}
                     style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
                     resizeMode="cover"
-                    blur={shouldBlur ? 10 : undefined}
+                    blur={shouldBlur ? 25 : undefined}
                     cachePolicy={IMAGE_CACHE_POLICY}
                     fadeDuration={150}
                 />

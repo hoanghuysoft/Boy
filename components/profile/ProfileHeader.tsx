@@ -17,6 +17,7 @@ import {
     View
 } from "react-native";
 import { getColors } from 'react-native-image-colors';
+import { createMMKV } from 'react-native-mmkv';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -30,6 +31,7 @@ import BirthdayCard from './BirthdayCard';
 
 const COVER_HEIGHT = 250;
 const { height } = Dimensions.get("window");
+const storage = createMMKV();
 
 type TabType = "Information" | "Images" | "Videos" | "Feed";
 
@@ -52,6 +54,9 @@ interface ProfileHeaderProps {
     onSocialEndReached?: () => void;
     onAddressesEndReached?: () => void;
     onWorkplacesEndReached?: () => void;
+    imageCount?: number;
+    videoCount?: number;
+    postCount?: number;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
@@ -72,6 +77,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     onSocialEndReached,
     onAddressesEndReached,
     onWorkplacesEndReached,
+    imageCount = 0,
+    videoCount = 0,
+    postCount = 0,
 }) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -101,6 +109,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
 
         const extractColors = async () => {
             const imageSource = currentAvatar || PLACEHOLDER_COVER;
+            const cacheKey = `mesh_colors_${imageSource}`;
+
+            if (storage.contains(cacheKey)) {
+                const cachedColors = storage.getString(cacheKey);
+                if (cachedColors) {
+                    setGradientColors(JSON.parse(cachedColors));
+                    return;
+                }
+            }
+
             try {
                 const colorsData = await getColors(imageSource, {
                     fallback: '#3b5998',
@@ -140,6 +158,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                 extractedColors = extractedColors.slice(0, 4);
 
                 setGradientColors(extractedColors);
+                storage.set(cacheKey, JSON.stringify(extractedColors));
             } catch (error) {
                 console.error('Failed to extract colors:', error);
                 setGradientColors(['#667eea', '#764ba2', '#f093fb', '#f5576c']);
@@ -242,7 +261,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
             }}>
 
                 <View style={common.screenPadding}>
-                    <View style={[common.row, { marginTop: -55, gap: 5 }]}>
+                    <View style={[common.row, { marginTop: -55, gap: 12, alignItems: 'flex-end' }]}>
                         <Galeria urls={currentAvatar ? [currentAvatar] : []}>
                             <Galeria.Image>
                                 <Image
@@ -254,14 +273,29 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 />
                             </Galeria.Image>
                         </Galeria>
+                        <View style={{ flex: 1 }}>
+                            <View style={[common.row, { gap: 2 }]}>
+                                <Text style={[common.heading, { fontWeight: '700' }]}>{profile?.name || "Boy not found"}</Text>
+                                {profile?.is_verified && <VerifiedIcon size={18} backgroundColor={colors.verify} />}
+                            </View>
+                            <View style={[common.row, { gap: 6, marginTop: 2 }]}>
+                                <Text style={common.bodySmall}>
+                                    <Text style={{ fontWeight: '700' }}>{imageCount}</Text> imgs
+                                </Text>
+                                <Text style={[common.bodySmall, { color: colors.muted }]}>·</Text>
+                                <Text style={common.bodySmall}>
+                                    <Text style={{ fontWeight: '700' }}>{videoCount}</Text> vids
+                                </Text>
+                                <Text style={[common.bodySmall, { color: colors.muted }]}>·</Text>
+                                <Text style={common.bodySmall}>
+                                    <Text style={{ fontWeight: '700' }}>{postCount}</Text> posts
+                                </Text>
+                            </View>
+                        </View>
                     </View>
                     <View>
-                        <View style={[common.row, { gap: 2, marginTop: 8 }]}>
-                            <Text style={common.heading}>{profile?.name || "Boy not found"}</Text>
-                            {profile?.is_verified && <VerifiedIcon size={18} backgroundColor={colors.verify} />}
-                        </View>
                         {profile?.pronouns && (
-                            <Text style={[common.muted, { fontSize: 12 }]}>
+                            <Text style={[common.muted, { fontSize: 12, marginTop: 8 }]}>
                                 {profile.pronouns}
                             </Text>
                         )}
@@ -270,6 +304,74 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 {profile.bio}
                             </Text>
                         )}
+
+                        {(() => {
+                            const getRelationshipEmoji = (label: string) => {
+                                const l = label.toLowerCase();
+                                if (l.includes('father') || l.includes('dad')) return '👨';
+                                if (l.includes('mother') || l.includes('mom')) return '👩';
+                                if (l.includes('brother')) return '👦';
+                                if (l.includes('sister')) return '👧';
+                                if (l.includes('son')) return '👦';
+                                if (l.includes('daughter')) return '👧';
+                                if (l.includes('wife') || l.includes('husband') || l.includes('partner') || l.includes('married')) return '💍';
+                                return '❤️';
+                            };
+
+                            const parts: { icon?: string; emoji?: string; label: string }[] = [];
+
+                            // Career
+                            if (workplaces.length > 0) {
+                                parts.push({ icon: 'briefcase', label: `${workplaces[0].position} at ${workplaces[0].company_name}` });
+                            }
+
+                            // Hometown/Address
+                            const primaryAddress = addresses.find(a => a.is_primary) || addresses[0];
+                            const homeInfo = profile?.hometown || (primaryAddress ? `${primaryAddress.city}${primaryAddress.country ? `, ${primaryAddress.country}` : ''}` : null);
+                            if (homeInfo) {
+                                parts.push({ icon: 'location', label: homeInfo });
+                            }
+
+                            // Education
+                            if (profile?.college) {
+                                parts.push({ icon: 'school', label: profile.college });
+                            }
+                            if (profile?.highschool) {
+                                parts.push({ icon: 'school-outline', label: profile.highschool });
+                            }
+
+                            // Loved Ones
+                            if (profile?.loved_ones && profile.loved_ones.length > 0) {
+                                profile.loved_ones.forEach(person => {
+                                    parts.push({
+                                        emoji: getRelationshipEmoji(person.label),
+                                        label: `${person.label}: ${person.name}`
+                                    });
+                                });
+                            }
+
+                            if (parts.length === 0) return null;
+
+                            return (
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', paddingTop: 8, rowGap: 4 }}>
+                                    {parts.map((part, index) => (
+                                        <View key={index} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                {part.icon ? (
+                                                    <Ionicons name={part.icon as any} size={14} color={colors.text} style={{ marginRight: 4 }} />
+                                                ) : (
+                                                    <Text style={{ fontSize: 13, marginRight: 4 }}>{part.emoji}</Text>
+                                                )}
+                                                <Text style={[common.bodySmall, { fontWeight: '700' }]}>{part.label}</Text>
+                                            </View>
+                                            {index < parts.length - 1 && (
+                                                <Text style={[common.bodySmall, { color: colors.muted, marginHorizontal: 6 }]}>·</Text>
+                                            )}
+                                        </View>
+                                    ))}
+                                </View>
+                            );
+                        })()}
                         <ScrollView
                             style={{ marginTop: 16, marginHorizontal: -16 }}
                             contentContainerStyle={{ paddingHorizontal: 16 }}

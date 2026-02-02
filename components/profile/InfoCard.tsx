@@ -134,8 +134,95 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                 </>
             )}
 
+            {/* Username */}
+            {profile?.username && (
+                <>
+                    <View style={common.divider} />
+                    <Text style={[common.muted]}>Username</Text>
+                    <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
+                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                            @{profile.username}
+                        </Text>
+                        <Ionicons name="at-circle-outline" size={22} color={colors.text} />
+                    </View>
+                </>
+            )}
+
+            {/* License Plate */}
+            {profile?.license_plate && (
+                <>
+                    <View style={common.divider} />
+                    <Text style={[common.muted]}>License Plate</Text>
+                    <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
+                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                            {profile.license_plate}
+                        </Text>
+                        <Ionicons name="card-outline" size={22} color={colors.text} />
+                    </View>
+                </>
+            )}
+
+            {/* Married Date */}
+            {profile?.married_date && (
+                <>
+                    <View style={common.divider} />
+                    <Text style={[common.muted]}>Married Date</Text>
+                    <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
+                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                            {formatBirthday(profile.married_date)}
+                        </Text>
+                        <Ionicons name="heart-outline" size={22} color={colors.text} />
+                    </View>
+                </>
+            )}
+
+            {/* Hobby */}
+            {profile?.hobby && (
+                <>
+                    <View style={common.divider} />
+                    <Text style={[common.muted]}>Hobby</Text>
+                    <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
+                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                            {profile.hobby}
+                        </Text>
+                        <Ionicons name="extension-puzzle-outline" size={22} color={colors.text} />
+                    </View>
+                </>
+            )}
+
+            {/* Talent */}
+            {profile?.talent && (
+                <>
+                    <View style={common.divider} />
+                    <Text style={[common.muted]}>Talent</Text>
+                    <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
+                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                            {profile.talent}
+                        </Text>
+                        <Ionicons name="star-outline" size={22} color={colors.text} />
+                    </View>
+                </>
+            )}
+
+            {/* Loved Ones */}
+            {profile?.loved_ones && profile.loved_ones.length > 0 && (
+                <>
+                    <View style={common.divider} />
+                    <Text style={[common.muted]}>Loved Ones</Text>
+                    <View style={{ gap: 4, marginTop: 4 }}>
+                        {profile.loved_ones.map((person, index) => (
+                            <View key={index} style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
+                                <Text style={[common.body, { flex: 1 }]}>
+                                    <Text style={{ fontWeight: '600' }}>{person.label}:</Text> {person.name}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
+                </>
+            )}
+
             {/* Show message if no info available */}
-            {!profile?.gender && !profile?.birthday && !profile?.hometown && !profile?.college && !profile?.highschool && (
+            {!profile?.gender && !profile?.birthday && !profile?.hometown && !profile?.college && !profile?.highschool && !profile?.username && !profile?.hobby && !profile?.talent && !profile?.license_plate && !profile?.married_date && !profile?.loved_ones?.length && (
                 <>
                     <View style={common.divider} />
                     <Text style={[common.muted, { textAlign: 'center', marginTop: 8 }]}>

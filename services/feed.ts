@@ -31,6 +31,7 @@ export const getProfileFeed = async ({
 }): Promise<PostResponse> => {
   const params: Record<string, any> = { limit };
   if (cursor) params.cursor = cursor;
+  params.showAdult = true;
 
   const response = await client.get<PostResponse>(`/api/profiles/${profileId}/posts`, {
     params,

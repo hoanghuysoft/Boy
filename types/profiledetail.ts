@@ -1,6 +1,6 @@
 export interface ProfileDetail {
     id: string;
-    user_id: string;
+    user_id: string | null;
     name: string;
     email: string | null;
     phone: string | null;
@@ -18,6 +18,14 @@ export interface ProfileDetail {
     hometown: string | null;
     is_admin: boolean;
     is_verified: boolean;
+    license_plate: string | null;
+    loved_ones: { name: string; label: string; }[] | null;
+    married_date: string | null;
+    hobby: string | null;
+    talent: string | null;
+    username: string | null;
+    metadata: string | null;
+    is_confidential: boolean;
 }
 
 
