@@ -7,7 +7,7 @@ import { Link, Post } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../context/ThemeContext";
 import { useAudioStore } from "../stores/audio";
@@ -65,9 +65,9 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
                         fadeDuration={100}
                     />
                     <View>
-                        <View style={[common.row, { gap: 2 }]}>
+                        <View style={[common.row, { gap: 4 }]}>
                             <Text style={[common.heading, { fontSize: 16 }]}>{post.profile_name}</Text>
-                            {post.profile_is_verified && <VerifiedIcon size={16} backgroundColor={colors.verify} />}
+                            {post.profile_is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
                         </View>
                         <PostMetaInfo post={post} />
                     </View>
@@ -118,6 +118,10 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
                     </TouchableOpacity>
                 )}
             </View>
+            {/* Invisible Spacer for No-Media Posts */}
+            {!hasMedia && (
+                <View style={{ width: Dimensions.get("window").width, height: 1 }} />
+            )}
 
             {/* Audio Button for No-Media Posts */}
             {!hasMedia && hasMusic && (

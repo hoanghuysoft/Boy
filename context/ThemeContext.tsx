@@ -60,12 +60,18 @@ const getSystemTheme = (): ThemeMode => {
   return Appearance.getColorScheme() === "dark" ? "dark" : "light";
 };
 
+const getAdaptiveTheme = (): ThemeMode => {
+  const hours = new Date().getHours();
+  return (hours >= 6 && hours < 18) ? "light" : "dark";
+};
+
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   // Use persisted settings store for theme preference
   const { themePreference, setThemePreference } = useSettingsStore();
   const [systemTheme, setSystemTheme] = useState<ThemeMode>(getSystemTheme());
+  const [adaptiveTheme, setAdaptiveTheme] = useState<ThemeMode>(getAdaptiveTheme());
   const [typographyScale, setTypographyScale] = useState<TypographyScale>("m3");
 
   // Listen for system theme changes
@@ -76,8 +82,26 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.remove();
   }, []);
 
+  // Check time for adaptive theme
+  useEffect(() => {
+    if (themePreference !== 'adaptive') return;
+
+    // Initial check
+    setAdaptiveTheme(getAdaptiveTheme());
+
+    // Check every minute
+    const interval = setInterval(() => {
+      setAdaptiveTheme(getAdaptiveTheme());
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [themePreference]);
+
   // Derive the actual theme from preference
-  const theme: ThemeMode = themePreference === "system" ? systemTheme : themePreference;
+  const theme: ThemeMode =
+    themePreference === "system" ? systemTheme :
+      themePreference === "adaptive" ? adaptiveTheme :
+        themePreference;
 
   const toggleTheme = () => {
     // Toggle between light and dark (not system)

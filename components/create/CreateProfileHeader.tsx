@@ -1,3 +1,4 @@
+import VerifiedIcon from "@/icons/verified";
 import { Ionicons } from "@expo/vector-icons";
 import React, { memo } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
@@ -88,13 +89,16 @@ export const CreateProfileHeader = memo(({
 }: CreateProfileHeaderProps) => (
     <View style={createStyles.profileRow}>
         <Image
-            source={{ uri: profile.avatar_url }}
+            source={{ uri: profile.avatar_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
             style={[createStyles.profileAvatar]}
         />
         <View>
-            <Text style={[common.subheading, { color: colors.text, fontWeight: "600" }]}>
-                {profile.name}
-            </Text>
+            <View style={[common.row, { gap: 4 }]}>
+                <Text style={[common.subheading, { color: colors.text }]} numberOfLines={1}>
+                    {profile.name}
+                </Text>
+                {profile.is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
+            </View>
             <View style={createStyles.postOptionsRow}>
                 <PostOptionBadge
                     icon="eye-off-outline"

@@ -30,6 +30,12 @@ const themeOptions: ThemeOption[] = [
         label: "System",
         description: "Follow device settings",
         icon: "phone-portrait-outline"
+    },
+    {
+        id: "adaptive",
+        label: "Adaptive",
+        description: "Change theme based on sunset and sunrise",
+        icon: "time-outline"
     }
 ];
 

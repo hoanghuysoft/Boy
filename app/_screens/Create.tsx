@@ -1,5 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormikHelpers, useFormik } from "formik";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     Alert,
     NativeScrollEvent,
@@ -8,6 +9,7 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Yup from "yup";
 
 // Components
 import {
@@ -34,6 +36,50 @@ import { createCommonStyles } from "../../styles/common";
 import { Link } from "../../types/post";
 
 // ============================================================================
+// Form Types & Validation Schema
+// ============================================================================
+
+interface CreatePostFormValues {
+    content: string;
+    location: string;
+    selectedMedia: SelectedMedia[];
+    links: Link[];
+    isGhost: boolean;
+    isAdult: boolean;
+    selectedTrack: DeezerTrack | null;
+}
+
+const createPostValidationSchema = Yup.object().shape({
+    content: Yup.string().max(2000, "Content is too long (max 2000 characters)"),
+    location: Yup.string().max(200, "Location is too long (max 200 characters)"),
+    selectedMedia: Yup.array(),
+    links: Yup.array().of(
+        Yup.object().shape({
+            label: Yup.string().when('url', {
+                is: (url: string) => url && url.trim().length > 0,
+                then: (schema) => schema.required("Link label is required when URL is provided"),
+                otherwise: (schema) => schema,
+            }),
+            url: Yup.string().when('label', {
+                is: (label: string) => label && label.trim().length > 0,
+                then: (schema) => schema.required("URL is required when label is provided").url("Please enter a valid URL"),
+                otherwise: (schema) => schema,
+            }),
+        }, [['label', 'url']])
+    ),
+    isGhost: Yup.boolean(),
+    isAdult: Yup.boolean(),
+    selectedTrack: Yup.object().nullable(),
+}).test(
+    'content-or-media-required',
+    'Please add some content or media to your post',
+    function (values) {
+        const { content, selectedMedia } = values;
+        return (content && content.trim().length > 0) || (selectedMedia && selectedMedia.length > 0);
+    }
+);
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -51,23 +97,15 @@ const CreateScreen = () => {
     const createPostMutation = useCreatePost(profileId);
     const uploadMediaMutation = useUploadMultipleMedia(profileId);
 
-    // Form State
-    const [content, setContent] = useState("");
-    const [location, setLocation] = useState("");
-    const [selectedMedia, setSelectedMedia] = useState<SelectedMedia[]>([]);
+    // Upload progress (not part of form values)
     const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
-    const [links, setLinks] = useState<Link[]>([]);
-    const [isGhost, setIsGhost] = useState(false);
-    const [isAdult, setIsAdult] = useState(false);
 
-    // Music State
+    // Music State (search query is UI state, not form value)
     const [musicSearchQuery, setMusicSearchQuery] = useState("");
-    const [selectedTrack, setSelectedTrack] = useState<DeezerTrack | null>(null);
     const [showMusicSearch, setShowMusicSearch] = useState(false);
     const { data: musicResults, isLoading: isMusicLoading } = useDeezerSearch(musicSearchQuery, 10);
 
     // UI State
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [showLocationInput, setShowLocationInput] = useState(false);
     const [showActionBar, setShowActionBar] = useState(true);
@@ -76,12 +114,131 @@ const CreateScreen = () => {
     const scrollContentHeight = useRef(0);
     const scrollViewHeight = useRef(0);
 
+    // ============================================================================
+    // Formik Setup
+    // ============================================================================
+
+    const formik = useFormik<CreatePostFormValues>({
+        initialValues: {
+            content: "",
+            location: "",
+            selectedMedia: [],
+            links: [],
+            isGhost: false,
+            isAdult: false,
+            selectedTrack: null,
+        },
+        validationSchema: createPostValidationSchema,
+        validateOnChange: false,
+        validateOnBlur: true,
+        onSubmit: async (values: CreatePostFormValues, { resetForm: formikResetForm }: FormikHelpers<CreatePostFormValues>) => {
+            if (!profileId) {
+                Alert.alert("Error", "Profile not loaded. Please try again.");
+                return;
+            }
+
+            try {
+                let mediaIds: string[] = [];
+
+                // Upload media first if any
+                if (values.selectedMedia.length > 0) {
+                    const files: FileAsset[] = values.selectedMedia.map((media) => ({
+                        uri: media.uri,
+                        name: media.name,
+                        type: media.type,
+                        fileSize: media.fileSize,
+                    }));
+
+                    const uploadedMedia = await uploadMediaMutation.mutateAsync({
+                        files,
+                        onFileProgress: (index, progress) => {
+                            setUploadProgress((prev) => ({ ...prev, [index]: progress }));
+                        },
+                        onFileComplete: (index: number, _media: unknown) => {
+                            setUploadProgress((prev) => ({ ...prev, [index]: 100 }));
+                        },
+                    });
+
+                    mediaIds = uploadedMedia.map((m) => m.id);
+                }
+
+                // Create post with validated links
+                const validLinks = values.links.filter((link: Link) => link.url.trim() && link.label.trim());
+
+                const postData: CreatePostInput = {
+                    content: values.content.trim() || undefined,
+                    location: values.location.trim() || undefined,
+                    deezer_id: values.selectedTrack?.deezer_id,
+                    links: validLinks.length > 0 ? validLinks : undefined,
+                    is_ghost: values.isGhost,
+                    is_adult: values.isAdult,
+                    media_ids: mediaIds.length > 0 ? mediaIds : undefined,
+                };
+
+                await createPostMutation.mutateAsync(postData);
+
+                Alert.alert("Success", "Your post has been created!", [
+                    {
+                        text: "OK",
+                        onPress: () => {
+                            formikResetForm();
+                            resetUIState();
+                        }
+                    }
+                ]);
+            } catch (error: any) {
+                console.error("Error creating post:", error);
+                Alert.alert("Error", error.message || "Failed to create post. Please try again.");
+            }
+        },
+    });
+
+    const { values, errors, isSubmitting, handleSubmit, setFieldValue, resetForm: formikResetForm } = formik;
+
+    // ============================================================================
+    // Helper Functions
+    // ============================================================================
+
+    const resetUIState = useCallback(() => {
+        setUploadProgress({});
+        setMusicSearchQuery("");
+        setShowMusicSearch(false);
+        setShowLinkInput(false);
+        setShowLocationInput(false);
+        setShowActionBar(true);
+    }, []);
+
+    const resetForm = useCallback(() => {
+        formikResetForm();
+        resetUIState();
+    }, [formikResetForm, resetUIState]);
+
     // Reset form when navigate to this screen
     useEffect(() => {
         if (trigger > 0) {
             resetForm();
         }
-    }, [trigger]);
+    }, [trigger, resetForm]);
+
+    // Custom submit handler that validates first and shows errors
+    const onSubmitPress = useCallback(async () => {
+        try {
+            // Validate the form using Yup schema
+            await createPostValidationSchema.validate(values, { abortEarly: false });
+            // If validation passes, call Formik's handleSubmit
+            handleSubmit();
+        } catch (validationError: any) {
+            // Handle Yup validation error
+            if (validationError.inner && validationError.inner.length > 0) {
+                // Get all field-level errors
+                const errorMessages = validationError.inner.map((err: any) => err.message).join('\n');
+                Alert.alert("Cannot create your post", errorMessages);
+            } else if (validationError.message) {
+                // Form-level error (like from .test())
+                Alert.alert("Cannot create your post", validationError.message);
+            }
+        }
+    }, [values, handleSubmit]);
 
     // ============================================================================
     // Handlers
@@ -111,149 +268,89 @@ const CreateScreen = () => {
             return;
         }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images', 'videos'],
-            allowsMultipleSelection: true,
-            quality: 0.8,
-            selectionLimit: 10 - selectedMedia.length,
-        });
+        // Small delay to ensure Android ActivityResultLauncher is registered
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        if (!result.canceled && result.assets) {
-            const newMedia: SelectedMedia[] = result.assets.map((asset) => ({
-                uri: asset.uri,
-                name: asset.fileName || `media_${Date.now()}`,
-                type: asset.mimeType || (asset.type === "video" ? "video/mp4" : "image/jpeg"),
-                fileSize: asset.fileSize,
-                isVideo: asset.type === "video",
-            }));
-            setSelectedMedia((prev) => [...prev, ...newMedia].slice(0, 10));
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images', 'videos'],
+                allowsMultipleSelection: true,
+                quality: 0.8,
+                selectionLimit: 10 - values.selectedMedia.length,
+            });
+
+            if (!result.canceled && result.assets) {
+                const newMedia: SelectedMedia[] = result.assets.map((asset) => ({
+                    uri: asset.uri,
+                    name: asset.fileName || `media_${Date.now()}`,
+                    type: asset.mimeType || (asset.type === "video" ? "video/mp4" : "image/jpeg"),
+                    fileSize: asset.fileSize,
+                    isVideo: asset.type === "video",
+                }));
+                setFieldValue('selectedMedia', [...values.selectedMedia, ...newMedia].slice(0, 10));
+            }
+        } catch (error: any) {
+            console.error("Error picking media:", error);
+            // Retry once after a longer delay if it fails
+            if (error.message?.includes('unregistered')) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                try {
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ['images', 'videos'],
+                        allowsMultipleSelection: true,
+                        quality: 0.8,
+                        selectionLimit: 10 - values.selectedMedia.length,
+                    });
+
+                    if (!result.canceled && result.assets) {
+                        const newMedia: SelectedMedia[] = result.assets.map((asset) => ({
+                            uri: asset.uri,
+                            name: asset.fileName || `media_${Date.now()}`,
+                            type: asset.mimeType || (asset.type === "video" ? "video/mp4" : "image/jpeg"),
+                            fileSize: asset.fileSize,
+                            isVideo: asset.type === "video",
+                        }));
+                        setFieldValue('selectedMedia', [...values.selectedMedia, ...newMedia].slice(0, 10));
+                    }
+                } catch (retryError) {
+                    Alert.alert("Error", "Failed to open media picker. Please try again.");
+                }
+            }
         }
-    }, [selectedMedia.length]);
+    }, [values.selectedMedia, setFieldValue]);
 
     const removeMedia = useCallback((index: number) => {
-        setSelectedMedia((prev) => prev.filter((_, i) => i !== index));
+        setFieldValue('selectedMedia', values.selectedMedia.filter((_: SelectedMedia, i: number) => i !== index));
         setUploadProgress((prev) => {
             const newProgress = { ...prev };
             delete newProgress[index];
             return newProgress;
         });
-    }, []);
+    }, [values.selectedMedia, setFieldValue]);
 
     const addLink = useCallback(() => {
-        setLinks((prev) => [...prev, { label: "", url: "" }]);
+        setFieldValue('links', [...values.links, { label: "", url: "" }]);
         setShowLinkInput(true);
-    }, []);
+    }, [values.links, setFieldValue]);
 
     const updateLink = useCallback((index: number, field: keyof Link, value: string) => {
-        setLinks((prev) =>
-            prev.map((link, i) => (i === index ? { ...link, [field]: value } : link))
+        const updatedLinks = values.links.map((link: Link, i: number) =>
+            i === index ? { ...link, [field]: value } : link
         );
-    }, []);
+        setFieldValue('links', updatedLinks);
+    }, [values.links, setFieldValue]);
 
     const removeLink = useCallback((index: number) => {
-        setLinks((prev) => prev.filter((_, i) => i !== index));
-        if (links.length === 1) setShowLinkInput(false);
-    }, [links.length]);
-
-    const resetForm = useCallback(() => {
-        setContent("");
-        setLocation("");
-        setSelectedMedia([]);
-        setUploadProgress({});
-        setLinks([]);
-        setIsGhost(false);
-        setIsAdult(false);
-        setSelectedTrack(null);
-        setMusicSearchQuery("");
-        setShowMusicSearch(false);
-        setShowLinkInput(false);
-        setShowLocationInput(false);
-        setShowActionBar(true);
-    }, []);
-
-    const handleSubmit = useCallback(async () => {
-        if (!profileId) {
-            Alert.alert("Error", "Profile not loaded. Please try again.");
-            return;
-        }
-
-        if (!content.trim() && selectedMedia.length === 0) {
-            Alert.alert("Error", "Please add some content or media to your post.");
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        try {
-            let mediaIds: string[] = [];
-
-            // Upload media first if any
-            if (selectedMedia.length > 0) {
-                const files: FileAsset[] = selectedMedia.map((media) => ({
-                    uri: media.uri,
-                    name: media.name,
-                    type: media.type,
-                    fileSize: media.fileSize,
-                }));
-
-                const uploadedMedia = await uploadMediaMutation.mutateAsync({
-                    files,
-                    onFileProgress: (index, progress) => {
-                        setUploadProgress((prev) => ({ ...prev, [index]: progress }));
-                    },
-                    onFileComplete: (index, media) => {
-                        setUploadProgress((prev) => ({ ...prev, [index]: 100 }));
-                    },
-                });
-
-                mediaIds = uploadedMedia.map((m) => m.id);
-            }
-
-            // Create post with validated links
-            const validLinks = links.filter((link) => link.url.trim() && link.label.trim());
-
-            const postData: CreatePostInput = {
-                content: content.trim() || undefined,
-                location: location.trim() || undefined,
-                deezer_id: selectedTrack?.deezer_id,
-                links: validLinks.length > 0 ? validLinks : undefined,
-                is_ghost: isGhost,
-                is_adult: isAdult,
-                media_ids: mediaIds.length > 0 ? mediaIds : undefined,
-            };
-
-            await createPostMutation.mutateAsync(postData);
-
-            Alert.alert("Success", "Your post has been created!", [
-                { text: "OK", onPress: resetForm }
-            ]);
-        } catch (error: any) {
-            console.error("Error creating post:", error);
-            Alert.alert("Error", error.message || "Failed to create post. Please try again.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    }, [
-        profileId,
-        content,
-        selectedMedia,
-        location,
-        selectedTrack,
-        links,
-        isGhost,
-        isAdult,
-        uploadMediaMutation,
-        createPostMutation,
-        resetForm,
-    ]);
+        const updatedLinks = values.links.filter((_: Link, i: number) => i !== index);
+        setFieldValue('links', updatedLinks);
+        if (values.links.length === 1) setShowLinkInput(false);
+    }, [values.links, setFieldValue]);
 
     // ============================================================================
     // Computed Values
     // ============================================================================
 
-    const canSubmit = useMemo(() => {
-        return (content.trim().length > 0 || selectedMedia.length > 0) && !isSubmitting;
-    }, [content, selectedMedia, isSubmitting]);
+    const canSubmit = (values.content.trim().length > 0 || values.selectedMedia.length > 0) && !isSubmitting;
 
     // ============================================================================
     // Render
@@ -269,7 +366,7 @@ const CreateScreen = () => {
                     topPadding={insets.top + 8}
                     canSubmit={canSubmit}
                     isSubmitting={isSubmitting}
-                    onSubmit={handleSubmit}
+                    onSubmit={onSubmitPress}
                 />
 
                 <KeyboardAwareScrollView
@@ -290,17 +387,17 @@ const CreateScreen = () => {
                             profile={profile}
                             colors={colors}
                             common={common}
-                            isGhost={isGhost}
-                            isAdult={isAdult}
-                            onToggleGhost={() => setIsGhost(!isGhost)}
-                            onToggleAdult={() => setIsAdult(!isAdult)}
+                            isGhost={values.isGhost}
+                            isAdult={values.isAdult}
+                            onToggleGhost={() => setFieldValue('isGhost', !values.isGhost)}
+                            onToggleAdult={() => setFieldValue('isAdult', !values.isAdult)}
                         />
                     )}
 
                     {/* Content Input */}
                     <ContentInput
-                        content={content}
-                        onContentChange={setContent}
+                        content={values.content}
+                        onContentChange={(text) => setFieldValue('content', text)}
                         colors={colors}
                         common={common}
                     />
@@ -308,10 +405,10 @@ const CreateScreen = () => {
                     {/* Location Input */}
                     <LocationInput
                         visible={showLocationInput}
-                        location={location}
-                        onLocationChange={setLocation}
+                        location={values.location}
+                        onLocationChange={(text) => setFieldValue('location', text)}
                         onClose={() => {
-                            setLocation("");
+                            setFieldValue('location', "");
                             setShowLocationInput(false);
                         }}
                         colors={colors}
@@ -320,7 +417,7 @@ const CreateScreen = () => {
 
                     {/* Selected Media */}
                     <MediaSection
-                        selectedMedia={selectedMedia}
+                        selectedMedia={values.selectedMedia}
                         uploadProgress={uploadProgress}
                         colors={colors}
                         common={common}
@@ -330,7 +427,7 @@ const CreateScreen = () => {
                     {/* Links Section */}
                     <LinksSection
                         visible={showLinkInput}
-                        links={links}
+                        links={values.links}
                         colors={colors}
                         common={common}
                         onUpdateLink={updateLink}
@@ -344,8 +441,8 @@ const CreateScreen = () => {
                         common={common}
                         searchQuery={musicSearchQuery}
                         onSearchQueryChange={setMusicSearchQuery}
-                        selectedTrack={selectedTrack}
-                        onSelectTrack={setSelectedTrack}
+                        selectedTrack={values.selectedTrack}
+                        onSelectTrack={(track) => setFieldValue('selectedTrack', track)}
                         musicResults={musicResults?.data || []}
                         isLoading={isMusicLoading}
                     />
@@ -356,15 +453,15 @@ const CreateScreen = () => {
                     colors={colors}
                     bottomPadding={insets.bottom + 80}
                     visible={showActionBar}
-                    selectedMediaCount={selectedMedia.length}
+                    selectedMediaCount={values.selectedMedia.length}
                     onPickMedia={pickMedia}
                     showLocationInput={showLocationInput}
-                    hasLocation={!!location}
+                    hasLocation={!!values.location}
                     onToggleLocation={() => setShowLocationInput(!showLocationInput)}
                     showMusicSearch={showMusicSearch}
-                    selectedTrack={selectedTrack}
+                    selectedTrack={values.selectedTrack}
                     onToggleMusic={() => setShowMusicSearch(!showMusicSearch)}
-                    linksCount={links.length}
+                    linksCount={values.links.length}
                     onAddLink={addLink}
                 />
             </View>

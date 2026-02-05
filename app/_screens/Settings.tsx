@@ -11,7 +11,8 @@ import ToggleSwitch from 'toggle-switch-react-native';
 const themePreferenceLabels = {
     light: "Light",
     dark: "Dark",
-    system: "System"
+    system: "System",
+    adaptive: "Adaptive"
 };
 
 const SettingsScreen = () => {
@@ -58,7 +59,7 @@ const SettingsScreen = () => {
                     </View>
                 )}
             </View>
-            <Text style={[styles.title]}>Customization</Text>
+            <Text style={[styles.title]}>Preferences</Text>
             <View style={[styles.card]}>
                 <TouchableOpacity style={[styles.option]} onPress={() => router.push('/theme-settings')}>
                     <View>
@@ -74,7 +75,7 @@ const SettingsScreen = () => {
                         <Text style={[common.bodySmall, { color: colors.muted }]}>{showSensitiveContent ? "Off" : "On"}</Text>
                     </View>
                     <ToggleSwitch
-                        isOn={showSensitiveContent}
+                        isOn={!showSensitiveContent}
                         onColor="#54d340"
                         offColor={colors.card}
                         size="medium"
@@ -115,6 +116,7 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
         ...common.row,
         alignItems: "center",
         justifyContent: "space-between",
+        gap: 4
     },
     divider: {
         height: 1,

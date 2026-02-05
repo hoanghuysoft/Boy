@@ -17,17 +17,17 @@ const OptionModal = ({ modalVisible, setModalVisible }: { modalVisible: boolean,
             <Pressable style={styles.modalContainer} onPress={() => setModalVisible(false)}>
                 <Pressable onPress={(e) => e.stopPropagation()} style={styles.modalContent}>
                     <View style={[styles.blurView, { backgroundColor: colors.containerContent }]}>
-                        <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-                            <Text style={common.label}>Demo1aaaaaaaaa</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-                            <Text style={common.label}>Demo2</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-                            <Text style={common.label}>Demo3</Text>
-                        </TouchableOpacity>
                         <TouchableOpacity style={styles.modalButton} onPress={() => { router.push('/settings'); setModalVisible(false) }}>
                             <Text style={common.label}>Settings</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+                            <Text style={common.label}>Privacy Policy</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+                            <Text style={common.label}>Terms of Service</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+                            <Text style={common.label}>Help & Support</Text>
                         </TouchableOpacity>
                     </View>
                 </Pressable>

@@ -69,6 +69,7 @@
     "expo-updates": "~29.0.16",
     "expo-video-thumbnails": "~10.0.8",
     "expo-web-browser": "~15.0.10",
+    "formik": "^2.4.9",
     "lodash": "^4.17.21",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -102,6 +103,7 @@
     "react-native-zoom-grid": "^0.1.5",
     "recyclerlistview": "^4.2.3",
     "toggle-switch-react-native": "^3.3.0",
+    "yup": "^1.7.1",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

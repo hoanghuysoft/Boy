@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
 interface CaptionTextProps {
   caption: string;
@@ -97,17 +97,19 @@ const CaptionText = ({ caption, colors, common, maxLines = 3 }: CaptionTextProps
   return (
     <View>
       <Text
-        style={[common.body, { color: colors.text, marginTop: 10, marginBottom: needsReadMore ? 0 : 10, fontSize: 14 }]}
+        style={[common.body, { color: colors.text, marginTop: 10, marginBottom: 10, fontSize: 14 }]}
       >
         {renderTruncatedText()}
-      </Text>
-      {needsReadMore && (
-        <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-          <Text style={[common.body, { color: colors.verify, marginTop: 4, fontWeight: '600', fontSize: 14, marginBottom: 10 }]}>
-            {expanded ? 'Read less' : 'Read more'}
+        {needsReadMore && (
+          <Text
+            onPress={() => setExpanded(!expanded)}
+            style={{ color: colors.verify, fontWeight: '600' }}
+            suppressHighlighting={true}
+          >
+            {expanded ? ' Read less' : ' Read more'}
           </Text>
-        </TouchableOpacity>
-      )}
+        )}
+      </Text>
     </View>
   );
 };

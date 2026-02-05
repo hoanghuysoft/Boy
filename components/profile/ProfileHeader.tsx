@@ -261,7 +261,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
             }}>
 
                 <View style={common.screenPadding}>
-                    <View style={[common.row, { marginTop: -55, gap: 12, alignItems: 'flex-end' }]}>
+                    <View style={[common.row, { marginTop: -55, gap: 12, alignItems: 'stretch' }]}>
                         <Galeria urls={currentAvatar ? [currentAvatar] : []}>
                             <Galeria.Image>
                                 <Image
@@ -273,18 +273,18 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 />
                             </Galeria.Image>
                         </Galeria>
-                        <View style={{ flex: 1 }}>
-                            <View style={[common.row, { gap: 2 }]}>
+                        <View style={{ flex: 1, paddingTop: 40, justifyContent: 'flex-end' }}>
+                            <View style={[common.row, { gap: 4 }]}>
                                 <Text style={[common.heading, { fontWeight: '700' }]}>{profile?.name || "Boy not found"}</Text>
-                                {profile?.is_verified && <VerifiedIcon size={18} backgroundColor={colors.verify} />}
+                                {profile?.is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
                             </View>
                             <View style={[common.row, { gap: 6, marginTop: 2 }]}>
                                 <Text style={common.bodySmall}>
-                                    <Text style={{ fontWeight: '700' }}>{imageCount}</Text> imgs
+                                    <Text style={{ fontWeight: '700' }}>{imageCount}</Text> images
                                 </Text>
                                 <Text style={[common.bodySmall, { color: colors.muted }]}>·</Text>
                                 <Text style={common.bodySmall}>
-                                    <Text style={{ fontWeight: '700' }}>{videoCount}</Text> vids
+                                    <Text style={{ fontWeight: '700' }}>{videoCount}</Text> videos
                                 </Text>
                                 <Text style={[common.bodySmall, { color: colors.muted }]}>·</Text>
                                 <Text style={common.bodySmall}>

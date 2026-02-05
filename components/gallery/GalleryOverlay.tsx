@@ -97,9 +97,9 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
             {showBottomBar && (profileName || caption) && (
                 <View style={[styles.galleryBottomBar, { paddingBottom: inset.bottom + 16 }]}>
                     {profileName && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                             <Text style={styles.galleryProfileName}>{profileName}</Text>
-                            {isVerified && <VerifiedIcon size={18} backgroundColor={colors.verify} />}
+                            {isVerified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
                         </View>
                     )}
                     {caption && (

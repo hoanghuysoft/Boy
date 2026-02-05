@@ -9,7 +9,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const scaleFont = (size: number): number => {
   const scale = SCREEN_WIDTH / 375; // Base width (iPhone X/11/12 standard)
   const newSize = size * scale;
-  
+
   // Clamp between reasonable min/max values
   return Math.max(12, Math.min(newSize, size * 1.5));
 };

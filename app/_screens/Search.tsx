@@ -80,7 +80,7 @@ const SearchScreen = () => {
     if (profiles && profiles.length > 0) {
       const avatarsToPreload = profiles
         .slice(0, 20)
-        .filter(p => p.avatar_url)
+        .filter((p): p is Profile & { avatar_url: string } => !!p.avatar_url)
         .map(p => ({ uri: p.avatar_url }));
 
       if (avatarsToPreload.length > 0) {
@@ -210,18 +210,18 @@ const SearchScreen = () => {
         onPress={() => navigation.push({ pathname: '/profile/[id]', params: { id: item.id, isMe: 'false' } })}
       >
         <TurboImage
-          source={{ uri: item.avatar_url }}
+          source={{ uri: item.avatar_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
           style={styles.avatar}
           resizeMode="cover"
           cachePolicy={IMAGE_CACHE_POLICY}
           fadeDuration={100}
         />
         <View style={styles.profileInfo}>
-          <View style={[common.row, { gap: 2 }]}>
+          <View style={[common.row, { gap: 4 }]}>
             <Text style={[common.subheading, { color: colors.text }]} numberOfLines={1}>
               {item.name}
             </Text>
-            {item.is_verified && <VerifiedIcon size={18} backgroundColor={colors.verify} />}
+            {item.is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
           </View>
           {item.birthday && (
             <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
@@ -234,7 +234,7 @@ const SearchScreen = () => {
             </Text>
           ) : item.hometown ? (
             <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
-              📍 {item.hometown}
+              {item.hometown}
             </Text>
           ) : null}
         </View>
