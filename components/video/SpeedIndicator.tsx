@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -12,7 +12,7 @@ export const SpeedIndicator: React.FC<SpeedIndicatorProps> = ({ playbackRate }) 
     return (
         <View style={styles.speedIndicator}>
             <View style={styles.speedBadge}>
-                <Ionicons name="play-forward" size={16} color="white" />
+                <MaterialIcons name="fast-forward" size={16} color="white" />
                 <Text style={styles.speedText}>{playbackRate}x</Text>
             </View>
         </View>

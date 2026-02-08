@@ -47,6 +47,7 @@ const VideoPlayer = () => {
     const [isLooping, setIsLooping] = useState(false);
     const [playbackRate, setPlaybackRate] = useState(1);
     const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
+    const [seekPosition, setSeekPosition] = useState<number | null>(null);
 
     // Refs
     const ref = useRef<VideoRef>(null);
@@ -64,7 +65,11 @@ const VideoPlayer = () => {
 
     const moveBackward = () => {
         try {
+            isSeekingRef.current = true;
             ref.current?.seek(progress.currentTime - 5);
+            setTimeout(() => {
+                isSeekingRef.current = false;
+            }, 300);
         } catch (error) {
             console.error('Error moving backward:', error);
         }
@@ -81,7 +86,11 @@ const VideoPlayer = () => {
 
     const moveForward = () => {
         try {
+            isSeekingRef.current = true;
             ref.current?.seek(progress.currentTime + 5);
+            setTimeout(() => {
+                isSeekingRef.current = false;
+            }, 300);
         } catch (error) {
             console.error('Error moving forward:', error);
         }
@@ -135,10 +144,16 @@ const VideoPlayer = () => {
         isSeekingRef.current = true;
         wasPlayingRef.current = !isPaused;
         setIsPaused(true);
+        setSeekPosition(progress.currentTime);
+    };
+
+    const handleSeek = (value: number) => {
+        setSeekPosition(value);
     };
 
     const handleSlidingComplete = (prog: number) => {
         ref.current?.seek(prog);
+        setSeekPosition(null);
         if (wasPlayingRef.current) {
             setIsPaused(false);
         }
@@ -349,7 +364,8 @@ const VideoPlayer = () => {
                         commonLabelStyle={common.label}
                         onLoopToggle={loopVideo}
                         onRotate={handleRotate}
-                        onSeek={() => { }}
+                        seekPosition={seekPosition}
+                        onSeek={handleSeek}
                         onSlidingStart={handleSlidingStart}
                         onSlidingComplete={handleSlidingComplete}
                     />

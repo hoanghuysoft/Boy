@@ -10,6 +10,7 @@ import {
 } from "@lineiconshq/free-icons";
 import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { SquircleView } from "expo-squircle-view";
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -167,7 +168,9 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
     const bottomSpacing = 13 + insets.bottom;
 
     return (
-        <View
+        <SquircleView
+            cornerSmoothing={100}
+            preserveSmoothing
             style={[
                 styles.tabBarContainer,
                 {
@@ -175,8 +178,8 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
                 },
             ]}
         >
-            <View style={styles.blurContainer}>
-                <View style={[styles.tabBarContent, { backgroundColor: colors.tabBar + "E6" }]}>
+            <SquircleView cornerSmoothing={100} preserveSmoothing style={styles.blurContainer}>
+                <View style={[styles.tabBarContent, { backgroundColor: colors.tabBar + "" }]}>
                     {state.routes.map((route, index) => {
                         const isFocused = state.index === index;
                         // Map route names to tab config
@@ -221,8 +224,8 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
                         );
                     })}
                 </View>
-            </View>
-        </View>
+            </SquircleView>
+        </SquircleView>
     );
 };
 

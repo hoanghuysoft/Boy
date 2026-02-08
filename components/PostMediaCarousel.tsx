@@ -5,8 +5,8 @@ import { Media } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Dimensions, TouchableOpacity, View } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
+import { Dimensions, View } from "react-native";
+import { FlatList, Pressable } from "react-native-gesture-handler";
 import TurboImage from "react-native-turbo-image";
 
 // TurboImage cache policy - use dataCache for aggressive local caching
@@ -50,8 +50,7 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
 
     return (
         <View style={{ width: SCREEN_WIDTH }}>
-            <TouchableOpacity
-                activeOpacity={0.9}
+            <Pressable
                 onPress={() => router.push({ pathname: '/video_player', params: { videoUrl: item.url, name: profileName, caption: content, portrait: 'true' } })}
                 style={{ width: '100%', aspectRatio: ASPECT_RATIO }}
             >
@@ -66,7 +65,7 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
                         <PlayIcon size={24} color="#ffffff" style={{ marginLeft: 4 }} />
                     </View>
                 </View>
-            </TouchableOpacity>
+            </Pressable>
         </View>
     );
 });
@@ -93,7 +92,7 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
 }) => {
     return (
         <View style={{ width: SCREEN_WIDTH }}>
-            <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
+            <Pressable android_ripple={{ color: colors.divider, foreground: true }} onPress={onPress}>
                 <TurboImage
                     source={{ uri: item.url }}
                     style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
@@ -102,7 +101,7 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
                     cachePolicy={IMAGE_CACHE_POLICY}
                     fadeDuration={150}
                 />
-            </TouchableOpacity>
+            </Pressable>
         </View>
     );
 });

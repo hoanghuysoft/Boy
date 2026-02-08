@@ -5,11 +5,13 @@ import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { SquircleView } from 'expo-squircle-view';
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
     Animated,
     Dimensions,
     Image,
+    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -28,6 +30,8 @@ import { ProfileMusic } from "../../types/profilemusic";
 import { Workplace } from "../../types/profileworplace";
 import { TabPillGroup } from "../tabpill";
 import BirthdayCard from './BirthdayCard';
+import DynamicAvatar from './DynamicAvatar';
+import QuickPreviewModal from './QuickPreviewModal';
 
 const COVER_HEIGHT = 250;
 const { height } = Dimensions.get("window");
@@ -86,6 +90,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const style = styles(colors);
     const [isPlaying, setIsPlaying] = useState(false);
     const [gradientColors, setGradientColors] = useState<string[]>([]);
+    const [avatarPreviewVisible, setAvatarPreviewVisible] = useState(false);
 
     const PLACEHOLDER_COVER = "https://pbs.twimg.com/media/GeMS4yjWIAA14OG.jpg";
     const MESH_GRADIENT_DEFAULTS = {
@@ -99,6 +104,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const hasCover = !!profile?.cover_url;
     const currentMusic = music?.[0];
     const currentAvatar = profile?.avatar_url;
+
+    // Parse metadata to extract threed_emoji
+    const parsedMetadata = useMemo(() => {
+        if (!profile?.metadata) return null;
+        try {
+            return typeof profile.metadata === 'string'
+                ? JSON.parse(profile.metadata)
+                : profile.metadata;
+        } catch {
+            return null;
+        }
+    }, [profile?.metadata]);
+
+    const threedEmoji = parsedMetadata?.threed_emoji || null;
 
     // Extract colors for mesh gradient when cover is not available
     useEffect(() => {
@@ -254,7 +273,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                     )}
                 </Animated.View>
             )}
-            <View style={{
+            <SquircleView cornerSmoothing={100} preserveSmoothing style={{
                 borderRadius: 8,
                 marginTop: -8,
                 backgroundColor: colors.background,
@@ -262,17 +281,36 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
 
                 <View style={common.screenPadding}>
                     <View style={[common.row, { marginTop: -55, gap: 12, alignItems: 'stretch' }]}>
-                        <Galeria urls={currentAvatar ? [currentAvatar] : []}>
-                            <Galeria.Image>
-                                <Image
-                                    source={{
-                                        uri: currentAvatar || "https://via.placeholder.com/150",
-                                    }}
-                                    resizeMode="cover"
-                                    style={common.avatarLarge}
+                        {threedEmoji ? (
+                            <>
+                                <Pressable
+                                    onLongPress={() => setAvatarPreviewVisible(true)}
+                                    onPressOut={() => setAvatarPreviewVisible(false)}
+                                    delayLongPress={200}
+                                >
+                                    <DynamicAvatar
+                                        uri={currentAvatar || "https://via.placeholder.com/150"}
+                                        threedEmoji={threedEmoji}
+                                        styles={common.avatarLarge}
+                                    />
+                                </Pressable>
+                                <QuickPreviewModal
+                                    visible={avatarPreviewVisible}
+                                    imageUrl={currentAvatar || null}
+                                    onClose={() => setAvatarPreviewVisible(false)}
                                 />
-                            </Galeria.Image>
-                        </Galeria>
+                            </>
+                        ) : (
+                            <Galeria urls={currentAvatar ? [currentAvatar] : []}>
+                                <Galeria.Image>
+                                    <Image
+                                        source={{ uri: currentAvatar || "https://via.placeholder.com/150" }}
+                                        resizeMode="cover"
+                                        style={common.avatarLarge}
+                                    />
+                                </Galeria.Image>
+                            </Galeria>
+                        )}
                         <View style={{ flex: 1, paddingTop: 40, justifyContent: 'flex-end' }}>
                             <View style={[common.row, { gap: 4 }]}>
                                 <Text style={[common.heading, { fontWeight: '700' }]}>{profile?.name || "Boy not found"}</Text>
@@ -466,7 +504,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                         {tabContent}
                     </View>
                 </View>
-            </View>
+            </SquircleView>
         </>
     );
 });

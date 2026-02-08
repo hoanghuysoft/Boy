@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 import React, { memo } from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
@@ -50,7 +50,7 @@ export const CreateScreenHeader = memo(({
                 <ActivityIndicator size="small" color="#fff" />
             ) : (
                 <>
-                    <Ionicons name="send" size={16} color="#fff" />
+                    <FontAwesome name="send" size={16} color="#fff" />
                     <Text style={createStyles.submitButtonText}>Post</Text>
                 </>
             )}

@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import { PauseSolid, PlaySolid } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import React from "react";
@@ -39,7 +39,7 @@ export const VideoPlaybackControls: React.FC<VideoPlaybackControlsProps> = ({
             ]}
         >
             <TouchableOpacity onPress={onMoveBackward} style={styles.largeButton}>
-                <Ionicons name="play-back" size={32} color={'white'} />
+                <MaterialIcons name="replay-5" size={32} color={'white'} />
             </TouchableOpacity>
             <TouchableOpacity onPress={onTogglePlayPause} style={styles.extraLargeButton}>
                 {isLoading ? (
@@ -54,7 +54,7 @@ export const VideoPlaybackControls: React.FC<VideoPlaybackControlsProps> = ({
                 )}
             </TouchableOpacity>
             <TouchableOpacity onPress={onMoveForward} style={styles.largeButton}>
-                <Ionicons name="play-forward" size={32} color={'white'} />
+                <MaterialIcons name="forward-5" size={32} color={'white'} />
             </TouchableOpacity>
         </View>
     );

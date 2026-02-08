@@ -1,3 +1,4 @@
+import * as Device from 'expo-device';
 import * as ImagePicker from "expo-image-picker";
 import { FormikHelpers, useFormik } from "formik";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -164,7 +165,6 @@ const CreateScreen = () => {
 
                 // Create post with validated links
                 const validLinks = values.links.filter((link: Link) => link.url.trim() && link.label.trim());
-
                 const postData: CreatePostInput = {
                     content: values.content.trim() || undefined,
                     location: values.location.trim() || undefined,
@@ -173,6 +173,7 @@ const CreateScreen = () => {
                     is_ghost: values.isGhost,
                     is_adult: values.isAdult,
                     media_ids: mediaIds.length > 0 ? mediaIds : undefined,
+                    device: Device.osName + " " + Device.osVersion + " " + Device.manufacturer + " " + Device.modelName,
                 };
 
                 await createPostMutation.mutateAsync(postData);

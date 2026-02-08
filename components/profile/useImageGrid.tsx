@@ -11,6 +11,7 @@ import {
     ViewStyle,
     useWindowDimensions
 } from "react-native";
+import { Pressable } from "react-native-gesture-handler";
 import TurboImage from "react-native-turbo-image";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -268,16 +269,15 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
                     }
 
                     return (
-                        <TouchableOpacity
+                        <Pressable
                             key={mediaItem.id}
-                            activeOpacity={0.8}
                             onPress={() => onImagePress?.(true, item.startIndex + i)}
                             onLongPress={() => handleLongPress(mediaItem.url)}
                             onPressOut={handlePressOut}
                             delayLongPress={300}
                         >
                             {content}
-                        </TouchableOpacity>
+                        </Pressable>
                     );
                 })}
                 {Array.from({ length: NUM_COLUMNS - item.items.length }).map((_, i) => (

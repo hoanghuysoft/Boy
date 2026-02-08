@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
 import PillSlider from "./PillSlider";
@@ -16,6 +16,7 @@ interface VideoBottomBarProps {
     name: string;
     caption: string;
     progress: VideoProgress;
+    seekPosition: number | null;
     bottomBarTranslateY: Animated.Value;
     videoPressed: boolean;
     commonRowStyle: ViewStyle;
@@ -35,6 +36,7 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
     name,
     caption,
     progress,
+    seekPosition,
     bottomBarTranslateY,
     videoPressed,
     commonRowStyle,
@@ -70,14 +72,14 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
                 </View>
                 <View style={[commonRowStyle, { gap: 8 }]}>
                     <TouchableOpacity style={styles.smallButton} onPress={onLoopToggle}>
-                        <Ionicons
-                            name={isLooping ? "repeat-sharp" : "repeat-outline"}
-                            size={24}
+                        <MaterialCommunityIcons
+                            name={isLooping ? "repeat-off" : "repeat"}
+                            size={20}
                             color={'white'}
                         />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.smallButton} onPress={onRotate}>
-                        <Ionicons name="reload-outline" size={24} color={'white'} />
+                        <MaterialCommunityIcons name={isLandscape ? "rotate-left" : "rotate-right"} size={24} color={'white'} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -95,7 +97,7 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
             />
             <View style={[commonRowStyle, { justifyContent: 'space-between', marginTop: 8 }]}>
                 <Text style={[commonLabelStyle, { color: 'white' }]}>
-                    {formatDuration(progress.currentTime)}
+                    {formatDuration(seekPosition !== null ? seekPosition : progress.currentTime)}
                 </Text>
                 <Text style={[commonLabelStyle, { color: 'white' }]}>
                     {formatDuration(progress.seekableDuration)}

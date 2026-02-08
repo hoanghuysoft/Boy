@@ -1,4 +1,5 @@
 import { calculateAge, calculateDaysLeft } from '@/utils/timeandage';
+import { SquircleView } from "expo-squircle-view";
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -11,6 +12,7 @@ import Animated, {
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
+
 
 interface BirthdayCardProps {
     birthday: string;
@@ -69,7 +71,7 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
     });
 
     return (
-        <View style={styles.cardContainer}>
+        <SquircleView borderRadius={200} cornerSmoothing={100} preserveSmoothing={true} style={styles.cardContainer}>
             <TurboImage
                 source={{ uri: "https://www.kudoboard.com/cdn-cgi/image/fit%3Dcover%2Cformat%3Dwebp%2Cquality%3D85%2Cwidth%3D1830%2Cheight%3D1041%2Conerror%3Dredirect/wp-content/uploads/2023/10/hero-bg-occasion-birthday.jpg" }}
                 style={StyleSheet.absoluteFill}
@@ -98,7 +100,7 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
                     </Animated.Text>
                 </Animated.View>
             </View>
-        </View>
+        </SquircleView>
     );
 };
 
@@ -106,7 +108,6 @@ const styles = StyleSheet.create({
     cardContainer: {
         height: 70,
         width: 170,
-        borderRadius: 100,
         overflow: "hidden",
         justifyContent: "center",
         alignItems: "center",

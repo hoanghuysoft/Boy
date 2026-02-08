@@ -1,5 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Layers1Solid, Volume1Solid, VolumeMuteSolid, XmarkSolid } from "@lineiconshq/free-icons";
+import { MaterialIcons } from "@expo/vector-icons";
+import { XmarkSolid } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
@@ -50,24 +50,22 @@ export const VideoTopBar: React.FC<VideoTopBarProps> = ({
                     />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.smallButton} onPress={onPipMode}>
-                    <Lineicons
-                        icon={Layers1Solid}
-                        size={24}
+                    <MaterialIcons
+                        name="picture-in-picture"
+                        size={20}
                         color={'white'}
-                        strokeWidth={3}
                     />
                 </TouchableOpacity>
             </View>
             <View style={[commonRowStyle, { gap: 12 }]}>
                 <TouchableOpacity style={styles.smallButton} onPress={onOpenExternal}>
-                    <Ionicons name="link" size={24} color={'white'} />
+                    <MaterialIcons name="open-in-new" size={20} color={'white'} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.smallButton} onPress={onMuteToggle}>
-                    <Lineicons
-                        icon={isMute ? VolumeMuteSolid : Volume1Solid}
-                        size={24}
+                    <MaterialIcons
+                        name={isMute ? "volume-off" : "volume-up"}
+                        size={20}
                         color={'white'}
-                        strokeWidth={3}
                     />
                 </TouchableOpacity>
             </View>

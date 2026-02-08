@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Dimensions, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Pressable } from 'react-native-gesture-handler';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../context/ThemeContext";
 import { useAudioStore } from "../stores/audio";
@@ -57,7 +58,7 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
         <View style={{}}>
             {/* Header */}
             <View style={[common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <TouchableOpacity onPress={() => router.push({ pathname: '/profile/[id]', params: { id: post.profile_id } })} style={[common.row, { gap: 12, flex: 1 }]}>
+                <Pressable onPress={() => router.push({ pathname: '/profile/[id]', params: { id: post.profile_id } })} style={[common.row, { gap: 12, flex: 1 }]}>
                     <TurboImage
                         source={{ uri: post.profile_avatar }}
                         style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.divider }}
@@ -71,14 +72,14 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
                         </View>
                         <PostMetaInfo post={post} />
                     </View>
-                </TouchableOpacity>
-                <TouchableOpacity
+                </Pressable>
+                <Pressable
                     hitSlop={10}
                     style={{ backgroundColor: colors.card, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
                     onPress={() => onOptionsPress?.(post)}
                 >
                     <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
-                </TouchableOpacity>
+                </Pressable>
             </View>
 
             {/* Caption */}

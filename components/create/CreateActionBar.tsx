@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { memo, useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
@@ -15,6 +15,7 @@ interface ActionButtonProps {
     onPress: () => void;
     disabled?: boolean;
     colors: ThemeColors;
+    isCommunityIcon?: boolean;
 }
 
 const ActionButton = memo(({
@@ -23,6 +24,7 @@ const ActionButton = memo(({
     onPress,
     disabled = false,
     colors,
+    isCommunityIcon = false,
 }: ActionButtonProps) => (
     <TouchableOpacity
         style={[
@@ -35,11 +37,19 @@ const ActionButton = memo(({
         disabled={disabled}
         activeOpacity={0.7}
     >
-        <Ionicons
-            name={icon as any}
-            size={24}
-            color={isActive ? COLORS.primary : colors.text}
-        />
+        {isCommunityIcon ? (
+            <MaterialCommunityIcons
+                name={icon as any}
+                size={24}
+                color={isActive ? COLORS.primary : colors.text}
+            />
+        ) : (
+            <MaterialIcons
+                name={icon as any}
+                size={24}
+                color={isActive ? COLORS.primary : colors.text}
+            />
+        )}
     </TouchableOpacity>
 ));
 
@@ -125,28 +135,30 @@ export const CreateActionBar = memo(({
                 ]}
             >
                 <ActionButton
-                    icon="image-outline"
+                    icon="image"
                     isActive={selectedMediaCount > 0}
                     onPress={onPickMedia}
                     disabled={selectedMediaCount >= 10}
                     colors={colors}
                 />
                 <ActionButton
-                    icon="location-outline"
+                    icon="location-history"
                     isActive={showLocationInput || hasLocation}
                     onPress={onToggleLocation}
                     colors={colors}
                 />
                 <ActionButton
-                    icon="musical-notes-outline"
+                    icon="music-circle"
                     isActive={showMusicSearch || selectedTrack !== null}
                     onPress={onToggleMusic}
                     colors={colors}
+                    isCommunityIcon
                 />
                 <ActionButton
-                    icon="link-outline"
+                    icon="link-circle"
                     isActive={linksCount > 0}
                     onPress={onAddLink}
+                    isCommunityIcon
                     colors={colors}
                 />
             </View>
