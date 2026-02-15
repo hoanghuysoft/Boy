@@ -1,6 +1,5 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { CalendarDaysSolid, MapMarker1Solid, Message2Solid, PhoneSolid, User4Solid } from '@lineiconshq/free-icons';
-import Lineicons from '@lineiconshq/react-native-lineicons';
+import { CalendarBold, LetterBold, MenBold, NotebookBookmarkBold, PhoneBold, PointOnMapBold, SquareAcademicCapBold, WeigherBold, WheelBold, WomenBold } from '@solar-icons/react-native';
 import React, { useMemo } from 'react';
 import { Text, View } from "react-native";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -60,7 +59,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <Text style={[common.body, { flex: 1 }]}>
                             {profile.email}
                         </Text>
-                        <Lineicons size={22} color={colors.text} icon={Message2Solid} strokeWidth={4} />
+                        <LetterBold size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -73,7 +72,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <Text style={[common.body, { flex: 1 }]}>
                             {profile.phone}
                         </Text>
-                        <Lineicons size={22} color={colors.text} icon={PhoneSolid} strokeWidth={4} />
+                        <PhoneBold size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -87,7 +86,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <Text style={[common.body, { textTransform: 'capitalize' }]}>
                             {profile.gender}
                         </Text>
-                        <Lineicons size={22} color={colors.text} icon={User4Solid} strokeWidth={4} />
+                        {profile.gender === 'male' ? <MenBold size={22} color={colors.text} /> : profile.gender === 'female' ? <WomenBold size={22} color={colors.text} /> : null}
                     </View>
                 </>
             )}
@@ -101,7 +100,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <Text style={[common.body, { flex: 1 }]}>
                             {formatBirthday(profile.birthday)}
                         </Text>
-                        <Lineicons size={22} color={colors.text} icon={CalendarDaysSolid} strokeWidth={4} />
+                        <CalendarBold size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -129,7 +128,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <Text style={[common.body, { flex: 1 }]}>
                             {weight} kg
                         </Text>
-                        <MaterialIcons name="scale" size={22} color={colors.text} />
+                        <WeigherBold size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -143,7 +142,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <Text style={[common.body, { flex: 1 }]}>
                             {profile.hometown}
                         </Text>
-                        <Lineicons size={22} color={colors.text} icon={MapMarker1Solid} strokeWidth={4} />
+                        <PointOnMapBold size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -157,7 +156,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <Text style={[common.body, { flex: 1 }]}>
                             {profile.college}
                         </Text>
-                        <Ionicons name="school" size={22} color={colors.text} />
+                        <SquareAcademicCapBold size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -171,7 +170,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <Text style={[common.body, { flex: 1 }]}>
                             {profile.highschool}
                         </Text>
-                        <Ionicons name="school-outline" size={22} color={colors.text} />
+                        <NotebookBookmarkBold size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -199,7 +198,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <Text style={[common.body, { flex: 1 }]}>
                             {profile.license_plate}
                         </Text>
-                        <Ionicons name="card-outline" size={22} color={colors.text} />
+                        <WheelBold size={22} color={colors.text} />
                     </View>
                 </>
             )}

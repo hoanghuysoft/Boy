@@ -1,5 +1,5 @@
 import VerifiedIcon from "@/icons/verified";
-import { Ionicons } from "@expo/vector-icons";
+import { GhostSmileBold, GhostSmileOutline, HeartUnlockBold, HeartUnlockOutline } from '@solar-icons/react-native';
 import React, { memo } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
@@ -46,11 +46,11 @@ const PostOptionBadge = memo(({
         ]}
         onPress={onPress}
     >
-        <Ionicons
-            name={isActive ? iconActive as any : icon as any}
-            size={14}
-            color={isActive ? activeColor : colors.muted}
-        />
+        {isActive ? (
+            iconActive === "ghost-smile-bold" ? <GhostSmileBold size={14} color={activeColor} /> : <HeartUnlockBold size={14} color={activeColor} />
+        ) : (
+            icon === "ghost-smile-outline" ? <GhostSmileOutline size={14} color={colors.muted} /> : <HeartUnlockOutline size={14} color={colors.muted} />
+        )}
         <Text
             style={[
                 common.caption,
@@ -101,8 +101,8 @@ export const CreateProfileHeader = memo(({
             </View>
             <View style={createStyles.postOptionsRow}>
                 <PostOptionBadge
-                    icon="eye-off-outline"
-                    iconActive="eye-off"
+                    icon="ghost-smile-outline"
+                    iconActive="ghost-smile-bold"
                     label="Ghost"
                     isActive={isGhost}
                     onPress={onToggleGhost}
@@ -111,8 +111,8 @@ export const CreateProfileHeader = memo(({
                     activeColor={COLORS.primary}
                 />
                 <PostOptionBadge
-                    icon="warning-outline"
-                    iconActive="warning"
+                    icon="heart-unlock-outline"
+                    iconActive="heart-unlock"
                     label="Sensitive"
                     isActive={isAdult}
                     onPress={onToggleAdult}

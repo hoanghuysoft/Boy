@@ -27,12 +27,13 @@ export const getProfiles = async ({ pageParam, search }: { pageParam?: string; s
     return response.data;
 };
 
-export const useInfiniteProfiles = (search: string = "") => {
+export const useInfiniteProfiles = (search: string = "", enabled: boolean = true) => {
     return useInfiniteQuery({
         queryKey: ["profiles", search],
         queryFn: ({ pageParam }: { pageParam: string | undefined }) => getProfiles({ pageParam, search }),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage: ProfilesResponse) => lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor : undefined,
+        enabled,
     });
 };
 
@@ -51,5 +52,18 @@ export const useProfile = (id: string, isMe: boolean) => {
         queryKey: isMe ? ['profile', 'me'] : ['profile', id],
         queryFn: () => (isMe ? getMyProfileDetail() : getProfileDetail(id)),
         enabled: isMe || !!id,
+    });
+};
+
+export const checkAdmin = async () => {
+    const response = await client.get("/api/admin/check");
+    return response.data;
+}
+
+export const useAdminCheck = () => {
+    return useQuery({
+        queryKey: ['admin-check'],
+        queryFn: checkAdmin,
+        retry: false,
     });
 };

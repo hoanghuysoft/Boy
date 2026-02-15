@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { EarthBold } from '@solar-icons/react-native';
 import React, { forwardRef, memo } from "react";
 import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -107,12 +108,10 @@ const LinkCard = ({
                 marginBottom: 12,
             }}
         >
-            {/* Icon Container */}
             <View style={{ marginRight: 16 }}>
                 {iconNode}
             </View>
 
-            {/* Text Content */}
             <View style={{ flex: 1, justifyContent: 'center' }}>
                 <Text style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
                     {title}
@@ -120,7 +119,6 @@ const LinkCard = ({
                 <FormattedLink url={url} username={username} common={common} color={colors.text} />
             </View>
 
-            {/* Action Arrow */}
             <Ionicons name="chevron-forward" size={20} color={colors.muted || '#999'} style={{ marginLeft: 8 }} />
         </TouchableOpacity>
     );
@@ -131,7 +129,6 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
     const { icon, color } = getPlatformDetails(item.platform, theme);
     const isGeneric = icon === 'link-outline';
 
-    // 1. GENERIC LINK (With Preview Fetching)
     if (isGeneric) {
         return (
             <LinkPreview
@@ -148,7 +145,7 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
                         />
                     ) : (
                         <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                            <Ionicons name="link" size={24} color={colors.text} />
+                            <EarthBold size={24} color={colors.text} />
                         </View>
                     );
 

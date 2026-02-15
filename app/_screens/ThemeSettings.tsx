@@ -2,6 +2,7 @@ import { ThemeColors, ThemePreference, useThemeContext } from "@/context/ThemeCo
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { SquircleView } from "expo-squircle-view";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -78,13 +79,13 @@ const ThemeSettingsScreen = () => {
                             onPress={() => setThemePreference(option.id)}
                         >
                             <View style={styles.optionLeft}>
-                                <View style={[styles.iconContainer, themePreference === option.id && styles.iconContainerActive]}>
+                                <SquircleView cornerSmoothing={100} preserveSmoothing={true} style={[styles.iconContainer, themePreference === option.id && styles.iconContainerActive]}>
                                     <Ionicons
                                         name={option.icon}
                                         size={20}
                                         color={themePreference === option.id ? "#fff" : colors.text}
                                     />
-                                </View>
+                                </SquircleView>
                                 <View style={styles.optionText}>
                                     <Text style={[common.body]}>{option.label}</Text>
                                     <Text style={[common.bodySmall, { color: colors.muted }]}>
@@ -132,7 +133,7 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
     iconContainer: {
         width: 40,
         height: 40,
-        borderRadius: 10,
+        borderRadius: 12,
         backgroundColor: colors.card,
         justifyContent: "center",
         alignItems: "center",

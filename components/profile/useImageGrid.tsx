@@ -24,17 +24,15 @@ import QuickPreviewModal from "./QuickPreviewModal";
 const IMAGE_CACHE_POLICY = "dataCache" as const;
 
 // Constants
-const SPACING = 2;
+const SPACING = 1;
 const NUM_COLUMNS = 3;
-const CONTAINER_PADDING = 16;
 
 // Types for grid data
 type GridItemType =
-    | { type: 'row'; items: Media[]; startIndex: number }
-    | { type: 'shimmer'; startIndex: number };
+    | { type: 'media'; item: Media; flatIndex: number }
+    | { type: 'shimmer'; flatIndex: number };
 
 interface UseImageGridOptions {
-    containerPadding?: number;
     photos?: Media[];
     onVideoPress?: (video: Media) => void;
     onImagePress?: (visible: boolean, index: number) => void;
@@ -42,7 +40,7 @@ interface UseImageGridOptions {
     fetchingMore?: boolean;
 }
 
-const processMediaToGrid = (media: Media[], numColumns: number): { gridData: GridItemType[]; sortedUrls: string[] } => {
+const processMediaToFlat = (media: Media[]): { gridData: GridItemType[]; sortedUrls: string[] } => {
     if (!media || media.length === 0) {
         return { gridData: [], sortedUrls: [] };
     }
@@ -54,16 +52,11 @@ const processMediaToGrid = (media: Media[], numColumns: number): { gridData: Gri
 
     // Only collect URLs for images for Galeria
     const sortedUrls = sorted.filter(m => !m.type.toLowerCase().includes('video')).map(m => m.url);
-    const gridData: GridItemType[] = [];
-
-    for (let i = 0; i < sorted.length; i += numColumns) {
-        const chunk = sorted.slice(i, i + numColumns);
-        gridData.push({
-            type: 'row',
-            items: chunk,
-            startIndex: i
-        });
-    }
+    const gridData: GridItemType[] = sorted.map((item, index) => ({
+        type: 'media',
+        item,
+        flatIndex: index,
+    }));
 
     return { gridData, sortedUrls };
 };
@@ -111,7 +104,6 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
 
 export const useImageGrid = (options: UseImageGridOptions = {}) => {
     const {
-        containerPadding = CONTAINER_PADDING,
         photos,
         onVideoPress,
         onImagePress,
@@ -140,33 +132,29 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
         setIsPreviewVisible(false);
     }, []);
 
-    // Calculate item width
-    const availableWidth = screenWidth - (containerPadding * 2) - (SPACING * 2);
-    const itemWidth = (availableWidth / NUM_COLUMNS) - (SPACING * (NUM_COLUMNS - 1) / NUM_COLUMNS);
-    const rowHeight = itemWidth + SPACING;
+    // Calculate item size for estimatedItemSize
+    const itemWidth = (screenWidth - SPACING * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
     const imageStyle = useMemo(
         () => ({
-            width: itemWidth,
-            height: itemWidth,
-            marginRight: SPACING,
-            marginBottom: SPACING,
+            flex: 1,
+            aspectRatio: 1,
+            margin: SPACING / 2,
             borderRadius: 0,
             backgroundColor: colors.card,
         }),
-        [itemWidth, colors.card]
+        [colors.card]
     );
 
     const videoStyle = useMemo(
         () => ({
-            width: itemWidth,
-            height: itemWidth * 1.7,
-            marginRight: SPACING,
-            marginBottom: SPACING,
+            flex: 1,
+            aspectRatio: 1 / 1.7,
+            margin: SPACING / 2,
             backgroundColor: colors.card,
             overflow: 'hidden' as const,
         }),
-        [itemWidth, colors.card]
+        [colors.card]
     );
 
 
@@ -174,22 +162,23 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
     useEffect(() => {
         try {
             const mediaList = photos || [];
-            const result = processMediaToGrid(mediaList, NUM_COLUMNS);
+            const result = processMediaToFlat(mediaList);
 
             let finalGridData: GridItemType[] = result.gridData;
 
             if (loading && mediaList.length === 0) {
-                // Initial loading state - show full screen of shimmers
-                finalGridData = Array.from({ length: 6 }).map((_, index) => ({
-                    type: 'shimmer',
-                    startIndex: index // fake index for key
+                // Initial loading state - show shimmers (NUM_COLUMNS * 2 rows)
+                finalGridData = Array.from({ length: NUM_COLUMNS * 2 }).map((_, index) => ({
+                    type: 'shimmer' as const,
+                    flatIndex: index,
                 }));
             } else if (fetchingMore) {
-                // Appending loading state - add one row of shimmers
-                finalGridData = [
-                    ...finalGridData,
-                    { type: 'shimmer', startIndex: -1 }
-                ];
+                // Appending loading state - add shimmer cells
+                const shimmerItems: GridItemType[] = Array.from({ length: NUM_COLUMNS }).map((_, i) => ({
+                    type: 'shimmer' as const,
+                    flatIndex: -(i + 1),
+                }));
+                finalGridData = [...finalGridData, ...shimmerItems];
             }
 
             setSortedUrls(result.sortedUrls);
@@ -212,114 +201,75 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
             const style = isVideoGrid ? videoStyle : imageStyle;
 
             return (
-                <View style={[common.row, { paddingHorizontal: containerPadding }]}>
-                    {Array.from({ length: NUM_COLUMNS }).map((_, i) => (
-                        <View
-                            key={`shimmer-${i}`}
-                            style={[
-                                style,
-                                {
-                                    marginRight: i === NUM_COLUMNS - 1 ? 0 : SPACING,
-                                    backgroundColor: colors.card
-                                }
-                            ]}
-                        >
-                            <ShimmerEffect
-                                isLoading={true}
-                                style={StyleSheet.absoluteFill}
-                            />
-                        </View>
-                    ))}
+                <View style={[style, { backgroundColor: colors.card }]}>
+                    <ShimmerEffect
+                        isLoading={true}
+                        style={StyleSheet.absoluteFill}
+                    />
                 </View>
             );
         }
 
+        const mediaItem = item.item;
+        const isVideo = mediaItem.type.toLowerCase().includes('video');
+        const imageUrl = isVideo ? (mediaItem.thumbnail_url || mediaItem.url || placeholderImage) : mediaItem.url || placeholderImage;
+
+        if (isVideo) {
+            return (
+                <VideoGridItem
+                    key={mediaItem.id}
+                    mediaItem={mediaItem}
+                    videoStyle={videoStyle}
+                    marginRight={0}
+                    placeholderImageVideo={placeholderImageVideo}
+                    onPress={() => onVideoPress?.(mediaItem)}
+                    onLongPress={() => handleLongPress(mediaItem.thumbnail_url || mediaItem.url)}
+                    onPressOut={handlePressOut}
+                />
+            );
+        }
+
         return (
-            <View style={[common.row, { paddingHorizontal: containerPadding }]}>
-                {item.items.map((mediaItem, i) => {
-                    const isVideo = mediaItem.type.toLowerCase().includes('video');
-                    const imageUrl = isVideo ? (mediaItem.thumbnail_url || mediaItem.url || placeholderImage) : mediaItem.url || placeholderImage;
-                    const content = (
-                        <TurboImage
-                            key={mediaItem.id}
-                            source={{ uri: imageUrl }}
-                            style={[
-                                imageStyle,
-                                { marginRight: i === item.items.length - 1 ? 0 : SPACING }
-                            ]}
-                            resizeMode="cover"
-                            cachePolicy={IMAGE_CACHE_POLICY}
-                            fadeDuration={150}
-                        />
-                    );
-
-                    if (isVideo) {
-                        return (
-                            <VideoGridItem
-                                key={mediaItem.id}
-                                mediaItem={mediaItem}
-                                videoStyle={videoStyle}
-                                marginRight={i === item.items.length - 1 ? 0 : SPACING}
-                                placeholderImageVideo={placeholderImageVideo}
-                                onPress={() => onVideoPress?.(mediaItem)}
-                                onLongPress={() => handleLongPress(mediaItem.thumbnail_url || mediaItem.url)}
-                                onPressOut={handlePressOut}
-                            />
-                        );
-                    }
-
-                    return (
-                        <Pressable
-                            key={mediaItem.id}
-                            onPress={() => onImagePress?.(true, item.startIndex + i)}
-                            onLongPress={() => handleLongPress(mediaItem.url)}
-                            onPressOut={handlePressOut}
-                            delayLongPress={300}
-                        >
-                            {content}
-                        </Pressable>
-                    );
-                })}
-                {Array.from({ length: NUM_COLUMNS - item.items.length }).map((_, i) => (
-                    <View
-                        key={`empty-${i}`}
-                        style={[
-                            imageStyle,
-                            {
-                                marginRight: (i === NUM_COLUMNS - item.items.length - 1) ? 0 : SPACING,
-                                backgroundColor: 'transparent'
-                            }
-                        ]}
-                    />
-                ))}
-            </View>
+            <Pressable
+                key={mediaItem.id}
+                onPress={() => onImagePress?.(true, item.flatIndex)}
+                onLongPress={() => handleLongPress(mediaItem.url)}
+                onPressOut={handlePressOut}
+                delayLongPress={300}
+            >
+                <TurboImage
+                    source={{ uri: imageUrl }}
+                    style={imageStyle}
+                    resizeMode="cover"
+                    cachePolicy={IMAGE_CACHE_POLICY}
+                    fadeDuration={150}
+                />
+            </Pressable>
         );
-    }, [imageStyle, videoStyle, common, onVideoPress, onImagePress, handleLongPress, handlePressOut, containerPadding, colors.card]);
+    }, [imageStyle, videoStyle, onVideoPress, onImagePress, handleLongPress, handlePressOut, colors.card]);
 
     const keyExtractor = useCallback((item: GridItemType, index: number): string => {
         if (item.type === 'shimmer') return `shimmer-${index}`;
-        return `r-${item.startIndex}`;
+        return `media-${item.item.id}`;
     }, []);
 
-    // Simple getItemLayout since all rows are same height now
-    const getItemLayout = useCallback((data: ArrayLike<GridItemType> | null | undefined, index: number) => {
-        const height = onVideoPress ? (itemWidth * 1.7 + SPACING) : rowHeight;
-        return { length: height, offset: height * index, index };
-    }, [rowHeight, itemWidth, onVideoPress]);
+    // Estimated item size for FlashList performance
+    const estimatedItemSize = onVideoPress ? (itemWidth * 1.7) : itemWidth;
 
     // FlatList optimization props
     const flatListProps = useMemo(() => ({
         removeClippedSubviews: true,
-        maxToRenderPerBatch: 6,
+        maxToRenderPerBatch: 8,
         updateCellsBatchingPeriod: 50,
         windowSize: 5,
-        initialNumToRender: 8,
-        getItemLayout,
-    }), [getItemLayout]);
+        initialNumToRender: NUM_COLUMNS * 3,
+    }), []);
 
     return {
         gridData,
         sortedUrls,
+        numColumns: NUM_COLUMNS,
+        estimatedItemSize,
         renderItem,
         keyExtractor,
         contentContainerStyle: styles.listContent,

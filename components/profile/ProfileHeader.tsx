@@ -1,9 +1,9 @@
 import VerifiedIcon from '@/icons/verified';
 import { getTiktokProfile } from '@/services/tiktok';
-import { Ionicons } from '@expo/vector-icons';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
+import { CaseMinimalisticBold, PlayCircleBold, PlayCircleOutline, PointOnMapBold } from '@solar-icons/react-native';
 import { SquircleView } from 'expo-squircle-view';
 import countries from "i18n-iso-countries";
 import en from "i18n-iso-countries/langs/en.json";
@@ -34,6 +34,7 @@ import { Workplace } from "../../types/profileworplace";
 import { TabPillGroup } from "../tabpill";
 import BirthdayCard from './BirthdayCard';
 import DynamicAvatar from './DynamicAvatar';
+import ProfileBriefInfo from './ProfileBriefInfo';
 import QuickPreviewModal from './QuickPreviewModal';
 
 const COVER_HEIGHT = 250;
@@ -359,95 +360,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                             </Text>
                         )}
 
-                        {(() => {
-                            const getRelationshipEmoji = (label: string) => {
-                                const l = label.toLowerCase();
-                                if (l.includes('father') || l.includes('dad')) return '👨';
-                                if (l.includes('mother') || l.includes('mom')) return '👩';
-                                if (l.includes('brother')) return '👦';
-                                if (l.includes('sister')) return '👧';
-                                if (l.includes('son')) return '👦';
-                                if (l.includes('daughter')) return '👧';
-                                if (l.includes('wife') || l.includes('husband') || l.includes('partner') || l.includes('married')) return '💍';
-                                return '❤️';
-                            };
+                        <ProfileBriefInfo profile={profile} workplaces={workplaces} homeInfo={homeInfo} />
 
-                            const workItems: any[] = [];
-                            if (workplaces.length > 0) {
-                                workItems.push({ icon: 'briefcase', label: `${workplaces[0].position} at ${workplaces[0].company_name}` });
-                            }
-
-                            const eduItems: any[] = [];
-                            if (profile?.college) eduItems.push({ icon: 'school', label: profile.college });
-                            if (profile?.highschool) eduItems.push({ icon: 'school-outline', label: profile.highschool });
-
-                            // Hometown/Address
-                            const homeItems: any[] = [];
-                            if (homeInfo) homeItems.push({ icon: 'location', label: homeInfo });
-
-                            const relItems: any[] = [];
-                            if (profile?.loved_ones && profile.loved_ones.length > 0) {
-                                profile.loved_ones.forEach(person => {
-                                    relItems.push({
-                                        emoji: getRelationshipEmoji(person.label),
-                                        label: `${person.label} - ${person.name}`
-                                    });
-                                });
-                            }
-
-                            if (!workItems.length && !eduItems.length && !homeItems.length && !relItems.length) return null;
-
-                            const Section = ({ title, items }: { title: string, items: any[] }) => {
-                                if (items.length === 0) return null;
-                                return (
-                                    <View style={{ marginBottom: 16 }}>
-                                        <Text style={[common.bodySmall, { fontWeight: '700', marginBottom: 8, opacity: 0.8 }]}>{title}</Text>
-                                        <View style={{ gap: 8 }}>
-                                            {items.map((item, i) => (
-                                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                    {item.icon ? (
-                                                        <Ionicons name={item.icon as any} size={16} color={colors.text} style={{ marginRight: 10, width: 20 }} />
-                                                    ) : (
-                                                        <Text style={{ fontSize: 14, marginRight: 10, width: 20, textAlign: 'center' }}>{item.emoji}</Text>
-                                                    )}
-                                                    <Text style={[common.bodySmall, { fontSize: 14, flex: 1 }]} numberOfLines={2}>{item.label}</Text>
-                                                </View>
-                                            ))}
-                                        </View>
-                                    </View>
-                                );
-                            };
-
-                            return (
-                                <View style={{ paddingTop: 16 }}>
-                                    <Section title="Work" items={workItems} />
-                                    <Section title="Education" items={eduItems} />
-                                    <Section title="Places Lived" items={homeItems} />
-
-                                    {relItems.length > 0 && (
-                                        <View style={{ marginBottom: 16 }}>
-                                            <Text style={[common.bodySmall, { fontWeight: '700', marginBottom: 8, opacity: 0.8 }]}>Family & Relationships</Text>
-                                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
-                                                {relItems.map((item, i) => (
-                                                    <View key={i} style={{
-                                                        flexDirection: 'row',
-                                                        alignItems: 'center',
-                                                        backgroundColor: colors.card,
-                                                        paddingVertical: 6,
-                                                        paddingHorizontal: 12,
-                                                        borderRadius: 20,
-                                                        marginRight: 8
-                                                    }}>
-                                                        <Text style={{ fontSize: 13, marginRight: 6 }}>{item.emoji}</Text>
-                                                        <Text style={[common.bodySmall, { fontSize: 13 }]}>{item.label}</Text>
-                                                    </View>
-                                                ))}
-                                            </ScrollView>
-                                        </View>
-                                    )}
-                                </View>
-                            );
-                        })()}
                         <ScrollView
                             style={{ marginTop: 16, marginHorizontal: -16 }}
                             contentContainerStyle={{ paddingHorizontal: 16 }}
@@ -471,11 +385,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                                     <TouchableOpacity onPress={toggleMusic} style={{ borderRadius: 999, padding: 6, backgroundColor: colors.card, justifyContent: "center", alignItems: "center", marginLeft: 8 }}>
-                                        <Ionicons
-                                            name={isPlaying ? 'musical-notes' : 'musical-notes-outline'}
-                                            size={20}
-                                            color={theme === "dark" ? "white" : "black"}
-                                        />
+                                        {isPlaying ? <PlayCircleBold size={20} color={colors.text} /> : <PlayCircleOutline size={20} color={colors.text} />}
                                     </TouchableOpacity>
                                     <Text numberOfLines={2} style={[common.bodySmall, { marginLeft: 8, marginRight: 4, flex: 1, color: 'white' }]}>
                                         {currentMusic.artist} - {currentMusic.title}
@@ -507,7 +417,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 >
                                     <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0, backgroundColor: colors.text, opacity: 0.1 }} />
                                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}>
-                                        <Ionicons name="location" size={20} color={colors.text} />
+                                        <PointOnMapBold size={20} color={colors.text} />
                                     </View>
                                     <Text numberOfLines={2} style={[common.label, { marginHorizontal: 10, flex: 1 }]}>
                                         {addresses.length} address{addresses.length > 1 ? 'es' : ''}
@@ -522,7 +432,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 >
                                     <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0, backgroundColor: colors.text, opacity: 0.1 }} />
                                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}>
-                                        <Ionicons name="briefcase" size={20} color={colors.text} />
+                                        <CaseMinimalisticBold size={20} color={colors.text} />
                                     </View>
                                     <Text numberOfLines={2} style={[common.label, { marginHorizontal: 10, flex: 1 }]}>
                                         {workplaces.length} workplace{workplaces.length > 1 ? 's' : ''}

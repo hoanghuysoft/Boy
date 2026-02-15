@@ -154,6 +154,8 @@ const ProfileScreen = () => {
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const hasMusic = music.length > 0;
+  const currentTrack = hasMusic ? music[0] : null;
 
   useEffect(() => {
     if (isProfileError) {
@@ -270,12 +272,13 @@ const ProfileScreen = () => {
   const {
     gridData: imageData,
     sortedUrls,
+    numColumns: imageNumColumns,
+    estimatedItemSize: imageEstimatedItemSize,
     renderItem: renderImageItem,
     keyExtractor: imageKeyExtractor,
     flatListProps: imageFlatListProps,
     renderQuickPreview: renderImageQuickPreview,
   } = useImageGrid({
-    containerPadding: 10,
     photos: photos,
     onImagePress: handleImagePress,
     loading: isPhotosLoading,
@@ -284,13 +287,14 @@ const ProfileScreen = () => {
 
   const {
     gridData: videoData,
+    numColumns: videoNumColumns,
+    estimatedItemSize: videoEstimatedItemSize,
     renderItem: renderVideoItem,
     keyExtractor: videoKeyExtractor,
     contentContainerStyle: videoContainerStyle,
     flatListProps: videoFlatListProps,
     renderQuickPreview: renderVideoQuickPreview,
   } = useImageGrid({
-    containerPadding: 10,
     photos: videos, // This hook expects Media[] in 'photos' prop
     onVideoPress: handleVideoPress,
     loading: isVideosLoading,
@@ -328,6 +332,26 @@ const ProfileScreen = () => {
       case "Feed": return feedPosts;
     }
   }, [activeTab, imageData, videoData, feedPosts]);
+
+  // Dynamic numColumns based on tab
+  const numColumns = useMemo(() => {
+    switch (activeTab) {
+      case "Images": return imageNumColumns;
+      case "Videos": return videoNumColumns;
+      default: return 1;
+    }
+  }, [activeTab, imageNumColumns, videoNumColumns]);
+
+  // Dynamic estimatedItemSize based on tab
+  const estimatedItemSize = useMemo(() => {
+    switch (activeTab) {
+      case "Images": return imageEstimatedItemSize;
+      case "Videos": return videoEstimatedItemSize;
+      case "Feed": return 400;
+      case "Information": return 600;
+      default: return 200;
+    }
+  }, [activeTab, imageEstimatedItemSize, videoEstimatedItemSize]);
 
   // Dynamic renderItem based on tab
   const renderItem = useCallback(({ item, index }: { item: any; index: number }) => {
@@ -469,10 +493,12 @@ const ProfileScreen = () => {
 
   const flatList = (
     <AnimatedFlashList
+      key={`flashlist-${numColumns}`}
       ref={listRef}
       data={data}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
+      numColumns={numColumns}
       contentContainerStyle={[
         { paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }
       ]}
@@ -490,7 +516,7 @@ const ProfileScreen = () => {
           progressBackgroundColor={colors.card}
         />
       }
-      estimatedItemSize={150}
+      estimatedItemSize={estimatedItemSize}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.5}
     />
@@ -501,13 +527,16 @@ const ProfileScreen = () => {
   return (
     <View style={common.screen}>
       {/* Sticky Back Button */}
+      {/* Sticky Header Container */}
       {!isMe && (
-        <View style={{ position: 'absolute', top: inset.top, left: 16, zIndex: 1000 }}>
-          <View style={[common.row, { gap: 8 }]}>
+        <View style={{ position: 'absolute', top: inset.top + 8, left: 16, zIndex: 1000 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+
+            {/* 1. BACK BUTTON (Height: 40px) */}
             <TouchableOpacity
               onPress={() => router.back()}
               style={{
-                backgroundColor: colors.containerContent,
+                backgroundColor: colors.containerContent, // Or use BlurView here too for consistency
                 borderRadius: 999,
                 width: 40,
                 height: 40,
@@ -519,51 +548,53 @@ const ProfileScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
+              activeOpacity={0.8}
               onPress={() => musicSheetRef.current?.present()}
+              style={{ height: 40, width: 150 }}
             >
-              <BlurView
-                blurAmount={0}
-                blurType={theme === 'dark' ? "systemMaterialDark" : "systemMaterialLight"}
-                style={{
-                  borderRadius: 999,
-                  height: 40,
-                  maxWidth: 200,
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  padding: 4,
-                  flexDirection: 'row',
-                  gap: 4
-                }}
-              >
-                {music.length === 0 ? (
-                  <View
-                    style={{
-                      borderRadius: 999,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      backgroundColor: colors.containerContent,
-                      padding: 6
-                    }}
-                  >
-                    <Ionicons name='musical-note' size={20} color={colors.text} />
+              <View style={styles.blurWrapper}>
+                <BlurView
+                  blurType={theme === 'dark' ? "systemMaterialDark" : "systemMaterialLight"}
+                  blurAmount={1}
+                  reducedTransparencyFallbackColor={theme === 'dark' ? "black" : "white"}
+                  style={StyleSheet.absoluteFill}
+                />
+
+                <View style={styles.blurContent}>
+                  <View style={[styles.artworkContainer, { width: 32, height: 32 }]}>
+                    {!hasMusic ? (
+                      <View style={[styles.placeholderIcon, { backgroundColor: colors.containerContent }]}>
+                        <Ionicons name='musical-note' size={18} color={colors.text} />
+                      </View>
+                    ) : (
+                      <TurboImage
+                        source={{ uri: currentTrack?.cover_url || '' }}
+                        style={styles.artworkImage}
+                        resizeMode="cover"
+                      />
+                    )}
                   </View>
-                ) : (
-                  <TurboImage
-                    source={{ uri: music[0].cover_url }}
-                    style={{
-                      borderRadius: 999,
-                      width: 35,
-                      height: 35,
-                    }}
-                    resizeMode="cover"
-                  />
-                )}
-                <View style={{ paddingRight: 10 }}>
-                  <Text style={[common.label, { fontWeight: 'bold' }]} numberOfLines={1}>{music.length === 0 ? 'Music not yet added' : music[0].title}</Text>
-                  <Text style={common.bodySmall} numberOfLines={1}>{music.length === 0 ? 'Tap to view more' : music[0].artist}</Text>
+
+                  <View style={styles.textContainer}>
+                    <Text
+                      style={[styles.titleText, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {hasMusic ? currentTrack?.title : 'Add Music'}
+                    </Text>
+
+                    {/* Optional: Hide artist if it gets too cramped, or keep small */}
+                    <Text
+                      style={[styles.artistText, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {hasMusic ? currentTrack?.artist : 'Select track'}
+                    </Text>
+                  </View>
                 </View>
-              </BlurView>
+              </View>
             </TouchableOpacity>
+
           </View>
         </View>
       )}
@@ -671,6 +702,58 @@ const styles = StyleSheet.create({
   },
   emptyMessage: {
     marginTop: 8,
+  },
+  touchableContainer: {
+    marginVertical: 8,
+    alignSelf: 'flex-start',
+  },
+  artworkContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderIcon: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 999,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  artworkImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 999,
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingRight: 12,
+  },
+
+  titleText: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+
+  artistText: {
+    fontSize: 11,
+    opacity: 0.7,
+    lineHeight: 14,
+  },
+  blurWrapper: {
+    borderRadius: 999,
+    overflow: 'hidden',
+    height: 40,
+    maxWidth: 200,
+    justifyContent: 'center',
+  },
+  blurContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 0,
+    height: '100%',
+    gap: 8,
   },
 });
 

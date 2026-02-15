@@ -1,15 +1,14 @@
-import {
-    Home2Outlined,
-    Home2Solid,
-    PlusOutlined,
-    PlusSolid,
-    Search1Outlined,
-    Search1Solid,
-    User4Outlined,
-    User4Solid
-} from "@lineiconshq/free-icons";
-import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import {
+    AddCircleBold,
+    AddCircleOutline,
+    HomeBold,
+    HomeOutline,
+    MinimalisticMagnifierBold,
+    MinimalisticMagnifierOutline,
+    UserRoundedBold,
+    UserRoundedOutline
+} from "@solar-icons/react-native";
 import { SquircleView } from "expo-squircle-view";
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -22,34 +21,34 @@ type TabName = "index" | "search" | "chat" | "profile";
 interface TabConfig {
     name: TabName;
     label: string;
-    iconOutlined: any;
-    iconSolid: any;
+    IconOutlined: any;
+    IconSolid: any;
 }
 
 const tabs: TabConfig[] = [
     {
         name: "index",
         label: "Home",
-        iconOutlined: Home2Outlined,
-        iconSolid: Home2Solid,
+        IconOutlined: HomeOutline,
+        IconSolid: HomeBold,
     },
     {
         name: "search",
         label: "Search",
-        iconOutlined: Search1Outlined,
-        iconSolid: Search1Solid,
+        IconOutlined: MinimalisticMagnifierOutline,
+        IconSolid: MinimalisticMagnifierBold,
     },
     {
         name: "chat",
         label: "Create",
-        iconOutlined: PlusOutlined,
-        iconSolid: PlusSolid,
+        IconOutlined: AddCircleOutline,
+        IconSolid: AddCircleBold,
     },
     {
         name: "profile",
         label: "Profile",
-        iconOutlined: User4Outlined,
-        iconSolid: User4Solid,
+        IconOutlined: UserRoundedOutline,
+        IconSolid: UserRoundedBold,
     },
 ];
 
@@ -111,18 +110,15 @@ const AnimatedTabButton = ({
         }).start();
     };
 
+    const Icon = isFocused ? tabConfig.IconSolid : tabConfig.IconOutlined;
+
     return (
         <TouchableOpacity
             key={route.key}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={descriptors[route.key].options.tabBarAccessibilityLabel}
-            style={[
-                styles.tabBarItem,
-                isFocused && {
-                    backgroundColor: colors.card + "CC",
-                },
-            ]}
+            style={styles.tabBarItem}
             onPress={() => {
                 handlePressOut();
                 onPress();
@@ -140,11 +136,9 @@ const AnimatedTabButton = ({
                     justifyContent: "center",
                 }}
             >
-                <Lineicons
-                    icon={isFocused ? tabConfig.iconSolid : tabConfig.iconOutlined}
+                <Icon
                     size={24}
                     color={color}
-                    strokeWidth={5}
                 />
                 <Text
                     style={[
@@ -167,6 +161,23 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
     const insets = useSafeAreaInsets();
     const bottomSpacing = 13 + insets.bottom;
 
+    const [layout, setLayout] = React.useState({ width: 0, height: 0 });
+    const translateX = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (layout.width > 0) {
+            const tabWidth = (layout.width - 10) / state.routes.length;
+            Animated.spring(translateX, {
+                toValue: state.index * tabWidth,
+                useNativeDriver: true,
+                friction: 8,
+                tension: 50,
+            }).start();
+        }
+    }, [state.index, layout.width, state.routes.length]);
+
+    const tabWidth = layout.width > 0 ? (layout.width - 10) / state.routes.length : 0;
+
     return (
         <SquircleView
             cornerSmoothing={100}
@@ -179,7 +190,35 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
             ]}
         >
             <SquircleView cornerSmoothing={100} preserveSmoothing style={styles.blurContainer}>
-                <View style={[styles.tabBarContent, { backgroundColor: colors.tabBar + "" }]}>
+                <View
+                    style={[styles.tabBarContent, { backgroundColor: colors.tabBar + "" }]}
+                    onLayout={(e) => setLayout(e.nativeEvent.layout)}
+                >
+                    {/* Animated Pill */}
+                    {layout.width > 0 && (
+                        <Animated.View
+                            style={{
+                                position: 'absolute',
+                                width: tabWidth,
+                                height: '100%',
+                                left: 5,
+                                top: 5,
+                                transform: [{ translateX }],
+                                zIndex: 0,
+                            }}
+                        >
+                            <SquircleView
+                                cornerSmoothing={100}
+                                preserveSmoothing
+                                style={{
+                                    flex: 1,
+                                    backgroundColor: colors.card + "CC",
+                                    borderRadius: 999,
+                                }}
+                            />
+                        </Animated.View>
+                    )}
+
                     {state.routes.map((route, index) => {
                         const isFocused = state.index === index;
                         // Map route names to tab config

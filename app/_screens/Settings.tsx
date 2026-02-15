@@ -97,7 +97,23 @@ const SettingsScreen = () => {
                     />
                 </View>
             </View>
-        </ScrollView>
+            <Text style={[styles.title, { marginTop: 24 }]}>Account</Text>
+            <View style={[styles.card]}>
+                <TouchableOpacity style={[styles.option]} onPress={async () => {
+                    try {
+                        const { signOut } = await import("@/services/login");
+                        await signOut();
+                        router.dismissAll();
+                        router.replace("/");
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }}>
+                    <Text style={[common.body, { color: '#FF3B30' }]}>Log out</Text>
+                    <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                </TouchableOpacity>
+            </View>
+        </ScrollView >
     );
 };
 

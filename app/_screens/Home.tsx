@@ -1,6 +1,4 @@
 import { Post } from "@/types/post";
-import { Search1Outlined } from "@lineiconshq/free-icons";
-import Lineicons from "@lineiconshq/react-native-lineicons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { useRouter } from "expo-router";
@@ -18,6 +16,7 @@ import SettingsIcon from "@/icons/settings";
 import { useCarouselColorStore } from "@/stores/carouselColor";
 import { useSettingsStore } from "@/stores/settings";
 import FastImage from "@d11/react-native-fast-image";
+import { Magnifier } from '@solar-icons/react-native/Outline';
 import { GalleryModal } from "../../components/gallery/GalleryModal";
 import CustomTopTabBar from "./home/CustomTopTabBar";
 import FeedTab from "./home/FeedTab";
@@ -260,12 +259,7 @@ const HomeScreen = () => {
                 opacity: pillBgOpacity,
               }} />
               <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-                <Lineicons
-                  icon={Search1Outlined}
-                  size={24}
-                  color={iconColor}
-                  strokeWidth={3}
-                />
+                <Magnifier size={24} color={iconColor} />
               </TouchableOpacity>
               <TouchableOpacity onPress={openModal}>
                 <SettingsIcon size={24} color={iconColor} />
