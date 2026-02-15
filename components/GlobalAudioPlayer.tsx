@@ -8,9 +8,11 @@ import { useAudioStore } from "../stores/audio";
  * to avoid issues with RecyclerListView's view recycling.
  * 
  * It listens to the audio store and plays/pauses audio based on state changes.
+ * All audio sources across the app (posts, profile header, music sheet)
+ * go through this single player.
  */
 export const GlobalAudioPlayer = () => {
-    const { currentAudioUrl, currentlyPlayingId, setCurrentlyPlayingId, setCurrentAudioUrl } = useAudioStore();
+    const { currentAudioUrl, currentlyPlayingId, stopPlayback } = useAudioStore();
 
     // Track the current audio source
     const audioSource = currentAudioUrl ? { uri: currentAudioUrl } : null;
@@ -43,15 +45,14 @@ export const GlobalAudioPlayer = () => {
             if (prevUrlRef.current && !player.playing && currentlyPlayingId) {
                 // Check if audio has reached the end
                 if (player.duration > 0 && player.currentTime >= player.duration - 0.1) {
-                    setCurrentlyPlayingId(null);
-                    setCurrentAudioUrl(null);
+                    stopPlayback();
                     prevUrlRef.current = null;
                 }
             }
         }, 500);
 
         return () => clearInterval(checkPlayerState);
-    }, [player, currentlyPlayingId, setCurrentlyPlayingId, setCurrentAudioUrl]);
+    }, [player, currentlyPlayingId, stopPlayback]);
 
     // This component doesn't render anything
     return null;

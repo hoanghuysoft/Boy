@@ -32,7 +32,7 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
     const common = createCommonStyles(colors, typography);
 
     // Global store for single play enforcement
-    const { currentlyPlayingId, setCurrentlyPlayingId, currentAudioUrl, setCurrentAudioUrl } = useAudioStore();
+    const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
 
     // Check if this post's music is currently playing
     const isPlaying = currentlyPlayingId === post.id;
@@ -41,13 +41,13 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
         if (!post.music?.preview_url) return;
 
         if (isPlaying) {
-            // Stop playing
-            setCurrentlyPlayingId(null);
-            setCurrentAudioUrl(null);
+            stopPlayback();
         } else {
-            // Start playing this post's music
-            setCurrentlyPlayingId(post.id);
-            setCurrentAudioUrl(post.music.preview_url);
+            playTrack(post.id, post.music.preview_url, {
+                title: post.music.title,
+                artist: post.music.artist,
+                coverUrl: post.music.cover_url,
+            });
         }
     };
 
@@ -190,15 +190,15 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
                 <View style={[common.row, { gap: 20 }]}>
                     <TouchableOpacity hitSlop={10} style={[common.row, { gap: 6, alignItems: 'center' }]}>
                         <LikeIcon size={24} color={colors.text} />
-                        <Text style={[common.label, { color: colors.text, fontWeight: '600' }]}>{post.like_count}</Text>
+                        <Text style={[common.label, { color: colors.text, fontWeight: '800' }]}>{post.like_count}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity hitSlop={10} style={[common.row, { gap: 6, alignItems: 'center' }]}>
                         <CommentIcon size={24} color={colors.text} />
-                        <Text style={[common.label, { color: colors.text, fontWeight: '600' }]}>{post.comment_count}</Text>
+                        <Text style={[common.label, { color: colors.text, fontWeight: '800' }]}>{post.comment_count}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity hitSlop={10} style={[common.row, { gap: 6, alignItems: 'center' }]}>
                         <ShareIcon size={24} color={colors.text} />
-                        <Text style={[common.label, { color: colors.text, fontWeight: '600' }]}>{post.share_count}</Text>
+                        <Text style={[common.label, { color: colors.text, fontWeight: '800' }]}>{post.share_count}</Text>
                     </TouchableOpacity>
                 </View>
                 <TouchableOpacity hitSlop={10}>

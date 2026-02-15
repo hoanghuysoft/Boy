@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import React, { forwardRef, memo, useEffect, useState } from "react";
+import React, { forwardRef, memo, useCallback } from "react";
 import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
+import { useAudioStore } from '../../../stores/audio';
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileMusic } from '../../../types/profilemusic';
 
@@ -18,63 +18,33 @@ const MusicItem = memo(({
     item,
     colors,
     common,
-    playingId,
-    setPlayingId
 }: {
     item: ProfileMusic,
     colors: any,
     common: any,
-    playingId: string | null,
-    setPlayingId: (id: string | null) => void
 }) => {
-    const player = useAudioPlayer({ uri: item.preview_url || "" });
-    const status = useAudioPlayerStatus(player);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
 
-    // Update isPlaying when playback status changes (handles audio end)
-    useEffect(() => {
-        if (status.playing !== isPlaying) {
-            setIsPlaying(status.playing);
-            // If audio stopped and we were the playing track, clear the playingId
-            if (!status.playing && playingId === item.id) {
-                setPlayingId(null);
-            }
-        }
-    }, [status.playing]);
+    const trackId = `music-sheet-${item.id}`;
+    const isPlaying = currentlyPlayingId === trackId;
 
-    // Watch for other tracks playing to auto-pause this one
-    useEffect(() => {
-        if (playingId !== item.id && isPlaying) {
-            player.pause();
-            player.seekTo(0);
-        }
-    }, [playingId]);
-
-    const toggleMusic = () => {
+    const toggleMusic = useCallback(() => {
         if (!item.preview_url) return;
 
-        // Check if track finished
-        const isAtEnd = player.duration > 0 && (player.duration - player.currentTime < 0.2);
-
-        if (isAtEnd) {
-            player.seekTo(0);
-            player.play();
-            setPlayingId(item.id);
-            return;
-        }
-
-        if (player.playing) {
-            player.pause();
-            setPlayingId(null);
+        if (isPlaying) {
+            stopPlayback();
         } else {
-            player.play();
-            setPlayingId(item.id);
+            playTrack(trackId, item.preview_url, {
+                title: item.title,
+                artist: item.artist,
+                coverUrl: item.cover_url,
+            });
         }
-    };
+    }, [item, trackId, isPlaying, playTrack, stopPlayback]);
 
-    const handleOpenLink = () => {
+    const handleOpenLink = useCallback(() => {
         if (item.url) Linking.openURL(item.url);
-    };
+    }, [item.url]);
 
     return (
         <TouchableOpacity
@@ -132,7 +102,7 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
-    const [playingId, setPlayingId] = useState<string | null>(null);
+    const { stopPlayback } = useAudioStore();
 
     // Safety check
     if (!data || data.length === 0) return null;
@@ -147,7 +117,7 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
                 height: 4,
                 width: 32,
             }}
-            onDidDismiss={() => setPlayingId(null)}
+            onDidDismiss={() => stopPlayback()}
         >
             <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
 
@@ -172,8 +142,6 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
                             item={item}
                             colors={colors}
                             common={common}
-                            playingId={playingId}
-                            setPlayingId={setPlayingId}
                         />
                     )}
                     contentContainerStyle={{ paddingBottom: 20 }}

@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { CalendarDaysSolid, MapMarker1Solid, Message2Solid, PhoneSolid, User4Solid } from '@lineiconshq/free-icons';
 import Lineicons from '@lineiconshq/react-native-lineicons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, View } from "react-native";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -27,12 +27,26 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
         });
     };
 
+    const parsedMetadata = useMemo(() => {
+        if (!profile?.metadata) return null;
+        try {
+            return typeof profile.metadata === 'string'
+                ? JSON.parse(profile.metadata)
+                : profile.metadata;
+        } catch {
+            return null;
+        }
+    }, [profile?.metadata]);
+
+    const height = parsedMetadata?.height;
+    const weight = parsedMetadata?.weight;
+
     return (
         <View style={[common.card, { marginTop: 16, marginHorizontal: 16 }]}>
             {/* Name */}
             <Text style={[common.muted]}>Name</Text>
             <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                <Text style={[common.body, { flex: 1 }]}>
                     {profile?.name || "Not specified"}
                 </Text>
             </View>
@@ -43,7 +57,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>Email</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {profile.email}
                         </Text>
                         <Lineicons size={22} color={colors.text} icon={Message2Solid} strokeWidth={4} />
@@ -56,7 +70,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>Phone</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {profile.phone}
                         </Text>
                         <Lineicons size={22} color={colors.text} icon={PhoneSolid} strokeWidth={4} />
@@ -70,7 +84,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>Gender</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', textTransform: 'capitalize' }]}>
+                        <Text style={[common.body, { textTransform: 'capitalize' }]}>
                             {profile.gender}
                         </Text>
                         <Lineicons size={22} color={colors.text} icon={User4Solid} strokeWidth={4} />
@@ -84,10 +98,38 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>Birthday</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {formatBirthday(profile.birthday)}
                         </Text>
                         <Lineicons size={22} color={colors.text} icon={CalendarDaysSolid} strokeWidth={4} />
+                    </View>
+                </>
+            )}
+
+            {/* Height */}
+            {height && (
+                <>
+                    <View style={common.divider} />
+                    <Text style={[common.muted]}>Height</Text>
+                    <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
+                            {height} cm
+                        </Text>
+                        <MaterialIcons name="height" size={22} color={colors.text} />
+                    </View>
+                </>
+            )}
+
+            {/* Weight */}
+            {weight && (
+                <>
+                    <View style={common.divider} />
+                    <Text style={[common.muted]}>Weight</Text>
+                    <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
+                            {weight} kg
+                        </Text>
+                        <MaterialIcons name="scale" size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -98,7 +140,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>Hometown</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {profile.hometown}
                         </Text>
                         <Lineicons size={22} color={colors.text} icon={MapMarker1Solid} strokeWidth={4} />
@@ -112,7 +154,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>College</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {profile.college}
                         </Text>
                         <Ionicons name="school" size={22} color={colors.text} />
@@ -126,7 +168,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>High School</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {profile.highschool}
                         </Text>
                         <Ionicons name="school-outline" size={22} color={colors.text} />
@@ -140,7 +182,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>Username</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             @{profile.username}
                         </Text>
                         <Ionicons name="at-circle-outline" size={22} color={colors.text} />
@@ -154,7 +196,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>License Plate</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {profile.license_plate}
                         </Text>
                         <Ionicons name="card-outline" size={22} color={colors.text} />
@@ -168,7 +210,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>Married Date</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {formatBirthday(profile.married_date)}
                         </Text>
                         <Ionicons name="heart-outline" size={22} color={colors.text} />
@@ -182,7 +224,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>Hobby</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {profile.hobby}
                         </Text>
                         <Ionicons name="extension-puzzle-outline" size={22} color={colors.text} />
@@ -196,7 +238,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     <View style={common.divider} />
                     <Text style={[common.muted]}>Talent</Text>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textAlign: 'justify', flex: 1 }]}>
+                        <Text style={[common.body, { flex: 1 }]}>
                             {profile.talent}
                         </Text>
                         <Ionicons name="star-outline" size={22} color={colors.text} />

@@ -1,8 +1,10 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { memo, useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
+import AnimatedGlow from 'react-native-animated-glow';
 import { ThemeColors } from "../../context/ThemeContext";
 import { DeezerTrack } from "../../services/deezer";
+import { abyssalGlow } from '../glow/AbyssGlowConfig';
 import { COLORS } from "./types";
 
 // ============================================================================
@@ -125,43 +127,48 @@ export const CreateActionBar = memo(({
             ]}
             pointerEvents={visible ? "auto" : "none"}
         >
-            <View
-                style={[
-                    styles.pillBar,
-                    {
-                        backgroundColor: colors.containerContent,
-                        borderColor: colors.divider,
-                    },
-                ]}
+            <AnimatedGlow
+                preset={abyssalGlow}
+                style={{ borderRadius: 999 }}
             >
-                <ActionButton
-                    icon="image"
-                    isActive={selectedMediaCount > 0}
-                    onPress={onPickMedia}
-                    disabled={selectedMediaCount >= 10}
-                    colors={colors}
-                />
-                <ActionButton
-                    icon="location-history"
-                    isActive={showLocationInput || hasLocation}
-                    onPress={onToggleLocation}
-                    colors={colors}
-                />
-                <ActionButton
-                    icon="music-circle"
-                    isActive={showMusicSearch || selectedTrack !== null}
-                    onPress={onToggleMusic}
-                    colors={colors}
-                    isCommunityIcon
-                />
-                <ActionButton
-                    icon="link-circle"
-                    isActive={linksCount > 0}
-                    onPress={onAddLink}
-                    isCommunityIcon
-                    colors={colors}
-                />
-            </View>
+                <View
+                    style={[
+                        styles.pillBar,
+                        {
+                            backgroundColor: colors.containerContent,
+                            borderColor: colors.divider,
+                        },
+                    ]}
+                >
+                    <ActionButton
+                        icon="image"
+                        isActive={selectedMediaCount > 0}
+                        onPress={onPickMedia}
+                        disabled={selectedMediaCount >= 10}
+                        colors={colors}
+                    />
+                    <ActionButton
+                        icon="location-history"
+                        isActive={showLocationInput || hasLocation}
+                        onPress={onToggleLocation}
+                        colors={colors}
+                    />
+                    <ActionButton
+                        icon="music-circle"
+                        isActive={showMusicSearch || selectedTrack !== null}
+                        onPress={onToggleMusic}
+                        colors={colors}
+                        isCommunityIcon
+                    />
+                    <ActionButton
+                        icon="link-circle"
+                        isActive={linksCount > 0}
+                        onPress={onAddLink}
+                        isCommunityIcon
+                        colors={colors}
+                    />
+                </View>
+            </AnimatedGlow>
         </Animated.View>
     );
 });

@@ -4,8 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { SquircleView } from 'expo-squircle-view';
+import countries from "i18n-iso-countries";
+import en from "i18n-iso-countries/langs/en.json";
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
     Animated,
@@ -18,10 +19,12 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import CountryFlag from "react-native-country-flag";
 import { getColors } from 'react-native-image-colors';
 import { createMMKV } from 'react-native-mmkv';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../context/ThemeContext";
+import { useAudioStore } from '../../stores/audio';
 import { createCommonStyles } from "../../styles/common";
 import { ProfileAddress } from "../../types/profileaddress";
 import { ProfileDetail } from "../../types/profiledetail";
@@ -84,11 +87,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     imageCount = 0,
     videoCount = 0,
     postCount = 0,
+    isMe = false,
 }) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const style = styles(colors);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
     const [gradientColors, setGradientColors] = useState<string[]>([]);
     const [avatarPreviewVisible, setAvatarPreviewVisible] = useState(false);
 
@@ -100,6 +104,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
         frequency: 5,
         amplitude: 30,
     };
+
+    useEffect(() => {
+        countries.registerLocale(en);
+    }, []);
 
     const hasCover = !!profile?.cover_url;
     const currentMusic = music?.[0];
@@ -118,6 +126,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     }, [profile?.metadata]);
 
     const threedEmoji = parsedMetadata?.threed_emoji || null;
+
+    const primaryAddress = addresses.find(a => a.is_primary) || addresses[0];
+    const homeInfo = profile?.hometown || (primaryAddress ? `${primaryAddress.city}${primaryAddress.country ? `, ${primaryAddress.country}` : ''}` : null);
+
+    const flagCode = useMemo(() => {
+        if (!homeInfo) return null;
+        const parts = homeInfo.split(',');
+        const potentialCountry = parts[parts.length - 1].trim();
+        return countries.getAlpha2Code(potentialCountry, "en");
+    }, [homeInfo]);
 
     // Extract colors for mesh gradient when cover is not available
     useEffect(() => {
@@ -193,15 +211,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
         extrapolate: "clamp",
     });
 
-    const player = useAudioPlayer(currentMusic?.preview_url ? { uri: currentMusic.preview_url } : null);
-    const status = useAudioPlayerStatus(player);
-
-    // Update isPlaying when playback status changes
-    useEffect(() => {
-        if (status.playing !== isPlaying) {
-            setIsPlaying(status.playing);
-        }
-    }, [status.playing]);
+    // Use a stable ID for the profile music player
+    const profileMusicId = currentMusic ? `profile-music-${currentMusic.id}` : null;
+    const isPlaying = profileMusicId ? currentlyPlayingId === profileMusicId : false;
 
     const handleInfoTab = useCallback(() => onTabChange("Information"), [onTabChange]);
     const handleImagesTab = useCallback(() => onTabChange("Images"), [onTabChange]);
@@ -209,20 +221,18 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     const handleFeedTab = useCallback(() => onTabChange("Feed"), [onTabChange]);
 
     const toggleMusic = useCallback(() => {
-        const isAtEnd = player.duration > 0 && (player.duration - player.currentTime < 0.2);
+        if (!currentMusic?.preview_url || !profileMusicId) return;
 
-        if (isAtEnd) {
-            player.seekTo(0);
-            player.play();
-            return;
-        }
-
-        if (player.playing) {
-            player.pause();
+        if (isPlaying) {
+            stopPlayback();
         } else {
-            player.play();
+            playTrack(profileMusicId, currentMusic.preview_url, {
+                title: currentMusic.title,
+                artist: currentMusic.artist,
+                coverUrl: currentMusic.cover_url,
+            });
         }
-    }, [player]);
+    }, [currentMusic, profileMusicId, isPlaying, playTrack, stopPlayback]);
 
     const testTiktokProfile = async () => {
         const res = await getTiktokProfile("dreww_ohi7")
@@ -311,10 +321,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 </Galeria.Image>
                             </Galeria>
                         )}
-                        <View style={{ flex: 1, paddingTop: 40, justifyContent: 'flex-end' }}>
+                        <View style={{ flex: 1, paddingTop: 10, justifyContent: 'flex-end' }}>
                             <View style={[common.row, { gap: 4 }]}>
                                 <Text style={[common.heading, { fontWeight: '700' }]}>{profile?.name || "Boy not found"}</Text>
                                 {profile?.is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
+                                {flagCode && <CountryFlag isoCode={flagCode} size={12} style={{ borderRadius: 2, marginLeft: 4 }} />}
                             </View>
                             <View style={[common.row, { gap: 6, marginTop: 2 }]}>
                                 <Text style={common.bodySmall}>
@@ -332,6 +343,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                         </View>
                     </View>
                     <View>
+                        {profile?.username && (
+                            <Text style={[{ fontSize: 12, marginTop: 8, fontWeight: '700', color: colors.text }]}>
+                                @{profile.username}
+                            </Text>
+                        )}
                         {profile?.pronouns && (
                             <Text style={[common.muted, { fontSize: 12, marginTop: 8 }]}>
                                 {profile.pronouns}
@@ -356,57 +372,79 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 return '❤️';
                             };
 
-                            const parts: { icon?: string; emoji?: string; label: string }[] = [];
-
-                            // Career
+                            const workItems: any[] = [];
                             if (workplaces.length > 0) {
-                                parts.push({ icon: 'briefcase', label: `${workplaces[0].position} at ${workplaces[0].company_name}` });
+                                workItems.push({ icon: 'briefcase', label: `${workplaces[0].position} at ${workplaces[0].company_name}` });
                             }
+
+                            const eduItems: any[] = [];
+                            if (profile?.college) eduItems.push({ icon: 'school', label: profile.college });
+                            if (profile?.highschool) eduItems.push({ icon: 'school-outline', label: profile.highschool });
 
                             // Hometown/Address
-                            const primaryAddress = addresses.find(a => a.is_primary) || addresses[0];
-                            const homeInfo = profile?.hometown || (primaryAddress ? `${primaryAddress.city}${primaryAddress.country ? `, ${primaryAddress.country}` : ''}` : null);
-                            if (homeInfo) {
-                                parts.push({ icon: 'location', label: homeInfo });
-                            }
+                            const homeItems: any[] = [];
+                            if (homeInfo) homeItems.push({ icon: 'location', label: homeInfo });
 
-                            // Education
-                            if (profile?.college) {
-                                parts.push({ icon: 'school', label: profile.college });
-                            }
-                            if (profile?.highschool) {
-                                parts.push({ icon: 'school-outline', label: profile.highschool });
-                            }
-
-                            // Loved Ones
+                            const relItems: any[] = [];
                             if (profile?.loved_ones && profile.loved_ones.length > 0) {
                                 profile.loved_ones.forEach(person => {
-                                    parts.push({
+                                    relItems.push({
                                         emoji: getRelationshipEmoji(person.label),
-                                        label: `${person.label}: ${person.name}`
+                                        label: `${person.label} - ${person.name}`
                                     });
                                 });
                             }
 
-                            if (parts.length === 0) return null;
+                            if (!workItems.length && !eduItems.length && !homeItems.length && !relItems.length) return null;
+
+                            const Section = ({ title, items }: { title: string, items: any[] }) => {
+                                if (items.length === 0) return null;
+                                return (
+                                    <View style={{ marginBottom: 16 }}>
+                                        <Text style={[common.bodySmall, { fontWeight: '700', marginBottom: 8, opacity: 0.8 }]}>{title}</Text>
+                                        <View style={{ gap: 8 }}>
+                                            {items.map((item, i) => (
+                                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                    {item.icon ? (
+                                                        <Ionicons name={item.icon as any} size={16} color={colors.text} style={{ marginRight: 10, width: 20 }} />
+                                                    ) : (
+                                                        <Text style={{ fontSize: 14, marginRight: 10, width: 20, textAlign: 'center' }}>{item.emoji}</Text>
+                                                    )}
+                                                    <Text style={[common.bodySmall, { fontSize: 14, flex: 1 }]} numberOfLines={2}>{item.label}</Text>
+                                                </View>
+                                            ))}
+                                        </View>
+                                    </View>
+                                );
+                            };
 
                             return (
-                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', paddingTop: 8, rowGap: 4 }}>
-                                    {parts.map((part, index) => (
-                                        <View key={index} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                {part.icon ? (
-                                                    <Ionicons name={part.icon as any} size={14} color={colors.text} style={{ marginRight: 4 }} />
-                                                ) : (
-                                                    <Text style={{ fontSize: 13, marginRight: 4 }}>{part.emoji}</Text>
-                                                )}
-                                                <Text style={[common.bodySmall, { fontWeight: '700' }]}>{part.label}</Text>
-                                            </View>
-                                            {index < parts.length - 1 && (
-                                                <Text style={[common.bodySmall, { color: colors.muted, marginHorizontal: 6 }]}>·</Text>
-                                            )}
+                                <View style={{ paddingTop: 16 }}>
+                                    <Section title="Work" items={workItems} />
+                                    <Section title="Education" items={eduItems} />
+                                    <Section title="Places Lived" items={homeItems} />
+
+                                    {relItems.length > 0 && (
+                                        <View style={{ marginBottom: 16 }}>
+                                            <Text style={[common.bodySmall, { fontWeight: '700', marginBottom: 8, opacity: 0.8 }]}>Family & Relationships</Text>
+                                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
+                                                {relItems.map((item, i) => (
+                                                    <View key={i} style={{
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center',
+                                                        backgroundColor: colors.card,
+                                                        paddingVertical: 6,
+                                                        paddingHorizontal: 12,
+                                                        borderRadius: 20,
+                                                        marginRight: 8
+                                                    }}>
+                                                        <Text style={{ fontSize: 13, marginRight: 6 }}>{item.emoji}</Text>
+                                                        <Text style={[common.bodySmall, { fontSize: 13 }]}>{item.label}</Text>
+                                                    </View>
+                                                ))}
+                                            </ScrollView>
                                         </View>
-                                    ))}
+                                    )}
                                 </View>
                             );
                         })()}
@@ -420,7 +458,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                             {profile?.birthday && (
                                 <BirthdayCard birthday={profile.birthday} />
                             )}
-                            {currentMusic && (
+                            {currentMusic && isMe && (
                                 <TouchableOpacity
                                     onPress={() => musicSheetRef?.current?.present()}
                                     activeOpacity={0.9}

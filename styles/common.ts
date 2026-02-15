@@ -77,8 +77,8 @@ export const createCommonStyles = (
       justifyContent: "center",
     },
     avatarLarge: {
-      width: 85,
-      height: 85,
+      width: 95,
+      height: 95,
       borderRadius: 100,
       borderWidth: 3,
       borderColor: colors.background,

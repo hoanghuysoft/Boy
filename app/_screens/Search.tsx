@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import AnimatedGlow from "react-native-animated-glow";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -32,6 +33,7 @@ const FlashList = FlashListOriginal as any;
 
 import { useRouter } from "expo-router";
 
+import { appleIntelli } from "@/components/glow/AppleIntelliConfig";
 import VerifiedIcon from "@/icons/verified";
 import { queryClient } from "@/services/client";
 import TurboImage from "react-native-turbo-image";
@@ -49,6 +51,8 @@ const KEYBOARD_SPRING_CONFIG = {
   restDisplacementThreshold: 0.01,
   restSpeedThreshold: 0.01,
 };
+
+
 
 const SearchScreen = () => {
   const navigation = useRouter();
@@ -75,6 +79,14 @@ const SearchScreen = () => {
   const profiles = useMemo(() => {
     return flatMap(data?.pages, (page: ProfilesResponse) => page.data);
   }, [data]);
+
+  useEffect(() => {
+    const keyboardListener = Keyboard.addListener('keyboardDidHide', () => {
+      inputRef.current?.blur();
+    });
+
+    return () => keyboardListener.remove();
+  }, []);
 
   useEffect(() => {
     if (profiles && profiles.length > 0) {
@@ -223,20 +235,20 @@ const SearchScreen = () => {
             </Text>
             {item.is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
           </View>
+          {item.username ? (
+            <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
+              @{item.username}
+            </Text>
+          ) : item.bio ? (
+            <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
+              {item.bio}
+            </Text>
+          ) : null}
           {item.birthday && (
             <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
               {calculateAge(item.birthday)} years old
             </Text>
           )}
-          {item.bio ? (
-            <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
-              {item.bio}
-            </Text>
-          ) : item.hometown ? (
-            <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
-              {item.hometown}
-            </Text>
-          ) : null}
         </View>
         <View style={[styles.viewButton, { backgroundColor: colors.card }]}>
           <Text style={[common.label, { color: colors.text, fontSize: 12 }]}>View</Text>
@@ -329,39 +341,42 @@ const SearchScreen = () => {
           animatedSearchBarStyle,
         ]}
       >
-        <View
-          style={[
-            styles.searchBar,
-            {
-              backgroundColor: colors.card,
-            },
-          ]}
+        <AnimatedGlow
+          preset={appleIntelli}
+          activeState={isFocused ? "press" : "default"}
+          style={{ borderRadius: 999 }}
         >
-          <TextInput
-            ref={inputRef}
-            style={[styles.searchInput, { color: colors.text, marginLeft: 12 }]}
-            placeholder="What are you looking for?"
-            placeholderTextColor={colors.muted}
-            value={searchQuery}
-            onChangeText={(text) => {
-              setSearchQuery(text);
-              debouncedHandler(text);
-            }}
+          <View
+            style={[
+              styles.searchBar,
+            ]}
+          >
+            <TextInput
+              ref={inputRef}
+              style={[styles.searchInput, { color: 'white', marginLeft: 12 }]}
+              placeholder="What are you looking for?"
+              placeholderTextColor={colors.muted}
+              value={searchQuery}
+              onChangeText={(text) => {
+                setSearchQuery(text);
+                debouncedHandler(text);
+              }}
 
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            returnKeyType="search"
-            autoCorrect={false}
-            autoCapitalize="none"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <View style={[styles.clearButtonInner, { backgroundColor: colors.card }]}>
-                <Lineicons icon={XmarkOutlined} size={14} color={colors.text} strokeWidth={3} />
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              returnKeyType="search"
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                <View style={[styles.clearButtonInner, { backgroundColor: colors.card }]}>
+                  <Lineicons icon={XmarkOutlined} size={14} color={colors.text} strokeWidth={3} />
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+        </AnimatedGlow>
       </Animated.View>
     </KeyboardAvoidingView>
   );
@@ -412,7 +427,7 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    height: 56,
+    height: 58,
     borderRadius: 999,
     paddingHorizontal: 6
   },

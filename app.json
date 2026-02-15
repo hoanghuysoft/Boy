@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Boy",
+    "name": "WeLove",
     "slug": "Boy",
-    "version": "2026.2.0",
+    "version": "2026.2.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",

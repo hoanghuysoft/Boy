@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { BlurView } from "@sbaiahmed1/react-native-blur";
 import { FlashList } from "@shopify/flash-list";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -43,6 +44,7 @@ type TabType = "Images" | "Videos" | "Feed" | "Information";
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
 import { PostOptionsSheet } from "@/components/post";
+import TurboImage from "react-native-turbo-image";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { ProfileGalleryModal } from "../../components/gallery/ProfileGalleryModal";
 import { useScrollStore } from "../../stores/scroll";
@@ -56,7 +58,7 @@ const ProfileScreen = () => {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const isMe = params.isMe === 'true';
 
-  const { colors, typography } = useThemeContext();
+  const { colors, typography, theme } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const inset = useSafeAreaInsets();
 
@@ -501,19 +503,68 @@ const ProfileScreen = () => {
       {/* Sticky Back Button */}
       {!isMe && (
         <View style={{ position: 'absolute', top: inset.top, left: 16, zIndex: 1000 }}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={{
-              backgroundColor: colors.containerContent,
-              borderRadius: 999,
-              width: 40,
-              height: 40,
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
-            <Ionicons name='chevron-back' size={24} color={colors.text} />
-          </TouchableOpacity>
+          <View style={[common.row, { gap: 8 }]}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{
+                backgroundColor: colors.containerContent,
+                borderRadius: 999,
+                width: 40,
+                height: 40,
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              <Ionicons name='chevron-back' size={24} color={colors.text} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => musicSheetRef.current?.present()}
+            >
+              <BlurView
+                blurAmount={0}
+                blurType={theme === 'dark' ? "systemMaterialDark" : "systemMaterialLight"}
+                style={{
+                  borderRadius: 999,
+                  height: 40,
+                  maxWidth: 200,
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  padding: 4,
+                  flexDirection: 'row',
+                  gap: 4
+                }}
+              >
+                {music.length === 0 ? (
+                  <View
+                    style={{
+                      borderRadius: 999,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: colors.containerContent,
+                      padding: 6
+                    }}
+                  >
+                    <Ionicons name='musical-note' size={20} color={colors.text} />
+                  </View>
+                ) : (
+                  <TurboImage
+                    source={{ uri: music[0].cover_url }}
+                    style={{
+                      borderRadius: 999,
+                      width: 35,
+                      height: 35,
+                    }}
+                    resizeMode="cover"
+                  />
+                )}
+                <View style={{ paddingRight: 10 }}>
+                  <Text style={[common.label, { fontWeight: 'bold' }]} numberOfLines={1}>{music.length === 0 ? 'Music not yet added' : music[0].title}</Text>
+                  <Text style={common.bodySmall} numberOfLines={1}>{music.length === 0 ? 'Tap to view more' : music[0].artist}</Text>
+                </View>
+              </BlurView>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
       {renderImageQuickPreview()}
