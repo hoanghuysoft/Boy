@@ -212,8 +212,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     }, [hasCover, currentAvatar]);
 
     const coverTranslateY = scrollY.interpolate({
-        inputRange: [0, COVER_HEIGHT],
-        outputRange: [0, COVER_HEIGHT * 0.5],
+        inputRange: [-COVER_HEIGHT, 0, COVER_HEIGHT],
+        outputRange: [-COVER_HEIGHT, 0, COVER_HEIGHT * 0.5],
         extrapolate: "clamp",
     });
 

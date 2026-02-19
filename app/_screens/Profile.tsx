@@ -7,6 +7,7 @@ import { FlashList } from "@shopify/flash-list";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
+  InteractionManager,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -49,10 +50,52 @@ import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { ProfileGalleryModal } from "../../components/gallery/ProfileGalleryModal";
 import { useScrollStore } from "../../stores/scroll";
 
-// Custom FastImage component for GalleryPreview
+// ─── Static skeleton shown during navigation transition ────────────────────────
+// Pure JSX — no hooks, no queries. Gives the slide animation full JS thread time.
+const ProfileSkeleton: React.FC = () => {
+  const { colors, typography } = useThemeContext();
+  const common = createCommonStyles(colors, typography);
+  return (
+    <View style={common.screen}>
+      <ShimmerEffect
+        isLoading
+        style={{ width: '100%', height: COVER_HEIGHT, backgroundColor: colors.divider }}
+      />
+      <View style={{ borderRadius: 8, marginTop: -8, backgroundColor: colors.background, flex: 1 }}>
+        <View style={common.screenPadding}>
+          <View style={[common.row, { marginTop: -55, gap: 5 }]}>
+            <View style={[common.avatarLarge, { overflow: 'hidden', borderWidth: 3, borderColor: colors.background, backgroundColor: colors.background }]}>
+              <ShimmerEffect isLoading style={{ width: '100%', height: '100%' }} />
+            </View>
+          </View>
+          <View style={{ marginTop: 8, gap: 8 }}>
+            <ShimmerEffect isLoading style={{ width: 150, height: 24, borderRadius: 8, backgroundColor: colors.divider }} />
+            <ShimmerEffect isLoading style={{ width: 100, height: 14, borderRadius: 8, backgroundColor: colors.divider }} />
+            <ShimmerEffect isLoading style={{ width: '80%', height: 16, borderRadius: 8, marginTop: 8, backgroundColor: colors.divider }} />
+          </View>
+          <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
+            <ShimmerEffect isLoading style={{ width: 170, height: 70, borderRadius: 35, backgroundColor: colors.divider }} />
+            <ShimmerEffect isLoading style={{ width: 170, height: 70, borderRadius: 35, backgroundColor: colors.divider }} />
+          </View>
+          <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
+            <ShimmerEffect isLoading style={{ width: 100, height: 36, borderRadius: 18, backgroundColor: colors.divider }} />
+            <ShimmerEffect isLoading style={{ width: 100, height: 36, borderRadius: 18, backgroundColor: colors.divider }} />
+            <ShimmerEffect isLoading style={{ width: 100, height: 36, borderRadius: 18, backgroundColor: colors.divider }} />
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 16, gap: 10 }}>
+            {Array.from({ length: 9 }).map((_, i) => (
+              <ShimmerEffect key={i} isLoading style={{ width: '31%', aspectRatio: 1, borderRadius: 8, backgroundColor: colors.divider }} />
+            ))}
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
 
-
-const ProfileScreen = () => {
+// ─── ProfileContent — all heavy logic lives here ──────────────────────────────
+// Only mounts after the navigation animation completes.
+const ProfileContent = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -65,8 +108,22 @@ const ProfileScreen = () => {
   const listRef = useRef<any>(null);
   const trigger = useScrollStore((state) => state.triggers['profile']);
 
+  // Per-tab scroll offset memory — plain refs, zero re-render overhead
+  const scrollPositions = useRef<Record<TabType, number>>({
+    Images: 0,
+    Videos: 0,
+    Feed: 0,
+    Information: 0,
+  });
+  // Tracks the live scroll Y so handleTabChange can save it without reading Animated
+  const currentScrollY = useRef(0);
+
   useEffect(() => {
     if (trigger > 0 && listRef.current) {
+      // Clear saved position for the active tab when scroll-to-top is triggered
+      scrollPositions.current[activeTab] = 0;
+      currentScrollY.current = 0;
+      scrollY.setValue(0);
       listRef.current.scrollToOffset({ offset: 0, animated: true });
     }
   }, [trigger]);
@@ -180,6 +237,8 @@ const ProfileScreen = () => {
         useNativeDriver: true,
         listener: (event: any) => {
           const offsetY = event.nativeEvent.contentOffset.y;
+          // Track live position in a plain ref — no setState, no re-render
+          currentScrollY.current = offsetY;
           const shouldShow = offsetY > 300;
           if (shouldShow !== showScrollTop) {
             setShowScrollTop(shouldShow);
@@ -195,7 +254,33 @@ const ProfileScreen = () => {
     [scrollY, showScrollTop]);
 
   // Handlers
-  const handleTabChange = useCallback((tab: TabType) => setActiveTab(tab), []);
+  // Use a ref so ProfileHeader's ListHeader memo stays stable across tab changes
+  const handleTabChangeRef = useRef<((tab: TabType) => void) | undefined>(undefined);
+  const handleTabChange = useCallback((tab: TabType) => {
+    if (tab === activeTab) return; // same tab — no-op
+    // Save scroll position of the tab we are leaving
+    scrollPositions.current[activeTab] = currentScrollY.current;
+    // Defer the heavy state update so the tap feels instant
+    InteractionManager.runAfterInteractions(() => {
+      setActiveTab(tab);
+    });
+  }, [activeTab]);
+  // Keep ref in sync so ProfileHeader callback never triggers header re-render
+  handleTabChangeRef.current = handleTabChange;
+
+  // Restore saved scroll position whenever the active tab changes
+  useEffect(() => {
+    const savedY = scrollPositions.current[activeTab];
+    // A small delay is needed so the FlashList (possibly remounted due to key change)
+    // has time to mount before we attempt scrollToOffset
+    const timer = setTimeout(() => {
+      scrollY.setValue(savedY);
+      if (savedY > 0) {
+        listRef.current?.scrollToOffset({ offset: savedY, animated: false });
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [activeTab, scrollY]);
 
   const handleVideoPress = useCallback((video: Media) => {
     router.push({
@@ -301,12 +386,19 @@ const ProfileScreen = () => {
     fetchingMore: isFetchingNextVideos
   });
 
-  // Single header
+  // Stable tab-change callback for the header — using a ref wrapper means
+  // ProfileHeader never re-renders just because handleTabChange identity changed
+  const stableTabChange = useCallback((tab: TabType) => {
+    handleTabChangeRef.current?.(tab);
+  }, []);
+
+  // Single header — deps exclude activeTab so ProfileHeader doesn't re-render
+  // on every tab press (cover image, avatar, bio, etc. all stay mounted)
   const ListHeader = useMemo(() => (
     <ProfileHeader
       scrollY={scrollY}
       activeTab={activeTab}
-      onTabChange={handleTabChange}
+      onTabChange={stableTabChange}
       profile={profile}
       isMe={isMe}
       musicSheetRef={musicSheetRef}
@@ -321,7 +413,7 @@ const ProfileScreen = () => {
       videoCount={videosPaging?.pages[0]?.pagination?.total || 0}
       postCount={feedPaging?.pages[0]?.pagination?.total || 0}
     />
-  ), [scrollY, activeTab, handleTabChange, profile, isMe, workplaces, music, socialLinks, addresses, photosPaging, videosPaging, feedPaging]);
+  ), [scrollY, profile, isMe, workplaces, music, socialLinks, addresses, photosPaging, videosPaging, feedPaging, stableTabChange, activeTab]);
 
   // Dynamic data based on tab
   const data = useMemo(() => {
@@ -626,7 +718,12 @@ const ProfileScreen = () => {
           }}
         >
           <TouchableOpacity
-            onPress={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+            onPress={() => {
+              // Clear saved position for the current tab so coming back doesn't restore the old offset
+              scrollPositions.current[activeTab] = 0;
+              currentScrollY.current = 0;
+              listRef.current?.scrollToOffset({ offset: 0, animated: true });
+            }}
             style={{
               backgroundColor: colors.containerContent,
               borderRadius: 999,
@@ -757,4 +854,27 @@ const styles = StyleSheet.create({
   },
 });
 
+// ─── ProfileScreen shell ──────────────────────────────────────────────────────
+// Exported default. Renders a static skeleton during the navigate-in animation
+// so the JS thread is free to drive the slide at 60fps. Only after
+// InteractionManager.runAfterInteractions (i.e. navigation animation done)
+// does it swap in the real ProfileContent with all its hooks and queries.
+const ProfileScreen = () => {
+  const [isReady, setIsReady] = React.useState(false);
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setIsReady(true);
+    });
+    return () => task.cancel();
+  }, []);
+
+  if (!isReady) {
+    return <ProfileSkeleton />;
+  }
+
+  return <ProfileContent />;
+};
+
 export default ProfileScreen;
+

@@ -1,5 +1,5 @@
-import React, { memo, useRef } from "react";
-import { Animated, StyleSheet, Text, TouchableOpacity } from "react-native";
+import React, { memo, useEffect, useRef } from "react";
+import { Animated, StyleSheet, TouchableOpacity } from "react-native";
 import { useThemeContext } from "../../context/ThemeContext";
 
 export interface TabPillProps {
@@ -12,6 +12,25 @@ const TabPill: React.FC<TabPillProps> = memo(({ name, isActive, onPress }) => {
   const { colors } = useThemeContext();
   const style = styles(colors);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  // Animate the active background opacity so the indicator cross-fades
+  // instead of snapping on/off — keeps the JS bridge work minimal (native driver)
+  const activeAnim = useRef(new Animated.Value(isActive ? 1 : 0)).current;
+  const textOpacityAnim = useRef(new Animated.Value(isActive ? 1 : 0.6)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(activeAnim, {
+        toValue: isActive ? 1 : 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(textOpacityAnim, {
+        toValue: isActive ? 1 : 0.6,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [isActive]);
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -32,17 +51,32 @@ const TabPill: React.FC<TabPillProps> = memo(({ name, isActive, onPress }) => {
   };
 
   return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+    <Animated.View style={[style.pillWrapper, { transform: [{ scale: scaleAnim }] }]}>
+      {/* Animated background layer — only the opacity is driven, no layout changes */}
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          style.activeBg,
+          { opacity: activeAnim },
+        ]}
+        pointerEvents="none"
+      />
       <TouchableOpacity
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        style={[style.tabPill, isActive && style.tabPillActive]}
+        style={style.tabPill}
         activeOpacity={1}
       >
-        <Text style={[style.tabText, isActive && style.tabTextActive]}>
+        <Animated.Text
+          style={[
+            style.tabText,
+            isActive && style.tabTextActive,
+            { opacity: textOpacityAnim },
+          ]}
+        >
           {name}
-        </Text>
+        </Animated.Text>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -52,24 +86,24 @@ TabPill.displayName = "TabPill";
 
 const styles = (colors: any) =>
   StyleSheet.create({
+    pillWrapper: {
+      borderRadius: 999,
+      overflow: 'hidden',
+    },
     tabPill: {
       paddingHorizontal: 16,
       paddingVertical: 11,
     },
-    tabPillActive: {
+    activeBg: {
       backgroundColor: colors.card,
       borderRadius: 999,
-      paddingHorizontal: 16,
-      paddingVertical: 11,
     },
     tabText: {
       fontSize: 14,
       fontWeight: "400",
       color: colors.text,
-      opacity: 0.6,
     },
     tabTextActive: {
-      opacity: 1,
       fontWeight: "600",
     },
   });
