@@ -1,6 +1,7 @@
 import VerifiedIcon from "@/icons/verified";
 import { Profile } from "@/types/profile";
 import { calculateAge } from "@/utils/timeandage";
+import FastImage from "@d11/react-native-fast-image";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import TurboImage from "react-native-turbo-image";
@@ -36,17 +37,23 @@ export const SearchProfileItem = React.memo(({
                 })
             }
         >
-            <TurboImage
-                source={{
-                    uri:
-                        item.avatar_url ||
-                        "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-                }}
+            {item.avatar_url ? <TurboImage
+                source={{ uri: item.avatar_url }}
                 style={styles.avatar}
-                resizeMode="cover"
-                cachePolicy={imageCachePolicy}
-                fadeDuration={100}
-            />
+                resizeMode='cover'
+            /> : <FastImage
+                source={
+                    item.gender === "male"
+                        ? require("../../assets/images/AV17.png")
+                        : item.gender
+                            ? require("../../assets/images/AV86.png")
+                            : {
+                                uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                            }
+                }
+                style={styles.avatar}
+                resizeMode={FastImage.resizeMode.cover}
+            />}
             <View style={styles.profileInfo}>
                 <View style={[common.row, { gap: 4 }]}>
                     <Text

@@ -1,5 +1,6 @@
 import VerifiedIcon from '@/icons/verified';
 import { getTiktokProfile } from '@/services/tiktok';
+import FastImage from '@d11/react-native-fast-image';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
@@ -22,7 +23,6 @@ import {
 import CountryFlag from "react-native-country-flag";
 import { getColors } from 'react-native-image-colors';
 import { createMMKV } from 'react-native-mmkv';
-import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../context/ThemeContext";
 import { useAudioStore } from '../../stores/audio';
 import { createCommonStyles } from "../../styles/common";
@@ -112,7 +112,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
 
     const hasCover = !!profile?.cover_url;
     const currentMusic = music?.[0];
-    const currentAvatar = profile?.avatar_url;
+    const currentAvatar = profile?.avatar_url || null;
+    const genderFallbackSource = profile?.gender === 'male'
+        ? require('../../assets/images/AV17.png')
+        : profile?.gender
+            ? require('../../assets/images/AV86.png')
+            : null;
 
     // Parse metadata to extract threed_emoji
     const parsedMetadata = useMemo(() => {
@@ -300,27 +305,39 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     delayLongPress={200}
                                 >
                                     <DynamicAvatar
-                                        uri={currentAvatar || "https://via.placeholder.com/150"}
+                                        uri={currentAvatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
                                         threedEmoji={threedEmoji}
                                         styles={common.avatarLarge}
                                     />
                                 </Pressable>
                                 <QuickPreviewModal
                                     visible={avatarPreviewVisible}
-                                    imageUrl={currentAvatar || null}
+                                    imageUrl={currentAvatar}
                                     onClose={() => setAvatarPreviewVisible(false)}
                                 />
                             </>
-                        ) : (
-                            <Galeria urls={currentAvatar ? [currentAvatar] : []}>
+                        ) : currentAvatar ? (
+                            <Galeria urls={[currentAvatar]}>
                                 <Galeria.Image>
                                     <Image
-                                        source={{ uri: currentAvatar || "https://via.placeholder.com/150" }}
+                                        source={{ uri: currentAvatar }}
                                         resizeMode="cover"
                                         style={common.avatarLarge}
                                     />
                                 </Galeria.Image>
                             </Galeria>
+                        ) : genderFallbackSource ? (
+                            <FastImage
+                                source={genderFallbackSource}
+                                resizeMode={FastImage.resizeMode.cover}
+                                style={common.avatarLarge}
+                            />
+                        ) : (
+                            <FastImage
+                                source={{ uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                                resizeMode={FastImage.resizeMode.cover}
+                                style={common.avatarLarge}
+                            />
                         )}
                         <View style={{ flex: 1, paddingTop: 10, justifyContent: 'flex-end' }}>
                             <View style={[common.row, { gap: 4 }]}>
@@ -378,10 +395,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     activeOpacity={0.9}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
-                                    <TurboImage
+                                    <FastImage
                                         source={{ uri: currentMusic.cover_url }}
                                         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-                                        resizeMode='cover'
+                                        resizeMode={FastImage.resizeMode.cover}
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                                     <TouchableOpacity onPress={toggleMusic} style={{ borderRadius: 999, padding: 6, backgroundColor: colors.card, justifyContent: "center", alignItems: "center", marginLeft: 8 }}>
@@ -398,10 +415,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     onPress={() => socialSheetRef?.current?.present()}
                                     style={{ height: 70, backgroundColor: colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
-                                    <TurboImage
-                                        source={{ uri: "https://womendobusiness.eu/wp-content/uploads/social-media.jpg", }}
+                                    <FastImage
+                                        source={{ uri: "https://womendobusiness.eu/wp-content/uploads/social-media.jpg" }}
                                         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-                                        resizeMode='cover'
+                                        resizeMode={FastImage.resizeMode.cover}
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                                     <Text numberOfLines={2} style={[common.label, { marginHorizontal: 10, flex: 1, color: 'white', textAlign: 'center' }]}>

@@ -4,7 +4,7 @@ import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ToggleSwitch from 'toggle-switch-react-native';
 
@@ -24,6 +24,7 @@ const SettingsScreen = () => {
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isFocused, setIsFocused] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     return (
         <ScrollView style={common.screenPadding}>
             <View style={{ position: 'absolute', top: inset.top, zIndex: 1000 }}>
@@ -101,18 +102,34 @@ const SettingsScreen = () => {
             <View style={[styles.card]}>
                 <TouchableOpacity style={[styles.option]} onPress={async () => {
                     try {
+                        setIsLoggingOut(true);
                         const { signOut } = await import("@/services/login");
                         await signOut();
                         router.dismissAll();
                         router.replace("/");
                     } catch (e) {
                         console.error(e);
+                    } finally {
+                        setIsLoggingOut(false);
                     }
                 }}>
                     <Text style={[common.body, { color: '#FF3B30' }]}>Log out</Text>
                     <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
                 </TouchableOpacity>
             </View>
+            <Modal
+                visible={isLoggingOut}
+                transparent
+                animationType="fade"
+                statusBarTranslucent
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <ActivityIndicator size="large" color={colors.text} />
+                        <Text style={[common.body, { color: colors.text, marginTop: 12 }]}>Logging out...</Text>
+                    </View>
+                </View>
+            </Modal>
         </ScrollView >
     );
 };
@@ -160,6 +177,24 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
         justifyContent: 'center',
         left: 0,
         right: 0,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: colors.containerContent,
+        borderRadius: 16,
+        paddingVertical: 28,
+        paddingHorizontal: 36,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 10,
     },
 });
 

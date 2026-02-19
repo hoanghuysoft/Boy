@@ -60,7 +60,7 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
             <View style={[common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
                 <Pressable onPress={() => router.push({ pathname: '/profile/[id]', params: { id: post.profile_id } })} style={[common.row, { gap: 12, flex: 1 }]}>
                     <TurboImage
-                        source={{ uri: post.profile_avatar }}
+                        source={{ uri: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
                         style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.divider }}
                         cachePolicy={IMAGE_CACHE_POLICY}
                         fadeDuration={100}

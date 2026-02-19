@@ -1,10 +1,13 @@
+import { Bank } from '@/types/bank';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { CalendarBold, LetterBold, MenBold, NotebookBookmarkBold, PhoneBold, PointOnMapBold, SquareAcademicCapBold, WeigherBold, WheelBold, WomenBold } from '@solar-icons/react-native';
-import React, { useMemo } from 'react';
-import { Text, View } from "react-native";
+import React, { useMemo, useState } from 'react';
+import { Text, TouchableOpacity, View } from "react-native";
+import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { ProfileDetail } from "../../types/profiledetail";
+import QuickPreviewModal from './QuickPreviewModal';
 
 interface InfoCardProps {
     profile?: ProfileDetail | null;
@@ -13,6 +16,8 @@ interface InfoCardProps {
 const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     // Format birthday
     const formatBirthday = (dateString: string | null) => {
@@ -39,6 +44,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
 
     const height = parsedMetadata?.height;
     const weight = parsedMetadata?.weight;
+    const bankinfo: Bank = parsedMetadata?.banking;
 
     return (
         <View style={[common.card, { marginTop: 16, marginHorizontal: 16 }]}>
@@ -74,6 +80,27 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         </Text>
                         <PhoneBold size={22} color={colors.text} />
                     </View>
+                </>
+            )}
+
+            {bankinfo && (
+                <>
+                    <View style={common.divider} />
+                    <TouchableOpacity onPress={() => {
+                        if (!bankinfo.qrurl) return;
+                        setSelectedImage(bankinfo.qrurl);
+                        setIsModalVisible(true);
+                    }}>
+                        <Text style={[common.muted]}>{bankinfo.bankname}</Text>
+                        <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
+                            <Text style={[common.body, { flex: 1 }]}>
+                                {bankinfo.recipient} - {bankinfo.banknumber}
+                            </Text>
+                            <View style={{ width: 32, height: 32, justifyContent: 'center', alignItems: 'center', borderRadius: 999, overflow: 'hidden', backgroundColor: colors.card }}>
+                                <TurboImage source={{ uri: bankinfo.logo || '' }} style={{ width: 24, height: 24 }} />
+                            </View>
+                        </View>
+                    </TouchableOpacity>
                 </>
             )}
 
@@ -271,6 +298,12 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                     </Text>
                 </>
             )}
+
+            <QuickPreviewModal
+                visible={isModalVisible}
+                onClose={() => setIsModalVisible(false)}
+                imageUrl={selectedImage}
+            />
         </View>
     )
 }

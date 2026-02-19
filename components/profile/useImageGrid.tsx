@@ -212,7 +212,7 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
 
         const mediaItem = item.item;
         const isVideo = mediaItem.type.toLowerCase().includes('video');
-        const imageUrl = isVideo ? (mediaItem.thumbnail_url || mediaItem.url || placeholderImage) : mediaItem.url || placeholderImage;
+        const imageUrl = mediaItem.thumbnail_url || mediaItem.url || placeholderImage;
 
         if (isVideo) {
             return (
