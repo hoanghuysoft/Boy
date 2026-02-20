@@ -2,11 +2,13 @@ import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
+import { Logout3Bold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ToggleSwitch from 'toggle-switch-react-native';
+
 
 const themePreferenceLabels = {
     light: "Light",
@@ -113,8 +115,8 @@ const SettingsScreen = () => {
                         setIsLoggingOut(false);
                     }
                 }}>
-                    <Text style={[common.body, { color: '#FF3B30' }]}>Log out</Text>
-                    <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                    <Text style={[common.body, { color: colors.text }]}>Log out</Text>
+                    <Logout3Bold size={24} color={colors.text} />
                 </TouchableOpacity>
             </View>
             <Modal

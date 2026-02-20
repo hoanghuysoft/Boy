@@ -23,6 +23,7 @@ import {
 import CountryFlag from "react-native-country-flag";
 import { getColors } from 'react-native-image-colors';
 import { createMMKV } from 'react-native-mmkv';
+import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../context/ThemeContext";
 import { useAudioStore } from '../../stores/audio';
 import { createCommonStyles } from "../../styles/common";
@@ -38,6 +39,7 @@ import ProfileBriefInfo from './ProfileBriefInfo';
 import QuickPreviewModal from './QuickPreviewModal';
 
 const COVER_HEIGHT = 250;
+const AnimatedTurboImage = Animated.createAnimatedComponent(TurboImage);
 const { height } = Dimensions.get("window");
 const storage = createMMKV();
 
@@ -254,10 +256,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     return (
         <>
             {hasCover ? (
-                <Animated.Image
+                <AnimatedTurboImage
                     source={{
                         uri: profile?.cover_url,
-                        cache: 'force-cache'
                     }}
                     style={[
                         style.coverImage,

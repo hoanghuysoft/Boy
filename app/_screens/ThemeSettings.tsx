@@ -1,6 +1,7 @@
 import { ThemeColors, ThemePreference, useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
+import { CheckCircleBold, ClockCircleBold, MoonBold, SmartphoneBold, Sun2Bold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -10,7 +11,7 @@ type ThemeOption = {
     id: ThemePreference;
     label: string;
     description: string;
-    icon: keyof typeof Ionicons.glyphMap;
+    icon: React.ComponentType<any>;
 };
 
 const themeOptions: ThemeOption[] = [
@@ -18,25 +19,25 @@ const themeOptions: ThemeOption[] = [
         id: "light",
         label: "Light",
         description: "Always use light theme",
-        icon: "sunny"
+        icon: Sun2Bold
     },
     {
         id: "dark",
         label: "Dark",
         description: "Always use dark theme",
-        icon: "moon"
+        icon: MoonBold
     },
     {
         id: "system",
         label: "System",
         description: "Follow device settings",
-        icon: "phone-portrait-outline"
+        icon: SmartphoneBold
     },
     {
         id: "adaptive",
         label: "Adaptive",
         description: "Change theme based on sunset and sunrise",
-        icon: "time-outline"
+        icon: ClockCircleBold
     }
 ];
 
@@ -80,9 +81,8 @@ const ThemeSettingsScreen = () => {
                         >
                             <View style={styles.optionLeft}>
                                 <SquircleView cornerSmoothing={100} preserveSmoothing={true} style={[styles.iconContainer, themePreference === option.id && styles.iconContainerActive]}>
-                                    <Ionicons
-                                        name={option.icon}
-                                        size={20}
+                                    <option.icon
+                                        size={24}
                                         color={themePreference === option.id ? "#fff" : colors.text}
                                     />
                                 </SquircleView>
@@ -94,7 +94,7 @@ const ThemeSettingsScreen = () => {
                                 </View>
                             </View>
                             {themePreference === option.id && (
-                                <Ionicons name="checkmark-circle" size={24} color="#54d340" />
+                                <CheckCircleBold size={24} color="#54d340" />
                             )}
                         </TouchableOpacity>
                     </View>

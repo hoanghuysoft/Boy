@@ -5,7 +5,8 @@ import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
 import { Link, Post } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { Dimensions, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { Pressable } from 'react-native-gesture-handler';
@@ -17,7 +18,6 @@ import CaptionText from "./CaptionText";
 import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 
-
 // TurboImage cache policy - use dataCache for aggressive local caching
 const IMAGE_CACHE_POLICY = "dataCache" as const;
 
@@ -28,13 +28,23 @@ interface PostItemProps {
 
 export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
     const router = useRouter();
+    const params = useLocalSearchParams();
+    const currentProfileId = Array.isArray(params.id) ? params.id[0] : params.id;
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
 
-    // Global store for single play enforcement
+    const handleProfilePress = () => {
+        // If we're already on this profile screen, ignore the press to avoid redundant navigation
+        if (currentProfileId && String(currentProfileId) === String(post.profile_id)) return;
+
+        router.push({
+            pathname: '/profile/[id]',
+            params: { id: post.profile_id }
+        });
+    };
+
     const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
 
-    // Check if this post's music is currently playing
     const isPlaying = currentlyPlayingId === post.id;
 
     const toggleMusic = () => {
@@ -58,7 +68,7 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
         <View style={{}}>
             {/* Header */}
             <View style={[common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <Pressable onPress={() => router.push({ pathname: '/profile/[id]', params: { id: post.profile_id } })} style={[common.row, { gap: 12, flex: 1 }]}>
+                <Pressable onPress={handleProfilePress} style={[common.row, { gap: 12, flex: 1 }]}>
                     <TurboImage
                         source={{ uri: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
                         style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.divider }}
@@ -115,7 +125,7 @@ export const PostItem = ({ post, onOptionsPress }: PostItemProps) => {
                             zIndex: 20
                         }}
                     >
-                        <Ionicons name={isPlaying ? "volume-high" : "volume-mute"} size={18} color="white" />
+                        {isPlaying ? <VolumeLoudBold size={18} color="white" /> : <VolumeCrossBold size={18} color="white" />}
                     </TouchableOpacity>
                 )}
             </View>

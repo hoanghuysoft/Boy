@@ -72,8 +72,8 @@ const SearchScreen = () => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
-      <View style={[styles.header, { paddingTop: vm.insets.top + 16 }]}>
-        <Text style={[common.headline, { color: colors.text }]}>Search</Text>
+      <View style={[styles.header, { paddingTop: vm.insets.top + 10 }]}>
+        <Text style={[common.headline, { color: colors.text, fontWeight: "bold" }]}>Search</Text>
         <Text
           style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}
         >

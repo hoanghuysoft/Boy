@@ -106,7 +106,6 @@ export const createStyles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         padding: 10,
-        borderRadius: 12,
         gap: 12,
     },
     musicCover: {
@@ -124,13 +123,6 @@ export const createStyles = StyleSheet.create({
     musicArtist: {
         fontSize: 12,
         marginTop: 2,
-    },
-    selectedIndicator: {
-        width: 24,
-        height: 24,
-        borderRadius: 5,
-        justifyContent: "center",
-        alignItems: "center",
     },
 
     // Links styles
@@ -216,7 +208,7 @@ export const createStyles = StyleSheet.create({
     locationSection: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
+        gap: 4,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 999,

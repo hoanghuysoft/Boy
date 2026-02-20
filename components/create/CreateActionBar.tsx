@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { GalleryBold, LinkBold, MapPointBold, MusicLibrary2Bold } from '@solar-icons/react-native';
 import React, { memo, useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import AnimatedGlow from 'react-native-animated-glow';
@@ -12,21 +12,19 @@ import { COLORS } from "./types";
 // ============================================================================
 
 interface ActionButtonProps {
-    icon: string;
+    icon: React.ComponentType<any>;
     isActive: boolean;
     onPress: () => void;
     disabled?: boolean;
     colors: ThemeColors;
-    isCommunityIcon?: boolean;
 }
 
 const ActionButton = memo(({
-    icon,
+    icon: Icon,
     isActive,
     onPress,
     disabled = false,
     colors,
-    isCommunityIcon = false,
 }: ActionButtonProps) => (
     <TouchableOpacity
         style={[
@@ -39,19 +37,10 @@ const ActionButton = memo(({
         disabled={disabled}
         activeOpacity={0.7}
     >
-        {isCommunityIcon ? (
-            <MaterialCommunityIcons
-                name={icon as any}
-                size={24}
-                color={isActive ? COLORS.primary : colors.text}
-            />
-        ) : (
-            <MaterialIcons
-                name={icon as any}
-                size={24}
-                color={isActive ? COLORS.primary : colors.text}
-            />
-        )}
+        <Icon
+            size={24}
+            color={isActive ? COLORS.primary : colors.text}
+        />
     </TouchableOpacity>
 ));
 
@@ -141,30 +130,28 @@ export const CreateActionBar = memo(({
                     ]}
                 >
                     <ActionButton
-                        icon="image"
+                        icon={GalleryBold}
                         isActive={selectedMediaCount > 0}
                         onPress={onPickMedia}
                         disabled={selectedMediaCount >= 10}
                         colors={colors}
                     />
                     <ActionButton
-                        icon="location-history"
+                        icon={MapPointBold}
                         isActive={showLocationInput || hasLocation}
                         onPress={onToggleLocation}
                         colors={colors}
                     />
                     <ActionButton
-                        icon="music-circle"
+                        icon={MusicLibrary2Bold}
                         isActive={showMusicSearch || selectedTrack !== null}
                         onPress={onToggleMusic}
                         colors={colors}
-                        isCommunityIcon
                     />
                     <ActionButton
-                        icon="link-circle"
+                        icon={LinkBold}
                         isActive={linksCount > 0}
                         onPress={onAddLink}
-                        isCommunityIcon
                         colors={colors}
                     />
                 </View>

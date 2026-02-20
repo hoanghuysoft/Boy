@@ -1,5 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { CopyBold, DangerBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
 import React, { forwardRef, memo, useCallback } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,7 +19,7 @@ interface PostOptionsSheetProps {
 }
 
 interface OptionItemProps {
-    icon: string;
+    icon: React.ComponentType<any>;
     label: string;
     onPress: () => void;
     destructive?: boolean;
@@ -32,7 +32,7 @@ interface OptionItemProps {
 // ============================================================================
 
 const OptionItem = memo(({
-    icon,
+    icon: Icon,
     label,
     onPress,
     destructive = false,
@@ -48,8 +48,7 @@ const OptionItem = memo(({
             styles.iconContainer,
             { backgroundColor: destructive ? "#EF444420" : colors.card }
         ]}>
-            <Ionicons
-                name={icon as any}
+            <Icon
                 size={24}
                 color={destructive ? "#EF4444" : colors.text}
             />
@@ -149,17 +148,19 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
                     height: 4,
                     width: 32,
                 }}
+                detents={['auto']}
             >
                 <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text style={[common.heading, { fontSize: 20 }]}>Options</Text>
+                        <Text style={[common.heading]}>Post </Text>
+                        <Text style={common.bodySmall}>Got something on your mind?</Text>
                     </View>
 
                     {/* Options List */}
                     <View style={styles.optionsList}>
                         <OptionItem
-                            icon="share-outline"
+                            icon={ShareBold}
                             label="Share"
                             onPress={handleShare}
                             colors={colors}
@@ -167,7 +168,7 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
                         />
 
                         <OptionItem
-                            icon="link-outline"
+                            icon={CopyBold}
                             label="Copy Link"
                             onPress={handleCopyLink}
                             colors={colors}
@@ -176,7 +177,7 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
 
                         {!isOwner && (
                             <OptionItem
-                                icon="flag-outline"
+                                icon={DangerBold}
                                 label="Report"
                                 onPress={handleReport}
                                 colors={colors}
@@ -186,7 +187,7 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
 
                         {isOwner && (
                             <OptionItem
-                                icon="trash-outline"
+                                icon={TrashBinTrashBold}
                                 label="Delete Post"
                                 onPress={handleDelete}
                                 destructive
@@ -214,13 +215,14 @@ const styles = StyleSheet.create({
     },
     header: {
         marginBottom: 20,
+        paddingTop: 10,
     },
     optionsList: {
     },
     optionItem: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 12,
+        paddingVertical: 8,
         gap: 16,
     },
     iconContainer: {

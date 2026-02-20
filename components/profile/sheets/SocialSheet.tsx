@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { EarthBold } from '@solar-icons/react-native';
+import * as WebBrowser from 'expo-web-browser';
 import React, { forwardRef, memo } from "react";
-import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -47,6 +48,42 @@ const getPlatformDetails = (platform: string, theme: 'light' | 'dark') => {
     } else if (p.includes('whatsapp')) {
         icon = 'logo-whatsapp';
         color = '#25D366';
+    } else if (p.includes('telegram')) {
+        icon = 'logo-telegram';
+        color = '#229ED9';
+    } else if (p.includes('snapchat')) {
+        icon = 'logo-snapchat';
+        color = '#FFFC00';
+    } else if (p.includes('threads')) {
+        icon = 'logo-threads';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
+    } else if (p.includes('discord')) {
+        icon = 'logo-discord';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
+    } else if (p.includes('twitch')) {
+        icon = 'logo-twitch';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
+    } else if (p.includes('reddit')) {
+        icon = 'logo-reddit';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
+    } else if (p.includes('spotify')) {
+        icon = 'logo-spotify';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
+    } else if (p.includes('soundcloud')) {
+        icon = 'logo-soundcloud';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
+    } else if (p.includes('paypal')) {
+        icon = 'logo-paypal';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
+    } else if (p.includes('cashapp')) {
+        icon = 'logo-cashapp';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
+    } else if (p.includes('venmo')) {
+        icon = 'logo-venmo';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
+    } else if (p.includes('cashapp')) {
+        icon = 'logo-cashapp';
+        color = theme === 'dark' ? '#ffffff' : '#000000';
     }
 
     return { icon, color };
@@ -151,7 +188,11 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
 
                     return (
                         <LinkCard
-                            onPress={() => Linking.openURL(item.url)}
+                            onPress={() => WebBrowser.openBrowserAsync(item.url, {
+                                toolbarColor: colors.background,
+                                controlsColor: colors.primary,
+                                showTitle: true,
+                            })}
                             iconNode={IconNode}
                             title={previewData?.title || item.platform || 'Website'}
                             url={item.url}
@@ -174,7 +215,11 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
 
     return (
         <LinkCard
-            onPress={() => Linking.openURL(item.url)}
+            onPress={() => WebBrowser.openBrowserAsync(item.url, {
+                toolbarColor: colors.background,
+                controlsColor: colors.primary,
+                showTitle: true,
+            })}
             iconNode={IconNode}
             title={item.platform}
             url={item.url}

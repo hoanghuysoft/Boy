@@ -1,9 +1,11 @@
 import { useThemeContext } from '@/context/ThemeContext';
 import VerifiedIcon from '@/icons/verified';
 import { Ionicons } from '@expo/vector-icons';
+import { GalleryBold, GalleryDownloadBold, ShareBold } from '@solar-icons/react-native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 export interface GalleryOverlayProps {
     /** Current image index (0-based) */
@@ -69,7 +71,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                             onPress={onShare}
                             style={[styles.galleryButton, styles.galleryButtonBg]}
                         >
-                            <Ionicons name="share-outline" size={20} color="white" />
+                            <ShareBold size={20} color="white" />
                         </TouchableOpacity>
                     )}
                     {onPoster && (
@@ -77,7 +79,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                             onPress={onPoster}
                             style={[styles.galleryButton, styles.galleryButtonBg]}
                         >
-                            <Ionicons name="image" size={20} color="white" />
+                            <GalleryBold size={20} color="white" />
                         </TouchableOpacity>
                     )}
                     {showDownload && onDownload && (
@@ -85,7 +87,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                             onPress={onDownload}
                             style={[styles.galleryButton, styles.galleryButtonBg]}
                         >
-                            <Ionicons name="download-outline" size={20} color="white" />
+                            <GalleryDownloadBold size={20} color="white" />
                         </TouchableOpacity>
                     )}
                     {/* Placeholder to maintain spacing when no buttons */}

@@ -2,7 +2,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { BlurView } from "@sbaiahmed1/react-native-blur";
 import { FlashList } from "@shopify/flash-list";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -45,6 +44,7 @@ type TabType = "Images" | "Videos" | "Feed" | "Information";
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
 import { PostOptionsSheet } from "@/components/post";
+import { HeadphonesRoundSoundBold } from "@solar-icons/react-native";
 import TurboImage from "react-native-turbo-image";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { ProfileGalleryModal } from "../../components/gallery/ProfileGalleryModal";
@@ -515,6 +515,8 @@ const ProfileContent = () => {
               onRefresh={onRefresh}
               tintColor={colors.text}
               colors={[colors.text]}
+              style={{ zIndex: 10 }}
+              progressViewOffset={inset.top + 60} // Push spinner below the absolute header
             />
           }
         >
@@ -606,6 +608,8 @@ const ProfileContent = () => {
           tintColor={colors.text}
           colors={[colors.text]}
           progressBackgroundColor={colors.card}
+          style={{ zIndex: 10 }}
+          progressViewOffset={inset.top + 60} // Push spinner below the absolute header
         />
       }
       estimatedItemSize={estimatedItemSize}
@@ -621,7 +625,7 @@ const ProfileContent = () => {
       {/* Sticky Back Button */}
       {/* Sticky Header Container */}
       {!isMe && (
-        <View style={{ position: 'absolute', top: inset.top + 8, left: 16, zIndex: 1000 }}>
+        <View style={{ position: 'absolute', top: inset.top + 8, left: 16, zIndex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
 
             {/* 1. BACK BUTTON (Height: 40px) */}
@@ -645,18 +649,15 @@ const ProfileContent = () => {
               style={{ height: 40, width: 150 }}
             >
               <View style={styles.blurWrapper}>
-                <BlurView
-                  blurType={theme === 'dark' ? "systemMaterialDark" : "systemMaterialLight"}
-                  blurAmount={1}
-                  reducedTransparencyFallbackColor={theme === 'dark' ? "black" : "white"}
-                  style={StyleSheet.absoluteFill}
+                <View
+                  style={[StyleSheet.absoluteFill, { backgroundColor: colors.containerContent }]}
                 />
 
                 <View style={styles.blurContent}>
                   <View style={[styles.artworkContainer, { width: 32, height: 32 }]}>
                     {!hasMusic ? (
-                      <View style={[styles.placeholderIcon, { backgroundColor: colors.containerContent }]}>
-                        <Ionicons name='musical-note' size={18} color={colors.text} />
+                      <View style={[styles.placeholderIcon, { backgroundColor: colors.card }]}>
+                        <HeadphonesRoundSoundBold size={18} color={colors.text} />
                       </View>
                     ) : (
                       <TurboImage

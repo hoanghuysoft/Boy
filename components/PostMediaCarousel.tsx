@@ -1,8 +1,8 @@
-import PlayIcon from "@/icons/play";
 import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import FastImage from "@d11/react-native-fast-image";
+import { PlayBold } from "@solar-icons/react-native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Dimensions, View } from "react-native";
@@ -62,7 +62,7 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
                 />
                 <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
                     <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
-                        <PlayIcon size={24} color="#ffffff" style={{ marginLeft: 4 }} />
+                        <PlayBold size={28} color="#ffffff" />
                     </View>
                 </View>
             </Pressable>

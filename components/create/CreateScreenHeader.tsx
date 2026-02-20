@@ -35,7 +35,7 @@ export const CreateScreenHeader = memo(({
             },
         ]}
     >
-        <Text style={[common.headline, { color: colors.text }]}>Create Post</Text>
+        <Text style={[common.headline, { color: colors.text, fontWeight: "bold" }]}>Create Post</Text>
         <TouchableOpacity
             style={[
                 createStyles.submitButton,

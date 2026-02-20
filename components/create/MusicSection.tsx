@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { XmarkSolid } from "@lineiconshq/free-icons";
 import { Lineicons } from "@lineiconshq/react-native-lineicons";
+import { CheckCircleBold, VinylRecordBold } from "@solar-icons/react-native";
+import { SquircleView } from "expo-squircle-view";
 import React, { memo } from "react";
 import {
     ActivityIndicator,
@@ -39,29 +41,30 @@ const MusicSearchResult = memo(({
     colors,
     common,
 }: MusicSearchResultProps) => (
-    <TouchableOpacity
-        style={[
-            createStyles.musicResultItem,
-            { backgroundColor: isSelected ? COLORS.primary + "20" : colors.card },
-            isSelected && { borderColor: COLORS.primary, borderWidth: 2 }
-        ]}
-        onPress={onSelect}
-    >
-        <Image source={{ uri: track.cover_url }} style={createStyles.musicCover} />
-        <View style={createStyles.musicInfo}>
-            <Text style={[common.subheading, createStyles.musicTitle, { color: colors.text }]} numberOfLines={1}>
-                {track.title}
-            </Text>
-            <Text style={[common.caption, createStyles.musicArtist, { color: colors.muted }]} numberOfLines={1}>
-                {track.artist}
-            </Text>
-        </View>
-        {isSelected && (
-            <View style={[createStyles.selectedIndicator, { backgroundColor: COLORS.primary }]}>
-                <Ionicons name="checkmark" size={14} color="#fff" />
+    <SquircleView style={[{
+        backgroundColor: isSelected ? COLORS.primary + "20" : colors.card,
+        borderRadius: 8
+    }]}>
+        <TouchableOpacity
+            style={[
+                createStyles.musicResultItem,
+            ]}
+            onPress={onSelect}
+        >
+            <Image source={{ uri: track.cover_url }} style={createStyles.musicCover} />
+            <View style={createStyles.musicInfo}>
+                <Text style={[common.subheading, createStyles.musicTitle, { color: colors.text }]} numberOfLines={1}>
+                    {track.title}
+                </Text>
+                <Text style={[common.caption, createStyles.musicArtist, { color: colors.muted }]} numberOfLines={1}>
+                    {track.artist}
+                </Text>
             </View>
-        )}
-    </TouchableOpacity>
+            {isSelected && (
+                <CheckCircleBold size={24} color={COLORS.primary} />
+            )}
+        </TouchableOpacity>
+    </SquircleView >
 ));
 
 MusicSearchResult.displayName = "MusicSearchResult";
@@ -157,7 +160,7 @@ export const MusicSection = memo(({
                     { backgroundColor: colors.card, borderColor: colors.divider },
                 ]}
             >
-                <Ionicons name="musical-notes-outline" size={18} color={COLORS.primary} />
+                <VinylRecordBold size={24} color={COLORS.primary} />
                 <TextInput
                     style={[createStyles.musicSearchInput, common.body, { color: colors.text }]}
                     placeholder="Search for songs..."

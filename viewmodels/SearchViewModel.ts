@@ -178,9 +178,10 @@ export const useSearchViewModel = () => {
 
     // ─── Refresh ──────────────────────────────────────────────────
     const handleRefresh = useCallback(async () => {
+        if (!isQueryEnabled) return;
         queryClient.removeQueries({ queryKey: ["profiles"] });
         refetch();
-    }, [refetch]);
+    }, [refetch, isQueryEnabled]);
 
     // ─── Pagination ───────────────────────────────────────────────
     const handleEndReached = useCallback(() => {

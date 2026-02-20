@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { MapPointBold } from "@solar-icons/react-native";
 import React, { memo } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
@@ -35,7 +36,7 @@ export const LocationInput = memo(({
                 { backgroundColor: colors.card, borderColor: colors.divider },
             ]}
         >
-            <Ionicons name="location-outline" size={18} color={COLORS.primary} />
+            <MapPointBold size={24} color={COLORS.primary} />
             <TextInput
                 style={[common.body, createStyles.locationInput, { color: colors.text }]}
                 placeholder="Add location..."
