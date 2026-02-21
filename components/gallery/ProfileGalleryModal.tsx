@@ -132,7 +132,7 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
                 initialIndex={initialIndex}
                 onIndexChange={onIndexChange}
                 onTap={onTap}
-                maxScale={6}
+                maxScale={3}
                 customTransition={transition}
                 zoomEnabled={true}
                 onVerticalPull={() => {

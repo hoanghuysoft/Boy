@@ -14,15 +14,16 @@ const LoginScreen = () => {
 
     return (
         <SafeAreaView style={[style.container, { backgroundColor: colors.background }]}>
-            <View style={{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center" }}>
-                <View style={[common.row, { gap: 10, alignItems: "center" }]}>
-                    <FastImage source={require("../../assets/images/icon.png")} style={{ width: 50, height: 50, borderRadius: 100 }} />
-                    <Text style={[common.headline, { color: colors.text }]}>WeLove</Text>
+            <FastImage source={require("../../assets/images/bg.png")} style={[StyleSheet.absoluteFill, { opacity: 0.8 }]} />
+            <View style={{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
+                <View style={{ alignItems: "center" }}>
+                    <FastImage source={require("../../assets/images/logo_head.png")} resizeMode={FastImage.resizeMode.contain} style={{ width: 85, height: 85 }} />
+                    <Text style={[common.headline, { color: 'white', fontWeight: "bold" }]}>WeLove</Text>
                 </View>
-                <Text style={[common.heading, { color: colors.text, marginTop: 80, textAlign: "center" }]}>Login to your account</Text>
-                <Text style={[common.body, { color: colors.text, marginTop: 10, textAlign: "center" }]}>Access to all loved one with your Google account</Text>
             </View>
             <View style={style.bottomButtonContainer}>
+                <Text style={[common.heading, { color: 'white', textAlign: "center", fontWeight: "bold" }]}>Login to your account</Text>
+                <Text style={[common.body, { color: 'white', marginVertical: 10, textAlign: "center" }]}>Share what you love for the whole world to see</Text>
                 <TouchableOpacity
                     onPress={handleGoogleLogin}
                     style={[common.button, { borderRadius: 9999, flexDirection: "row", gap: 10, width: "100%", justifyContent: "center", alignItems: "center" }]}

@@ -516,7 +516,7 @@ const ProfileContent = () => {
               tintColor={colors.text}
               colors={[colors.text]}
               style={{ zIndex: 10 }}
-              progressViewOffset={inset.top + 60} // Push spinner below the absolute header
+              progressViewOffset={inset.top + 30}
             />
           }
         >
@@ -609,7 +609,7 @@ const ProfileContent = () => {
           colors={[colors.text]}
           progressBackgroundColor={colors.card}
           style={{ zIndex: 10 }}
-          progressViewOffset={inset.top + 60} // Push spinner below the absolute header
+          progressViewOffset={inset.top + 30} // Push spinner below the absolute header
         />
       }
       estimatedItemSize={estimatedItemSize}

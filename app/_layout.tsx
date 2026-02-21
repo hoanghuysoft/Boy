@@ -11,7 +11,8 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { ImageBackground, StatusBar, StyleSheet, View } from 'react-native';
 import { easeGradient } from 'react-native-easing-gradient';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -70,6 +71,20 @@ const StatusBarFade = () => {
     );
 };
 
+// ─── FakeSplashScreen ────────────────────────────────────────────────────────
+// Displays the full-screen background design during the app's initial load.
+const FakeSplashScreen = () => {
+    return (
+        <ImageBackground
+            source={require('../assets/images/bg.png')}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+        >
+            <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+        </ImageBackground>
+    );
+};
+
 // ─── RootContent ───────────────────────────────────────────────────────────────
 // Renders the app shell once session + fonts are ready.
 
@@ -79,7 +94,15 @@ const RootContent = () => {
     // All business logic lives in the ViewModel
     const { isReady } = useRootLayoutViewModel();
 
-    if (!isReady) return null;
+    // Hide the native splash screen immediately when this component mounts,
+    // so the "Fake" React Native splash screen (ImageBackground) can take over.
+    useEffect(() => {
+        SplashScreen.hideAsync();
+    }, []);
+
+    if (!isReady) {
+        return <FakeSplashScreen />;
+    }
 
     return (
         <View style={{ flex: 1, backgroundColor: colors.background }}>

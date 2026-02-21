@@ -1,29 +1,24 @@
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { useThemeContext } from "@/context/ThemeContext";
-import { useCarouselQuery } from "@/services/carousel";
-import { useCarouselColorStore } from "@/stores/carouselColor";
-import { Canvas, ImageShader, Image as SkiaImage, LinearGradient as SkiaLinearGradient, useAnimatedImageValue, useImage, vec } from "@shopify/react-native-skia";
+import { isGifUrl } from "@/utils/checkGif";
+import { useHomeCarouselViewModel } from "@/viewmodels/HomeCarouselViewModel";
+import {
+    Canvas,
+    ImageShader,
+    Image as SkiaImage,
+    LinearGradient as SkiaLinearGradient,
+    useAnimatedImageValue,
+    useImage,
+    vec
+} from "@shopify/react-native-skia";
 import { LinearGradient } from "expo-linear-gradient";
-import _ from "lodash";
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Dimensions, StyleSheet } from "react-native";
+import React, { memo, useMemo } from "react";
+import { Animated, StyleSheet } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { useSharedValue } from "react-native-reanimated";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CAROUSEL_HEIGHT = SCREEN_HEIGHT * 0.28; // 28% of screen height
-const BLUR_HEIGHT = CAROUSEL_HEIGHT * 0.5; // Blur only bottom 50% of carousel
-const AUTO_SCROLL_INTERVAL = 5000; // 5 seconds
-
-// Helper to check if URL is a GIF
-const isGifUrl = (url: string | undefined): boolean => {
-    if (!url) return false;
-    const lowercaseUrl = url.toLowerCase();
-    return lowercaseUrl.endsWith('.gif') || lowercaseUrl.includes('.gif?');
-};
-
 // Component for static images
-const StaticCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
+const StaticCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blurHeight }: { imageUrl: string; screenWidth: number; carouselHeight: number; blurHeight: number }) => {
     const image = useImage(imageUrl);
 
     if (!image) return null;
@@ -36,8 +31,8 @@ const StaticCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
                     image={image}
                     x={0}
                     y={0}
-                    width={SCREEN_WIDTH}
-                    height={CAROUSEL_HEIGHT}
+                    width={screenWidth}
+                    height={carouselHeight}
                     fit="cover"
                 />
             </Canvas>
@@ -49,7 +44,7 @@ const StaticCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    height: BLUR_HEIGHT,
+                    height: blurHeight,
                 }}
                 pointerEvents="none"
             >
@@ -57,7 +52,7 @@ const StaticCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
                     mask={
                         <SkiaLinearGradient
                             start={vec(0, 0)}
-                            end={vec(0, BLUR_HEIGHT)}
+                            end={vec(0, blurHeight)}
                             colors={["transparent", "black"]}
                         />
                     }
@@ -65,9 +60,9 @@ const StaticCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
                     <ImageShader
                         image={image}
                         x={0}
-                        y={-(CAROUSEL_HEIGHT - BLUR_HEIGHT)}
-                        width={SCREEN_WIDTH}
-                        height={CAROUSEL_HEIGHT}
+                        y={-(carouselHeight - blurHeight)}
+                        width={screenWidth}
+                        height={carouselHeight}
                         fit="cover"
                         tx="clamp"
                         ty="clamp"
@@ -78,8 +73,7 @@ const StaticCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
     );
 });
 
-// Component for animated GIFs
-const AnimatedCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
+const AnimatedCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blurHeight }: { imageUrl: string; screenWidth: number; carouselHeight: number; blurHeight: number }) => {
     const isPaused = useSharedValue(false);
     const animatedImage = useAnimatedImageValue(imageUrl, isPaused);
 
@@ -87,26 +81,24 @@ const AnimatedCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
 
     return (
         <>
-            {/* Main carousel image */}
             <Canvas style={StyleSheet.absoluteFill}>
                 <SkiaImage
                     image={animatedImage}
                     x={0}
                     y={0}
-                    width={SCREEN_WIDTH}
-                    height={CAROUSEL_HEIGHT}
+                    width={screenWidth}
+                    height={carouselHeight}
                     fit="cover"
                 />
             </Canvas>
 
-            {/* Blur overlay at bottom */}
             <Canvas
                 style={{
                     position: 'absolute',
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    height: BLUR_HEIGHT,
+                    height: blurHeight,
                 }}
                 pointerEvents="none"
             >
@@ -114,7 +106,7 @@ const AnimatedCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
                     mask={
                         <SkiaLinearGradient
                             start={vec(0, 0)}
-                            end={vec(0, BLUR_HEIGHT)}
+                            end={vec(0, blurHeight)}
                             colors={["transparent", "black"]}
                         />
                     }
@@ -122,9 +114,9 @@ const AnimatedCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
                     <ImageShader
                         image={animatedImage}
                         x={0}
-                        y={-(CAROUSEL_HEIGHT - BLUR_HEIGHT)}
-                        width={SCREEN_WIDTH}
-                        height={CAROUSEL_HEIGHT}
+                        y={-(carouselHeight - blurHeight)}
+                        width={screenWidth}
+                        height={carouselHeight}
                         fit="cover"
                         tx="clamp"
                         ty="clamp"
@@ -135,23 +127,17 @@ const AnimatedCarouselImage = memo(({ imageUrl }: { imageUrl: string }) => {
     );
 });
 
-// Combined carousel image that chooses between static and animated
-const SkiaCarouselImage = memo(({ imageUrl }: { imageUrl: string | undefined }) => {
+const SkiaCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight }: { imageUrl: string | undefined, screenWidth: number, carouselHeight: number }) => {
+    const blurHeight = carouselHeight * 0.5;
     if (!imageUrl) return null;
-
-    // Use animated component for GIFs, static for other images
     if (isGifUrl(imageUrl)) {
-        return <AnimatedCarouselImage imageUrl={imageUrl} />;
+        return <AnimatedCarouselImage imageUrl={imageUrl} screenWidth={screenWidth} carouselHeight={carouselHeight} blurHeight={blurHeight} />;
     }
-
-    return <StaticCarouselImage imageUrl={imageUrl} />;
+    return <StaticCarouselImage imageUrl={imageUrl} screenWidth={screenWidth} carouselHeight={carouselHeight} blurHeight={blurHeight} />;
 });
 
-// Color gradient overlay - memoized with useMemo for gradient calculation
-const ColorGradientOverlay = memo(() => {
+const ColorGradientOverlay = memo(({ carouselHeight }: { carouselHeight: number }) => {
     const { theme } = useThemeContext();
-
-    // Memoize gradient calculation - only recalculate when theme changes
     const { colors, locations } = useMemo(() => easeGradient({
         colorStops: {
             0: {
@@ -178,118 +164,22 @@ const ColorGradientOverlay = memo(() => {
                 bottom: 0,
                 left: 0,
                 right: 0,
-                height: CAROUSEL_HEIGHT * 0.4,
+                height: carouselHeight * 0.4,
             }}
         />
     );
 });
 
 interface HomeCarouselProps {
-    animatedVisibility?: Animated.Value; // Animated value for smooth show/hide and auto-scroll control
+    animatedVisibility?: Animated.Value;
 }
 
 const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const { theme } = useThemeContext();
-    const { data: carouselData = [] } = useCarouselQuery();
-
-    // Get the analyze function from the store
-    const analyzeImageLuminance = useCarouselColorStore(state => state.analyzeImageLuminance);
-
-    // Filter to only include active carousel items
-    const activeCarouselData = useMemo(
-        () => carouselData.filter(item => item.is_active),
-        [carouselData]
-    );
-
-    // Get current image URL for carousel and blur overlay
-    const currentImageUrl = activeCarouselData[currentIndex]?.image_url;
-
-    // Analyze image luminance when current image changes
-    useEffect(() => {
-        if (currentImageUrl) {
-            analyzeImageLuminance(currentImageUrl);
-        }
-    }, [currentImageUrl, analyzeImageLuminance]);
-
-    // Track remaining indices for random non-repeating selection
-    const remainingIndicesRef = useRef<number[]>([]);
-    const currentIndexRef = useRef(currentIndex);
-    currentIndexRef.current = currentIndex;
-
-    // Function to get next random index without repeating
-    const getNextRandomIndex = useCallback(() => {
-        // If no remaining indices, reset with all indices
-        if (remainingIndicesRef.current.length === 0) {
-            remainingIndicesRef.current = _.range(activeCarouselData.length);
-        }
-
-        // Remove current index from remaining if present (to avoid showing same image twice in a row)
-        const indicesToUse = _.without(remainingIndicesRef.current, currentIndexRef.current);
-        const finalIndices = indicesToUse.length > 0 ? indicesToUse : remainingIndicesRef.current;
-
-        // Pick random index from remaining using lodash sample
-        const nextIndex = _.sample(finalIndices) ?? 0;
-
-        // Remove the picked index from remaining
-        _.pull(remainingIndicesRef.current, nextIndex);
-
-        return nextIndex;
-    }, [activeCarouselData.length]); // Only depend on data length, use ref for currentIndex
-
-    // Keep a stable ref to the function to avoid effect re-runs
-    const getNextRandomIndexRef = useRef(getNextRandomIndex);
-    getNextRandomIndexRef.current = getNextRandomIndex;
-
-    // Track visibility via animated value listener (avoids re-renders from state)
-    const isVisibleRef = useRef(true);
-
-    // Single effect for auto-scroll management
-    useEffect(() => {
-        if (activeCarouselData.length === 0) return;
-
-        const startAutoScroll = () => {
-            if (intervalRef.current) return; // Already running
-            intervalRef.current = setInterval(() => {
-                const nextIndex = getNextRandomIndexRef.current();
-                setCurrentIndex(nextIndex);
-            }, AUTO_SCROLL_INTERVAL);
-        };
-
-        const stopAutoScroll = () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
-        };
-
-        // Start initially
-        startAutoScroll();
-
-        // Listen to visibility changes
-        let listenerId: string | undefined;
-        if (animatedVisibility) {
-            listenerId = animatedVisibility.addListener(({ value }) => {
-                const shouldBeVisible = value > 0.5;
-                if (isVisibleRef.current !== shouldBeVisible) {
-                    isVisibleRef.current = shouldBeVisible;
-                    if (shouldBeVisible) {
-                        startAutoScroll();
-                    } else {
-                        stopAutoScroll();
-                    }
-                }
-            });
-        }
-
-        return () => {
-            stopAutoScroll();
-            if (listenerId && animatedVisibility) {
-                animatedVisibility.removeListener(listenerId);
-            }
-        };
-    }, [activeCarouselData.length, animatedVisibility]); // Removed getNextRandomIndex from deps
+    const {
+        currentImageUrl,
+        SCREEN_WIDTH,
+        CAROUSEL_HEIGHT,
+    } = useHomeCarouselViewModel(animatedVisibility);
 
     const animatedStyle = useMemo(() => {
         if (!animatedVisibility) return {};
@@ -299,18 +189,18 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
                 {
                     translateY: animatedVisibility.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [-CAROUSEL_HEIGHT * 0.3, 0], // Slide up when hiding
+                        outputRange: [-CAROUSEL_HEIGHT * 0.3, 0],
                     }),
                 },
                 {
                     scale: animatedVisibility.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [0.95, 1], // Slight scale down when hiding
+                        outputRange: [0.95, 1],
                     }),
                 },
             ],
         };
-    }, [animatedVisibility]);
+    }, [animatedVisibility, CAROUSEL_HEIGHT]);
 
     return (
         <Animated.View style={[{
@@ -321,8 +211,12 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
             left: 0,
             right: 0,
         }, animatedStyle]}>
-            <SkiaCarouselImage imageUrl={currentImageUrl} />
-            <ColorGradientOverlay />
+            <SkiaCarouselImage
+                imageUrl={currentImageUrl}
+                screenWidth={SCREEN_WIDTH}
+                carouselHeight={CAROUSEL_HEIGHT}
+            />
+            <ColorGradientOverlay carouselHeight={CAROUSEL_HEIGHT} />
         </Animated.View>
     )
 });
