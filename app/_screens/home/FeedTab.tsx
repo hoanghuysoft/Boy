@@ -27,6 +27,7 @@ interface FeedTabProps {
     feedType: "latest" | "lucky" | "this_day";
     onScroll?: (event: any) => void;
     onOptionsPress: (post: Post) => void;
+    onLikeCountPress?: (post: Post) => void;
     headerHeight: number;
 }
 
@@ -34,6 +35,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
     feedType,
     onScroll,
     onOptionsPress,
+    onLikeCountPress,
     headerHeight,
 }) => {
     const { colors, typography } = useThemeContext();
@@ -104,10 +106,10 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const rowRenderer = useCallback((type: string | number, data: Post, index: number) => {
         return (
             <View style={{ marginBottom: 30 }}>
-                <PostItem post={data} onOptionsPress={onOptionsPress} />
+                <PostItem post={data} onOptionsPress={onOptionsPress} onLikeCountPress={onLikeCountPress} />
             </View>
         );
-    }, [onOptionsPress]);
+    }, [onOptionsPress, onLikeCountPress]);
 
     const renderPostSkeleton = () => {
         return (

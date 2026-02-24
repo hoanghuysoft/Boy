@@ -17,6 +17,8 @@ export interface Post {
     links: Link[]
     is_ghost: boolean
     is_adult: boolean
+    is_liked: boolean
+    is_bookmarked: boolean
     profile_name: string
     profile_avatar: string
     profile_is_verified: boolean

@@ -1,0 +1,101 @@
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import React from "react";
+import { View } from "react-native";
+import CustomTopTabBar from "./CustomTopTabBar";
+import FeedTab from "./FeedTab";
+
+const Tab = createMaterialTopTabNavigator();
+
+// Tab screen components
+const FollowingTab = ({ onScroll, onOptionsPress, onLikeCountPress, headerHeight }: any) => (
+    <FeedTab
+        feedType="latest"
+        onScroll={onScroll}
+        onOptionsPress={onOptionsPress}
+        onLikeCountPress={onLikeCountPress}
+        headerHeight={headerHeight}
+    />
+);
+
+const LuckyTab = ({ onScroll, onOptionsPress, onLikeCountPress, headerHeight }: any) => (
+    <FeedTab
+        feedType="lucky"
+        onScroll={onScroll}
+        onOptionsPress={onOptionsPress}
+        onLikeCountPress={onLikeCountPress}
+        headerHeight={headerHeight}
+    />
+);
+
+const ThisDayTab = ({ onScroll, onOptionsPress, onLikeCountPress, headerHeight }: any) => (
+    <FeedTab
+        feedType="this_day"
+        onScroll={onScroll}
+        onOptionsPress={onOptionsPress}
+        onLikeCountPress={onLikeCountPress}
+        headerHeight={headerHeight}
+    />
+);
+
+interface HomeTabsProps {
+    vm: any;
+}
+
+const HomeTabs = ({ vm }: HomeTabsProps) => {
+    return (
+        <Tab.Navigator
+            tabBar={(props) => (
+                <View style={{ position: 'absolute', top: vm.insets.top + vm.headerHeight, left: 0, right: 0, zIndex: 99 }}>
+                    <CustomTopTabBar
+                        {...props}
+                        tabBgOpacity={vm.pillBgOpacity}
+                        tabOpacity={vm.tabOpacity}
+                        iconColor={vm.iconColor}
+                    />
+                </View>
+            )}
+            screenOptions={{
+                swipeEnabled: true,
+                lazy: true,
+                lazyPreloadDistance: 0,
+                sceneStyle: { backgroundColor: 'transparent' },
+            }}
+            screenListeners={{
+                state: vm.handleTabStateChange,
+            }}
+        >
+            <Tab.Screen name="Following">
+                {() => (
+                    <FollowingTab
+                        onScroll={vm.onScroll}
+                        onOptionsPress={vm.handlePostOptionsPress}
+                        onLikeCountPress={vm.handleLikeCountPress}
+                        headerHeight={vm.totalHeaderHeight + vm.insets.top}
+                    />
+                )}
+            </Tab.Screen>
+            <Tab.Screen name="Lucky">
+                {() => (
+                    <LuckyTab
+                        onScroll={vm.onScroll}
+                        onOptionsPress={vm.handlePostOptionsPress}
+                        onLikeCountPress={vm.handleLikeCountPress}
+                        headerHeight={vm.totalHeaderHeight + vm.insets.top}
+                    />
+                )}
+            </Tab.Screen>
+            <Tab.Screen name="This Day" options={{ title: "This Day" }}>
+                {() => (
+                    <ThisDayTab
+                        onScroll={vm.onScroll}
+                        onOptionsPress={vm.handlePostOptionsPress}
+                        onLikeCountPress={vm.handleLikeCountPress}
+                        headerHeight={vm.totalHeaderHeight + vm.insets.top}
+                    />
+                )}
+            </Tab.Screen>
+        </Tab.Navigator>
+    );
+};
+
+export default HomeTabs;

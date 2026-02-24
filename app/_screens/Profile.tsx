@@ -44,6 +44,7 @@ type TabType = "Images" | "Videos" | "Feed" | "Information";
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
 import { PostOptionsSheet } from "@/components/post";
+import { LikersSheet } from "@/components/post/LikersSheet";
 import { HeadphonesRoundSoundBold } from "@solar-icons/react-native";
 import TurboImage from "react-native-turbo-image";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
@@ -352,6 +353,15 @@ const ProfileContent = () => {
     optionsSheetRef.current?.present();
   }, []);
 
+  // Likers Sheet
+  const likersSheetRef = useRef<TrueSheet>(null);
+  const [selectedLikePostId, setSelectedLikePostId] = useState<string | null>(null);
+
+  const handleLikeCountPress = useCallback((post: Post) => {
+    setSelectedLikePostId(post.id);
+    likersSheetRef.current?.present();
+  }, []);
+
 
   // Grid Hooks
   const {
@@ -455,7 +465,7 @@ const ProfileContent = () => {
       case "Videos":
         return renderVideoItem({ item, index, separators: {} as any });
       case "Feed":
-        return <PostItem post={item as Post} key={item.id} onOptionsPress={handlePostOptionsPress} />;
+        return <PostItem post={item as Post} key={item.id} onOptionsPress={handlePostOptionsPress} onLikeCountPress={handleLikeCountPress} />;
     }
   }, [activeTab, profile, renderImageItem, renderVideoItem]);
 
@@ -780,6 +790,10 @@ const ProfileContent = () => {
         post={selectedPost}
         currentProfileId={myProfile?.id || null}
         onDeleted={handlePostDeleted}
+      />
+      <LikersSheet
+        ref={likersSheetRef}
+        postId={selectedLikePostId}
       />
     </View>
   );

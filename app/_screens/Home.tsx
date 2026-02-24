@@ -1,227 +1,52 @@
-import { Post } from "@/types/post";
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PostOptionsSheet } from "../../components/post/PostOptionsSheet";
-import { useThemeContext } from "../../context/ThemeContext";
-import { useProfile } from "../../services/userprofile";
-import { createCommonStyles } from "../../styles/common";
-
 import HomeCarousel from "@/components/HomeCarousel";
 import OptionModal from "@/components/HomeOptionModal";
 import SettingsIcon from "@/icons/settings";
-import { useCarouselColorStore } from "@/stores/carouselColor";
-import { useSettingsStore } from "@/stores/settings";
+import { useHomeViewModel } from "@/viewmodels/HomeViewModel";
 import FastImage from "@d11/react-native-fast-image";
 import { Magnifier } from '@solar-icons/react-native/Outline';
+import React from "react";
+import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
-import CustomTopTabBar from "./home/CustomTopTabBar";
-import FeedTab from "./home/FeedTab";
-
-const Tab = createMaterialTopTabNavigator();
-
-// Tab screen components
-const FollowingTab = ({ onScroll, onOptionsPress, headerHeight }: any) => (
-  <FeedTab
-    feedType="latest"
-    onScroll={onScroll}
-    onOptionsPress={onOptionsPress}
-    headerHeight={headerHeight}
-  />
-);
-
-const LuckyTab = ({ onScroll, onOptionsPress, headerHeight }: any) => (
-  <FeedTab
-    feedType="lucky"
-    onScroll={onScroll}
-    onOptionsPress={onOptionsPress}
-    headerHeight={headerHeight}
-  />
-);
-
-const ThisDayTab = ({ onScroll, onOptionsPress, headerHeight }: any) => (
-  <FeedTab
-    feedType="this_day"
-    onScroll={onScroll}
-    onOptionsPress={onOptionsPress}
-    headerHeight={headerHeight}
-  />
-);
+import { LikersSheet } from "../../components/post/LikersSheet";
+import { PostOptionsSheet } from "../../components/post/PostOptionsSheet";
+import HomeTabs from "./home/HomeTabs";
 
 const HomeScreen = () => {
-  const router = useRouter();
-  const { colors, typography, theme } = useThemeContext();
-  const common = createCommonStyles(colors, typography);
-  const insets = useSafeAreaInsets();
-
-  // Current user profile
-  const { data: myProfile } = useProfile('me', true);
-
-  // Post options sheet
-  const optionsSheetRef = useRef<TrueSheet>(null);
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-
-  // Carousel color store for dynamic icon/text colors
-  const { overlayColor, isUsingCarouselColor } = useCarouselColorStore();
-
-  // Carousel settings
-  const { showCarousel: carouselEnabled } = useSettingsStore();
-  const isCarouselVisible = useRef(true); // Use ref instead of state
-  const carouselVisibility = useRef(new Animated.Value(1)).current;
-  const [modalVisible, setModalVisible] = useState(false);
-
-  // Track if we should use carousel color (at top + carousel enabled + has color)
-  const [useCarouselColor, setUseCarouselColor] = useState(false);
-
-  // Listen to carousel visibility changes
-  useEffect(() => {
-    const listenerId = carouselVisibility.addListener(({ value }) => {
-      const shouldShow = value > 0.5;
-      setUseCarouselColor(shouldShow && carouselEnabled && isUsingCarouselColor);
-    });
-
-    return () => {
-      carouselVisibility.removeListener(listenerId);
-    };
-  }, [carouselVisibility, carouselEnabled, isUsingCarouselColor]);
-
-  // Update when carousel color changes
-  useEffect(() => {
-    if (isCarouselVisible.current && carouselEnabled && isUsingCarouselColor) {
-      setUseCarouselColor(true);
-    }
-  }, [isUsingCarouselColor, carouselEnabled]);
-
-  // Compute the icon color - simple: either carousel contrast color or theme color
-  const iconColor = useMemo(() => {
-    if (useCarouselColor) {
-      // Only pure black or white
-      return overlayColor === '#000000' ? '#000000' : '#FFFFFF';
-    }
-    return colors.text;
-  }, [useCarouselColor, overlayColor, colors.text]);
-
-  // Scroll animation for floating header
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const tabVisibility = useRef(new Animated.Value(1)).current;
-  const lastScrollY = useRef(0);
-  const isTabVisible = useRef(true);
-  const scrollThreshold = 10;
-
-  const tabOpacity = tabVisibility;
-
-  const headerBgOpacity = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  const headerPillVisibility = tabVisibility;
-
-  // Pill background opacity - inverse of carousel visibility (when at top, bg is transparent)
-  const pillBgOpacity = carouselVisibility.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  // Memoize pill background color to prevent re-renders
-  const pillBgColor = useMemo(
-    () => colors.tabBar + "E6",
-    [theme]
-  );
-
-  const openModal = () => {
-    setModalVisible(true);
-  };
-
-  // Scroll handler
-  const onScroll = useCallback((event: any) => {
-    const currentScrollY = event.nativeEvent.contentOffset.y;
-    const diff = currentScrollY - lastScrollY.current;
-
-    if (Math.abs(diff) > scrollThreshold) {
-      if (diff > 0 && isTabVisible.current && currentScrollY > 50) {
-        isTabVisible.current = false;
-        Animated.spring(tabVisibility, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      } else if (diff < 0 && !isTabVisible.current) {
-        isTabVisible.current = true;
-        Animated.spring(tabVisibility, {
-          toValue: 1,
-          useNativeDriver: true,
-        }).start();
-      }
-
-      lastScrollY.current = currentScrollY;
-    }
-
-    const shouldShowCarousel = currentScrollY <= 10;
-    if (shouldShowCarousel !== isCarouselVisible.current) {
-      isCarouselVisible.current = shouldShowCarousel;
-      Animated.spring(carouselVisibility, {
-        toValue: shouldShowCarousel ? 1 : 0,
-        useNativeDriver: true,
-        friction: 8,
-        tension: 100,
-      }).start();
-
-      // Update color usage based on carousel visibility
-      setUseCarouselColor(shouldShowCarousel && carouselEnabled && isUsingCarouselColor);
-    }
-  }, [carouselEnabled, isUsingCarouselColor]);
-
-  const handlePostOptionsPress = useCallback((post: Post) => {
-    setSelectedPost(post);
-    optionsSheetRef.current?.present();
-  }, []);
-
-  const handlePostDeleted = useCallback(() => {
-    setSelectedPost(null);
-  }, []);
-
-  const headerHeight = 75;
-  const tabsHeight = 50;
-  const totalHeaderHeight = headerHeight + tabsHeight;
+  const vm = useHomeViewModel();
 
   return (
     <>
-      <View style={[common.screen, { position: 'relative' }]}>
-        {carouselEnabled && (
+      <View style={[vm.common.screen, { position: 'relative' }]}>
+        {vm.carouselEnabled && (
           <HomeCarousel
-            animatedVisibility={carouselVisibility}
+            animatedVisibility={vm.carouselVisibility}
           />
         )}
-        <OptionModal modalVisible={modalVisible} setModalVisible={setModalVisible} />
+        <OptionModal modalVisible={vm.modalVisible} setModalVisible={vm.setModalVisible} />
         <Animated.View
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: totalHeaderHeight + insets.top,
+            height: vm.totalHeaderHeight + vm.insets.top,
             zIndex: -10,
-            opacity: headerBgOpacity,
+            opacity: vm.headerBgOpacity,
           }}
         />
         <Animated.View
           pointerEvents="box-none"
           style={{
             position: 'absolute',
-            top: insets.top,
+            top: vm.insets.top,
             left: 0,
             right: 0,
             zIndex: 100,
-            opacity: headerPillVisibility,
-            transform: [{ translateY: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [-100, 0] }) }],
+            opacity: vm.headerPillVisibility,
+            transform: [{ translateY: vm.headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [-100, 0] }) }],
           }}
         >
-          <View style={[common.row, {
+          <View style={[vm.common.row, {
             paddingHorizontal: 16,
             paddingTop: 16,
             paddingBottom: 8,
@@ -229,111 +54,58 @@ const HomeScreen = () => {
             alignItems: "center",
             marginBottom: 12,
           }]}>
-            <Animated.View style={[common.row, {
+            <Animated.View style={[vm.common.row, {
               gap: 10,
               padding: 8,
               borderRadius: 100,
               overflow: 'hidden',
-              transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+              transform: [{ scale: vm.headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
             }]}>
               {/* Animated background */}
               <Animated.View style={{
                 ...StyleSheet.absoluteFillObject,
-                backgroundColor: pillBgColor,
-                opacity: pillBgOpacity,
+                backgroundColor: vm.pillBgColor,
+                opacity: vm.pillBgOpacity,
               }} />
               <FastImage resizeMode="contain" source={require("../../assets/images/logo_head.png")} style={{ width: 40, height: 30, borderRadius: 100 }} />
             </Animated.View>
 
-            <Animated.View style={[common.row, {
+            <Animated.View style={[vm.common.row, {
               gap: 10,
               padding: 8,
               borderRadius: 100,
               overflow: 'hidden',
-              transform: [{ scale: headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+              transform: [{ scale: vm.headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
             }]}>
               {/* Animated background */}
               <Animated.View style={{
                 ...StyleSheet.absoluteFillObject,
-                backgroundColor: pillBgColor,
-                opacity: pillBgOpacity,
+                backgroundColor: vm.pillBgColor,
+                opacity: vm.pillBgOpacity,
               }} />
-              <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
-                <Magnifier size={24} color={iconColor} />
+              <TouchableOpacity onPress={vm.navigateToSearch}>
+                <Magnifier size={24} color={vm.iconColor} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={openModal}>
-                <SettingsIcon size={24} color={iconColor} />
+              <TouchableOpacity onPress={vm.openModal}>
+                <SettingsIcon size={24} color={vm.iconColor} />
               </TouchableOpacity>
             </Animated.View>
           </View>
         </Animated.View>
 
         {/* Material Top Tabs */}
-        <Tab.Navigator
-          tabBar={(props) => (
-            <View style={{ position: 'absolute', top: insets.top + headerHeight, left: 0, right: 0, zIndex: 99 }}>
-              <CustomTopTabBar
-                {...props}
-                tabBgOpacity={pillBgOpacity}
-                tabOpacity={tabOpacity}
-                iconColor={iconColor}
-              />
-            </View>
-          )}
-          screenOptions={{
-            swipeEnabled: true,
-            lazy: true,
-            lazyPreloadDistance: 0,
-            sceneStyle: { backgroundColor: 'transparent' },
-          }}
-          screenListeners={{
-            state: () => {
-              if (!isTabVisible.current) {
-                isTabVisible.current = true;
-                Animated.spring(tabVisibility, {
-                  toValue: 1,
-                  useNativeDriver: true,
-                }).start();
-              }
-              lastScrollY.current = 0;
-            },
-          }}
-        >
-          <Tab.Screen name="Following">
-            {() => (
-              <FollowingTab
-                onScroll={onScroll}
-                onOptionsPress={handlePostOptionsPress}
-                headerHeight={totalHeaderHeight + insets.top}
-              />
-            )}
-          </Tab.Screen>
-          <Tab.Screen name="Lucky">
-            {() => (
-              <LuckyTab
-                onScroll={onScroll}
-                onOptionsPress={handlePostOptionsPress}
-                headerHeight={totalHeaderHeight + insets.top}
-              />
-            )}
-          </Tab.Screen>
-          <Tab.Screen name="This Day" options={{ title: "This Day" }}>
-            {() => (
-              <ThisDayTab
-                onScroll={onScroll}
-                onOptionsPress={handlePostOptionsPress}
-                headerHeight={totalHeaderHeight + insets.top}
-              />
-            )}
-          </Tab.Screen>
-        </Tab.Navigator>
+        <HomeTabs vm={vm} />
       </View>
       <GalleryModal />
       <PostOptionsSheet
-        ref={optionsSheetRef}
-        post={selectedPost}
-        currentProfileId={myProfile?.id || null}
-        onDeleted={handlePostDeleted}
+        ref={vm.optionsSheetRef}
+        post={vm.selectedPost}
+        currentProfileId={vm.myProfile?.id || null}
+        onDeleted={vm.handlePostDeleted}
+      />
+      <LikersSheet
+        ref={vm.likersSheetRef}
+        postId={vm.selectedLikePostId}
       />
     </>
   );

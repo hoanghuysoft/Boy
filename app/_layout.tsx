@@ -71,8 +71,6 @@ const StatusBarFade = () => {
     );
 };
 
-// ─── FakeSplashScreen ────────────────────────────────────────────────────────
-// Displays the full-screen background design during the app's initial load.
 const FakeSplashScreen = () => {
     return (
         <ImageBackground
@@ -80,22 +78,16 @@ const FakeSplashScreen = () => {
             style={StyleSheet.absoluteFill}
             resizeMode="cover"
         >
-            <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+            <StatusBar translucent backgroundColor="transparent" barStyle="light-content" animated/>
         </ImageBackground>
     );
 };
 
-// ─── RootContent ───────────────────────────────────────────────────────────────
-// Renders the app shell once session + fonts are ready.
-
 const RootContent = () => {
     const { theme, colors } = useThemeContext();
 
-    // All business logic lives in the ViewModel
     const { isReady } = useRootLayoutViewModel();
 
-    // Hide the native splash screen immediately when this component mounts,
-    // so the "Fake" React Native splash screen (ImageBackground) can take over.
     useEffect(() => {
         SplashScreen.hideAsync();
     }, []);
@@ -133,12 +125,7 @@ const RootContent = () => {
     );
 };
 
-// ─── RootLayout (Entry Point) ──────────────────────────────────────────────────
-// Pure bootstrap: wraps the app in required providers only.
-
 export default function RootLayout() {
-    // Fonts are still needed here so StatusBarFade (inside ThemeProvider) can
-    // safely use GoogleSansFlex_700Bold before RootContent mounts.
     const [fontsLoaded] = useFonts({
         GoogleSansFlex_700Bold,
     });
