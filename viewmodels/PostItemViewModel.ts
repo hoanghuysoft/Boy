@@ -10,12 +10,14 @@ interface UsePostItemViewModelProps {
     post: Post;
     onOptionsPress?: (post: Post) => void;
     onLikeCountPress?: (post: Post) => void;
+    onCommentPress?: (post: Post) => void;
 }
 
 export const usePostItemViewModel = ({
     post,
     onOptionsPress,
     onLikeCountPress,
+    onCommentPress,
 }: UsePostItemViewModelProps) => {
     const router = useRouter();
     const params = useLocalSearchParams();
@@ -28,11 +30,11 @@ export const usePostItemViewModel = ({
     const [likeCount, setLikeCount] = useState(post.like_count);
     const toggleLikeMutation = useToggleLike();
 
-    // Sync with server data when post prop changes
+    // Sync with server data when post prop changes (including cell recycling)
     useEffect(() => {
         setIsLiked(post.is_liked);
         setLikeCount(post.like_count);
-    }, [post.is_liked, post.like_count]);
+    }, [post.id, post.is_liked, post.like_count]);
 
     const handleLikePress = useCallback(() => {
         const newIsLiked = !isLiked;
@@ -53,6 +55,10 @@ export const usePostItemViewModel = ({
     const handleLikeCountPress = useCallback(() => {
         onLikeCountPress?.(post);
     }, [onLikeCountPress, post]);
+
+    const handleCommentPress = useCallback(() => {
+        onCommentPress?.(post);
+    }, [onCommentPress, post]);
 
     // ─── Profile Navigation ─────────────────────────────────────
     const handleProfilePress = useCallback(() => {
@@ -99,6 +105,7 @@ export const usePostItemViewModel = ({
         likeCount,
         handleLikePress,
         handleLikeCountPress,
+        handleCommentPress,
 
         // Profile
         handleProfilePress,

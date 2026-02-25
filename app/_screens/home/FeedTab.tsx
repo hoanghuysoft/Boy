@@ -28,6 +28,7 @@ interface FeedTabProps {
     onScroll?: (event: any) => void;
     onOptionsPress: (post: Post) => void;
     onLikeCountPress?: (post: Post) => void;
+    onCommentPress?: (post: Post) => void;
     headerHeight: number;
 }
 
@@ -36,6 +37,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
     onScroll,
     onOptionsPress,
     onLikeCountPress,
+    onCommentPress,
     headerHeight,
 }) => {
     const { colors, typography } = useThemeContext();
@@ -79,8 +81,12 @@ const FeedTab: React.FC<FeedTabProps> = ({
     // Create DataProvider with rowHasChanged comparison
     const [dataProvider, setDataProvider] = useState<DataProvider>(
         new DataProvider((r1, r2) => {
-            // Compare by post id for efficiency
-            return r1.id !== r2.id;
+            // Compare by id AND mutable fields so recycled cells get fresh data
+            return r1.id !== r2.id
+                || r1.is_liked !== r2.is_liked
+                || r1.like_count !== r2.like_count
+                || r1.comment_count !== r2.comment_count
+                || r1.is_bookmarked !== r2.is_bookmarked;
         })
     );
 
@@ -106,10 +112,10 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const rowRenderer = useCallback((type: string | number, data: Post, index: number) => {
         return (
             <View style={{ marginBottom: 30 }}>
-                <PostItem post={data} onOptionsPress={onOptionsPress} onLikeCountPress={onLikeCountPress} />
+                <PostItem post={data} onOptionsPress={onOptionsPress} onLikeCountPress={onLikeCountPress} onCommentPress={onCommentPress} />
             </View>
         );
-    }, [onOptionsPress, onLikeCountPress]);
+    }, [onOptionsPress, onLikeCountPress, onCommentPress]);
 
     const renderPostSkeleton = () => {
         return (

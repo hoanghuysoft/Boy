@@ -112,7 +112,8 @@ export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
                     height: 4,
                     width: 32,
                 }}
-                detents={['auto']}
+                cornerRadius={24}
+                detents={[0.7]}
             >
                 <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
                     {/* Header */}

@@ -7,32 +7,35 @@ import FeedTab from "./FeedTab";
 const Tab = createMaterialTopTabNavigator();
 
 // Tab screen components
-const FollowingTab = ({ onScroll, onOptionsPress, onLikeCountPress, headerHeight }: any) => (
+const FollowingTab = ({ onScroll, onOptionsPress, onLikeCountPress, onCommentPress, headerHeight }: any) => (
     <FeedTab
         feedType="latest"
         onScroll={onScroll}
         onOptionsPress={onOptionsPress}
         onLikeCountPress={onLikeCountPress}
+        onCommentPress={onCommentPress}
         headerHeight={headerHeight}
     />
 );
 
-const LuckyTab = ({ onScroll, onOptionsPress, onLikeCountPress, headerHeight }: any) => (
+const LuckyTab = ({ onScroll, onOptionsPress, onLikeCountPress, onCommentPress, headerHeight }: any) => (
     <FeedTab
         feedType="lucky"
         onScroll={onScroll}
         onOptionsPress={onOptionsPress}
         onLikeCountPress={onLikeCountPress}
+        onCommentPress={onCommentPress}
         headerHeight={headerHeight}
     />
 );
 
-const ThisDayTab = ({ onScroll, onOptionsPress, onLikeCountPress, headerHeight }: any) => (
+const ThisDayTab = ({ onScroll, onOptionsPress, onLikeCountPress, onCommentPress, headerHeight }: any) => (
     <FeedTab
         feedType="this_day"
         onScroll={onScroll}
         onOptionsPress={onOptionsPress}
         onLikeCountPress={onLikeCountPress}
+        onCommentPress={onCommentPress}
         headerHeight={headerHeight}
     />
 );
@@ -70,6 +73,7 @@ const HomeTabs = ({ vm }: HomeTabsProps) => {
                         onScroll={vm.onScroll}
                         onOptionsPress={vm.handlePostOptionsPress}
                         onLikeCountPress={vm.handleLikeCountPress}
+                        onCommentPress={vm.handleCommentPress}
                         headerHeight={vm.totalHeaderHeight + vm.insets.top}
                     />
                 )}
@@ -80,6 +84,7 @@ const HomeTabs = ({ vm }: HomeTabsProps) => {
                         onScroll={vm.onScroll}
                         onOptionsPress={vm.handlePostOptionsPress}
                         onLikeCountPress={vm.handleLikeCountPress}
+                        onCommentPress={vm.handleCommentPress}
                         headerHeight={vm.totalHeaderHeight + vm.insets.top}
                     />
                 )}
@@ -90,6 +95,7 @@ const HomeTabs = ({ vm }: HomeTabsProps) => {
                         onScroll={vm.onScroll}
                         onOptionsPress={vm.handlePostOptionsPress}
                         onLikeCountPress={vm.handleLikeCountPress}
+                        onCommentPress={vm.handleCommentPress}
                         headerHeight={vm.totalHeaderHeight + vm.insets.top}
                     />
                 )}

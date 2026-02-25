@@ -5,9 +5,9 @@
  *   PUT/DELETE /api/posts/[id]/comments/[commentId]
  */
 
+import { Comment, CommentResponse, CreateCommentInput, UpdateCommentInput } from '@/types/comment';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
-import { Comment, CommentResponse, CreateCommentInput, UpdateCommentInput } from '@/types/comment';
 
 // ============================================================================
 // API Functions
@@ -79,6 +79,37 @@ export const deleteComment = async (
 // ============================================================================
 
 /**
+ * Patches a single post's comment_count across all feed caches.
+ * Same pattern as patchPostInFeedCaches in like.ts — instant UI update.
+ */
+const patchCommentCountInFeedCaches = (
+    queryClient: ReturnType<typeof useQueryClient>,
+    postId: string,
+    delta: number
+) => {
+    const updater = (oldData: any) => {
+        if (!oldData?.pages) return oldData;
+        return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+                ...page,
+                data: page.data.map((post: any) =>
+                    post.id === postId
+                        ? {
+                            ...post,
+                            comment_count: Math.max(0, (post.comment_count ?? 0) + delta),
+                        }
+                        : post
+                ),
+            })),
+        };
+    };
+
+    queryClient.setQueriesData({ queryKey: ['feed'], exact: false }, updater);
+    queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, updater);
+};
+
+/**
  * Hook for fetching comments on a post (infinite scroll)
  */
 export const useComments = (postId: string | undefined) => {
@@ -93,18 +124,24 @@ export const useComments = (postId: string | undefined) => {
 };
 
 /**
- * Hook for creating a comment
+ * Hook for creating a comment — optimistically increments comment_count
  */
 export const useCreateComment = (postId: string) => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: (data: CreateCommentInput) => createComment(postId, data),
+        onMutate: async () => {
+            // Optimistically increment comment count in feed caches
+            patchCommentCountInFeedCaches(queryClient, postId, +1);
+        },
         onSuccess: () => {
+            // Refetch the comments list to show the new comment
             queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-            // Also invalidate feed queries to update comment counts
-            queryClient.invalidateQueries({ queryKey: ['feed'], exact: false });
-            queryClient.invalidateQueries({ queryKey: ['profileFeed'], exact: false });
+        },
+        onError: () => {
+            // Roll back the optimistic increment
+            patchCommentCountInFeedCaches(queryClient, postId, -1);
         },
     });
 };
@@ -125,17 +162,25 @@ export const useUpdateComment = (postId: string) => {
 };
 
 /**
- * Hook for deleting a comment
+ * Hook for deleting a comment — optimistically decrements comment_count
  */
 export const useDeleteComment = (postId: string) => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: (commentId: string) => deleteComment(postId, commentId),
+        onMutate: async () => {
+            // Optimistically decrement comment count in feed caches
+            patchCommentCountInFeedCaches(queryClient, postId, -1);
+        },
         onSuccess: () => {
+            // Refetch the comments list to reflect the deletion
             queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-            queryClient.invalidateQueries({ queryKey: ['feed'], exact: false });
-            queryClient.invalidateQueries({ queryKey: ['profileFeed'], exact: false });
+        },
+        onError: () => {
+            // Roll back the optimistic decrement
+            patchCommentCountInFeedCaches(queryClient, postId, +1);
         },
     });
 };
+

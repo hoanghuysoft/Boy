@@ -24,10 +24,11 @@ interface PostItemProps {
     post: Post;
     onOptionsPress?: (post: Post) => void;
     onLikeCountPress?: (post: Post) => void;
+    onCommentPress?: (post: Post) => void;
 }
 
-export const PostItem = ({ post, onOptionsPress, onLikeCountPress }: PostItemProps) => {
-    const vm = usePostItemViewModel({ post, onOptionsPress, onLikeCountPress });
+export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPress }: PostItemProps) => {
+    const vm = usePostItemViewModel({ post, onOptionsPress, onLikeCountPress, onCommentPress });
 
     return (
         <View style={{}}>
@@ -175,7 +176,7 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress }: PostItemPro
                             <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</Text>
                         </TouchableOpacity>
                     </View>
-                    <TouchableOpacity hitSlop={10} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                    <TouchableOpacity hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <CommentIcon size={24} color={vm.colors.text} />
                         <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</Text>
                     </TouchableOpacity>

@@ -7,6 +7,7 @@ import { Magnifier } from '@solar-icons/react-native/Outline';
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
+import { CommentsSheet } from "../../components/post/CommentsSheet";
 import { LikersSheet } from "../../components/post/LikersSheet";
 import { PostOptionsSheet } from "../../components/post/PostOptionsSheet";
 import HomeTabs from "./home/HomeTabs";
@@ -106,6 +107,10 @@ const HomeScreen = () => {
       <LikersSheet
         ref={vm.likersSheetRef}
         postId={vm.selectedLikePostId}
+      />
+      <CommentsSheet
+        ref={vm.commentsSheetRef}
+        postId={vm.selectedCommentPostId}
       />
     </>
   );

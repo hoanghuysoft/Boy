@@ -31,6 +31,10 @@ export const useHomeViewModel = () => {
     const likersSheetRef = useRef<TrueSheet>(null);
     const [selectedLikePostId, setSelectedLikePostId] = useState<string | null>(null);
 
+    // ─── Comments Sheet ─────────────────────────────────────────────
+    const commentsSheetRef = useRef<TrueSheet>(null);
+    const [selectedCommentPostId, setSelectedCommentPostId] = useState<string | null>(null);
+
     // ─── Carousel Color Store ──────────────────────────────────────
     const { overlayColor, isUsingCarouselColor } = useCarouselColorStore();
 
@@ -153,6 +157,11 @@ export const useHomeViewModel = () => {
         likersSheetRef.current?.present();
     }, []);
 
+    const handleCommentPress = useCallback((post: Post) => {
+        setSelectedCommentPostId(post.id);
+        commentsSheetRef.current?.present();
+    }, []);
+
     const handleTabStateChange = useCallback(() => {
         if (!isTabVisible.current) {
             isTabVisible.current = true;
@@ -191,6 +200,10 @@ export const useHomeViewModel = () => {
         likersSheetRef,
         selectedLikePostId,
 
+        // Comments Sheet
+        commentsSheetRef,
+        selectedCommentPostId,
+
         // Carousel
         carouselEnabled,
         carouselVisibility,
@@ -215,6 +228,7 @@ export const useHomeViewModel = () => {
         handlePostOptionsPress,
         handlePostDeleted,
         handleLikeCountPress,
+        handleCommentPress,
         handleTabStateChange,
         navigateToSearch,
     };
