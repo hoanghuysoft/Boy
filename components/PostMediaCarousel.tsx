@@ -1,6 +1,7 @@
 import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
+import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import FastImage from "@d11/react-native-fast-image";
 import { PlayBold } from "@solar-icons/react-native";
 import { useRouter } from "expo-router";
@@ -47,18 +48,24 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
     placeholderImageVideo,
 }) => {
     const router = useRouter();
+    const fallbackUrls = useMemo(() => buildFallbackUrls(item, placeholderImageVideo), [item, placeholderImageVideo]);
+    const [prev, setPrev] = useState(0);
+    const handleThumbnailError = useCallback(() => {
+        setPrev(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
+    }, [fallbackUrls.length]);
 
     return (
         <View style={{ width: SCREEN_WIDTH }}>
             <Pressable
-                onPress={() => router.push({ pathname: '/video_player', params: { videoUrl: item.url, name: profileName, caption: content, portrait: 'true' } })}
+                onPress={() => router.push({ pathname: '/video_player', params: { videoUrl: choosenMediaPath(item), name: profileName, caption: content, portrait: 'true' } })}
                 style={{ width: '100%', aspectRatio: ASPECT_RATIO }}
             >
                 <FastImage
-                    source={{ uri: item.thumbnail_url || item.url }}
+                    source={{ uri: fallbackUrls[prev] }}
                     style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
                     resizeMode="cover"
                     blurRadius={shouldBlur ? 25 : undefined}
+                    onError={handleThumbnailError}
                 />
                 <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
                     <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
@@ -94,7 +101,7 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
         <View style={{ width: SCREEN_WIDTH }}>
             <Pressable android_ripple={{ color: colors.divider, foreground: true }} onPress={onPress}>
                 <TurboImage
-                    source={{ uri: item.url }}
+                    source={{ uri: choosenMediaPath(item) }}
                     style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
                     resizeMode="cover"
                     blur={shouldBlur ? 25 : undefined}

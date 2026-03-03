@@ -1,67 +1,31 @@
 import { Ionicons } from "@expo/vector-icons";
 
+import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import { FasterImageView } from '@rraut/react-native-faster-image';
-import * as Haptics from "expo-haptics";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
+    ImageStyle,
     ListRenderItem,
     StyleSheet,
     TouchableOpacity,
     View,
     ViewStyle,
-    useWindowDimensions
 } from "react-native";
 import { Pressable } from "react-native-gesture-handler";
 import TurboImage from "react-native-turbo-image";
-import { useThemeContext } from "../../context/ThemeContext";
-import { createCommonStyles } from "../../styles/common";
 import { Media } from "../../types/media";
+import {
+    GridItemType,
+    UseImageGridViewModelOptions,
+    useImageGridViewModel
+} from "../../viewmodels/ImageGridViewModel";
 import { ShimmerEffect } from "../shimmer/Shimmer";
 import QuickPreviewModal from "./QuickPreviewModal";
 
-// TurboImage cache policy - use dataCache for aggressive local caching
-// This ignores server cache-control headers and caches everything locally
+// TurboImage cache policy
 const IMAGE_CACHE_POLICY = "dataCache" as const;
 
-// Constants
-const SPACING = 1;
-const NUM_COLUMNS = 3;
-
-// Types for grid data
-type GridItemType =
-    | { type: 'media'; item: Media; flatIndex: number }
-    | { type: 'shimmer'; flatIndex: number };
-
-interface UseImageGridOptions {
-    photos?: Media[];
-    onVideoPress?: (video: Media) => void;
-    onImagePress?: (visible: boolean, index: number) => void;
-    loading?: boolean;
-    fetchingMore?: boolean;
-}
-
-const processMediaToFlat = (media: Media[]): { gridData: GridItemType[]; sortedUrls: string[] } => {
-    if (!media || media.length === 0) {
-        return { gridData: [], sortedUrls: [] };
-    }
-
-    // Sort by created_at (newest first)
-    const sorted = [...media].sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-
-    // Only collect URLs for images for Galeria
-    const sortedUrls = sorted.filter(m => !m.type.toLowerCase().includes('video')).map(m => m.url);
-    const gridData: GridItemType[] = sorted.map((item, index) => ({
-        type: 'media',
-        item,
-        flatIndex: index,
-    }));
-
-    return { gridData, sortedUrls };
-};
-
-// Separate component for video grid items - allows using hooks for thumbnail generation
+// ─── Video Grid Item (View) ────────────────────────────────────────────────────
 interface VideoGridItemProps {
     mediaItem: Media;
     videoStyle: ViewStyle;
@@ -81,6 +45,13 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
     onLongPress,
     onPressOut,
 }) => {
+    const fallbackUrls = useMemo(() => buildFallbackUrls(mediaItem, placeholderImageVideo), [mediaItem, placeholderImageVideo]);
+    const [urlIndex, setUrlIndex] = useState(0);
+
+    const handleImageError = useCallback(() => {
+        setUrlIndex(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
+    }, [fallbackUrls.length]);
+
     return (
         <TouchableOpacity
             key={mediaItem.id}
@@ -92,7 +63,8 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
             ]}
         >
             <FasterImageView
-                source={{ uri: mediaItem.thumbnail_url || mediaItem.url, resizeMode: 'cover' }}
+                source={{ uri: fallbackUrls[urlIndex], resizeMode: 'cover' }}
+                onError={handleImageError}
                 style={StyleSheet.absoluteFill}
             />
             <View style={styles.overlay}>
@@ -102,106 +74,66 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
     );
 });
 
-export const useImageGrid = (options: UseImageGridOptions = {}) => {
-    const {
-        photos,
-        onVideoPress,
-        onImagePress,
-        loading = false,
-        fetchingMore = false
-    } = options;
+// ─── Image Grid Item (View) ────────────────────────────────────────────────────
+interface ImageGridItemProps {
+    mediaItem: Media;
+    flatIndex: number;
+    imageStyle: ImageStyle;
+    placeholderImage: string;
+    onImagePress?: (visible: boolean, index: number) => void;
+    onLongPress: () => void;
+    onPressOut: () => void;
+}
 
-    const [gridData, setGridData] = useState<GridItemType[]>([]);
-    const [sortedUrls, setSortedUrls] = useState<string[]>([]);
-    const { colors, typography } = useThemeContext();
-    const common = createCommonStyles(colors, typography);
-    const { width: screenWidth } = useWindowDimensions();
-    const placeholderImageVideo = 'https://placehold.net/3-600x800.png';
-    const placeholderImage = 'https://placehold.net/default.png';
+const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
+    mediaItem,
+    flatIndex,
+    imageStyle,
+    placeholderImage,
+    onImagePress,
+    onLongPress,
+    onPressOut,
+}) => {
+    const fallbackUrls = useMemo(() => buildFallbackUrls(mediaItem, placeholderImage), [mediaItem, placeholderImage]);
+    const [urlIndex, setUrlIndex] = useState(0);
 
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+    const handleImageError = useCallback(() => {
+        setUrlIndex(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
+    }, [fallbackUrls.length]);
 
-    const handleLongPress = useCallback((url: string) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setPreviewUrl(url);
-        setIsPreviewVisible(true);
-    }, []);
-
-    const handlePressOut = useCallback(() => {
-        setIsPreviewVisible(false);
-    }, []);
-
-    // Calculate item size for estimatedItemSize
-    const itemWidth = (screenWidth - SPACING * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
-
-    const imageStyle = useMemo(
-        () => ({
-            flex: 1,
-            aspectRatio: 1,
-            margin: SPACING / 2,
-            borderRadius: 0,
-            backgroundColor: colors.card,
-        }),
-        [colors.card]
+    return (
+        <Pressable
+            key={mediaItem.id}
+            onPress={() => onImagePress?.(true, flatIndex)}
+            onLongPress={onLongPress}
+            onPressOut={onPressOut}
+            delayLongPress={300}
+        >
+            <TurboImage
+                source={{ uri: fallbackUrls[urlIndex] }}
+                style={imageStyle}
+                resizeMode="cover"
+                cachePolicy={IMAGE_CACHE_POLICY}
+                fadeDuration={150}
+                onFailure={handleImageError}
+            />
+        </Pressable>
     );
+});
 
-    const videoStyle = useMemo(
-        () => ({
-            flex: 1,
-            aspectRatio: 1 / 1.7,
-            margin: SPACING / 2,
-            backgroundColor: colors.card,
-            overflow: 'hidden' as const,
-        }),
-        [colors.card]
-    );
-
-
-    // Process photos from profile data and prefetch images
-    useEffect(() => {
-        try {
-            const mediaList = photos || [];
-            const result = processMediaToFlat(mediaList);
-
-            let finalGridData: GridItemType[] = result.gridData;
-
-            if (loading && mediaList.length === 0) {
-                // Initial loading state - show shimmers (NUM_COLUMNS * 2 rows)
-                finalGridData = Array.from({ length: NUM_COLUMNS * 2 }).map((_, index) => ({
-                    type: 'shimmer' as const,
-                    flatIndex: index,
-                }));
-            } else if (fetchingMore) {
-                // Appending loading state - add shimmer cells
-                const shimmerItems: GridItemType[] = Array.from({ length: NUM_COLUMNS }).map((_, i) => ({
-                    type: 'shimmer' as const,
-                    flatIndex: -(i + 1),
-                }));
-                finalGridData = [...finalGridData, ...shimmerItems];
-            }
-
-            setSortedUrls(result.sortedUrls);
-            setGridData(finalGridData);
-
-            // Prefetch images for faster grid loading
-            if (result.sortedUrls.length > 0) {
-                const urlsToPreload = result.sortedUrls.slice(0, 12); // Prefetch first 12 images
-                TurboImage.prefetch(urlsToPreload.map(uri => ({ uri })));
-            }
-        } catch (error) {
-            console.error("Error processing media:", error);
-        }
-    }, [photos, loading, fetchingMore]);
+// ─── useImageGrid (View Hook) ──────────────────────────────────────────────────
+// Thin View layer — consumes ViewModel and provides render functions
+export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
+    const vm = useImageGridViewModel(options);
 
     // Render items
     const renderItem: ListRenderItem<GridItemType> = useCallback(({ item }) => {
         if (item.type === 'shimmer') {
-            const isVideoGrid = onVideoPress !== undefined;
-            const style = isVideoGrid ? videoStyle : imageStyle;
+            const isVideoGrid = vm.onVideoPress !== undefined;
+            const style = isVideoGrid ? vm.videoStyle : vm.imageStyle;
 
             return (
-                <View style={[style, { backgroundColor: colors.card }]}>
+                <View style={[style, { backgroundColor: vm.colors.card }]}>
                     <ShimmerEffect
                         isLoading={true}
                         style={StyleSheet.absoluteFill}
@@ -212,73 +144,51 @@ export const useImageGrid = (options: UseImageGridOptions = {}) => {
 
         const mediaItem = item.item;
         const isVideo = mediaItem.type.toLowerCase().includes('video');
-        const imageUrl = mediaItem.thumbnail_url || mediaItem.url || placeholderImage;
+        const mediaPath = choosenMediaPath(mediaItem);
 
         if (isVideo) {
             return (
                 <VideoGridItem
                     key={mediaItem.id}
                     mediaItem={mediaItem}
-                    videoStyle={videoStyle}
+                    videoStyle={vm.videoStyle}
                     marginRight={0}
-                    placeholderImageVideo={placeholderImageVideo}
-                    onPress={() => onVideoPress?.(mediaItem)}
-                    onLongPress={() => handleLongPress(mediaItem.thumbnail_url || mediaItem.url)}
-                    onPressOut={handlePressOut}
+                    placeholderImageVideo={vm.placeholderImageVideo}
+                    onPress={() => vm.onVideoPress?.(mediaItem)}
+                    onLongPress={() => vm.handleLongPress(mediaItem.thumbnail_url || mediaItem.url)}
+                    onPressOut={vm.handlePressOut}
                 />
             );
         }
 
         return (
-            <Pressable
+            <ImageGridItem
                 key={mediaItem.id}
-                onPress={() => onImagePress?.(true, item.flatIndex)}
-                onLongPress={() => handleLongPress(mediaItem.url)}
-                onPressOut={handlePressOut}
-                delayLongPress={300}
-            >
-                <TurboImage
-                    source={{ uri: imageUrl }}
-                    style={imageStyle}
-                    resizeMode="cover"
-                    cachePolicy={IMAGE_CACHE_POLICY}
-                    fadeDuration={150}
-                />
-            </Pressable>
+                mediaItem={mediaItem}
+                flatIndex={item.flatIndex}
+                imageStyle={vm.imageStyle}
+                placeholderImage={vm.placeholderImage}
+                onImagePress={vm.onImagePress}
+                onLongPress={() => vm.handleLongPress(mediaPath)}
+                onPressOut={vm.handlePressOut}
+            />
         );
-    }, [imageStyle, videoStyle, onVideoPress, onImagePress, handleLongPress, handlePressOut, colors.card]);
-
-    const keyExtractor = useCallback((item: GridItemType, index: number): string => {
-        if (item.type === 'shimmer') return `shimmer-${index}`;
-        return `media-${item.item.id}`;
-    }, []);
-
-    // Estimated item size for FlashList performance
-    const estimatedItemSize = onVideoPress ? (itemWidth * 1.7) : itemWidth;
-
-    // FlatList optimization props
-    const flatListProps = useMemo(() => ({
-        removeClippedSubviews: true,
-        maxToRenderPerBatch: 8,
-        updateCellsBatchingPeriod: 50,
-        windowSize: 5,
-        initialNumToRender: NUM_COLUMNS * 3,
-    }), []);
+    }, [vm.imageStyle, vm.videoStyle, vm.onVideoPress, vm.onImagePress, vm.handleLongPress, vm.handlePressOut, vm.colors.card, vm.placeholderImage, vm.placeholderImageVideo]);
 
     return {
-        gridData,
-        sortedUrls,
-        numColumns: NUM_COLUMNS,
-        estimatedItemSize,
+        gridData: vm.gridData,
+        sortedUrls: vm.sortedUrls,
+        numColumns: vm.numColumns,
+        estimatedItemSize: vm.estimatedItemSize,
         renderItem,
-        keyExtractor,
+        keyExtractor: vm.keyExtractor,
         contentContainerStyle: styles.listContent,
-        flatListProps,
+        flatListProps: vm.flatListProps,
         renderQuickPreview: () => (
             <QuickPreviewModal
-                visible={isPreviewVisible}
-                imageUrl={previewUrl}
-                onClose={() => setIsPreviewVisible(false)}
+                visible={vm.isPreviewVisible}
+                imageUrl={vm.previewUrl}
+                onClose={vm.closePreview}
             />
         )
     };

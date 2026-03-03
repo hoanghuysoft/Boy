@@ -41,6 +41,7 @@ export interface Media {
     url: string
     thumbnail_url: any
     caption: string
+    backup1: string | null;
 }
 
 export interface Music {

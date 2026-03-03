@@ -10,4 +10,5 @@ export interface Media {
     post_id: string | null;
     created_at: string;
     updated_at: string;
+    backup1: string | null;
 }
