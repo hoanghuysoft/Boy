@@ -22,7 +22,7 @@ const SettingsScreen = () => {
     const common = createCommonStyles(colors, typography);
     const styles = style(colors, common);
     const inset = useSafeAreaInsets();
-    const { showSensitiveContent, toggleShowSensitiveContent, showCarousel, toggleCarousel } = useSettingsStore();
+    const { showSensitiveContent, toggleShowSensitiveContent, showCarousel, toggleCarousel, autoplayVideos, toggleAutoplayVideos } = useSettingsStore();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isFocused, setIsFocused] = useState(false);
@@ -97,6 +97,20 @@ const SettingsScreen = () => {
                         offColor={colors.card}
                         size="medium"
                         onToggle={toggleCarousel}
+                    />
+                </View>
+                <View style={styles.divider}></View>
+                <View style={[styles.option]}>
+                    <View style={{ flex: 1 }}>
+                        <Text style={[common.body]}>Autoplay videos</Text>
+                        <Text style={[common.bodySmall, { color: colors.muted }]}>Automatically play videos in feed. {autoplayVideos ? "On" : "Off"}</Text>
+                    </View>
+                    <ToggleSwitch
+                        isOn={autoplayVideos}
+                        onColor="#54d340"
+                        offColor={colors.card}
+                        size="medium"
+                        onToggle={toggleAutoplayVideos}
                     />
                 </View>
             </View>

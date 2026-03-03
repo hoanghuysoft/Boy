@@ -1,20 +1,23 @@
+import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import FastImage from "@d11/react-native-fast-image";
-import { PlayBold } from "@solar-icons/react-native";
+import { PlayBold, RestartCircleBold } from "@solar-icons/react-native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Dimensions, View } from "react-native";
+import { Dimensions, Pressable as RNPressable, View } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import TurboImage from "react-native-turbo-image";
+import { FeedVideoPlayer } from "./FeedVideoPlayer";
 
 // TurboImage cache policy - use dataCache for aggressive local caching
 const IMAGE_CACHE_POLICY = "dataCache" as const;
 
 interface PostMediaCarouselProps {
     media: Media[];
+    postId: string;
     profileName: string;
     content?: string;
     colors: any;
@@ -27,9 +30,10 @@ interface PostMediaCarouselProps {
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const ASPECT_RATIO = 3 / 4;
 
-// Video carousel item component - uses hook for thumbnail generation
+// Video carousel item component - shows inline player when active, thumbnail otherwise
 interface VideoCarouselItemProps {
     item: Media;
+    postId: string;
     profileName: string;
     content?: string;
     colors: any;
@@ -40,6 +44,7 @@ interface VideoCarouselItemProps {
 
 const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
     item,
+    postId,
     profileName,
     content,
     colors,
@@ -48,18 +53,41 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
     placeholderImageVideo,
 }) => {
     const router = useRouter();
+    const activeMediaId = useFeedVideoStore(s => s.activeMediaId);
+    const isEnded = useFeedVideoStore(s => s.isEnded);
+    const setEnded = useFeedVideoStore(s => s.setEnded);
+
+    const isActive = activeMediaId === item.id;
+    const showReplay = isActive && isEnded;
+    const showPlayer = isActive && !isEnded;
+
     const fallbackUrls = useMemo(() => buildFallbackUrls(item, placeholderImageVideo), [item, placeholderImageVideo]);
     const [prev, setPrev] = useState(0);
     const handleThumbnailError = useCallback(() => {
         setPrev(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
     }, [fallbackUrls.length]);
 
+    const handleReplay = useCallback(() => {
+        // Reset ended state — this will cause FeedVideoPlayer to re-render and play
+        setEnded(false);
+    }, [setEnded]);
+
+    const handleFullScreenPress = useCallback(() => {
+        router.push({
+            pathname: '/video_player',
+            params: {
+                videoUrl: choosenMediaPath(item),
+                name: profileName,
+                caption: content,
+                portrait: 'true',
+            },
+        });
+    }, [router, item, profileName, content]);
+
     return (
         <View style={{ width: SCREEN_WIDTH }}>
-            <Pressable
-                onPress={() => router.push({ pathname: '/video_player', params: { videoUrl: choosenMediaPath(item), name: profileName, caption: content, portrait: 'true' } })}
-                style={{ width: '100%', aspectRatio: ASPECT_RATIO }}
-            >
+            <RNPressable onPress={handleFullScreenPress} style={{ width: '100%', aspectRatio: ASPECT_RATIO }}>
+                {/* Base layer: thumbnail always present (stable dimensions, acts as poster) */}
                 <FastImage
                     source={{ uri: fallbackUrls[prev] }}
                     style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
@@ -67,12 +95,51 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
                     blurRadius={shouldBlur ? 25 : undefined}
                     onError={handleThumbnailError}
                 />
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
-                    <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
-                        <PlayBold size={28} color="#ffffff" />
+
+                {/* Video layer: overlays on top of thumbnail when active */}
+                {showPlayer && (
+                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+                        <FeedVideoPlayer />
                     </View>
-                </View>
-            </Pressable>
+                )}
+
+                {/* Replay overlay */}
+                {showReplay && (
+                    <RNPressable
+                        onPress={handleReplay}
+                        style={{
+                            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                            alignItems: 'center', justifyContent: 'center',
+                            backgroundColor: 'rgba(0,0,0,0.35)',
+                        }}
+                    >
+                        <View style={{
+                            width: 56, height: 56, borderRadius: 28,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'center', alignItems: 'center',
+                        }}>
+                            <RestartCircleBold size={46} color="#ffffff" />
+                        </View>
+                    </RNPressable>
+                )}
+
+                {/* Play icon overlay (not active, not replaying) */}
+                {!isActive && (
+                    <View style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        alignItems: 'center', justifyContent: 'center',
+                        backgroundColor: 'rgba(0,0,0,0.1)',
+                    }}>
+                        <View style={{
+                            width: 56, height: 56, borderRadius: 28,
+                            backgroundColor: 'rgba(0,0,0,0.4)',
+                            justifyContent: 'center', alignItems: 'center',
+                        }}>
+                            <PlayBold size={28} color="#ffffff" />
+                        </View>
+                    </View>
+                )}
+            </RNPressable>
         </View>
     );
 });
@@ -118,6 +185,7 @@ interface MediaCarouselItemProps {
     item: Media;
     index: number;
     media: Media[];
+    postId: string;
     profileName: string;
     content?: string;
     colors: any;
@@ -132,6 +200,7 @@ const MediaCarouselItem: React.FC<MediaCarouselItemProps> = React.memo(({
     item,
     index,
     media,
+    postId,
     profileName,
     content,
     colors,
@@ -151,6 +220,7 @@ const MediaCarouselItem: React.FC<MediaCarouselItemProps> = React.memo(({
         return (
             <VideoCarouselItem
                 item={item}
+                postId={postId}
                 profileName={profileName}
                 content={content}
                 colors={colors}
@@ -174,7 +244,7 @@ const MediaCarouselItem: React.FC<MediaCarouselItemProps> = React.memo(({
     );
 });
 
-export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult = false, isVerified, musicUrl, musicTitle }: PostMediaCarouselProps) => {
+export const PostMediaCarousel = ({ media, postId, profileName, content, colors, isAdult = false, isVerified, musicUrl, musicTitle }: PostMediaCarouselProps) => {
     const router = useRouter();
     const [activeIndex, setActiveIndex] = useState(0);
     const { showSensitiveContent, setShowSensitiveContent } = useSettingsStore();
@@ -212,11 +282,28 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
         openGallery(galleryImages, photoIndex);
     }, [openGallery, galleryImages]);
 
+    // Track active post for carousel swipe updates
+    const activePostId = useFeedVideoStore(s => s.activePostId);
+    const setActiveMedia = useFeedVideoStore(s => s.setActiveMedia);
+
     const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
         if (viewableItems.length > 0) {
-            setActiveIndex(viewableItems[0].index || 0);
+            const idx = viewableItems[0].index || 0;
+            setActiveIndex(idx);
+
+            // If this post is the active video post, update which media is playing
+            if (activePostId === postId) {
+                const visibleItem = media[idx];
+                if (visibleItem && visibleItem.type === 'video') {
+                    // Swiped to a video — update the active media
+                    setActiveMedia(visibleItem.id, choosenMediaPath(visibleItem));
+                } else {
+                    // Swiped to a photo — clear the active media (pause video)
+                    setActiveMedia(null, null);
+                }
+            }
         }
-    }, []);
+    }, [activePostId, postId, media, setActiveMedia]);
 
     // Calculate media height based on aspect ratio
     const mediaHeight = SCREEN_WIDTH / ASPECT_RATIO;
@@ -248,6 +335,7 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
             item={item}
             index={index}
             media={media}
+            postId={postId}
             profileName={profileName}
             content={content}
             colors={colors}
@@ -257,7 +345,7 @@ export const PostMediaCarousel = ({ media, profileName, content, colors, isAdult
             mediaHeight={mediaHeight}
             onPhotoPress={handlePhotoPress}
         />
-    ), [media, profileName, content, colors, shouldBlur, onReveal, placeholderImageVideo, mediaHeight, handlePhotoPress]);
+    ), [media, postId, profileName, content, colors, shouldBlur, onReveal, placeholderImageVideo, mediaHeight, handlePhotoPress]);
 
     if (!media || media.length === 0) return null;
 

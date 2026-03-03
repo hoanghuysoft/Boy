@@ -5,9 +5,10 @@ import LikeIcon from "@/icons/like";
 import LikeSolidIcon from "@/icons/likedsolid";
 import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
+import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Post } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
-import { VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
+import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import React from "react";
 import { Dimensions, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { Pressable } from 'react-native-gesture-handler';
@@ -29,6 +30,13 @@ interface PostItemProps {
 
 export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPress }: PostItemProps) => {
     const vm = usePostItemViewModel({ post, onOptionsPress, onLikeCountPress, onCommentPress });
+
+    // Feed video state
+    const activeVideoPostId = useFeedVideoStore(s => s.activePostId);
+    const isVideoMuted = useFeedVideoStore(s => s.isMuted);
+    const toggleVideoMute = useFeedVideoStore(s => s.toggleMute);
+    const isActiveVideoPost = activeVideoPostId === post.id;
+    const hasVideo = post.media?.some(m => m.type === 'video');
 
     return (
         <View style={{}}>
@@ -69,6 +77,7 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
             <View>
                 <PostMediaCarousel
                     media={post.media}
+                    postId={post.id}
                     profileName={post.profile_name}
                     content={post.content}
                     colors={vm.colors}
@@ -78,6 +87,25 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                     musicTitle={post.music ? `${post.music.artist} - ${post.music.title}` : undefined}
                 />
 
+                {/* Video mute/unmute icon — shown when this post is actively playing a video */}
+                {vm.hasMedia && isActiveVideoPost && hasVideo && (
+                    <TouchableOpacity
+                        onPress={toggleVideoMute}
+                        style={{
+                            position: 'absolute',
+                            bottom: 24,
+                            right: vm.hasMusic ? 56 : 16,
+                            backgroundColor: 'rgba(0,0,0,0.6)',
+                            padding: 8,
+                            borderRadius: 20,
+                            zIndex: 20,
+                        }}
+                    >
+                        {isVideoMuted ? <VolumeCrossBold size={18} color="white" /> : <VolumeLoudBold size={18} color="white" />}
+                    </TouchableOpacity>
+                )}
+
+                {/* Music icon */}
                 {vm.hasMedia && vm.hasMusic && (
                     <TouchableOpacity
                         onPress={vm.toggleMusic}
@@ -91,7 +119,7 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                             zIndex: 20
                         }}
                     >
-                        {vm.isPlaying ? <VolumeLoudBold size={18} color="white" /> : <VolumeCrossBold size={18} color="white" />}
+                        {vm.isPlaying ? <MusicNotesBold size={18} color="white" /> : <MusicNotesOutline size={18} color="white" />}
                     </TouchableOpacity>
                 )}
             </View>

@@ -15,6 +15,9 @@ interface SettingsStore {
     // Theme settings
     themePreference: ThemePreference;
     setThemePreference: (preference: ThemePreference) => void;
+    // Video autoplay settings
+    autoplayVideos: boolean;
+    toggleAutoplayVideos: () => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -30,6 +33,9 @@ export const useSettingsStore = create<SettingsStore>()(
             // Theme settings
             themePreference: 'system', // Default to system
             setThemePreference: (preference) => set({ themePreference: preference }),
+            // Video autoplay
+            autoplayVideos: true, // Default to on
+            toggleAutoplayVideos: () => set((state) => ({ autoplayVideos: !state.autoplayVideos })),
         }),
         {
             name: 'settings-storage',

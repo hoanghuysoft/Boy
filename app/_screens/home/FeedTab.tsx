@@ -1,6 +1,8 @@
 import { queryClient } from "@/services/client";
 import { useFeed } from "@/services/feed";
+import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Post } from "@/types/post";
+import { choosenMediaPath } from "@/utils/imageurl";
 import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dimensions, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -9,7 +11,9 @@ import { DataProvider, LayoutProvider, RecyclerListView } from "recyclerlistview
 import { PostItem } from "../../../components/PostItem";
 import { ShimmerEffect } from "../../../components/shimmer/Shimmer";
 import { useThemeContext } from "../../../context/ThemeContext";
+import { useAudioStore } from "../../../stores/audio";
 import { useScrollStore } from "../../../stores/scroll";
+import { useSettingsStore } from "../../../stores/settings";
 import { createCommonStyles } from "../../../styles/common";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -72,6 +76,76 @@ const FeedTab: React.FC<FeedTabProps> = ({
             listRef.current.scrollToTop(true);
         }
     }, [trigger]);
+
+    // ─── Feed Video Autoplay ────────────────────────────────────
+    const setActiveVideo = useFeedVideoStore(s => s.setActiveVideo);
+    const clearActiveVideo = useFeedVideoStore(s => s.clearActiveVideo);
+    const stopAudioPlayback = useAudioStore(s => s.stopPlayback);
+
+    // Debounce timer ref for video activation
+    const videoDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Track last scroll offset for velocity detection
+    const lastScrollOffsetRef = useRef(0);
+    const lastScrollTimeRef = useRef(Date.now());
+
+    // Clear active video when component unmounts (tab switch)
+    useEffect(() => {
+        return () => {
+            clearActiveVideo();
+            if (videoDebounceRef.current) {
+                clearTimeout(videoDebounceRef.current);
+            }
+        };
+    }, [clearActiveVideo]);
+
+    // Find the topmost visible post that has a video
+    const findTopmostVideoPost = useCallback((visibleIndices: number[]) => {
+        if (!posts.length || visibleIndices.length === 0) return null;
+
+        // Sort indices to find the topmost (smallest index = closest to top)
+        const sorted = [...visibleIndices].sort((a, b) => a - b);
+
+        for (const idx of sorted) {
+            const post = posts[idx];
+            if (post?.media?.some((m: any) => m.type === 'video')) {
+                // Find the first video media item in this post
+                const videoMedia = post.media.find((m: any) => m.type === 'video');
+                if (videoMedia) {
+                    return { postId: post.id, mediaId: videoMedia.id, videoUrl: choosenMediaPath(videoMedia) };
+                }
+            }
+        }
+        return null;
+    }, [posts]);
+
+    // Autoplay setting
+    const autoplayVideos = useSettingsStore(s => s.autoplayVideos);
+
+    // Handle visible indices change from RecyclerListView
+    const handleVisibleIndicesChanged = useCallback((all: number[]) => {
+        // Skip if autoplay is disabled
+        if (!autoplayVideos) {
+            clearActiveVideo();
+            return;
+        }
+
+        // Clear any pending debounce
+        if (videoDebounceRef.current) {
+            clearTimeout(videoDebounceRef.current);
+        }
+
+        // Debounce by 300ms to ignore fast scrolling
+        videoDebounceRef.current = setTimeout(() => {
+            const result = findTopmostVideoPost(all);
+            if (result) {
+                setActiveVideo(result.postId, result.mediaId, result.videoUrl);
+                // Stop music playback when video starts to avoid audio conflict
+                stopAudioPlayback();
+            } else {
+                clearActiveVideo();
+            }
+        }, 500);
+    }, [autoplayVideos, findTopmostVideoPost, setActiveVideo, clearActiveVideo, stopAudioPlayback]);
 
     const handleRefresh = async () => {
         queryClient.removeQueries({ queryKey: ['feed', feedType] });
@@ -169,6 +243,22 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
     // Handle scroll events
     const handleScroll = useCallback((rawEvent: any, offsetX: number, offsetY: number) => {
+        // Track scroll velocity for fast-scroll detection
+        const now = Date.now();
+        const dt = now - lastScrollTimeRef.current;
+        const dy = Math.abs(offsetY - lastScrollOffsetRef.current);
+        lastScrollOffsetRef.current = offsetY;
+        lastScrollTimeRef.current = now;
+
+        // If scrolling very fast (>3000px/s), clear video to avoid wasted decoding
+        if (dt > 0 && (dy / dt) * 1000 > 3000) {
+            clearActiveVideo();
+            if (videoDebounceRef.current) {
+                clearTimeout(videoDebounceRef.current);
+                videoDebounceRef.current = null;
+            }
+        }
+
         // Forward scroll event to parent in the expected format
         if (onScroll) {
             onScroll({
@@ -177,7 +267,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 }
             });
         }
-    }, [onScroll]);
+    }, [onScroll, clearActiveVideo]);
 
     // Handle end reached for infinite scroll
     const handleEndReached = useCallback(() => {
@@ -256,6 +346,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 dataProvider={dataProvider}
                 rowRenderer={rowRenderer}
                 onScroll={handleScroll}
+                onVisibleIndicesChanged={handleVisibleIndicesChanged}
                 scrollViewProps={{
                     showsVerticalScrollIndicator: false,
                     contentContainerStyle: {
