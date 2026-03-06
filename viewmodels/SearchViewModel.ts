@@ -24,8 +24,6 @@ const KEYBOARD_SPRING_CONFIG = {
 };
 
 // Bottom navigation layout constants
-const BOTTOM_NAV_HEIGHT = 67;
-const BOTTOM_NAV_MARGIN = 13;
 const SEARCH_BAR_HEIGHT = 56;
 
 export const useSearchViewModel = () => {
@@ -116,8 +114,7 @@ export const useSearchViewModel = () => {
     // ─── Keyboard Animation ───────────────────────────────────────
     const searchBarTranslateY = useSharedValue(0);
 
-    const baseSearchBarBottom =
-        BOTTOM_NAV_HEIGHT + BOTTOM_NAV_MARGIN + insets.bottom + 16;
+    const baseSearchBarBottom = insets.bottom + 16;
     const contentBottomPadding = baseSearchBarBottom + SEARCH_BAR_HEIGHT + 16;
 
     useEffect(() => {
@@ -128,8 +125,7 @@ export const useSearchViewModel = () => {
 
         const showSubscription = Keyboard.addListener(showEvent, (e) => {
             const keyboardHeight = e.endCoordinates.height;
-            const bottomNavSpace =
-                BOTTOM_NAV_HEIGHT + BOTTOM_NAV_MARGIN + insets.bottom;
+            const bottomNavSpace = insets.bottom;
             const offset = keyboardHeight - bottomNavSpace + 8;
             searchBarTranslateY.value = withSpring(-offset, KEYBOARD_SPRING_CONFIG);
         });

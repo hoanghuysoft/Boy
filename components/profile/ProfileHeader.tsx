@@ -1,11 +1,13 @@
 import VerifiedIcon from '@/icons/verified';
 import FastImage from '@d11/react-native-fast-image';
+import { Ionicons } from '@expo/vector-icons';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
 import { CaseMinimalisticBold, PlayCircleBold, PlayCircleOutline, PointOnMapBold } from '@solar-icons/react-native';
+import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import {
     Animated,
     Image,
@@ -87,8 +89,22 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
         music,
         addresses,
     });
+    const router = useRouter();
 
     const style = componentStyles(vm.colors);
+
+    // Parse metadata to check for facebook section
+    const hasFacebook = useMemo(() => {
+        if (!profile?.metadata) return false;
+        try {
+            const meta = typeof profile.metadata === 'string'
+                ? JSON.parse(profile.metadata)
+                : profile.metadata;
+            return !!meta?.facebook;
+        } catch {
+            return false;
+        }
+    }, [profile?.metadata]);
 
     return (
         <>
@@ -244,6 +260,26 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     </TouchableOpacity>
                                     <Text numberOfLines={2} style={[vm.common.bodySmall, { marginLeft: 8, marginRight: 4, flex: 1, color: 'white' }]}>
                                         {vm.currentMusic.artist} - {vm.currentMusic.title}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+
+                            {hasFacebook && profile && (
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        router.push({
+                                            pathname: '/fprofile',
+                                            params: { profile: JSON.stringify(profile) },
+                                        });
+                                    }}
+                                    activeOpacity={0.9}
+                                    style={{ height: 70, backgroundColor: '#1877F2', width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
+                                >
+                                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}>
+                                        <Ionicons name="logo-facebook" size={22} color="#FFF" />
+                                    </View>
+                                    <Text numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: '#FFF' }]}>
+                                        Facebook Profile
                                     </Text>
                                 </TouchableOpacity>
                             )}

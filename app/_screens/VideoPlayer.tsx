@@ -8,6 +8,7 @@ import {
 } from "@/components/video";
 import { useStatusBar } from "@/context/StatusBarContext";
 import { useThemeContext } from "@/context/ThemeContext";
+import { useCachedVideoUri } from "@/hooks/useCachedVideoUri";
 import { createCommonStyles } from "@/styles/common";
 import * as IntentLauncher from 'expo-intent-launcher';
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -30,6 +31,10 @@ const VideoPlayer = () => {
     const name = params.name as string;
     const caption = params.caption as string;
     const portrait = params.portrait === 'true';
+
+    // Resolve against video cache for instant playback if already downloaded
+    const resolvedVideoUrl = useCachedVideoUri(videoUrl);
+
     const { colors, typography } = useThemeContext();
     const { setShowStatusBarFade } = useStatusBar();
     const common = createCommonStyles(colors, typography);
@@ -246,7 +251,7 @@ const VideoPlayer = () => {
             {/* Video Layer */}
             <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center' }]}>
                 <Video
-                    source={{ uri: videoUrl }}
+                    source={{ uri: resolvedVideoUrl || videoUrl }}
                     style={{
                         width: '100%',
                         height: '100%',

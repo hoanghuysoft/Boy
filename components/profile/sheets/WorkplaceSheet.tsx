@@ -107,9 +107,9 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({
             scrollable={true}
             backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
             grabberOptions={{
-                color: colors.muted || '#C4C4C4',
-                height: 4,
-                width: 32,
+                color: colors.muted || "#C4C4C4",
+                height: 5,
+                width: 40,
             }}
         >
             <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>

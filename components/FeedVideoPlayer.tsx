@@ -1,3 +1,4 @@
+import { useCachedVideoUri } from '@/hooks/useCachedVideoUri';
 import { useFeedVideoStore } from '@/stores/feedVideo';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
@@ -26,6 +27,10 @@ export const FeedVideoPlayer: React.FC = React.memo(() => {
     const setEnded = useFeedVideoStore(s => s.setEnded);
     const [isBuffering, setIsBuffering] = React.useState(true);
 
+    // Resolve against video cache — if Shots already downloaded this video,
+    // play from local storage for instant start.
+    const resolvedVideoUrl = useCachedVideoUri(activeVideoUrl);
+
     // When the video ends, mark it as ended (show replay button, don't loop)
     const handleEnd = useCallback(() => {
         setEnded(true);
@@ -47,7 +52,7 @@ export const FeedVideoPlayer: React.FC = React.memo(() => {
         }
     }, [activeVideoUrl]);
 
-    if (!activeVideoUrl || isEnded) {
+    if (!resolvedVideoUrl || isEnded) {
         return null;
     }
 
@@ -55,7 +60,7 @@ export const FeedVideoPlayer: React.FC = React.memo(() => {
         <View style={styles.container} pointerEvents="none">
             <Video
                 ref={videoRef}
-                source={{ uri: activeVideoUrl }}
+                source={{ uri: resolvedVideoUrl }}
                 style={styles.video}
                 resizeMode="cover"
                 controls={false}

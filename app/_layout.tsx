@@ -9,7 +9,7 @@ configureReanimatedLogger({
 import { GoogleSansFlex_700Bold, useFonts } from '@expo-google-fonts/google-sans-flex';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { ImageBackground, StatusBar, StyleSheet, View } from 'react-native';
@@ -34,19 +34,26 @@ const StatusBarFade = () => {
     const { showStatusBarFade } = useStatusBar();
     const insets = useSafeAreaInsets();
 
-    if (!showStatusBarFade) return null;
+    const pathname = usePathname();
+    const isShots = pathname === '/shots';
+
+    if (!showStatusBarFade && !isShots) return null;
 
     const { colors, locations } = easeGradient({
         colorStops: {
             0: {
-                color: theme === 'light'
-                    ? 'rgba(255,255,255,0.8)'
-                    : 'rgba(0,0,0,0.9)',
+                color: isShots
+                    ? 'rgba(0,0,0,0.6)'
+                    : theme === 'light'
+                        ? 'rgba(255,255,255,0.8)'
+                        : 'rgba(0,0,0,0.9)',
             },
             1: {
-                color: theme === 'light'
-                    ? 'rgba(255,255,255,0)'
-                    : 'rgba(0,0,0,0)',
+                color: isShots
+                    ? 'rgba(0,0,0,0)'
+                    : theme === 'light'
+                        ? 'rgba(255,255,255,0)'
+                        : 'rgba(0,0,0,0)',
             },
         },
         extraColorStopsPerTransition: 12,
@@ -78,13 +85,15 @@ const FakeSplashScreen = () => {
             style={StyleSheet.absoluteFill}
             resizeMode="cover"
         >
-            <StatusBar translucent backgroundColor="transparent" barStyle="light-content" animated/>
+            <StatusBar translucent backgroundColor="transparent" barStyle="light-content" animated />
         </ImageBackground>
     );
 };
 
 const RootContent = () => {
     const { theme, colors } = useThemeContext();
+    const pathname = usePathname();
+    const isShots = pathname === '/shots';
 
     const { isReady } = useRootLayoutViewModel();
 
@@ -99,11 +108,11 @@ const RootContent = () => {
     return (
         <View style={{ flex: 1, backgroundColor: colors.background }}>
             <StatusBar
-                key={theme}
+                key={`${theme}-${isShots}`}
                 animated={false}
                 translucent
                 backgroundColor="transparent"
-                barStyle={theme === 'light' ? 'dark-content' : 'light-content'}
+                barStyle={isShots ? 'light-content' : theme === 'light' ? 'dark-content' : 'light-content'}
             />
             <StatusBarFade />
             <Stack
@@ -119,6 +128,9 @@ const RootContent = () => {
                 <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="image_poster" options={{ headerShown: false }} />
                 <Stack.Screen name="settings" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="bookmarks" options={{ headerShown: false, animation: 'slide_from_right' }} />
+                <Stack.Screen name="fprofile" options={{ headerShown: false, animation: 'slide_from_right' }} />
+                <Stack.Screen name="search" options={{ headerShown: false, animation: 'slide_from_right' }} />
             </Stack>
             <GlobalAudioPlayer />
         </View>

@@ -1,4 +1,5 @@
 import { Profile } from "@/types/profile";
+import { Ionicons } from "@expo/vector-icons";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
@@ -72,11 +73,26 @@ const SearchScreen = () => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
-      <View style={[styles.header, { paddingTop: vm.insets.top + 10 }]}>
-        <Text style={[common.headline, { color: colors.text, fontWeight: "bold" }]}>Search</Text>
-        <Text
-          style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}
+      {/* Floating back button — same pattern as Bookmarks/Settings */}
+      <View style={{ position: 'absolute', top: vm.insets.top + 16, left: 16, zIndex: 1000 }}>
+        <TouchableOpacity
+          onPress={() => navigation.back()}
+          style={{
+            backgroundColor: colors.containerContent,
+            borderRadius: 999,
+            width: 40,
+            height: 40,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
         >
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={[styles.header, { marginTop: vm.insets.top + 66 }]}>
+        <Text style={[common.heading, { fontSize: 28 }]}>Search</Text>
+        <Text style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
           {vm.searchQuery
             ? `${vm.totalResults} result(s)`
             : vm.isAdmin

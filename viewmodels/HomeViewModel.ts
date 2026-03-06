@@ -174,7 +174,11 @@ export const useHomeViewModel = () => {
     }, []);
 
     const navigateToSearch = useCallback(() => {
-        router.push('/(tabs)/search');
+        router.push('/search');
+    }, [router]);
+
+    const navigateToBookmarks = useCallback(() => {
+        router.push('/bookmarks');
     }, [router]);
 
     // ─── Return ViewModel ──────────────────────────────────────────
@@ -231,5 +235,6 @@ export const useHomeViewModel = () => {
         handleCommentPress,
         handleTabStateChange,
         navigateToSearch,
+        navigateToBookmarks,
     };
 };

@@ -2,6 +2,7 @@ import { Post } from "@/types/post";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { useThemeContext } from "../context/ThemeContext";
+import { useToggleBookmark } from "../services/bookmark";
 import { useToggleLike } from "../services/like";
 import { useAudioStore } from "../stores/audio";
 import { createCommonStyles } from "../styles/common";
@@ -91,6 +92,28 @@ export const usePostItemViewModel = ({
         onOptionsPress?.(post);
     }, [onOptionsPress, post]);
 
+    // ─── Bookmark State (optimistic) ────────────────────────────
+    const [isBookmarked, setIsBookmarked] = useState(!!post.is_bookmarked);
+    const toggleBookmarkMutation = useToggleBookmark();
+
+    // Sync bookmark state when post prop changes (cell recycling)
+    useEffect(() => {
+        setIsBookmarked(!!post.is_bookmarked);
+    }, [post.id, post.is_bookmarked]);
+
+    const handleBookmarkPress = useCallback(() => {
+        const prev = isBookmarked;
+        setIsBookmarked(!prev);
+        toggleBookmarkMutation.mutate(
+            { postId: post.id, isBookmarked: prev },
+            {
+                onError: () => {
+                    setIsBookmarked(prev);
+                },
+            }
+        );
+    }, [isBookmarked, post.id, toggleBookmarkMutation]);
+
     // ─── Derived ────────────────────────────────────────────────
     const hasMedia = post.media && post.media.length > 0;
     const hasMusic = !!post.music?.preview_url;
@@ -116,6 +139,10 @@ export const usePostItemViewModel = ({
 
         // Options
         handleOptionsPress,
+
+        // Bookmark
+        isBookmarked,
+        handleBookmarkPress,
 
         // Derived
         hasMedia,

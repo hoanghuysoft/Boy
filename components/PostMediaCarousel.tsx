@@ -1,3 +1,4 @@
+import { useCachedVideoUri } from "@/hooks/useCachedVideoUri";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
@@ -61,6 +62,11 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
     const showReplay = isActive && isEnded;
     const showPlayer = isActive && !isEnded;
 
+    // Resolve video URL against cache — if Shots already downloaded it,
+    // the full-screen player will open instantly from local storage.
+    const videoUrl = choosenMediaPath(item);
+    const resolvedVideoUrl = useCachedVideoUri(videoUrl, item.backup1 || null);
+
     const fallbackUrls = useMemo(() => buildFallbackUrls(item, placeholderImageVideo), [item, placeholderImageVideo]);
     const [prev, setPrev] = useState(0);
     const handleThumbnailError = useCallback(() => {
@@ -76,13 +82,13 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
         router.push({
             pathname: '/video_player',
             params: {
-                videoUrl: choosenMediaPath(item),
+                videoUrl: resolvedVideoUrl || videoUrl,
                 name: profileName,
                 caption: content,
                 portrait: 'true',
             },
         });
-    }, [router, item, profileName, content]);
+    }, [router, resolvedVideoUrl, videoUrl, profileName, content]);
 
     return (
         <View style={{ width: SCREEN_WIDTH }}>

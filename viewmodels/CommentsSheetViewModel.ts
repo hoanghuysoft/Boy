@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { RefObject, useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Keyboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
-import { useComments, useCreateComment, useDeleteComment } from "../services/comment";
+import { useComments, useCreateComment, useDeleteComment, useUpdateComment } from "../services/comment";
 import { useProfile } from "../services/userprofile";
 import { createCommonStyles } from "../styles/common";
 import { Comment } from "../types/comment";
@@ -21,6 +21,7 @@ export const useCommentsSheetViewModel = (
     const router = useRouter();
 
     const [commentText, setCommentText] = useState("");
+    const [editingComment, setEditingComment] = useState<Comment | null>(null);
     const { data: myProfile } = useProfile('me', true);
     const currentProfileId = myProfile?.id || null;
 
@@ -35,6 +36,7 @@ export const useCommentsSheetViewModel = (
 
     const createCommentMutation = useCreateComment(postId || "");
     const deleteCommentMutation = useDeleteComment(postId || "");
+    const updateCommentMutation = useUpdateComment(postId || "");
 
     // Flatten pages into a single array of comments
     const comments = useMemo(() => {
@@ -103,6 +105,39 @@ export const useCommentsSheetViewModel = (
         );
     }, [deleteCommentMutation]);
 
+    // Start editing a comment — pre-fill the input with its current content
+    const handleEditComment = useCallback((comment: Comment) => {
+        setEditingComment(comment);
+        setCommentText(comment.content);
+    }, []);
+
+    // Cancel editing and reset the input
+    const handleCancelEdit = useCallback(() => {
+        setEditingComment(null);
+        setCommentText("");
+        Keyboard.dismiss();
+    }, []);
+
+    // Save the edited comment
+    const handleSaveEdit = useCallback(() => {
+        const trimmed = commentText.trim();
+        if (!trimmed || !editingComment) return;
+
+        updateCommentMutation.mutate(
+            { commentId: editingComment.id, data: { content: trimmed } },
+            {
+                onSuccess: () => {
+                    setEditingComment(null);
+                    setCommentText("");
+                    Keyboard.dismiss();
+                },
+            }
+        );
+    }, [commentText, editingComment, updateCommentMutation]);
+
+    const isEditing = editingComment !== null;
+    const isSaving = updateCommentMutation.isPending;
+
     // Format relative time
     const formatTimeAgo = useCallback((dateString: string) => {
         return dayjs(dateString).fromNow();
@@ -126,11 +161,19 @@ export const useCommentsSheetViewModel = (
         setCommentText,
         isSubmitting,
 
+        // Edit state
+        editingComment,
+        isEditing,
+        isSaving,
+
         // Handlers
         handleEndReached,
         handleUserPress,
         handleSubmitComment,
         handleDeleteComment,
+        handleEditComment,
+        handleCancelEdit,
+        handleSaveEdit,
         formatTimeAgo,
     };
 };

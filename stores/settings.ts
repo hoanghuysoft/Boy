@@ -4,6 +4,14 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 export type ThemePreference = 'light' | 'dark' | 'system' | 'adaptive';
 
+// Cache size options in bytes
+export const CACHE_SIZE_OPTIONS = [
+    { label: '200 MB', value: 200 * 1024 * 1024 },
+    { label: '500 MB', value: 500 * 1024 * 1024 },
+    { label: '1 GB', value: 1024 * 1024 * 1024 },
+    { label: '2 GB', value: 2 * 1024 * 1024 * 1024 },
+] as const;
+
 interface SettingsStore {
     showSensitiveContent: boolean;
     setShowSensitiveContent: (show: boolean) => void;
@@ -18,6 +26,9 @@ interface SettingsStore {
     // Video autoplay settings
     autoplayVideos: boolean;
     toggleAutoplayVideos: () => void;
+    // Video cache settings
+    videoCacheSizeLimit: number; // in bytes
+    setVideoCacheSizeLimit: (sizeBytes: number) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -36,6 +47,9 @@ export const useSettingsStore = create<SettingsStore>()(
             // Video autoplay
             autoplayVideos: true, // Default to on
             toggleAutoplayVideos: () => set((state) => ({ autoplayVideos: !state.autoplayVideos })),
+            // Video cache
+            videoCacheSizeLimit: 500 * 1024 * 1024, // Default 500 MB
+            setVideoCacheSizeLimit: (sizeBytes) => set({ videoCacheSizeLimit: sizeBytes }),
         }),
         {
             name: 'settings-storage',

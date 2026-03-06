@@ -109,8 +109,8 @@ export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
                 backgroundColor={vm.theme === "dark" ? vm.colors.containerContent : "#ffffff"}
                 grabberOptions={{
                     color: vm.colors.muted || "#C4C4C4",
-                    height: 4,
-                    width: 32,
+                    height: 5,
+                    width: 40,
                 }}
                 cornerRadius={24}
                 detents={[0.7]}

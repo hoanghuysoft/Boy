@@ -2,12 +2,11 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "2026.2.4",
+    "version": "2026.4.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -18,7 +17,6 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.techfox.boy",
       "permissions": [
@@ -39,7 +37,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/icon.png",
-          "imageWidth": 100,
+          "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#000000",
           "dark": {
@@ -63,14 +61,17 @@
             "buildArchs": [
               "arm64-v8a"
             ]
-          }
+          },
+          "buildReactNativeFromSource": true,
+          "useHermesV1": true
         }
       ],
       "expo-asset",
       "expo-web-browser",
       [
         "expo-localization"
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -86,7 +87,8 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/ddac2295-af33-4e05-b689-6caa80c1d9d3"
+      "url": "https://u.expo.dev/ddac2295-af33-4e05-b689-6caa80c1d9d3",
+      "enableBsdiffPatchSupport": true
     }
   }
 }

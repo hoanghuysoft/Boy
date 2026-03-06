@@ -31,6 +31,7 @@ interface CommentItemProps {
     isOwn: boolean;
     onPress: () => void;
     onDelete: () => void;
+    onEdit: () => void;
     formatTimeAgo: (dateString: string) => string;
 }
 
@@ -38,7 +39,7 @@ interface CommentItemProps {
 // CommentItem Component
 // ============================================================================
 
-const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDelete, formatTimeAgo }: CommentItemProps) => (
+const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDelete, onEdit, formatTimeAgo }: CommentItemProps) => (
     <View style={styles.commentItem}>
         {/* Avatar */}
         <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
@@ -76,9 +77,19 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                     <>
                         <Text style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</Text>
                         <TouchableOpacity
+                            onPress={onEdit}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={styles.actionButton}
+                        >
+                            <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
+                                Edit
+                            </Text>
+                        </TouchableOpacity>
+                        <Text style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</Text>
+                        <TouchableOpacity
                             onPress={onDelete}
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            style={styles.deleteButton}
+                            style={styles.actionButton}
                         >
                             <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
                                 Delete
@@ -111,9 +122,10 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 isOwn={!!vm.currentProfileId && String(vm.currentProfileId) === String(item.profile_id)}
                 onPress={() => vm.handleUserPress(item)}
                 onDelete={() => vm.handleDeleteComment(item)}
+                onEdit={() => vm.handleEditComment(item)}
                 formatTimeAgo={vm.formatTimeAgo}
             />
-        ), [vm.colors, vm.common, vm.theme, vm.currentProfileId, vm.handleUserPress, vm.handleDeleteComment, vm.formatTimeAgo]);
+        ), [vm.colors, vm.common, vm.theme, vm.currentProfileId, vm.handleUserPress, vm.handleDeleteComment, vm.handleEditComment, vm.formatTimeAgo]);
 
         const renderListFooter = useCallback(() => {
             if (vm.isFetchingNextPage) {
@@ -159,32 +171,54 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     paddingBottom: Math.max(insets.bottom, 12),
                 }
             ]}>
+                {/* Edit mode banner */}
+                {vm.isEditing && (
+                    <View style={[
+                        styles.editBanner,
+                        { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }
+                    ]}>
+                        <MaterialIcons name="edit" size={14} color={vm.colors.muted} style={{ marginRight: 6 }} />
+                        <Text
+                            style={[vm.common.bodySmall, { color: vm.colors.muted, flex: 1, fontSize: 12 }]}
+                            numberOfLines={1}
+                        >
+                            Editing comment
+                        </Text>
+                        <TouchableOpacity
+                            onPress={vm.handleCancelEdit}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                            <MaterialIcons name="close" size={16} color={vm.colors.muted} />
+                        </TouchableOpacity>
+                    </View>
+                )}
                 <View style={styles.inputInnerWrapper}>
                     <TextInput
                         style={[styles.input, {
                             backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                             color: vm.colors.text,
                         }]}
-                        placeholder="Add a comment..."
+                        placeholder={vm.isEditing ? "Edit your comment..." : "Add a comment..."}
                         placeholderTextColor={vm.colors.muted}
                         value={vm.commentText}
                         onChangeText={vm.setCommentText}
                         multiline
                         maxLength={500}
                         selectionColor={vm.colors.text}
+                        autoFocus={vm.isEditing}
                     />
                     {vm.commentText.trim().length > 0 && (
                         <TouchableOpacity
-                            onPress={vm.handleSubmitComment}
-                            disabled={vm.isSubmitting}
+                            onPress={vm.isEditing ? vm.handleSaveEdit : vm.handleSubmitComment}
+                            disabled={vm.isEditing ? vm.isSaving : vm.isSubmitting}
                             style={styles.sendButton}
                         >
                             <View style={[styles.sendButtonBackground, { backgroundColor: vm.colors.text }]}>
-                                {vm.isSubmitting ? (
+                                {(vm.isEditing ? vm.isSaving : vm.isSubmitting) ? (
                                     <ActivityIndicator size="small" color={vm.colors.background} />
                                 ) : (
                                     <Text style={[styles.sendButtonText, { color: vm.colors.background }]}>
-                                        Post
+                                        {vm.isEditing ? 'Save' : 'Post'}
                                     </Text>
                                 )}
                             </View>
@@ -282,7 +316,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
     },
-    deleteButton: {
+    actionButton: {
     },
     footerLoader: {
         paddingVertical: 20,
@@ -304,6 +338,14 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         paddingHorizontal: 16,
         paddingTop: 12,
+    },
+    editBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 99,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginBottom: 8,
     },
     inputInnerWrapper: {
         flexDirection: 'row',

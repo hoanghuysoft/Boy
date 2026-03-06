@@ -3,7 +3,7 @@ import OptionModal from "@/components/HomeOptionModal";
 import SettingsIcon from "@/icons/settings";
 import { useHomeViewModel } from "@/viewmodels/HomeViewModel";
 import FastImage from "@d11/react-native-fast-image";
-import { Magnifier } from '@solar-icons/react-native/Outline';
+import { BookmarkOpenedLineDuotone, MagnifierLineDuotone } from "@solar-icons/react-native";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
@@ -85,7 +85,10 @@ const HomeScreen = () => {
                 opacity: vm.pillBgOpacity,
               }} />
               <TouchableOpacity onPress={vm.navigateToSearch}>
-                <Magnifier size={24} color={vm.iconColor} />
+                <MagnifierLineDuotone size={24} color={vm.iconColor} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={vm.navigateToBookmarks}>
+                <BookmarkOpenedLineDuotone size={26} color={vm.iconColor} />
               </TouchableOpacity>
               <TouchableOpacity onPress={vm.openModal}>
                 <SettingsIcon size={24} color={vm.iconColor} />

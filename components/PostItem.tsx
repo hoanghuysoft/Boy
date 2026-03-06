@@ -26,9 +26,10 @@ interface PostItemProps {
     onOptionsPress?: (post: Post) => void;
     onLikeCountPress?: (post: Post) => void;
     onCommentPress?: (post: Post) => void;
+    isBookmarked?: boolean;
 }
 
-export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPress }: PostItemProps) => {
+export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPress, isBookmarked = false }: PostItemProps) => {
     const vm = usePostItemViewModel({ post, onOptionsPress, onLikeCountPress, onCommentPress });
 
     // Feed video state
@@ -57,13 +58,15 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                         <PostMetaInfo post={post} />
                     </View>
                 </Pressable>
-                <Pressable
-                    hitSlop={10}
-                    style={{ backgroundColor: vm.colors.card, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
-                    onPress={vm.handleOptionsPress}
-                >
-                    <Ionicons name="ellipsis-horizontal" size={20} color={vm.colors.text} />
-                </Pressable>
+                {!isBookmarked && (
+                    <Pressable
+                        hitSlop={10}
+                        style={{ backgroundColor: vm.colors.card, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
+                        onPress={vm.handleOptionsPress}
+                    >
+                        <Ionicons name="ellipsis-horizontal" size={20} color={vm.colors.text} />
+                    </Pressable>
+                )}
             </View>
 
             {/* Caption */}
@@ -190,37 +193,63 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
             {post.device && <Text style={[vm.common.label, { color: vm.colors.muted, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 }]}>This post was created on {post.device}</Text>}
 
             {/* Action Bar */}
-            <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
-                <View style={[vm.common.row, { gap: 20 }]}>
+            {isBookmarked ? (
+                // Bookmarks screen: read-only stats, no bookmark button
+                <View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 20 }]}>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                        <TouchableOpacity hitSlop={10} onPress={vm.handleLikePress}>
-                            {vm.isLiked ? (
-                                <LikeSolidIcon size={24} color={vm.colors.text} />
-                            ) : (
-                                <LikeIcon size={24} color={vm.colors.text} />
-                            )}
-                        </TouchableOpacity>
-                        <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
-                            <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</Text>
-                        </TouchableOpacity>
+                        {vm.isLiked ? (
+                            <LikeSolidIcon size={24} color={vm.colors.text} />
+                        ) : (
+                            <LikeIcon size={24} color={vm.colors.text} />
+                        )}
+                        <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</Text>
                     </View>
-                    <TouchableOpacity hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                    <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <CommentIcon size={24} color={vm.colors.text} />
                         <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity hitSlop={10} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                        <ShareIcon size={24} color={vm.colors.text} />
-                        <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.share_count}</Text>
+                    </View>
+                    <TouchableOpacity hitSlop={10} onPress={vm.handleBookmarkPress}>
+                        {vm.isBookmarked ? (
+                            <BookmarkSolidIcon size={24} color={vm.colors.text} />
+                        ) : (
+                            <BookmarkIcon size={24} color={vm.colors.text} />
+                        )}
                     </TouchableOpacity>
                 </View>
-                <TouchableOpacity hitSlop={10}>
-                    {post.is_bookmarked ? (
-                        <BookmarkSolidIcon size={24} color={vm.colors.text} />
-                    ) : (
-                        <BookmarkIcon size={24} color={vm.colors.text} />
-                    )}
-                </TouchableOpacity>
-            </View>
+            ) : (
+                // Feed: full interactive action bar with bookmark toggle
+                <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
+                    <View style={[vm.common.row, { gap: 20 }]}>
+                        <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                            <TouchableOpacity hitSlop={10} onPress={vm.handleLikePress}>
+                                {vm.isLiked ? (
+                                    <LikeSolidIcon size={24} color={vm.colors.text} />
+                                ) : (
+                                    <LikeIcon size={24} color={vm.colors.text} />
+                                )}
+                            </TouchableOpacity>
+                            <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
+                                <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <TouchableOpacity hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                            <CommentIcon size={24} color={vm.colors.text} />
+                            <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity hitSlop={10} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                            <ShareIcon size={24} color={vm.colors.text} />
+                            <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.share_count}</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity hitSlop={10} onPress={vm.handleBookmarkPress}>
+                        {vm.isBookmarked ? (
+                            <BookmarkSolidIcon size={24} color={vm.colors.text} />
+                        ) : (
+                            <BookmarkIcon size={24} color={vm.colors.text} />
+                        )}
+                    </TouchableOpacity>
+                </View>
+            )}
         </View>
     );
 };

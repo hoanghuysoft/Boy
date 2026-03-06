@@ -113,9 +113,9 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
             scrollable={true}
             backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
             grabberOptions={{
-                color: colors.muted || '#C4C4C4',
-                height: 4,
-                width: 32,
+                color: colors.muted || "#C4C4C4",
+                height: 5,
+                width: 40,
             }}
             onDidDismiss={() => stopPlayback()}
         >
