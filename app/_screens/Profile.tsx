@@ -3,7 +3,6 @@ import { FlashList } from "@shopify/flash-list";
 import React, { useCallback, useEffect, useMemo } from "react";
 import {
   Animated,
-  InteractionManager,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -13,7 +12,6 @@ import {
 } from "react-native";
 import { Snackbar } from 'react-native-paper';
 import { PostItem } from '../../components/PostItem';
-import InfoCard from '../../components/profile/InfoCard';
 import ProfileHeader, { COVER_HEIGHT } from '../../components/profile/ProfileHeader';
 import { AddressSheet } from "../../components/profile/sheets/AddressSheet";
 import { MusicSheet } from "../../components/profile/sheets/MusicSheet";
@@ -29,14 +27,17 @@ import { useProfileViewModel } from "../../viewmodels/ProfileViewModel";
 import { PostOptionsSheet } from "@/components/post";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { LikersSheet } from "@/components/post/LikersSheet";
+import { BriefInfoSheet } from "@/components/profile/sheets/BriefInfoSheet";
+import { RelationshipSheet } from "@/components/profile/sheets/RelationshipSheet";
 import { HeadphonesRoundSoundBold } from "@solar-icons/react-native";
+import { BlurTargetView, BlurView } from "expo-blur";
 import TurboImage from "react-native-turbo-image";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { ProfileGalleryModal } from "../../components/gallery/ProfileGalleryModal";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
-type TabType = "Images" | "Videos" | "Feed" | "Information";
+type TabType = "Images" | "Videos" | "Feed";
 
 // ─── Static skeleton shown during navigation transition ────────────────────────
 const ProfileSkeleton: React.FC = () => {
@@ -136,13 +137,14 @@ const ProfileContent = () => {
       imageCount={vm.imageCount}
       videoCount={vm.videoCount}
       postCount={vm.postCount}
+      familySheetRef={vm.familySheetRef}
+      briefSheetRef={vm.briefSheetRef}
     />
   ), [vm.scrollY, vm.profile, vm.isMe, vm.workplaces, vm.music, vm.socialLinks, vm.addresses, vm.imageCount, vm.videoCount, vm.postCount, vm.stableTabChange, vm.activeTab]);
 
   // Dynamic data based on tab
   const data = useMemo(() => {
     switch (vm.activeTab) {
-      case "Information": return [{ _type: 'info' as const }];
       case "Images": return imageData;
       case "Videos": return videoData;
       case "Feed": return vm.feedPosts;
@@ -164,7 +166,6 @@ const ProfileContent = () => {
       case "Images": return imageEstimatedItemSize;
       case "Videos": return videoEstimatedItemSize;
       case "Feed": return 400;
-      case "Information": return 600;
       default: return 200;
     }
   }, [vm.activeTab, imageEstimatedItemSize, videoEstimatedItemSize]);
@@ -172,8 +173,6 @@ const ProfileContent = () => {
   // Dynamic renderItem based on tab
   const renderItem = useCallback(({ item, index }: { item: any; index: number }) => {
     switch (vm.activeTab) {
-      case "Information":
-        return <InfoCard profile={vm.profile} />;
       case "Images":
         return renderImageItem({ item, index, separators: {} as any });
       case "Videos":
@@ -181,13 +180,11 @@ const ProfileContent = () => {
       case "Feed":
         return <PostItem post={item as Post} key={item.id} onOptionsPress={vm.handlePostOptionsPress} onLikeCountPress={vm.handleLikeCountPress} onCommentPress={vm.handleCommentPress} />;
     }
-  }, [vm.activeTab, vm.profile, renderImageItem, renderVideoItem]);
+  }, [vm.activeTab, renderImageItem, renderVideoItem]);
 
   // Dynamic keyExtractor
   const keyExtractor = useCallback((item: any, index: number) => {
     switch (vm.activeTab) {
-      case "Information":
-        return 'info';
       case "Images":
         return imageKeyExtractor(item, index);
       case "Videos":
@@ -201,7 +198,6 @@ const ProfileContent = () => {
 
   // Empty component
   const ListEmpty = useMemo(() => {
-    if (vm.activeTab === "Information") return null;
     let title = "";
     let message = "";
     switch (vm.activeTab) {
@@ -210,8 +206,8 @@ const ProfileContent = () => {
         message = "No photos have been uploaded yet.";
         break;
       case "Videos":
-        title = "No Videos";
-        message = "No videos have been uploaded yet.";
+        title = "No Shots";
+        message = "No shots have been uploaded yet.";
         break;
       case "Feed":
         title = "No Posts";
@@ -298,197 +294,218 @@ const ProfileContent = () => {
     );
   }
 
-  const formattedImages = sortedUrls.map(url => ({ uri: url }));
-
   return (
-    <View style={vm.common.screen}>
-      {/* Sticky Header Container */}
-      {!vm.isMe && (
-        <View style={{ position: 'absolute', top: vm.inset.top + 8, left: 16, zIndex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+    <BlurTargetView ref={vm.blurTargetRef} style={{ flex: 1 }}>
+      <View style={vm.common.screen}>
+        {/* Sticky Header Container */}
+        {!vm.isMe && (
+          <View style={{ position: 'absolute', top: vm.inset.top + 8, left: 16, zIndex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
 
-            {/* Back Button */}
+              {/* Back Button */}
+              <BlurView
+                tint="dark"
+                intensity={80}
+                blurTarget={vm.blurTargetRef}
+                blurMethod="dimezisBlurView"
+                style={{
+                  borderRadius: 999,
+                  overflow: 'hidden',
+                  backgroundColor: vm.colors.containerContent + "CC",
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => vm.router.back()}
+                  style={{
+                    borderRadius: 999,
+                    width: 40,
+                    height: 40,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  <Ionicons name='chevron-back' size={24} color={vm.colors.text} />
+                </TouchableOpacity>
+              </BlurView>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => vm.musicSheetRef.current?.present()}
+                style={{ height: 40, width: 150 }}
+              >
+                <View style={styles.blurWrapper}>
+                  <View
+                    style={[StyleSheet.absoluteFill, { backgroundColor: vm.colors.containerContent }]}
+                  />
+
+                  <View style={styles.blurContent}>
+                    <View style={[styles.artworkContainer, { width: 32, height: 32 }]}>
+                      {!vm.hasMusic ? (
+                        <View style={[styles.placeholderIcon, { backgroundColor: vm.colors.card }]}>
+                          <HeadphonesRoundSoundBold size={18} color={vm.colors.text} />
+                        </View>
+                      ) : (
+                        <TurboImage
+                          source={{ uri: vm.currentTrack?.cover_url || '' }}
+                          style={styles.artworkImage}
+                          resizeMode="cover"
+                        />
+                      )}
+                    </View>
+
+                    <View style={styles.textContainer}>
+                      <Text
+                        style={[styles.titleText, { color: vm.colors.text }]}
+                        numberOfLines={1}
+                      >
+                        {vm.hasMusic ? vm.currentTrack?.title : 'Add Music'}
+                      </Text>
+                      <Text
+                        style={[styles.artistText, { color: vm.colors.text }]}
+                        numberOfLines={1}
+                      >
+                        {vm.hasMusic ? vm.currentTrack?.artist : 'Select track'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+            </View>
+          </View>
+        )}
+        {renderImageQuickPreview()}
+        {renderVideoQuickPreview()}
+        <ProfileGalleryModal
+          visible={vm.galleryVisible}
+          photos={vm.photos}
+          music={vm.music}
+          initialIndex={vm.galleryIndex}
+          onClose={vm.closeGallery}
+          profileName={vm.profile?.name}
+          isVerified={vm.profile?.is_verified}
+        />
+        <GalleryModal />
+
+        <AnimatedFlashList
+          key={`flashlist-${numColumns}`}
+          ref={vm.listRef}
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          numColumns={numColumns}
+          contentContainerStyle={[
+            { paddingBottom: vm.isMe ? 100 + vm.inset.bottom : vm.inset.bottom + 10 }
+          ]}
+          ListHeaderComponent={ListHeader}
+          ListEmptyComponent={ListEmpty}
+          onScroll={vm.onScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={vm.isProfileRefetching}
+              onRefresh={vm.onRefresh}
+              tintColor={vm.colors.text}
+              colors={[vm.colors.text]}
+              progressBackgroundColor={vm.colors.card}
+              style={{ zIndex: 10 }}
+              progressViewOffset={vm.inset.top + 30}
+            />
+          }
+          estimatedItemSize={estimatedItemSize}
+          onEndReached={vm.handleEndReached}
+          onEndReachedThreshold={0.5}
+        />
+
+        {/* Floating Scroll to Top Button */}
+        {!vm.isMe && (
+          <Animated.View
+            pointerEvents={vm.showScrollTop ? 'auto' : 'none'}
+            style={{
+              position: 'absolute',
+              bottom: vm.inset.bottom + 20,
+              right: 16,
+              opacity: vm.scrollTopButtonOpacity,
+              zIndex: 1000,
+            }}
+          >
             <TouchableOpacity
-              onPress={() => vm.router.back()}
+              onPress={vm.scrollToTop}
               style={{
                 backgroundColor: vm.colors.containerContent,
                 borderRadius: 999,
-                width: 40,
-                height: 40,
+                width: 48,
+                height: 48,
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                elevation: 5,
               }}
             >
-              <Ionicons name='chevron-back' size={24} color={vm.colors.text} />
+              <Ionicons name='chevron-up' size={24} color={vm.colors.text} />
             </TouchableOpacity>
+          </Animated.View>
+        )}
+        <Snackbar
+          visible={vm.snackbarVisible}
+          onDismiss={vm.dismissSnackbar}
+          action={{
+            label: 'Retry',
+            onPress: vm.onRefresh,
+          }}>
+          Failed to load profile
+        </Snackbar>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => vm.musicSheetRef.current?.present()}
-              style={{ height: 40, width: 150 }}
-            >
-              <View style={styles.blurWrapper}>
-                <View
-                  style={[StyleSheet.absoluteFill, { backgroundColor: vm.colors.containerContent }]}
-                />
+        <MusicSheet
+          ref={vm.musicSheetRef}
+          data={vm.music}
+          onEndReached={vm.handleMusicEndReached}
+        />
+        <SocialSheet
+          ref={vm.socialSheetRef}
+          data={vm.socialLinks}
+          onEndReached={vm.handleSocialEndReached}
+        />
+        <AddressSheet
+          ref={vm.addressSheetRef}
+          data={vm.addresses}
+          onEndReached={vm.handleAddressesEndReached}
+        />
+        <WorkplaceSheet
+          ref={vm.workplaceSheetRef}
+          data={vm.workplaces}
+          onEndReached={vm.handleWorkplacesEndReached}
+        />
+        <RelationshipSheet
+          ref={vm.familySheetRef}
+          data={vm.profile?.loved_ones || []}
+        />
+        <BriefInfoSheet
+          ref={vm.briefSheetRef}
+          profile={vm.profile}
+          workplaces={vm.workplaces}
+          homeInfo={vm.profile?.hometown || null}
+        />
+        <PostOptionsSheet
+          ref={vm.optionsSheetRef}
+          post={vm.selectedPost}
+          currentProfileId={vm.myProfile?.id || null}
+          onDeleted={vm.handlePostDeleted}
+        />
+        <LikersSheet
+          ref={vm.likersSheetRef}
+          postId={vm.selectedLikePostId}
+        />
+        <CommentsSheet
+          ref={vm.commentsSheetRef}
+          postId={vm.selectedCommentPostId}
+        />
 
-                <View style={styles.blurContent}>
-                  <View style={[styles.artworkContainer, { width: 32, height: 32 }]}>
-                    {!vm.hasMusic ? (
-                      <View style={[styles.placeholderIcon, { backgroundColor: vm.colors.card }]}>
-                        <HeadphonesRoundSoundBold size={18} color={vm.colors.text} />
-                      </View>
-                    ) : (
-                      <TurboImage
-                        source={{ uri: vm.currentTrack?.cover_url || '' }}
-                        style={styles.artworkImage}
-                        resizeMode="cover"
-                      />
-                    )}
-                  </View>
-
-                  <View style={styles.textContainer}>
-                    <Text
-                      style={[styles.titleText, { color: vm.colors.text }]}
-                      numberOfLines={1}
-                    >
-                      {vm.hasMusic ? vm.currentTrack?.title : 'Add Music'}
-                    </Text>
-                    <Text
-                      style={[styles.artistText, { color: vm.colors.text }]}
-                      numberOfLines={1}
-                    >
-                      {vm.hasMusic ? vm.currentTrack?.artist : 'Select track'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-          </View>
-        </View>
-      )}
-      {renderImageQuickPreview()}
-      {renderVideoQuickPreview()}
-      <ProfileGalleryModal
-        visible={vm.galleryVisible}
-        photos={vm.photos}
-        music={vm.music}
-        initialIndex={vm.galleryIndex}
-        onClose={vm.closeGallery}
-        profileName={vm.profile?.name}
-        isVerified={vm.profile?.is_verified}
-      />
-      <GalleryModal />
-
-      <AnimatedFlashList
-        key={`flashlist-${numColumns}`}
-        ref={vm.listRef}
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        numColumns={numColumns}
-        contentContainerStyle={[
-          { paddingBottom: vm.isMe ? 100 + vm.inset.bottom : vm.inset.bottom + 10 }
-        ]}
-        ListHeaderComponent={ListHeader}
-        ListEmptyComponent={ListEmpty}
-        onScroll={vm.onScroll}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={vm.isProfileRefetching}
-            onRefresh={vm.onRefresh}
-            tintColor={vm.colors.text}
-            colors={[vm.colors.text]}
-            progressBackgroundColor={vm.colors.card}
-            style={{ zIndex: 10 }}
-            progressViewOffset={vm.inset.top + 30}
-          />
-        }
-        estimatedItemSize={estimatedItemSize}
-        onEndReached={vm.handleEndReached}
-        onEndReachedThreshold={0.5}
-      />
-
-      {/* Floating Scroll to Top Button */}
-      {!vm.isMe && (
-        <Animated.View
-          pointerEvents={vm.showScrollTop ? 'auto' : 'none'}
-          style={{
-            position: 'absolute',
-            bottom: vm.inset.bottom + 20,
-            right: 16,
-            opacity: vm.scrollTopButtonOpacity,
-            zIndex: 1000,
-          }}
-        >
-          <TouchableOpacity
-            onPress={vm.scrollToTop}
-            style={{
-              backgroundColor: vm.colors.containerContent,
-              borderRadius: 999,
-              width: 48,
-              height: 48,
-              justifyContent: 'center',
-              alignItems: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 5,
-            }}
-          >
-            <Ionicons name='chevron-up' size={24} color={vm.colors.text} />
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-      <Snackbar
-        visible={vm.snackbarVisible}
-        onDismiss={vm.dismissSnackbar}
-        action={{
-          label: 'Retry',
-          onPress: vm.onRefresh,
-        }}>
-        Failed to load profile
-      </Snackbar>
-
-      <MusicSheet
-        ref={vm.musicSheetRef}
-        data={vm.music}
-        onEndReached={vm.handleMusicEndReached}
-      />
-      <SocialSheet
-        ref={vm.socialSheetRef}
-        data={vm.socialLinks}
-        onEndReached={vm.handleSocialEndReached}
-      />
-      <AddressSheet
-        ref={vm.addressSheetRef}
-        data={vm.addresses}
-        onEndReached={vm.handleAddressesEndReached}
-      />
-      <WorkplaceSheet
-        ref={vm.workplaceSheetRef}
-        data={vm.workplaces}
-        onEndReached={vm.handleWorkplacesEndReached}
-      />
-      <PostOptionsSheet
-        ref={vm.optionsSheetRef}
-        post={vm.selectedPost}
-        currentProfileId={vm.myProfile?.id || null}
-        onDeleted={vm.handlePostDeleted}
-      />
-      <LikersSheet
-        ref={vm.likersSheetRef}
-        postId={vm.selectedLikePostId}
-      />
-      <CommentsSheet
-        ref={vm.commentsSheetRef}
-        postId={vm.selectedCommentPostId}
-      />
-    </View>
+      </View>
+    </BlurTargetView>
   );
 };
 
@@ -565,10 +582,10 @@ const ProfileScreen = () => {
   const [isReady, setIsReady] = React.useState(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const id = requestIdleCallback(() => {
       setIsReady(true);
     });
-    return () => task.cancel();
+    return () => cancelIdleCallback(id);
   }, []);
 
   if (!isReady) {

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo, useCallback } from "react";
 import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSheetBackHandler } from "./useSheetBackHandler";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -103,6 +104,7 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
     const { stopPlayback } = useAudioStore();
+    const backHandler = useSheetBackHandler(ref);
 
     // Safety check
     if (!data || data.length === 0) return null;
@@ -117,7 +119,8 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
                 height: 5,
                 width: 40,
             }}
-            onDidDismiss={() => stopPlayback()}
+            onDidPresent={backHandler.onDidPresent}
+            onDidDismiss={() => { backHandler.onDidDismiss(); stopPlayback(); }}
         >
             <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
 

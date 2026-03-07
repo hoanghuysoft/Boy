@@ -9,15 +9,15 @@ import {
     VideoLibraryBold,
     VideoLibraryOutline
 } from "@solar-icons/react-native";
+import { BlurView } from "expo-blur";
 import { SquircleView } from "expo-squircle-view";
-import React, { useEffect, useRef } from "react";
+import React, { RefObject, useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useScrollStore } from "../../stores/scroll";
 
-type TabName = "index" | "shots" | "search" | "chat" | "profile";
+type TabName = "index" | "shots" | "chat" | "profile";
 
 interface TabConfig {
     name: TabName;
@@ -27,13 +27,32 @@ interface TabConfig {
 }
 
 const tabs: TabConfig[] = [
-    { name: "index", label: "Home", IconOutlined: HomeOutline, IconSolid: HomeBold },
-    { name: "shots", label: "Shots", IconOutlined: VideoLibraryOutline, IconSolid: VideoLibraryBold },
-    { name: "chat", label: "Create", IconOutlined: AddCircleOutline, IconSolid: AddCircleBold },
-    { name: "profile", label: "Profile", IconOutlined: UserRoundedOutline, IconSolid: UserRoundedBold },
+    {
+        name: "index",
+        label: "Home",
+        IconOutlined: HomeOutline,
+        IconSolid: HomeBold,
+    },
+    {
+        name: "shots",
+        label: "Shots",
+        IconOutlined: VideoLibraryOutline,
+        IconSolid: VideoLibraryBold
+    },
+    {
+        name: "chat",
+        label: "Create",
+        IconOutlined: AddCircleOutline,
+        IconSolid: AddCircleBold,
+    },
+    {
+        name: "profile",
+        label: "Profile",
+        IconOutlined: UserRoundedOutline,
+        IconSolid: UserRoundedBold,
+    },
 ];
 
-// ─── Animated Tab Button ─────────────────────────────────────────────
 const AnimatedTabButton = ({
     route,
     isFocused,
@@ -43,7 +62,6 @@ const AnimatedTabButton = ({
     onLongPress,
     descriptors,
     colors,
-    onLayout,
 }: {
     route: any;
     isFocused: boolean;
@@ -53,7 +71,6 @@ const AnimatedTabButton = ({
     onLongPress: () => void;
     descriptors: any;
     colors: any;
-    onLayout: (x: number, width: number) => void;
 }) => {
     const scaleAnim = useRef(new Animated.Value(isFocused ? 1 : 0.95)).current;
     const opacityAnim = useRef(new Animated.Value(isFocused ? 1 : 0.6)).current;
@@ -77,26 +94,36 @@ const AnimatedTabButton = ({
     }, [isFocused]);
 
     const handlePressIn = () => {
-        Animated.spring(iconScaleAnim, { toValue: 0.85, useNativeDriver: true, friction: 5, tension: 100 }).start();
+        Animated.spring(iconScaleAnim, {
+            toValue: 0.85,
+            useNativeDriver: true,
+            friction: 5,
+            tension: 100,
+        }).start();
     };
+
     const handlePressOut = () => {
-        Animated.spring(iconScaleAnim, { toValue: 1, useNativeDriver: true, friction: 5, tension: 100 }).start();
+        Animated.spring(iconScaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            friction: 5,
+            tension: 100,
+        }).start();
     };
 
     const Icon = isFocused ? tabConfig.IconSolid : tabConfig.IconOutlined;
 
     return (
         <TouchableOpacity
+            key={route.key}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={descriptors[route.key].options.tabBarAccessibilityLabel}
-            // Active tab gets more flex → pill is wider → proper capsule shape
-            style={[styles.tabBarItem, { flex: isFocused ? 1.6 : 1 }]}
-            onLayout={(e) => {
-                const { x, width } = e.nativeEvent.layout;
-                onLayout(x, width);
+            style={styles.tabBarItem}
+            onPress={() => {
+                handlePressOut();
+                onPress();
             }}
-            onPress={() => { handlePressOut(); onPress(); }}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
             onLongPress={onLongPress}
@@ -110,7 +137,10 @@ const AnimatedTabButton = ({
                     justifyContent: "center",
                 }}
             >
-                <Icon size={24} color={color} />
+                <Icon
+                    size={24}
+                    color={color}
+                />
                 <Text
                     style={[
                         styles.tabBarLabel,
@@ -127,76 +157,76 @@ const AnimatedTabButton = ({
     );
 };
 
-// ─── Custom Tab Bar ───────────────────────────────────────────────────
-export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
-    const { colors } = useThemeContext();
+export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: BottomTabBarProps & { blurTargetRef?: RefObject<View | null> }) => {
+    const { colors, theme } = useThemeContext();
     const insets = useSafeAreaInsets();
     const bottomSpacing = 13 + insets.bottom;
 
-    // Per-tab measured layout — updated via onLayout callbacks
-    const tabLayouts = useRef<Array<{ x: number; width: number }>>(
-        state.routes.map(() => ({ x: 0, width: 0 }))
-    );
-
-    // Reanimated shared values — animate on the native UI thread
-    const pillX = useSharedValue(0);
-    const pillWidth = useSharedValue(0);
-
-    const springConfig = { damping: 18, stiffness: 180, mass: 1 };
-
-    const animatePill = (index: number) => {
-        const layout = tabLayouts.current[index];
-        if (!layout || layout.width === 0) return;
-
-        pillX.value = withSpring(layout.x, springConfig);
-        pillWidth.value = withSpring(layout.width, springConfig);
-    };
+    const [layout, setLayout] = React.useState({ width: 0, height: 0 });
+    const translateX = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        animatePill(state.index);
-    }, [state.index]);
+        if (layout.width > 0) {
+            const tabWidth = (layout.width - 10) / state.routes.length;
+            Animated.spring(translateX, {
+                toValue: state.index * tabWidth,
+                useNativeDriver: true,
+                friction: 8,
+                tension: 50,
+            }).start();
+        }
+    }, [state.index, layout.width, state.routes.length]);
 
-    const pillStyle = useAnimatedStyle(() => ({
-        left: pillX.value,
-        width: pillWidth.value,
-    }));
+    const tabWidth = layout.width > 0 ? (layout.width - 10) / state.routes.length : 0;
 
     return (
-        <SquircleView
-            cornerSmoothing={100}
-            preserveSmoothing
-            style={[styles.tabBarContainer, { marginBottom: bottomSpacing }]}
+        <View
+            style={[
+                styles.tabBarContainer,
+                {
+                    marginBottom: bottomSpacing,
+                },
+            ]}
         >
-            <SquircleView cornerSmoothing={100} preserveSmoothing style={styles.blurContainer}>
-                <View style={[styles.tabBarContent, { backgroundColor: colors.tabBar }]}>
-
-                    {/* Pill — runs on native UI thread via reanimated */}
-                    <Reanimated.View
-                        style={[{
-                            position: 'absolute',
-                            top: 5,
-                            bottom: 5,
-                            zIndex: 0,
-                        }, pillStyle]}
-                    >
-                        <SquircleView
-                            cornerSmoothing={100}
-                            preserveSmoothing
+            <BlurView
+                tint="dark"
+                intensity={80}
+                blurTarget={blurTargetRef}
+                blurMethod="dimezisBlurView"
+                style={[styles.tabBarContent, { backgroundColor: colors.tabBar + "CC" }]}
+                onLayout={(e) => setLayout(e.nativeEvent.layout)}
+            >
+                    {/* Animated Pill */}
+                    {layout.width > 0 && (
+                        <Animated.View
                             style={{
-                                flex: 1,
-                                backgroundColor: colors.card + "CC",
-                                borderRadius: 999,
+                                position: 'absolute',
+                                width: tabWidth,
+                                height: '100%',
+                                left: 5,
+                                top: 5,
+                                transform: [{ translateX }],
+                                zIndex: 0,
                             }}
-                        />
-                    </Reanimated.View>
+                        >
+                            <SquircleView
+                                cornerSmoothing={100}
+                                preserveSmoothing
+                                style={{
+                                    flex: 1,
+                                    backgroundColor: colors.card + "CC",
+                                    borderRadius: 999,
+                                }}
+                            />
+                        </Animated.View>
+                    )}
 
                     {state.routes.map((route, index) => {
                         const isFocused = state.index === index;
+                        // Map route names to tab config
                         const tabConfig = tabs.find((tab) => tab.name === route.name);
                         if (!tabConfig) return null;
-
                         const color = isFocused ? colors.tabActive : colors.tabInactive;
-
                         const onPress = () => {
                             const event = navigation.emit({
                                 type: "tabPress",
@@ -207,13 +237,17 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
                             if (isFocused) {
                                 useScrollStore.getState().triggerScrollToTop(route.name);
                             }
+
                             if (!isFocused && !event.defaultPrevented) {
                                 navigation.navigate(route.name);
                             }
                         };
 
                         const onLongPress = () => {
-                            navigation.emit({ type: "tabLongPress", target: route.key });
+                            navigation.emit({
+                                type: "tabLongPress",
+                                target: route.key,
+                            });
                         };
 
                         return (
@@ -227,17 +261,11 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
                                 onLongPress={onLongPress}
                                 descriptors={descriptors}
                                 colors={colors}
-                                onLayout={(x, width) => {
-                                    tabLayouts.current[index] = { x, width };
-                                    // Immediately snap pill if this tab just became active
-                                    if (isFocused) animatePill(index);
-                                }}
                             />
                         );
                     })}
-                </View>
-            </SquircleView>
-        </SquircleView>
+            </BlurView>
+        </View>
     );
 };
 
@@ -249,18 +277,16 @@ const styles = StyleSheet.create({
         borderRadius: 999,
         borderTopWidth: 0,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
+        shadowOffset: {
+            width: 0,
+            height: 10,
+        },
         shadowOpacity: 0.12,
         shadowRadius: 12,
         elevation: 8,
         bottom: 0,
         left: 0,
         right: 0,
-        overflow: "hidden",
-    },
-    blurContainer: {
-        flex: 1,
-        borderRadius: 999,
         overflow: "hidden",
     },
     tabBarContent: {
@@ -270,12 +296,14 @@ const styles = StyleSheet.create({
         paddingVertical: 5,
     },
     tabBarItem: {
+        flex: 1,
         alignItems: "center",
         justifyContent: "center",
         borderRadius: 999,
-        paddingVertical: 4,
+        gap: 2,
     },
     tabBarLabel: {
-        fontSize: 13,
+        fontSize: 12,
+        marginTop: 2,
     },
 });

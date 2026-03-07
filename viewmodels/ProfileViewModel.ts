@@ -2,7 +2,7 @@ import { choosenMediaPath } from "@/utils/imageurl";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, InteractionManager } from "react-native";
+import { Animated, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../context/ThemeContext";
 import { useInfiniteAddresses } from "../services/address";
@@ -24,6 +24,7 @@ export const useProfileViewModel = () => {
     const params = useLocalSearchParams();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     const isMe = params.isMe === 'true';
+    const blurTargetRef = useRef<View | null>(null);
 
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -150,6 +151,8 @@ export const useProfileViewModel = () => {
     const socialSheetRef = useRef<TrueSheet>(null);
     const addressSheetRef = useRef<TrueSheet>(null);
     const workplaceSheetRef = useRef<TrueSheet>(null);
+    const familySheetRef = useRef<TrueSheet>(null);
+    const briefSheetRef = useRef<TrueSheet>(null);
 
     // ─── Scroll Animation ──────────────────────────────────────────
     const scrollY = useRef(new Animated.Value(0)).current;
@@ -211,7 +214,7 @@ export const useProfileViewModel = () => {
     const handleTabChange = useCallback((tab: TabType) => {
         if (tab === activeTab) return;
         scrollPositions.current[activeTab] = currentScrollY.current;
-        InteractionManager.runAfterInteractions(() => {
+        requestIdleCallback(() => {
             setActiveTab(tab);
         });
     }, [activeTab]);
@@ -331,9 +334,12 @@ export const useProfileViewModel = () => {
         socialSheetRef,
         addressSheetRef,
         workplaceSheetRef,
+        familySheetRef,
+        briefSheetRef,
         optionsSheetRef,
         likersSheetRef,
         commentsSheetRef,
+        blurTargetRef,
 
         // Profile
         profile,

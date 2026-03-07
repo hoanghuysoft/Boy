@@ -17,6 +17,13 @@ export type ThemeColors = {
   divider: string;
   muted: string;
   verify: string;
+  /** Facebook-style pill tab colors (active bg, active text, inactive bg, inactive text) */
+  pillTab: {
+    activeBg: string;
+    activeText: string;
+    inactiveBg: string;
+    inactiveText: string;
+  };
 };
 
 type ThemeContextValue = {
@@ -31,16 +38,22 @@ type ThemeContextValue = {
 };
 
 const lightColors: ThemeColors = {
-  background: "#f1f1f3",
+  background: "#ffffff",
   text: "#0F172A",
   card: "#e0e0e2",
   tabBar: "#f1f1f3",
   tabActive: "#111827",
   tabInactive: "#000000",
-  containerContent: "#ffffff",
+  containerContent: "#f8f9fa",
   divider: "#e0e0e2",
   muted: "#888888",
-  verify: "#1c94e6"
+  verify: "#1c94e6",
+  pillTab: {
+    activeBg: "#E7F3FF",
+    activeText: "#0866FF",
+    inactiveBg: "transparent",
+    inactiveText: "#1C1E21",
+  },
 };
 
 const darkColors: ThemeColors = {
@@ -53,7 +66,13 @@ const darkColors: ThemeColors = {
   containerContent: "#171719",
   divider: "#363638",
   muted: "#888888",
-  verify: "#1c94e6"
+  verify: "#1c94e6",
+  pillTab: {
+    activeBg: "#263951",
+    activeText: "#5890FF",
+    inactiveBg: "transparent",
+    inactiveText: "#E4E6EB",
+  },
 };
 
 const getSystemTheme = (): ThemeMode => {

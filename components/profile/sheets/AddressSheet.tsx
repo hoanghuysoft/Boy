@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo } from "react";
 import { FlatList, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSheetBackHandler } from "./useSheetBackHandler";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -64,6 +65,7 @@ export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ dat
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
+    const backHandler = useSheetBackHandler(ref);
 
     // Safety check
     if (!data || data.length === 0) return null;
@@ -78,6 +80,8 @@ export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ dat
                 height: 5,
                 width: 40,
             }}
+            onDidPresent={backHandler.onDidPresent}
+            onDidDismiss={backHandler.onDidDismiss}
         >
             <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
 

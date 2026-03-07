@@ -17,7 +17,6 @@ const REEL_GAP = 2;
 const REEL_WIDTH = (SCREEN_WIDTH - REEL_GAP * (REEL_COLUMNS - 1)) / REEL_COLUMNS;
 const REEL_HEIGHT = REEL_WIDTH * 1.5;
 
-// ─── Standalone Reel Item (must be outside component for memo) ───────────────
 const ReelItem: React.FC<{
     item: FBVideoList[0];
     formatDuration: (seconds: number) => string;
@@ -44,58 +43,7 @@ const ReelItem: React.FC<{
     </TouchableOpacity>
 );
 
-export const MemoReelItem = memo(ReelItem);
-
-// ─── Reels Grid ──────────────────────────────────────────────────────────────
-interface FProfileReelsGridProps {
-    videos: FBVideoList | null;
-    fbColors: any;
-    formatDuration: (seconds: number) => string;
-    formatCount: (count: number) => string;
-}
-
-const FProfileReelsGrid: React.FC<FProfileReelsGridProps> = ({
-    videos,
-    fbColors,
-    formatDuration,
-    formatCount,
-}) => {
-    if (!videos || videos.length === 0) {
-        return (
-            <View style={styles.emptyState}>
-                <Ionicons name="videocam-outline" size={48} color={fbColors.secondaryText} />
-                <Text style={[styles.emptyText, { color: fbColors.secondaryText }]}>
-                    No videos available
-                </Text>
-            </View>
-        );
-    }
-
-    return (
-        <View style={styles.container}>
-            <View style={styles.grid}>
-                {videos.map((video) => (
-                    <MemoReelItem
-                        key={video.id}
-                        item={video}
-                        formatDuration={formatDuration}
-                        formatCount={formatCount}
-                    />
-                ))}
-            </View>
-        </View>
-    );
-};
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    grid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: REEL_GAP,
-    },
     reelItem: {
         width: REEL_WIDTH,
         height: REEL_HEIGHT,
@@ -146,14 +94,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    emptyState: {
-        paddingVertical: 60,
-        alignItems: 'center',
-        gap: 12,
-    },
-    emptyText: {
-        fontSize: 15,
-    },
 });
 
-export default memo(FProfileReelsGrid);
+export const MemoReelItem = memo(ReelItem);
+export default ReelItem;

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
-import { CaseMinimalisticBold, PlayCircleBold, PlayCircleOutline, PointOnMapBold } from '@solar-icons/react-native';
+import { CaseMinimalisticBold, ChatSquareLikeBold, HeartAngleBold, HeartBold, PlayCircleBold, PlayCircleOutline, PointOnMapBold } from '@solar-icons/react-native';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import React, { memo, useMemo } from "react";
@@ -25,14 +25,13 @@ import { ProfileDetail } from "../../types/profiledetail";
 import { ProfileLink } from "../../types/profilelink";
 import { ProfileMusic } from "../../types/profilemusic";
 import { Workplace } from "../../types/profileworplace";
+import { getFamilyAvatarSource } from "../../utils/familyAvatar";
 import { useProfileHeaderViewModel } from "../../viewmodels/ProfileHeaderViewModel";
-import { TabPillGroup } from "../tabpill";
 import BirthdayCard from './BirthdayCard';
 import DynamicAvatar from './DynamicAvatar';
-import ProfileBriefInfo from './ProfileBriefInfo';
 import QuickPreviewModal from './QuickPreviewModal';
 
-const COVER_HEIGHT = 250;
+const COVER_HEIGHT = 280;
 const AnimatedTurboImage = Animated.createAnimatedComponent(TurboImage);
 
 type TabType = "Information" | "Images" | "Videos" | "Feed";
@@ -48,6 +47,8 @@ interface ProfileHeaderProps {
     socialSheetRef?: React.RefObject<TrueSheet | null>;
     addressSheetRef?: React.RefObject<TrueSheet | null>;
     workplaceSheetRef?: React.RefObject<TrueSheet | null>;
+    familySheetRef?: React.RefObject<TrueSheet | null>;
+    briefSheetRef?: React.RefObject<TrueSheet | null>;
     workplaces?: Workplace[];
     music?: ProfileMusic[];
     socialLinks?: ProfileLink[];
@@ -71,6 +72,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     socialSheetRef,
     addressSheetRef,
     workplaceSheetRef,
+    familySheetRef,
+    briefSheetRef,
     workplaces = [],
     music = [],
     socialLinks = [],
@@ -144,13 +147,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                 </Animated.View>
             )}
             <SquircleView cornerSmoothing={100} preserveSmoothing style={{
-                borderRadius: 8,
-                marginTop: -8,
+                borderRadius: 28,
+                marginTop: -70,
                 backgroundColor: vm.colors.background,
             }}>
 
                 <View style={vm.common.screenPadding}>
-                    <View style={[vm.common.row, { marginTop: -55, gap: 12, alignItems: 'stretch' }]}>
+                    <View style={[vm.common.row, { marginTop: -40, gap: 12, alignItems: 'stretch' }]}>
                         {vm.threedEmoji ? (
                             <>
                                 <Pressable
@@ -193,7 +196,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 style={vm.common.avatarLarge}
                             />
                         )}
-                        <View style={{ flex: 1, paddingTop: 10, justifyContent: 'flex-end' }}>
+                        <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 10 }}>
                             <View style={[vm.common.row, { gap: 4 }]}>
                                 <Text style={[vm.common.heading, { fontWeight: '700' }]}>{profile?.name || "Boy not found"}</Text>
                                 {profile?.is_verified && <VerifiedIcon size={14} backgroundColor={vm.colors.verify} />}
@@ -231,7 +234,67 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                             </Text>
                         )}
 
-                        <ProfileBriefInfo profile={profile} workplaces={workplaces} homeInfo={vm.homeInfo} />
+                        {/* Action buttons — FProfile style */}
+                        <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+                            <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={8}
+                                style={{ flex: 1, backgroundColor: '#1877F2' }}>
+                                <TouchableOpacity style={{ borderRadius: 8, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1 }}>
+                                    <HeartAngleBold size={22} color="#fff" />
+                                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Add love</Text>
+                                </TouchableOpacity>
+                            </SquircleView>
+                            <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={8}
+                                style={{ flex: 1, backgroundColor: vm.colors.card }}>
+                                <TouchableOpacity
+                                    onPress={() => briefSheetRef?.current?.present()}
+                                    style={{ borderRadius: 8, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1 }}
+                                >
+                                    <ChatSquareLikeBold size={22} color={vm.colors.text} />
+                                    <Text style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }}>Know me</Text>
+                                </TouchableOpacity>
+                            </SquircleView>
+                        </View>
+
+                        {/* Family stacked avatars — FProfile style */}
+                        {profile?.loved_ones && profile.loved_ones.length > 0 && (
+                            <TouchableOpacity
+                                onPress={() => familySheetRef?.current?.present()}
+                                activeOpacity={0.7}
+                                style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 10 }}
+                            >
+                                <View style={{ flexDirection: 'row' }}>
+                                    {profile.loved_ones.slice(0, 4).map((person, i) => (
+                                            <View
+                                                key={`fam-${i}`}
+                                                style={{
+                                                    width: 36,
+                                                    height: 36,
+                                                    borderRadius: 18,
+                                                    overflow: 'hidden',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    marginLeft: i === 0 ? 0 : -10,
+                                                    borderWidth: 2,
+                                                    borderColor: vm.colors.background,
+                                                    zIndex: 10 - i,
+                                                }}
+                                            >
+                                                <Image
+                                                    source={getFamilyAvatarSource(person.label)}
+                                                    style={{ width: 36, height: 36 }}
+                                                    resizeMode="cover"
+                                                />
+                                            </View>
+                                        ))}
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }} numberOfLines={1}>
+                                        {profile.loved_ones.length} family member{profile.loved_ones.length > 1 ? 's' : ''}
+                                    </Text>
+                                </View>
+                                <HeartBold size={18} color={vm.colors.muted} />
+                            </TouchableOpacity>
+                        )}
 
                         <ScrollView
                             style={{ marginTop: 16, marginHorizontal: -16 }}
@@ -332,13 +395,33 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                             )}
                         </ScrollView>
 
-                        <TabPillGroup
-                            tabs={vm.tabs}
-                            activeTab={activeTab}
-                            containerStyle={{ marginTop: 16, marginHorizontal: -16 }}
-                            scrollViewStyle={{ paddingHorizontal: 16 }}
-                            renderContent={false}
-                        />
+                        <View style={{ flexDirection: 'row', gap: 6, marginTop: 16, marginHorizontal: -16, paddingHorizontal: 16, paddingVertical: 8 }}>
+                            {vm.tabs.map((tab) => {
+                                const isActive = activeTab === tab.name;
+                                const pt = vm.colors.pillTab;
+                                return (
+                                    <TouchableOpacity
+                                        key={tab.name}
+                                        onPress={tab.onClick}
+                                        style={{
+                                            paddingHorizontal: 16,
+                                            paddingVertical: 6,
+                                            borderRadius: 999,
+                                            backgroundColor: isActive ? pt.activeBg : pt.inactiveBg,
+                                        }}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={{
+                                            fontSize: 14,
+                                            fontWeight: '600',
+                                            color: isActive ? pt.activeText : pt.inactiveText,
+                                        }}>
+                                            {tab.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
 
                         {tabContent}
                     </View>

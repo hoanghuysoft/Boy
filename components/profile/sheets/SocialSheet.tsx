@@ -5,6 +5,7 @@ import { EarthBold } from '@solar-icons/react-native';
 import * as WebBrowser from 'expo-web-browser';
 import React, { forwardRef, memo } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSheetBackHandler } from "./useSheetBackHandler";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -235,6 +236,7 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data,
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
+    const backHandler = useSheetBackHandler(ref);
 
     // Safety check for empty data
     if (!data || data.length === 0) return null;
@@ -249,6 +251,8 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data,
                 height: 5,
                 width: 40,
             }}
+            onDidPresent={backHandler.onDidPresent}
+            onDidDismiss={backHandler.onDidDismiss}
         >
             <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
 

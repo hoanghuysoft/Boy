@@ -3,6 +3,7 @@ import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import dayjs from 'dayjs';
 import React, { forwardRef, memo } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
+import { useSheetBackHandler } from "./useSheetBackHandler";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -97,6 +98,7 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const inset = useSafeAreaInsets();
+    const backHandler = useSheetBackHandler(ref);
 
     // Safety check
     if (!data || data.length === 0) return null;
@@ -111,6 +113,8 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({
                 height: 5,
                 width: 40,
             }}
+            onDidPresent={backHandler.onDidPresent}
+            onDidDismiss={backHandler.onDidDismiss}
         >
             <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
 

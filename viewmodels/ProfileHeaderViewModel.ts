@@ -23,7 +23,7 @@ const MESH_GRADIENT_DEFAULTS = {
 
 const storage = createMMKV();
 
-type TabType = "Information" | "Images" | "Videos" | "Feed";
+type TabType = "Images" | "Videos" | "Feed";
 
 interface UseProfileHeaderViewModelOptions {
     scrollY: Animated.Value;
@@ -184,17 +184,15 @@ export const useProfileHeaderViewModel = ({
     }, [currentMusic, profileMusicId, isPlaying, playTrack, stopPlayback]);
 
     // ─── Tab Handlers ──────────────────────────────────────────────
-    const handleInfoTab = useCallback(() => onTabChange("Information"), [onTabChange]);
     const handleImagesTab = useCallback(() => onTabChange("Images"), [onTabChange]);
     const handleVideosTab = useCallback(() => onTabChange("Videos"), [onTabChange]);
     const handleFeedTab = useCallback(() => onTabChange("Feed"), [onTabChange]);
 
     const tabs = useMemo(() => [
-        { name: "Images", onClick: handleImagesTab },
-        { name: "Videos", onClick: handleVideosTab },
-        { name: "Feed", onClick: handleFeedTab },
-        { name: "Information", onClick: handleInfoTab },
-    ], [handleInfoTab, handleImagesTab, handleVideosTab, handleFeedTab]);
+        { name: "Images", label: "Images", onClick: handleImagesTab },
+        { name: "Videos", label: "Shots", onClick: handleVideosTab },
+        { name: "Feed", label: "Feed", onClick: handleFeedTab },
+    ], [handleImagesTab, handleVideosTab, handleFeedTab]);
 
     // ─── Avatar Preview ────────────────────────────────────────────
     const showAvatarPreview = useCallback(() => {

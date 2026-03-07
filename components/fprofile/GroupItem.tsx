@@ -1,4 +1,4 @@
-import { FBGroup, FBGroupList } from '@/types/localfb';
+import { FBGroup } from '@/types/localfb';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -14,17 +14,10 @@ import CachedImage from './CachedImage';
 
 dayjs.extend(relativeTime);
 
-// Calculate relative time string from a timestamp
 const formatTimeAgo = (timestamp: number): string | null => {
     if (!timestamp || timestamp === 0) return null;
     return dayjs(timestamp).fromNow();
 };
-
-interface FProfileGroupsListProps {
-    groups: FBGroupList | null;
-    fbColors: any;
-    formatCount: (count: number) => string;
-}
 
 const GroupItem: React.FC<{
     group: FBGroup;
@@ -90,50 +83,7 @@ const GroupItem: React.FC<{
     );
 };
 
-export const MemoGroupItem = memo(GroupItem);
-
-const FProfileGroupsList: React.FC<FProfileGroupsListProps> = ({
-    groups,
-    fbColors,
-    formatCount,
-}) => {
-    if (!groups || groups.length === 0) {
-        return (
-            <View style={styles.emptyState}>
-                <Ionicons name="people-circle-outline" size={48} color={fbColors.secondaryText} />
-                <Text style={[styles.emptyText, { color: fbColors.secondaryText }]}>
-                    No groups joined
-                </Text>
-            </View>
-        );
-    }
-
-    return (
-        <View style={styles.container}>
-            {/* {groups.map((group) => (
-                <GroupItem
-                    key={group.id}
-                    group={group}
-                    fbColors={fbColors}
-                    formatCount={formatCount}
-                />
-            ))} */}
-            {groups.map((group) => (
-                <MemoGroupItem
-                    key={group.id}
-                    group={group}
-                    fbColors={fbColors}
-                    formatCount={formatCount}
-                />
-            ))}
-        </View>
-    );
-};
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     groupItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -172,14 +122,7 @@ const styles = StyleSheet.create({
         lineHeight: 17,
         marginTop: 3,
     },
-    emptyState: {
-        paddingVertical: 60,
-        alignItems: 'center',
-        gap: 12,
-    },
-    emptyText: {
-        fontSize: 15,
-    },
 });
 
-export default memo(FProfileGroupsList);
+export const MemoGroupItem = memo(GroupItem);
+export default GroupItem;

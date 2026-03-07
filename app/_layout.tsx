@@ -45,8 +45,8 @@ const StatusBarFade = () => {
                 color: isShots
                     ? 'rgba(0,0,0,0.6)'
                     : theme === 'light'
-                        ? 'rgba(255,255,255,0.8)'
-                        : 'rgba(0,0,0,0.9)',
+                        ? 'rgba(255,255,255,0.5)'
+                        : 'rgba(0,0,0,0.6)',
             },
             1: {
                 color: isShots
