@@ -1,7 +1,8 @@
+import { AlertDialog, Host } from "@expo/ui/jetpack-compose";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { CopyBold, DangerBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
-import React, { forwardRef, memo, useCallback } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { forwardRef, memo, useCallback, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useDeletePost } from "../../services/post";
@@ -77,127 +78,132 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
         const isOwner = post?.profile_id === currentProfileId;
         const deletePostMutation = useDeletePost(currentProfileId || "");
 
+        type DialogConfig = {
+            title: string;
+            text: string;
+            confirmText?: string;
+            dismissText?: string;
+            onConfirm?: () => void;
+        };
+
+        const [dialog, setDialog] = useState<DialogConfig | null>(null);
+        const closeDialog = useCallback(() => setDialog(null), []);
+
+        const dismissSheet = useCallback(() => {
+            if (ref && typeof ref !== "function" && ref.current) {
+                ref.current.dismiss();
+            }
+        }, [ref]);
+
         const handleDelete = useCallback(() => {
             if (!post) return;
-
-            Alert.alert(
-                "Delete Post",
-                "Are you sure you want to delete this post? This action cannot be undone.",
-                [
-                    {
-                        text: "Cancel",
-                        style: "cancel",
-                    },
-                    {
-                        text: "Delete",
-                        style: "destructive",
-                        onPress: async () => {
-                            try {
-                                await deletePostMutation.mutateAsync({
-                                    postId: post.id,
-                                    deleteMedia: false, // Don't delete media by default
-                                });
-
-                                // Close sheet
-                                if (ref && typeof ref !== "function" && ref.current) {
-                                    ref.current.dismiss();
-                                }
-
-                                onDeleted?.();
-
-                                Alert.alert("Success", "Post deleted successfully.");
-                            } catch (error: any) {
-                                Alert.alert(
-                                    "Error",
-                                    error.message || "Failed to delete post. Please try again."
-                                );
-                            }
-                        },
-                    },
-                ]
-            );
-        }, [post, deletePostMutation, ref, onDeleted]);
+            setDialog({
+                title: "Delete Post",
+                text: "Are you sure you want to delete this post? This action cannot be undone.",
+                confirmText: "Delete",
+                dismissText: "Cancel",
+                onConfirm: async () => {
+                    closeDialog();
+                    try {
+                        await deletePostMutation.mutateAsync({ postId: post.id, deleteMedia: false });
+                        dismissSheet();
+                        onDeleted?.();
+                        setDialog({ title: "Success", text: "Post deleted successfully.", confirmText: "OK" });
+                    } catch (error: any) {
+                        setDialog({ title: "Error", text: error.message || "Failed to delete post. Please try again.", confirmText: "OK" });
+                    }
+                },
+            });
+        }, [post, deletePostMutation, dismissSheet, closeDialog, onDeleted]);
 
         const handleReport = useCallback(() => {
-            Alert.alert("Report", "Report feature coming soon!");
-            if (ref && typeof ref !== "function" && ref.current) {
-                ref.current.dismiss();
-            }
-        }, [ref]);
+            dismissSheet();
+            setDialog({ title: "Report", text: "Report feature coming soon!", confirmText: "OK" });
+        }, [dismissSheet]);
 
         const handleShare = useCallback(() => {
-            Alert.alert("Share", "Share feature coming soon!");
-            if (ref && typeof ref !== "function" && ref.current) {
-                ref.current.dismiss();
-            }
-        }, [ref]);
+            dismissSheet();
+            setDialog({ title: "Share", text: "Share feature coming soon!", confirmText: "OK" });
+        }, [dismissSheet]);
 
         const handleCopyLink = useCallback(() => {
-            Alert.alert("Copy Link", "Link copied to clipboard!");
-            if (ref && typeof ref !== "function" && ref.current) {
-                ref.current.dismiss();
-            }
-        }, [ref]);
+            dismissSheet();
+            setDialog({ title: "Copy Link", text: "Link copied to clipboard!", confirmText: "OK" });
+        }, [dismissSheet]);
 
         return (
-            <TrueSheet
-                ref={ref}
-                backgroundColor={theme === "dark" ? colors.containerContent : "#ffffff"}
-                grabberOptions={{
-                    color: colors.muted || "#C4C4C4",
-                    height: 4,
-                    width: 32,
-                }}
-                detents={['auto']}
-            >
-                <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <Text style={[common.heading]}>Post </Text>
-                        <Text style={common.bodySmall}>Got something on your mind?</Text>
-                    </View>
+            <>
+                <TrueSheet
+                    ref={ref}
+                    backgroundColor={theme === "dark" ? colors.containerContent : "#ffffff"}
+                    grabberOptions={{
+                        color: colors.muted || "#C4C4C4",
+                        height: 4,
+                        width: 32,
+                    }}
+                    detents={['auto']}
+                >
+                    <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <Text style={[common.heading]}>Post </Text>
+                            <Text style={common.bodySmall}>Got something on your mind?</Text>
+                        </View>
 
-                    {/* Options List */}
-                    <View style={styles.optionsList}>
-                        <OptionItem
-                            icon={ShareBold}
-                            label="Share"
-                            onPress={handleShare}
-                            colors={colors}
-                            common={common}
-                        />
-
-                        <OptionItem
-                            icon={CopyBold}
-                            label="Copy Link"
-                            onPress={handleCopyLink}
-                            colors={colors}
-                            common={common}
-                        />
-
-                        {!isOwner && (
+                        {/* Options List */}
+                        <View style={styles.optionsList}>
                             <OptionItem
-                                icon={DangerBold}
-                                label="Report"
-                                onPress={handleReport}
+                                icon={ShareBold}
+                                label="Share"
+                                onPress={handleShare}
                                 colors={colors}
                                 common={common}
                             />
-                        )}
 
-                        {isOwner && (
                             <OptionItem
-                                icon={TrashBinTrashBold}
-                                label="Delete Post"
-                                onPress={handleDelete}
-                                destructive
+                                icon={CopyBold}
+                                label="Copy Link"
+                                onPress={handleCopyLink}
                                 colors={colors}
                                 common={common}
                             />
-                        )}
+
+                            {!isOwner && (
+                                <OptionItem
+                                    icon={DangerBold}
+                                    label="Report"
+                                    onPress={handleReport}
+                                    colors={colors}
+                                    common={common}
+                                />
+                            )}
+
+                            {isOwner && (
+                                <OptionItem
+                                    icon={TrashBinTrashBold}
+                                    label="Delete Post"
+                                    onPress={handleDelete}
+                                    destructive
+                                    colors={colors}
+                                    common={common}
+                                />
+                            )}
+                        </View>
                     </View>
-                </View>
-            </TrueSheet>
+                </TrueSheet>
+
+                <Host matchContents>
+                    <AlertDialog
+                        visible={dialog !== null}
+                        title={dialog?.title ?? ""}
+                        text={dialog?.text ?? ""}
+                        confirmButtonText={dialog?.confirmText ?? "OK"}
+                        dismissButtonText={dialog?.dismissText}
+                        onConfirmPressed={() => dialog?.onConfirm ? dialog.onConfirm() : closeDialog()}
+                        onDismissPressed={closeDialog}
+                    />
+                </Host>
+            </>
         );
     }
 ));

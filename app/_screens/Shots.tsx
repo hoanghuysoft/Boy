@@ -4,7 +4,7 @@ import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
 import { FlashList } from "@shopify/flash-list";
-import { ChatRoundLikeOutline, HeartOutline, MutedBold, SquareShareLineOutline, VolumeLoudBold } from "@solar-icons/react-native";
+import { ChatRoundLikeBold, HeartBold, MutedBold, SquareShareLineBold, VolumeLoudBold } from "@solar-icons/react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -211,17 +211,17 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
 
                 {/* Placeholder actions — will be implemented later */}
                 <TouchableOpacity style={styles.actionButton}>
-                    <HeartOutline size={26} color="white" />
+                    <HeartBold size={26} color="white" />
                     <Text style={styles.actionText}>0</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.actionButton}>
-                    <ChatRoundLikeOutline size={26} color="white" />
+                    <ChatRoundLikeBold size={26} color="white" />
                     <Text style={styles.actionText}>0</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.actionButton}>
-                    <SquareShareLineOutline size={26} color="white" />
+                    <SquareShareLineBold size={26} color="white" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -345,11 +345,11 @@ const ShotsScreen = () => {
             {topHeader}
 
             {/* Buffering indicator */}
-            {vm.isBuffering && (
+            {/* {vm.isBuffering && (
                 <View style={styles.bufferingIndicator} pointerEvents="none">
                     <ActivityIndicator size="large" color="rgba(255,255,255,0.7)" />
                 </View>
-            )}
+            )} */}
         </View>
     );
 };
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 12,
         alignItems: 'center',
-        gap: 20,
+        gap: 15,
     },
     actionButton: {
         alignItems: 'center',

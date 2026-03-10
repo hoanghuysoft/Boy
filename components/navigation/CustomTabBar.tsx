@@ -10,9 +10,11 @@ import {
     VideoLibraryOutline
 } from "@solar-icons/react-native";
 import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { SquircleView } from "expo-squircle-view";
 import React, { RefObject, useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
+import { easeGradient } from "react-native-easing-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useScrollStore } from "../../stores/scroll";
@@ -141,7 +143,7 @@ const AnimatedTabButton = ({
                     size={24}
                     color={color}
                 />
-                <Text
+                {/* <Text
                     style={[
                         styles.tabBarLabel,
                         {
@@ -151,7 +153,7 @@ const AnimatedTabButton = ({
                     ]}
                 >
                     {tabConfig.label}
-                </Text>
+                </Text> */}
             </Animated.View>
         </TouchableOpacity>
     );
@@ -179,21 +181,52 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
 
     const tabWidth = layout.width > 0 ? (layout.width - 10) / state.routes.length : 0;
 
+    const { colors: fadeColors, locations: fadeLocations } = easeGradient({
+        colorStops: {
+            0: {
+                color: theme === 'dark' ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0)',
+            },
+            1: {
+                color: theme === 'dark' ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0)',
+            },
+        },
+        extraColorStopsPerTransition: 8,
+    });
+
     return (
+        <>
+        <LinearGradient
+            pointerEvents="none"
+            colors={fadeColors as [string, string, ...string[]]}
+            locations={fadeLocations as [number, number, ...number[]]}
+            start={{ x: 0.5, y: 1 }}
+            end={{ x: 0.5, y: 0 }}
+            style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: bottomSpacing + 55 + 40,
+                zIndex: 0,
+            }}
+        />
         <View
             style={[
                 styles.tabBarContainer,
                 {
                     marginBottom: bottomSpacing,
+                    zIndex: 1,
+                    shadowColor: theme === "dark" ? "rgb(111, 137, 158)" : "rgba(0,0,0,0.12)",
+                    shadowOpacity: theme === "dark" ? 0.22 : 0.12,
                 },
             ]}
         >
             <BlurView
-                tint="dark"
-                intensity={80}
+                tint={theme === "dark" ? "dark" : "light"}
+                intensity={0}
                 blurTarget={blurTargetRef}
-                blurMethod="dimezisBlurView"
-                style={[styles.tabBarContent, { backgroundColor: colors.tabBar + "CC" }]}
+                blurMethod="dimezisBlurViewSdk31Plus"
+                style={[styles.tabBarContent, { backgroundColor: colors.background + "" }]}
                 onLayout={(e) => setLayout(e.nativeEvent.layout)}
             >
                     {/* Animated Pill */}
@@ -214,7 +247,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                                 preserveSmoothing
                                 style={{
                                     flex: 1,
-                                    backgroundColor: colors.card + "CC",
+                                    backgroundColor: colors.secondaryMuted + "CC",
                                     borderRadius: 999,
                                 }}
                             />
@@ -226,7 +259,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                         // Map route names to tab config
                         const tabConfig = tabs.find((tab) => tab.name === route.name);
                         if (!tabConfig) return null;
-                        const color = isFocused ? colors.tabActive : colors.tabInactive;
+                        const color = isFocused ? colors.secondary : colors.tabInactive;
                         const onPress = () => {
                             const event = navigation.emit({
                                 type: "tabPress",
@@ -266,34 +299,36 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                     })}
             </BlurView>
         </View>
+        </>
     );
 };
 
 const styles = StyleSheet.create({
     tabBarContainer: {
-        height: 67,
+        height: 58,
         position: "absolute",
-        marginHorizontal: 16,
+        marginHorizontal: 40,
         borderRadius: 999,
         borderTopWidth: 0,
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: 10,
+            height: 4,
         },
         shadowOpacity: 0.12,
-        shadowRadius: 12,
-        elevation: 8,
+        shadowRadius: 16,
+        elevation: 10,
         bottom: 0,
         left: 0,
         right: 0,
-        overflow: "hidden",
     },
     tabBarContent: {
         flex: 1,
         flexDirection: "row",
         paddingHorizontal: 5,
         paddingVertical: 5,
+        borderRadius: 999,
+        overflow: "hidden",
     },
     tabBarItem: {
         flex: 1,

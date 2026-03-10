@@ -3,7 +3,6 @@ import * as ImagePicker from "expo-image-picker";
 import { FormikHelpers, useFormik } from "formik";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
     NativeScrollEvent,
     NativeSyntheticEvent,
     View
@@ -13,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Yup from "yup";
 
 // Components
+import { AlertDialog, Host } from '@expo/ui/jetpack-compose';
 import {
     ContentInput,
     CreateActionBar,
@@ -25,6 +25,7 @@ import {
     MusicSection,
     SelectedMedia,
 } from "../../components/create";
+
 
 // Context & Services
 import { useThemeContext } from "../../context/ThemeContext";
@@ -89,6 +90,12 @@ const CreateScreen = () => {
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
     const trigger = useScrollStore((state) => state.triggers['chat']);
+    const [dialog, setDialog] = useState<{
+        visible: boolean;
+        title: string;
+        message: string;
+        onConfirm?: () => void;
+    }>({ visible: false, title: "", message: "", onConfirm: undefined });
 
     // Profile data
     const { data: profile } = useProfile('me', true);
@@ -134,7 +141,11 @@ const CreateScreen = () => {
         validateOnBlur: true,
         onSubmit: async (values: CreatePostFormValues, { resetForm: formikResetForm }: FormikHelpers<CreatePostFormValues>) => {
             if (!profileId) {
-                Alert.alert("Error", "Profile not loaded. Please try again.");
+                setDialog({
+                    visible: true,
+                    title: "Error",
+                    message: "Profile not loaded. Please try again.",
+                });
                 return;
             }
 
@@ -178,18 +189,22 @@ const CreateScreen = () => {
 
                 await createPostMutation.mutateAsync(postData);
 
-                Alert.alert("Success", "Your post has been created!", [
-                    {
-                        text: "OK",
-                        onPress: () => {
-                            formikResetForm();
-                            resetUIState();
-                        }
-                    }
-                ]);
+                setDialog({
+                    visible: true,
+                    title: "Success",
+                    message: "Your post has been created!",
+                    onConfirm: () => {
+                        formikResetForm();
+                        resetUIState();
+                    },
+                });
             } catch (error: any) {
                 console.error("Error creating post:", error);
-                Alert.alert("Error", error.message || "Failed to create post. Please try again.");
+                setDialog({
+                    visible: true,
+                    title: "Error",
+                    message: error.message || "Failed to create post. Please try again.",
+                });
             }
         },
     });
@@ -233,10 +248,10 @@ const CreateScreen = () => {
             if (validationError.inner && validationError.inner.length > 0) {
                 // Get all field-level errors
                 const errorMessages = validationError.inner.map((err: any) => err.message).join('\n');
-                Alert.alert("Cannot create your post", errorMessages);
+                setDialog({ visible: true, title: "Create Post", message: errorMessages });
             } else if (validationError.message) {
                 // Form-level error (like from .test())
-                Alert.alert("Cannot create your post", validationError.message);
+                setDialog({ visible: true, title: "Create Post", message: validationError.message });
             }
         }
     }, [values, handleSubmit]);
@@ -265,7 +280,11 @@ const CreateScreen = () => {
     const pickMedia = useCallback(async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
-            Alert.alert("Permission Required", "Please grant media library access to pick images.");
+            setDialog({
+                visible: true,
+                title: "Permission Required",
+                message: "Please grant media library access to pick images.",
+            });
             return;
         }
 
@@ -314,7 +333,11 @@ const CreateScreen = () => {
                         setFieldValue('selectedMedia', [...values.selectedMedia, ...newMedia].slice(0, 10));
                     }
                 } catch (retryError) {
-                    Alert.alert("Error", "Failed to open media picker. Please try again.");
+                    setDialog({
+                        visible: true,
+                        title: "Error",
+                        message: "Failed to open media picker. Please try again.",
+                    });
                 }
             }
         }
@@ -361,6 +384,21 @@ const CreateScreen = () => {
         <View style={[common.screen]}>
             <View style={createStyles.container}>
                 {/* Header */}
+                <Host matchContents>
+                    <AlertDialog
+                        visible={dialog.visible}
+                        title={dialog.title}
+                        text={dialog.message}
+                        confirmButtonText="OK"
+                        onConfirmPressed={() => {
+                            dialog.onConfirm?.();
+                            setDialog((prev) => ({ ...prev, visible: false }));
+                        }}
+                        onDismissPressed={() => {
+                            setDialog((prev) => ({ ...prev, visible: false }));
+                        }}
+                    />
+                </Host>
                 <CreateScreenHeader
                     colors={colors}
                     common={common}

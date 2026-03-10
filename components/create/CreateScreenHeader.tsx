@@ -16,6 +16,7 @@ interface CreateScreenHeaderProps {
     canSubmit: boolean;
     isSubmitting: boolean;
     onSubmit: () => void;
+    subtitle?: string;
 }
 
 export const CreateScreenHeader = memo(({
@@ -25,6 +26,7 @@ export const CreateScreenHeader = memo(({
     canSubmit,
     isSubmitting,
     onSubmit,
+    subtitle = "Share something with your followers",
 }: CreateScreenHeaderProps) => (
     <View
         style={[
@@ -35,7 +37,12 @@ export const CreateScreenHeader = memo(({
             },
         ]}
     >
-        <Text style={[common.headline, { color: colors.text, fontWeight: "bold" }]}>Create Post</Text>
+        <View>
+            <Text style={[common.heading, { fontSize: 28 }]}>Create Post</Text>
+            <Text style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
+                {subtitle}
+            </Text>
+        </View>
         <TouchableOpacity
             style={[
                 createStyles.submitButton,

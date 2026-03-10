@@ -129,7 +129,6 @@
   },
   "private": true,
   "overrides": {
-    "expo-modules-core": "55.0.14",
-    "hermes-compiler": "250829098.0.4"
+    "expo-modules-core": "55.0.14"
   }
 }

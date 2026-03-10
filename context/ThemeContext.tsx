@@ -17,7 +17,8 @@ export type ThemeColors = {
   divider: string;
   muted: string;
   verify: string;
-  /** Facebook-style pill tab colors (active bg, active text, inactive bg, inactive text) */
+  secondary: string;
+  secondaryMuted: string;
   pillTab: {
     activeBg: string;
     activeText: string;
@@ -48,6 +49,8 @@ const lightColors: ThemeColors = {
   divider: "#e0e0e2",
   muted: "#888888",
   verify: "#1c94e6",
+  secondary: "#0e64f6",
+  secondaryMuted: "#ecf4fe",
   pillTab: {
     activeBg: "#E7F3FF",
     activeText: "#0866FF",
@@ -67,6 +70,8 @@ const darkColors: ThemeColors = {
   divider: "#363638",
   muted: "#888888",
   verify: "#1c94e6",
+  secondary: "#0e64f6",
+  secondaryMuted: "#001b3a",
   pillTab: {
     activeBg: "#263951",
     activeText: "#5890FF",

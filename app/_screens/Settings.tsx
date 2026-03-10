@@ -302,6 +302,7 @@ const SettingsScreen = () => {
                     </View>
                 </TouchableOpacity>
             </Modal>
+            <View style={{marginBottom: inset.bottom + 16}}></View>
         </ScrollView >
     );
 };
