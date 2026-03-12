@@ -1,5 +1,6 @@
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { clearVideoCache, formatBytes, getCacheCount, getCacheSize, setMaxCacheSize } from "@/services/videoCache";
+import { useSearchHistoryStore } from "@/stores/searchHistory";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
@@ -234,6 +235,7 @@ const SettingsScreen = () => {
                         setIsLoggingOut(true);
                         const { signOut } = await import("@/services/login");
                         await signOut();
+                        useSearchHistoryStore.getState().clearHistory();
                         router.dismissAll();
                         router.replace("/");
                     } catch (e) {
@@ -302,7 +304,7 @@ const SettingsScreen = () => {
                     </View>
                 </TouchableOpacity>
             </Modal>
-            <View style={{marginBottom: inset.bottom + 16}}></View>
+            <View style={{ marginBottom: inset.bottom + 16 }}></View>
         </ScrollView >
     );
 };

@@ -1,7 +1,9 @@
 import { queryClient } from "@/services/client";
 import { ProfilesResponse, useAdminCheck, useInfiniteProfiles } from "@/services/userprofile";
 import { useScrollStore } from "@/stores/scroll";
+import { useSearchHistoryStore } from "@/stores/searchHistory";
 import { Profile } from "@/types/profile";
+import { useRouter } from "expo-router";
 import { debounce, flatMap } from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard, Platform, TextInput } from "react-native";
@@ -28,6 +30,11 @@ const SEARCH_BAR_HEIGHT = 56;
 
 export const useSearchViewModel = () => {
     const insets = useSafeAreaInsets();
+    const router = useRouter();
+
+    // ─── Search History (MMKV) ────────────────────────────────────
+    const recordProfileClick = useSearchHistoryStore((s) => s.recordProfileClick);
+    const updateProfilesBatch = useSearchHistoryStore((s) => s.updateProfilesBatch);
 
     // ─── Search State ──────────────────────────────────────────────
     const [searchQuery, setSearchQuery] = useState("");
@@ -172,6 +179,43 @@ export const useSearchViewModel = () => {
         }
     }, [profiles]);
 
+    // ─── Update Local Profile Cache ───────────────────────────────
+    // When profiles are loaded/refreshed, silently update any cached
+    // profiles so name/avatar stays current without resetting click counts.
+    useEffect(() => {
+        if (!isAdmin && profiles.length > 0) {
+            updateProfilesBatch(
+                profiles.map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                    avatar_url: p.avatar_url,
+                    username: p.username,
+                    is_verified: p.is_verified,
+                    gender: p.gender,
+                }))
+            );
+        }
+    }, [profiles, isAdmin, updateProfilesBatch]);
+
+    // ─── Profile Press (track + navigate) ────────────────────────
+    const handleProfilePress = useCallback(
+        (profile: Profile) => {
+            recordProfileClick({
+                id: profile.id,
+                name: profile.name,
+                avatar_url: profile.avatar_url,
+                username: profile.username,
+                is_verified: profile.is_verified,
+                gender: profile.gender,
+            });
+            router.push({
+                pathname: "/profile/[id]" as any,
+                params: { id: profile.id, isMe: "false" },
+            });
+        },
+        [recordProfileClick, router]
+    );
+
     // ─── Refresh ──────────────────────────────────────────────────
     const handleRefresh = useCallback(async () => {
         if (!isQueryEnabled) return;
@@ -216,5 +260,6 @@ export const useSearchViewModel = () => {
         handleBlur,
         handleRefresh,
         handleEndReached,
+        handleProfilePress,
     };
 };

@@ -3,7 +3,10 @@ import OptionModal from "@/components/HomeOptionModal";
 import SettingsIcon from "@/icons/settings";
 import { useHomeViewModel } from "@/viewmodels/HomeViewModel";
 import FastImage from "@d11/react-native-fast-image";
-import { BookmarkOpenedLineDuotone, MagnifierLineDuotone } from "@solar-icons/react-native";
+import {
+  BookmarkOpenedLineDuotone,
+  MagnifierLineDuotone,
+} from "@solar-icons/react-native";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
@@ -17,13 +20,14 @@ const HomeScreen = () => {
 
   return (
     <>
-      <View style={[vm.common.screen, { position: 'relative' }]}>
+      <View style={[vm.common.screen, { position: "relative" }]}>
         {vm.carouselEnabled && (
-          <HomeCarousel
-            animatedVisibility={vm.carouselVisibility}
-          />
+          <HomeCarousel animatedVisibility={vm.carouselVisibility} />
         )}
-        <OptionModal modalVisible={vm.modalVisible} setModalVisible={vm.setModalVisible} />
+        <OptionModal
+          modalVisible={vm.modalVisible}
+          setModalVisible={vm.setModalVisible}
+        />
         <Animated.View
           style={{
             position: "absolute",
@@ -38,59 +42,103 @@ const HomeScreen = () => {
         <Animated.View
           pointerEvents="box-none"
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: vm.insets.top,
             left: 0,
             right: 0,
             zIndex: 100,
             opacity: vm.headerPillVisibility,
-            transform: [{ translateY: vm.headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [-100, 0] }) }],
+            transform: [
+              {
+                translateY: vm.headerPillVisibility.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-100, 0],
+                }),
+              },
+            ],
           }}
         >
-          <View style={[vm.common.row, {
-            paddingHorizontal: 16,
-            paddingTop: 16,
-            paddingBottom: 8,
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 12,
-          }]}>
-            <Animated.View style={[vm.common.row, {
-              gap: 10,
-              padding: 8,
-              borderRadius: 100,
-              overflow: 'hidden',
-              transform: [{ scale: vm.headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
-            }]}>
+          <View
+            style={[
+              vm.common.row,
+              {
+                paddingHorizontal: 16,
+                paddingTop: 16,
+                paddingBottom: 8,
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 12,
+              },
+            ]}
+          >
+            <Animated.View
+              style={[
+                vm.common.row,
+                {
+                  gap: 10,
+                  padding: 8,
+                  borderRadius: 100,
+                  overflow: "hidden",
+                  transform: [
+                    {
+                      scale: vm.headerPillVisibility.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.9, 1],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
               {/* Animated background */}
-              <Animated.View style={{
-                ...StyleSheet.absoluteFill,
-                backgroundColor: vm.pillBgColor,
-                opacity: vm.pillBgOpacity,
-              }} />
-              <FastImage resizeMode="contain" source={require("../../assets/images/logo_head.png")} style={{ width: 40, height: 30, borderRadius: 100 }} />
+              <Animated.View
+                style={{
+                  ...StyleSheet.absoluteFill,
+                  backgroundColor: vm.pillBgColor,
+                  opacity: vm.pillBgOpacity,
+                }}
+              />
+              <FastImage
+                resizeMode="contain"
+                source={require("../../assets/images/logo_head.png")}
+                style={{ width: 40, height: 30, borderRadius: 100 }}
+              />
             </Animated.View>
 
-            <Animated.View style={[vm.common.row, {
-              gap: 10,
-              padding: 8,
-              borderRadius: 100,
-              overflow: 'hidden',
-              transform: [{ scale: vm.headerPillVisibility.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
-            }]}>
+            <Animated.View
+              style={[
+                vm.common.row,
+                {
+                  gap: 10,
+                  padding: 8,
+                  borderRadius: 100,
+                  overflow: "hidden",
+                  transform: [
+                    {
+                      scale: vm.headerPillVisibility.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.9, 1],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
               {/* Animated background */}
-              <Animated.View style={{
-                ...StyleSheet.absoluteFillObject,
-                backgroundColor: vm.pillBgColor,
-                opacity: vm.pillBgOpacity,
-              }} />
+              <Animated.View
+                style={{
+                  ...StyleSheet.absoluteFill,
+                  backgroundColor: vm.pillBgColor,
+                  opacity: vm.pillBgOpacity,
+                }}
+              />
               <TouchableOpacity onPress={vm.navigateToSearch}>
                 <MagnifierLineDuotone size={24} color={vm.iconColor} />
               </TouchableOpacity>
               <TouchableOpacity onPress={vm.navigateToBookmarks}>
                 <BookmarkOpenedLineDuotone size={26} color={vm.iconColor} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={vm.openModal}>
+              <TouchableOpacity onPress={vm.openSettingsPage}>
                 <SettingsIcon size={24} color={vm.iconColor} />
               </TouchableOpacity>
             </Animated.View>
@@ -107,10 +155,7 @@ const HomeScreen = () => {
         currentProfileId={vm.myProfile?.id || null}
         onDeleted={vm.handlePostDeleted}
       />
-      <LikersSheet
-        ref={vm.likersSheetRef}
-        postId={vm.selectedLikePostId}
-      />
+      <LikersSheet ref={vm.likersSheetRef} postId={vm.selectedLikePostId} />
       <CommentsSheet
         ref={vm.commentsSheetRef}
         postId={vm.selectedCommentPostId}
@@ -126,15 +171,15 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   activeIndicator: {
-    width: '100%',
+    width: "100%",
     height: 2,
-    backgroundColor: 'orange',
+    backgroundColor: "orange",
     borderRadius: 999,
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 60,
     paddingHorizontal: 24,
   },

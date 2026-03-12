@@ -24,10 +24,12 @@ const FlashList = FlashListOriginal as any;
 import { useRouter } from "expo-router";
 
 import { appleIntelli } from "@/components/glow/AppleIntelliConfig";
+import { MostSearchedSection } from "@/components/search/MostSearchedSection";
 import { renderEmptyState } from "@/components/search/SearchEmpty";
 import { renderFooter } from "@/components/search/SearchFooter";
 import { SearchProfileItem } from "@/components/search/SearchProfileItem";
 import { renderProfileSkeleton } from "@/components/search/SearchProfileSkeleton";
+import { TrendingHashtagsSection } from "@/components/search/TrendingHashtagsSection";
 import { useSearchViewModel } from "../../viewmodels/SearchViewModel";
 
 // TurboImage cache policy - use dataCache for aggressive local caching
@@ -43,29 +45,54 @@ const SearchScreen = () => {
   // ─── ViewModel ─────────────────────────────────────────────────
   const vm = useSearchViewModel();
 
-  const renderItem = useCallback(({ item }: { item: Profile }) => (
-    <SearchProfileItem
-      item={item}
-      colors={colors}
-      styles={styles}
-      common={common}
-      navigation={navigation}
-      imageCachePolicy={IMAGE_CACHE_POLICY}
-    />
-  ), [colors, styles, common, navigation]);
+  const renderItem = useCallback(
+    ({ item }: { item: Profile }) => (
+      <SearchProfileItem
+        item={item}
+        colors={colors}
+        styles={styles}
+        common={common}
+        navigation={navigation}
+        imageCachePolicy={IMAGE_CACHE_POLICY}
+        onPress={vm.handleProfilePress}
+      />
+    ),
+    [colors, styles, common, navigation, vm.handleProfilePress],
+  );
 
-  const ListEmptyComponent = useCallback(() =>
-    renderEmptyState({ colors, styles, common, searchQuery: vm.searchQuery, isAdmin: vm.isAdmin }),
-    [colors, styles, common, vm.searchQuery, vm.isAdmin]);
+  const ListEmptyComponent = useCallback(
+    () =>
+      renderEmptyState({
+        colors,
+        styles,
+        common,
+        searchQuery: vm.searchQuery,
+        isAdmin: vm.isAdmin,
+      }),
+    [colors, styles, common, vm.searchQuery, vm.isAdmin],
+  );
 
-  const ListFooterComponent = useCallback(() =>
-    renderFooter({
-      isFetchingNextPage: vm.isFetchingNextPage,
-      colors,
-      styles,
-      renderProfileSkeleton
-    }),
-    [vm.isFetchingNextPage, colors, styles]);
+  const ListFooterComponent = useCallback(
+    () =>
+      renderFooter({
+        isFetchingNextPage: vm.isFetchingNextPage,
+        colors,
+        styles,
+        renderProfileSkeleton,
+      }),
+    [vm.isFetchingNextPage, colors, styles],
+  );
+
+  const ListHeaderComponent = useCallback(
+    () =>
+      !vm.searchQuery ? (
+        <View style={{ paddingBottom: 8 }}>
+          <MostSearchedSection />
+          <TrendingHashtagsSection />
+        </View>
+      ) : null,
+    [vm.searchQuery],
+  );
 
   return (
     <KeyboardAvoidingView
@@ -74,7 +101,14 @@ const SearchScreen = () => {
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       {/* Floating back button — same pattern as Bookmarks/Settings */}
-      <View style={{ position: 'absolute', top: vm.insets.top + 16, left: 16, zIndex: 1000 }}>
+      <View
+        style={{
+          position: "absolute",
+          top: vm.insets.top + 16,
+          left: 16,
+          zIndex: 1000,
+        }}
+      >
         <TouchableOpacity
           onPress={() => navigation.back()}
           style={{
@@ -82,8 +116,8 @@ const SearchScreen = () => {
             borderRadius: 999,
             width: 40,
             height: 40,
-            justifyContent: 'center',
-            alignItems: 'center',
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -97,7 +131,7 @@ const SearchScreen = () => {
             ? `${vm.totalResults} result(s)`
             : vm.isAdmin
               ? `People ${vm.totalResults}`
-              : "Search for people"}
+              : "Explore for more contents on the platform"}
         </Text>
       </View>
 
@@ -111,6 +145,7 @@ const SearchScreen = () => {
             styles.listContent,
             { paddingBottom: vm.contentBottomPadding },
           ]}
+          ListHeaderComponent={ListHeaderComponent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           estimatedItemSize={80}
@@ -127,6 +162,7 @@ const SearchScreen = () => {
             { paddingBottom: vm.contentBottomPadding },
             vm.profiles.length === 0 && styles.emptyListContent,
           ]}
+          ListHeaderComponent={ListHeaderComponent}
           ListEmptyComponent={ListEmptyComponent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -163,10 +199,7 @@ const SearchScreen = () => {
           <View style={[styles.searchBar]}>
             <TextInput
               ref={vm.inputRef}
-              style={[
-                styles.searchInput,
-                { color: "white", marginLeft: 12 },
-              ]}
+              style={[styles.searchInput, { color: "white", marginLeft: 12 }]}
               placeholder="What are you looking for?"
               placeholderTextColor={colors.muted}
               value={vm.searchQuery}
@@ -215,7 +248,6 @@ const styles = StyleSheet.create({
   },
   emptyListContent: {
     flex: 1,
-    justifyContent: "center",
   },
   profileCard: {
     flexDirection: "row",

@@ -13,6 +13,7 @@ interface SearchProfileItemProps {
     common: any;
     navigation: any;
     imageCachePolicy: any;
+    onPress?: (item: Profile) => void;
 }
 
 export const SearchProfileItem = React.memo(({
@@ -21,8 +22,20 @@ export const SearchProfileItem = React.memo(({
     styles,
     common,
     navigation,
-    imageCachePolicy
+    imageCachePolicy,
+    onPress,
 }: SearchProfileItemProps) => {
+    const handlePress = () => {
+        if (onPress) {
+            onPress(item);
+        } else {
+            navigation.push({
+                pathname: "/profile/[id]",
+                params: { id: item.id, isMe: "false" },
+            });
+        }
+    };
+
     return (
         <TouchableOpacity
             style={[
@@ -30,12 +43,7 @@ export const SearchProfileItem = React.memo(({
                 { backgroundColor: colors.containerContent },
             ]}
             activeOpacity={0.7}
-            onPress={() =>
-                navigation.push({
-                    pathname: "/profile/[id]",
-                    params: { id: item.id, isMe: "false" },
-                })
-            }
+            onPress={handlePress}
         >
             {item.avatar_url ? <TurboImage
                 source={{ uri: item.avatar_url }}
