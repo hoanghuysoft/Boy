@@ -132,47 +132,48 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
 
         // Education
         const eduItems: InfoItem[] = [];
-        if (profile?.college) eduItems.push({ kind: 'solar', icon: SquareAcademicCapBold, label: profile.college });
-        if (profile?.highschool) eduItems.push({ kind: 'solar', icon: NotebookBookmarkBold, label: profile.highschool });
+        if (profile?.college) eduItems.push({ kind: 'solar', icon: SquareAcademicCapBold, label: profile.college,sublabel: "College" });
+        if (profile?.highschool) eduItems.push({ kind: 'solar', icon: NotebookBookmarkBold, label: profile.highschool,sublabel: "High School" });
         if (eduItems.length > 0) result.push({ title: 'Education', items: eduItems });
 
         // Places
         if (homeInfo) {
             result.push({
                 title: 'Places Lived',
-                items: [{ kind: 'solar', icon: PointOnMapBold, label: homeInfo }],
+                items: [{ kind: 'solar', icon: PointOnMapBold, label: homeInfo,sublabel: "Hometown" }],
             });
         }
 
         // Personal
         const personalItems: InfoItem[] = [];
         const birthdayStr = formatDate(profile?.birthday);
-        if (birthdayStr) personalItems.push({ kind: 'solar', icon: CalendarBold, label: birthdayStr });
+        if (birthdayStr) personalItems.push({ kind: 'solar', icon: CalendarBold, label: birthdayStr,sublabel: "Birthday" });
         if (profile?.gender) {
             personalItems.push({
                 kind: 'solar',
                 icon: profile.gender === 'male' ? MenBold : WomenBold,
                 label: profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1),
+                sublabel: "Gender",
             });
         }
-        if (height) personalItems.push({ kind: 'material', name: 'height', label: `${height} cm` });
-        if (weight) personalItems.push({ kind: 'solar', icon: WeigherBold, label: `${weight} kg` });
+        if (height) personalItems.push({ kind: 'material', name: 'height', label: `${height} cm`,sublabel: "Height" });
+        if (weight) personalItems.push({ kind: 'solar', icon: WeigherBold, label: `${weight} kg`,sublabel: "Weight" });
         if (personalItems.length > 0) result.push({ title: 'Personal', items: personalItems });
 
         // Contact
         const contactItems: InfoItem[] = [];
-        if (profile?.email) contactItems.push({ kind: 'solar', icon: LetterBold, label: profile.email });
-        if (profile?.phone) contactItems.push({ kind: 'solar', icon: PhoneBold, label: profile.phone });
-        if (profile?.username) contactItems.push({ kind: 'ionicons', name: 'at-circle-outline', label: `@${profile.username}` });
+        if (profile?.email) contactItems.push({ kind: 'solar', icon: LetterBold, label: profile.email,sublabel: "Email" });
+        if (profile?.phone) contactItems.push({ kind: 'solar', icon: PhoneBold, label: profile.phone,sublabel: "Phone" });
+        if (profile?.username) contactItems.push({ kind: 'ionicons', name: 'at-circle-outline', label: `@${profile.username}`,sublabel: "Username" });
         if (contactItems.length > 0) result.push({ title: 'Contact', items: contactItems });
 
         // More
         const moreItems: InfoItem[] = [];
-        if (profile?.hobby) moreItems.push({ kind: 'ionicons', name: 'extension-puzzle-outline', label: profile.hobby });
-        if (profile?.talent) moreItems.push({ kind: 'ionicons', name: 'star-outline', label: profile.talent });
-        if (profile?.license_plate) moreItems.push({ kind: 'solar', icon: WheelBold, label: profile.license_plate });
+        if (profile?.hobby) moreItems.push({ kind: 'ionicons', name: 'extension-puzzle-outline', label: profile.hobby,sublabel: "Hobby" });
+        if (profile?.talent) moreItems.push({ kind: 'ionicons', name: 'star-outline', label: profile.talent,sublabel: "Talent" });
+        if (profile?.license_plate) moreItems.push({ kind: 'solar', icon: WheelBold, label: profile.license_plate,sublabel: "License Plate" });
         const marriedStr = formatDate(profile?.married_date);
-        if (marriedStr) moreItems.push({ kind: 'ionicons', name: 'heart-outline', label: `Married: ${marriedStr}` });
+        if (marriedStr) moreItems.push({ kind: 'ionicons', name: 'heart-outline', label: `Married: ${marriedStr}`,sublabel: "Married Date" });
         if (moreItems.length > 0) result.push({ title: 'More', items: moreItems });
 
         // Banking

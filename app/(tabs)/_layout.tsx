@@ -1,4 +1,3 @@
-import { BlurTargetView } from "expo-blur";
 import { Tabs } from "expo-router";
 import React, { useRef } from "react";
 import { View } from "react-native";
@@ -8,13 +7,12 @@ export default function TabLayout() {
     const blurTargetRef = useRef<View | null>(null);
 
     return (
-        <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
-            <Tabs
-                tabBar={(props) => <CustomTabBar {...props} blurTargetRef={blurTargetRef} />}
-                screenOptions={{
-                    headerShown: false,
-                }}
-            >
+        <Tabs
+            tabBar={(props) => <CustomTabBar {...props} blurTargetRef={blurTargetRef} />}
+            screenOptions={{
+                headerShown: false,
+            }}
+        >
                 <Tabs.Screen name="index" options={{ title: 'Home', animation: 'none' }} />
                 <Tabs.Screen name="shots" options={{ title: 'Shots', animation: 'none' }} />
                 <Tabs.Screen name="chat" options={{ title: 'Chat', animation: 'none' }} />
@@ -23,7 +21,6 @@ export default function TabLayout() {
                     options={{ title: 'Profile', animation: 'none' }}
                     initialParams={{ isMe: true }}
                 />
-            </Tabs>
-        </BlurTargetView>
+        </Tabs>
     );
 }

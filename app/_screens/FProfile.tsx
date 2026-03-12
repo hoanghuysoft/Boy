@@ -8,6 +8,7 @@ import {
 } from '@/components/fprofile';
 import CachedImage from '@/components/fprofile/CachedImage';
 import { FBPhotoList } from '@/types/localfb';
+import { Profile } from '@/types/profile';
 import { useFProfileViewModel } from '@/viewmodels/FProfileViewModel';
 import { Ionicons } from '@expo/vector-icons';
 import { Galeria } from '@nandorojo/galeria';
@@ -61,6 +62,65 @@ const PhotoRowItem = React.memo<{
     </View>
 ));
 
+// ─── Tab Bar ─────────────────────────────────────────────────────────────────
+// Isolated outside FProfileScreen so only the tab bar re-renders on tab switch,
+// never the profile header above it.
+type TabBarProps = { activeTab: TabType; onTabPress: (tab: TabType) => void; colors: any };
+
+const TabBar = React.memo(({ activeTab, onTabPress, colors: c }: TabBarProps) => (
+    <View style={[styles.stickyTabContainer, { backgroundColor: c.contentBg, paddingTop: 10 }]}>
+        <View style={[styles.tabsContainer, { borderBottomColor: c.divider }]}>
+            {(['All', 'Reels', 'Photos', 'Groups'] as TabType[]).map((tab) => {
+                const isActive = activeTab === tab;
+                return (
+                    <TouchableOpacity
+                        key={tab}
+                        onPress={() => onTabPress(tab)}
+                        style={[styles.tabButton, { backgroundColor: isActive ? c.tabActiveBg : c.tabInactiveBg }]}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={[styles.tabText, { color: isActive ? c.tabActiveText : c.tabInactiveText }]}>
+                            {tab}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+    </View>
+));
+
+// ─── Profile List Header ──────────────────────────────────────────────────────
+// React.memo ensures FProfileHeader is skipped on tab switches (only activeTab
+// changes, which is not forwarded to FProfileHeader).
+type ProfileListHeaderProps = {
+    profile: Profile;
+    fbColors: any;
+    insetsTop: number;
+    postCount: number;
+    photoCount: number;
+    videoCount: number;
+    onBack: () => void;
+    activeTab: TabType;
+    onTabPress: (tab: TabType) => void;
+};
+
+const ProfileListHeader = React.memo(({
+    profile, fbColors, insetsTop, postCount, photoCount, videoCount, onBack, activeTab, onTabPress,
+}: ProfileListHeaderProps) => (
+    <View>
+        <FProfileHeader
+            profile={profile}
+            fbColors={fbColors}
+            insetsTop={insetsTop}
+            postCount={postCount}
+            photoCount={photoCount}
+            videoCount={videoCount}
+            onBack={onBack}
+        />
+        <TabBar activeTab={activeTab} onTabPress={onTabPress} colors={fbColors} />
+    </View>
+));
+
 const FProfileScreen = () => {
     const vm = useFProfileViewModel();
     const insets = useSafeAreaInsets();
@@ -78,10 +138,10 @@ const FProfileScreen = () => {
         return () => clearTimeout(timeout);
     }, []);
 
+    // Stable callback — no activeTab dep needed; React ignores no-op setState calls.
     const handleTabPress = useCallback((tab: TabType) => {
-        if (tab === activeTab) return;
         setActiveTab(tab);
-    }, [activeTab]);
+    }, []);
 
     // ─── Loading state ──────────────────────────────────────────────────
     if (!vm.profile) {
@@ -98,37 +158,20 @@ const FProfileScreen = () => {
     const videoCount = vm.fbData.videos?.length ?? 0;
 
     // ─── Header + Tab bar as ListHeaderComponent ─────────────────────────
-    const ListHeader = useMemo(() => (
-        <View>
-            <FProfileHeader
-                profile={profile}
-                fbColors={c}
-                insetsTop={insets.top}
-                postCount={postCount}
-                photoCount={photoCount}
-                videoCount={videoCount}
-                onBack={vm.goBack}
-            />
-            <View style={[styles.stickyTabContainer, { backgroundColor: c.contentBg, paddingTop: 10 }]}>
-                <View style={[styles.tabsContainer, { borderBottomColor: c.divider }]}>
-                    {(['All', 'Reels', 'Photos', 'Groups'] as TabType[]).map((tab) => {
-                        const isActive = activeTab === tab;
-                        return (
-                            <TouchableOpacity
-                                key={tab}
-                                onPress={() => handleTabPress(tab)}
-                                style={[styles.tabButton, { backgroundColor: isActive ? c.tabActiveBg : c.tabInactiveBg }]}
-                                activeOpacity={0.7}
-                            >
-                                <Text style={[styles.tabText, { color: isActive ? c.tabActiveText : c.tabInactiveText }]}>
-                                    {tab}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                </View>
-            </View>
-        </View>
+    // ProfileListHeader is React.memo'd: when activeTab changes only TabBar
+    // re-renders inside it; FProfileHeader is fully skipped.
+    const listHeader = useMemo(() => (
+        <ProfileListHeader
+            profile={profile}
+            fbColors={c}
+            insetsTop={insets.top}
+            postCount={postCount}
+            photoCount={photoCount}
+            videoCount={videoCount}
+            onBack={vm.goBack}
+            activeTab={activeTab}
+            onTabPress={handleTabPress}
+        />
     ), [profile, c, insets.top, postCount, photoCount, videoCount, vm.goBack, activeTab, handleTabPress]);
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -249,7 +292,7 @@ const FProfileScreen = () => {
             data={data}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
-            ListHeaderComponent={ListHeader}
+            ListHeaderComponent={listHeader}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
         />

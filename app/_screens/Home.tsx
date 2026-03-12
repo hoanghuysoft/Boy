@@ -64,7 +64,7 @@ const HomeScreen = () => {
             }]}>
               {/* Animated background */}
               <Animated.View style={{
-                ...StyleSheet.absoluteFillObject,
+                ...StyleSheet.absoluteFill,
                 backgroundColor: vm.pillBgColor,
                 opacity: vm.pillBgOpacity,
               }} />

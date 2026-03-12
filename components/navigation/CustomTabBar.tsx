@@ -9,7 +9,6 @@ import {
     VideoLibraryBold,
     VideoLibraryOutline
 } from "@solar-icons/react-native";
-import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { SquircleView } from "expo-squircle-view";
 import React, { RefObject, useEffect, useRef } from "react";
@@ -221,11 +220,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                 },
             ]}
         >
-            <BlurView
-                tint={theme === "dark" ? "dark" : "light"}
-                intensity={0}
-                blurTarget={blurTargetRef}
-                blurMethod="dimezisBlurViewSdk31Plus"
+            <View
                 style={[styles.tabBarContent, { backgroundColor: colors.background + "" }]}
                 onLayout={(e) => setLayout(e.nativeEvent.layout)}
             >
@@ -297,7 +292,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                             />
                         );
                     })}
-            </BlurView>
+            </View>
         </View>
         </>
     );

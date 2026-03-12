@@ -295,23 +295,68 @@ const ProfileContent = () => {
   }
 
   return (
-    <BlurTargetView ref={vm.blurTargetRef} style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <View style={vm.common.screen}>
         {/* Sticky Header Container */}
+        <BlurTargetView ref={vm.blurTargetRef} style={{ flex: 1 }}>
+          {renderImageQuickPreview()}
+          {renderVideoQuickPreview()}
+          <ProfileGalleryModal
+            visible={vm.galleryVisible}
+            photos={vm.photos}
+            music={vm.music}
+            initialIndex={vm.galleryIndex}
+            onClose={vm.closeGallery}
+            profileName={vm.profile?.name}
+            isVerified={vm.profile?.is_verified}
+          />
+          <GalleryModal />
+
+          <AnimatedFlashList
+            key={`flashlist-${numColumns}`}
+            ref={vm.listRef}
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            numColumns={numColumns}
+            contentContainerStyle={[
+              { paddingBottom: vm.isMe ? 100 + vm.inset.bottom : vm.inset.bottom + 10 }
+            ]}
+            ListHeaderComponent={ListHeader}
+            ListEmptyComponent={ListEmpty}
+            onScroll={vm.onScroll}
+            scrollEventThrottle={16}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={vm.isProfileRefetching}
+                onRefresh={vm.onRefresh}
+                tintColor={vm.colors.text}
+                colors={[vm.colors.text]}
+                progressBackgroundColor={vm.colors.card}
+                style={{ zIndex: 10 }}
+                progressViewOffset={vm.inset.top + 30}
+              />
+            }
+            estimatedItemSize={estimatedItemSize}
+            onEndReached={vm.handleEndReached}
+            onEndReachedThreshold={0.5}
+          />
+        </BlurTargetView>
+
         {!vm.isMe && (
           <View style={{ position: 'absolute', top: vm.inset.top + 8, left: 16, zIndex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
 
               {/* Back Button */}
               <BlurView
-                tint="dark"
+                tint={vm.theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
                 intensity={80}
                 blurTarget={vm.blurTargetRef}
-                blurMethod="dimezisBlurView"
+                blurMethod="dimezisBlurViewSdk31Plus"
                 style={{
                   borderRadius: 999,
                   overflow: 'hidden',
-                  backgroundColor: vm.colors.containerContent + "CC",
                 }}
               >
                 <TouchableOpacity
@@ -332,9 +377,9 @@ const ProfileContent = () => {
                 onPress={() => vm.musicSheetRef.current?.present()}
                 style={{ height: 40, width: 150 }}
               >
-                <View style={styles.blurWrapper}>
+                <BlurView tint={vm.theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"} intensity={80} blurTarget={vm.blurTargetRef} blurMethod="dimezisBlurView" style={styles.blurWrapper}>
                   <View
-                    style={[StyleSheet.absoluteFill, { backgroundColor: vm.colors.containerContent }]}
+                    style={[StyleSheet.absoluteFill, { }]}
                   />
 
                   <View style={styles.blurContent}>
@@ -367,55 +412,12 @@ const ProfileContent = () => {
                       </Text>
                     </View>
                   </View>
-                </View>
+                </BlurView>
               </TouchableOpacity>
 
             </View>
           </View>
         )}
-        {renderImageQuickPreview()}
-        {renderVideoQuickPreview()}
-        <ProfileGalleryModal
-          visible={vm.galleryVisible}
-          photos={vm.photos}
-          music={vm.music}
-          initialIndex={vm.galleryIndex}
-          onClose={vm.closeGallery}
-          profileName={vm.profile?.name}
-          isVerified={vm.profile?.is_verified}
-        />
-        <GalleryModal />
-
-        <AnimatedFlashList
-          key={`flashlist-${numColumns}`}
-          ref={vm.listRef}
-          data={data}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          numColumns={numColumns}
-          contentContainerStyle={[
-            { paddingBottom: vm.isMe ? 100 + vm.inset.bottom : vm.inset.bottom + 10 }
-          ]}
-          ListHeaderComponent={ListHeader}
-          ListEmptyComponent={ListEmpty}
-          onScroll={vm.onScroll}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={vm.isProfileRefetching}
-              onRefresh={vm.onRefresh}
-              tintColor={vm.colors.text}
-              colors={[vm.colors.text]}
-              progressBackgroundColor={vm.colors.card}
-              style={{ zIndex: 10 }}
-              progressViewOffset={vm.inset.top + 30}
-            />
-          }
-          estimatedItemSize={estimatedItemSize}
-          onEndReached={vm.handleEndReached}
-          onEndReachedThreshold={0.5}
-        />
 
         {/* Floating Scroll to Top Button */}
         {!vm.isMe && (
@@ -505,7 +507,7 @@ const ProfileContent = () => {
         />
 
       </View>
-    </BlurTargetView>
+    </View>
   );
 };
 
