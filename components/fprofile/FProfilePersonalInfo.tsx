@@ -1,7 +1,8 @@
 import { Profile } from '@/types/profile';
 import { CalendarBold, HeartPulse2Bold, MailboxBold, MenBold, NotebookBookmarkBold, PhoneBold, SquareAcademicCapBold, WheelBold, WomenBold } from '@solar-icons/react-native';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlexText } from '../FlexText';
 import CachedImage from './CachedImage';
 
 // Random placeholder avatars for family members
@@ -62,21 +63,21 @@ const FProfilePersonalInfo: React.FC<FProfilePersonalInfoProps> = ({
 
     return (
         <View style={styles.container}>
-            <Text style={[styles.sectionTitle, { color: fbColors.primaryText }]}>
+            <FlexText style={[styles.sectionTitle, { color: fbColors.primaryText }]}>
                 Personal details
-            </Text>
+            </FlexText>
             <View style={styles.detailsList}>
                 {details.map((detail, index) => (
                     <View key={index} style={styles.detailItem}>
                         <View style={styles.detailIconContainer}>
                             <detail.icon size={24} color={fbColors.iconColor} />
                         </View>
-                        <Text
+                        <FlexText
                             style={[styles.detailLabel, { color: fbColors.primaryText }]}
                             numberOfLines={3}
                         >
                             {detail.label}
-                        </Text>
+                        </FlexText>
                     </View>
                 ))}
 
@@ -90,9 +91,9 @@ const FProfilePersonalInfo: React.FC<FProfilePersonalInfoProps> = ({
                             />
                         </View>
                         <View style={styles.familyContent}>
-                            <Text style={[styles.detailLabel, { color: fbColors.primaryText }]}>
+                            <FlexText style={[styles.detailLabel, { color: fbColors.primaryText }]}>
                                 Family
-                            </Text>
+                            </FlexText>
                             <View style={styles.familyRow}>
                                 {/* Stacked Avatars */}
                                 <View style={styles.stackedAvatars}>
@@ -112,9 +113,9 @@ const FProfilePersonalInfo: React.FC<FProfilePersonalInfoProps> = ({
                                         />
                                     ))}
                                 </View>
-                                <Text style={[styles.familyCountText, { color: fbColors.secondaryText }]}>
+                                <FlexText style={[styles.familyCountText, { color: fbColors.secondaryText }]}>
                                     {familyMembers.length} family member{familyMembers.length > 1 ? 's' : ''}
-                                </Text>
+                                </FlexText>
                             </View>
                         </View>
                     </View>
@@ -122,9 +123,9 @@ const FProfilePersonalInfo: React.FC<FProfilePersonalInfoProps> = ({
             </View>
 
             <TouchableOpacity activeOpacity={0.7}>
-                <Text style={[styles.seeMoreText, { color: fbColors.primaryText }]}>
+                <FlexText style={[styles.seeMoreText, { color: fbColors.primaryText }]}>
                     See more details
-                </Text>
+                </FlexText>
             </TouchableOpacity>
         </View>
     );

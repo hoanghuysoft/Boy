@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
+import { View } from "react-native";
+import { FlexText } from "./FlexText";
 
 interface CaptionTextProps {
   caption: string;
@@ -44,72 +46,60 @@ const parseCaption = (text: string) => {
 
 const CaptionText = ({ caption, colors, common, maxLines = 3 }: CaptionTextProps) => {
   const [expanded, setExpanded] = useState(false);
-  const [showReadMore, setShowReadMore] = useState(false);
+  const router = useRouter();
 
-  // Use character count heuristic instead of layout measurement
-  // This is more reliable with RecyclerListView
-  const CHARACTER_THRESHOLD = 150; // Approximate characters for 3 lines
-
-  // Determine if text needs "Read more" based on character count
+  const CHARACTER_THRESHOLD = 150;
   const needsReadMore = caption.length > CHARACTER_THRESHOLD;
-
-  // Parse caption for highlights
   const parsedParts = parseCaption(caption);
 
-  const renderText = () => {
-    return parsedParts.map((part, index) => {
+  const handlePartPress = useCallback((part: { type: string; text: string }) => {
+    if (part.type === 'tag') {
+      const tag = part.text.slice(1); // remove the leading #
+      router.push(`/hashtag/${encodeURIComponent(tag)}`);
+    }
+  }, [router]);
+
+  const renderParts = (parts: ReturnType<typeof parseCaption>) => {
+    return parts.map((part, index) => {
       const isHighlight = part.type !== 'text';
+      const isTappable = part.type === 'tag';
       return (
-        <Text
+        <FlexText
           key={index}
           style={isHighlight ? { color: colors.verify, fontWeight: '500' } : undefined}
+          onPress={isTappable ? () => handlePartPress(part) : undefined}
+          suppressHighlighting={isTappable ? false : undefined}
         >
           {part.text}
-        </Text>
+        </FlexText>
       );
     });
   };
 
-  // Truncate text if not expanded
-  const displayText = !expanded && needsReadMore
-    ? caption.slice(0, CHARACTER_THRESHOLD) + '...'
-    : caption;
-
   const renderTruncatedText = () => {
     if (!expanded && needsReadMore) {
       const truncatedCaption = caption.slice(0, CHARACTER_THRESHOLD) + '...';
-      const truncatedParts = parseCaption(truncatedCaption);
-      return truncatedParts.map((part, index) => {
-        const isHighlight = part.type !== 'text';
-        return (
-          <Text
-            key={index}
-            style={isHighlight ? { color: colors.verify, fontWeight: '500' } : undefined}
-          >
-            {part.text}
-          </Text>
-        );
-      });
+      return renderParts(parseCaption(truncatedCaption));
     }
-    return renderText();
+    return renderParts(parsedParts);
   };
 
   return (
     <View>
-      <Text
+      <FlexText
         style={[common.body, { color: colors.text, marginTop: 10, marginBottom: 10, fontSize: 14 }]}
       >
         {renderTruncatedText()}
         {needsReadMore && (
-          <Text
+          <FlexText
             onPress={() => setExpanded(!expanded)}
             style={{ color: colors.verify, fontWeight: '600' }}
             suppressHighlighting={true}
           >
             {expanded ? ' Read less' : ' Read more'}
-          </Text>
+          </FlexText>
         )}
-      </Text>
+      </FlexText>
     </View>
   );
 };

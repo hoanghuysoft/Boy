@@ -3,8 +3,9 @@ import { Profile } from "@/types/profile";
 import { calculateAge } from "@/utils/timeandage";
 import FastImage from "@d11/react-native-fast-image";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import TurboImage from "react-native-turbo-image";
+import { FlexText } from "../FlexText";
 
 interface SearchProfileItemProps {
     item: Profile;
@@ -45,10 +46,10 @@ export const SearchProfileItem = React.memo(({
             activeOpacity={0.7}
             onPress={handlePress}
         >
-            {item.avatar_url ? <TurboImage
+            {item.avatar_url ? <FastImage
                 source={{ uri: item.avatar_url }}
                 style={styles.avatar}
-                resizeMode='cover'
+                resizeMode={FastImage.resizeMode.cover}
             /> : <FastImage
                 source={
                     item.gender === "male"
@@ -64,44 +65,44 @@ export const SearchProfileItem = React.memo(({
             />}
             <View style={styles.profileInfo}>
                 <View style={[common.row, { gap: 4 }]}>
-                    <Text
+                    <FlexText
                         style={[common.subheading, { color: colors.text }]}
                         numberOfLines={1}
                     >
                         {item.name}
-                    </Text>
+                    </FlexText>
                     {item.is_verified && (
                         <VerifiedIcon size={14} backgroundColor={colors.verify} />
                     )}
                 </View>
                 {item.username ? (
-                    <Text
+                    <FlexText
                         style={[common.caption, { color: colors.muted, marginTop: 2 }]}
                         numberOfLines={1}
                     >
                         @{item.username}
-                    </Text>
+                    </FlexText>
                 ) : item.bio ? (
-                    <Text
+                    <FlexText
                         style={[common.caption, { color: colors.muted, marginTop: 2 }]}
                         numberOfLines={1}
                     >
                         {item.bio}
-                    </Text>
+                    </FlexText>
                 ) : null}
                 {item.birthday && (
-                    <Text
+                    <FlexText
                         style={[common.caption, { color: colors.muted, marginTop: 2 }]}
                         numberOfLines={1}
                     >
                         {calculateAge(item.birthday)} years old
-                    </Text>
+                    </FlexText>
                 )}
             </View>
             <View style={[styles.viewButton, { backgroundColor: colors.card }]}>
-                <Text style={[common.label, { color: colors.text, fontSize: 12 }]}>
+                <FlexText style={[common.label, { color: colors.text, fontSize: 12 }]}>
                     View
-                </Text>
+                </FlexText>
             </View>
         </TouchableOpacity>
     );

@@ -1,0 +1,247 @@
+import { FlexText } from '@/components/FlexText';
+import { useThemeContext } from '@/context/ThemeContext';
+import { createCommonStyles } from '@/styles/common';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import FastImage from '@d11/react-native-fast-image';
+import { useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    Platform,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useOnboardingViewModel } from '../../viewmodels/OnboardingViewModel';
+
+const OnboardingScreen = () => {
+    const { colors, typography } = useThemeContext();
+    const common = createCommonStyles(colors, typography);
+    const style = styles(colors);
+
+    const { form, isSubmitting, error, maxBirthday, setField, pickAvatar, handleSubmit } =
+        useOnboardingViewModel();
+
+    const nameRef = useRef<TextInput>(null);
+    const bioRef = useRef<TextInput>(null);
+    const [showAndroidPicker, setShowAndroidPicker] = useState(false);
+
+    return (
+        <SafeAreaView style={[style.container, { backgroundColor: colors.background }]}>
+            <KeyboardAwareScrollView
+                contentContainerStyle={style.scroll}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                bottomOffset={24}
+            >
+                <View style={style.header}>
+                    <FlexText style={[common.headline, { fontWeight: 'bold' }]}>
+                        Create your profile
+                    </FlexText>
+                    <FlexText style={[common.body, { color: colors.muted, marginTop: 6 }]}>
+                        Tell us a little about yourself to get started.
+                    </FlexText>
+                </View>
+
+                {/* Avatar picker */}
+                <TouchableOpacity style={style.avatarWrapper} onPress={pickAvatar} activeOpacity={0.8}>
+                    {form.avatarUri ? (
+                        <FastImage
+                            source={{ uri: form.avatarUri }}
+                            style={style.avatar}
+                        />
+                    ) : (
+                        <View style={[style.avatar, style.avatarPlaceholder, { backgroundColor: colors.containerContent }]}>
+                            <FlexText style={[common.body, { color: colors.muted }]}>Photo</FlexText>
+                        </View>
+                    )}
+                    <View style={[style.avatarEditBadge, { backgroundColor: colors.secondary }]}>
+                        <FlexText style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>Edit</FlexText>
+                    </View>
+                </TouchableOpacity>
+
+                {/* Name */}
+                <View style={style.fieldGroup}>
+                    <FlexText style={[common.label, { marginBottom: 6 }]}>Full name *</FlexText>
+                    <TextInput
+                        ref={nameRef}
+                        style={[style.input, { color: colors.text, backgroundColor: colors.containerContent }]}
+                        placeholder="Your name"
+                        placeholderTextColor={colors.muted}
+                        value={form.name}
+                        onChangeText={(v) => setField('name', v)}
+                        returnKeyType="next"
+                        onSubmitEditing={() => bioRef.current?.focus()}
+                        maxLength={60}
+                    />
+                </View>
+
+                {/* Birthday — native date picker */}
+                <View style={style.fieldGroup}>
+                    <FlexText style={[common.label, { marginBottom: 6 }]}>Date of birth *</FlexText>
+                    {Platform.OS === 'ios' ? (
+                        // iOS: compact label that expands to an inline calendar on tap
+                        <DateTimePicker
+                            value={form.birthday ?? maxBirthday}
+                            mode="date"
+                            display="compact"
+                            maximumDate={maxBirthday}
+                            onChange={(_, date) => { if (date) setField('birthday', date); }}
+                            themeVariant={colors.background === '#ffffff' ? 'light' : 'dark'}
+                            style={{ alignSelf: 'flex-start', marginLeft: -8 }}
+                        />
+                    ) : (
+                        // Android: tappable field that opens a modal calendar dialog
+                        <>
+                            <TouchableOpacity
+                                style={[style.input, style.dateButton, { backgroundColor: colors.containerContent }]}
+                                onPress={() => setShowAndroidPicker(true)}
+                                activeOpacity={0.7}
+                            >
+                                <FlexText style={{ color: form.birthday ? colors.text : colors.muted }}>
+                                    {form.birthday
+                                        ? form.birthday.toLocaleDateString('en-GB')
+                                        : 'Select date of birth'}
+                                </FlexText>
+                            </TouchableOpacity>
+                            {showAndroidPicker && (
+                                <DateTimePicker
+                                    value={form.birthday ?? maxBirthday}
+                                    mode="date"
+                                    display="default"
+                                    maximumDate={maxBirthday}
+                                    onChange={(event, date) => {
+                                        setShowAndroidPicker(false);
+                                        if (event.type === 'set' && date) setField('birthday', date);
+                                    }}
+                                />
+                            )}
+                        </>
+                    )}
+                    <FlexText style={[common.caption, { color: colors.muted, marginTop: 4 }]}>
+                        You must be at least 18 years old.
+                    </FlexText>
+                </View>
+
+                {/* Bio */}
+                <View style={style.fieldGroup}>
+                    <FlexText style={[common.label, { marginBottom: 6 }]}>Bio (optional)</FlexText>
+                    <TextInput
+                        ref={bioRef}
+                        style={[
+                            style.input,
+                            style.bioInput,
+                            { color: colors.text, backgroundColor: colors.containerContent },
+                        ]}
+                        placeholder="Say something about yourself…"
+                        placeholderTextColor={colors.muted}
+                        value={form.bio}
+                        onChangeText={(v) => setField('bio', v)}
+                        multiline
+                        maxLength={160}
+                        returnKeyType="done"
+                    />
+                    <FlexText style={[common.caption, { color: colors.muted, marginTop: 4, textAlign: 'right' }]}>
+                        {form.bio.length}/160
+                    </FlexText>
+                </View>
+
+                {/* Error */}
+                {error ? (
+                    <View style={[style.errorBox, { backgroundColor: '#FEE2E2' }]}>
+                        <FlexText style={[common.bodySmall, { color: '#B91C1C' }]}>{error}</FlexText>
+                    </View>
+                ) : null}
+
+                {/* Submit */}
+                <TouchableOpacity
+                    style={[
+                        common.button,
+                        style.submitButton,
+                        { backgroundColor: colors.secondary, opacity: isSubmitting ? 0.6 : 1 },
+                    ]}
+                    onPress={handleSubmit}
+                    disabled={isSubmitting}
+                    activeOpacity={0.8}
+                >
+                    {isSubmitting ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <FlexText style={[common.buttonText, { color: '#fff', fontWeight: 'bold' }]}>
+                            Continue
+                        </FlexText>
+                    )}
+                </TouchableOpacity>
+            </KeyboardAwareScrollView>
+        </SafeAreaView>
+    );
+};
+
+export default OnboardingScreen;
+
+const styles = (colors: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+        },
+        scroll: {
+            paddingHorizontal: 24,
+            paddingBottom: 40,
+        },
+        header: {
+            paddingTop: 24,
+            paddingBottom: 28,
+        },
+        avatarWrapper: {
+            alignSelf: 'center',
+            marginBottom: 32,
+        },
+        avatar: {
+            width: 96,
+            height: 96,
+            borderRadius: 48,
+        },
+        avatarPlaceholder: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 2,
+            borderColor: colors.divider,
+            borderStyle: 'dashed',
+        },
+        avatarEditBadge: {
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            borderRadius: 12,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+        },
+        fieldGroup: {
+            marginBottom: 20,
+        },
+        input: {
+            borderRadius: 12,
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            fontSize: 15,
+        },
+        dateButton: {
+            justifyContent: 'center',
+        },
+        bioInput: {
+            minHeight: 90,
+            textAlignVertical: 'top',
+        },
+        errorBox: {
+            borderRadius: 10,
+            padding: 12,
+            marginBottom: 16,
+        },
+        submitButton: {
+            marginTop: 8,
+            borderRadius: 9999,
+            paddingVertical: 14,
+        },
+    });

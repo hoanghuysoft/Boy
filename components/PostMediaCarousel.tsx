@@ -149,6 +149,7 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
         </View>
     );
 });
+VideoCarouselItem.displayName = "VideoCarouselItem";
 
 // Photo carousel item component - now with onPress callback for gallery
 interface PhotoCarouselItemProps {
@@ -185,6 +186,7 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
         </View>
     );
 });
+PhotoCarouselItem.displayName = "PhotoCarouselItem";
 
 // Main media item component - decides between video and photo
 interface MediaCarouselItemProps {
@@ -249,9 +251,9 @@ const MediaCarouselItem: React.FC<MediaCarouselItemProps> = React.memo(({
         />
     );
 });
+MediaCarouselItem.displayName = "MediaCarouselItem";
 
 export const PostMediaCarousel = ({ media, postId, profileName, content, colors, isAdult = false, isVerified, musicUrl, musicTitle }: PostMediaCarouselProps) => {
-    const router = useRouter();
     const [activeIndex, setActiveIndex] = useState(0);
     const { showSensitiveContent, setShowSensitiveContent } = useSettingsStore();
     const openGallery = useGalleryStore(state => state.openGallery);

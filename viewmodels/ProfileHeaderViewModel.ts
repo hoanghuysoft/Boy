@@ -23,7 +23,7 @@ const MESH_GRADIENT_DEFAULTS = {
 
 const storage = createMMKV();
 
-type TabType = "Images" | "Videos" | "Feed";
+export type TabType = "Images" | "Videos" | "Feed";
 
 interface UseProfileHeaderViewModelOptions {
     scrollY: Animated.Value;

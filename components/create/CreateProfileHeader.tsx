@@ -1,9 +1,10 @@
 import VerifiedIcon from "@/icons/verified";
 import { GhostSmileBold, GhostSmileOutline, HeartUnlockBold, HeartUnlockOutline } from '@solar-icons/react-native';
 import React, { memo } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { Profile } from "../../types/profile";
+import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
 
@@ -51,14 +52,14 @@ const PostOptionBadge = memo(({
         ) : (
             icon === "ghost-smile-outline" ? <GhostSmileOutline size={14} color={colors.muted} /> : <HeartUnlockOutline size={14} color={colors.muted} />
         )}
-        <Text
+        <FlexText
             style={[
                 common.caption,
                 { color: isActive ? activeColor : colors.muted, fontWeight: "500" },
             ]}
         >
             {label}
-        </Text>
+        </FlexText>
     </TouchableOpacity>
 ));
 
@@ -94,9 +95,9 @@ export const CreateProfileHeader = memo(({
         />
         <View>
             <View style={[common.row, { gap: 4 }]}>
-                <Text style={[common.subheading, { color: colors.text }]} numberOfLines={1}>
+                <FlexText style={[common.subheading, { color: colors.text }]} numberOfLines={1}>
                     {profile.name}
-                </Text>
+                </FlexText>
                 {profile.is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
             </View>
             <View style={createStyles.postOptionsRow}>

@@ -1,10 +1,9 @@
-import { MaterialIcons } from "@expo/vector-icons";
 import {
-  RewindForwardBold,
-  RewindForwardBoldDuotone,
+  RewindForwardBoldDuotone
 } from "@solar-icons/react-native";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { FlexText } from "../FlexText";
 
 interface SpeedIndicatorProps {
   playbackRate: number;
@@ -19,7 +18,7 @@ export const SpeedIndicator: React.FC<SpeedIndicatorProps> = ({
     <View style={styles.speedIndicator}>
       <View style={styles.speedBadge}>
         <RewindForwardBoldDuotone size={16} color="white" />
-        <Text style={styles.speedText}>{playbackRate}x</Text>
+        <FlexText style={styles.speedText}>{playbackRate}x</FlexText>
       </View>
     </View>
   );

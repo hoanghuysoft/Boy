@@ -2,8 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { XmarkSolid } from "@lineiconshq/free-icons";
 import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import React, { memo } from "react";
-import { FlatList, Image, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
+import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS, SelectedMedia } from "./types";
 
@@ -32,7 +33,7 @@ const MediaThumbnail = memo(({
         )}
         {uploadProgress !== undefined && uploadProgress < 100 && (
             <View style={[createStyles.uploadOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
-                <Text style={createStyles.uploadProgressText}>{uploadProgress}%</Text>
+                <FlexText style={createStyles.uploadProgressText}>{uploadProgress}%</FlexText>
             </View>
         )}
         <TouchableOpacity
@@ -69,9 +70,9 @@ export const MediaSection = memo(({
 
     return (
         <View style={createStyles.mediaSection}>
-            <Text style={[common.label, { color: colors.text, marginBottom: 12 }]}>
+            <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
                 Media ({selectedMedia.length}/10)
-            </Text>
+            </FlexText>
             <FlatList
                 data={selectedMedia}
                 horizontal

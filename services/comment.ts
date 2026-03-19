@@ -107,6 +107,23 @@ const patchCommentCountInFeedCaches = (
 
     queryClient.setQueriesData({ queryKey: ['feed'], exact: false }, updater);
     queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, updater);
+
+    // Also patch the video (Shots) feed — videos link to posts via post_id
+    const videoUpdater = (oldData: any) => {
+        if (!oldData?.pages) return oldData;
+        return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+                ...page,
+                data: page.data.map((video: any) =>
+                    video.post_id === postId
+                        ? { ...video, comment_count: Math.max(0, (video.comment_count ?? 0) + delta) }
+                        : video
+                ),
+            })),
+        };
+    };
+    queryClient.setQueriesData({ queryKey: ['videoFeed'], exact: false }, videoUpdater);
 };
 
 /**

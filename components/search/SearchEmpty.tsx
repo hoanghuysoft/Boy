@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { FlexText } from "../FlexText";
 
 interface SearchEmptyProps {
     colors: any;
@@ -11,7 +12,7 @@ interface SearchEmptyProps {
 
 export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin = false }: SearchEmptyProps) => (
     <View style={styles.emptyState}>
-        <Text
+        <FlexText
             style={[
                 common.heading,
                 { color: colors.muted, textAlign: "center", marginTop: 16 },
@@ -22,8 +23,8 @@ export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin 
                 : isAdmin
                     ? "No people yet"
                     : "Search for people"}
-        </Text>
-        <Text
+        </FlexText>
+        <FlexText
             style={[
                 common.bodySmall,
                 {
@@ -39,6 +40,6 @@ export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin 
                 : isAdmin
                     ? "No profiles available"
                     : "Type a name to find people"}
-        </Text>
+        </FlexText>
     </View>
 );

@@ -1,3 +1,4 @@
+import { FlexText } from '@/components/FlexText';
 import { PostItem } from '@/components/PostItem';
 import { useThemeContext } from '@/context/ThemeContext';
 import { createCommonStyles } from '@/styles/common';
@@ -10,9 +11,8 @@ import {
     ActivityIndicator,
     FlatList,
     StyleSheet,
-    Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 
 interface HashtagPostsScreenProps {
@@ -66,17 +66,17 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                         },
                     ]}
                 >
-                    <Text style={{ fontSize: 32 }}>#</Text>
+                    <FlexText style={{ fontSize: 32 }}>#</FlexText>
                 </View>
-                <Text
+                <FlexText
                     style={[
                         common.heading,
                         { fontSize: 20, marginTop: 20, marginBottom: 8 },
                     ]}
                 >
                     No posts yet
-                </Text>
-                <Text
+                </FlexText>
+                <FlexText
                     style={[
                         common.body,
                         {
@@ -87,7 +87,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                     ]}
                 >
                     Be the first to post with #{tag}
-                </Text>
+                </FlexText>
             </View>
         );
     }, [vm.isLoading, colors, common, theme, tag]);
@@ -101,10 +101,10 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                     marginBottom: 8,
                 }}
             >
-                <Text style={[common.heading, { fontSize: 28 }]}>
+                <FlexText style={[common.heading, { fontSize: 28 }]}>
                     #{vm.hashtagLabel}
-                </Text>
-                <Text
+                </FlexText>
+                <FlexText
                     style={[
                         common.bodySmall,
                         { color: colors.muted, marginTop: 2 },
@@ -113,7 +113,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                     {vm.totalCount > 0
                         ? `${vm.totalCount.toLocaleString()} post${vm.totalCount !== 1 ? 's' : ''}`
                         : 'Posts'}
-                </Text>
+                </FlexText>
             </View>
         ),
         [vm.insets.top, vm.hashtagLabel, vm.totalCount, common, colors.muted]

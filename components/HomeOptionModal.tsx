@@ -1,7 +1,8 @@
 import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import { router } from "expo-router";
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Modal, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { FlexText } from "./FlexText";
 
 const OptionModal = ({ modalVisible, setModalVisible }: { modalVisible: boolean, setModalVisible: (visible: boolean) => void }) => {
     const { colors, typography, theme } = useThemeContext();
@@ -18,16 +19,16 @@ const OptionModal = ({ modalVisible, setModalVisible }: { modalVisible: boolean,
                 <Pressable onPress={(e) => e.stopPropagation()} style={styles.modalContent}>
                     <View style={[styles.blurView, { backgroundColor: colors.containerContent }]}>
                         <TouchableOpacity style={styles.modalButton} onPress={() => { router.push('/settings'); setModalVisible(false) }}>
-                            <Text style={common.label}>Settings</Text>
+                            <FlexText style={common.label}>Settings</FlexText>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-                            <Text style={common.label}>Privacy Policy</Text>
+                            <FlexText style={common.label}>Privacy Policy</FlexText>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-                            <Text style={common.label}>Terms of Service</Text>
+                            <FlexText style={common.label}>Terms of Service</FlexText>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-                            <Text style={common.label}>Help & Support</Text>
+                            <FlexText style={common.label}>Help & Support</FlexText>
                         </TouchableOpacity>
                     </View>
                 </Pressable>

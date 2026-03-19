@@ -37,6 +37,7 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
                     source={{ uri: imageUrl || "" }}
                     style={styles.image}
                     resizeMode="contain"
+                    format={imageUrl?.endsWith('.gif') ? 'gif' : undefined}
                 />
 
             </View>

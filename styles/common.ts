@@ -22,23 +22,23 @@ export const createCommonStyles = (
       padding: 16,
     },
 
-    display: createTextStyle(typography.display, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
-    headline: createTextStyle(typography.headline, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
-    heading: createTextStyle(typography.title, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
+    display: createTextStyle(typography.display, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
+    headline: createTextStyle(typography.headline, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
+    heading: createTextStyle(typography.title, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
 
-    title: createTextStyle(typography.title, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
+    title: createTextStyle(typography.title, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
     subheading: createTextStyle(
       ("titleMedium" in typography ? typography.titleMedium : typography.subtitle1) as TextStyle,
-      colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }
+      colors.text, { fontFamily: 'GoogleSansFlexRegular' }
     ),
 
-    body: createTextStyle(typography.body, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
+    body: createTextStyle(typography.body, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
     bodySmall: createTextStyle(
       ("bodySmall" in typography ? typography.bodySmall : typography.body2) as TextStyle,
-      colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }
+      colors.text, { fontFamily: 'GoogleSansFlexRegular' }
     ),
 
-    label: createTextStyle(typography.label, colors.text, { fontFamily: 'GoogleSansFlex_400Regular' }),
+    label: createTextStyle(typography.label, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
     buttonText: createTextStyle(
       ("button" in typography ? typography.button : typography.label) as TextStyle,
       colors.text,
@@ -48,13 +48,13 @@ export const createCommonStyles = (
     caption: createTextStyle(
       typography.caption,
       colors.text,
-      { fontFamily: 'GoogleSansFlex_400Regular' }
+      { fontFamily: 'GoogleSansFlexRegular' }
     ),
     muted: {
       ...createTextStyle(
         ("bodySmall" in typography ? typography.bodySmall : typography.body2) as TextStyle,
         colors.text,
-        { fontFamily: 'GoogleSansFlex_400Regular' }
+        { fontFamily: 'GoogleSansFlexRegular' }
       ),
       opacity: 0.7,
     },

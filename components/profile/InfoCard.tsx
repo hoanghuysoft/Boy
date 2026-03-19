@@ -2,11 +2,12 @@ import { Bank } from '@/types/bank';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { CalendarBold, LetterBold, MenBold, NotebookBookmarkBold, PhoneBold, PointOnMapBold, SquareAcademicCapBold, WeigherBold, WheelBold, WomenBold } from '@solar-icons/react-native';
 import React, { useMemo, useState } from 'react';
-import { Text, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { ProfileDetail } from "../../types/profiledetail";
+import { FlexText } from '../FlexText';
 import QuickPreviewModal from './QuickPreviewModal';
 
 interface InfoCardProps {
@@ -49,22 +50,22 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
     return (
         <View style={[common.card, { marginTop: 16, marginHorizontal: 16 }]}>
             {/* Name */}
-            <Text style={[common.muted]}>Name</Text>
+            <FlexText style={[common.muted]}>Name</FlexText>
             <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                <Text style={[common.body, { flex: 1 }]}>
+                <FlexText style={[common.body, { flex: 1 }]}>
                     {profile?.name || "Not specified"}
-                </Text>
+                </FlexText>
             </View>
 
             {/* Email */}
             {profile?.email && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Email</Text>
+                    <FlexText style={[common.muted]}>Email</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.email}
-                        </Text>
+                        </FlexText>
                         <LetterBold size={22} color={colors.text} />
                     </View>
                 </>
@@ -73,11 +74,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.phone && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Phone</Text>
+                    <FlexText style={[common.muted]}>Phone</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.phone}
-                        </Text>
+                        </FlexText>
                         <PhoneBold size={22} color={colors.text} />
                     </View>
                 </>
@@ -91,11 +92,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         setSelectedImage(bankinfo.qrurl);
                         setIsModalVisible(true);
                     }}>
-                        <Text style={[common.muted]}>{bankinfo.bankname}</Text>
+                        <FlexText style={[common.muted]}>{bankinfo.bankname}</FlexText>
                         <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                            <Text style={[common.body, { flex: 1 }]}>
+                            <FlexText style={[common.body, { flex: 1 }]}>
                                 {bankinfo.recipient} - {bankinfo.banknumber}
-                            </Text>
+                            </FlexText>
                             <View style={{ width: 32, height: 32, justifyContent: 'center', alignItems: 'center', borderRadius: 999, overflow: 'hidden', backgroundColor: colors.card }}>
                                 <TurboImage source={{ uri: bankinfo.logo || '' }} style={{ width: 24, height: 24 }} />
                             </View>
@@ -108,11 +109,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.gender && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Gender</Text>
+                    <FlexText style={[common.muted]}>Gender</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { textTransform: 'capitalize' }]}>
+                        <FlexText style={[common.body, { textTransform: 'capitalize' }]}>
                             {profile.gender}
-                        </Text>
+                        </FlexText>
                         {profile.gender === 'male' ? <MenBold size={22} color={colors.text} /> : profile.gender === 'female' ? <WomenBold size={22} color={colors.text} /> : null}
                     </View>
                 </>
@@ -122,11 +123,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.birthday && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Birthday</Text>
+                    <FlexText style={[common.muted]}>Birthday</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {formatBirthday(profile.birthday)}
-                        </Text>
+                        </FlexText>
                         <CalendarBold size={22} color={colors.text} />
                     </View>
                 </>
@@ -136,11 +137,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {height && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Height</Text>
+                    <FlexText style={[common.muted]}>Height</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {height} cm
-                        </Text>
+                        </FlexText>
                         <MaterialIcons name="height" size={22} color={colors.text} />
                     </View>
                 </>
@@ -150,11 +151,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {weight && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Weight</Text>
+                    <FlexText style={[common.muted]}>Weight</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {weight} kg
-                        </Text>
+                        </FlexText>
                         <WeigherBold size={22} color={colors.text} />
                     </View>
                 </>
@@ -164,11 +165,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.hometown && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Hometown</Text>
+                    <FlexText style={[common.muted]}>Hometown</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.hometown}
-                        </Text>
+                        </FlexText>
                         <PointOnMapBold size={22} color={colors.text} />
                     </View>
                 </>
@@ -178,11 +179,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.college && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>College</Text>
+                    <FlexText style={[common.muted]}>College</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.college}
-                        </Text>
+                        </FlexText>
                         <SquareAcademicCapBold size={22} color={colors.text} />
                     </View>
                 </>
@@ -192,11 +193,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.highschool && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>High School</Text>
+                    <FlexText style={[common.muted]}>High School</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.highschool}
-                        </Text>
+                        </FlexText>
                         <NotebookBookmarkBold size={22} color={colors.text} />
                     </View>
                 </>
@@ -206,11 +207,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.username && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Username</Text>
+                    <FlexText style={[common.muted]}>Username</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             @{profile.username}
-                        </Text>
+                        </FlexText>
                         <Ionicons name="at-circle-outline" size={22} color={colors.text} />
                     </View>
                 </>
@@ -220,11 +221,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.license_plate && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>License Plate</Text>
+                    <FlexText style={[common.muted]}>License Plate</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.license_plate}
-                        </Text>
+                        </FlexText>
                         <WheelBold size={22} color={colors.text} />
                     </View>
                 </>
@@ -234,11 +235,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.married_date && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Married Date</Text>
+                    <FlexText style={[common.muted]}>Married Date</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {formatBirthday(profile.married_date)}
-                        </Text>
+                        </FlexText>
                         <Ionicons name="heart-outline" size={22} color={colors.text} />
                     </View>
                 </>
@@ -248,11 +249,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.hobby && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Hobby</Text>
+                    <FlexText style={[common.muted]}>Hobby</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.hobby}
-                        </Text>
+                        </FlexText>
                         <Ionicons name="extension-puzzle-outline" size={22} color={colors.text} />
                     </View>
                 </>
@@ -262,11 +263,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.talent && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Talent</Text>
+                    <FlexText style={[common.muted]}>Talent</FlexText>
                     <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                        <Text style={[common.body, { flex: 1 }]}>
+                        <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.talent}
-                        </Text>
+                        </FlexText>
                         <Ionicons name="star-outline" size={22} color={colors.text} />
                     </View>
                 </>
@@ -276,13 +277,13 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {profile?.loved_ones && profile.loved_ones.length > 0 && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted]}>Loved Ones</Text>
+                    <FlexText style={[common.muted]}>Loved Ones</FlexText>
                     <View style={{ gap: 4, marginTop: 4 }}>
                         {profile.loved_ones.map((person, index) => (
                             <View key={index} style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
-                                <Text style={[common.body, { flex: 1 }]}>
-                                    <Text style={{ fontWeight: '600' }}>{person.label}:</Text> {person.name}
-                                </Text>
+                                <FlexText style={[common.body, { flex: 1 }]}>
+                                    <FlexText style={{ fontWeight: '600' }}>{person.label}:</FlexText> {person.name}
+                                </FlexText>
                             </View>
                         ))}
                     </View>
@@ -293,9 +294,9 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
             {!profile?.gender && !profile?.birthday && !profile?.hometown && !profile?.college && !profile?.highschool && !profile?.username && !profile?.hobby && !profile?.talent && !profile?.license_plate && !profile?.married_date && !profile?.loved_ones?.length && (
                 <>
                     <View style={common.divider} />
-                    <Text style={[common.muted, { textAlign: 'center', marginTop: 8 }]}>
+                    <FlexText style={[common.muted, { textAlign: 'center', marginTop: 8 }]}>
                         No additional information available
-                    </Text>
+                    </FlexText>
                 </>
             )}
 

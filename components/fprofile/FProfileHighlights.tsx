@@ -4,9 +4,9 @@ import React from 'react';
 import {
     ScrollView,
     StyleSheet,
-    Text,
-    View,
+    View
 } from 'react-native';
+import { FlexText } from '../FlexText';
 import CachedImage from './CachedImage';
 
 const HIGHLIGHT_SIZE = 80;
@@ -24,9 +24,9 @@ const FProfileHighlights: React.FC<FProfileHighlightsProps> = ({
 
     return (
         <View style={styles.container}>
-            <Text style={[styles.sectionTitle, { color: fbColors.primaryText }]}>
+            <FlexText style={[styles.sectionTitle, { color: fbColors.primaryText }]}>
                 Highlights
-            </Text>
+            </FlexText>
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -46,15 +46,15 @@ const FProfileHighlights: React.FC<FProfileHighlightsProps> = ({
                                 resizeMode="cover"
                             />
                         </SquircleView>
-                        <Text
+                        <FlexText
                             style={[styles.highlightTitle, { color: fbColors.primaryText }]}
                             numberOfLines={1}
                         >
                             {item.title}
-                        </Text>
-                        <Text style={[styles.highlightCount, { color: fbColors.secondaryText }]}>
+                        </FlexText>
+                        <FlexText style={[styles.highlightCount, { color: fbColors.secondaryText }]}>
                             {item.count} items
-                        </Text>
+                        </FlexText>
                     </View>
                 ))}
             </ScrollView>

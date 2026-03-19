@@ -6,13 +6,13 @@ import { SquircleView } from 'expo-squircle-view';
 import React from 'react';
 import {
     StyleSheet,
-    Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
+import { FlexText } from '../FlexText';
 
 // ─── Single Profile Card ─────────────────────────────────────────────────────
 
@@ -35,10 +35,10 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
 
         >
             {profile.avatar_url ? (
-                <TurboImage
+                <FastImage
                     source={{ uri: profile.avatar_url }}
                     style={styles.avatar}
-                    resizeMode="cover"
+                    resizeMode={FastImage.resizeMode.cover}
                 />
             ) : (
                 <FastImage
@@ -55,23 +55,23 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
             )}
             <View style={styles.textBlock}>
                 <View style={styles.nameRow}>
-                    <Text
+                    <FlexText
                         style={[common.label, { color: colors.text, fontWeight: '600', flexShrink: 1 }]}
                         numberOfLines={1}
                     >
                         {profile.name}
-                    </Text>
+                    </FlexText>
                     {profile.is_verified && (
                         <VerifiedIcon size={12} backgroundColor={colors.verify} />
                     )}
                 </View>
                 {profile.username ? (
-                    <Text
+                    <FlexText
                         style={[common.caption, { color: colors.muted }]}
                         numberOfLines={1}
                     >
                         @{profile.username}
-                    </Text>
+                    </FlexText>
                 ) : null}
             </View>
         </SquircleView>
@@ -94,9 +94,9 @@ export const MostSearchedSection = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={[common.subheading, { fontSize: 15, marginBottom: 12 }]}>
+            <FlexText style={[common.subheading, { fontSize: 15, marginBottom: 12 }]}>
                 Most Searched
-            </Text>
+            </FlexText>
 
             {pairs.map((pair, rowIdx) => (
                 <View

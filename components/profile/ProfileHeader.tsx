@@ -14,7 +14,6 @@ import {
     Pressable,
     ScrollView,
     StyleSheet,
-    Text,
     TouchableOpacity,
     View
 } from "react-native";
@@ -26,15 +25,15 @@ import { ProfileLink } from "../../types/profilelink";
 import { ProfileMusic } from "../../types/profilemusic";
 import { Workplace } from "../../types/profileworplace";
 import { getFamilyAvatarSource } from "../../utils/familyAvatar";
+import type { TabType } from "../../viewmodels/ProfileHeaderViewModel";
 import { useProfileHeaderViewModel } from "../../viewmodels/ProfileHeaderViewModel";
+import { FlexText } from '../FlexText';
 import BirthdayCard from './BirthdayCard';
 import DynamicAvatar from './DynamicAvatar';
 import QuickPreviewModal from './QuickPreviewModal';
 
 const COVER_HEIGHT = 280;
 const AnimatedTurboImage = Animated.createAnimatedComponent(TurboImage);
-
-type TabType = "Information" | "Images" | "Videos" | "Feed";
 
 interface ProfileHeaderProps {
     scrollY: Animated.Value;
@@ -112,7 +111,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     return (
         <>
             {vm.hasCover ? (
-                <AnimatedTurboImage
+                <Animated.Image
                     source={{
                         uri: profile?.cover_url || '',
                     }}
@@ -198,40 +197,40 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                         )}
                         <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 10 }}>
                             <View style={[vm.common.row, { gap: 4 }]}>
-                                <Text style={[vm.common.heading, { fontWeight: '700' }]}>{profile?.name || "Boy not found"}</Text>
+                                <FlexText style={[vm.common.heading, { fontWeight: '700' }]}>{profile?.name || "Boy not found"}</FlexText>
                                 {profile?.is_verified && <VerifiedIcon size={14} backgroundColor={vm.colors.verify} />}
                                 {vm.flagCode && <CountryFlag isoCode={vm.flagCode} size={12} style={{ borderRadius: 2, marginLeft: 4 }} />}
                             </View>
                             <View style={[vm.common.row, { gap: 6, marginTop: 2 }]}>
-                                <Text style={vm.common.bodySmall}>
-                                    <Text style={{ fontWeight: '700' }}>{imageCount}</Text> images
-                                </Text>
-                                <Text style={[vm.common.bodySmall, { color: vm.colors.muted }]}>·</Text>
-                                <Text style={vm.common.bodySmall}>
-                                    <Text style={{ fontWeight: '700' }}>{videoCount}</Text> videos
-                                </Text>
-                                <Text style={[vm.common.bodySmall, { color: vm.colors.muted }]}>·</Text>
-                                <Text style={vm.common.bodySmall}>
-                                    <Text style={{ fontWeight: '700' }}>{postCount}</Text> posts
-                                </Text>
+                                <FlexText style={vm.common.bodySmall}>
+                                    <FlexText style={{ fontWeight: '700' }}>{imageCount}</FlexText> images
+                                </FlexText>
+                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted }]}>·</FlexText>
+                                <FlexText style={vm.common.bodySmall}>
+                                    <FlexText style={{ fontWeight: '700' }}>{videoCount}</FlexText> videos
+                                </FlexText>
+                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted }]}>·</FlexText>
+                                <FlexText style={vm.common.bodySmall}>
+                                    <FlexText style={{ fontWeight: '700' }}>{postCount}</FlexText> posts
+                                </FlexText>
                             </View>
                         </View>
                     </View>
                     <View>
                         {profile?.username && (
-                            <Text style={[{ fontSize: 12, marginTop: 8, fontWeight: '700', color: vm.colors.text }]}>
+                            <FlexText style={[{ fontSize: 12, marginTop: 8, fontWeight: '700', color: vm.colors.text }]}>
                                 @{profile.username}
-                            </Text>
+                            </FlexText>
                         )}
                         {profile?.pronouns && (
-                            <Text style={[vm.common.muted, { fontSize: 12, marginTop: 8 }]}>
+                            <FlexText style={[vm.common.muted, { fontSize: 12, marginTop: 8 }]}>
                                 {profile.pronouns}
-                            </Text>
+                            </FlexText>
                         )}
                         {profile?.bio && (
-                            <Text style={[vm.common.bodySmall, { paddingTop: 8 }]}>
+                            <FlexText style={[vm.common.bodySmall, { paddingTop: 8 }]}>
                                 {profile.bio}
-                            </Text>
+                            </FlexText>
                         )}
 
                         {/* Action buttons — FProfile style */}
@@ -240,7 +239,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 style={{ flex: 1, backgroundColor: '#1877F2' }}>
                                 <TouchableOpacity style={{ borderRadius: 8, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1 }}>
                                     <HeartAngleBold size={22} color="#fff" />
-                                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Add love</Text>
+                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Add love</FlexText>
                                 </TouchableOpacity>
                             </SquircleView>
                             <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={8}
@@ -250,7 +249,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     style={{ borderRadius: 8, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1 }}
                                 >
                                     <ChatSquareLikeBold size={22} color={vm.colors.text} />
-                                    <Text style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }}>Know me</Text>
+                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }}>Know me</FlexText>
                                 </TouchableOpacity>
                             </SquircleView>
                         </View>
@@ -288,9 +287,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                         ))}
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }} numberOfLines={1}>
+                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }} numberOfLines={1}>
                                         {profile.loved_ones.length} family member{profile.loved_ones.length > 1 ? 's' : ''}
-                                    </Text>
+                                    </FlexText>
                                 </View>
                                 <HeartBold size={18} color={vm.colors.muted} />
                             </TouchableOpacity>
@@ -321,9 +320,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     <TouchableOpacity onPress={vm.toggleMusic} style={{ borderRadius: 999, padding: 6, backgroundColor: vm.colors.card, justifyContent: "center", alignItems: "center", marginLeft: 8 }}>
                                         {vm.isPlaying ? <PlayCircleBold size={20} color={vm.colors.text} /> : <PlayCircleOutline size={20} color={vm.colors.text} />}
                                     </TouchableOpacity>
-                                    <Text numberOfLines={2} style={[vm.common.bodySmall, { marginLeft: 8, marginRight: 4, flex: 1, color: 'white' }]}>
+                                    <FlexText numberOfLines={2} style={[vm.common.bodySmall, { marginLeft: 8, marginRight: 4, flex: 1, color: 'white' }]}>
                                         {vm.currentMusic.artist} - {vm.currentMusic.title}
-                                    </Text>
+                                    </FlexText>
                                 </TouchableOpacity>
                             )}
 
@@ -341,9 +340,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}>
                                         <Ionicons name="logo-facebook" size={22} color="#FFF" />
                                     </View>
-                                    <Text numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: '#FFF' }]}>
+                                    <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: '#FFF' }]}>
                                         Facebook Profile
-                                    </Text>
+                                    </FlexText>
                                 </TouchableOpacity>
                             )}
 
@@ -358,9 +357,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                         resizeMode={FastImage.resizeMode.cover}
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
-                                    <Text numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: 'white', textAlign: 'center' }]}>
+                                    <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: 'white', textAlign: 'center' }]}>
                                         {socialLinks.length} social link{socialLinks.length > 1 ? 's' : ''}
-                                    </Text>
+                                    </FlexText>
                                 </TouchableOpacity>
                             )}
 
@@ -373,9 +372,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: vm.colors.card, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}>
                                         <PointOnMapBold size={20} color={vm.colors.text} />
                                     </View>
-                                    <Text numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1 }]}>
+                                    <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1 }]}>
                                         {addresses.length} address{addresses.length > 1 ? 'es' : ''}
-                                    </Text>
+                                    </FlexText>
                                 </TouchableOpacity>
                             )}
 
@@ -388,9 +387,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: vm.colors.card, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}>
                                         <CaseMinimalisticBold size={20} color={vm.colors.text} />
                                     </View>
-                                    <Text numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1 }]}>
+                                    <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1 }]}>
                                         {workplaces.length} workplace{workplaces.length > 1 ? 's' : ''}
-                                    </Text>
+                                    </FlexText>
                                 </TouchableOpacity>
                             )}
                         </ScrollView>
@@ -411,13 +410,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                         }}
                                         activeOpacity={0.7}
                                     >
-                                        <Text style={{
+                                        <FlexText style={{
                                             fontSize: 14,
                                             fontWeight: '600',
                                             color: isActive ? pt.activeText : pt.inactiveText,
                                         }}>
                                             {tab.label}
-                                        </Text>
+                                        </FlexText>
                                     </TouchableOpacity>
                                 );
                             })}

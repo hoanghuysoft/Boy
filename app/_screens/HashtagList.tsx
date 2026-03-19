@@ -1,3 +1,4 @@
+import { FlexText } from '@/components/FlexText';
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -7,9 +8,8 @@ import {
     ActivityIndicator,
     FlatList,
     StyleSheet,
-    Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -34,22 +34,22 @@ const HashtagListScreen = () => {
                     preserveSmoothing={true}
                     style={[styles.tagRow, { backgroundColor: colors.containerContent }]}
                 >
-                <View style={styles.tagRowLeft}>
-                    <Text
-                        style={[
-                            common.body,
-                            { color: colors.secondary, fontWeight: '600' },
-                        ]}
-                    >
-                        #{item.tag}
-                    </Text>
-                    {item.count != null && (
-                        <Text style={[common.caption, { color: colors.muted, marginTop: 2 }]}>
-                            {item.count.toLocaleString()} post{item.count !== 1 ? 's' : ''}
-                        </Text>
-                    )}
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                    <View style={styles.tagRowLeft}>
+                        <FlexText
+                            style={[
+                                common.body,
+                                { color: colors.secondary, fontWeight: '600' },
+                            ]}
+                        >
+                            #{item.tag}
+                        </FlexText>
+                        {item.count != null && (
+                            <FlexText style={[common.caption, { color: colors.muted, marginTop: 2 }]}>
+                                {item.count.toLocaleString()} post{item.count !== 1 ? 's' : ''}
+                            </FlexText>
+                        )}
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.muted} />
                 </SquircleView>
             </TouchableOpacity>
         ),
@@ -77,24 +77,24 @@ const HashtagListScreen = () => {
                         },
                     ]}
                 >
-                    <Text style={{ fontSize: 32 }}>#</Text>
+                    <FlexText style={{ fontSize: 32 }}>#</FlexText>
                 </View>
-                <Text
+                <FlexText
                     style={[
                         common.heading,
                         { fontSize: 20, marginTop: 20, marginBottom: 8 },
                     ]}
                 >
                     No trending tags
-                </Text>
-                <Text
+                </FlexText>
+                <FlexText
                     style={[
                         common.body,
                         { color: colors.muted, textAlign: 'center', lineHeight: 22 },
                     ]}
                 >
                     Check back later for trending hashtags.
-                </Text>
+                </FlexText>
             </View>
         );
     }, [vm.isLoading, colors, common, theme]);
@@ -108,12 +108,12 @@ const HashtagListScreen = () => {
                     marginBottom: 16,
                 }}
             >
-                <Text style={[common.heading, { fontSize: 28 }]}>Trending Tags</Text>
-                <Text style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
+                <FlexText style={[common.heading, { fontSize: 28 }]}>Trending Tags</FlexText>
+                <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
                     {vm.allTags.length > 0
                         ? `${vm.allTags.length} tag${vm.allTags.length !== 1 ? 's' : ''}`
                         : 'Discover what people are talking about'}
-                </Text>
+                </FlexText>
             </View>
         ),
         [insets.top, common, colors.muted, vm.allTags.length]

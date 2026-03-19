@@ -1,10 +1,11 @@
+import { FlexText } from "@/components/FlexText";
 import { ThemeColors, ThemePreference, useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
 import { CheckCircleBold, ClockCircleBold, MoonBold, SmartphoneBold, Sun2Bold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ThemeOption = {
@@ -66,10 +67,10 @@ const ThemeSettingsScreen = () => {
             </View>
             <View style={{ marginTop: inset.top + 50 }}></View>
 
-            <Text style={[styles.title]}>Theme</Text>
-            <Text style={[common.bodySmall, { color: colors.muted, marginBottom: 16 }]}>
+            <FlexText style={[styles.title]}>Theme</FlexText>
+            <FlexText style={[common.bodySmall, { color: colors.muted, marginBottom: 16 }]}>
                 Choose how the app looks
-            </Text>
+            </FlexText>
 
             <View style={[styles.card]}>
                 {themeOptions.map((option, index) => (
@@ -87,10 +88,10 @@ const ThemeSettingsScreen = () => {
                                     />
                                 </SquircleView>
                                 <View style={styles.optionText}>
-                                    <Text style={[common.body]}>{option.label}</Text>
-                                    <Text style={[common.bodySmall, { color: colors.muted }]}>
+                                    <FlexText style={[common.body]}>{option.label}</FlexText>
+                                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>
                                         {option.description}
-                                    </Text>
+                                    </FlexText>
                                 </View>
                             </View>
                             {themePreference === option.id && (

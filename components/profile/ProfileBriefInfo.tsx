@@ -1,10 +1,11 @@
 import { CaseMinimalisticBold, NotebookBookmarkBold, PointOnMapBold, SquareAcademicCapBold } from '@solar-icons/react-native';
 import React from 'react';
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { ProfileDetail } from "../../types/profiledetail";
 import { Workplace } from "../../types/profileworplace";
+import { FlexText } from '../FlexText';
 
 interface ProfileBriefInfoProps {
     profile?: ProfileDetail | null;
@@ -38,16 +39,16 @@ const ProfileBriefInfo: React.FC<ProfileBriefInfoProps> = ({ profile, workplaces
         if (items.length === 0) return null;
         return (
             <View style={{ marginBottom: 16 }}>
-                <Text style={[common.bodySmall, { fontWeight: '700', marginBottom: 8, opacity: 0.8 }]}>{title}</Text>
+                <FlexText style={[common.bodySmall, { fontWeight: '700', marginBottom: 8, opacity: 0.8 }]}>{title}</FlexText>
                 <View style={{ gap: 8 }}>
                     {items.map((item, i) => (
                         <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
                             {item.solarIcon ? (
                                 <item.solarIcon size={18} color={colors.text} style={{ marginRight: 10, width: 20 }} />
                             ) : (
-                                <Text style={{ fontSize: 14, marginRight: 10, width: 20, textAlign: 'center' }}>{item.emoji}</Text>
+                                <FlexText style={{ fontSize: 14, marginRight: 10, width: 20, textAlign: 'center' }}>{item.emoji}</FlexText>
                             )}
-                            <Text style={[{ fontSize: 14, fontWeight: '600', flexShrink: 1 }]} numberOfLines={2}>{item.label}</Text>
+                            <FlexText style={[{ fontSize: 14, fontWeight: '600', flexShrink: 1 }]} numberOfLines={2}>{item.label}</FlexText>
                         </View>
                     ))}
                 </View>

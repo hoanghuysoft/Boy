@@ -1,15 +1,16 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { GoogleSansFlex_700Bold } from '@expo-google-fonts/google-sans-flex';
 import { Text, useFont } from "@shopify/react-native-skia";
 import React, { useMemo } from "react";
 import { useWindowDimensions } from "react-native";
 
 const HORIZONTAL_PADDING = 24;
 
+const FontBold = require("../../assets/fonts/GoogleSansRounded-Bold.ttf");
+
 export const Title = ({ name, description }: { name: string, description: string }) => {
     const { width, height } = useWindowDimensions();
-    const font = useFont(GoogleSansFlex_700Bold, 38);
-    const subFont = useFont(GoogleSansFlex_700Bold, 16);
+    const font = useFont(FontBold, 38);
+    const subFont = useFont(FontBold, 16);
 
     // Calculate available width for text
     const maxWidth = width - (HORIZONTAL_PADDING * 2);

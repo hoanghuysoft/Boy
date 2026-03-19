@@ -1,12 +1,13 @@
+import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo } from "react";
-import { FlatList, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useSheetBackHandler } from "./useSheetBackHandler";
+import { FlatList, Linking, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileAddress } from "../../../types/profileaddress";
+import { useSheetBackHandler } from "./useSheetBackHandler";
 
 interface AddressSheetProps {
     data: ProfileAddress[];
@@ -45,13 +46,13 @@ const AddressItem = memo(({ item, colors, common }: { item: ProfileAddress; colo
             </View>
 
             <View style={styles.textContainer}>
-                <Text style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
+                <FlexText style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
                     {item.label}
-                </Text>
+                </FlexText>
 
-                <Text style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
+                <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
                     {addressHeader} {item.postal_code}
-                </Text>
+                </FlexText>
             </View>
 
             <View style={styles.actionIcon}>
@@ -87,10 +88,10 @@ export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ dat
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <Text style={[common.heading, { fontSize: 24 }]}>Locations</Text>
-                    <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>Locations</FlexText>
+                    <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
                         Tap an address to open Maps
-                    </Text>
+                    </FlexText>
                 </View>
 
                 {/* List */}

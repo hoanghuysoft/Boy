@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { memo } from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
+import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 
 // ============================================================================
@@ -49,9 +50,9 @@ export const ContentInput = memo(({
                 </TouchableOpacity>
             )}
         </View>
-        <Text style={[common.caption, createStyles.characterCount, { color: colors.muted }]}>
+        <FlexText style={[common.caption, createStyles.characterCount, { color: colors.muted }]}>
             {content.length}/{maxLength}
-        </Text>
+        </FlexText>
     </View>
 ));
 

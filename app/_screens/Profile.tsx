@@ -6,7 +6,6 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View
 } from "react-native";
@@ -24,6 +23,7 @@ import { createCommonStyles } from "../../styles/common";
 import { Post } from '../../types/post';
 import { useProfileViewModel } from "../../viewmodels/ProfileViewModel";
 
+import { FlexText } from "@/components/FlexText";
 import { PostOptionsSheet } from "@/components/post";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { LikersSheet } from "@/components/post/LikersSheet";
@@ -36,8 +36,6 @@ import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { ProfileGalleryModal } from "../../components/gallery/ProfileGalleryModal";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
-
-type TabType = "Images" | "Videos" | "Feed";
 
 // ─── Static skeleton shown during navigation transition ────────────────────────
 const ProfileSkeleton: React.FC = () => {
@@ -122,7 +120,7 @@ const ProfileContent = () => {
   const ListHeader = useMemo(() => (
     <ProfileHeader
       scrollY={vm.scrollY}
-      activeTab={vm.activeTab}
+      activeTab={vm.activeTab as any}
       onTabChange={vm.stableTabChange}
       profile={vm.profile}
       isMe={vm.isMe}
@@ -216,8 +214,8 @@ const ProfileContent = () => {
     }
     return (
       <View style={[vm.common.card, styles.emptyCard]}>
-        <Text style={vm.common.subheading}>{title}</Text>
-        <Text style={[vm.common.body, styles.emptyMessage]}>{message}</Text>
+        <FlexText style={vm.common.subheading}>{title}</FlexText>
+        <FlexText style={[vm.common.body, styles.emptyMessage]}>{message}</FlexText>
       </View>
     );
   }, [vm.activeTab, vm.common]);
@@ -398,18 +396,18 @@ const ProfileContent = () => {
                     </View>
 
                     <View style={styles.textContainer}>
-                      <Text
+                      <FlexText
                         style={[styles.titleText, { color: vm.colors.text }]}
                         numberOfLines={1}
                       >
                         {vm.hasMusic ? vm.currentTrack?.title : 'Add Music'}
-                      </Text>
-                      <Text
+                      </FlexText>
+                      <FlexText
                         style={[styles.artistText, { color: vm.colors.text }]}
                         numberOfLines={1}
                       >
                         {vm.hasMusic ? vm.currentTrack?.artist : 'Select track'}
-                      </Text>
+                      </FlexText>
                     </View>
                   </View>
                 </BlurView>

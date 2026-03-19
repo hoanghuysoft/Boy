@@ -1,14 +1,15 @@
+import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo, useCallback } from "react";
-import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useSheetBackHandler } from "./useSheetBackHandler";
+import { FlatList, Linking, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { useAudioStore } from '../../../stores/audio';
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileMusic } from '../../../types/profilemusic';
+import { useSheetBackHandler } from "./useSheetBackHandler";
 
 interface MusicSheetProps {
     data: ProfileMusic[];
@@ -77,12 +78,12 @@ const MusicItem = memo(({
 
             {/* Text Info */}
             <View style={styles.textContainer}>
-                <Text style={[common.heading, { fontSize: 16, marginBottom: 4 }]} numberOfLines={1}>
+                <FlexText style={[common.heading, { fontSize: 16, marginBottom: 4 }]} numberOfLines={1}>
                     {item.title}
-                </Text>
-                <Text style={[common.bodySmall, { color: colors.muted }]} numberOfLines={1}>
+                </FlexText>
+                <FlexText style={[common.bodySmall, { color: colors.muted }]} numberOfLines={1}>
                     {item.artist}
-                </Text>
+                </FlexText>
             </View>
 
             {/* External Link Button */}
@@ -126,10 +127,10 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <Text style={[common.heading, { fontSize: 24 }]}>Music</Text>
-                    <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>Music</FlexText>
+                    <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
                         Listen to my favorite tracks
-                    </Text>
+                    </FlexText>
                 </View>
 
                 {/* List */}

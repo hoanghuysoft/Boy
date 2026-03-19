@@ -31,6 +31,7 @@ const GalleryImage: React.FC<GalleryImageProps> = ({ uri, index }) => {
                         setResolution({ width: w, height: h });
                     }
                 }}
+                format={uri.endsWith('.gif') ? 'gif' : undefined}
             />
         </View>
     );

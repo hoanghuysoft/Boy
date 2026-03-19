@@ -1,9 +1,10 @@
 import { XmarkSolid } from "@lineiconshq/free-icons";
 import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import React, { memo } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { TextInput, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { Link } from "../../types/post";
+import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
 
@@ -86,9 +87,9 @@ export const LinksSection = memo(({
 
     return (
         <View style={createStyles.linksSection}>
-            <Text style={[common.label, { color: colors.text, marginBottom: 12 }]}>
+            <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
                 Links
-            </Text>
+            </FlexText>
             {links.map((link, index) => (
                 <LinkItem
                     key={index}

@@ -1,82 +1,127 @@
-import { GoogleSansFlex_700Bold, useFonts } from '@expo-google-fonts/google-sans-flex';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import {
+    checkProfileFromServer,
+    getLocalHasProfile,
+} from '../services/onboarding';
 import { supabase } from '../services/login';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface RootLayoutViewModel {
-    /** Whether the session check and font loading are both complete. */
     isReady: boolean;
-    /** Whether fonts have been loaded. */
     fontsLoaded: boolean;
-    /** The current Supabase session, or null if unauthenticated. */
+    loaded: boolean;
     session: any;
+    hasProfile: boolean | undefined;
 }
 
 // ─── ViewModel Hook ───────────────────────────────────────────────────────────
 
-/**
- * useRootLayoutViewModel
- *
- * Encapsulates all side-effects and state management for the root layout:
- *  - Google Sign-In SDK configuration
- *  - Font loading
- *  - Session initialisation & auth-state subscription
- *  - Route protection (redirect to /login when unauthenticated)
- *  - Splash screen dismissal once everything is ready
- */
 export const useRootLayoutViewModel = (): RootLayoutViewModel => {
     const router = useRouter();
     const segments = useSegments();
 
-    // ─── Fonts ────────────────────────────────────────────────────────────
-    const [fontsLoaded] = useFonts({
-        GoogleSansFlex_700Bold,
-    });
+    const fontsLoaded = true;
 
-    // ─── Auth State ───────────────────────────────────────────────────────
     const [session, setSession] = useState<any>(null);
     const [isSessionReady, setIsSessionReady] = useState(false);
+    const [hasProfile, setHasProfile] = useState<boolean | undefined>(undefined);
 
-    // Configure Google Sign-In once on mount
+    // Prevents a second server check when SIGNED_IN fires right after getSession
+    // on the initial app load (both can resolve for the same login event).
+    const initialCheckDoneRef = useRef(false);
+
     useEffect(() => {
         GoogleSignin.configure({
             webClientId: '674603557783-tn1v0di2jpgp87af41b1t1rok9sqelc1.apps.googleusercontent.com',
         });
     }, []);
 
-    // Load the initial session and subscribe to future auth changes
+    // ─── Session + profile check ───────────────────────────────────────────────
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        // App startup: restore session from AsyncStorage, then check profile.
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
             setSession(session);
+
+            if (session) {
+                const local = getLocalHasProfile();
+
+                if (local !== undefined) {
+                    // Fast path: already determined locally.
+                    setHasProfile(local);
+                } else {
+                    // Existing user who hasn't gone through this flow yet —
+                    // fetch once to populate MMKV.
+                    try {
+                        const result = await checkProfileFromServer();
+                        setHasProfile(result);
+                    } catch {
+                        // Fail open so existing users aren't blocked on errors.
+                        setHasProfile(true);
+                    }
+                }
+
+                initialCheckDoneRef.current = true;
+            }
+
             setIsSessionReady(true);
         });
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                setSession(session);
+
+                if (event === 'SIGNED_IN' && session) {
+                    // New login: always verify against the server so we don't rely
+                    // on a stale MMKV value from a previous account.
+                    if (!initialCheckDoneRef.current) {
+                        // getSession() fired first on startup — skip duplicate call.
+                        initialCheckDoneRef.current = true;
+                        return;
+                    }
+                    try {
+                        const result = await checkProfileFromServer();
+                        setHasProfile(result);
+                    } catch {
+                        setHasProfile(true);
+                    }
+                } else if (!session) {
+                    // Signed out — MMKV is cleared by signOut(), reset state.
+                    setHasProfile(undefined);
+                }
+            }
+        );
 
         return () => subscription.unsubscribe();
     }, []);
 
-    // ─── Route Protection ─────────────────────────────────────────────────
+    // ─── Route protection ──────────────────────────────────────────────────────
     useEffect(() => {
         if (!isSessionReady) return;
 
         const inAuthGroup = segments[0] === 'login';
+        const inOnboarding = segments[0] === 'onboarding';
 
-        if (!session && !inAuthGroup) {
-            router.replace('/login');
-        } else if (session && inAuthGroup) {
-            router.replace('/');
+        if (!session) {
+            if (!inAuthGroup) router.replace('/login');
+        } else if (hasProfile === false) {
+            if (!inOnboarding) router.replace('/onboarding');
+        } else if (hasProfile === true) {
+            if (inAuthGroup || inOnboarding) router.replace('/');
         }
-    }, [isSessionReady, segments, session]);
+        // hasProfile === undefined while still checking: don't redirect yet.
+    }, [isSessionReady, segments, session, hasProfile]);
 
-    // ─── Splash Screen ────────────────────────────────────────────────────
-    const isReady = isSessionReady && fontsLoaded;
+    // ─── Splash screen ─────────────────────────────────────────────────────────
+    // Wait for both the session AND (when logged in) the profile flag before
+    // revealing the app, so the user never sees a flash of the wrong screen.
+    const isReady =
+        isSessionReady &&
+        fontsLoaded &&
+        (session ? hasProfile !== undefined : true);
 
     useEffect(() => {
         if (isReady) {
@@ -87,6 +132,8 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
     return {
         isReady,
         fontsLoaded,
+        loaded: true,
         session,
+        hasProfile,
     };
 };

@@ -3,8 +3,9 @@ import VerifiedIcon from '@/icons/verified';
 import { Ionicons } from '@expo/vector-icons';
 import { GalleryBold, GalleryDownloadBold, ShareBold } from '@solar-icons/react-native';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FlexText } from '../FlexText';
 
 
 export interface GalleryOverlayProps {
@@ -60,9 +61,9 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                 </TouchableOpacity>
 
                 <View style={styles.galleryPagination}>
-                    <Text style={styles.galleryPaginationText}>
+                    <FlexText style={styles.galleryPaginationText}>
                         {currentIndex + 1} / {totalCount}
-                    </Text>
+                    </FlexText>
                 </View>
 
                 <View style={styles.actionButtons}>
@@ -100,14 +101,14 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                 <View style={[styles.galleryBottomBar, { paddingBottom: inset.bottom + 16 }]}>
                     {profileName && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <Text style={styles.galleryProfileName}>{profileName}</Text>
+                            <FlexText style={styles.galleryProfileName}>{profileName}</FlexText>
                             {isVerified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
                         </View>
                     )}
                     {caption && (
-                        <Text style={styles.galleryImageCaption} numberOfLines={3}>
+                        <FlexText style={styles.galleryImageCaption} numberOfLines={3}>
                             {caption}
-                        </Text>
+                        </FlexText>
                     )}
                 </View>
             )}

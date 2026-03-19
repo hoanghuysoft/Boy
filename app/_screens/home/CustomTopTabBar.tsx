@@ -1,6 +1,7 @@
+import { FlexText } from "@/components/FlexText";
 import { MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
 import React, { useEffect, useRef } from "react";
-import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 
@@ -99,7 +100,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                                 accessibilityRole="button"
                                 accessibilityState={isFocused ? { selected: true } : {}}
                             >
-                                <Text
+                                <FlexText
                                     style={[
                                         common.label,
                                         {
@@ -110,7 +111,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                                     ]}
                                 >
                                     {typeof label === 'string' ? label : route.name}
-                                </Text>
+                                </FlexText>
                                 <Animated.View
                                     style={[
                                         styles.activeIndicator,

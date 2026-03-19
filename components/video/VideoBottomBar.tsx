@@ -1,20 +1,19 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React from "react";
-import {
-  Animated,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-} from "react-native";
-import PillSlider from "./PillSlider";
-import { formatDuration } from "./videoPlayerStyles";
 import {
   RepeatBold,
   RepeatOneBold,
   SmartphoneRotate2Bold,
 } from "@solar-icons/react-native";
+import React from "react";
+import {
+  Animated,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  ViewStyle
+} from "react-native";
+import { FlexText } from "../FlexText";
+import PillSlider from "./PillSlider";
+import { formatDuration } from "./videoPlayerStyles";
 
 interface VideoProgress {
   currentTime: number;
@@ -76,9 +75,9 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
         ]}
       >
         <View style={{ flex: 1 }}>
-          <Text style={[commonBodySmallStyle, { color: "white" }]}>{name}</Text>
+          <FlexText style={[commonBodySmallStyle, { color: "white" }]}>{name}</FlexText>
           {caption && (
-            <Text
+            <FlexText
               style={{
                 marginBottom: 8,
                 fontSize: 28,
@@ -89,7 +88,7 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
               ellipsizeMode="tail"
             >
               {caption}
-            </Text>
+            </FlexText>
           )}
         </View>
         <View style={[commonRowStyle, { gap: 8 }]}>
@@ -123,14 +122,14 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
           { justifyContent: "space-between", marginTop: 8 },
         ]}
       >
-        <Text style={[commonLabelStyle, { color: "white" }]}>
+        <FlexText style={[commonLabelStyle, { color: "white" }]}>
           {formatDuration(
             seekPosition !== null ? seekPosition : progress.currentTime,
           )}
-        </Text>
-        <Text style={[commonLabelStyle, { color: "white" }]}>
+        </FlexText>
+        <FlexText style={[commonLabelStyle, { color: "white" }]}>
           {formatDuration(progress.seekableDuration)}
-        </Text>
+        </FlexText>
       </View>
     </Animated.View>
   );

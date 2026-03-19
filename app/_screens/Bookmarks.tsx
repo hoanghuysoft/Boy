@@ -8,11 +8,11 @@ import {
     ActivityIndicator,
     FlatList,
     StyleSheet,
-    Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FlexText } from "../../components/FlexText";
 import { PostItem } from "../../components/PostItem";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -87,12 +87,12 @@ const BookmarksScreen = () => {
                 >
                     <BookmarkIcon size={32} color={colors.muted} />
                 </View>
-                <Text style={[common.heading, { fontSize: 20, marginTop: 20, marginBottom: 8 }]}>
+                <FlexText style={[common.heading, { fontSize: 20, marginTop: 20, marginBottom: 8 }]}>
                     No bookmarks yet
-                </Text>
-                <Text style={[common.body, { color: colors.muted, textAlign: "center", lineHeight: 22 }]}>
+                </FlexText>
+                <FlexText style={[common.body, { color: colors.muted, textAlign: "center", lineHeight: 22 }]}>
                     Save posts you love and find them here anytime.
-                </Text>
+                </FlexText>
             </View>
         );
     }, [isLoading, colors, common, theme]);
@@ -101,12 +101,12 @@ const BookmarksScreen = () => {
     // sits below the spacer that clears the floating back button.
     const ListHeaderComponent = useCallback(() => (
         <View style={{ marginTop: insets.top + 66, paddingHorizontal: 16, marginBottom: 8 }}>
-            <Text style={[common.heading, { fontSize: 28 }]}>Bookmarks</Text>
-            <Text style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
+            <FlexText style={[common.heading, { fontSize: 28 }]}>Bookmarks</FlexText>
+            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
                 {posts.length > 0
                     ? `${posts.length} saved post${posts.length !== 1 ? 's' : ''}`
                     : 'Your saved posts'}
-            </Text>
+            </FlexText>
         </View>
     ), [insets.top, common, colors.muted, posts.length]);
 

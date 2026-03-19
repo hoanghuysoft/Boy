@@ -81,6 +81,32 @@ const patchPostInFeedCaches = (
     queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, updater);
 };
 
+/**
+ * Patches like_count in the video (Shots) infinite feed cache.
+ * Video items use post_id to link to a post, not their own id.
+ */
+const patchVideoFeedCaches = (
+    queryClient: ReturnType<typeof useQueryClient>,
+    postId: string,
+    patch: { like_count_delta: number }
+) => {
+    const updater = (oldData: any) => {
+        if (!oldData?.pages) return oldData;
+        return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+                ...page,
+                data: page.data.map((video: any) =>
+                    video.post_id === postId
+                        ? { ...video, like_count: Math.max(0, video.like_count + patch.like_count_delta) }
+                        : video
+                ),
+            })),
+        };
+    };
+    queryClient.setQueriesData({ queryKey: ['videoFeed'], exact: false }, updater);
+};
+
 // ============================================================================
 // React Query Hooks
 // ============================================================================
@@ -170,6 +196,11 @@ export const useToggleLike = () => {
                 like_count_delta: isLiked ? -1 : 1,
             });
 
+            // Also patch the video (Shots) feed cache
+            patchVideoFeedCaches(queryClient, postId, {
+                like_count_delta: isLiked ? -1 : 1,
+            });
+
             return { previous, postId, wasLiked: isLiked };
         },
         onError: (_, __, context) => {
@@ -180,6 +211,11 @@ export const useToggleLike = () => {
                 // Rollback feed caches
                 patchPostInFeedCaches(queryClient, context.postId, {
                     is_liked: context.wasLiked,
+                    like_count_delta: context.wasLiked ? 1 : -1,
+                });
+
+                // Rollback video feed cache
+                patchVideoFeedCaches(queryClient, context.postId, {
                     like_count_delta: context.wasLiked ? 1 : -1,
                 });
             }

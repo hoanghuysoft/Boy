@@ -1,3 +1,4 @@
+import { FlexText } from "@/components/FlexText";
 import { queryClient } from "@/services/client";
 import { useFeed } from "@/services/feed";
 import { useFeedVideoStore } from "@/stores/feedVideo";
@@ -5,7 +6,7 @@ import { Post } from "@/types/post";
 import { choosenMediaPath } from "@/utils/imageurl";
 import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Dimensions, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DataProvider, LayoutProvider, RecyclerListView } from "recyclerlistview";
 import { PostItem } from "../../../components/PostItem";
@@ -231,12 +232,12 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
         return (
             <View style={styles.emptyState}>
-                <Text style={[common.heading, { color: colors.muted, textAlign: 'center' }]}>
+                <FlexText style={[common.heading, { color: colors.muted, textAlign: 'center' }]}>
                     No posts yet
-                </Text>
-                <Text style={[common.label, { color: colors.muted, textAlign: 'center', marginTop: 8 }]}>
+                </FlexText>
+                <FlexText style={[common.label, { color: colors.muted, textAlign: 'center', marginTop: 8 }]}>
                     {emptyMessages[feedType]}
-                </Text>
+                </FlexText>
             </View>
         );
     };

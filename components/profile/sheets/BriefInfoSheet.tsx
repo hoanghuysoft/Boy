@@ -1,3 +1,4 @@
+import { FlexText } from "@/components/FlexText";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import {
@@ -14,7 +15,7 @@ import {
     WomenBold,
 } from '@solar-icons/react-native';
 import React, { forwardRef, memo, useMemo } from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from "react-native-turbo-image";
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -73,13 +74,13 @@ const InfoRow = memo(({ item, colors }: { item: InfoItem; colors: any }) => {
                 {renderIcon()}
             </View>
             <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Text style={[styles.infoLabel, { color: colors.text }]} numberOfLines={2}>
+                <FlexText style={[styles.infoLabel, { color: colors.text }]} numberOfLines={2}>
                     {item.label}
-                </Text>
+                </FlexText>
                 {item.sublabel ? (
-                    <Text style={[styles.infoSublabel, { color: colors.muted }]} numberOfLines={1}>
+                    <FlexText style={[styles.infoSublabel, { color: colors.muted }]} numberOfLines={1}>
                         {item.sublabel}
-                    </Text>
+                    </FlexText>
                 ) : null}
             </View>
         </View>
@@ -222,20 +223,20 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <Text style={[common.heading, { fontSize: 24 }]}>Know me</Text>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>Know me</FlexText>
                     {profile?.name && (
-                        <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                        <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
                             Get to know {profile.name} better
-                        </Text>
+                        </FlexText>
                     )}
                 </View>
 
                 {/* Sections */}
                 {sections.map((section) => (
                     <View key={section.title} style={{ marginBottom: 24 }}>
-                        <Text style={[common.bodySmall, styles.sectionTitle]}>
+                        <FlexText style={[common.bodySmall, styles.sectionTitle]}>
                             {section.title}
-                        </Text>
+                        </FlexText>
                         <View style={{ gap: 4 }}>
                             {section.items.map((item, i) => (
                                 <InfoRow key={i} item={item} colors={colors} />
@@ -245,9 +246,9 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
                 ))}
 
                 {sections.length === 0 && (
-                    <Text style={[common.bodySmall, { color: colors.muted, textAlign: 'center' }]}>
+                    <FlexText style={[common.bodySmall, { color: colors.muted, textAlign: 'center' }]}>
                         No information available
-                    </Text>
+                    </FlexText>
                 )}
 
                 <View style={{ height: inset.bottom + 20 }} />

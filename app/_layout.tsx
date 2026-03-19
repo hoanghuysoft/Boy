@@ -1,24 +1,13 @@
-import {
-  configureReanimatedLogger,
-  ReanimatedLogLevel,
-} from "react-native-reanimated";
-
-// Disable Reanimated strict mode warning
-configureReanimatedLogger({
-  level: ReanimatedLogLevel.warn,
-  strict: false,
-});
-
-import {
-  GoogleSansFlex_700Bold,
-  useFonts,
-} from "@expo-google-fonts/google-sans-flex";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { ImageBackground, StatusBar, StyleSheet, View } from "react-native";
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from "react-native-reanimated";
 import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -27,10 +16,17 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { GlobalAudioPlayer } from "../components/GlobalAudioPlayer";
+import { SessionProvider } from "../context/SessionContext";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
 import { clientPersister, queryClient } from "../services/client";
 import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
+
+// Disable Reanimated strict mode warning
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -109,7 +105,7 @@ const RootContent = () => {
   const pathname = usePathname();
   const isShots = pathname === "/shots";
 
-  const { isReady } = useRootLayoutViewModel();
+  const { isReady, session, hasProfile } = useRootLayoutViewModel();
 
   useEffect(() => {
     SplashScreen.hideAsync();
@@ -120,74 +116,76 @@ const RootContent = () => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar
-        key={`${theme}-${isShots}`}
-        animated={false}
-        translucent
-        backgroundColor="transparent"
-        barStyle={
-          isShots
-            ? "light-content"
-            : theme === "light"
-              ? "dark-content"
-              : "light-content"
-        }
-      />
-      <StatusBarFade />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-          animation: "slide_from_right",
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="login"
-          options={{ headerShown: false, animation: "fade" }}
+    <SessionProvider session={session} hasProfile={hasProfile}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <StatusBar
+          key={`${theme}-${isShots}`}
+          animated={false}
+          translucent
+          backgroundColor="transparent"
+          barStyle={
+            isShots
+              ? "light-content"
+              : theme === "light"
+                ? "dark-content"
+                : "light-content"
+          }
         />
-        <Stack.Screen
-          name="video_player"
-          options={{ headerShown: false, animation: "slide_from_bottom" }}
-        />
-        <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="image_poster" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="settings"
-          options={{ headerShown: false, animation: "slide_from_bottom" }}
-        />
-        <Stack.Screen
-          name="bookmarks"
-          options={{ headerShown: false, animation: "slide_from_right" }}
-        />
-        <Stack.Screen
-          name="fprofile"
-          options={{ headerShown: false, animation: "slide_from_right" }}
-        />
-        <Stack.Screen
-          name="search"
-          options={{ headerShown: false, animation: "slide_from_right" }}
-        />
-        <Stack.Screen
-          name="hashtag/[tag]"
-          options={{ headerShown: false, animation: "slide_from_right" }}
-        />
-        <Stack.Screen
-          name="hashtag-list"
-          options={{ headerShown: false, animation: "slide_from_right" }}
-        />
-      </Stack>
-      <GlobalAudioPlayer />
-    </View>
+        <StatusBarFade />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+            animation: "slide_from_right",
+          }}
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="login"
+            options={{ headerShown: false, animation: "fade" }}
+          />
+          <Stack.Screen
+            name="onboarding"
+            options={{ headerShown: false, animation: "fade", gestureEnabled: false }}
+          />
+          <Stack.Screen
+            name="video_player"
+            options={{ headerShown: false, animation: "slide_from_bottom" }}
+          />
+          <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="image_poster" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="settings"
+            options={{ headerShown: false, animation: "slide_from_bottom" }}
+          />
+          <Stack.Screen
+            name="bookmarks"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="fprofile"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="search"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="hashtag/[tag]"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="hashtag-list"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+        </Stack>
+        <GlobalAudioPlayer />
+      </View>
+    </SessionProvider>
   );
 };
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    GoogleSansFlex_700Bold,
-  });
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PersistQueryClientProvider

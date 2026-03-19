@@ -6,12 +6,12 @@ import React, { memo, useState } from 'react';
 import {
     Dimensions,
     Linking,
-    Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
+import { FlexText } from '../FlexText';
 import CachedImage from './CachedImage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -30,18 +30,18 @@ const FBCaptionText: React.FC<{ text: string; colors: any; common: any }> = ({
 
     return (
         <View style={{ paddingHorizontal: 16 }}>
-            <Text style={[common.body, { color: colors.text, marginTop: 10, marginBottom: 10, fontSize: 14 }]}>
+            <FlexText style={[common.body, { color: colors.text, marginTop: 10, marginBottom: 10, fontSize: 14 }]}>
                 {displayText}
                 {needsReadMore && (
-                    <Text
+                    <FlexText
                         onPress={() => setExpanded(!expanded)}
                         style={{ color: colors.verify, fontWeight: '600' }}
                         suppressHighlighting
                     >
                         {expanded ? ' Read less' : ' Read more'}
-                    </Text>
+                    </FlexText>
                 )}
-            </Text>
+            </FlexText>
         </View>
     );
 };
@@ -118,9 +118,9 @@ const FBMediaGrid: React.FC<{
                                     backgroundColor: 'rgba(0,0,0,0.5)',
                                     alignItems: 'center', justifyContent: 'center',
                                 }}>
-                                    <Text style={{ color: '#FFF', fontSize: 24, fontWeight: '700' }}>
+                                    <FlexText style={{ color: '#FFF', fontSize: 24, fontWeight: '700' }}>
                                         +{photoUrls.length - 4}
-                                    </Text>
+                                    </FlexText>
                                 </View>
                             )}
 
@@ -178,17 +178,17 @@ const FBPostCard: React.FC<{
                     />
                     <View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <Text style={[common.heading, { fontSize: 16 }]}>{post.actor.name}</Text>
+                            <FlexText style={[common.heading, { fontSize: 16 }]}>{post.actor.name}</FlexText>
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <Text style={[common.label, { color: colors.muted, fontSize: 12 }]}>
+                            <FlexText style={[common.label, { color: colors.muted, fontSize: 12 }]}>
                                 {formatTimestamp(post.creation_time)}
-                            </Text>
-                            <Text style={{ color: colors.muted, fontSize: 12 }}> · </Text>
+                            </FlexText>
+                            <FlexText style={{ color: colors.muted, fontSize: 12 }}> · </FlexText>
                             <Ionicons name={privacyIcon as any} size={11} color={colors.muted} />
                             {post.is_pinned && (
                                 <>
-                                    <Text style={{ color: colors.muted, fontSize: 12 }}> · </Text>
+                                    <FlexText style={{ color: colors.muted, fontSize: 12 }}> · </FlexText>
                                     <PinBold size={11} color={colors.muted} />
                                 </>
                             )}
@@ -228,9 +228,9 @@ const FBPostCard: React.FC<{
                 {post.reactions.total > 0 && (
                     <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                         <Ionicons name="heart" size={22} color={colors.text} />
-                        <Text style={[common.label, { color: colors.text, fontWeight: '800' }]}>
+                        <FlexText style={[common.label, { color: colors.text, fontWeight: '800' }]}>
                             {post.reactions.total}
-                        </Text>
+                        </FlexText>
                     </View>
                 )}
             </View>

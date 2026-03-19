@@ -1,3 +1,4 @@
+import { FlexText } from "@/components/FlexText";
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { clearVideoCache, formatBytes, getCacheCount, getCacheSize, setMaxCacheSize } from "@/services/videoCache";
 import { useSearchHistoryStore } from "@/stores/searchHistory";
@@ -7,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Logout3Bold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ToggleSwitch from 'toggle-switch-react-native';
 
@@ -120,24 +121,24 @@ const SettingsScreen = () => {
                 {!searchQuery && !isFocused && (
                     <View style={styles.placeholderContainer} pointerEvents="none">
                         <Ionicons name='search' size={18} color={colors.muted} />
-                        <Text style={[common.body, { color: colors.muted, marginLeft: 6 }]}>Search</Text>
+                        <FlexText style={[common.body, { color: colors.muted, marginLeft: 6 }]}>Search</FlexText>
                     </View>
                 )}
-            </View>
-            <Text style={[styles.title]}>Preferences</Text>
+            </View> 
+            <FlexText style={[styles.title]}>Preferences</FlexText>
             <View style={[styles.card]}>
                 <TouchableOpacity style={[styles.option]} onPress={() => router.push('/theme-settings')}>
                     <View>
-                        <Text style={[common.body]}>Theme</Text>
-                        <Text style={[common.bodySmall, { color: colors.muted }]}>{themePreferenceLabels[themePreference]}</Text>
+                        <FlexText style={[common.body]}>Theme</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{themePreferenceLabels[themePreference]}</FlexText>
                     </View>
                     <Ionicons name="chevron-forward" size={24} color={colors.text} />
                 </TouchableOpacity>
                 <View style={styles.divider}></View>
                 <View style={[styles.option]}>
                     <View>
-                        <Text style={[common.body]}>Adult filter</Text>
-                        <Text style={[common.bodySmall, { color: colors.muted }]}>{showSensitiveContent ? "Off" : "On"}</Text>
+                        <FlexText style={[common.body]}>Adult filter</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{showSensitiveContent ? "Off" : "On"}</FlexText>
                     </View>
                     <ToggleSwitch
                         isOn={!showSensitiveContent}
@@ -150,8 +151,8 @@ const SettingsScreen = () => {
                 <View style={styles.divider}></View>
                 <View style={[styles.option]}>
                     <View style={{ flex: 1 }}>
-                        <Text style={[common.body]}>Home carousel</Text>
-                        <Text style={[common.bodySmall, { color: colors.muted }]}>The carousel may contain sensitive media. {showCarousel ? "On" : "Off"}</Text>
+                        <FlexText style={[common.body]}>Home carousel</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>The carousel may contain sensitive media. {showCarousel ? "On" : "Off"}</FlexText>
                     </View>
                     <ToggleSwitch
                         isOn={showCarousel}
@@ -164,8 +165,8 @@ const SettingsScreen = () => {
                 <View style={styles.divider}></View>
                 <View style={[styles.option]}>
                     <View style={{ flex: 1 }}>
-                        <Text style={[common.body]}>Autoplay videos</Text>
-                        <Text style={[common.bodySmall, { color: colors.muted }]}>Automatically play videos in feed. {autoplayVideos ? "On" : "Off"}</Text>
+                        <FlexText style={[common.body]}>Autoplay videos</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>Automatically play videos in feed. {autoplayVideos ? "On" : "Off"}</FlexText>
                     </View>
                     <ToggleSwitch
                         isOn={autoplayVideos}
@@ -178,19 +179,19 @@ const SettingsScreen = () => {
             </View>
 
             {/* ─── Storage & Cache ──────────────────────────────────── */}
-            <Text style={[styles.title, { marginTop: 24 }]}>Storage & Cache</Text>
+            <FlexText style={[styles.title, { marginTop: 24 }]}>Storage & Cache</FlexText>
             <View style={[styles.card]}>
                 {/* Cache usage bar */}
                 <View style={{ marginBottom: 12 }}>
                     <View style={styles.cacheInfoRow}>
-                        <Text style={[common.body]}>Video cache</Text>
-                        <Text style={[common.bodySmall, { color: colors.muted }]}>
+                        <FlexText style={[common.body]}>Video cache</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>
                             {formatBytes(cacheSize)} / {currentLimitLabel}
-                        </Text>
+                        </FlexText>
                     </View>
-                    <Text style={[common.bodySmall, { color: colors.muted, marginBottom: 8 }]}>
+                    <FlexText style={[common.bodySmall, { color: colors.muted, marginBottom: 8 }]}>
                         {cacheCount} {cacheCount === 1 ? 'video' : 'videos'} cached
-                    </Text>
+                    </FlexText>
                     <View style={styles.progressBarBg}>
                         <View
                             style={[
@@ -208,8 +209,8 @@ const SettingsScreen = () => {
                 {/* Cache size limit picker */}
                 <TouchableOpacity style={[styles.option]} onPress={() => setShowCacheSizePicker(true)}>
                     <View>
-                        <Text style={[common.body]}>Max cache size</Text>
-                        <Text style={[common.bodySmall, { color: colors.muted }]}>{currentLimitLabel}</Text>
+                        <FlexText style={[common.body]}>Max cache size</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{currentLimitLabel}</FlexText>
                     </View>
                     <Ionicons name="chevron-forward" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -221,14 +222,14 @@ const SettingsScreen = () => {
                     onPress={handleClearCache}
                     disabled={isClearing || cacheSize === 0}
                 >
-                    <Text style={[common.body, { color: cacheSize === 0 ? colors.muted : '#ff4444' }]}>
+                    <FlexText style={[common.body, { color: cacheSize === 0 ? colors.muted : '#ff4444' }]}>
                         {isClearing ? 'Clearing...' : 'Clear video cache'}
-                    </Text>
+                    </FlexText>
                     {isClearing && <ActivityIndicator size="small" color={colors.muted} />}
                 </TouchableOpacity>
             </View>
 
-            <Text style={[styles.title, { marginTop: 24 }]}>Account</Text>
+            <FlexText style={[styles.title, { marginTop: 24 }]}>Account</FlexText>
             <View style={[styles.card]}>
                 <TouchableOpacity style={[styles.option]} onPress={async () => {
                     try {
@@ -244,7 +245,7 @@ const SettingsScreen = () => {
                         setIsLoggingOut(false);
                     }
                 }}>
-                    <Text style={[common.body, { color: colors.text }]}>Log out</Text>
+                    <FlexText style={[common.body, { color: colors.text }]}>Log out</FlexText>
                     <Logout3Bold size={24} color={colors.text} />
                 </TouchableOpacity>
             </View>
@@ -259,7 +260,7 @@ const SettingsScreen = () => {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <ActivityIndicator size="large" color={colors.text} />
-                        <Text style={[common.body, { color: colors.text, marginTop: 12 }]}>Logging out...</Text>
+                        <FlexText style={[common.body, { color: colors.text, marginTop: 12 }]}>Logging out...</FlexText>
                     </View>
                 </View>
             </Modal>
@@ -278,9 +279,9 @@ const SettingsScreen = () => {
                     onPress={() => setShowCacheSizePicker(false)}
                 >
                     <View style={styles.pickerModal}>
-                        <Text style={[common.body, { fontWeight: '700', marginBottom: 16, textAlign: 'center' }]}>
+                        <FlexText style={[common.body, { fontWeight: '700', marginBottom: 16, textAlign: 'center' }]}>
                             Max Cache Size
-                        </Text>
+                        </FlexText>
                         {CACHE_SIZE_OPTIONS.map((option) => {
                             const isSelected = option.value === videoCacheSizeLimit;
                             return (
@@ -292,9 +293,9 @@ const SettingsScreen = () => {
                                     ]}
                                     onPress={() => handleSetCacheLimit(option.value)}
                                 >
-                                    <Text style={[common.body, isSelected && { color: colors.verify, fontWeight: '700' }]}>
+                                    <FlexText style={[common.body, isSelected && { color: colors.verify, fontWeight: '700' }]}>
                                         {option.label}
-                                    </Text>
+                                    </FlexText>
                                     {isSelected && (
                                         <Ionicons name="checkmark-circle" size={22} color={colors.verify} />
                                     )}

@@ -10,11 +10,12 @@ import { Link, Post } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import React from "react";
-import { Dimensions, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, Linking, ScrollView, TouchableOpacity, View } from "react-native";
 import { Pressable } from 'react-native-gesture-handler';
 import TurboImage from 'react-native-turbo-image';
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
+import { FlexText } from "./FlexText";
 import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 
@@ -49,10 +50,11 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                         style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: vm.colors.divider }}
                         cachePolicy={IMAGE_CACHE_POLICY}
                         fadeDuration={100}
+                        format={post.profile_avatar?.endsWith('.gif') ? 'gif' : undefined}
                     />
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>
-                            <Text style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</Text>
+                            <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
                             {post.profile_is_verified && <VerifiedIcon size={14} backgroundColor={vm.colors.verify} />}
                         </View>
                         <PostMetaInfo post={post} />
@@ -149,7 +151,7 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                         }}
                     >
                         <Ionicons name={vm.isPlaying ? "volume-high" : "volume-mute"} size={16} color={vm.colors.text} />
-                        <Text style={[vm.common.label, { fontSize: 12 }]}>Preview</Text>
+                        <FlexText style={[vm.common.label, { fontSize: 12 }]}>Preview</FlexText>
                     </TouchableOpacity>
                 </View>
             )}
@@ -180,9 +182,9 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                                 }}
                             >
                                 <Ionicons name="link-outline" size={16} color={vm.colors.muted} />
-                                <Text style={[vm.common.label, { color: vm.colors.text, fontSize: 13, fontWeight: '500' }]}>
+                                <FlexText style={[vm.common.label, { color: vm.colors.text, fontSize: 13, fontWeight: '500' }]}>
                                     {item.label}
-                                </Text>
+                                </FlexText>
                                 <Ionicons name="open-outline" size={14} color={vm.colors.muted} style={{ marginLeft: 4 }} />
                             </TouchableOpacity>
                         ))}
@@ -190,7 +192,7 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                 </View>
             )}
 
-            {post.device && <Text style={[vm.common.label, { color: vm.colors.muted, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 }]}>This post was created on {post.device}</Text>}
+            {post.device && <FlexText style={[vm.common.label, { color: vm.colors.muted, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 }]}>This post was created on {post.device}</FlexText>}
 
             {/* Action Bar */}
             {isBookmarked ? (
@@ -202,11 +204,11 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                         ) : (
                             <LikeIcon size={24} color={vm.colors.text} />
                         )}
-                        <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</Text>
+                        <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
                     </View>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <CommentIcon size={24} color={vm.colors.text} />
-                        <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</Text>
+                        <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</FlexText>
                     </View>
                     <TouchableOpacity hitSlop={10} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
@@ -229,16 +231,16 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                                 )}
                             </TouchableOpacity>
                             <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
-                                <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</Text>
+                                <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
                             </TouchableOpacity>
                         </View>
                         <TouchableOpacity hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                             <CommentIcon size={24} color={vm.colors.text} />
-                            <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</Text>
+                            <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</FlexText>
                         </TouchableOpacity>
                         <TouchableOpacity hitSlop={10} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                             <ShareIcon size={24} color={vm.colors.text} />
-                            <Text style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.share_count}</Text>
+                            <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.share_count}</FlexText>
                         </TouchableOpacity>
                     </View>
                     <TouchableOpacity hitSlop={10} onPress={vm.handleBookmarkPress}>

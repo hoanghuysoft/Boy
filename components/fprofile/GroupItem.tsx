@@ -6,10 +6,10 @@ import React, { memo } from 'react';
 import {
     Linking,
     StyleSheet,
-    Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
+import { FlexText } from '../FlexText';
 import CachedImage from './CachedImage';
 
 dayjs.extend(relativeTime);
@@ -45,37 +45,37 @@ const GroupItem: React.FC<{
                 resizeMode="cover"
             />
             <View style={styles.groupInfo}>
-                <Text
+                <FlexText
                     style={[styles.groupName, { color: fbColors.primaryText }]}
                     numberOfLines={2}
                 >
                     {group.name}
-                </Text>
+                </FlexText>
                 <View style={styles.groupMeta}>
                     <Ionicons name={visibilityIcon as any} size={12} color={fbColors.secondaryText} />
-                    <Text style={[styles.groupMetaText, { color: fbColors.secondaryText }]}>
+                    <FlexText style={[styles.groupMetaText, { color: fbColors.secondaryText }]}>
                         {group.visibility.charAt(0) + group.visibility.slice(1).toLowerCase()}
-                    </Text>
-                    <Text style={[styles.groupDot, { color: fbColors.secondaryText }]}> · </Text>
-                    <Text style={[styles.groupMetaText, { color: fbColors.secondaryText }]}>
+                    </FlexText>
+                    <FlexText style={[styles.groupDot, { color: fbColors.secondaryText }]}> · </FlexText>
+                    <FlexText style={[styles.groupMetaText, { color: fbColors.secondaryText }]}>
                         {formatCount(group.membersCount)} members
-                    </Text>
+                    </FlexText>
                 </View>
                 {group.addedTime > 0 && (
                     <View style={styles.groupMeta}>
                         <Ionicons name="time-outline" size={12} color={fbColors.secondaryText} />
-                        <Text style={[styles.groupMetaText, { color: fbColors.secondaryText }]}>
+                        <FlexText style={[styles.groupMetaText, { color: fbColors.secondaryText }]}>
                             Joined {formatTimeAgo(group.addedTime)}
-                        </Text>
+                        </FlexText>
                     </View>
                 )}
                 {group.description && (
-                    <Text
+                    <FlexText
                         style={[styles.groupDesc, { color: fbColors.secondaryText }]}
                         numberOfLines={2}
                     >
                         {group.description}
-                    </Text>
+                    </FlexText>
                 )}
             </View>
             <Ionicons name="chevron-forward" size={18} color={fbColors.secondaryText} />

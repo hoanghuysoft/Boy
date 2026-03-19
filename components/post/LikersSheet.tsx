@@ -1,11 +1,12 @@
+import FastImage from "@d11/react-native-fast-image";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo, useCallback } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import TurboImage from "react-native-turbo-image";
 import VerifiedIcon from "../../icons/verified";
 import { LikeUser } from "../../types/like";
 import { useLikersSheetViewModel } from "../../viewmodels/LikersSheetViewModel";
+import { FlexText } from "../FlexText";
 
 // ============================================================================
 // Types
@@ -32,17 +33,16 @@ const LikerItem = memo(({ user, colors, common, onPress }: LikerItemProps) => (
         onPress={onPress}
         activeOpacity={0.7}
     >
-        <TurboImage
+        <FastImage
             source={{ uri: user.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
             style={[styles.avatar, { backgroundColor: colors.divider }]}
-            cachePolicy="dataCache"
-            fadeDuration={100}
+            resizeMode={FastImage.resizeMode.cover}
         />
         <View style={styles.userInfo}>
             <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                <Text style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
+                <FlexText style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
                     {user.profile_name}
-                </Text>
+                </FlexText>
                 {user.profile_is_verified && (
                     <VerifiedIcon size={14} backgroundColor={colors.verify} />
                 )}
@@ -92,12 +92,12 @@ export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
             }
             return (
                 <View style={styles.emptyState}>
-                    <Text style={[vm.common.body, { color: vm.colors.muted, textAlign: 'center' }]}>
+                    <FlexText style={[vm.common.body, { color: vm.colors.muted, textAlign: 'center' }]}>
                         No likes yet
-                    </Text>
-                    <Text style={[vm.common.bodySmall, { color: vm.colors.muted, textAlign: 'center', marginTop: 4 }]}>
+                    </FlexText>
+                    <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted, textAlign: 'center', marginTop: 4 }]}>
                         Be the first to like this post!
-                    </Text>
+                    </FlexText>
                 </View>
             );
         }, [vm.isLoading, vm.colors, vm.common]);
@@ -118,12 +118,12 @@ export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
                 <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text style={[vm.common.heading]}>Likes</Text>
-                        <Text style={vm.common.bodySmall}>
+                        <FlexText style={[vm.common.heading]}>Likes</FlexText>
+                        <FlexText style={vm.common.bodySmall}>
                             {vm.totalLikes > 0
                                 ? `${vm.totalLikes} ${vm.totalLikes === 1 ? 'person' : 'people'} liked this post`
                                 : 'No likes yet'}
-                        </Text>
+                        </FlexText>
                     </View>
 
                     {/* Likers List */}

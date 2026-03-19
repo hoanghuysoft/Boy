@@ -1,7 +1,8 @@
+import { FlexText } from "@/components/FlexText";
 import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import FastImage from "@d11/react-native-fast-image";
-import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLoginViewModel } from "../../viewmodels/LoginViewModel";
 
@@ -18,12 +19,12 @@ const LoginScreen = () => {
             <View style={{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
                 <View style={{ alignItems: "center" }}>
                     <FastImage source={require("../../assets/images/logo_head.png")} resizeMode={FastImage.resizeMode.contain} style={{ width: 85, height: 85 }} />
-                    <Text style={[common.headline, { color: 'white', fontWeight: "bold" }]}>WeLove</Text>
+                    <FlexText style={[common.headline, { color: 'white', fontWeight: "bold" }]}>WeLove</FlexText>
                 </View>
             </View>
             <View style={style.bottomButtonContainer}>
-                <Text style={[common.heading, { color: 'white', textAlign: "center", fontWeight: "bold" }]}>Login to your account</Text>
-                <Text style={[common.body, { color: 'white', marginVertical: 10, textAlign: "center" }]}>Share what you love for the whole world to see</Text>
+                <FlexText style={[common.heading, { color: 'white', textAlign: "center", fontWeight: "bold" }]}>Login to your account</FlexText>
+                <FlexText style={[common.body, { color: 'white', marginVertical: 10, textAlign: "center" }]}>Share what you love for the whole world to see</FlexText>
                 <TouchableOpacity
                     onPress={handleGoogleLogin}
                     style={[common.button, { borderRadius: 9999, flexDirection: "row", gap: 10, width: "100%", justifyContent: "center", alignItems: "center" }]}
@@ -35,7 +36,7 @@ const LoginScreen = () => {
                         }}
                         style={{ width: 25, height: 30 }}
                     />
-                    <Text style={[common.buttonText, { color: colors.text }]}>Login with Google</Text>
+                    <FlexText style={[common.buttonText, { color: colors.text }]}>Login with Google</FlexText>
                 </TouchableOpacity>
             </View>
             <Modal
@@ -47,7 +48,7 @@ const LoginScreen = () => {
                 <View style={style.modalOverlay}>
                     <View style={[style.modalContent, { backgroundColor: colors.containerContent || colors.card }]}>
                         <ActivityIndicator size="large" color={colors.text} />
-                        <Text style={[common.body, { color: colors.text, marginTop: 12, textAlign: "center" }]}>Signing in...</Text>
+                        <FlexText style={[common.body, { color: colors.text, marginTop: 12, textAlign: "center" }]}>Signing in...</FlexText>
                     </View>
                 </View>
             </Modal>

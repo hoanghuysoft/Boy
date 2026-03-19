@@ -85,6 +85,7 @@ export const FeedVideoPlayer: React.FC = React.memo(() => {
         </View>
     );
 });
+FeedVideoPlayer.displayName = 'FeedVideoPlayer';
 
 const styles = StyleSheet.create({
     container: {

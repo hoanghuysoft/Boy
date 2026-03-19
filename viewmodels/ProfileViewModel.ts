@@ -16,8 +16,7 @@ import { useScrollStore } from "../stores/scroll";
 import { createCommonStyles } from "../styles/common";
 import { Media } from "../types/media";
 import { Post } from "../types/post";
-
-type TabType = "Images" | "Videos" | "Feed" | "Information";
+import type { TabType } from "./ProfileHeaderViewModel";
 
 export const useProfileViewModel = () => {
     const router = useRouter();
@@ -38,7 +37,6 @@ export const useProfileViewModel = () => {
         Images: 0,
         Videos: 0,
         Feed: 0,
-        Information: 0,
     });
     const currentScrollY = useRef(0);
 

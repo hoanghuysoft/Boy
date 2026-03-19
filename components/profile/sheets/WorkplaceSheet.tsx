@@ -1,13 +1,14 @@
+import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import dayjs from 'dayjs';
 import React, { forwardRef, memo } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
-import { useSheetBackHandler } from "./useSheetBackHandler";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { Workplace } from '../../../types/profileworplace';
+import { useSheetBackHandler } from "./useSheetBackHandler";
 
 interface WorkplaceSheetProps {
     data: Workplace[];
@@ -53,10 +54,10 @@ const WorkplaceItem = memo(({ item, colors, common }: { item: Workplace, colors:
                 </View>
 
                 <View style={{ flex: 1 }}>
-                    <Text style={[common.heading, { fontSize: 16 }]}>{item.company_name}</Text>
-                    <Text style={[common.body, { color: colors.text, fontWeight: '600', marginTop: 2 }]}>
+                    <FlexText style={[common.heading, { fontSize: 16 }]}>{item.company_name}</FlexText>
+                    <FlexText style={[common.body, { color: colors.text, fontWeight: '600', marginTop: 2 }]}>
                         {item.position}
-                    </Text>
+                    </FlexText>
                 </View>
             </View>
 
@@ -64,20 +65,20 @@ const WorkplaceItem = memo(({ item, colors, common }: { item: Workplace, colors:
             <View style={[styles.metaContainer, { backgroundColor: colors.background }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
                     <Ionicons name="calendar-outline" size={14} color={colors.muted} style={{ marginRight: 6 }} />
-                    <Text style={[common.bodySmall, { color: colors.muted }]}>
+                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>
                         {formatDate(item.start_date)} - <Text style={{ color: isCurrent ? (colors.primary) : colors.muted, fontWeight: isCurrent ? '700' : '400' }}>{item.end_date ? formatDate(item.end_date) : 'Present'}</Text>
-                    </Text>
+                    </FlexText>
 
-                    <Text style={[common.muted, { marginHorizontal: 6 }]}>•</Text>
-                    <Text style={[common.bodySmall, { color: colors.muted }]}>
+                    <FlexText style={[common.muted, { marginHorizontal: 6 }]}>•</FlexText>
+                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>
                         {calculateDuration(item.start_date, item.end_date)}
-                    </Text>
+                    </FlexText>
                 </View>
 
                 {item.location && (
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                         <Ionicons name="location-outline" size={14} color={colors.muted} style={{ marginRight: 6 }} />
-                        <Text style={[common.bodySmall, { color: colors.muted }]}>{item.location}</Text>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{item.location}</FlexText>
                     </View>
                 )}
             </View>
@@ -85,9 +86,9 @@ const WorkplaceItem = memo(({ item, colors, common }: { item: Workplace, colors:
             {/* Description */}
             {item.description && (
                 <View style={{ marginTop: 12 }}>
-                    <Text style={[common.body, { fontSize: 14, lineHeight: 22, opacity: 0.8 }]}>
+                    <FlexText style={[common.body, { fontSize: 14, lineHeight: 22, opacity: 0.8 }]}>
                         {item.description}
-                    </Text>
+                    </FlexText>
                 </View>
             )}
         </View>
@@ -120,10 +121,10 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <Text style={[common.heading, { fontSize: 24 }]}>Work History</Text>
-                    <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>Work History</FlexText>
+                    <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
                         My professional timeline
-                    </Text>
+                    </FlexText>
                 </View>
 
                 {/* List */}

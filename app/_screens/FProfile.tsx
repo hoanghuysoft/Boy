@@ -1,3 +1,4 @@
+import { FlexText } from '@/components/FlexText';
 import {
     FProfileHeader,
     FProfileHighlights,
@@ -18,9 +19,8 @@ import {
     Dimensions,
     FlatList,
     StyleSheet,
-    Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -61,6 +61,7 @@ const PhotoRowItem = React.memo<{
         ))}
     </View>
 ));
+PhotoRowItem.displayName = 'PhotoRowItem';
 
 // ─── Tab Bar ─────────────────────────────────────────────────────────────────
 // Isolated outside FProfileScreen so only the tab bar re-renders on tab switch,
@@ -79,15 +80,16 @@ const TabBar = React.memo(({ activeTab, onTabPress, colors: c }: TabBarProps) =>
                         style={[styles.tabButton, { backgroundColor: isActive ? c.tabActiveBg : c.tabInactiveBg }]}
                         activeOpacity={0.7}
                     >
-                        <Text style={[styles.tabText, { color: isActive ? c.tabActiveText : c.tabInactiveText }]}>
+                        <FlexText style={[styles.tabText, { color: isActive ? c.tabActiveText : c.tabInactiveText }]}>
                             {tab}
-                        </Text>
+                        </FlexText>
                     </TouchableOpacity>
                 );
             })}
         </View>
     </View>
 ));
+TabBar.displayName = 'TabBar';
 
 // ─── Profile List Header ──────────────────────────────────────────────────────
 // React.memo ensures FProfileHeader is skipped on tab switches (only activeTab
@@ -120,6 +122,7 @@ const ProfileListHeader = React.memo(({
         <TabBar activeTab={activeTab} onTabPress={onTabPress} colors={fbColors} />
     </View>
 ));
+ProfileListHeader.displayName = 'ProfileListHeader';
 
 const FProfileScreen = () => {
     const vm = useFProfileViewModel();
@@ -143,15 +146,6 @@ const FProfileScreen = () => {
         setActiveTab(tab);
     }, []);
 
-    // ─── Loading state ──────────────────────────────────────────────────
-    if (!vm.profile) {
-        return (
-            <View style={[styles.screen, { backgroundColor: c.screenBg, justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={c.buttonBlueBg} />
-            </View>
-        );
-    }
-
     const profile = vm.profile;
     const postCount = vm.fbData.posts?.length ?? 0;
     const photoCount = vm.fbData.photos?.length ?? 0;
@@ -160,19 +154,22 @@ const FProfileScreen = () => {
     // ─── Header + Tab bar as ListHeaderComponent ─────────────────────────
     // ProfileListHeader is React.memo'd: when activeTab changes only TabBar
     // re-renders inside it; FProfileHeader is fully skipped.
-    const listHeader = useMemo(() => (
-        <ProfileListHeader
-            profile={profile}
-            fbColors={c}
-            insetsTop={insets.top}
-            postCount={postCount}
-            photoCount={photoCount}
-            videoCount={videoCount}
-            onBack={vm.goBack}
-            activeTab={activeTab}
-            onTabPress={handleTabPress}
-        />
-    ), [profile, c, insets.top, postCount, photoCount, videoCount, vm.goBack, activeTab, handleTabPress]);
+    const listHeader = useMemo(() => {
+        if (!profile) return null;
+        return (
+            <ProfileListHeader
+                profile={profile}
+                fbColors={c}
+                insetsTop={insets.top}
+                postCount={postCount}
+                photoCount={photoCount}
+                videoCount={videoCount}
+                onBack={vm.goBack}
+                activeTab={activeTab}
+                onTabPress={handleTabPress}
+            />
+        );
+    }, [profile, c, insets.top, postCount, photoCount, videoCount, vm.goBack, activeTab, handleTabPress]);
 
     // ═══════════════════════════════════════════════════════════════════════
     // Dynamic data based on active tab
@@ -218,10 +215,11 @@ const FProfileScreen = () => {
                 return (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="small" color={c.buttonBlueBg} />
-                        <Text style={[styles.loadingText, { color: c.secondaryText }]}>Loading Facebook data...</Text>
+                        <FlexText style={[styles.loadingText, { color: c.secondaryText }]}>Loading Facebook data...</FlexText>
                     </View>
                 );
             case 'personalInfo':
+                if (!profile) return null;
                 return <FProfilePersonalInfo profile={profile} fbColors={c} formatBirthday={vm.formatBirthday} />;
             case 'highlights':
                 return <FProfileHighlights highlights={vm.fbData.highlights} fbColors={c} />;
@@ -232,7 +230,7 @@ const FProfileScreen = () => {
             case 'emptyPosts':
                 return (
                     <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-                        <Text style={{ fontSize: 15, color: c.secondaryText }}>No posts available</Text>
+                        <FlexText style={{ fontSize: 15, color: c.secondaryText }}>No posts available</FlexText>
                     </View>
                 );
             case 'reelRow':
@@ -252,7 +250,7 @@ const FProfileScreen = () => {
                 return (
                     <View style={{ paddingVertical: 60, alignItems: 'center', gap: 12 }}>
                         <Ionicons name="videocam-outline" size={48} color={c.secondaryText} />
-                        <Text style={{ fontSize: 15, color: c.secondaryText }}>No videos available</Text>
+                        <FlexText style={{ fontSize: 15, color: c.secondaryText }}>No videos available</FlexText>
                     </View>
                 );
             case 'photoRow':
@@ -261,7 +259,7 @@ const FProfileScreen = () => {
                 return (
                     <View style={{ paddingVertical: 60, alignItems: 'center', gap: 12 }}>
                         <Ionicons name="images-outline" size={48} color={c.secondaryText} />
-                        <Text style={{ fontSize: 15, color: c.secondaryText }}>No photos available</Text>
+                        <FlexText style={{ fontSize: 15, color: c.secondaryText }}>No photos available</FlexText>
                     </View>
                 );
             case 'group':
@@ -270,7 +268,7 @@ const FProfileScreen = () => {
                 return (
                     <View style={{ paddingVertical: 60, alignItems: 'center', gap: 12 }}>
                         <Ionicons name="people-circle-outline" size={48} color={c.secondaryText} />
-                        <Text style={{ fontSize: 15, color: c.secondaryText }}>No groups joined</Text>
+                        <FlexText style={{ fontSize: 15, color: c.secondaryText }}>No groups joined</FlexText>
                     </View>
                 );
             default:
@@ -297,6 +295,15 @@ const FProfileScreen = () => {
             contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
         />
     );
+
+    // ─── Loading state ──────────────────────────────────────────────────
+    if (!profile) {
+        return (
+            <View style={[styles.screen, { backgroundColor: c.screenBg, justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={c.buttonBlueBg} />
+            </View>
+        );
+    }
 
     return (
         <View style={[styles.screen, { backgroundColor: c.screenBg }]}>

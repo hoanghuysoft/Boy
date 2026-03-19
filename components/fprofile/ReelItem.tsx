@@ -5,10 +5,10 @@ import {
     Dimensions,
     Linking,
     StyleSheet,
-    Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
+import { FlexText } from '../FlexText';
 import CachedImage from './CachedImage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -29,12 +29,12 @@ const ReelItem: React.FC<{
     >
         <CachedImage uri={item.picture} style={styles.reelThumbnail} resizeMode="cover" />
         <View style={styles.durationBadge}>
-            <Text style={styles.durationText}>{formatDuration(item.length)}</Text>
+            <FlexText style={styles.durationText}>{formatDuration(item.length)}</FlexText>
         </View>
         {item.statistics.play_count > 0 && (
             <View style={styles.playCountBadge}>
                 <Ionicons name="play" size={10} color="#FFF" />
-                <Text style={styles.playCountText}>{formatCount(item.statistics.play_count)}</Text>
+                <FlexText style={styles.playCountText}>{formatCount(item.statistics.play_count)}</FlexText>
             </View>
         )}
         <View style={styles.playOverlay}>

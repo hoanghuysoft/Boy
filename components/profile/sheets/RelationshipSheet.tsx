@@ -1,11 +1,12 @@
+import { FlexText } from "@/components/FlexText";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo } from "react";
-import { FlatList, Image, StyleSheet, Text, View } from "react-native";
-import { useSheetBackHandler } from "./useSheetBackHandler";
+import { FlatList, Image, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { getFamilyAvatarSource } from "../../../utils/familyAvatar";
+import { useSheetBackHandler } from "./useSheetBackHandler";
 
 interface LovedOne {
     name: string;
@@ -26,12 +27,12 @@ const RelationshipItem = memo(({ item, colors, common }: { item: LovedOne; color
             </View>
 
             <View style={styles.textContainer}>
-                <Text style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
+                <FlexText style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
                     {item.name}
-                </Text>
-                <Text style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
+                </FlexText>
+                <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
                     {item.label}
-                </Text>
+                </FlexText>
             </View>
         </View>
     );
@@ -62,10 +63,10 @@ export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetPro
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <Text style={[common.heading, { fontSize: 24 }]}>Family & Relationships</Text>
-                    <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>Family & Relationships</FlexText>
+                    <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
                         {data.length} family member{data.length > 1 ? 's' : ''}
-                    </Text>
+                    </FlexText>
                 </View>
 
                 {/* List */}

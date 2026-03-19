@@ -3,12 +3,12 @@ import { SquircleView } from 'expo-squircle-view';
 import React from 'react';
 import {
     StyleSheet,
-    Text,
     TouchableOpacity,
     View
 } from 'react-native';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
+import { FlexText } from '../FlexText';
 
 export const TrendingHashtagsSection = () => {
     const { colors, typography } = useThemeContext();
@@ -20,12 +20,12 @@ export const TrendingHashtagsSection = () => {
     return (
         <View style={styles.container}>
             <View style={styles.headerRow}>
-                <Text style={[common.subheading, { fontSize: 15 }]}>Trending</Text>
+                <FlexText style={[common.subheading, { fontSize: 15 }]}>Trending</FlexText>
                 {vm.hasMoreTags && (
                     <TouchableOpacity onPress={vm.navigateToAllTags} hitSlop={8}>
-                        <Text style={[common.bodySmall, { color: colors.secondary }]}>
+                        <FlexText style={[common.bodySmall, { color: colors.secondary }]}>
                             See all
-                        </Text>
+                        </FlexText>
                     </TouchableOpacity>
                 )}
             </View>
@@ -60,7 +60,7 @@ export const TrendingHashtagsSection = () => {
                                     { backgroundColor: colors.containerContent },
                                 ]}
                             >
-                                <Text
+                                <FlexText
                                     style={[
                                         common.bodySmall,
                                         { color: colors.secondary, fontWeight: '600' },
@@ -68,16 +68,16 @@ export const TrendingHashtagsSection = () => {
                                     numberOfLines={1}
                                 >
                                     #{hashtag.tag}
-                                </Text>
+                                </FlexText>
                                 {hashtag.count != null && (
-                                    <Text
+                                    <FlexText
                                         style={[
                                             common.caption,
                                             { color: colors.muted, marginTop: 2 },
                                         ]}
                                     >
                                         {hashtag.count.toLocaleString()} post{hashtag.count !== 1 ? 's' : ''}
-                                    </Text>
+                                    </FlexText>
                                 )}
                             </SquircleView>
                         </TouchableOpacity>

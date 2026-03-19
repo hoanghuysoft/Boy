@@ -4,7 +4,8 @@ import { ChatRoundLikeBold, PointOnMapBold, UserPlusRoundedBold } from '@solar-i
 import { LinearGradient } from 'expo-linear-gradient';
 import { SquircleView } from 'expo-squircle-view';
 import React, { memo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlexText } from '../FlexText';
 import CachedImage from './CachedImage';
 
 const COVER_HEIGHT = 190;
@@ -62,27 +63,27 @@ const FProfileHeader: React.FC<FProfileHeaderProps> = ({
                         />
                     </View>
                     <View style={styles.nameContainer}>
-                        <Text style={[styles.nameText, { color: c.primaryText }]}>{profile.name}</Text>
-                        <Text style={[styles.statsText, { color: c.secondaryText }]}>
-                            <Text style={[styles.statBold, { color: c.primaryText }]}>{postCount}</Text>
+                        <FlexText style={[styles.nameText, { color: c.primaryText }]}>{profile.name}</FlexText>
+                        <FlexText style={[styles.statsText, { color: c.secondaryText }]}>
+                            <FlexText style={[styles.statBold, { color: c.primaryText }]}>{postCount}</FlexText>
                             {' posts · '}
-                            <Text style={[styles.statBold, { color: c.primaryText }]}>{photoCount}</Text>
+                            <FlexText style={[styles.statBold, { color: c.primaryText }]}>{photoCount}</FlexText>
                             {' photos · '}
-                            <Text style={[styles.statBold, { color: c.primaryText }]}>{videoCount}</Text>
+                            <FlexText style={[styles.statBold, { color: c.primaryText }]}>{videoCount}</FlexText>
                             {' videos'}
-                        </Text>
+                        </FlexText>
                     </View>
                 </View>
 
                 <View style={styles.bioSection}>
                     {profile.pronouns && (
-                        <Text style={[styles.subtitleText, { color: c.secondaryText }]}>
+                        <FlexText style={[styles.subtitleText, { color: c.secondaryText }]}>
                             {profile.pronouns}
                             {profile.username ? ` · @${profile.username}` : ''}
-                        </Text>
+                        </FlexText>
                     )}
                     {profile.bio && (
-                        <Text style={[styles.bioText, { color: c.primaryText }]}>{profile.bio}</Text>
+                        <FlexText style={[styles.bioText, { color: c.primaryText }]}>{profile.bio}</FlexText>
                     )}
                 </View>
 
@@ -90,9 +91,9 @@ const FProfileHeader: React.FC<FProfileHeaderProps> = ({
                     {profile.hometown && (
                         <View style={styles.badge}>
                             <PointOnMapBold size={18} color={c.primaryText} />
-                            <Text style={[styles.badgeText, { color: c.primaryText }]} numberOfLines={1}>
+                            <FlexText style={[styles.badgeText, { color: c.primaryText }]} numberOfLines={1}>
                                 {profile.hometown}
-                            </Text>
+                            </FlexText>
                         </View>
                     )}
                 </View>
@@ -102,14 +103,14 @@ const FProfileHeader: React.FC<FProfileHeaderProps> = ({
                         style={[styles.actionButtonFlex, { backgroundColor: c.buttonBlueBg }]}>
                         <TouchableOpacity style={[styles.actionButton, { flex: 1 }]}>
                             <UserPlusRoundedBold size={24} color={c.white} />
-                            <Text style={[styles.actionButtonText, { color: c.white }]}>Add friend</Text>
+                            <FlexText style={[styles.actionButtonText, { color: c.white }]}>Add friend</FlexText>
                         </TouchableOpacity>
                     </SquircleView>
                     <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={8}
                         style={[styles.actionButtonFlex, { backgroundColor: c.buttonGrayBg }]}>
                         <TouchableOpacity style={[styles.actionButton, { flex: 1 }]}>
                             <ChatRoundLikeBold size={24} color={c.primaryText} />
-                            <Text style={[styles.actionButtonText, { color: c.primaryText }]}>Message</Text>
+                            <FlexText style={[styles.actionButtonText, { color: c.primaryText }]}>Message</FlexText>
                         </TouchableOpacity>
                     </SquircleView>
                 </View>

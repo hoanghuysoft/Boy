@@ -1,16 +1,17 @@
+import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { EarthBold } from '@solar-icons/react-native';
 import * as WebBrowser from 'expo-web-browser';
 import React, { forwardRef, memo } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useSheetBackHandler } from "./useSheetBackHandler";
+import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileLink } from '../../../types/profilelink';
+import { useSheetBackHandler } from "./useSheetBackHandler";
 
 interface SocialSheetProps {
     data: ProfileLink[];
@@ -111,9 +112,9 @@ const FormattedLink = ({ url, username, common, color }: { url: string, username
     }
 
     return (
-        <Text style={[common.bodySmall, { color: color, opacity: 0.6, marginTop: 2 }]} numberOfLines={1}>
+        <FlexText style={[common.bodySmall, { color: color, opacity: 0.6, marginTop: 2 }]} numberOfLines={1}>
             {display}
-        </Text>
+        </FlexText>
     );
 };
 
@@ -151,9 +152,9 @@ const LinkCard = ({
             </View>
 
             <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Text style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
+                <FlexText style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
                     {title}
-                </Text>
+                </FlexText>
                 <FormattedLink url={url} username={username} common={common} color={colors.text} />
             </View>
 
@@ -259,10 +260,10 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data,
                 {/* Header */}
                 <View style={{ marginBottom: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View>
-                        <Text style={[common.heading, { fontSize: 24 }]}>Socials</Text>
-                        <Text style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                        <FlexText style={[common.heading, { fontSize: 24 }]}>Socials</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
                             Connect with me on these platforms
-                        </Text>
+                        </FlexText>
                     </View>
                 </View>
 

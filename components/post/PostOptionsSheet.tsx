@@ -2,12 +2,13 @@ import { AlertDialog, Host } from "@expo/ui/jetpack-compose";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { CopyBold, DangerBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
 import React, { forwardRef, memo, useCallback, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useDeletePost } from "../../services/post";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from "../../types/post";
+import { FlexText } from "../FlexText";
 
 // ============================================================================
 // Types
@@ -54,12 +55,12 @@ const OptionItem = memo(({
                 color={destructive ? "#EF4444" : colors.text}
             />
         </View>
-        <Text style={[
+        <FlexText style={[
             common.body,
             { color: destructive ? "#EF4444" : colors.text, fontWeight: "680" }
         ]}>
             {label}
-        </Text>
+        </FlexText>
     </TouchableOpacity>
 ));
 
@@ -146,8 +147,8 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
                     <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
                         {/* Header */}
                         <View style={styles.header}>
-                            <Text style={[common.heading]}>Post </Text>
-                            <Text style={common.bodySmall}>Got something on your mind?</Text>
+                            <FlexText style={[common.heading]}>Post </FlexText>
+                            <FlexText style={common.bodySmall}>Got something on your mind?</FlexText>
                         </View>
 
                         {/* Options List */}

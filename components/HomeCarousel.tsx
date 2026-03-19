@@ -72,6 +72,7 @@ const StaticCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blurH
         </>
     );
 });
+StaticCarouselImage.displayName = "StaticCarouselImage";
 
 const AnimatedCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blurHeight }: { imageUrl: string; screenWidth: number; carouselHeight: number; blurHeight: number }) => {
     const isPaused = useSharedValue(false);
@@ -126,6 +127,7 @@ const AnimatedCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blu
         </>
     );
 });
+AnimatedCarouselImage.displayName = "AnimatedCarouselImage";
 
 const SkiaCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight }: { imageUrl: string | undefined, screenWidth: number, carouselHeight: number }) => {
     const blurHeight = carouselHeight * 0.5;
@@ -135,6 +137,7 @@ const SkiaCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight }: { ima
     }
     return <StaticCarouselImage imageUrl={imageUrl} screenWidth={screenWidth} carouselHeight={carouselHeight} blurHeight={blurHeight} />;
 });
+SkiaCarouselImage.displayName = "SkiaCarouselImage";
 
 const ColorGradientOverlay = memo(({ carouselHeight }: { carouselHeight: number }) => {
     const { theme } = useThemeContext();
@@ -169,6 +172,7 @@ const ColorGradientOverlay = memo(({ carouselHeight }: { carouselHeight: number 
         />
     );
 });
+ColorGradientOverlay.displayName = "ColorGradientOverlay";
 
 interface HomeCarouselProps {
     animatedVisibility?: Animated.Value;
@@ -220,5 +224,6 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
         </Animated.View>
     )
 });
+HomeCarousel.displayName = "HomeCarousel";
 
 export default HomeCarousel;

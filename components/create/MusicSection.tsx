@@ -8,13 +8,13 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
-    Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { DeezerTrack } from "../../services/deezer";
+import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
 
@@ -53,12 +53,12 @@ const MusicSearchResult = memo(({
         >
             <Image source={{ uri: track.cover_url }} style={createStyles.musicCover} />
             <View style={createStyles.musicInfo}>
-                <Text style={[common.subheading, createStyles.musicTitle, { color: colors.text }]} numberOfLines={1}>
+                <FlexText style={[common.subheading, createStyles.musicTitle, { color: colors.text }]} numberOfLines={1}>
                     {track.title}
-                </Text>
-                <Text style={[common.caption, createStyles.musicArtist, { color: colors.muted }]} numberOfLines={1}>
+                </FlexText>
+                <FlexText style={[common.caption, createStyles.musicArtist, { color: colors.muted }]} numberOfLines={1}>
                     {track.artist}
-                </Text>
+                </FlexText>
             </View>
             {isSelected && (
                 <CheckCircleBold size={24} color={COLORS.primary} />
@@ -92,12 +92,12 @@ const SelectedMusicCard = memo(({
             style={createStyles.selectedMusicCover}
         />
         <View style={createStyles.selectedMusicInfo}>
-            <Text style={[common.subheading, createStyles.selectedMusicTitle, { color: colors.text }]} numberOfLines={1}>
+            <FlexText style={[common.subheading, createStyles.selectedMusicTitle, { color: colors.text }]} numberOfLines={1}>
                 {track.title}
-            </Text>
-            <Text style={[common.caption, createStyles.selectedMusicArtist, { color: colors.muted }]} numberOfLines={1}>
+            </FlexText>
+            <FlexText style={[common.caption, createStyles.selectedMusicArtist, { color: colors.muted }]} numberOfLines={1}>
                 {track.artist}
-            </Text>
+            </FlexText>
         </View>
         <TouchableOpacity
             style={[createStyles.removeSelectedMusic, { backgroundColor: COLORS.error }]}
@@ -141,9 +141,9 @@ export const MusicSection = memo(({
 
     return (
         <View style={createStyles.musicSection}>
-            <Text style={[common.label, { color: colors.text, marginBottom: 12 }]}>
+            <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
                 Add Music
-            </Text>
+            </FlexText>
 
             {selectedTrack && (
                 <SelectedMusicCard

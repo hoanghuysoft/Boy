@@ -5,10 +5,10 @@
  * Supports both direct upload and pre-signed URL upload for large files
  */
 
+import { Media, MediaType } from '@/types/media';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { client } from './client';
-import { Media, MediaType } from '@/types/media';
 import { supabase } from './login';
 
 // ============================================================================

@@ -1,28 +1,4 @@
-import { Profile } from "@/types/profile";
-import { Ionicons } from "@expo/vector-icons";
-import { XmarkOutlined } from "@lineiconshq/free-icons";
-import Lineicons from "@lineiconshq/react-native-lineicons";
-import { FlashList as FlashListOriginal } from "@shopify/flash-list";
-import React, { useCallback } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import AnimatedGlow from "react-native-animated-glow";
-import Animated from "react-native-reanimated";
-import { useThemeContext } from "../../context/ThemeContext";
-import { createCommonStyles } from "../../styles/common";
-
-const FlashList = FlashListOriginal as any;
-
-import { useRouter } from "expo-router";
-
+import { FlexText } from "@/components/FlexText";
 import { appleIntelli } from "@/components/glow/AppleIntelliConfig";
 import { MostSearchedSection } from "@/components/search/MostSearchedSection";
 import { renderEmptyState } from "@/components/search/SearchEmpty";
@@ -30,7 +6,29 @@ import { renderFooter } from "@/components/search/SearchFooter";
 import { SearchProfileItem } from "@/components/search/SearchProfileItem";
 import { renderProfileSkeleton } from "@/components/search/SearchProfileSkeleton";
 import { TrendingHashtagsSection } from "@/components/search/TrendingHashtagsSection";
+import { Profile } from "@/types/profile";
+import { Ionicons } from "@expo/vector-icons";
+import { XmarkOutlined } from "@lineiconshq/free-icons";
+import LineiconsIcon from "@lineiconshq/react-native-lineicons";
+import { FlashList as FlashListOriginal } from "@shopify/flash-list";
+import { useRouter } from "expo-router";
+import React, { useCallback } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+import AnimatedGlow from "react-native-animated-glow";
+import Animated from "react-native-reanimated";
+import { useThemeContext } from "../../context/ThemeContext";
+import { createCommonStyles } from "../../styles/common";
 import { useSearchViewModel } from "../../viewmodels/SearchViewModel";
+
+const FlashList = FlashListOriginal as any;
 
 // TurboImage cache policy - use dataCache for aggressive local caching
 const IMAGE_CACHE_POLICY = "dataCache" as const;
@@ -57,7 +55,7 @@ const SearchScreen = () => {
         onPress={vm.handleProfilePress}
       />
     ),
-    [colors, styles, common, navigation, vm.handleProfilePress],
+    [colors, common, navigation, vm.handleProfilePress],
   );
 
   const ListEmptyComponent = useCallback(
@@ -69,7 +67,7 @@ const SearchScreen = () => {
         searchQuery: vm.searchQuery,
         isAdmin: vm.isAdmin,
       }),
-    [colors, styles, common, vm.searchQuery, vm.isAdmin],
+    [colors, common, vm.searchQuery, vm.isAdmin],
   );
 
   const ListFooterComponent = useCallback(
@@ -80,7 +78,7 @@ const SearchScreen = () => {
         styles,
         renderProfileSkeleton,
       }),
-    [vm.isFetchingNextPage, colors, styles],
+    [vm.isFetchingNextPage, colors],
   );
 
   const ListHeaderComponent = useCallback(
@@ -125,14 +123,14 @@ const SearchScreen = () => {
       </View>
 
       <View style={[styles.header, { marginTop: vm.insets.top + 66 }]}>
-        <Text style={[common.heading, { fontSize: 28 }]}>Search</Text>
-        <Text style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
+        <FlexText style={[common.heading, { fontSize: 28 }]}>Search</FlexText>
+        <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
           {vm.searchQuery
             ? `${vm.totalResults} result(s)`
             : vm.isAdmin
               ? `People ${vm.totalResults}`
               : "Explore for more contents on the platform"}
-        </Text>
+        </FlexText>
       </View>
 
       {/* Content */}
@@ -221,7 +219,7 @@ const SearchScreen = () => {
                     { backgroundColor: colors.card },
                   ]}
                 >
-                  <Lineicons
+                  <LineiconsIcon
                     icon={XmarkOutlined}
                     size={14}
                     color={colors.text}
