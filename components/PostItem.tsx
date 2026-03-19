@@ -10,6 +10,7 @@ import { Link, Post } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Dimensions, Linking, ScrollView, TouchableOpacity, View } from "react-native";
 import { Pressable } from 'react-native-gesture-handler';
 import TurboImage from 'react-native-turbo-image';
@@ -32,6 +33,7 @@ interface PostItemProps {
 
 export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPress, isBookmarked = false }: PostItemProps) => {
     const vm = usePostItemViewModel({ post, onOptionsPress, onLikeCountPress, onCommentPress });
+    const { t } = useTranslation();
 
     // Feed video state
     const activeVideoPostId = useFeedVideoStore(s => s.activePostId);
@@ -151,7 +153,9 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                         }}
                     >
                         <Ionicons name={vm.isPlaying ? "volume-high" : "volume-mute"} size={16} color={vm.colors.text} />
-                        <FlexText style={[vm.common.label, { fontSize: 12 }]}>Preview</FlexText>
+                        <FlexText style={[vm.common.label, { fontSize: 12 }]}>
+                            {t('post.audioPreview')}
+                        </FlexText>
                     </TouchableOpacity>
                 </View>
             )}
@@ -192,7 +196,16 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                 </View>
             )}
 
-            {post.device && <FlexText style={[vm.common.label, { color: vm.colors.muted, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 }]}>This post was created on {post.device}</FlexText>}
+            {post.device && (
+                <FlexText
+                    style={[
+                        vm.common.label,
+                        { color: vm.colors.muted, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 },
+                    ]}
+                >
+                    {t('post.createdOnDevice', { device: post.device })}
+                </FlexText>
+            )}
 
             {/* Action Bar */}
             {isBookmarked ? (

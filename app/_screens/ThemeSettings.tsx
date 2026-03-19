@@ -5,41 +5,22 @@ import { Ionicons } from "@expo/vector-icons";
 import { CheckCircleBold, ClockCircleBold, MoonBold, SmartphoneBold, Sun2Bold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// Only static, non-translatable data lives outside the component.
+// Translatable strings (label, description) are fetched via t() at render time.
 type ThemeOption = {
     id: ThemePreference;
-    label: string;
-    description: string;
     icon: React.ComponentType<any>;
 };
 
 const themeOptions: ThemeOption[] = [
-    {
-        id: "light",
-        label: "Light",
-        description: "Always use light theme",
-        icon: Sun2Bold
-    },
-    {
-        id: "dark",
-        label: "Dark",
-        description: "Always use dark theme",
-        icon: MoonBold
-    },
-    {
-        id: "system",
-        label: "System",
-        description: "Follow device settings",
-        icon: SmartphoneBold
-    },
-    {
-        id: "adaptive",
-        label: "Adaptive",
-        description: "Change theme based on sunset and sunrise",
-        icon: ClockCircleBold
-    }
+    { id: "light",    icon: Sun2Bold },
+    { id: "dark",     icon: MoonBold },
+    { id: "system",   icon: SmartphoneBold },
+    { id: "adaptive", icon: ClockCircleBold },
 ];
 
 const ThemeSettingsScreen = () => {
@@ -47,6 +28,7 @@ const ThemeSettingsScreen = () => {
     const common = createCommonStyles(colors, typography);
     const styles = style(colors, common);
     const inset = useSafeAreaInsets();
+    const { t } = useTranslation();
 
     return (
         <ScrollView style={[common.screenPadding, { backgroundColor: colors.background }]}>
@@ -67,9 +49,9 @@ const ThemeSettingsScreen = () => {
             </View>
             <View style={{ marginTop: inset.top + 50 }}></View>
 
-            <FlexText style={[styles.title]}>Theme</FlexText>
+            <FlexText style={[styles.title]}>{t('themeSettings.title')}</FlexText>
             <FlexText style={[common.bodySmall, { color: colors.muted, marginBottom: 16 }]}>
-                Choose how the app looks
+                {t('themeSettings.subtitle')}
             </FlexText>
 
             <View style={[styles.card]}>
@@ -88,9 +70,11 @@ const ThemeSettingsScreen = () => {
                                     />
                                 </SquircleView>
                                 <View style={styles.optionText}>
-                                    <FlexText style={[common.body]}>{option.label}</FlexText>
+                                    <FlexText style={[common.body]}>
+                                        {t(`themeSettings.options.${option.id}.label`)}
+                                    </FlexText>
                                     <FlexText style={[common.bodySmall, { color: colors.muted }]}>
-                                        {option.description}
+                                        {t(`themeSettings.options.${option.id}.description`)}
                                     </FlexText>
                                 </View>
                             </View>

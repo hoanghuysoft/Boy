@@ -8,7 +8,13 @@
     "scheme": "boy",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleLocalizations": [
+          "en",
+          "vi"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,8 +28,8 @@
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ]
     },
     "web": {
@@ -147,10 +153,23 @@
       "expo-asset",
       "expo-web-browser",
       [
-        "expo-localization"
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": [
+              "en",
+              "vi"
+            ],
+            "android": [
+              "en",
+              "vi"
+            ]
+          }
+        }
       ],
       "expo-sharing",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -159,14 +178,11 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "dac8585b-45f2-4ae7-a3b5-adfc3b76af46"
+        "projectId": "13168ed1-cd09-4dea-840b-86f37dbb087d"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/dac8585b-45f2-4ae7-a3b5-adfc3b76af46"
     }
   }
 }

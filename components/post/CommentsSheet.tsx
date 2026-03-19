@@ -4,6 +4,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import React, { forwardRef, memo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     FlatList,
@@ -40,13 +41,15 @@ interface CommentItemProps {
     onDelete: () => void;
     onEdit: () => void;
     formatTimeAgo: (dateString: string) => string;
+    editLabel: string;
+    deleteLabel: string;
 }
 
 // ============================================================================
 // CommentItem Component
 // ============================================================================
 
-const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDelete, onEdit, formatTimeAgo }: CommentItemProps) => (
+const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDelete, onEdit, formatTimeAgo, editLabel, deleteLabel }: CommentItemProps) => (
     <View style={styles.commentItem}>
         {/* Avatar */}
         <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
@@ -89,7 +92,7 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                             style={styles.actionButton}
                         >
                             <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
-                                Edit
+                                {editLabel}
                             </FlexText>
                         </TouchableOpacity>
                         <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</FlexText>
@@ -99,7 +102,7 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                             style={styles.actionButton}
                         >
                             <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
-                                Delete
+                                {deleteLabel}
                             </FlexText>
                         </TouchableOpacity>
                     </>
@@ -119,6 +122,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
     ({ postId, onDismiss, useReanimated = false, detents = [0.7] }, ref) => {
         const insets = useSafeAreaInsets();
         const vm = useCommentsSheetViewModel(postId, ref as React.RefObject<TrueSheet | null>);
+        const { t } = useTranslation();
 
         const renderItem = useCallback(({ item }: { item: Comment }) => (
             <CommentItem
@@ -131,8 +135,10 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 onDelete={() => vm.handleDeleteComment(item)}
                 onEdit={() => vm.handleEditComment(item)}
                 formatTimeAgo={vm.formatTimeAgo}
+                editLabel={t('post.commentsSheet.actionEdit')}
+                deleteLabel={t('post.commentsSheet.actionDelete')}
             />
-        ), [vm.colors, vm.common, vm.theme, vm.currentProfileId, vm.handleUserPress, vm.handleDeleteComment, vm.handleEditComment, vm.formatTimeAgo]);
+        ), [vm.colors, vm.common, vm.theme, vm.currentProfileId, vm.handleUserPress, vm.handleDeleteComment, vm.handleEditComment, vm.formatTimeAgo, t]);
 
         const renderListFooter = useCallback(() => {
             if (vm.isFetchingNextPage) {
@@ -159,14 +165,14 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         <MaterialIcons name="comment" size={32} color={vm.colors.muted} />
                     </View>
                     <FlexText style={[vm.common.heading, { fontSize: 18, marginTop: 16, marginBottom: 8 }]}>
-                        No comments yet
+                        {t('post.commentsSheet.emptyTitle')}
                     </FlexText>
                     <FlexText style={[vm.common.body, { color: vm.colors.muted, textAlign: 'center' }]}>
-                        Start the conversation and be the first to comment!
+                        {t('post.commentsSheet.emptyBody')}
                     </FlexText>
                 </View>
             );
-        }, [vm.isLoading, vm.colors, vm.common, vm.theme]);
+        }, [vm.isLoading, vm.colors, vm.common, vm.theme, t]);
 
         // Modern Input Footer
         const commentInputFooter = (
@@ -189,7 +195,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                             style={[vm.common.bodySmall, { color: vm.colors.muted, flex: 1, fontSize: 12 }]}
                             numberOfLines={1}
                         >
-                            Editing comment
+                            {t('post.commentsSheet.editingBanner')}
                         </FlexText>
                         <TouchableOpacity
                             onPress={vm.handleCancelEdit}
@@ -205,7 +211,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                             backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                             color: vm.colors.text,
                         }]}
-                        placeholder={vm.isEditing ? "Edit your comment..." : "Add a comment..."}
+                        placeholder={vm.isEditing ? t('post.commentsSheet.placeholderEdit') : t('post.commentsSheet.placeholderAdd')}
                         placeholderTextColor={vm.colors.muted}
                         value={vm.commentText}
                         onChangeText={vm.setCommentText}
@@ -225,7 +231,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                                     <ActivityIndicator size="small" color={vm.colors.background} />
                                 ) : (
                                     <FlexText style={[styles.sendButtonText, { color: vm.colors.background }]}>
-                                        {vm.isEditing ? 'Save' : 'Post'}
+                                        {vm.isEditing ? t('post.commentsSheet.sendSave') : t('post.commentsSheet.sendPost')}
                                     </FlexText>
                                 )}
                             </View>
@@ -254,7 +260,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             <>
                 {/* Header */}
                 <View style={styles.header}>
-                    <FlexText style={[vm.common.heading, { fontSize: 20 }]}>Comments</FlexText>
+                    <FlexText style={[vm.common.heading, { fontSize: 20 }]}>{t('post.commentsSheet.title')}</FlexText>
                 </View>
 
                 {/* Comments List */}

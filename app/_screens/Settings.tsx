@@ -1,30 +1,30 @@
 import { FlexText } from "@/components/FlexText";
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
+import { LANGUAGE_LABELS } from "@/i18n";
 import { clearVideoCache, formatBytes, getCacheCount, getCacheSize, setMaxCacheSize } from "@/services/videoCache";
+import { useLanguageStore } from "@/stores/language";
 import { useSearchHistoryStore } from "@/stores/searchHistory";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
 import { Logout3Bold } from '@solar-icons/react-native';
-import { router } from "expo-router";
+import { Href, router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ToggleSwitch from 'toggle-switch-react-native';
 
 
-const themePreferenceLabels = {
-    light: "Light",
-    dark: "Dark",
-    system: "System",
-    adaptive: "Adaptive"
-};
+
 
 const SettingsScreen = () => {
     const { colors, themePreference, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const styles = style(colors, common);
     const inset = useSafeAreaInsets();
+    const { t } = useTranslation();
+    const { mode: languageMode, language } = useLanguageStore();
     const {
         showSensitiveContent, toggleShowSensitiveContent,
         showCarousel, toggleCarousel,
@@ -48,6 +48,13 @@ const SettingsScreen = () => {
         setCacheCount(count);
     }, []);
 
+    const themePreferenceLabels = {
+        light: t('settings.light'),
+        dark: t('settings.dark'),
+        system: t('settings.system'),
+        adaptive: t('settings.adaptive')
+    };
+
     useEffect(() => {
         refreshCacheInfo();
     }, [refreshCacheInfo]);
@@ -59,12 +66,12 @@ const SettingsScreen = () => {
 
     const handleClearCache = useCallback(() => {
         Alert.alert(
-            "Clear Video Cache",
-            `This will free up ${formatBytes(cacheSize)} of storage. Continue?`,
+            t('settings.clearVideoCache'),
+            t('settings.clearVideoCacheConfirmation', { size: formatBytes(cacheSize) }),
             [
-                { text: "Cancel", style: "cancel" },
+                { text: t('settings.cancel'), style: "cancel" },
                 {
-                    text: "Clear",
+                    text: t('settings.clear'),
                     style: "destructive",
                     onPress: async () => {
                         setIsClearing(true);
@@ -121,24 +128,34 @@ const SettingsScreen = () => {
                 {!searchQuery && !isFocused && (
                     <View style={styles.placeholderContainer} pointerEvents="none">
                         <Ionicons name='search' size={18} color={colors.muted} />
-                        <FlexText style={[common.body, { color: colors.muted, marginLeft: 6 }]}>Search</FlexText>
+                        <FlexText style={[common.body, { color: colors.muted, marginLeft: 6 }]}>{t('settings.search')}</FlexText>
                     </View>
                 )}
             </View> 
-            <FlexText style={[styles.title]}>Preferences</FlexText>
+            <FlexText style={[styles.title]}>{t('settings.preferences')}</FlexText>
             <View style={[styles.card]}>
                 <TouchableOpacity style={[styles.option]} onPress={() => router.push('/theme-settings')}>
                     <View>
-                        <FlexText style={[common.body]}>Theme</FlexText>
+                        <FlexText style={[common.body]}>{t('settings.theme')}</FlexText>
                         <FlexText style={[common.bodySmall, { color: colors.muted }]}>{themePreferenceLabels[themePreference]}</FlexText>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                </TouchableOpacity>
+                <View style={styles.divider}></View>
+                <TouchableOpacity style={[styles.option]} onPress={() => router.push('/language-settings' as Href)}>
+                    <View>
+                        <FlexText style={[common.body]}>{t('settings.language')}</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>
+                            {languageMode === 'auto' ? t('settings.languageAuto') : LANGUAGE_LABELS[language]}
+                        </FlexText>
                     </View>
                     <Ionicons name="chevron-forward" size={24} color={colors.text} />
                 </TouchableOpacity>
                 <View style={styles.divider}></View>
                 <View style={[styles.option]}>
                     <View>
-                        <FlexText style={[common.body]}>Adult filter</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{showSensitiveContent ? "Off" : "On"}</FlexText>
+                        <FlexText style={[common.body]}>{t('settings.adultFilter')}</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{showSensitiveContent ? t('settings.adultFilterOff') : t('settings.adultFilterOn')}</FlexText>
                     </View>
                     <ToggleSwitch
                         isOn={!showSensitiveContent}
@@ -151,8 +168,8 @@ const SettingsScreen = () => {
                 <View style={styles.divider}></View>
                 <View style={[styles.option]}>
                     <View style={{ flex: 1 }}>
-                        <FlexText style={[common.body]}>Home carousel</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>The carousel may contain sensitive media. {showCarousel ? "On" : "Off"}</FlexText>
+                        <FlexText style={[common.body]}>{t('settings.homeCarousel')}</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.homeCarouselDescription')}</FlexText>
                     </View>
                     <ToggleSwitch
                         isOn={showCarousel}
@@ -165,8 +182,8 @@ const SettingsScreen = () => {
                 <View style={styles.divider}></View>
                 <View style={[styles.option]}>
                     <View style={{ flex: 1 }}>
-                        <FlexText style={[common.body]}>Autoplay videos</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>Automatically play videos in feed. {autoplayVideos ? "On" : "Off"}</FlexText>
+                        <FlexText style={[common.body]}>{t('settings.autoplayVideos')}</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.autoplayVideosDescription')}</FlexText>
                     </View>
                     <ToggleSwitch
                         isOn={autoplayVideos}
@@ -179,18 +196,18 @@ const SettingsScreen = () => {
             </View>
 
             {/* ─── Storage & Cache ──────────────────────────────────── */}
-            <FlexText style={[styles.title, { marginTop: 24 }]}>Storage & Cache</FlexText>
+            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.storageCache')}</FlexText>
             <View style={[styles.card]}>
                 {/* Cache usage bar */}
                 <View style={{ marginBottom: 12 }}>
                     <View style={styles.cacheInfoRow}>
-                        <FlexText style={[common.body]}>Video cache</FlexText>
+                        <FlexText style={[common.body]}>{t('settings.videoCache')}</FlexText>
                         <FlexText style={[common.bodySmall, { color: colors.muted }]}>
                             {formatBytes(cacheSize)} / {currentLimitLabel}
                         </FlexText>
                     </View>
                     <FlexText style={[common.bodySmall, { color: colors.muted, marginBottom: 8 }]}>
-                        {cacheCount} {cacheCount === 1 ? 'video' : 'videos'} cached
+                        {t('settings.videoCacheDescription', { count: cacheCount })}
                     </FlexText>
                     <View style={styles.progressBarBg}>
                         <View
@@ -209,7 +226,7 @@ const SettingsScreen = () => {
                 {/* Cache size limit picker */}
                 <TouchableOpacity style={[styles.option]} onPress={() => setShowCacheSizePicker(true)}>
                     <View>
-                        <FlexText style={[common.body]}>Max cache size</FlexText>
+                        <FlexText style={[common.body]}>{t('settings.maxCacheSize')}</FlexText>
                         <FlexText style={[common.bodySmall, { color: colors.muted }]}>{currentLimitLabel}</FlexText>
                     </View>
                     <Ionicons name="chevron-forward" size={24} color={colors.text} />
@@ -223,13 +240,13 @@ const SettingsScreen = () => {
                     disabled={isClearing || cacheSize === 0}
                 >
                     <FlexText style={[common.body, { color: cacheSize === 0 ? colors.muted : '#ff4444' }]}>
-                        {isClearing ? 'Clearing...' : 'Clear video cache'}
+                        {isClearing ? t('settings.clearCacheClearing') : t('settings.clearCacheIdle')}
                     </FlexText>
                     {isClearing && <ActivityIndicator size="small" color={colors.muted} />}
                 </TouchableOpacity>
             </View>
 
-            <FlexText style={[styles.title, { marginTop: 24 }]}>Account</FlexText>
+            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.account')}</FlexText>
             <View style={[styles.card]}>
                 <TouchableOpacity style={[styles.option]} onPress={async () => {
                     try {
@@ -245,7 +262,7 @@ const SettingsScreen = () => {
                         setIsLoggingOut(false);
                     }
                 }}>
-                    <FlexText style={[common.body, { color: colors.text }]}>Log out</FlexText>
+                    <FlexText style={[common.body, { color: colors.text }]}>{t('settings.logout')}</FlexText>
                     <Logout3Bold size={24} color={colors.text} />
                 </TouchableOpacity>
             </View>
@@ -260,7 +277,7 @@ const SettingsScreen = () => {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <ActivityIndicator size="large" color={colors.text} />
-                        <FlexText style={[common.body, { color: colors.text, marginTop: 12 }]}>Logging out...</FlexText>
+                        <FlexText style={[common.body, { color: colors.text, marginTop: 12 }]}>{t('settings.loggingOut')}</FlexText>
                     </View>
                 </View>
             </Modal>
@@ -280,7 +297,7 @@ const SettingsScreen = () => {
                 >
                     <View style={styles.pickerModal}>
                         <FlexText style={[common.body, { fontWeight: '700', marginBottom: 16, textAlign: 'center' }]}>
-                            Max Cache Size
+                            {t('settings.maxCacheSize')}
                         </FlexText>
                         {CACHE_SIZE_OPTIONS.map((option) => {
                             const isSelected = option.value === videoCacheSizeLimit;

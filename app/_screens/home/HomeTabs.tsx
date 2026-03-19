@@ -1,5 +1,6 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import CustomTopTabBar from "./CustomTopTabBar";
 import FeedTab from "./FeedTab";
@@ -45,6 +46,8 @@ interface HomeTabsProps {
 }
 
 const HomeTabs = ({ vm }: HomeTabsProps) => {
+    const { t } = useTranslation();
+
     return (
         <Tab.Navigator
             tabBar={(props) => (
@@ -67,7 +70,7 @@ const HomeTabs = ({ vm }: HomeTabsProps) => {
                 state: vm.handleTabStateChange,
             }}
         >
-            <Tab.Screen name="Following">
+            <Tab.Screen name="Following" options={{ title: t('home.tabs.following') }}>
                 {() => (
                     <FollowingTab
                         onScroll={vm.onScroll}
@@ -78,7 +81,7 @@ const HomeTabs = ({ vm }: HomeTabsProps) => {
                     />
                 )}
             </Tab.Screen>
-            <Tab.Screen name="Lucky">
+            <Tab.Screen name="Lucky" options={{ title: t('home.tabs.lucky') }}>
                 {() => (
                     <LuckyTab
                         onScroll={vm.onScroll}
@@ -89,7 +92,7 @@ const HomeTabs = ({ vm }: HomeTabsProps) => {
                     />
                 )}
             </Tab.Screen>
-            <Tab.Screen name="This Day" options={{ title: "This Day" }}>
+            <Tab.Screen name="This Day" options={{ title: t('home.tabs.thisDay') }}>
                 {() => (
                     <ThisDayTab
                         onScroll={vm.onScroll}

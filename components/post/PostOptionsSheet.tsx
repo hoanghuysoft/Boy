@@ -2,6 +2,7 @@ import { AlertDialog, Host } from "@expo/ui/jetpack-compose";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { CopyBold, DangerBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
 import React, { forwardRef, memo, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -75,6 +76,7 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
         const { colors, typography, theme } = useThemeContext();
         const common = createCommonStyles(colors, typography);
         const insets = useSafeAreaInsets();
+        const { t } = useTranslation();
 
         const isOwner = post?.profile_id === currentProfileId;
         const deletePostMutation = useDeletePost(currentProfileId || "");
@@ -99,38 +101,42 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
         const handleDelete = useCallback(() => {
             if (!post) return;
             setDialog({
-                title: "Delete Post",
-                text: "Are you sure you want to delete this post? This action cannot be undone.",
-                confirmText: "Delete",
-                dismissText: "Cancel",
+                title: t('post.dialogs.deletePostTitle'),
+                text: t('post.dialogs.deletePostBody'),
+                confirmText: t('post.dialogs.delete'),
+                dismissText: t('post.dialogs.cancel'),
                 onConfirm: async () => {
                     closeDialog();
                     try {
                         await deletePostMutation.mutateAsync({ postId: post.id, deleteMedia: false });
                         dismissSheet();
                         onDeleted?.();
-                        setDialog({ title: "Success", text: "Post deleted successfully.", confirmText: "OK" });
+                        setDialog({ title: t('post.dialogs.successTitle'), text: t('post.dialogs.postDeleted'), confirmText: t('post.dialogs.ok') });
                     } catch (error: any) {
-                        setDialog({ title: "Error", text: error.message || "Failed to delete post. Please try again.", confirmText: "OK" });
+                        setDialog({
+                            title: t('post.dialogs.errorTitle'),
+                            text: error.message || t('post.dialogs.deleteFailed'),
+                            confirmText: t('post.dialogs.ok'),
+                        });
                     }
                 },
             });
-        }, [post, deletePostMutation, dismissSheet, closeDialog, onDeleted]);
+        }, [post, deletePostMutation, dismissSheet, closeDialog, onDeleted, t]);
 
         const handleReport = useCallback(() => {
             dismissSheet();
-            setDialog({ title: "Report", text: "Report feature coming soon!", confirmText: "OK" });
-        }, [dismissSheet]);
+            setDialog({ title: t('post.dialogs.reportTitle'), text: t('post.dialogs.reportComingSoon'), confirmText: t('post.dialogs.ok') });
+        }, [dismissSheet, t]);
 
         const handleShare = useCallback(() => {
             dismissSheet();
-            setDialog({ title: "Share", text: "Share feature coming soon!", confirmText: "OK" });
-        }, [dismissSheet]);
+            setDialog({ title: t('post.dialogs.shareTitle'), text: t('post.dialogs.shareComingSoon'), confirmText: t('post.dialogs.ok') });
+        }, [dismissSheet, t]);
 
         const handleCopyLink = useCallback(() => {
             dismissSheet();
-            setDialog({ title: "Copy Link", text: "Link copied to clipboard!", confirmText: "OK" });
-        }, [dismissSheet]);
+            setDialog({ title: t('post.dialogs.copyLinkTitle'), text: t('post.dialogs.linkCopied'), confirmText: t('post.dialogs.ok') });
+        }, [dismissSheet, t]);
 
         return (
             <>
@@ -147,15 +153,15 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
                     <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
                         {/* Header */}
                         <View style={styles.header}>
-                            <FlexText style={[common.heading]}>Post </FlexText>
-                            <FlexText style={common.bodySmall}>Got something on your mind?</FlexText>
+                            <FlexText style={[common.heading]}>{t('post.optionsSheet.title')}</FlexText>
+                            <FlexText style={common.bodySmall}>{t('post.optionsSheet.subtitle')}</FlexText>
                         </View>
 
                         {/* Options List */}
                         <View style={styles.optionsList}>
                             <OptionItem
                                 icon={ShareBold}
-                                label="Share"
+                                label={t('post.optionsSheet.share')}
                                 onPress={handleShare}
                                 colors={colors}
                                 common={common}
@@ -163,7 +169,7 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
 
                             <OptionItem
                                 icon={CopyBold}
-                                label="Copy Link"
+                                label={t('post.optionsSheet.copyLink')}
                                 onPress={handleCopyLink}
                                 colors={colors}
                                 common={common}
@@ -172,7 +178,7 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
                             {!isOwner && (
                                 <OptionItem
                                     icon={DangerBold}
-                                    label="Report"
+                                    label={t('post.optionsSheet.report')}
                                     onPress={handleReport}
                                     colors={colors}
                                     common={common}
@@ -182,7 +188,7 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
                             {isOwner && (
                                 <OptionItem
                                     icon={TrashBinTrashBold}
-                                    label="Delete Post"
+                                    label={t('post.optionsSheet.deletePost')}
                                     onPress={handleDelete}
                                     destructive
                                     colors={colors}
@@ -198,7 +204,7 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
                         visible={dialog !== null}
                         title={dialog?.title ?? ""}
                         text={dialog?.text ?? ""}
-                        confirmButtonText={dialog?.confirmText ?? "OK"}
+                        confirmButtonText={dialog?.confirmText ?? t('post.dialogs.ok')}
                         dismissButtonText={dialog?.dismissText}
                         onConfirmPressed={() => dialog?.onConfirm ? dialog.onConfirm() : closeDialog()}
                         onDismissPressed={closeDialog}

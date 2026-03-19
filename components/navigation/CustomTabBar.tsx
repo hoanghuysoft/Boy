@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { SquircleView } from "expo-squircle-view";
 import React, { RefObject, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,7 +23,6 @@ type TabName = "index" | "shots" | "chat" | "profile";
 
 interface TabConfig {
     name: TabName;
-    label: string;
     IconOutlined: any;
     IconSolid: any;
 }
@@ -30,25 +30,21 @@ interface TabConfig {
 const tabs: TabConfig[] = [
     {
         name: "index",
-        label: "Home",
         IconOutlined: HomeOutline,
         IconSolid: HomeBold,
     },
     {
         name: "shots",
-        label: "Shots",
         IconOutlined: VideoLibraryOutline,
         IconSolid: VideoLibraryBold
     },
     {
         name: "chat",
-        label: "Create",
         IconOutlined: AddCircleOutline,
         IconSolid: AddCircleBold,
     },
     {
         name: "profile",
-        label: "Profile",
         IconOutlined: UserRoundedOutline,
         IconSolid: UserRoundedBold,
     },
@@ -63,6 +59,7 @@ const AnimatedTabButton = ({
     onLongPress,
     descriptors,
     colors,
+    label,
 }: {
     route: any;
     isFocused: boolean;
@@ -72,6 +69,7 @@ const AnimatedTabButton = ({
     onLongPress: () => void;
     descriptors: any;
     colors: any;
+    label: string;
 }) => {
     const scaleAnim = useRef(new Animated.Value(isFocused ? 1 : 0.95)).current;
     const opacityAnim = useRef(new Animated.Value(isFocused ? 1 : 0.6)).current;
@@ -119,7 +117,7 @@ const AnimatedTabButton = ({
             key={route.key}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={descriptors[route.key].options.tabBarAccessibilityLabel}
+            accessibilityLabel={label}
             style={styles.tabBarItem}
             onPress={() => {
                 handlePressOut();
@@ -160,6 +158,7 @@ const AnimatedTabButton = ({
 
 export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: BottomTabBarProps & { blurTargetRef?: RefObject<View | null> }) => {
     const { colors, theme } = useThemeContext();
+    const { t } = useTranslation();
     const insets = useSafeAreaInsets();
     const bottomSpacing = 13 + insets.bottom;
 
@@ -183,7 +182,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
     const { colors: fadeColors, locations: fadeLocations } = easeGradient({
         colorStops: {
             0: {
-                color: theme === 'dark' ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0)',
+                color: theme === 'dark' ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0.8)',
             },
             1: {
                 color: theme === 'dark' ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0)',
@@ -254,6 +253,16 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                         // Map route names to tab config
                         const tabConfig = tabs.find((tab) => tab.name === route.name);
                         if (!tabConfig) return null;
+
+                        const label =
+                            route.name === "index"
+                                ? t("navigation.tabs.home")
+                                : route.name === "shots"
+                                    ? t("navigation.tabs.shots")
+                                    : route.name === "chat"
+                                        ? t("navigation.tabs.create")
+                                        : t("navigation.tabs.profile");
+
                         const color = isFocused ? colors.secondary : colors.tabInactive;
                         const onPress = () => {
                             const event = navigation.emit({
@@ -284,6 +293,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                                 route={route}
                                 isFocused={isFocused}
                                 tabConfig={tabConfig}
+                                label={label}
                                 color={color}
                                 onPress={onPress}
                                 onLongPress={onLongPress}

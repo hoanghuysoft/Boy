@@ -11,6 +11,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlexText } from "../../components/FlexText";
 import { PostItem } from "../../components/PostItem";
@@ -22,6 +23,7 @@ const BookmarksScreen = () => {
     const insets = useSafeAreaInsets();
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const { t } = useTranslation();
 
     const {
         data,
@@ -32,7 +34,7 @@ const BookmarksScreen = () => {
         refetch,
         isRefetching,
     } = useBookmarks();
-
+    
     const posts = useMemo(() => {
         if (!data?.pages) return [];
         return data.pages.flatMap((page) => page.data);
@@ -88,10 +90,10 @@ const BookmarksScreen = () => {
                     <BookmarkIcon size={32} color={colors.muted} />
                 </View>
                 <FlexText style={[common.heading, { fontSize: 20, marginTop: 20, marginBottom: 8 }]}>
-                    No bookmarks yet
+                    {t('bookmarks.emptyTitle')}
                 </FlexText>
                 <FlexText style={[common.body, { color: colors.muted, textAlign: "center", lineHeight: 22 }]}>
-                    Save posts you love and find them here anytime.
+                    {t('bookmarks.emptyBody')}
                 </FlexText>
             </View>
         );
@@ -101,11 +103,13 @@ const BookmarksScreen = () => {
     // sits below the spacer that clears the floating back button.
     const ListHeaderComponent = useCallback(() => (
         <View style={{ marginTop: insets.top + 66, paddingHorizontal: 16, marginBottom: 8 }}>
-            <FlexText style={[common.heading, { fontSize: 28 }]}>Bookmarks</FlexText>
+            <FlexText style={[common.heading, { fontSize: 28 }]}>
+                {t('bookmarks.title')}
+            </FlexText>
             <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
                 {posts.length > 0
-                    ? `${posts.length} saved post${posts.length !== 1 ? 's' : ''}`
-                    : 'Your saved posts'}
+                    ? t('bookmarks.savedCount', { count: posts.length })
+                    : t('bookmarks.yourSavedPosts')}
             </FlexText>
         </View>
     ), [insets.top, common, colors.muted, posts.length]);

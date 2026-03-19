@@ -6,6 +6,7 @@ import { Post } from "@/types/post";
 import { choosenMediaPath } from "@/utils/imageurl";
 import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dimensions, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DataProvider, LayoutProvider, RecyclerListView } from "recyclerlistview";
@@ -48,6 +49,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
 
     const {
         data,
@@ -225,15 +227,15 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
     const renderEmptyState = () => {
         const emptyMessages: Record<string, string> = {
-            latest: "Follow some people to see their posts",
-            lucky: "No lucky posts yet",
-            this_day: "No posts from this day"
+            latest: t('home.feed.emptyLatest'),
+            lucky: t('home.feed.emptyLucky'),
+            this_day: t('home.feed.emptyThisDay'),
         };
 
         return (
             <View style={styles.emptyState}>
                 <FlexText style={[common.heading, { color: colors.muted, textAlign: 'center' }]}>
-                    No posts yet
+                    {t('home.feed.emptyTitle')}
                 </FlexText>
                 <FlexText style={[common.label, { color: colors.muted, textAlign: 'center', marginTop: 8 }]}>
                     {emptyMessages[feedType]}

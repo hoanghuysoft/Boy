@@ -1,3 +1,4 @@
+import '@/i18n';
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, usePathname } from "expo-router";
@@ -20,6 +21,7 @@ import { SessionProvider } from "../context/SessionContext";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
 import { clientPersister, queryClient } from "../services/client";
+import { useAutoLanguageSync } from "../stores/language";
 import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
 
 // Disable Reanimated strict mode warning
@@ -106,6 +108,7 @@ const RootContent = () => {
   const isShots = pathname === "/shots";
 
   const { isReady, session, hasProfile } = useRootLayoutViewModel();
+  useAutoLanguageSync();
 
   useEffect(() => {
     SplashScreen.hideAsync();
@@ -160,6 +163,10 @@ const RootContent = () => {
           />
           <Stack.Screen
             name="bookmarks"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="language-settings"
             options={{ headerShown: false, animation: "slide_from_right" }}
           />
           <Stack.Screen

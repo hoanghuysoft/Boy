@@ -1,6 +1,7 @@
 import FastImage from "@d11/react-native-fast-image";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import VerifiedIcon from "../../icons/verified";
@@ -61,6 +62,7 @@ export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
     ({ postId }, ref) => {
         const insets = useSafeAreaInsets();
         const vm = useLikersSheetViewModel(postId, ref as React.RefObject<TrueSheet | null>);
+        const { t } = useTranslation();
 
         const renderItem = useCallback(({ item }: { item: LikeUser }) => (
             <LikerItem
@@ -93,14 +95,14 @@ export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
             return (
                 <View style={styles.emptyState}>
                     <FlexText style={[vm.common.body, { color: vm.colors.muted, textAlign: 'center' }]}>
-                        No likes yet
+                        {t('post.likersSheet.emptyTitle')}
                     </FlexText>
                     <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted, textAlign: 'center', marginTop: 4 }]}>
-                        Be the first to like this post!
+                        {t('post.likersSheet.emptyBody')}
                     </FlexText>
                 </View>
             );
-        }, [vm.isLoading, vm.colors, vm.common]);
+        }, [vm.isLoading, vm.colors, vm.common, t]);
 
         return (
             <TrueSheet
@@ -118,11 +120,11 @@ export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
                 <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <FlexText style={[vm.common.heading]}>Likes</FlexText>
+                        <FlexText style={[vm.common.heading]}>{t('post.likersSheet.title')}</FlexText>
                         <FlexText style={vm.common.bodySmall}>
                             {vm.totalLikes > 0
-                                ? `${vm.totalLikes} ${vm.totalLikes === 1 ? 'person' : 'people'} liked this post`
-                                : 'No likes yet'}
+                                ? t('post.likersSheet.subtitle', { count: vm.totalLikes })
+                                : t('post.likersSheet.emptyTitle')}
                         </FlexText>
                     </View>
 
