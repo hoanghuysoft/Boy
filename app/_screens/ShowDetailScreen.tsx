@@ -1,0 +1,543 @@
+import { BlurMask } from "@/components/blur mask/BlurMask";
+import { FlexText } from "@/components/FlexText";
+import { GalleryModal } from "@/components/gallery/GalleryModal";
+import { useVideoDetailQuery } from "@/services/shows";
+import { useGalleryStore } from "@/stores/gallery";
+import type { VideoCard } from "@/types/shows";
+import { Ionicons } from "@expo/vector-icons";
+import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
+import { BlurTargetView, BlurView } from "expo-blur";
+import { Image } from "expo-image";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { FlatList as GestureFlatList } from "react-native-gesture-handler";
+import { getColors } from "react-native-image-colors";
+import { createMMKV } from "react-native-mmkv";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import TurboImage from "react-native-turbo-image";
+import { useThemeContext } from "../../context/ThemeContext";
+import { createCommonStyles } from "../../styles/common";
+
+const storage = createMMKV({ id: "showdetail-image-colors" });
+const DARK_DOMINANT_CACHE_PREFIX = "darkDominant:";
+
+const withAlpha = (hex: string, alphaHex: string) => {
+  // Supports '#RRGGBB' and '#RRGGBBAA'. If not hex, fall back to original.
+  if (typeof hex !== "string") return hex as unknown as string;
+  if (hex.startsWith("#") && (hex.length === 7 || hex.length === 9)) {
+    return hex.slice(0, 7) + alphaHex;
+  }
+  return hex;
+};
+
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    }
+    : null;
+};
+
+const luminance = (hex: string): number | null => {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return null;
+  const [rs, gs, bs] = [rgb.r, rgb.g, rgb.b].map((c) => {
+    const sRGB = c / 255;
+    return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+};
+
+const clamp255 = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+
+const darkenHex = (hex: string, amount: number): string => {
+  // amount: 0..1, where 0 = unchanged, 1 = black
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const a = Math.max(0, Math.min(1, amount));
+  const r = clamp255(rgb.r * (1 - a));
+  const g = clamp255(rgb.g * (1 - a));
+  const b = clamp255(rgb.b * (1 - a));
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+};
+
+const ChatScreen = () => {
+  const { colors, typography } = useThemeContext();
+  const blurTargetRef = useRef<View | null>(null);
+  const common = createCommonStyles(colors, typography);
+  const params = useLocalSearchParams();
+  const videoUrlOrSlug = Array.isArray(params.video_url) ? params.video_url[0] : params.video_url;
+
+  const fallbackPosterUrl = "https://fastly.picsum.photos/id/36/4179/2790.jpg?hmac=OCuYYm0PkDCMwxWhrtoSefG5UDir4O0XCcR2x-aSPjs";
+  const { data: videoDetail, isLoading: isVideoDetailLoading, isError: isVideoDetailError } = useVideoDetailQuery(videoUrlOrSlug);
+
+  const detail = videoDetail?.video_detail;
+  const relatedVideos = videoDetail?.related_videos;
+  const posterUrl = detail?.poster_url ?? fallbackPosterUrl;
+  const image = useImage(posterUrl);
+  const { width, height } = useWindowDimensions();
+  const posterHeight = 500;
+  const inset = useSafeAreaInsets();
+
+  const episodes = useMemo(() => {
+    if (!detail) return [];
+    const apiEpisodes = (detail.episodes ?? []).map((e) => ({ episode: e.episode, url: e.url }));
+    if (apiEpisodes.length > 0) {
+      return apiEpisodes.slice().sort((a, b) => a.episode - b.episode);
+    }
+    if (detail.stream_url) return [{ episode: 1, url: detail.stream_url }];
+    return [];
+  }, [detail]);
+
+  const openGallery = useGalleryStore((s) => s.openGallery);
+
+  const galleryImages = useMemo(
+    () => (detail?.extra_images ?? []).map((uri) => ({ uri, caption: detail?.title })),
+    [detail?.extra_images, detail?.title],
+  );
+
+  const renderGalleryItem = useCallback(
+    ({ item, index }: { item: string; index: number }) => (
+      <Pressable
+        onPress={() => openGallery(galleryImages, index)}
+        style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+      >
+        <TurboImage
+          source={{ uri: item }}
+          style={{ width: 250, aspectRatio: 16 / 9, borderRadius: 12 }}
+          resizeMode="cover"
+          fadeDuration={150}
+        />
+      </Pressable>
+    ),
+    [galleryImages, openGallery],
+  );
+
+  const galleryKeyExtractor = useCallback(
+    (item: string, index: number) => `${item}-${index}`,
+    [],
+  );
+
+  const renderRelatedVideo = useCallback(
+    ({ item }: { item: VideoCard }) => (
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: "/show_detail",
+            params: { video_url: item.video_url },
+          })
+        }
+        style={{ width: 200, marginRight: 12, overflow: "hidden", position: "relative" }}
+      >
+        <View style={{ width: 200, borderRadius: 16, overflow: "hidden", position: "relative" }}>
+          <Image
+            source={{ uri: item.thumb_url }}
+            style={{
+              width: 200,
+              aspectRatio: 16 / 9,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: "rgba(132,132,132,0.34)",
+            }}
+            contentFit="cover"
+          />
+          <View
+            style={{
+              zIndex: 2,
+              position: "absolute",
+              bottom: 8,
+              right: 12,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 999,
+            }}
+          >
+            <FlexText style={{ color: "white", fontSize: 12 }}>{item.duration}</FlexText>
+          </View>
+        </View>
+        <FlexText
+          numberOfLines={2}
+          ellipsizeMode="tail"
+          style={[styles.textStyle, { color: "white", width: "100%", flexShrink: 1 }]}
+        >
+          {item.title}
+        </FlexText>
+        <FlexText
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[styles.textStyle, { color: "white", opacity: 0.5, width: "100%", flexShrink: 1 }]}
+        >
+          {item.views}
+        </FlexText>
+      </Pressable>
+    ),
+    [],
+  );
+
+  const relatedVideoKeyExtractor = useCallback((item: VideoCard) => item.video_url, []);
+
+  const renderTag = useCallback(
+    ({ item }: { item: string }) => {
+      const slug = item.startsWith("#") ? item.slice(1) : item;
+      return (
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/show_list",
+              params: { mode: "tag", slug },
+            })
+          }
+          style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: "rgba(121, 121, 121, 0.1)" }}
+        >
+          <Text style={[styles.textStyle, { color: "rgb(121, 121, 121)" }]}>{item}</Text>
+        </TouchableOpacity>
+      );
+    },
+    [],
+  );
+
+  const tagKeyExtractor = useCallback((item: string) => item, []);
+
+  const fallbackBase = useMemo(() => {
+    const c = colors.background;
+    return typeof c === "string" && c.startsWith("#") && c.length >= 7 ? c.slice(0, 7) : "#000000";
+  }, [colors.background]);
+  const [darkDominant, setDarkDominant] = useState<string>(darkenHex(fallbackBase, 0.55));
+
+  const { refetch } = useVideoDetailQuery(videoUrlOrSlug);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const cacheKey = `${DARK_DOMINANT_CACHE_PREFIX}${posterUrl}:${fallbackBase}`;
+        const cachedDarkDominant = storage.getString(cacheKey);
+
+        if (cachedDarkDominant) {
+          if (!cancelled) setDarkDominant(cachedDarkDominant);
+          return;
+        }
+
+        const result = await getColors(posterUrl, {
+          fallback: fallbackBase,
+          cache: true,
+          key: posterUrl,
+        });
+
+        let dominant: string | undefined | null = null;
+        if (result.platform === "android") dominant = result.dominant ?? result.average;
+        if (result.platform === "ios") dominant = result.background ?? result.primary;
+
+        const dominantHex = dominant ? (dominant.startsWith("#") ? dominant : `#${dominant}`) : fallbackBase;
+        const darker = darkenHex(dominantHex, 0.55);
+        const finalDarkDominant = darker;
+        storage.set(cacheKey, finalDarkDominant);
+        if (!cancelled) setDarkDominant(finalDarkDominant);
+      } catch (e) {
+        const fallbackDarkDominant = darkenHex(fallbackBase, 0.55);
+        storage.set(`${DARK_DOMINANT_CACHE_PREFIX}${posterUrl}:${fallbackBase}`, fallbackDarkDominant);
+        if (!cancelled) setDarkDominant(fallbackDarkDominant);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [posterUrl, fallbackBase]);
+
+  return (
+    <View style={[common.screen, { backgroundColor: darkDominant }]}>
+      <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={[{ gap: 12, paddingBottom: 24 }]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isVideoDetailLoading}
+              onRefresh={() => {
+                refetch();
+              }}
+            />
+          }
+        >
+          {isVideoDetailLoading && !isVideoDetailError && (
+            <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.08)" }}>
+              <Text style={{ color: "white", fontWeight: "700" }}>Loading video...</Text>
+            </View>
+          )}
+          {isVideoDetailError && (
+            <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, backgroundColor: "rgba(255,0,0,0.12)" }}>
+              <Text style={{ color: "white", fontWeight: "700" }}>Failed to load video.</Text>
+            </View>
+          )}
+          {/* Header poster (scrolls away) */}
+          <View style={[styles.header, { height: posterHeight }]}>
+            <Canvas style={{ height: posterHeight }}>
+              <BlurMask
+                mask={
+                  <LinearGradient
+                    start={vec(0, posterHeight * 0.5)}
+                    end={vec(0, posterHeight)}
+                    colors={["transparent", "black"]}
+                  />
+                }
+              >
+                <ImageShader
+                  image={image}
+                  x={0}
+                  width={width}
+                  height={posterHeight}
+                  fit="cover"
+                  tx="clamp"
+                  ty="clamp"
+                />
+              </BlurMask>
+
+              {/* Bottom→top overlay to blend into the solid background */}
+              <Rect x={0} y={0} width={width} height={posterHeight}>
+                <LinearGradient
+                  start={vec(0, posterHeight)}
+                  end={vec(0, 0)}
+                  // Strong at bottom, fades out quickly (adjust positions to taste)
+                  colors={[
+                    withAlpha(darkDominant, "FF"), // solid at bottom
+                    withAlpha(darkDominant, "99"), // stronger mid fade
+                    "transparent",
+                  ]}
+                  positions={[0, 0.25, 1]}
+                />
+              </Rect>
+            </Canvas>
+
+            <View
+              pointerEvents="none"
+              style={[
+                styles.headerOverlay,
+                {
+                  paddingBottom: 24, // distance from bottom
+                },
+              ]}
+            >
+              {/* Badge */}
+              <Image source={require("../../assets/images/oscar.png")} style={{ width: 150, height: 150 }} contentFit="contain" />
+              <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
+                {detail?.title ?? ""}
+              </FlexText>
+              <Text numberOfLines={2} style={{ color: "white", fontSize: 16, fontWeight: "400", textAlign: "justify" }}>
+                {detail?.description ?? ""}
+              </Text>
+              <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+                <FlexText style={[styles.textStyle, { color: "white" }]}>{detail?.views ?? ""}</FlexText>
+                <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
+                <FlexText style={[styles.textStyle, { color: "white" }]}>{detail?.category ?? ""}</FlexText>
+                <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
+                <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+              </View>
+            </View>
+          </View>
+          <View>
+            <View style={{ paddingHorizontal: 16 }}>
+              <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12 }]}>
+                Episodes
+              </Text>
+              <View style={styles.episodeGrid}>
+                {episodes.map((ep) => (
+                  <Pressable
+                    key={`${ep.episode}-${ep.url}`}
+                    onPress={() => {
+                      router.push({
+                        pathname: "/video_player",
+                        params: {
+                          videoUrl: ep.url,
+                          name: detail?.title ?? "",
+                          caption: detail?.description ?? "",
+                          portrait: "true",
+                        },
+                      });
+                    }}
+                    style={({ pressed }) => [
+                      styles.episodeButton,
+                      {
+                        backgroundColor: withAlpha("#FFFFFF", "14"),
+                        borderColor: withAlpha("#FFFFFF", "2A"),
+                        opacity: pressed ? 0.85 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.episodeText, { color: "white" }]}>
+                      Episode {ep.episode}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+            {(detail?.extra_images?.length ?? 0) > 0 && (
+              <View>
+                <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 24, paddingHorizontal: 16 }]}>
+                  Gallery
+                </Text>
+                <GestureFlatList
+                  horizontal
+                  data={detail?.extra_images ?? []}
+                  keyExtractor={galleryKeyExtractor}
+                  renderItem={renderGalleryItem}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+                />
+              </View>
+            )}
+            <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 20, paddingHorizontal: 16 }]}>
+              Information
+            </Text>
+            <View style={{ gap: 8 }}>
+              <View style={{ paddingHorizontal: 16 }}>
+                <Text style={[styles.textStyle, { color: "white", }]}>
+                  Released
+                </Text>
+                <Text style={[styles.textStyle, { color: "rgb(121, 121, 121)", }]}>
+                  {detail?.uploaded ?? ""}
+                </Text>
+              </View>
+              <View>
+                <Text style={[styles.textStyle, { color: "white", paddingHorizontal: 16 }]}>
+                  Tags
+                </Text>
+                <GestureFlatList
+                  horizontal
+                  data={detail?.tags ?? []}
+                  keyExtractor={tagKeyExtractor}
+                  renderItem={renderTag}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8, marginTop: 8, paddingHorizontal: 16 }}
+                />
+              </View>
+            </View>
+            <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 20, paddingHorizontal: 16 }]}>
+              Related Videos
+            </Text>
+            <GestureFlatList
+              horizontal
+              data={relatedVideos ?? []}
+              keyExtractor={relatedVideoKeyExtractor}
+              renderItem={renderRelatedVideo}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16 }}
+            />
+          </View>
+          <View style={{ height: inset.bottom }} />
+        </ScrollView>
+      </BlurTargetView>
+      <View
+        style={{
+          position: 'absolute',
+          top: inset.top,
+          left: 16,
+          right: 16,
+          zIndex: 1000,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+        }}
+      >
+        <BlurView
+          tint={"systemMaterialDark"}
+          intensity={80}
+          blurTarget={blurTargetRef}
+          blurMethod="dimezisBlurViewSdk31Plus"
+          style={{
+            borderRadius: 999,
+            overflow: 'hidden',
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              borderRadius: 999,
+              width: 40,
+              height: 40,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Ionicons name='chevron-back' size={24} color={'white'} />
+          </TouchableOpacity>
+        </BlurView>
+        <BlurView
+          tint={"systemMaterialDark"}
+          intensity={80}
+          blurTarget={blurTargetRef}
+          blurMethod="dimezisBlurViewSdk31Plus"
+          style={{
+            borderRadius: 999,
+            overflow: 'hidden',
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => { Linking.openURL(detail?.download_url ?? "") }}
+            style={{
+              borderRadius: 999,
+              width: 40,
+              height: 40,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Ionicons name='download' size={24} color={'white'} />
+          </TouchableOpacity>
+        </BlurView>
+      </View>
+      <GalleryModal />
+    </View>
+  );
+};
+
+export default ChatScreen;
+
+const styles = StyleSheet.create({
+  header: {
+    position: "relative",
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  headerOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 16,
+    right: 16,
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  episodeGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  episodeButton: {
+    flexBasis: "30%",
+    flexGrow: 1,
+    maxWidth: "32%",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  episodeText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  textStyle: {
+    fontSize: 14,
+  },
+});
+

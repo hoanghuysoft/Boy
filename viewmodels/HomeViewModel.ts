@@ -193,6 +193,10 @@ export const useHomeViewModel = () => {
     router.push("/bookmarks");
   }, [router]);
 
+  const navigateToCreate = useCallback(() => {
+    router.push("/create");
+  }, [router]);
+
   // ─── Return ViewModel ──────────────────────────────────────────
   return {
     // Theme & Layout
@@ -249,5 +253,6 @@ export const useHomeViewModel = () => {
     handleTabStateChange,
     navigateToSearch,
     navigateToBookmarks,
+    navigateToCreate,
   };
 };

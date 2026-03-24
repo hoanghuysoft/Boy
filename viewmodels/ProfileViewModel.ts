@@ -1,7 +1,7 @@
 import { choosenMediaPath } from "@/utils/imageurl";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { Animated, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../context/ThemeContext";
@@ -13,6 +13,7 @@ import { useInfiniteSocialLinks } from "../services/sociallink";
 import { useProfile } from "../services/userprofile";
 import { useInfiniteWorkplaces } from "../services/workplace";
 import { useScrollStore } from "../stores/scroll";
+import { useAudioStore } from "../stores/audio";
 import { createCommonStyles } from "../styles/common";
 import { Media } from "../types/media";
 import { Post } from "../types/post";
@@ -41,6 +42,7 @@ export const useProfileViewModel = () => {
     const currentScrollY = useRef(0);
 
     // ─── State ─────────────────────────────────────────────────────
+    const [selectedTab, setSelectedTab] = useState<TabType>("Images");
     const [activeTab, setActiveTab] = useState<TabType>("Images");
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [galleryVisible, setGalleryVisible] = useState(false);
@@ -131,6 +133,10 @@ export const useProfileViewModel = () => {
     const videoCount = videosPaging?.pages[0]?.pagination?.total || 0;
     const postCount = feedPaging?.pages[0]?.pagination?.total || 0;
 
+    // ─── Audio state ───────────────────────────────────────────────
+    const currentlyPlayingId = useAudioStore(s => s.currentlyPlayingId);
+    const isMusicPlaying = !!profileId && currentlyPlayingId === `profile-music-${profileId}`;
+
     // ─── Post Options Sheet ────────────────────────────────────────
     const optionsSheetRef = useRef<TrueSheet>(null);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -210,12 +216,19 @@ export const useProfileViewModel = () => {
     // ─── Tab Change ────────────────────────────────────────────────
     const handleTabChangeRef = useRef<((tab: TabType) => void) | undefined>(undefined);
     const handleTabChange = useCallback((tab: TabType) => {
-        if (tab === activeTab) return;
-        scrollPositions.current[activeTab] = currentScrollY.current;
-        requestIdleCallback(() => {
-            setActiveTab(tab);
+        if (tab === selectedTab) return;
+        scrollPositions.current[selectedTab] = currentScrollY.current;
+        
+        // Update UI immediately (makes the button press feel instant)
+        setSelectedTab(tab);
+
+        // Defer heavy list rendering to unblock the UI thread's click animation
+        requestAnimationFrame(() => {
+            startTransition(() => {
+                setActiveTab(tab);
+            });
         });
-    }, [activeTab]);
+    }, [selectedTab]);
     handleTabChangeRef.current = handleTabChange;
 
     const stableTabChange = useCallback((tab: TabType) => {
@@ -235,6 +248,21 @@ export const useProfileViewModel = () => {
             }
         });
     }, [router, profile?.name]);
+
+    const handleMusicPress = useCallback(() => {
+        if (!currentTrack?.preview_url) return;
+        const trackId = `profile-music-${profileId}`;
+        const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore.getState();
+        if (currentlyPlayingId === trackId) {
+            stopPlayback();
+        } else {
+            playTrack(trackId, currentTrack.preview_url, {
+                title: currentTrack.title,
+                artist: currentTrack.artist,
+                coverUrl: currentTrack.cover_url,
+            });
+        }
+    }, [currentTrack, profileId]);
 
     const handleImagePress = useCallback((visible: boolean, index: number) => {
         setGalleryIndex(index);
@@ -346,6 +374,7 @@ export const useProfileViewModel = () => {
         myProfile,
 
         // Tab
+        selectedTab,
         activeTab,
 
         // Data
@@ -391,6 +420,7 @@ export const useProfileViewModel = () => {
         stableTabChange,
         handleVideoPress,
         handleImagePress,
+        handleMusicPress,
         onRefresh,
         handleEndReached,
         handleMusicEndReached,
@@ -404,5 +434,8 @@ export const useProfileViewModel = () => {
         scrollToTop,
         dismissSnackbar,
         closeGallery,
+
+        // Music playback
+        isMusicPlaying,
     };
 };

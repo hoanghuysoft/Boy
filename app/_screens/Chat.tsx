@@ -1,13 +1,13 @@
-import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
+import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
+import type { VideoCard } from "@/types/shows";
 import { Ionicons } from "@expo/vector-icons";
-import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
-import { BlurTargetView, BlurView } from "expo-blur";
+import { BlurTargetView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { getColors } from "react-native-image-colors";
+import React, { useCallback, useRef } from "react";
+import { Animated, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { FlatList as GestureFlatList, Pressable as GesturePressable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -55,175 +55,225 @@ const darkenHex = (hex: string, amount: number): string => {
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 };
 
+const PARALLAX_OFFSET = 80;
+
 const ChatScreen = () => {
   const { colors, typography } = useThemeContext();
   const blurTargetRef = useRef<View | null>(null);
   const common = createCommonStyles(colors, typography);
-  const imageUrl = "https://cdn.prod.website-files.com/5ef387c475859118661dbbc7/67ac5802d44b5caa9d3c3035_Jayden%20Revri%20wonderland.jpeg";
-  const image = useImage(imageUrl);
-  const { width, height } = useWindowDimensions();
-  const posterHeight = 400;
-  const episodes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+  const { width } = useWindowDimensions();
+  const posterHeight = 600;
   const inset = useSafeAreaInsets();
+  const headerScrollX = useRef(new Animated.Value(0)).current;
+  const vm = useHomeViewModel();
 
-  // `react-native-image-colors` requires fallback hex in #rgb or #rrggbb (NO alpha).
-  const fallbackBase = useMemo(() => {
-    const c = colors.background;
-    return typeof c === "string" && c.startsWith("#") && c.length >= 7 ? c.slice(0, 7) : "#000000";
-  }, [colors.background]);
-  const [darkDominant, setDarkDominant] = useState<string>(darkenHex(fallbackBase, 0.55));
+  const renderSectionItem = useCallback(
+    ({ item }: { item: VideoCard }) => (
+      <GesturePressable
+        onPress={() =>
+          router.push({
+            pathname: "/show_detail",
+            params: { video_url: item.video_url },
+          })
+        }
+        style={{ width: 200, marginRight: 12, overflow: "hidden", position: "relative" }}
+      >
+        <View style={{ width: 200, borderRadius: 16, overflow: "hidden", position: "relative" }}>
+          <Image
+            source={{ uri: item.thumb_url }}
+            style={{
+              width: 200,
+              aspectRatio: 16 / 9,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: "rgba(132,132,132,0.34)",
+            }}
+            contentFit="cover"
+          />
+          <View
+            style={{
+              zIndex: 2,
+              position: "absolute",
+              bottom: 8,
+              right: 12,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 999,
+            }}
+          >
+            <FlexText style={{ color: "white", fontSize: 12 }}>{item.duration}</FlexText>
+          </View>
+        </View>
+        <FlexText
+          numberOfLines={2}
+          ellipsizeMode="tail"
+          style={[styles.textStyle, { color: "white", width: "100%", flexShrink: 1 }]}
+        >
+          {item.title}
+        </FlexText>
+        <FlexText
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[styles.textStyle, { color: "white", opacity: 0.5, width: "100%", flexShrink: 1 }]}
+        >
+          {item.views}
+        </FlexText>
+      </GesturePressable>
+    ),
+    [],
+  );
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const run = async () => {
-      try {
-        const result = await getColors(imageUrl, {
-          fallback: fallbackBase,
-          cache: true,
-          key: imageUrl,
-        });
-
-        let dominant: string | undefined | null = null;
-        if (result.platform === "android") dominant = result.dominant ?? result.average;
-        if (result.platform === "ios") dominant = result.background ?? result.primary;
-
-        const dominantHex = dominant ? (dominant.startsWith("#") ? dominant : `#${dominant}`) : fallbackBase;
-        const darker = darkenHex(dominantHex, 0.55);
-        if (!cancelled) setDarkDominant(darker);
-      } catch (e) {
-        if (!cancelled) setDarkDominant(darkenHex(fallbackBase, 0.55));
-      }
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [imageUrl, fallbackBase]);
+  const sectionKeyExtractor = useCallback((item: VideoCard) => item.video_url, []);
 
   return (
-    <View style={[common.screen, { backgroundColor: darkDominant }]}>
+    <View style={[common.screen, { backgroundColor: "#000000" }]}>
       <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={[{ gap: 12, paddingBottom: 24 }]}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={vm.isRefetchingSections || vm.isRefetchingSlider}
+              onRefresh={() => {
+                vm.refetchSections();
+                vm.refetchSlider();
+              }}
+              tintColor={colors.text}
+              colors={[colors.text]}
+              progressBackgroundColor={colors.card}
+            />
+          }
         >
-          {/* Header poster (scrolls away) */}
-          <View style={[styles.header, { height: posterHeight }]}>
-            <Canvas style={{ height: posterHeight }}>
-              <BlurMask
-                mask={
-                  <LinearGradient
-                    start={vec(0, posterHeight * 0.5)}
-                    end={vec(0, posterHeight)}
-                    colors={["transparent", "black"]}
-                  />
-                }
-              >
-                <ImageShader
-                  image={image}
-                  x={0}
-                  width={width}
-                  height={posterHeight}
-                  fit="cover"
-                  tx="clamp"
-                  ty="clamp"
-                />
-              </BlurMask>
-
-              {/* Bottom→top overlay to blend into the solid background */}
-              <Rect x={0} y={0} width={width} height={posterHeight}>
-                <LinearGradient
-                  start={vec(0, posterHeight)}
-                  end={vec(0, 0)}
-                  // Strong at bottom, fades out quickly (adjust positions to taste)
-                  colors={[
-                    withAlpha(darkDominant, "FF"), // solid at bottom
-                    withAlpha(darkDominant, "99"), // stronger mid fade
-                    "transparent",
-                  ]}
-                  positions={[0, 0.25, 1]}
-                />
-              </Rect>
-            </Canvas>
-
+          {/* Header poster carousel with parallax */}
+          {(vm.isErrorSlider || vm.isErrorSections) && (
             <View
-              pointerEvents="none"
-              style={[
-                styles.headerOverlay,
-                {
-                  paddingBottom: 24, // distance from bottom
-                },
-              ]}
+              style={{
+                marginHorizontal: 16,
+                marginTop: 8,
+                padding: 12,
+                borderRadius: 12,
+                backgroundColor: "rgba(255, 0, 0, 0.12)",
+              }}
             >
-              <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700" }}>
-                Tom Holland
-              </FlexText>
-              <FlexText numberOfLines={2} style={{ color: "white", fontSize: 16, fontWeight: "400", textAlign: "center" }}>
-                The Amazing Spider-Man is a 2012 American superhero film based on the Marvel Comics character Spider-Man. It is the fifth installment in the Marvel Cinematic Universe (MCU) film series, produced by Marvel Studios and distributed by Columbia Pictures. Directed by Marc Webb, the film stars Andrew Garfield as Peter Parker/Spider-Man, with Emma Stone as Gwen Stacy, Rhys Ifans as the Lizard, and Martin Sheen as Uncle Ben.
-              </FlexText>
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
-                <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
-              </View>
+              <Text style={{ color: "white", fontWeight: "700" }}>Failed to load shows.</Text>
+              <Text style={{ color: "rgba(255,255,255,0.8)", marginTop: 4 }}>
+                Pull to refresh and try again.
+              </Text>
             </View>
-          </View>
-          <View style={{ paddingHorizontal: 16 }}>
-            <FlexText style={[styles.sectionTitle, { color: "white", marginBottom: 12 }]}>
-              Episodes
-            </FlexText>
-            <View style={styles.episodeGrid}>
-              {episodes.map((ep) => (
+          )}
+          <Animated.ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: headerScrollX } } }],
+              { useNativeDriver: true }
+            )}
+            style={{ height: posterHeight }}
+          >
+            {vm.slider?.slider_items.map((slider, i) => {
+              const translateX = headerScrollX.interpolate({
+                inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+                outputRange: [PARALLAX_OFFSET, 0, -PARALLAX_OFFSET],
+                extrapolate: "clamp",
+              });
+              return (
                 <Pressable
-                  key={ep}
-                  onPress={() => { }}
-                  style={({ pressed }) => [
-                    styles.episodeButton,
-                    {
-                      backgroundColor: withAlpha("#FFFFFF", "14"),
-                      borderColor: withAlpha("#FFFFFF", "2A"),
-                      opacity: pressed ? 0.85 : 1,
-                    },
-                  ]}
+                  key={i}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/show_detail",
+                      params: { video_url: slider.video_url },
+                    })
+                  }
+                  style={{ width, height: posterHeight, overflow: "hidden" }}
                 >
-                  <FlexText style={[styles.episodeText, { color: "white" }]}>
-                    Episode {ep}
-                  </FlexText>
+                  <Animated.View
+                    style={{
+                      width: width + PARALLAX_OFFSET * 2,
+                      height: posterHeight,
+                      marginLeft: -PARALLAX_OFFSET,
+                      transform: [{ translateX }],
+                    }}
+                  >
+                    <Image
+                      source={{ uri: slider.background_image }}
+                      style={{ width: "100%", height: "100%" }}
+                      contentFit="cover"
+                    />
+                  </Animated.View>
+                  <View
+                    pointerEvents="none"
+                    style={[styles.headerOverlay, { paddingBottom: 24 }]}
+                  >
+                    <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
+                      {slider.title}
+                    </FlexText>
+                    <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+                      <FlexText style={[styles.textStyle, { color: "white" }]}>{slider.category}</FlexText>
+                      <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }} />
+                      <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                      <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                    </View>
+                  </View>
                 </Pressable>
-              ))}
+              );
+            })}
+          </Animated.ScrollView>
+          {vm.sections?.sections?.map((section, index) => (
+            <View key={index}>
+              <Pressable onPress={() => { router.push("/show_list") }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                <FlexText style={[styles.sectionTitle, { color: "white", marginBottom: 12, flex: 1 }]}>
+                  {section.heading}
+                </FlexText>
+                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 999 }}>
+                  <Ionicons name='chevron-forward' size={20} color={'white'} />
+                </View>
+              </Pressable>
+              <GestureFlatList
+                horizontal
+                data={section.items}
+                keyExtractor={sectionKeyExtractor}
+                renderItem={renderSectionItem}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16 }}
+              />
             </View>
-          </View>
+          ))}
           <View style={{ height: inset.bottom + 80 }} />
         </ScrollView>
       </BlurTargetView>
-      <BlurView
-        tint={"systemMaterialDark"}
-        intensity={80}
-        blurTarget={blurTargetRef}
-        blurMethod="dimezisBlurViewSdk31Plus"
+      <View
         style={{
-          borderRadius: 999,
-          overflow: 'hidden',
-          position: 'absolute',
+          position: "absolute",
           top: inset.top,
           left: 16,
+          right: 16,
           zIndex: 1000,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Image source={require("../../assets/images/logo_head.png")} style={{ width: 50, height: 50 }} contentFit="contain" />
+          <Text style={[styles.textStyle, { color: "white", fontSize: 42, fontWeight: "700" }]}>tv</Text>
+        </View>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.push("/search_shows")}
           style={{
             borderRadius: 999,
             width: 40,
             height: 40,
-            justifyContent: 'center',
-            alignItems: 'center'
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
-          <Ionicons name='chevron-back' size={24} color={'white'} />
+          <Ionicons name="search" size={24} color={"white"} />
         </TouchableOpacity>
-      </BlurView>
+      </View>
     </View>
   );
 };
@@ -233,7 +283,6 @@ export default ChatScreen;
 const styles = StyleSheet.create({
   header: {
     position: "relative",
-    borderRadius: 16,
     overflow: "hidden",
   },
   headerOverlay: {
@@ -249,16 +298,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   episodeGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
+    paddingLeft: 16,
   },
   episodeButton: {
     flexBasis: "30%",
     flexGrow: 1,
     maxWidth: "32%",
     paddingVertical: 12,
-    borderWidth: 1,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -266,6 +312,9 @@ const styles = StyleSheet.create({
   episodeText: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  textStyle: {
+    fontSize: 14,
   },
 });
 

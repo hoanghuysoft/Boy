@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import { FasterImageView } from '@rraut/react-native-faster-image';
+import { Image } from "expo-image";
 import React, { useCallback, useMemo, useState } from "react";
 import {
     ImageStyle,
@@ -12,7 +13,6 @@ import {
     ViewStyle,
 } from "react-native";
 import { Pressable } from "react-native-gesture-handler";
-import TurboImage from "react-native-turbo-image";
 import { Media } from "../../types/media";
 import {
     GridItemType,
@@ -109,13 +109,20 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
             onPressOut={onPressOut}
             delayLongPress={300}
         >
-            <TurboImage
+            {/* <TurboImage
                 source={{ uri: fallbackUrls[urlIndex] }}
                 style={imageStyle}
                 resizeMode="cover"
                 cachePolicy={IMAGE_CACHE_POLICY}
                 fadeDuration={150}
                 onFailure={handleImageError}
+            /> */}
+            <Image
+                source={{ uri: fallbackUrls[urlIndex] }}
+                style={imageStyle}
+                contentFit="cover"
+                transition={150}
+                onError={handleImageError}
             />
         </Pressable>
     );

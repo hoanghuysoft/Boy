@@ -23,7 +23,6 @@ const GalleryImage: React.FC<GalleryImageProps> = ({ uri, index }) => {
                 source={{ uri }}
                 style={{ width: '100%', height: '100%' }}
                 resizeMode="contain"
-                cachePolicy="dataCache"
                 onSuccess={(e: any) => {
                     const w = e?.nativeEvent?.width ?? e?.width ?? 0;
                     const h = e?.nativeEvent?.height ?? e?.height ?? 0;
@@ -33,6 +32,19 @@ const GalleryImage: React.FC<GalleryImageProps> = ({ uri, index }) => {
                 }}
                 format={uri.endsWith('.gif') ? 'gif' : undefined}
             />
+            {/* <Image
+                source={{ uri }}
+                style={{ width: '100%', height: '100%' }}
+                contentFit="contain"
+                transition={150}
+                onLoad={(e: any) => {
+                    const w = e?.source?.width ?? e?.nativeEvent?.width ?? e?.width ?? 0;
+                    const h = e?.source?.height ?? e?.nativeEvent?.height ?? e?.height ?? 0;
+                    if (w > 0 && h > 0) {
+                        setResolution({ width: w, height: h });
+                    }
+                }}
+            /> */}
         </View>
     );
 };

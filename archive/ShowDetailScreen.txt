@@ -1,0 +1,309 @@
+import { BlurMask } from "@/components/blur mask/BlurMask";
+import { FlexText } from "@/components/FlexText";
+import { Ionicons } from "@expo/vector-icons";
+import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
+import { BlurTargetView, BlurView } from "expo-blur";
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { getColors } from "react-native-image-colors";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useThemeContext } from "../../context/ThemeContext";
+import { createCommonStyles } from "../../styles/common";
+
+const withAlpha = (hex: string, alphaHex: string) => {
+  // Supports '#RRGGBB' and '#RRGGBBAA'. If not hex, fall back to original.
+  if (typeof hex !== "string") return hex as unknown as string;
+  if (hex.startsWith("#") && (hex.length === 7 || hex.length === 9)) {
+    return hex.slice(0, 7) + alphaHex;
+  }
+  return hex;
+};
+
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    }
+    : null;
+};
+
+const luminance = (hex: string): number | null => {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return null;
+  const [rs, gs, bs] = [rgb.r, rgb.g, rgb.b].map((c) => {
+    const sRGB = c / 255;
+    return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+};
+
+const clamp255 = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+
+const darkenHex = (hex: string, amount: number): string => {
+  // amount: 0..1, where 0 = unchanged, 1 = black
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const a = Math.max(0, Math.min(1, amount));
+  const r = clamp255(rgb.r * (1 - a));
+  const g = clamp255(rgb.g * (1 - a));
+  const b = clamp255(rgb.b * (1 - a));
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+};
+
+const ChatScreen = () => {
+  const { colors, typography } = useThemeContext();
+  const blurTargetRef = useRef<View | null>(null);
+  const common = createCommonStyles(colors, typography);
+  const imageUrl = "https://cdn.traingon.top/Vietnam/Tiktoker/thumbBo.jpg";
+  const image = useImage(imageUrl);
+  const { width, height } = useWindowDimensions();
+  const posterHeight = 500;
+  const episodes = [1, 2, 3, 4, 5];
+  const inset = useSafeAreaInsets();
+
+  // `react-native-image-colors` requires fallback hex in #rgb or #rrggbb (NO alpha).
+  const fallbackBase = useMemo(() => {
+    const c = colors.background;
+    return typeof c === "string" && c.startsWith("#") && c.length >= 7 ? c.slice(0, 7) : "#000000";
+  }, [colors.background]);
+  const [darkDominant, setDarkDominant] = useState<string>(darkenHex(fallbackBase, 0.55));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const result = await getColors(imageUrl, {
+          fallback: fallbackBase,
+          cache: true,
+          key: imageUrl,
+        });
+
+        let dominant: string | undefined | null = null;
+        if (result.platform === "android") dominant = result.dominant ?? result.average;
+        if (result.platform === "ios") dominant = result.background ?? result.primary;
+
+        const dominantHex = dominant ? (dominant.startsWith("#") ? dominant : `#${dominant}`) : fallbackBase;
+        const darker = darkenHex(dominantHex, 0.55);
+        if (!cancelled) setDarkDominant(darker);
+      } catch (e) {
+        if (!cancelled) setDarkDominant(darkenHex(fallbackBase, 0.55));
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [imageUrl, fallbackBase]);
+
+  return (
+    <View style={[common.screen, { backgroundColor: darkDominant }]}>
+      <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={[{ gap: 12, paddingBottom: 24 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header poster (scrolls away) */}
+          <View style={[styles.header, { height: posterHeight }]}>
+            <Canvas style={{ height: posterHeight }}>
+              <BlurMask
+                mask={
+                  <LinearGradient
+                    start={vec(0, posterHeight * 0.5)}
+                    end={vec(0, posterHeight)}
+                    colors={["transparent", "black"]}
+                  />
+                }
+              >
+                <ImageShader
+                  image={image}
+                  x={0}
+                  width={width}
+                  height={posterHeight}
+                  fit="cover"
+                  tx="clamp"
+                  ty="clamp"
+                />
+              </BlurMask>
+
+              {/* Bottom→top overlay to blend into the solid background */}
+              <Rect x={0} y={0} width={width} height={posterHeight}>
+                <LinearGradient
+                  start={vec(0, posterHeight)}
+                  end={vec(0, 0)}
+                  // Strong at bottom, fades out quickly (adjust positions to taste)
+                  colors={[
+                    withAlpha(darkDominant, "FF"), // solid at bottom
+                    withAlpha(darkDominant, "99"), // stronger mid fade
+                    "transparent",
+                  ]}
+                  positions={[0, 0.25, 1]}
+                />
+              </Rect>
+            </Canvas>
+
+            <View
+              pointerEvents="none"
+              style={[
+                styles.headerOverlay,
+                {
+                  paddingBottom: 24, // distance from bottom
+                },
+              ]}
+            >
+              {/* Badge */}
+              <Image source={require("../../assets/images/oscar.png")} style={{ width: 150, height: 150 }} contentFit="contain" />
+              <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700" }}>
+                Bo Pờ Cafe
+              </FlexText>
+              <Text numberOfLines={2} style={{ color: "white", fontSize: 16, fontWeight: "400", textAlign: "justify" }}>
+                The Amazing Spider-Man is a 2012 American superhero film based on the Marvel Comics character Spider-Man. It is the fifth installment in the Marvel Cinematic Universe (MCU) film series, produced by Marvel Studios and distributed by Columbia Pictures. Directed by Marc Webb, the film stars Andrew Garfield as Peter Parker/Spider-Man, with Emma Stone as Gwen Stacy, Rhys Ifans as the Lizard, and Martin Sheen as Uncle Ben.
+              </Text>
+              <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+                <FlexText style={[styles.textStyle, { color: "white", }]}>2026</FlexText>
+                <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
+                <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+              </View>
+            </View>
+          </View>
+          <View style={{ paddingHorizontal: 16 }}>
+            <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12 }]}>
+              Episodes
+            </Text>
+            <View style={styles.episodeGrid}>
+              {episodes.map((ep) => (
+                <Pressable
+                  key={ep}
+                  onPress={() => { }}
+                  style={({ pressed }) => [
+                    styles.episodeButton,
+                    {
+                      backgroundColor: withAlpha("#FFFFFF", "14"),
+                      borderColor: withAlpha("#FFFFFF", "2A"),
+                      opacity: pressed ? 0.85 : 1,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.episodeText, { color: "white" }]}>
+                    Episode {ep}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 24 }]}>
+              Cast & Crew
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ gap: 12, alignItems: "center" }}>
+                <Image source={{ uri: "https://instagram.fsgn5-6.fna.fbcdn.net/v/t51.82787-15/540746783_18062036975598641_8798549366963877851_n.jpg?stp=dst-jpg_e35_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InRocmVhZHMuRkVFRC5pbWFnZV91cmxnZW4uMTQ0MHgxOTIwLnNkci5mODI3ODcuZGVmYXVsdF9pbWFnZS5jMiJ9&_nc_ht=instagram.fsgn5-6.fna.fbcdn.net&_nc_cat=105&_nc_oc=Q6cZ2gFnPLWF8aol1xhb8-tlTKMlk-5eMv54wMwOt6KORu46N1-V-B2Ji1FgJvG25zTWb40&_nc_ohc=6ZTYIAe-yRUQ7kNvwGI6apB&_nc_gid=0bvI0679RDpfsXNVjpGgvw&edm=AKr904kBAAAA&ccb=7-5&ig_cache_key=MzcxMjA3NTE3MDMwNDkyNjk5Ng%3D%3D.3-ccb7-5&oh=00_Afx5yJ81XKckjdFNS8tn78hVvlIgsE4DNHbMURMdY5N5Xw&oe=69C1C906&_nc_sid=23467f" }} style={{ width: 100, height: 100, borderRadius: 9999 }} contentFit="cover" />
+                <Text style={[styles.textStyle, { color: "white", }]}>
+                  Tran Thai Bao
+                </Text>
+              </View>
+            </ScrollView>
+            <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 20 }]}>
+              Information
+            </Text>
+            <View style={{ gap: 8 }}>
+              <View>
+                <Text style={[styles.textStyle, { color: "white", }]}>
+                  Released
+                </Text>
+                <Text style={[styles.textStyle, { color: "rgb(121, 121, 121)", }]}>
+                  2026
+                </Text>
+              </View>
+              <View>
+                <Text style={[styles.textStyle, { color: "white", }]}>
+                  Audio
+                </Text>
+                <Text style={[styles.textStyle, { color: "rgb(121, 121, 121)", }]}>
+                  English (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Czech (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), French (Canada) (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), French (France) (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), German (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Hindi (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Hungarian (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Italian (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Japanese (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Portuguese (Brazil) (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Russian (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Slovak (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Spanish (Latin America) (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Spanish (Spain) (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Tamil (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Telugu (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Thai (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Turkish (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩), Ukrainian (AD, Dolby Atmos, AAC, ⁨Dolby 5.1⁩)
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View style={{ height: inset.bottom + 80 }} />
+        </ScrollView>
+      </BlurTargetView>
+      <BlurView
+        tint={"systemMaterialDark"}
+        intensity={80}
+        blurTarget={blurTargetRef}
+        blurMethod="dimezisBlurViewSdk31Plus"
+        style={{
+          borderRadius: 999,
+          overflow: 'hidden',
+          position: 'absolute',
+          top: inset.top,
+          left: 16,
+          zIndex: 1000,
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{
+            borderRadius: 999,
+            width: 40,
+            height: 40,
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <Ionicons name='chevron-back' size={24} color={'white'} />
+        </TouchableOpacity>
+      </BlurView>
+    </View>
+  );
+};
+
+export default ChatScreen;
+
+const styles = StyleSheet.create({
+  header: {
+    position: "relative",
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  headerOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 16,
+    right: 16,
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  episodeGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  episodeButton: {
+    flexBasis: "30%",
+    flexGrow: 1,
+    maxWidth: "32%",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  episodeText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  textStyle: {
+    fontSize: 14,
+  },
+});
+

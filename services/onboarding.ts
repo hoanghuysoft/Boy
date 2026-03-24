@@ -2,8 +2,8 @@ import { createMMKV } from 'react-native-mmkv';
 import { client } from './client';
 import { supabase } from './login';
 
-const PROFILE_KEY = 'onboarding_has_profile';
-const mmkv = createMMKV();
+export const PROFILE_KEY = 'onboarding_has_profile';
+export const onboardingMmkv = createMMKV();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,12 +29,12 @@ export interface CreateProfileData {
 
 /** Returns undefined when key has never been written (i.e. needs server check). */
 export function getLocalHasProfile(): boolean | undefined {
-    if (!mmkv.contains(PROFILE_KEY)) return undefined;
-    return mmkv.getBoolean(PROFILE_KEY);
+    if (!onboardingMmkv.contains(PROFILE_KEY)) return undefined;
+    return onboardingMmkv.getBoolean(PROFILE_KEY);
 }
 
 export function setLocalHasProfile(value: boolean): void {
-    mmkv.set(PROFILE_KEY, value);
+    onboardingMmkv.set(PROFILE_KEY, value);
 }
 
 // ─── API ──────────────────────────────────────────────────────────────────────

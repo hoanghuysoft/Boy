@@ -118,7 +118,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
 
 const styles = StyleSheet.create({
     galleryOverlay: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         justifyContent: 'space-between',
     },
     galleryTopBar: {

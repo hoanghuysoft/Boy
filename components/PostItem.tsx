@@ -50,7 +50,6 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                     <TurboImage
                         source={{ uri: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
                         style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: vm.colors.divider }}
-                        cachePolicy={IMAGE_CACHE_POLICY}
                         fadeDuration={100}
                         format={post.profile_avatar?.endsWith('.gif') ? 'gif' : undefined}
                     />
@@ -130,6 +129,17 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                     </TouchableOpacity>
                 )}
             </View>
+
+            {/* Audio Waveform — shown when post has a direct audio_url */}
+            {/* {!!post.audio_url && (
+                <PostAudioWaveform
+                    postId={post.id}
+                    audioUrl={post.audio_url}
+                    colors={vm.colors}
+                    label={post.profile_name}
+                />
+            )} */}
+
             {/* Invisible Spacer for No-Media Posts */}
             {!vm.hasMedia && (
                 <View style={{ width: Dimensions.get("window").width, height: 1 }} />

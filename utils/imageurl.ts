@@ -17,7 +17,11 @@ export const buildFallbackUrls = (mediaItem: MediaWithFallback, placeholder: str
 export const choosenMediaPath = (video: MediaWithFallback): string => {
     const sources = [video.url, video.backup1].filter(Boolean) as string[];
 
-    return sources.find(src => src.startsWith('https://tinyvault.space/'))
-        || sources[0]
-        || '';
+
+    // return sources.find(src => src.startsWith('https://tinyvault.space/'))
+    //     || sources[0]
+    //     || '';
+
+    //return normal url
+    return sources[0];
 };

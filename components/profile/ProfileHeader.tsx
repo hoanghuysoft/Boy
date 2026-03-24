@@ -1,16 +1,15 @@
 import VerifiedIcon from '@/icons/verified';
-import FastImage from '@d11/react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from '@nandorojo/galeria';
 import { CaseMinimalisticBold, ChatSquareLikeBold, HeartAngleBold, HeartBold, PlayCircleBold, PlayCircleOutline, PointOnMapBold } from '@solar-icons/react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import React, { memo, useMemo } from "react";
 import {
     Animated,
-    Image,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -18,7 +17,6 @@ import {
     View
 } from "react-native";
 import CountryFlag from "react-native-country-flag";
-import TurboImage from 'react-native-turbo-image';
 import { ProfileAddress } from "../../types/profileaddress";
 import { ProfileDetail } from "../../types/profiledetail";
 import { ProfileLink } from "../../types/profilelink";
@@ -33,7 +31,7 @@ import DynamicAvatar from './DynamicAvatar';
 import QuickPreviewModal from './QuickPreviewModal';
 
 const COVER_HEIGHT = 280;
-const AnimatedTurboImage = Animated.createAnimatedComponent(TurboImage);
+const AnimatedExpoImage = Animated.createAnimatedComponent(Image);
 
 interface ProfileHeaderProps {
     scrollY: Animated.Value;
@@ -111,7 +109,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     return (
         <>
             {vm.hasCover ? (
-                <Animated.Image
+                <AnimatedExpoImage
                     source={{
                         uri: profile?.cover_url || '',
                     }}
@@ -121,7 +119,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                             transform: [{ translateY: vm.coverTranslateY }],
                         },
                     ]}
-                    resizeMode="cover"
+                    contentFit={'cover'}
                 />
             ) : (
                 <Animated.View
@@ -177,21 +175,21 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 <Galeria.Image>
                                     <Image
                                         source={{ uri: vm.currentAvatar }}
-                                        resizeMode="cover"
+                                        contentFit="cover"
                                         style={vm.common.avatarLarge}
                                     />
                                 </Galeria.Image>
                             </Galeria>
                         ) : vm.genderFallbackSource ? (
-                            <FastImage
+                            <Image
                                 source={vm.genderFallbackSource}
-                                resizeMode={FastImage.resizeMode.cover}
+                                contentFit="cover"
                                 style={vm.common.avatarLarge}
                             />
                         ) : (
-                            <FastImage
+                            <Image
                                 source={{ uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                                resizeMode={FastImage.resizeMode.cover}
+                                contentFit='cover'
                                 style={vm.common.avatarLarge}
                             />
                         )}
@@ -311,10 +309,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     activeOpacity={0.9}
                                     style={{ height: 70, backgroundColor: vm.colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
-                                    <FastImage
+                                    <Image
                                         source={{ uri: vm.currentMusic.cover_url }}
                                         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-                                        resizeMode={FastImage.resizeMode.cover}
+                                        contentFit='cover'
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                                     <TouchableOpacity onPress={vm.toggleMusic} style={{ borderRadius: 999, padding: 6, backgroundColor: vm.colors.card, justifyContent: "center", alignItems: "center", marginLeft: 8 }}>
@@ -351,10 +349,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     onPress={() => socialSheetRef?.current?.present()}
                                     style={{ height: 70, backgroundColor: vm.colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
                                 >
-                                    <FastImage
+                                    <Image
                                         source={{ uri: "https://womendobusiness.eu/wp-content/uploads/social-media.jpg" }}
                                         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-                                        resizeMode={FastImage.resizeMode.cover}
+                                        contentFit='cover'
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                                     <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: 'white', textAlign: 'center' }]}>
@@ -421,7 +419,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 );
                             })}
                         </View>
-
                         {tabContent}
                     </View>
                 </View>

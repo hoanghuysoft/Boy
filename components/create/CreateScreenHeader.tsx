@@ -38,17 +38,21 @@ export const CreateScreenHeader = memo(({
             },
         ]}
     >
-        <View>
-            <FlexText style={[common.heading, { fontSize: 28 }]}>Create Post</FlexText>
-            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
+        <View style={{ flex: 1, flexShrink: 1, marginRight: 12 }}>
+            <FlexText style={[common.heading, { fontSize: 28 }]} numberOfLines={1}>
+                Create Post
+            </FlexText>
+            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
                 {subtitle}
             </FlexText>
         </View>
+
         <TouchableOpacity
             style={[
                 createStyles.submitButton,
                 {
                     backgroundColor: canSubmit ? COLORS.primary : colors.divider,
+                    flexShrink: 0,
                 },
             ]}
             onPress={onSubmit}
@@ -59,7 +63,12 @@ export const CreateScreenHeader = memo(({
             ) : (
                 <>
                     <FontAwesome name="send" size={16} color="#fff" />
-                    <FlexText style={createStyles.submitButtonText}>Post</FlexText>
+                    <FlexText
+                        style={createStyles.submitButtonText}
+                        numberOfLines={1}
+                    >
+                        Post
+                    </FlexText>
                 </>
             )}
         </TouchableOpacity>

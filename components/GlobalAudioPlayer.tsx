@@ -12,7 +12,7 @@ import { useAudioStore } from "../stores/audio";
  * go through this single player.
  */
 export const GlobalAudioPlayer = () => {
-    const { currentAudioUrl, currentlyPlayingId, stopPlayback } = useAudioStore();
+    const { currentAudioUrl, currentlyPlayingId, stopPlayback, setPlaybackStatus } = useAudioStore();
 
     // Track the current audio source
     const audioSource = currentAudioUrl ? { uri: currentAudioUrl } : null;
@@ -41,6 +41,11 @@ export const GlobalAudioPlayer = () => {
         if (!player) return;
 
         const checkPlayerState = setInterval(() => {
+            // Update playback status for subscribers
+            if (player.duration > 0) {
+                setPlaybackStatus(player.currentTime, player.duration);
+            }
+
             // If the audio finished naturally, reset the store
             if (prevUrlRef.current && !player.playing && currentlyPlayingId) {
                 // Check if audio has reached the end
@@ -52,7 +57,7 @@ export const GlobalAudioPlayer = () => {
         }, 500);
 
         return () => clearInterval(checkPlayerState);
-    }, [player, currentlyPlayingId, stopPlayback]);
+    }, [player, currentlyPlayingId, stopPlayback, setPlaybackStatus]);
 
     // This component doesn't render anything
     return null;

@@ -1,7 +1,7 @@
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
-    AddCircleBold,
-    AddCircleOutline,
+    ClapperboardBold,
+    ClapperboardOutline,
     HomeBold,
     HomeOutline,
     UserRoundedBold,
@@ -40,8 +40,8 @@ const tabs: TabConfig[] = [
     },
     {
         name: "chat",
-        IconOutlined: AddCircleOutline,
-        IconSolid: AddCircleBold,
+        IconOutlined: ClapperboardOutline,
+        IconSolid: ClapperboardBold,
     },
     {
         name: "profile",
@@ -182,7 +182,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
     const { colors: fadeColors, locations: fadeLocations } = easeGradient({
         colorStops: {
             0: {
-                color: theme === 'dark' ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0.8)',
+                color: theme === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255,255,255,0.8)',
             },
             1: {
                 color: theme === 'dark' ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0)',
@@ -193,36 +193,36 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
 
     return (
         <>
-        <LinearGradient
-            pointerEvents="none"
-            colors={fadeColors as [string, string, ...string[]]}
-            locations={fadeLocations as [number, number, ...number[]]}
-            start={{ x: 0.5, y: 1 }}
-            end={{ x: 0.5, y: 0 }}
-            style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: bottomSpacing + 55 + 40,
-                zIndex: 0,
-            }}
-        />
-        <View
-            style={[
-                styles.tabBarContainer,
-                {
-                    marginBottom: bottomSpacing,
-                    zIndex: 1,
-                    shadowColor: theme === "dark" ? "rgb(111, 137, 158)" : "rgba(0,0,0,0.12)",
-                    shadowOpacity: theme === "dark" ? 0.22 : 0.12,
-                },
-            ]}
-        >
+            <LinearGradient
+                pointerEvents="none"
+                colors={fadeColors as [string, string, ...string[]]}
+                locations={fadeLocations as [number, number, ...number[]]}
+                start={{ x: 0.5, y: 1 }}
+                end={{ x: 0.5, y: 0 }}
+                style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: bottomSpacing + 55 + 40,
+                    zIndex: 0,
+                }}
+            />
             <View
-                style={[styles.tabBarContent, { backgroundColor: colors.background + "" }]}
-                onLayout={(e) => setLayout(e.nativeEvent.layout)}
+                style={[
+                    styles.tabBarContainer,
+                    {
+                        marginBottom: bottomSpacing,
+                        zIndex: 1,
+                        shadowColor: theme === "dark" ? "rgb(111, 137, 158)" : "rgba(0,0,0,0.12)",
+                        shadowOpacity: theme === "dark" ? 0.22 : 0.12,
+                    },
+                ]}
             >
+                <View
+                    style={[styles.tabBarContent, { backgroundColor: colors.background + "" }]}
+                    onLayout={(e) => setLayout(e.nativeEvent.layout)}
+                >
                     {/* Animated Pill */}
                     {layout.width > 0 && (
                         <Animated.View
@@ -302,8 +302,8 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                             />
                         );
                     })}
+                </View>
             </View>
-        </View>
         </>
     );
 };

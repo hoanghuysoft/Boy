@@ -36,7 +36,7 @@ export const VideoTopBar: React.FC<VideoTopBarProps> = ({
 }) => {
   return (
     <Animated.View
-      pointerEvents={videoPressed ? "auto" : "none"}
+      pointerEvents={videoPressed ? "box-none" : "none"}
       style={[
         commonRowStyle,
         {
@@ -47,24 +47,19 @@ export const VideoTopBar: React.FC<VideoTopBarProps> = ({
         },
       ]}
     >
-      <View style={[commonRowStyle, { gap: 12 }]}>
-        <TouchableOpacity onPress={onClose} style={styles.smallButton}>
-          <Lineicons
-            icon={XmarkSolid}
-            size={24}
-            color={"white"}
-            strokeWidth={3}
-          />
+      <View style={[commonRowStyle, { gap: 12 }]} pointerEvents="box-none">
+        <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} onPress={onClose} style={styles.smallButton}>
+          <Lineicons icon={XmarkSolid} size={24} color={"white"} strokeWidth={3} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.smallButton} onPress={onPipMode}>
+        <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onPipMode}>
           <Pip2Bold size={20} color={"white"} />
         </TouchableOpacity>
       </View>
-      <View style={[commonRowStyle, { gap: 12 }]}>
-        <TouchableOpacity style={styles.smallButton} onPress={onOpenExternal}>
+      <View style={[commonRowStyle, { gap: 12 }]} pointerEvents="box-none">
+        <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onOpenExternal}>
           <MaterialIcons name="open-in-new" size={20} color={"white"} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.smallButton} onPress={onMuteToggle}>
+        <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onMuteToggle}>
           {isMute ? (
             <MutedBold size={20} color={"white"} />
           ) : (

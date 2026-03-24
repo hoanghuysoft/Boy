@@ -1,20 +1,27 @@
 import { FlexText } from "@/components/FlexText";
+import { calculateBMI, enrichProfileData, getBMIStatus } from "@/utils/zodiacCalculation";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import {
+    CalculatorBold,
     CalendarBold,
     CaseMinimalisticBold,
+    CatBold,
+    ClipboardHeartBold,
+    DumbbellLargeMinimalisticBold,
+    HistoryBold,
     LetterBold,
     MenBold,
     NotebookBookmarkBold,
     PhoneBold,
     PointOnMapBold,
     SquareAcademicCapBold,
+    StarsMinimalisticBold,
     WeigherBold,
     WheelBold,
     WomenBold,
 } from '@solar-icons/react-native';
-import React, { forwardRef, memo, useMemo } from "react";
+import React, { forwardRef, memo, useEffect, useMemo, useState } from "react";
 import { Image, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from "react-native-turbo-image";
@@ -107,6 +114,31 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
     const height = parsedMetadata?.height;
     const weight = parsedMetadata?.weight;
     const bankinfo = parsedMetadata?.banking;
+    const [profileInfo, setProfileInfo] = useState<Awaited<ReturnType<typeof enrichProfileData>>>(null);
+    const BMI = useMemo(() => calculateBMI(height || 0, weight || 0), [height, weight]);
+    const BMIStatus = useMemo(() => getBMIStatus(BMI), [BMI]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const birthday = profile?.birthday;
+        if (!birthday) {
+            setProfileInfo(null);
+            return;
+        }
+
+        enrichProfileData(birthday)
+            .then((res) => {
+                if (!cancelled) setProfileInfo(res);
+            })
+            .catch(() => {
+                if (!cancelled) setProfileInfo(null);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [profile?.birthday]);
 
     const formatDate = (dateString: string | null | undefined) => {
         if (!dateString) return null;
@@ -133,22 +165,22 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
 
         // Education
         const eduItems: InfoItem[] = [];
-        if (profile?.college) eduItems.push({ kind: 'solar', icon: SquareAcademicCapBold, label: profile.college,sublabel: "College" });
-        if (profile?.highschool) eduItems.push({ kind: 'solar', icon: NotebookBookmarkBold, label: profile.highschool,sublabel: "High School" });
+        if (profile?.college) eduItems.push({ kind: 'solar', icon: SquareAcademicCapBold, label: profile.college, sublabel: "College" });
+        if (profile?.highschool) eduItems.push({ kind: 'solar', icon: NotebookBookmarkBold, label: profile.highschool, sublabel: "High School" });
         if (eduItems.length > 0) result.push({ title: 'Education', items: eduItems });
 
         // Places
         if (homeInfo) {
             result.push({
                 title: 'Places Lived',
-                items: [{ kind: 'solar', icon: PointOnMapBold, label: homeInfo,sublabel: "Hometown" }],
+                items: [{ kind: 'solar', icon: PointOnMapBold, label: homeInfo, sublabel: "Hometown" }],
             });
         }
 
         // Personal
         const personalItems: InfoItem[] = [];
         const birthdayStr = formatDate(profile?.birthday);
-        if (birthdayStr) personalItems.push({ kind: 'solar', icon: CalendarBold, label: birthdayStr,sublabel: "Birthday" });
+        if (birthdayStr) personalItems.push({ kind: 'solar', icon: CalendarBold, label: birthdayStr, sublabel: `Lived for ${profileInfo?.daysLived} days, ${profileInfo?.moonPhase} moon phase` });
         if (profile?.gender) {
             personalItems.push({
                 kind: 'solar',
@@ -157,24 +189,29 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
                 sublabel: "Gender",
             });
         }
-        if (height) personalItems.push({ kind: 'material', name: 'height', label: `${height} cm`,sublabel: "Height" });
-        if (weight) personalItems.push({ kind: 'solar', icon: WeigherBold, label: `${weight} kg`,sublabel: "Weight" });
+        if (height) personalItems.push({ kind: 'material', name: 'height', label: `${height} cm`, sublabel: "Height" });
+        if (weight) personalItems.push({ kind: 'solar', icon: WeigherBold, label: `${weight} kg`, sublabel: "Weight" });
+        if (height && weight) personalItems.push({ kind: 'solar', icon: ClipboardHeartBold, label: `${BMI} BMI`, sublabel: `${BMIStatus} BMI` });
         if (personalItems.length > 0) result.push({ title: 'Personal', items: personalItems });
-
+        if (profileInfo?.zodiacSign) personalItems.push({ kind: 'solar', icon: StarsMinimalisticBold, label: profileInfo.zodiacSign.charAt(0).toUpperCase() + profileInfo.zodiacSign.slice(1), sublabel: "Zodiac Sign" });
+        if (profileInfo?.chineseZodiac) personalItems.push({ kind: 'solar', icon: CatBold, label: profileInfo.chineseZodiac.charAt(0).toUpperCase() + profileInfo.chineseZodiac.slice(1), sublabel: "Chinese Zodiac" });
+        if (profileInfo?.lifePathNumber) personalItems.push({ kind: 'solar', icon: CalculatorBold, label: profileInfo.lifePathNumber.toString(), sublabel: "Life Path Number" });
+        if (profileInfo?.generation) personalItems.push({ kind: 'solar', icon: DumbbellLargeMinimalisticBold, label: profileInfo.generation, sublabel: "Generation" });
+        if (profileInfo?.historicalEvent) personalItems.push({ kind: 'solar', icon: HistoryBold, label: profileInfo.historicalEvent, sublabel: "Historical Event on your birthday" });
         // Contact
         const contactItems: InfoItem[] = [];
-        if (profile?.email) contactItems.push({ kind: 'solar', icon: LetterBold, label: profile.email,sublabel: "Email" });
-        if (profile?.phone) contactItems.push({ kind: 'solar', icon: PhoneBold, label: profile.phone,sublabel: "Phone" });
-        if (profile?.username) contactItems.push({ kind: 'ionicons', name: 'at-circle-outline', label: `@${profile.username}`,sublabel: "Username" });
+        if (profile?.email) contactItems.push({ kind: 'solar', icon: LetterBold, label: profile.email, sublabel: "Email" });
+        if (profile?.phone) contactItems.push({ kind: 'solar', icon: PhoneBold, label: profile.phone, sublabel: "Phone" });
+        if (profile?.username) contactItems.push({ kind: 'ionicons', name: 'at-circle-outline', label: `@${profile.username}`, sublabel: "Username" });
         if (contactItems.length > 0) result.push({ title: 'Contact', items: contactItems });
 
         // More
         const moreItems: InfoItem[] = [];
-        if (profile?.hobby) moreItems.push({ kind: 'ionicons', name: 'extension-puzzle-outline', label: profile.hobby,sublabel: "Hobby" });
-        if (profile?.talent) moreItems.push({ kind: 'ionicons', name: 'star-outline', label: profile.talent,sublabel: "Talent" });
-        if (profile?.license_plate) moreItems.push({ kind: 'solar', icon: WheelBold, label: profile.license_plate,sublabel: "License Plate" });
+        if (profile?.hobby) moreItems.push({ kind: 'ionicons', name: 'extension-puzzle-outline', label: profile.hobby, sublabel: "Hobby" });
+        if (profile?.talent) moreItems.push({ kind: 'ionicons', name: 'star-outline', label: profile.talent, sublabel: "Talent" });
+        if (profile?.license_plate) moreItems.push({ kind: 'solar', icon: WheelBold, label: profile.license_plate, sublabel: "License Plate" });
         const marriedStr = formatDate(profile?.married_date);
-        if (marriedStr) moreItems.push({ kind: 'ionicons', name: 'heart-outline', label: `Married: ${marriedStr}`,sublabel: "Married Date" });
+        if (marriedStr) moreItems.push({ kind: 'ionicons', name: 'heart-outline', label: `Married: ${marriedStr}`, sublabel: "Married Date" });
         if (moreItems.length > 0) result.push({ title: 'More', items: moreItems });
 
         // Banking
@@ -204,7 +241,7 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
         }
 
         return result;
-    }, [profile, workplaces, homeInfo, height, weight, bankinfo]);
+    }, [profile, workplaces, homeInfo, height, weight, bankinfo, profileInfo]);
 
     return (
         <TrueSheet

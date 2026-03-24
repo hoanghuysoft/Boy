@@ -1,10 +1,13 @@
+import { Ionicons } from "@expo/vector-icons";
 import * as Device from 'expo-device';
 import * as ImagePicker from "expo-image-picker";
+import { router } from "expo-router";
 import { FormikHelpers, useFormik } from "formik";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     NativeScrollEvent,
     NativeSyntheticEvent,
+    TouchableOpacity,
     View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -383,6 +386,23 @@ const CreateScreen = () => {
     return (
         <View style={[common.screen]}>
             <View style={createStyles.container}>
+                {/* Floating back button, same pattern as Bookmarks/ShowList */}
+                <View style={{ position: 'absolute', top: insets.top + 16, left: 16, zIndex: 1000 }}>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={{
+                            backgroundColor: colors.containerContent,
+                            borderRadius: 999,
+                            width: 40,
+                            height: 40,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <Ionicons name="chevron-back" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                </View>
+
                 {/* Header */}
                 <Host matchContents>
                     <AlertDialog
@@ -402,7 +422,7 @@ const CreateScreen = () => {
                 <CreateScreenHeader
                     colors={colors}
                     common={common}
-                    topPadding={insets.top + 8}
+                    topPadding={insets.top + 60}
                     canSubmit={canSubmit}
                     isSubmitting={isSubmitting}
                     onSubmit={onSubmitPress}
@@ -412,7 +432,7 @@ const CreateScreen = () => {
                     style={createStyles.scrollView}
                     contentContainerStyle={[
                         createStyles.scrollContent,
-                        { paddingBottom: insets.bottom + 150 },
+                        { paddingBottom: insets.bottom},
                     ]}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
@@ -490,7 +510,7 @@ const CreateScreen = () => {
                 {/* Action Bar */}
                 <CreateActionBar
                     colors={colors}
-                    bottomPadding={insets.bottom + 80}
+                    bottomPadding={insets.bottom}
                     visible={showActionBar}
                     selectedMediaCount={values.selectedMedia.length}
                     onPickMedia={pickMedia}

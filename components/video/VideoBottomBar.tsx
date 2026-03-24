@@ -61,7 +61,7 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
 }) => {
   return (
     <Animated.View
-      pointerEvents={videoPressed ? "auto" : "none"}
+      pointerEvents={videoPressed ? "box-none" : "none"}
       style={{
         paddingBottom: isLandscape ? 30 : 16,
         paddingRight: isLandscape ? 32 : 0,
@@ -69,12 +69,13 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
       }}
     >
       <View
+        pointerEvents="box-none"
         style={[
           commonRowStyle,
           { justifyContent: "space-between", alignItems: "center" },
         ]}
       >
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }} pointerEvents="none">
           <FlexText style={[commonBodySmallStyle, { color: "white" }]}>{name}</FlexText>
           {caption && (
             <FlexText
@@ -91,15 +92,15 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
             </FlexText>
           )}
         </View>
-        <View style={[commonRowStyle, { gap: 8 }]}>
-          <TouchableOpacity style={styles.smallButton} onPress={onLoopToggle}>
+        <View style={[commonRowStyle, { gap: 8 }]} pointerEvents="box-none">
+          <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onLoopToggle}>
             {isLooping ? (
               <RepeatOneBold size={20} color={"white"} />
             ) : (
               <RepeatBold size={20} color={"white"} />
             )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.smallButton} onPress={onRotate}>
+          <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onRotate}>
             <SmartphoneRotate2Bold size={24} color={"white"} />
           </TouchableOpacity>
         </View>
@@ -113,7 +114,7 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
         onSlidingStart={onSlidingStart}
         onSlidingComplete={onSlidingComplete}
         trackHeight={8}
-        trackColor="rgba(255, 255, 255, 0.3)"
+        trackColor="#4DFFFFFF"
         progressColor="#FFFFFF"
       />
       <View

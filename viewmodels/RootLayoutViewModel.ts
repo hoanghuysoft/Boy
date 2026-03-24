@@ -5,8 +5,11 @@ import { useEffect, useRef, useState } from 'react';
 import {
     checkProfileFromServer,
     getLocalHasProfile,
+    onboardingMmkv,
+    PROFILE_KEY,
 } from '../services/onboarding';
 import { supabase } from '../services/login';
+import { useMMKVBoolean } from 'react-native-mmkv';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,11 +31,13 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
 
     const [session, setSession] = useState<any>(null);
     const [isSessionReady, setIsSessionReady] = useState(false);
-    const [hasProfile, setHasProfile] = useState<boolean | undefined>(undefined);
+    
+    // Reactively watch MMKV for changes so Onboarding form submission triggers an instant update
+    const [hasProfile, setHasProfile] = useMMKVBoolean(PROFILE_KEY, onboardingMmkv);
 
-    // Prevents a second server check when SIGNED_IN fires right after getSession
-    // on the initial app load (both can resolve for the same login event).
-    const initialCheckDoneRef = useRef(false);
+    // Track if getSession() has resolved. This prevents reacting to the redundant
+    // SIGNED_IN event that Supabase often fires right after getSession() on startup.
+    const initialSessionCheckDoneRef = useRef(false);
 
     useEffect(() => {
         GoogleSignin.configure({
@@ -47,26 +52,24 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
             setSession(session);
 
             if (session) {
+                // Read directly from MMKV here to avoid stale closure state
                 const local = getLocalHasProfile();
 
                 if (local !== undefined) {
-                    // Fast path: already determined locally.
                     setHasProfile(local);
                 } else {
-                    // Existing user who hasn't gone through this flow yet —
-                    // fetch once to populate MMKV.
                     try {
                         const result = await checkProfileFromServer();
                         setHasProfile(result);
                     } catch {
-                        // Fail open so existing users aren't blocked on errors.
                         setHasProfile(true);
                     }
                 }
-
-                initialCheckDoneRef.current = true;
             }
 
+            // Important: Mark the initial startup check as done, even if NO session was found.
+            // This ensures that true future sign-ins aren't mistakenly ignored.
+            initialSessionCheckDoneRef.current = true;
             setIsSessionReady(true);
         });
 
@@ -75,13 +78,13 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
                 setSession(session);
 
                 if (event === 'SIGNED_IN' && session) {
-                    // New login: always verify against the server so we don't rely
-                    // on a stale MMKV value from a previous account.
-                    if (!initialCheckDoneRef.current) {
-                        // getSession() fired first on startup — skip duplicate call.
-                        initialCheckDoneRef.current = true;
-                        return;
+                    // Supabase fires SIGNED_IN both when manually logging in AND sometimes
+                    // implicitly alongside getSession on startup.
+                    if (!initialSessionCheckDoneRef.current) {
+                        return; // Ignore implicit event; getSession logic is handling it.
                     }
+
+                    // A new manually-triggered login: fetch from server to clear any stale MMKV
                     try {
                         const result = await checkProfileFromServer();
                         setHasProfile(result);
@@ -89,8 +92,8 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
                         setHasProfile(true);
                     }
                 } else if (!session) {
-                    // Signed out — MMKV is cleared by signOut(), reset state.
-                    setHasProfile(undefined);
+                    // SIGNED_OUT or TOKEN_REFRESHED to null
+                    onboardingMmkv.remove(PROFILE_KEY);
                 }
             }
         );

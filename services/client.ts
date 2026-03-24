@@ -46,6 +46,13 @@ export const client = axios.create({
     },
 });
 
+export const showsClient = axios.create({
+    baseURL: process.env.EXPO_PUBLIC_SHOWS_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
 client.interceptors.request.use(async (config) => {
     const { data: { session } } = await supabase.auth.getSession()
     const token = session?.access_token

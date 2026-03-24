@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Easing, Image, ImageStyle, StyleSheet, View } from "react-native";
+import { Animated, Easing, ImageStyle, StyleSheet, View } from "react-native";
+import { Image } from 'expo-image';
 
 interface DynamicAvatarProps {
     uri: string;

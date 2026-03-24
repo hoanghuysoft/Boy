@@ -179,7 +179,6 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
                     style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
                     resizeMode="cover"
                     blur={shouldBlur ? 25 : undefined}
-                    cachePolicy={IMAGE_CACHE_POLICY}
                     fadeDuration={150}
                 />
             </Pressable>

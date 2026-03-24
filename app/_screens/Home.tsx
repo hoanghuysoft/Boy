@@ -4,8 +4,9 @@ import SettingsIcon from "@/icons/settings";
 import { useHomeViewModel } from "@/viewmodels/HomeViewModel";
 import FastImage from "@d11/react-native-fast-image";
 import {
+  AddCircleLineDuotone,
   BookmarkOpenedLineDuotone,
-  MagnifierLineDuotone,
+  MagnifierLineDuotone
 } from "@solar-icons/react-native";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -134,6 +135,9 @@ const HomeScreen = () => {
               />
               <TouchableOpacity onPress={vm.navigateToSearch}>
                 <MagnifierLineDuotone size={24} color={vm.iconColor} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={vm.navigateToCreate}>
+                <AddCircleLineDuotone size={26} color={vm.iconColor} />
               </TouchableOpacity>
               <TouchableOpacity onPress={vm.navigateToBookmarks}>
                 <BookmarkOpenedLineDuotone size={26} color={vm.iconColor} />

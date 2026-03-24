@@ -10,7 +10,6 @@ import { useStatusBar } from "@/context/StatusBarContext";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useCachedVideoUri } from "@/hooks/useCachedVideoUri";
 import { createCommonStyles } from "@/styles/common";
-import { BlurTargetView } from "expo-blur";
 import * as IntentLauncher from "expo-intent-launcher";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
@@ -39,7 +38,7 @@ interface VideoProgress {
 const VideoPlayer = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const videoUrl = params.videoUrl as string;
+  const videoUrl = ((params.videoUrl as string) ?? "").replace(/#/g, "%23");
   const name = params.name as string;
   const caption = params.caption as string;
   const portrait = params.portrait === "true";
@@ -223,7 +222,7 @@ const VideoPlayer = () => {
 
     return () => {
       setShowStatusBarFade(true);
-      ScreenOrientation.removeOrientationChangeListener(subscription);
+      subscription.remove();
     };
   }, []);
 
@@ -234,17 +233,15 @@ const VideoPlayer = () => {
         duration: 250,
         useNativeDriver: true,
       }),
-      Animated.spring(topBarTranslateY, {
+      Animated.timing(topBarTranslateY, {
         toValue: videoPressed ? 0 : -50,
+        duration: 250,
         useNativeDriver: true,
-        friction: 8,
-        tension: 80,
       }),
-      Animated.spring(bottomBarTranslateY, {
+      Animated.timing(bottomBarTranslateY, {
         toValue: videoPressed ? 0 : 50,
+        duration: 250,
         useNativeDriver: true,
-        friction: 8,
-        tension: 80,
       }),
     ]).start();
   }, [videoPressed]);
@@ -330,6 +327,9 @@ const VideoPlayer = () => {
           <LongPressSpeedZone
             onShowControls={handleVideoPress}
             setPlaybackRate={setPlaybackRate}
+            onDoubleTap={(direction) => 
+               direction === 'forward' ? moveForward() : moveBackward()
+            }
           />
         )}
 

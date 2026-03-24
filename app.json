@@ -38,6 +38,7 @@
     },
     "plugins": [
       "./withAndroidSvgFix",
+      "./withWaveformFix",
       "expo-router",
       [
         "expo-splash-screen",
@@ -178,11 +179,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "13168ed1-cd09-4dea-840b-86f37dbb087d"
+        "projectId": "dac8585b-45f2-4ae7-a3b5-adfc3b76af46"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/dac8585b-45f2-4ae7-a3b5-adfc3b76af46"
     }
   }
 }

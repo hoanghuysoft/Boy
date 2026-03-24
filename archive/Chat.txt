@@ -1,0 +1,234 @@
+import { FlexText } from "@/components/FlexText";
+import { Ionicons } from "@expo/vector-icons";
+import { BlurTargetView } from "expo-blur";
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import React, { useRef } from "react";
+import { Animated, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Pressable as GesturePressable, ScrollView as GestureScrollView } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useThemeContext } from "../../context/ThemeContext";
+import { createCommonStyles } from "../../styles/common";
+
+const withAlpha = (hex: string, alphaHex: string) => {
+  // Supports '#RRGGBB' and '#RRGGBBAA'. If not hex, fall back to original.
+  if (typeof hex !== "string") return hex as unknown as string;
+  if (hex.startsWith("#") && (hex.length === 7 || hex.length === 9)) {
+    return hex.slice(0, 7) + alphaHex;
+  }
+  return hex;
+};
+
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    }
+    : null;
+};
+
+const luminance = (hex: string): number | null => {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return null;
+  const [rs, gs, bs] = [rgb.r, rgb.g, rgb.b].map((c) => {
+    const sRGB = c / 255;
+    return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+};
+
+const clamp255 = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+
+const darkenHex = (hex: string, amount: number): string => {
+  // amount: 0..1, where 0 = unchanged, 1 = black
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const a = Math.max(0, Math.min(1, amount));
+  const r = clamp255(rgb.r * (1 - a));
+  const g = clamp255(rgb.g * (1 - a));
+  const b = clamp255(rgb.b * (1 - a));
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+};
+
+const PARALLAX_OFFSET = 80;
+
+const posters = [
+  {
+    imageUrl: "https://imagedelivery.net/JDM3uk-GdYDD2J1M4ILjUg/2a228e6f-8afd-441e-3ab3-bb21cc5a4b00/public",
+    title: "Boyfriend for a day",
+    year: "2026",
+  },
+  {
+    imageUrl: "https://imagedelivery.net/JDM3uk-GdYDD2J1M4ILjUg/6f9a4094-31ac-4497-0584-05905dba1f00/public",
+    title: "Another Show",
+    year: "2025",
+  },
+  {
+    imageUrl: "https://b2.traingon.top/file/traingon/MAGAZINE/Hormon8.jpg",
+    title: "Third Show",
+    year: "2024",
+  },
+  {
+    imageUrl: "https://cdn.traingon.top/Vietnam/Tiktoker/thumbBo.jpg",
+    title: "Bo Pờ Cafe",
+    year: "2023",
+  },
+  {
+    imageUrl: "https://is1-ssl.mzstatic.com/image/thumb/8tZXIVmGubplrBRmZfc_fw/2400x1350sr.webp",
+    title: "Bo Pờ Cafe",
+    year: "2022",
+  },
+];
+
+const ChatScreen = () => {
+  const { colors, typography } = useThemeContext();
+  const blurTargetRef = useRef<View | null>(null);
+  const common = createCommonStyles(colors, typography);
+  const { width } = useWindowDimensions();
+  const posterHeight = 600;
+  const episodes = [1, 2, 3, 4, 5];
+  const inset = useSafeAreaInsets();
+  const itemWidth = width - 32;
+  const headerScrollX = useRef(new Animated.Value(0)).current;
+
+  return (
+    <View style={[common.screen, { backgroundColor: "#000000" }]}>
+      <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={[{ gap: 12, paddingBottom: 24 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header poster carousel with parallax */}
+          <Animated.ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: headerScrollX } } }],
+              { useNativeDriver: true }
+            )}
+            style={{ height: posterHeight }}
+          >
+            {posters.map((poster, i) => {
+              const translateX = headerScrollX.interpolate({
+                inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+                outputRange: [PARALLAX_OFFSET, 0, -PARALLAX_OFFSET],
+                extrapolate: "clamp",
+              });
+              return (
+                <Pressable
+                  key={i}
+                  onPress={() => router.push("/show_detail")}
+                  style={{ width, height: posterHeight, overflow: "hidden" }}
+                >
+                  <Animated.View
+                    style={{
+                      width: width + PARALLAX_OFFSET * 2,
+                      height: posterHeight,
+                      marginLeft: -PARALLAX_OFFSET,
+                      transform: [{ translateX }],
+                    }}
+                  >
+                    <Image
+                      source={{ uri: poster.imageUrl }}
+                      style={{ width: "100%", height: "100%" }}
+                      contentFit="cover"
+                    />
+                  </Animated.View>
+                  <View
+                    pointerEvents="none"
+                    style={[styles.headerOverlay, { paddingBottom: 24 }]}
+                  >
+                    <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
+                      {poster.title}
+                    </FlexText>
+                    <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+                      <FlexText style={[styles.textStyle, { color: "white" }]}>{poster.year}</FlexText>
+                      <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }} />
+                      <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                      <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </Animated.ScrollView>
+          <View>
+            <Pressable onPress={() => { router.push("/show_list") }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
+                Discover all the shows on WeLove TV <Ionicons name='chevron-forward' size={20} color={'white'} />
+              </Text>
+            </Pressable>
+            <GestureScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={itemWidth + 12}
+              decelerationRate="fast"
+              disableIntervalMomentum
+              contentContainerStyle={{ paddingHorizontal: 16 }}
+            >
+              {posters.map((poster, index) => (
+                <GesturePressable key={index} onPress={() => { router.push("/show_detail") }} style={{ marginRight: 12 }}>
+                  <Image source={require("../../assets/images/oscar.png")} style={{ width: 200, height: 200, position: "absolute", bottom: 20, left: '50%', transform: [{ translateX: '-50%' }], zIndex: 1000 }} contentFit="contain" />
+                  <Image source={{ uri: poster.imageUrl }} style={{ width: itemWidth, height: itemWidth * 1.3, borderRadius: 16, borderWidth: 1, borderColor: "rgba(132,132,132,0.34)" }} contentFit="cover" />
+                </GesturePressable>
+              ))}
+            </GestureScrollView>
+          </View>
+          <View style={{ height: inset.bottom + 80 }} />
+        </ScrollView>
+      </BlurTargetView>
+      <View style={{ position: 'absolute', top: inset.top, left: 16, zIndex: 1000 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Image source={require("../../assets/images/logo_head.png")} style={{ width: 50, height: 50 }} contentFit="contain" />
+          <Text style={[styles.textStyle, { color: "white", fontSize: 42, fontWeight: "700" }]}>tv</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+export default ChatScreen;
+
+const styles = StyleSheet.create({
+  header: {
+    position: "relative",
+    overflow: "hidden",
+  },
+  headerOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 16,
+    right: 16,
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  episodeGrid: {
+    paddingLeft: 16,
+  },
+  episodeButton: {
+    flexBasis: "30%",
+    flexGrow: 1,
+    maxWidth: "32%",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  episodeText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  textStyle: {
+    fontSize: 14,
+  },
+});
+

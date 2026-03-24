@@ -100,38 +100,9 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
         height: animatedPosition.value,
     }));
 
-    // ─── Fade-in: hide video until first frame is ready ─────────
-    const videoOpacity = useRef(new Animated.Value(0)).current;
-    const hasLoaded = useRef(false);
-
-    useEffect(() => {
-        if (!isActive && !shouldPreload) {
-            hasLoaded.current = false;
-            videoOpacity.setValue(0);
-        }
-    }, [isActive, shouldPreload]);
-
-    useEffect(() => {
-        if (isActive && hasLoaded.current) {
-            videoOpacity.setValue(1);
-        }
-    }, [isActive]);
-
-    const handleInternalLoad = useCallback(() => {
-        if (!hasLoaded.current) {
-            hasLoaded.current = true;
-            Animated.timing(videoOpacity, {
-                toValue: 1,
-                duration: 150,
-                useNativeDriver: true,
-            }).start();
-        }
-    }, [videoOpacity]);
-
     const handleLoad = useCallback(() => {
-        handleInternalLoad();
         if (isActive) onVideoLoad();
-    }, [handleInternalLoad, isActive, onVideoLoad]);
+    }, [isActive, onVideoLoad]);
 
     const shouldRenderVideo = isFocused ? (isActive || shouldPreload) : isActive;
 
@@ -148,29 +119,29 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
                 )}
 
                 {shouldRenderVideo && (
-                    <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
-                        <Video
-                            ref={videoRef}
-                            source={{ uri: resolvedUri }}
-                            style={StyleSheet.absoluteFill}
-                            resizeMode="contain"
-                            controls={false}
-                            muted={isMuted}
-                            paused={!isActive || isPaused || !isFocused}
-                            repeat={true}
-                            onLoad={handleLoad}
-                            onProgress={isActive ? onVideoProgress : undefined}
-                            onBuffer={isActive ? onVideoBuffer : undefined}
-                            onEnd={isActive ? onVideoEnd : undefined}
-                            bufferConfig={{
+                    <Video
+                        ref={videoRef}
+                        source={{ 
+                            uri: resolvedUri,
+                            bufferConfig: {
                                 minBufferMs: 3000,
                                 maxBufferMs: 15000,
                                 bufferForPlaybackMs: 500,
                                 bufferForPlaybackAfterRebufferMs: 1500,
-                            }}
-                            pointerEvents="none"
-                        />
-                    </Animated.View>
+                            }
+                        }}
+                        style={StyleSheet.absoluteFill}
+                        resizeMode="contain"
+                        controls={false}
+                        muted={isMuted}
+                        paused={!isActive || isPaused || !isFocused}
+                        repeat={true}
+                        onLoad={handleLoad}
+                        onProgress={isActive ? onVideoProgress : undefined}
+                        onBuffer={isActive ? onVideoBuffer : undefined}
+                        onEnd={isActive ? onVideoEnd : undefined}
+                        pointerEvents="none"
+                    />
                 )}
             </Reanimated.View>
 

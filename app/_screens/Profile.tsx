@@ -29,11 +29,10 @@ import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { LikersSheet } from "@/components/post/LikersSheet";
 import { BriefInfoSheet } from "@/components/profile/sheets/BriefInfoSheet";
 import { RelationshipSheet } from "@/components/profile/sheets/RelationshipSheet";
-import { HeadphonesRoundSoundBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
-import TurboImage from "react-native-turbo-image";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { ProfileGalleryModal } from "../../components/gallery/ProfileGalleryModal";
+import { SpinningArtwork } from "../../components/profile/SpinningArtwork";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as any;
 
@@ -120,7 +119,7 @@ const ProfileContent = () => {
   const ListHeader = useMemo(() => (
     <ProfileHeader
       scrollY={vm.scrollY}
-      activeTab={vm.activeTab as any}
+      activeTab={vm.selectedTab as any}
       onTabChange={vm.stableTabChange}
       profile={vm.profile}
       isMe={vm.isMe}
@@ -138,7 +137,7 @@ const ProfileContent = () => {
       familySheetRef={vm.familySheetRef}
       briefSheetRef={vm.briefSheetRef}
     />
-  ), [vm.scrollY, vm.profile, vm.isMe, vm.workplaces, vm.music, vm.socialLinks, vm.addresses, vm.imageCount, vm.videoCount, vm.postCount, vm.stableTabChange, vm.activeTab]);
+  ), [vm.scrollY, vm.profile, vm.isMe, vm.workplaces, vm.music, vm.socialLinks, vm.addresses, vm.imageCount, vm.videoCount, vm.postCount, vm.stableTabChange, vm.selectedTab]);
 
   // Dynamic data based on tab
   const data = useMemo(() => {
@@ -149,14 +148,26 @@ const ProfileContent = () => {
     }
   }, [vm.activeTab, imageData, videoData, vm.feedPosts]);
 
-  // Dynamic numColumns based on tab
-  const numColumns = useMemo(() => {
+  // We extract the REAL column count for the active tab to chunk our data,
+  // but we will explicitly force FlashList to ALWAYS use numColumns=1.
+  // This completely stops FlashList from destroying and remounting the ListHeaderComponent (preventing the blink!)
+  const actualNumColumns = useMemo(() => {
     switch (vm.activeTab) {
       case "Images": return imageNumColumns;
       case "Videos": return videoNumColumns;
       default: return 1;
     }
   }, [vm.activeTab, imageNumColumns, videoNumColumns]);
+
+  // Manually chunk array into rows so the 1-column FlashList renders multi-column grids!
+  const chunkedData = useMemo(() => {
+    if (actualNumColumns === 1) return data;
+    const chunked = [];
+    for (let i = 0; i < data.length; i += actualNumColumns) {
+      chunked.push(data.slice(i, i + actualNumColumns));
+    }
+    return chunked;
+  }, [data, actualNumColumns]);
 
   // Dynamic estimatedItemSize based on tab
   const estimatedItemSize = useMemo(() => {
@@ -172,27 +183,42 @@ const ProfileContent = () => {
   const renderItem = useCallback(({ item, index }: { item: any; index: number }) => {
     switch (vm.activeTab) {
       case "Images":
-        return renderImageItem({ item, index, separators: {} as any });
-      case "Videos":
-        return renderVideoItem({ item, index, separators: {} as any });
+      case "Videos": {
+        const RenderFunc = vm.activeTab === "Images" ? renderImageItem : renderVideoItem;
+        return (
+          <View style={{ flexDirection: 'row', width: '100%' }}>
+            {item.map((subItem: any, subIndex: number) => (
+              <View key={subIndex} style={{ flex: 1 }}>
+                {RenderFunc({ item: subItem, index: index * actualNumColumns + subIndex, separators: {} as any })}
+              </View>
+            ))}
+            {/* Fill remaining flex space for incomplete rows so they don't stretch to fill the width */}
+            {Array.from({ length: actualNumColumns - item.length }).map((_, i) => (
+              <View key={`spacer-${i}`} style={{ flex: 1 }} />
+            ))}
+          </View>
+        );
+      }
       case "Feed":
         return <PostItem post={item as Post} key={item.id} onOptionsPress={vm.handlePostOptionsPress} onLikeCountPress={vm.handleLikeCountPress} onCommentPress={vm.handleCommentPress} />;
     }
-  }, [vm.activeTab, renderImageItem, renderVideoItem]);
+  }, [vm.activeTab, renderImageItem, renderVideoItem, actualNumColumns]);
 
   // Dynamic keyExtractor
   const keyExtractor = useCallback((item: any, index: number) => {
     switch (vm.activeTab) {
       case "Images":
-        return imageKeyExtractor(item, index);
       case "Videos":
-        return videoKeyExtractor(item, index);
+        // Item is a row array. We extract the key by using the first element's key.
+        const firstItem = item[0];
+        const Extractor = vm.activeTab === "Images" ? imageKeyExtractor : videoKeyExtractor;
+        return Extractor ? Extractor(firstItem, index * actualNumColumns) : String(index);
       case "Feed":
         return (item as Post).id || String(index);
       default:
         return String(index);
     }
-  }, [vm.activeTab, imageKeyExtractor, videoKeyExtractor]);
+  }, [vm.activeTab, imageKeyExtractor, videoKeyExtractor, actualNumColumns]);
 
   // Empty component
   const ListEmpty = useMemo(() => {
@@ -311,19 +337,19 @@ const ProfileContent = () => {
           <GalleryModal />
 
           <AnimatedFlashList
-            key={`flashlist-${numColumns}`}
+            key="flashlist-profile-view" // Static key prevents component destruction
             ref={vm.listRef}
-            data={data}
+            data={chunkedData}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
-            numColumns={numColumns}
+            numColumns={1} // Hardcoded to 1 to prevent dynamic mount flashes
+            estimatedItemSize={estimatedItemSize}
             contentContainerStyle={[
               { paddingBottom: vm.isMe ? 100 + vm.inset.bottom : vm.inset.bottom + 10 }
             ]}
             ListHeaderComponent={ListHeader}
             ListEmptyComponent={ListEmpty}
             onScroll={vm.onScroll}
-            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -336,7 +362,6 @@ const ProfileContent = () => {
                 progressViewOffset={vm.inset.top + 30}
               />
             }
-            estimatedItemSize={estimatedItemSize}
             onEndReached={vm.handleEndReached}
             onEndReachedThreshold={0.5}
           />
@@ -377,23 +402,17 @@ const ProfileContent = () => {
               >
                 <BlurView tint={vm.theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"} intensity={80} blurTarget={vm.blurTargetRef} blurMethod="dimezisBlurView" style={styles.blurWrapper}>
                   <View
-                    style={[StyleSheet.absoluteFill, { }]}
+                    style={[StyleSheet.absoluteFill, {}]}
                   />
 
                   <View style={styles.blurContent}>
-                    <View style={[styles.artworkContainer, { width: 32, height: 32 }]}>
-                      {!vm.hasMusic ? (
-                        <View style={[styles.placeholderIcon, { backgroundColor: vm.colors.card }]}>
-                          <HeadphonesRoundSoundBold size={18} color={vm.colors.text} />
-                        </View>
-                      ) : (
-                        <TurboImage
-                          source={{ uri: vm.currentTrack?.cover_url || '' }}
-                          style={styles.artworkImage}
-                          resizeMode="cover"
-                        />
-                      )}
-                    </View>
+                    <SpinningArtwork
+                      isMusicPlaying={vm.isMusicPlaying}
+                      hasMusic={vm.hasMusic}
+                      coverUrl={vm.currentTrack?.cover_url}
+                      onPress={vm.handleMusicPress}
+                      colors={vm.colors}
+                    />
 
                     <View style={styles.textContainer}>
                       <FlexText
@@ -532,6 +551,12 @@ const styles = StyleSheet.create({
   artworkContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  artworkPlaying: {
+    borderWidth: 2,
+    borderColor: '#7C3AED',
   },
   placeholderIcon: {
     width: '100%',

@@ -5,13 +5,13 @@ import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { ImageBackground, StatusBar, StyleSheet, View } from "react-native";
+import { easeGradient } from "react-native-easing-gradient";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
-import { easeGradient } from "react-native-easing-gradient";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -184,6 +184,18 @@ const RootContent = () => {
           <Stack.Screen
             name="hashtag-list"
             options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="show_detail"
+            options={{ headerShown: false, animation: "none" }}
+          />
+          <Stack.Screen
+            name="show_list"
+            options={{ headerShown: false, animation: "none" }}
+          />
+          <Stack.Screen
+            name="create"
+            options={{ headerShown: false, animation: "none" }}
           />
         </Stack>
         <GlobalAudioPlayer />
