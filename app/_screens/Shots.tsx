@@ -96,9 +96,13 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
     // When the sheet is dismissed it returns to ~SCREEN_HEIGHT (full video).
     // When the sheet is open at detent 0.5 it is SCREEN_HEIGHT * 0.5.
     const { animatedPosition } = useReanimatedTrueSheet();
-    const videoAreaStyle = useAnimatedStyle(() => ({
-        height: animatedPosition.value,
-    }));
+    const videoAreaStyle = useAnimatedStyle(() => {
+        // Limit the video shrink to the initial comment sheet size (detent 0.6 -> top edge at 0.4)
+        const minHeight = SCREEN_HEIGHT * 0.4;
+        return {
+            height: Math.max(animatedPosition.value, minHeight),
+        };
+    });
 
     const handleLoad = useCallback(() => {
         if (isActive) onVideoLoad();
@@ -277,7 +281,7 @@ const ShotsInner = () => {
     const keyExtractor = useCallback((item: VideoItem) => item.id, []);
 
     // ─── Shared top header ──────────────────────────────────────
-    const topHeader = (
+    const topHeader = !vm.isCommentsOpen && (
         <View style={[styles.topHeader, { paddingTop: insets.top + 8 }]}>
             <TouchableOpacity
                 style={styles.headerTab}
@@ -340,6 +344,7 @@ const ShotsInner = () => {
                 renderItem={renderItem}
                 keyExtractor={keyExtractor}
                 pagingEnabled
+                scrollEnabled={!vm.isCommentsOpen}
                 showsVerticalScrollIndicator={false}
                 snapToInterval={SCREEN_HEIGHT}
                 snapToAlignment="start"

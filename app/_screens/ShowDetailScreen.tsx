@@ -1,5 +1,6 @@
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
+import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { useVideoDetailQuery } from "@/services/shows";
 import { useGalleryStore } from "@/stores/gallery";
@@ -99,6 +100,12 @@ const ChatScreen = () => {
     () => (detail?.extra_images ?? []).map((uri) => ({ uri, caption: detail?.title })),
     [detail?.extra_images, detail?.title],
   );
+
+  useEffect(() => {
+    const uris = detail?.extra_images;
+    if (!uris || uris.length === 0) return;
+    TurboImage.prefetch(uris.map((uri) => ({ uri })));
+  }, [detail?.extra_images]);
 
   const renderGalleryItem = useCallback(
     ({ item, index }: { item: string; index: number }) => (
@@ -267,20 +274,26 @@ const ChatScreen = () => {
             />
           }
         >
-          {isVideoDetailLoading && !isVideoDetailError && (
-            <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.08)" }}>
-              <Text style={{ color: "white", fontWeight: "700" }}>Loading video...</Text>
+          {isVideoDetailLoading && !isVideoDetailError ? (
+            <View style={{ gap: 16 }}>
+               <ShimmerEffect style={{ height: posterHeight, width: '100%' }} />
+               <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
+                 <ShimmerEffect style={{ height: 32, width: '60%', borderRadius: 8, alignSelf: 'center' }} />
+                 <ShimmerEffect style={{ height: 16, width: '100%', borderRadius: 8 }} />
+                 <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 8 }} />
+                 <ShimmerEffect style={{ height: 120, width: '100%', borderRadius: 12, marginTop: 24 }} />
+               </View>
             </View>
-          )}
-          {isVideoDetailError && (
-            <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, backgroundColor: "rgba(255,0,0,0.12)" }}>
-              <Text style={{ color: "white", fontWeight: "700" }}>Failed to load video.</Text>
+          ) : isVideoDetailError ? (
+            <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, backgroundColor: "rgba(255,0,0,0.12)", marginTop: posterHeight * 0.5 }}>
+              <Text style={{ color: "white", fontWeight: "700", textAlign: "center" }}>Failed to load video.</Text>
             </View>
-          )}
-          {/* Header poster (scrolls away) */}
-          <View style={[styles.header, { height: posterHeight }]}>
-            <Canvas style={{ height: posterHeight }}>
-              <BlurMask
+          ) : (
+            <>
+              {/* Header poster (scrolls away) */}
+              <View style={[styles.header, { height: posterHeight }]}>
+                <Canvas style={{ height: posterHeight }}>
+                  <BlurMask
                 mask={
                   <LinearGradient
                     start={vec(0, posterHeight * 0.5)}
@@ -430,9 +443,11 @@ const ChatScreen = () => {
               renderItem={renderRelatedVideo}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 16 }}
-            />
-          </View>
-          <View style={{ height: inset.bottom }} />
+              />
+            </View>
+            <View style={{ height: inset.bottom }} />
+          </>
+        )}
         </ScrollView>
       </BlurTargetView>
       <View

@@ -6,24 +6,11 @@ import { Profile } from "@/types/profile";
 import { useRouter } from "expo-router";
 import { debounce, flatMap } from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Keyboard, Platform, TextInput } from "react-native";
-import {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-} from "react-native-reanimated";
+import { Keyboard, TextInput } from "react-native";
+import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
+import { useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import TurboImage from "react-native-turbo-image";
-
-// Native spring config for smoother keyboard animations
-const KEYBOARD_SPRING_CONFIG = {
-    damping: 20,
-    stiffness: 200,
-    mass: 0.8,
-    overshootClamping: false,
-    restDisplacementThreshold: 0.01,
-    restSpeedThreshold: 0.01,
-};
 
 // Bottom navigation layout constants
 const SEARCH_BAR_HEIGHT = 56;
@@ -119,38 +106,26 @@ export const useSearchViewModel = () => {
     }, []);
 
     // ─── Keyboard Animation ───────────────────────────────────────
-    const searchBarTranslateY = useSharedValue(0);
+    // useReanimatedKeyboardAnimation runs entirely on the UI thread —
+    // the bar tracks the keyboard frame-by-frame with no JS involvement.
+    // height: SharedValue<number> — 0 (hidden) → -keyboardHeight (fully open)
+    // progress: SharedValue<number> — 0 → 1
+    const { height: keyboardHeight, progress: keyboardProgress } = useReanimatedKeyboardAnimation();
 
     const baseSearchBarBottom = insets.bottom + 16;
     const contentBottomPadding = baseSearchBarBottom + SEARCH_BAR_HEIGHT + 16;
 
-    useEffect(() => {
-        const showEvent =
-            Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-        const hideEvent =
-            Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-        const showSubscription = Keyboard.addListener(showEvent, (e) => {
-            const keyboardHeight = e.endCoordinates.height;
-            const bottomNavSpace = insets.bottom;
-            const offset = keyboardHeight - bottomNavSpace + 8;
-            searchBarTranslateY.value = withSpring(-offset, KEYBOARD_SPRING_CONFIG);
-        });
-
-        const hideSubscription = Keyboard.addListener(hideEvent, () => {
-            searchBarTranslateY.value = withSpring(0, KEYBOARD_SPRING_CONFIG);
-        });
-
-        return () => {
-            showSubscription.remove();
-            hideSubscription.remove();
-        };
-    }, []);
-
+    // Derive translateY from the two shared values so the formula is correct
+    // at both endpoints without knowing the keyboard height ahead of time:
+    //   progress = 0, height = 0       → translateY = 0            (resting)
+    //   progress = 1, height = -H      → translateY = -(H - insets.bottom + 8) (raised)
+    const bottomInset = insets.bottom;
     const animatedSearchBarStyle = useAnimatedStyle(() => {
         "worklet";
         return {
-            transform: [{ translateY: searchBarTranslateY.value }],
+            transform: [{
+                translateY: keyboardHeight.value + keyboardProgress.value * (bottomInset - 8),
+            }],
         };
     });
 

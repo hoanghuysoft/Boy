@@ -43,13 +43,14 @@ interface CommentItemProps {
     formatTimeAgo: (dateString: string) => string;
     editLabel: string;
     deleteLabel: string;
+    isDeleting?: boolean;
 }
 
 // ============================================================================
 // CommentItem Component
 // ============================================================================
 
-const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDelete, onEdit, formatTimeAgo, editLabel, deleteLabel }: CommentItemProps) => (
+const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDelete, onEdit, formatTimeAgo, editLabel, deleteLabel, isDeleting }: CommentItemProps) => (
     <View style={styles.commentItem}>
         {/* Avatar */}
         <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
@@ -98,12 +99,17 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                         <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</FlexText>
                         <TouchableOpacity
                             onPress={onDelete}
+                            disabled={isDeleting}
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            style={styles.actionButton}
+                            style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
                         >
-                            <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
-                                {deleteLabel}
-                            </FlexText>
+                            {isDeleting ? (
+                                <ActivityIndicator size="small" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
+                            ) : (
+                                <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
+                                    {deleteLabel}
+                                </FlexText>
+                            )}
                         </TouchableOpacity>
                     </>
                 )}
@@ -137,8 +143,9 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 formatTimeAgo={vm.formatTimeAgo}
                 editLabel={t('post.commentsSheet.actionEdit')}
                 deleteLabel={t('post.commentsSheet.actionDelete')}
+                isDeleting={vm.deletingId === item.id}
             />
-        ), [vm.colors, vm.common, vm.theme, vm.currentProfileId, vm.handleUserPress, vm.handleDeleteComment, vm.handleEditComment, vm.formatTimeAgo, t]);
+        ), [vm.colors, vm.common, vm.theme, vm.currentProfileId, vm.handleUserPress, vm.handleDeleteComment, vm.handleEditComment, vm.formatTimeAgo, t, vm.deletingId]);
 
         const renderListFooter = useCallback(() => {
             if (vm.isFetchingNextPage) {

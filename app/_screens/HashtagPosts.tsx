@@ -6,7 +6,10 @@ import { Post } from '@/types/post';
 import { useHashtagPostsViewModel } from '@/viewmodels/HashtagPostsViewModel';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
+import { TrueSheet } from '@lodev09/react-native-true-sheet';
+import { LikersSheet } from '@/components/post/LikersSheet';
+import { CommentsSheet } from '@/components/post/CommentsSheet';
 import {
     ActivityIndicator,
     FlatList,
@@ -25,13 +28,32 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
     const common = createCommonStyles(colors, typography);
     const vm = useHashtagPostsViewModel(tag);
 
+    const likersSheetRef = useRef<TrueSheet>(null);
+    const commentsSheetRef = useRef<TrueSheet>(null);
+    const [selectedLikePostId, setSelectedLikePostId] = useState<string | null>(null);
+    const [selectedCommentPostId, setSelectedCommentPostId] = useState<string | null>(null);
+
+    const handleLikeCountPress = useCallback((post: Post) => {
+        setSelectedLikePostId(post.id);
+        likersSheetRef.current?.present();
+    }, []);
+
+    const handleCommentPress = useCallback((post: Post) => {
+        setSelectedCommentPostId(post.id);
+        commentsSheetRef.current?.present();
+    }, []);
+
     const renderItem = useCallback(
         ({ item }: { item: Post }) => (
             <View style={{ marginBottom: 30 }}>
-                <PostItem post={item} />
+                <PostItem 
+                    post={item}
+                    onLikeCountPress={handleLikeCountPress}
+                    onCommentPress={handleCommentPress}
+                />
             </View>
         ),
-        []
+        [handleLikeCountPress, handleCommentPress]
     );
 
     const renderFooter = useCallback(() => {
@@ -160,6 +182,12 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                 contentContainerStyle={
                     vm.posts.length === 0 ? styles.emptyContainer : undefined
                 }
+            />
+
+            <LikersSheet ref={likersSheetRef} postId={selectedLikePostId} />
+            <CommentsSheet
+                ref={commentsSheetRef}
+                postId={selectedCommentPostId}
             />
         </View>
     );

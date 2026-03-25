@@ -146,8 +146,6 @@ const VideoPlayer = () => {
 
   const handleClose = useCallback(() => {
     router.back();
-    ScreenOrientation.unlockAsync();
-    SystemNavigationBar.fullScreen(false);
   }, [router]);
 
   const openExternalLink = async () => {
@@ -207,7 +205,11 @@ const VideoPlayer = () => {
         ? ScreenOrientation.OrientationLock.PORTRAIT
         : ScreenOrientation.OrientationLock.LANDSCAPE,
     );
-    SystemNavigationBar.fullScreen(true);
+    if (Platform.OS === 'android') {
+      SystemNavigationBar.stickyImmersive();
+    } else {
+      SystemNavigationBar.fullScreen(true);
+    }
     setShowStatusBarFade(false);
 
     const subscription = ScreenOrientation.addOrientationChangeListener(
@@ -223,6 +225,8 @@ const VideoPlayer = () => {
     return () => {
       setShowStatusBarFade(true);
       subscription.remove();
+      ScreenOrientation.unlockAsync();
+      SystemNavigationBar.fullScreen(false);
     };
   }, []);
 

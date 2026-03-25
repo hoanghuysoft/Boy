@@ -9,6 +9,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next";
 import { Dimensions, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import FastImage from "@d11/react-native-fast-image";
+import TurboImage from "react-native-turbo-image";
 import { DataProvider, LayoutProvider, RecyclerListView } from "recyclerlistview";
 import { PostItem } from "../../../components/PostItem";
 import { ShimmerEffect } from "../../../components/shimmer/Shimmer";
@@ -19,6 +21,9 @@ import { useSettingsStore } from "../../../stores/settings";
 import { createCommonStyles } from "../../../styles/common";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+// How many posts ahead to prefetch images for
+const PREFETCH_AHEAD = 3;
 
 // View types for RecyclerListView
 const ViewTypes = {
@@ -126,7 +131,27 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
     // Handle visible indices change from RecyclerListView
     const handleVisibleIndicesChanged = useCallback((all: number[]) => {
-        // Skip if autoplay is disabled
+        // Prefetch images for posts just beyond the visible window.
+        // Route each URL to the cache of the component that will render it:
+        // avatars + photo media → TurboImage.prefetch
+        // video thumbnails      → FastImage.preload
+        if (all.length > 0) {
+            const maxVisible = Math.max(...all);
+            const aheadPosts = posts.slice(maxVisible + 1, maxVisible + 1 + PREFETCH_AHEAD);
+            const turboUrls: Array<{ uri: string }> = [];
+            const fastUrls: Array<{ uri: string }> = [];
+            for (const p of aheadPosts) {
+                if (p.profile_avatar) turboUrls.push({ uri: p.profile_avatar });
+                for (const m of p.media ?? []) {
+                    if (m.type === 'video' && m.thumbnail_url) fastUrls.push({ uri: m.thumbnail_url });
+                    else if (m.type === 'photo' && m.url) turboUrls.push({ uri: m.url });
+                }
+            }
+            if (turboUrls.length > 0) TurboImage.prefetch(turboUrls);
+            if (fastUrls.length > 0) FastImage.preload(fastUrls);
+        }
+
+        // Skip video autoplay if disabled
         if (!autoplayVideos) {
             clearActiveVideo();
             return;
@@ -148,7 +173,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 clearActiveVideo();
             }
         }, 500);
-    }, [autoplayVideos, findTopmostVideoPost, setActiveVideo, clearActiveVideo, stopAudioPlayback]);
+    }, [posts, autoplayVideos, findTopmostVideoPost, setActiveVideo, clearActiveVideo, stopAudioPlayback]);
 
     const handleRefresh = async () => {
         queryClient.removeQueries({ queryKey: ['feed', feedType] });

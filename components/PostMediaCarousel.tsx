@@ -316,18 +316,22 @@ export const PostMediaCarousel = ({ media, postId, profileName, content, colors,
     const mediaHeight = SCREEN_WIDTH / ASPECT_RATIO;
     const placeholderImageVideo = 'https://placehold.net/3-600x800.png';
 
-    // Prefetch all carousel images for smoother scrolling using TurboImage
+    // Prefetch carousel images — route each URL to the cache of the component that will render it:
+    // video thumbnails → FastImage.preload (rendered by FastImage in VideoCarouselItem)
+    // photo URLs       → TurboImage.prefetch (rendered by TurboImage in PhotoCarouselItem)
     useEffect(() => {
-        if (media && media.length > 0) {
-            const imagesToPrefetch = media
-                .map(m => m.type === 'video' ? m.thumbnail_url : m.url)
-                .filter(Boolean)
-                .map(uri => ({ uri: uri as string }));
+        if (!media || media.length === 0) return;
 
-            if (imagesToPrefetch.length > 0) {
-                TurboImage.prefetch(imagesToPrefetch);
-            }
-        }
+        const videoThumbnails = media
+            .filter(m => m.type === 'video' && m.thumbnail_url)
+            .map(m => ({ uri: m.thumbnail_url as string }));
+
+        const photoUrls = media
+            .filter(m => m.type === 'photo' && m.url)
+            .map(m => ({ uri: m.url }));
+
+        if (videoThumbnails.length > 0) FastImage.preload(videoThumbnails);
+        if (photoUrls.length > 0) TurboImage.prefetch(photoUrls);
     }, [media]);
 
     // Memoized keyExtractor

@@ -1,4 +1,5 @@
 import { FlexText } from "@/components/FlexText";
+import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { useCategoryInfiniteQuery } from "@/services/shows/category";
 import { useTagInfiniteQuery } from "@/services/shows/tag";
 import type { VideoCard } from "@/types/shows";
@@ -109,8 +110,16 @@ const ShowListScreen = () => {
   const ListFooterComponent = useCallback(() => {
     if (isLoading) {
       return (
-        <View style={{ paddingVertical: 32, alignItems: "center" }}>
-          <ActivityIndicator color={colors.text} />
+        <View style={{ gap: 12, paddingHorizontal: 16, paddingTop: 16 }}>
+          {[1, 2, 3, 4, 5].map((key) => (
+            <View key={key} style={[styles.row, { padding: 0 }]}>
+              <ShimmerEffect style={styles.thumbnail} />
+              <View style={{ flex: 1, gap: 8 }}>
+                <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 4 }} />
+                <ShimmerEffect style={{ height: 12, width: '60%', borderRadius: 4 }} />
+              </View>
+            </View>
+          ))}
         </View>
       );
     }
@@ -176,7 +185,6 @@ const ShowListScreen = () => {
         contentContainerStyle={{
           paddingHorizontal: 8,
           paddingBottom: inset.bottom + 24,
-          gap: 12,
         }}
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
@@ -202,6 +210,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     gap: 12,
+    marginBottom: 12,
   },
   thumbnail: {
     width: 150,

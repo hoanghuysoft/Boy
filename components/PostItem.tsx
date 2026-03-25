@@ -50,6 +50,7 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                     <TurboImage
                         source={{ uri: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
                         style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: vm.colors.divider }}
+                        cachePolicy={IMAGE_CACHE_POLICY}
                         fadeDuration={100}
                         format={post.profile_avatar?.endsWith('.gif') ? 'gif' : undefined}
                     />
@@ -222,17 +223,21 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                 // Bookmarks screen: read-only stats, no bookmark button
                 <View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 20 }]}>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                        {vm.isLiked ? (
-                            <LikeSolidIcon size={24} color={vm.colors.text} />
-                        ) : (
-                            <LikeIcon size={24} color={vm.colors.text} />
-                        )}
-                        <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
+                        <TouchableOpacity hitSlop={10} onPress={vm.handleLikePress}>
+                            {vm.isLiked ? (
+                                <LikeSolidIcon size={24} color={vm.colors.text} />
+                            ) : (
+                                <LikeIcon size={24} color={vm.colors.text} />
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
+                            <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
+                        </TouchableOpacity>
                     </View>
-                    <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                    <TouchableOpacity hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <CommentIcon size={24} color={vm.colors.text} />
                         <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</FlexText>
-                    </View>
+                    </TouchableOpacity>
                     <TouchableOpacity hitSlop={10} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
                             <BookmarkSolidIcon size={24} color={vm.colors.text} />

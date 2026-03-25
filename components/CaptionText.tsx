@@ -12,7 +12,7 @@ interface CaptionTextProps {
 
 // Simple text parsing for hashtags, mentions, and links
 const parseCaption = (text: string) => {
-  const regex = /(#\w+|@\w+|https?:\/\/[^\s]+)/g;
+  const regex = /(#[\p{L}\p{N}_]+|@[\p{L}\p{N}_]+|https?:\/\/[^\s]+)/gu;
   const parts: { type: 'text' | 'tag' | 'mention' | 'link'; text: string }[] = [];
   let lastIndex = 0;
   let match;
@@ -49,7 +49,8 @@ const CaptionText = ({ caption, colors, common, maxLines = 3 }: CaptionTextProps
   const router = useRouter();
 
   const CHARACTER_THRESHOLD = 150;
-  const needsReadMore = caption.length > CHARACTER_THRESHOLD;
+  // Add a 20 character buffer so we don't show "Read more" to reveal just 1 or 2 extra characters
+  const needsReadMore = caption.length > CHARACTER_THRESHOLD + 20;
   const parsedParts = parseCaption(caption);
 
   const handlePartPress = useCallback((part: { type: string; text: string }) => {
@@ -78,7 +79,7 @@ const CaptionText = ({ caption, colors, common, maxLines = 3 }: CaptionTextProps
 
   const renderTruncatedText = () => {
     if (!expanded && needsReadMore) {
-      const truncatedCaption = caption.slice(0, CHARACTER_THRESHOLD) + '...';
+      const truncatedCaption = caption.slice(0, CHARACTER_THRESHOLD);
       return renderParts(parseCaption(truncatedCaption));
     }
     return renderParts(parsedParts);
@@ -90,13 +91,13 @@ const CaptionText = ({ caption, colors, common, maxLines = 3 }: CaptionTextProps
         style={[common.body, { color: colors.text, marginTop: 10, marginBottom: 10, fontSize: 14 }]}
       >
         {renderTruncatedText()}
-        {needsReadMore && (
+        {!expanded && needsReadMore && (
           <FlexText
-            onPress={() => setExpanded(!expanded)}
+            onPress={() => setExpanded(true)}
             style={{ color: colors.verify, fontWeight: '600' }}
             suppressHighlighting={true}
           >
-            {expanded ? ' Read less' : ' Read more'}
+            {' ...Read more'}
           </FlexText>
         )}
       </FlexText>

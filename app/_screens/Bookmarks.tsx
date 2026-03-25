@@ -3,7 +3,8 @@ import { useBookmarks } from "@/services/bookmark";
 import { BookmarkedPost } from "@/types/bookmarkedpost";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import {
     ActivityIndicator,
     FlatList,
@@ -17,6 +18,9 @@ import { FlexText } from "../../components/FlexText";
 import { PostItem } from "../../components/PostItem";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
+import { CommentsSheet } from "../../components/post/CommentsSheet";
+import { LikersSheet } from "../../components/post/LikersSheet";
+import { Post } from "../../types/post";
 
 const BookmarksScreen = () => {
     const router = useRouter();
@@ -40,6 +44,21 @@ const BookmarksScreen = () => {
         return data.pages.flatMap((page) => page.data);
     }, [data?.pages]);
 
+    const likersSheetRef = useRef<TrueSheet>(null);
+    const commentsSheetRef = useRef<TrueSheet>(null);
+    const [selectedLikePostId, setSelectedLikePostId] = useState<string | null>(null);
+    const [selectedCommentPostId, setSelectedCommentPostId] = useState<string | null>(null);
+
+    const handleLikeCountPress = useCallback((post: Post) => {
+        setSelectedLikePostId(post.id);
+        likersSheetRef.current?.present();
+    }, []);
+
+    const handleCommentPress = useCallback((post: Post) => {
+        setSelectedCommentPostId(post.id);
+        commentsSheetRef.current?.present();
+    }, []);
+
     const handleEndReached = useCallback(() => {
         if (hasNextPage && !isFetchingNextPage) {
             fetchNextPage();
@@ -49,10 +68,15 @@ const BookmarksScreen = () => {
     const renderItem = useCallback(
         ({ item }: { item: BookmarkedPost }) => (
             <View style={{ marginBottom: 30 }}>
-                <PostItem post={item} isBookmarked={true} />
+                <PostItem 
+                    post={item} 
+                    isBookmarked={true}
+                    onLikeCountPress={handleLikeCountPress}
+                    onCommentPress={handleCommentPress}
+                />
             </View>
         ),
-        []
+        [handleLikeCountPress, handleCommentPress]
     );
 
     const renderFooter = useCallback(() => {
@@ -149,6 +173,12 @@ const BookmarksScreen = () => {
                 contentContainerStyle={
                     posts.length === 0 ? styles.emptyContainer : undefined
                 }
+            />
+
+            <LikersSheet ref={likersSheetRef} postId={selectedLikePostId} />
+            <CommentsSheet
+                ref={commentsSheetRef}
+                postId={selectedCommentPostId}
             />
         </View>
     );

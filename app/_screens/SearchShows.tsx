@@ -1,4 +1,5 @@
 import { FlexText } from "@/components/FlexText";
+import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { useCategoriesQuery } from "@/services/shows";
 import { useSearchInfiniteQuery } from "@/services/shows/search";
 import type { Category, VideoCard } from "@/types/shows";
@@ -273,7 +274,24 @@ const SearchShowsScreen = () => {
         keyExtractor={(item) => item.video_url}
         renderItem={renderItem}
         ListHeaderComponent={ListHeaderComponent}
-        ListEmptyComponent={null}
+        ListEmptyComponent={() => {
+          if (isLoading && submittedQuery) {
+            return (
+              <View style={{ padding: 16, gap: 12 }}>
+                {[1, 2, 3, 4, 5].map((key) => (
+                  <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
+                    <ShimmerEffect style={styles.thumbnail} />
+                    <View style={{ flex: 1, gap: 8 }}>
+                      <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 4 }} />
+                      <ShimmerEffect style={{ height: 12, width: '60%', borderRadius: 4 }} />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            );
+          }
+          return null;
+        }}
         ListFooterComponent={ListFooterComponent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -324,12 +342,6 @@ const SearchShowsScreen = () => {
             </TouchableOpacity>
           )}
         </View>
-
-        {isLoading && submittedQuery && (
-          <View style={{ marginTop: 8 }}>
-            <ActivityIndicator />
-          </View>
-        )}
 
         {isError && submittedQuery && (
           <View style={{ marginTop: 8 }}>

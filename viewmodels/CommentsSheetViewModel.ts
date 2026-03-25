@@ -22,6 +22,8 @@ export const useCommentsSheetViewModel = (
 
     const [commentText, setCommentText] = useState("");
     const [editingComment, setEditingComment] = useState<Comment | null>(null);
+    const [isLocalSubmitting, setIsLocalSubmitting] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const { data: myProfile } = useProfile('me', true);
     const currentProfileId = myProfile?.id || null;
 
@@ -73,22 +75,29 @@ export const useCommentsSheetViewModel = (
 
     const handleSubmitComment = useCallback(() => {
         const trimmed = commentText.trim();
-        if (!trimmed || !postId) return;
+        if (!trimmed || !postId || isLocalSubmitting || createCommentMutation.isPending) return;
 
+        setIsLocalSubmitting(true);
         createCommentMutation.mutate(
             { content: trimmed },
             {
                 onSuccess: () => {
                     setCommentText("");
                     Keyboard.dismiss();
+                    setIsLocalSubmitting(false);
                 },
+                onError: () => {
+                    setIsLocalSubmitting(false);
+                }
             }
         );
-    }, [commentText, postId, createCommentMutation]);
+    }, [commentText, postId, createCommentMutation, isLocalSubmitting]);
 
-    const isSubmitting = createCommentMutation.isPending;
+    const isSubmitting = createCommentMutation.isPending || isLocalSubmitting;
 
     const handleDeleteComment = useCallback((comment: Comment) => {
+        if (deletingId === comment.id || deleteCommentMutation.isPending) return;
+        
         Alert.alert(
             'Delete Comment',
             'Are you sure you want to delete this comment?',
@@ -98,12 +107,17 @@ export const useCommentsSheetViewModel = (
                     text: 'Delete',
                     style: 'destructive',
                     onPress: () => {
-                        deleteCommentMutation.mutate(comment.id);
+                        setDeletingId(comment.id);
+                        deleteCommentMutation.mutate(comment.id, {
+                            onSettled: () => {
+                                setDeletingId(null);
+                            }
+                        });
                     },
                 },
             ]
         );
-    }, [deleteCommentMutation]);
+    }, [deleteCommentMutation, deletingId]);
 
     // Start editing a comment — pre-fill the input with its current content
     const handleEditComment = useCallback((comment: Comment) => {
@@ -165,6 +179,7 @@ export const useCommentsSheetViewModel = (
         editingComment,
         isEditing,
         isSaving,
+        deletingId,
 
         // Handlers
         handleEndReached,
