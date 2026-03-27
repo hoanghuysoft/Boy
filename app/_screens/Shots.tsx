@@ -346,10 +346,8 @@ const ShotsInner = () => {
                 pagingEnabled
                 scrollEnabled={!vm.isCommentsOpen}
                 showsVerticalScrollIndicator={false}
-                snapToInterval={SCREEN_HEIGHT}
-                snapToAlignment="start"
-                decelerationRate="fast"
-                disableIntervalMomentum
+                bounces={false}
+                overScrollMode="never"
                 onViewableItemsChanged={vm.onViewableItemsChanged}
                 viewabilityConfig={vm.viewabilityConfig}
                 onEndReached={() => vm.loadMore()}

@@ -57,6 +57,7 @@ export const useShotsViewModel = () => {
     const [isBuffering, setIsBuffering] = useState(false);
 
     const [readyIndices, setReadyIndices] = useState<Set<number>>(new Set());
+    const readyIndicesRef = useRef<Set<number>>(new Set());
 
     // ─── Pre-buffer Strategy ────────────────────────────────────
     const preloadIndicesRef = useRef<number[]>([0]);
@@ -154,6 +155,7 @@ export const useShotsViewModel = () => {
         if (feedType !== type) {
             setFeedType(type);
             setActiveIndex(0);
+            readyIndicesRef.current = new Set();
             setReadyIndices(new Set());
             setLikeMap(new Map());
             setIsPaused(false);
@@ -175,16 +177,17 @@ export const useShotsViewModel = () => {
             const newIndex = viewableItems[0].index ?? 0;
             setActiveIndex(newIndex);
             setIsPaused(false);
-            setIsBuffering(true);
+            // Skip the buffering flash if the video was already preloaded and ready
+            setIsBuffering(!readyIndicesRef.current.has(newIndex));
         }
     }).current;
 
     const viewabilityConfig = useRef({
-        itemVisiblePercentThreshold: 80,
-        minimumViewTime: 100,
+        itemVisiblePercentThreshold: 50,
     }).current;
 
     const markReady = useCallback((index: number) => {
+        readyIndicesRef.current.add(index);
         setReadyIndices(prev => {
             const next = new Set(prev);
             next.add(index);
@@ -237,6 +240,7 @@ export const useShotsViewModel = () => {
             listRef.current?.scrollToOffset({ offset: 0, animated: true });
             queryClient.removeQueries({ queryKey: ["videoFeed", feedType], exact: false });
             setActiveIndex(0);
+            readyIndicesRef.current = new Set();
             setReadyIndices(new Set());
             setLikeMap(new Map());
             setIsPaused(false);
