@@ -22,6 +22,8 @@ export const videoPlayerStyles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
     },
     largeButton: {
         width: 64,
@@ -30,6 +32,8 @@ export const videoPlayerStyles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
     },
     extraLargeButton: {
         width: 85,
@@ -38,6 +42,8 @@ export const videoPlayerStyles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
     },
     speedIndicator: {
         position: 'absolute',

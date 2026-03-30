@@ -76,11 +76,25 @@ const VideoPlayer = () => {
   const topBarTranslateY = useRef(new Animated.Value(-50)).current;
   const bottomBarTranslateY = useRef(new Animated.Value(50)).current;
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track videoPressed in a ref so callbacks always see the latest value
+  const videoPressedRef = useRef(false);
+  // Prevent rapid consecutive taps from toggling controls back immediately
+  const lastControlsToggleRef = useRef<number>(0);
 
   // Handlers
-  const handleVideoPress = () => {
-    setVideoPressed(!videoPressed);
-  };
+  const handleVideoPress = useCallback(() => {
+    // Debounce: ignore taps within 300ms of the last toggle to prevent
+    // rapid show/hide from interfering with double-tap detection
+    const now = Date.now();
+    if (now - lastControlsToggleRef.current < 300) return;
+    lastControlsToggleRef.current = now;
+
+    setVideoPressed((prev) => {
+      const next = !prev;
+      videoPressedRef.current = next;
+      return next;
+    });
+  }, []);
 
   const moveBackward = () => {
     try {
@@ -259,6 +273,7 @@ const VideoPlayer = () => {
 
     if (videoPressed && !isPaused) {
       hideTimeoutRef.current = setTimeout(() => {
+        videoPressedRef.current = false;
         setVideoPressed(false);
       }, 5000);
     }

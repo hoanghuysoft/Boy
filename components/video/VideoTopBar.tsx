@@ -1,4 +1,3 @@
-import { MaterialIcons } from "@expo/vector-icons";
 import { XmarkSolid } from "@lineiconshq/free-icons";
 import Lineicons from "@lineiconshq/react-native-lineicons";
 import { MutedBold, Pip2Bold, VolumeLoudBold } from "@solar-icons/react-native";
@@ -56,9 +55,9 @@ export const VideoTopBar: React.FC<VideoTopBarProps> = ({
         </TouchableOpacity>
       </View>
       <View style={[commonRowStyle, { gap: 12 }]} pointerEvents="box-none">
-        <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onOpenExternal}>
+        {/* <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onOpenExternal}>
           <MaterialIcons name="open-in-new" size={20} color={"white"} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onMuteToggle}>
           {isMute ? (
             <MutedBold size={20} color={"white"} />
@@ -79,5 +78,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
 });

@@ -81,11 +81,11 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
             <FlexText
               style={{
                 marginBottom: 8,
-                fontSize: 28,
+                fontSize: isLandscape ? 16 : 28,
                 fontWeight: "bold",
                 color: "white",
               }}
-              numberOfLines={2}
+              numberOfLines={1}
               ellipsizeMode="tail"
             >
               {caption}
@@ -144,5 +144,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
 });

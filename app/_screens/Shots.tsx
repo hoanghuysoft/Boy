@@ -13,20 +13,19 @@ import { FlashList } from "@shopify/flash-list";
 import {
     ChatRoundLikeBold,
     HeartBold,
-    HeartLinear,
     MutedBold,
     SquareShareLineBold,
-    VolumeLoudBold,
+    VolumeLoudBold
 } from "@solar-icons/react-native";
+import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
-    Animated,
     Dimensions,
     StatusBar,
     StyleSheet,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import Reanimated, { useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -125,7 +124,7 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
                 {shouldRenderVideo && (
                     <Video
                         ref={videoRef}
-                        source={{ 
+                        source={{
                             uri: resolvedUri,
                             bufferConfig: {
                                 minBufferMs: 3000,
@@ -165,7 +164,7 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
 
             {/* Bottom info */}
             <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 100 }]} pointerEvents="none">
-                <View style={styles.profileRow}>
+                <TouchableOpacity onPress={() => router.push(`/profile/${item.profile_id}`)} style={styles.profileRow}>
                     {item.profile_avatar && (
                         <FastImage
                             source={{ uri: item.profile_avatar }}
@@ -173,7 +172,7 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
                         />
                     )}
                     <FlexText style={styles.profileName}>{item.profile_name}</FlexText>
-                </View>
+                </TouchableOpacity>
                 {item.caption && (
                     <FlexText style={styles.caption} numberOfLines={2}>
                         {item.caption}
@@ -195,10 +194,10 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
                 <TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10}>
                     {isLiked
                         ? <HeartBold size={28} color="#ff4d6d" />
-                        : <HeartLinear size={28} color="white" />
+                        : <HeartBold size={28} color="white" />
                     }
                     <FlexText style={[styles.actionText, isLiked && { color: '#ff4d6d' }]}>
-                        {likeCount > 0 ? likeCount : ''}
+                        {likeCount > 0 ? likeCount : 0}
                     </FlexText>
                 </TouchableOpacity>
 
@@ -206,7 +205,7 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
                 <TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10}>
                     <ChatRoundLikeBold size={26} color="white" />
                     <FlexText style={styles.actionText}>
-                        {item.comment_count > 0 ? item.comment_count : ''}
+                        {item.comment_count > 0 ? item.comment_count : 0}
                     </FlexText>
                 </TouchableOpacity>
 

@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Comment } from "../../types/comment";
 import { useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
 import { FlexText } from "../FlexText";
+import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
 
 // ============================================================================
 // Types
@@ -129,6 +130,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const insets = useSafeAreaInsets();
         const vm = useCommentsSheetViewModel(postId, ref as React.RefObject<TrueSheet | null>);
         const { t } = useTranslation();
+        const backHandler = useSheetBackHandler(ref);
 
         const renderItem = useCallback(({ item }: { item: Comment }) => (
             <CommentItem
@@ -260,7 +262,11 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             cornerRadius: 24,
             detents,
             footer: commentInputFooter,
-            onDidDismiss: onDismiss,
+            onDidPresent: backHandler.onDidPresent,
+            onDidDismiss: () => {
+                backHandler.onDidDismiss();
+                onDismiss?.();
+            },
         };
 
         const sheetContent = (

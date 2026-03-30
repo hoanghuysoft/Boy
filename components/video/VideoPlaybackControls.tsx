@@ -1,9 +1,6 @@
-import { MaterialIcons } from "@expo/vector-icons";
-import { PauseSolid, PlaySolid } from "@lineiconshq/free-icons";
-import Lineicons from "@lineiconshq/react-native-lineicons";
 import {
-  PlayBold,
   PauseBold,
+  PlayBold,
   Rewind5SecondsBackBold,
   Rewind5SecondsForwardBold,
 } from "@solar-icons/react-native";
@@ -80,6 +77,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   extraLargeButton: {
     width: 85,
@@ -88,5 +87,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
 });

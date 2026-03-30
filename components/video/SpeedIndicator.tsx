@@ -2,7 +2,7 @@ import {
   RewindForwardBoldDuotone
 } from "@solar-icons/react-native";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { FlexText } from "../FlexText";
 
 interface SpeedIndicatorProps {
@@ -14,11 +14,22 @@ export const SpeedIndicator: React.FC<SpeedIndicatorProps> = ({
 }) => {
   if (playbackRate <= 1) return null;
 
+  // Format: 2 → "2×", 2.5 → "2.5×"
+  const label = Number.isInteger(playbackRate)
+    ? `${playbackRate}×`
+    : `${playbackRate.toFixed(2).replace(/\.?0+$/, "")}×`;
+
+  // If speed differs from a round number the user is drag-scrubbing
+  const isScrubbing = !Number.isInteger(playbackRate);
+
   return (
     <View style={styles.speedIndicator}>
       <View style={styles.speedBadge}>
         <RewindForwardBoldDuotone size={16} color="white" />
-        <FlexText style={styles.speedText}>{playbackRate}x</FlexText>
+        <FlexText style={styles.speedText}>{label}</FlexText>
+        {isScrubbing && (
+          <Text style={styles.scrubHint}>‹ drag ›</Text>
+        )}
       </View>
     </View>
   );
@@ -46,5 +57,11 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "600",
+  },
+  scrubHint: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 11,
+    fontWeight: "400",
+    letterSpacing: 0.5,
   },
 });

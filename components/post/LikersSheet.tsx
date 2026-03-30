@@ -8,6 +8,7 @@ import VerifiedIcon from "../../icons/verified";
 import { LikeUser } from "../../types/like";
 import { useLikersSheetViewModel } from "../../viewmodels/LikersSheetViewModel";
 import { FlexText } from "../FlexText";
+import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
 
 // ============================================================================
 // Types
@@ -63,6 +64,7 @@ export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
         const insets = useSafeAreaInsets();
         const vm = useLikersSheetViewModel(postId, ref as React.RefObject<TrueSheet | null>);
         const { t } = useTranslation();
+        const backHandler = useSheetBackHandler(ref);
 
         const renderItem = useCallback(({ item }: { item: LikeUser }) => (
             <LikerItem
@@ -116,6 +118,8 @@ export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
                 }}
                 cornerRadius={24}
                 detents={[0.7]}
+                onDidPresent={backHandler.onDidPresent}
+                onDidDismiss={backHandler.onDidDismiss}
             >
                 <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
                     {/* Header */}
