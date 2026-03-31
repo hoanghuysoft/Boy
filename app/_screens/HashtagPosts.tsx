@@ -62,18 +62,22 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
         if (vm.isFetchingNextPage) {
             return (
                 <View style={styles.footerLoader}>
-                    <ActivityIndicator size="small" color={colors.text} />
+                    <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
+                        <ActivityIndicator size="small" color={colors.text} />
+                    </View>
                 </View>
             );
         }
         return <View style={{ height: 80 }} />;
-    }, [vm.isFetchingNextPage, colors.text]);
+    }, [vm.isFetchingNextPage, colors.text, colors.card]);
 
     const renderEmpty = useCallback(() => {
         if (vm.isLoading) {
             return (
                 <View style={styles.emptyState}>
-                    <ActivityIndicator size="large" color={colors.text} />
+                    <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
+                        <ActivityIndicator size="large" color={colors.text} />
+                    </View>
                 </View>
             );
         }
@@ -201,6 +205,12 @@ const styles = StyleSheet.create({
     footerLoader: {
         paddingVertical: 24,
         alignItems: 'center',
+    },
+    refreshIndicator: {
+        borderRadius: 999,
+        padding: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     emptyState: {
         flex: 1,

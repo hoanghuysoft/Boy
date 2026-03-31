@@ -2,9 +2,10 @@ import BookmarkIcon from "@/icons/bookmark";
 import { useBookmarks } from "@/services/bookmark";
 import { BookmarkedPost } from "@/types/bookmarkedpost";
 import { Ionicons } from "@expo/vector-icons";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     FlatList,
@@ -12,14 +13,13 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlexText } from "../../components/FlexText";
+import { CommentsSheet } from "../../components/post/CommentsSheet";
+import { LikersSheet } from "../../components/post/LikersSheet";
 import { PostItem } from "../../components/PostItem";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
-import { CommentsSheet } from "../../components/post/CommentsSheet";
-import { LikersSheet } from "../../components/post/LikersSheet";
 import { Post } from "../../types/post";
 
 const BookmarksScreen = () => {
@@ -83,18 +83,22 @@ const BookmarksScreen = () => {
         if (isFetchingNextPage) {
             return (
                 <View style={styles.footerLoader}>
-                    <ActivityIndicator size="small" color={colors.text} />
+                    <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
+                        <ActivityIndicator size="small" color={colors.text} />
+                    </View>
                 </View>
             );
         }
         return <View style={{ height: 80 }} />;
-    }, [isFetchingNextPage, colors.text]);
+    }, [isFetchingNextPage, colors.text, colors.card]);
 
     const renderEmpty = useCallback(() => {
         if (isLoading) {
             return (
                 <View style={styles.emptyState}>
-                    <ActivityIndicator size="large" color={colors.text} />
+                    <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
+                        <ActivityIndicator size="large" color={colors.text} />
+                    </View>
                 </View>
             );
         }
@@ -190,6 +194,12 @@ const styles = StyleSheet.create({
     footerLoader: {
         paddingVertical: 24,
         alignItems: "center",
+    },
+    refreshIndicator: {
+        borderRadius: 999,
+        padding: 10,
+        alignItems: "center",
+        justifyContent: "center",
     },
     emptyState: {
         flex: 1,

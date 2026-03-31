@@ -6,6 +6,7 @@ import hashtag from './vi/hashtag';
 import home from './vi/home';
 import languageSettings from './vi/languageSettings';
 import navigation from './vi/navigation';
+import onboarding from './vi/onboarding';
 import post from './vi/post';
 import profile from './vi/profile';
 import search from './vi/search';
@@ -21,6 +22,7 @@ const vi = {
     settings,
     languageSettings,
     navigation,
+    onboarding,
     post,
     profile,
     search,

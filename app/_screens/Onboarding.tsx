@@ -14,10 +14,12 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useOnboardingViewModel } from '../../viewmodels/OnboardingViewModel';
 
 const OnboardingScreen = () => {
     const { colors, typography } = useThemeContext();
+    const { t } = useTranslation();
     const common = createCommonStyles(colors, typography);
     const style = styles(colors);
 
@@ -38,10 +40,10 @@ const OnboardingScreen = () => {
             >
                 <View style={style.header}>
                     <FlexText style={[common.headline, { fontWeight: 'bold' }]}>
-                        Create your profile
+                        {t('onboarding.title')}
                     </FlexText>
                     <FlexText style={[common.body, { color: colors.muted, marginTop: 6 }]}>
-                        Tell us a little about yourself to get started.
+                        {t('onboarding.subtitle')}
                     </FlexText>
                 </View>
 
@@ -54,21 +56,27 @@ const OnboardingScreen = () => {
                         />
                     ) : (
                         <View style={[style.avatar, style.avatarPlaceholder, { backgroundColor: colors.containerContent }]}>
-                            <FlexText style={[common.body, { color: colors.muted }]}>Photo</FlexText>
+                            <FlexText style={[common.body, { color: colors.muted }]}>
+                                {t('onboarding.avatar.placeholder')}
+                            </FlexText>
                         </View>
                     )}
                     <View style={[style.avatarEditBadge, { backgroundColor: colors.secondary }]}>
-                        <FlexText style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>Edit</FlexText>
+                        <FlexText style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>
+                            {t('onboarding.avatar.edit')}
+                        </FlexText>
                     </View>
                 </TouchableOpacity>
 
                 {/* Name */}
                 <View style={style.fieldGroup}>
-                    <FlexText style={[common.label, { marginBottom: 6 }]}>Full name *</FlexText>
+                    <FlexText style={[common.label, { marginBottom: 6 }]}>
+                        {t('onboarding.name.label')}
+                    </FlexText>
                     <TextInput
                         ref={nameRef}
                         style={[style.input, { color: colors.text, backgroundColor: colors.containerContent }]}
-                        placeholder="Your name"
+                        placeholder={t('onboarding.name.placeholder')}
                         placeholderTextColor={colors.muted}
                         value={form.name}
                         onChangeText={(v) => setField('name', v)}
@@ -80,7 +88,9 @@ const OnboardingScreen = () => {
 
                 {/* Birthday — native date picker */}
                 <View style={style.fieldGroup}>
-                    <FlexText style={[common.label, { marginBottom: 6 }]}>Date of birth *</FlexText>
+                    <FlexText style={[common.label, { marginBottom: 6 }]}>
+                        {t('onboarding.birthday.label')}
+                    </FlexText>
                     {Platform.OS === 'ios' ? (
                         // iOS: compact label that expands to an inline calendar on tap
                         <DateTimePicker
@@ -103,7 +113,7 @@ const OnboardingScreen = () => {
                                 <FlexText style={{ color: form.birthday ? colors.text : colors.muted }}>
                                     {form.birthday
                                         ? form.birthday.toLocaleDateString('en-GB')
-                                        : 'Select date of birth'}
+                                        : t('onboarding.birthday.placeholder')}
                                 </FlexText>
                             </TouchableOpacity>
                             {showAndroidPicker && (
@@ -121,13 +131,15 @@ const OnboardingScreen = () => {
                         </>
                     )}
                     <FlexText style={[common.caption, { color: colors.muted, marginTop: 4 }]}>
-                        You must be at least 18 years old.
+                        {t('onboarding.birthday.requirement')}
                     </FlexText>
                 </View>
 
                 {/* Bio */}
                 <View style={style.fieldGroup}>
-                    <FlexText style={[common.label, { marginBottom: 6 }]}>Bio (optional)</FlexText>
+                    <FlexText style={[common.label, { marginBottom: 6 }]}>
+                        {t('onboarding.bio.label')}
+                    </FlexText>
                     <TextInput
                         ref={bioRef}
                         style={[
@@ -135,7 +147,7 @@ const OnboardingScreen = () => {
                             style.bioInput,
                             { color: colors.text, backgroundColor: colors.containerContent },
                         ]}
-                        placeholder="Say something about yourself…"
+                        placeholder={t('onboarding.bio.placeholder')}
                         placeholderTextColor={colors.muted}
                         value={form.bio}
                         onChangeText={(v) => setField('bio', v)}
@@ -144,7 +156,8 @@ const OnboardingScreen = () => {
                         returnKeyType="done"
                     />
                     <FlexText style={[common.caption, { color: colors.muted, marginTop: 4, textAlign: 'right' }]}>
-                        {form.bio.length}/160
+                        {form.bio.length}
+                        {t('onboarding.bio.counterSuffix')}
                     </FlexText>
                 </View>
 
@@ -170,7 +183,7 @@ const OnboardingScreen = () => {
                         <ActivityIndicator size="small" color="#fff" />
                     ) : (
                         <FlexText style={[common.buttonText, { color: '#fff', fontWeight: 'bold' }]}>
-                            Continue
+                            {t('onboarding.submit')}
                         </FlexText>
                     )}
                 </TouchableOpacity>

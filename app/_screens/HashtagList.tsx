@@ -62,7 +62,9 @@ const HashtagListScreen = () => {
         if (vm.isLoading) {
             return (
                 <View style={styles.emptyState}>
-                    <ActivityIndicator size="large" color={colors.text} />
+                    <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
+                        <ActivityIndicator size="large" color={colors.text} />
+                    </View>
                 </View>
             );
         }
@@ -190,6 +192,12 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    refreshIndicator: {
+        borderRadius: 999,
+        padding: 10,
         alignItems: 'center',
         justifyContent: 'center',
     },
