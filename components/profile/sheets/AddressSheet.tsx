@@ -2,6 +2,7 @@ import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo } from "react";
+import { useTranslation } from 'react-i18next';
 import { FlatList, Linking, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -65,6 +66,7 @@ const AddressItem = memo(({ item, colors, common }: { item: ProfileAddress; colo
 export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ data, onEndReached }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const { t } = useTranslation();
     const inset = useSafeAreaInsets();
     const backHandler = useSheetBackHandler(ref);
 
@@ -88,9 +90,9 @@ export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ dat
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <FlexText style={[common.heading, { fontSize: 24 }]}>Locations</FlexText>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.sheets.address.title')}</FlexText>
                     <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-                        Tap an address to open Maps
+                        {t('profile.sheets.address.subtitle')}
                     </FlexText>
                 </View>
 

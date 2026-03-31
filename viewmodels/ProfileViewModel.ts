@@ -45,6 +45,7 @@ export const useProfileViewModel = () => {
     const [selectedTab, setSelectedTab] = useState<TabType>("Images");
     const [activeTab, setActiveTab] = useState<TabType>("Images");
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [showHeaderAvatar, setShowHeaderAvatar] = useState(false);
     const [galleryVisible, setGalleryVisible] = useState(false);
     const [galleryIndex, setGalleryIndex] = useState(0);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
@@ -208,10 +209,14 @@ export const useProfileViewModel = () => {
                             useNativeDriver: true,
                         }).start();
                     }
+                    const shouldShowAvatar = offsetY > 160;
+                    if (shouldShowAvatar !== showHeaderAvatar) {
+                        setShowHeaderAvatar(shouldShowAvatar);
+                    }
                 }
             }
         ),
-        [scrollY, showScrollTop]);
+        [scrollY, showScrollTop, showHeaderAvatar]);
 
     // ─── Tab Change ────────────────────────────────────────────────
     const handleTabChangeRef = useRef<((tab: TabType) => void) | undefined>(undefined);
@@ -413,6 +418,7 @@ export const useProfileViewModel = () => {
         // Scroll
         scrollY,
         showScrollTop,
+        showHeaderAvatar,
         scrollTopButtonOpacity,
         onScroll,
 

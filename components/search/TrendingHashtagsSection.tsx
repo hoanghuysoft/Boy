@@ -1,6 +1,7 @@
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
 import { SquircleView } from 'expo-squircle-view';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     StyleSheet,
     TouchableOpacity,
@@ -14,17 +15,18 @@ export const TrendingHashtagsSection = () => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const vm = useTrendingHashtagsViewModel();
+    const { t } = useTranslation();
 
     if (!vm.isLoading && vm.previewTags.length === 0) return null;
 
     return (
         <View style={styles.container}>
             <View style={styles.headerRow}>
-                <FlexText style={[common.subheading, { fontSize: 15 }]}>Trending</FlexText>
+                <FlexText style={[common.subheading, { fontSize: 15 }]}>{t('search.sections.trending')}</FlexText>
                 {vm.hasMoreTags && (
                     <TouchableOpacity onPress={vm.navigateToAllTags} hitSlop={8}>
-                        <FlexText style={[common.bodySmall, { color: colors.secondary }]}>
-                            See all
+                        <FlexText style={[common.bodySmall, { color: colors.pillTab.activeText }]}>
+                            {t('search.sections.seeAll')}
                         </FlexText>
                     </TouchableOpacity>
                 )}
@@ -51,6 +53,7 @@ export const TrendingHashtagsSection = () => {
                             key={hashtag.id}
                             onPress={() => vm.navigateToTag(hashtag.tag)}
                             activeOpacity={0.7}
+                            style={styles.tagPillWrapper}
                         >
                             <SquircleView
                                 cornerSmoothing={100}
@@ -63,7 +66,7 @@ export const TrendingHashtagsSection = () => {
                                 <FlexText
                                     style={[
                                         common.bodySmall,
-                                        { color: colors.secondary, fontWeight: '600' },
+                                        { color: colors.pillTab.activeText, fontWeight: '600' },
                                     ]}
                                     numberOfLines={1}
                                 >
@@ -76,7 +79,7 @@ export const TrendingHashtagsSection = () => {
                                             { color: colors.muted, marginTop: 2 },
                                         ]}
                                     >
-                                        {hashtag.count.toLocaleString()} post{hashtag.count !== 1 ? 's' : ''}
+                                        {t('search.sections.postsCount', { count: hashtag.count })}
                                     </FlexText>
                                 )}
                             </SquircleView>
@@ -106,13 +109,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 10,
     },
+    tagPillWrapper: {
+        flex: 1,
+    },
     tagPill: {
         flex: 1,
         borderRadius: 16,
         paddingHorizontal: 14,
         paddingVertical: 10,
         alignItems: 'center',
-        minHeight: 52,
+        justifyContent: 'center',
     },
     tagPillSkeleton: {
         flex: 1,

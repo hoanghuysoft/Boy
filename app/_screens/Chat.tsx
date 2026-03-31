@@ -1,8 +1,9 @@
 import { FlexText } from "@/components/FlexText";
 import { ShimmerEffect } from "@/components/shimmer/Shimmer";
-import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
 import type { VideoCard } from "@/types/shows";
+import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
 import { Ionicons } from "@expo/vector-icons";
+import { FolderFavouriteBookmarkBold, RoundedMagnifierBold } from "@solar-icons/react-native";
 import { BlurTargetView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -12,50 +13,6 @@ import { FlatList as GestureFlatList, Pressable as GesturePressable } from "reac
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
-
-const withAlpha = (hex: string, alphaHex: string) => {
-  // Supports '#RRGGBB' and '#RRGGBBAA'. If not hex, fall back to original.
-  if (typeof hex !== "string") return hex as unknown as string;
-  if (hex.startsWith("#") && (hex.length === 7 || hex.length === 9)) {
-    return hex.slice(0, 7) + alphaHex;
-  }
-  return hex;
-};
-
-const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16),
-    }
-    : null;
-};
-
-const luminance = (hex: string): number | null => {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return null;
-  const [rs, gs, bs] = [rgb.r, rgb.g, rgb.b].map((c) => {
-    const sRGB = c / 255;
-    return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
-  });
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-};
-
-const clamp255 = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
-
-const darkenHex = (hex: string, amount: number): string => {
-  // amount: 0..1, where 0 = unchanged, 1 = black
-  const rgb = hexToRgb(hex);
-  if (!rgb) return hex;
-  const a = Math.max(0, Math.min(1, amount));
-  const r = clamp255(rgb.r * (1 - a));
-  const g = clamp255(rgb.g * (1 - a));
-  const b = clamp255(rgb.b * (1 - a));
-  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-};
-
 
 const ChatScreen = () => {
   const { colors, typography } = useThemeContext();
@@ -297,18 +254,32 @@ const ChatScreen = () => {
           <Image source={require("../../assets/images/logo_head.png")} style={{ width: 50, height: 50 }} contentFit="contain" />
           <Text style={[styles.textStyle, { color: "white", fontSize: 42, fontWeight: "700" }]}>tv</Text>
         </View>
-        <TouchableOpacity
-          onPress={() => router.push("/search_shows")}
-          style={{
-            borderRadius: 999,
-            width: 40,
-            height: 40,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Ionicons name="search" size={24} color={"white"} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+          <TouchableOpacity
+            onPress={() => router.push("/watchlist")}
+            style={{
+              borderRadius: 999,
+              width: 40,
+              height: 40,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <FolderFavouriteBookmarkBold size={28} color={"white"} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push("/search_shows")}
+            style={{
+              borderRadius: 999,
+              width: 40,
+              height: 40,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <RoundedMagnifierBold size={28} color={"white"} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

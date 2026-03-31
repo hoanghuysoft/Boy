@@ -7,6 +7,7 @@ import { useHashtagPostsViewModel } from '@/viewmodels/HashtagPostsViewModel';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { LikersSheet } from '@/components/post/LikersSheet';
 import { CommentsSheet } from '@/components/post/CommentsSheet';
@@ -27,6 +28,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const vm = useHashtagPostsViewModel(tag);
+    const { t } = useTranslation();
 
     const likersSheetRef = useRef<TrueSheet>(null);
     const commentsSheetRef = useRef<TrueSheet>(null);
@@ -96,7 +98,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                         { fontSize: 20, marginTop: 20, marginBottom: 8 },
                     ]}
                 >
-                    No posts yet
+                    {t('hashtag.posts.emptyTitle')}
                 </FlexText>
                 <FlexText
                     style={[
@@ -108,11 +110,11 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                         },
                     ]}
                 >
-                    Be the first to post with #{tag}
+                    {t('hashtag.posts.emptyBody', { tag })}
                 </FlexText>
             </View>
         );
-    }, [vm.isLoading, colors, common, theme, tag]);
+    }, [vm.isLoading, colors, common, theme, tag, t]);
 
     const ListHeaderComponent = useCallback(
         () => (
@@ -133,12 +135,12 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                     ]}
                 >
                     {vm.totalCount > 0
-                        ? `${vm.totalCount.toLocaleString()} post${vm.totalCount !== 1 ? 's' : ''}`
-                        : 'Posts'}
+                        ? t('hashtag.posts.count', { count: vm.totalCount })
+                        : t('hashtag.posts.title')}
                 </FlexText>
             </View>
         ),
-        [vm.insets.top, vm.hashtagLabel, vm.totalCount, common, colors.muted]
+        [vm.insets.top, vm.hashtagLabel, vm.totalCount, common, colors.muted, t]
     );
 
     return (

@@ -1,6 +1,7 @@
 import countries from "i18n-iso-countries";
 import en from "i18n-iso-countries/langs/en.json";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Animated } from "react-native";
 import { getColors } from 'react-native-image-colors';
 import { createMMKV } from 'react-native-mmkv';
@@ -45,6 +46,7 @@ export const useProfileHeaderViewModel = ({
     addresses = [],
 }: UseProfileHeaderViewModelOptions) => {
     const { colors, typography, theme } = useThemeContext();
+    const { t } = useTranslation();
     const common = createCommonStyles(colors, typography);
     const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
 
@@ -189,10 +191,10 @@ export const useProfileHeaderViewModel = ({
     const handleFeedTab = useCallback(() => onTabChange("Feed"), [onTabChange]);
 
     const tabs = useMemo(() => [
-        { name: "Images", label: "Images", onClick: handleImagesTab },
-        { name: "Videos", label: "Shots", onClick: handleVideosTab },
-        { name: "Feed", label: "Feed", onClick: handleFeedTab },
-    ], [handleImagesTab, handleVideosTab, handleFeedTab]);
+        { name: "Images", label: t("profile.tabs.images"), onClick: handleImagesTab },
+        { name: "Videos", label: t("profile.tabs.videos"), onClick: handleVideosTab },
+        { name: "Feed", label: t("profile.tabs.feed"), onClick: handleFeedTab },
+    ], [handleImagesTab, handleVideosTab, handleFeedTab, t]);
 
     // ─── Avatar Preview ────────────────────────────────────────────
     const showAvatarPreview = useCallback(() => {

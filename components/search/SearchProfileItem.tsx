@@ -3,6 +3,7 @@ import { Profile } from "@/types/profile";
 import { calculateAge } from "@/utils/timeandage";
 import FastImage from "@d11/react-native-fast-image";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
 import TurboImage from "react-native-turbo-image";
 import { FlexText } from "../FlexText";
@@ -26,6 +27,8 @@ export const SearchProfileItem = React.memo(({
     imageCachePolicy,
     onPress,
 }: SearchProfileItemProps) => {
+    const { t } = useTranslation();
+
     const handlePress = () => {
         if (onPress) {
             onPress(item);
@@ -95,13 +98,13 @@ export const SearchProfileItem = React.memo(({
                         style={[common.caption, { color: colors.muted, marginTop: 2 }]}
                         numberOfLines={1}
                     >
-                        {calculateAge(item.birthday)} years old
+                        {t('search.profile.yearsOld', { count: calculateAge(item.birthday) })}
                     </FlexText>
                 )}
             </View>
             <View style={[styles.viewButton, { backgroundColor: colors.card }]}>
                 <FlexText style={[common.label, { color: colors.text, fontSize: 12 }]}>
-                    View
+                    {t('search.profile.view')}
                 </FlexText>
             </View>
         </TouchableOpacity>

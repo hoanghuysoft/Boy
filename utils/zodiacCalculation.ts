@@ -1,3 +1,56 @@
+export type ZodiacSignKey =
+    | 'aquarius'
+    | 'pisces'
+    | 'aries'
+    | 'taurus'
+    | 'gemini'
+    | 'cancer'
+    | 'leo'
+    | 'virgo'
+    | 'libra'
+    | 'scorpio'
+    | 'sagittarius'
+    | 'capricorn'
+    | 'unknown';
+
+export type ChineseZodiacKey =
+    | 'rat'
+    | 'ox'
+    | 'tiger'
+    | 'rabbit'
+    | 'dragon'
+    | 'snake'
+    | 'horse'
+    | 'goat'
+    | 'monkey'
+    | 'rooster'
+    | 'dog'
+    | 'pig';
+
+export type GenerationKey =
+    | 'genAlpha'
+    | 'genZ'
+    | 'millennial'
+    | 'genX'
+    | 'babyBoomer'
+    | 'silentGeneration';
+
+export type MoonPhaseKey =
+    | 'newMoon'
+    | 'waxingCrescent'
+    | 'firstQuarter'
+    | 'waxingGibbous'
+    | 'fullMoon'
+    | 'waningGibbous'
+    | 'lastQuarter'
+    | 'waningCrescent';
+
+export type BMIStatusKey =
+    | 'underweight'
+    | 'normalWeight'
+    | 'overweight'
+    | 'obesity';
+
 export const enrichProfileData = async (birthday: string) => {
     const date = new Date(birthday);
     if (isNaN(date.getTime())) return null;
@@ -18,37 +71,37 @@ export const enrichProfileData = async (birthday: string) => {
     };
 };
 
-export const calculateZodiacSign = (birthday: string): string => {
+export const calculateZodiacSign = (birthday: string): ZodiacSignKey => {
     const date = new Date(birthday);
     
     if (isNaN(date.getTime())) {
-        return "Invalid Date";
+        return 'unknown';
     }
 
     const month = date.getUTCMonth() + 1;
     const day = date.getUTCDate();
 
-    if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return "Aquarius";
-    if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) return "Pisces";
-    if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return "Aries";
-    if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return "Taurus";
-    if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return "Gemini";
-    if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return "Cancer";
-    if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return "Leo";
-    if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return "Virgo";
-    if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return "Libra";
-    if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return "Scorpio";
-    if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return "Sagittarius";
-    if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return "Capricorn";
+    if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return 'aquarius';
+    if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) return 'pisces';
+    if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return 'aries';
+    if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return 'taurus';
+    if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return 'gemini';
+    if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return 'cancer';
+    if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return 'leo';
+    if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return 'virgo';
+    if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return 'libra';
+    if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return 'scorpio';
+    if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return 'sagittarius';
+    if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return 'capricorn';
 
-    return "Unknown";
+    return 'unknown';
 };
 
 /**
  * 1. Chinese Zodiac (Based on a 12-year cycle)
  */
-const getChineseZodiac = (year: number): string => {
-    const animals = ["Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Goat", "Monkey", "Rooster", "Dog", "Pig"];
+const getChineseZodiac = (year: number): ChineseZodiacKey => {
+    const animals: ChineseZodiacKey[] = ['rat', 'ox', 'tiger', 'rabbit', 'dragon', 'snake', 'horse', 'goat', 'monkey', 'rooster', 'dog', 'pig'];
     // The cycle repeats every 12 years; 1924 was a year of the Rat
     return animals[(year - 1924) % 12];
 };
@@ -70,13 +123,13 @@ const calculateLifePath = (birthday: string): number => {
 /**
  * 3. Generation Labeling
  */
-const getGeneration = (year: number): string => {
-    if (year >= 2013) return "Gen Alpha";
-    if (year >= 1997) return "Gen Z";
-    if (year >= 1981) return "Millennial";
-    if (year >= 1965) return "Gen X";
-    if (year >= 1946) return "Baby Boomer";
-    return "Silent Generation";
+const getGeneration = (year: number): GenerationKey => {
+    if (year >= 2013) return 'genAlpha';
+    if (year >= 1997) return 'genZ';
+    if (year >= 1981) return 'millennial';
+    if (year >= 1965) return 'genX';
+    if (year >= 1946) return 'babyBoomer';
+    return 'silentGeneration';
 };
 
 const getDayOfWeek = (date: Date): string => {
@@ -95,7 +148,7 @@ const getDaysLived = (birthDate: Date): string => {
  * 3. Moon Phase (Conway's Algorithm approximation)
  * Returns a string representing the moon phase.
  */
-const getMoonPhase = (year: number, month: number, day: number): string => {
+const getMoonPhase = (year: number, month: number, day: number): MoonPhaseKey => {
     let r = year % 100;
     r %= 19;
     if (r > 9) r -= 19;
@@ -105,7 +158,7 @@ const getMoonPhase = (year: number, month: number, day: number): string => {
     r = Math.floor(r % 30);
     if (r < 0) r += 30;
 
-    const phases = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
+    const phases: MoonPhaseKey[] = ['newMoon', 'waxingCrescent', 'firstQuarter', 'waxingGibbous', 'fullMoon', 'waningGibbous', 'lastQuarter', 'waningCrescent'];
     // Map the 30-day cycle to our 8 phases
     const index = Math.floor(r / 3.75) % 8;
     return phases[index];
@@ -135,9 +188,9 @@ export const calculateBMI = (heightCm: number, weightKg: number): number => {
     return Math.round(bmi * 10) / 10;
 };
 
-export const getBMIStatus = (bmi: number): string => {
-    if (bmi < 18.5) return "Underweight";
-    if (bmi < 25) return "Normal weight";
-    if (bmi < 30) return "Overweight";
-    return "Obesity";
+export const getBMIStatus = (bmi: number): BMIStatusKey => {
+    if (bmi < 18.5) return 'underweight';
+    if (bmi < 25) return 'normalWeight';
+    if (bmi < 30) return 'overweight';
+    return 'obesity';
 };

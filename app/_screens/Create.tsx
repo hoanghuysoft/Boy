@@ -4,6 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { FormikHelpers, useFormik } from "formik";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
     NativeScrollEvent,
     NativeSyntheticEvent,
@@ -55,19 +56,19 @@ interface CreatePostFormValues {
 }
 
 const createPostValidationSchema = Yup.object().shape({
-    content: Yup.string().max(2000, "Content is too long (max 2000 characters)"),
-    location: Yup.string().max(200, "Location is too long (max 200 characters)"),
+    content: Yup.string().max(2000, "create.validation.contentTooLong"),
+    location: Yup.string().max(200, "create.validation.locationTooLong"),
     selectedMedia: Yup.array(),
     links: Yup.array().of(
         Yup.object().shape({
             label: Yup.string().when('url', {
                 is: (url: string) => url && url.trim().length > 0,
-                then: (schema) => schema.required("Link label is required when URL is provided"),
+                then: (schema) => schema.required("create.validation.linkLabelRequired"),
                 otherwise: (schema) => schema,
             }),
             url: Yup.string().when('label', {
                 is: (label: string) => label && label.trim().length > 0,
-                then: (schema) => schema.required("URL is required when label is provided").url("Please enter a valid URL"),
+                then: (schema) => schema.required("create.validation.urlRequired").url("create.validation.urlInvalid"),
                 otherwise: (schema) => schema,
             }),
         }, [['label', 'url']])
@@ -77,7 +78,7 @@ const createPostValidationSchema = Yup.object().shape({
     selectedTrack: Yup.object().nullable(),
 }).test(
     'content-or-media-required',
-    'Please add some content or media to your post',
+    'create.validation.contentOrMediaRequired',
     function (values) {
         const { content, selectedMedia } = values;
         return (content && content.trim().length > 0) || (selectedMedia && selectedMedia.length > 0);
@@ -89,8 +90,10 @@ const createPostValidationSchema = Yup.object().shape({
 // ============================================================================
 
 const CreateScreen = () => {
+    const AlertDialogAny = AlertDialog as any;
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const { t } = useTranslation();
     const insets = useSafeAreaInsets();
     const trigger = useScrollStore((state) => state.triggers['chat']);
     const [dialog, setDialog] = useState<{
@@ -146,8 +149,8 @@ const CreateScreen = () => {
             if (!profileId) {
                 setDialog({
                     visible: true,
-                    title: "Error",
-                    message: "Profile not loaded. Please try again.",
+                    title: t("create.dialog.errorTitle"),
+                    message: t("create.dialog.profileNotLoaded"),
                 });
                 return;
             }
@@ -194,8 +197,8 @@ const CreateScreen = () => {
 
                 setDialog({
                     visible: true,
-                    title: "Success",
-                    message: "Your post has been created!",
+                    title: t("create.dialog.successTitle"),
+                    message: t("create.dialog.postCreated"),
                     onConfirm: () => {
                         formikResetForm();
                         resetUIState();
@@ -205,8 +208,8 @@ const CreateScreen = () => {
                 console.error("Error creating post:", error);
                 setDialog({
                     visible: true,
-                    title: "Error",
-                    message: error.message || "Failed to create post. Please try again.",
+                    title: t("create.dialog.errorTitle"),
+                    message: error.message || t("create.dialog.createFailed"),
                 });
             }
         },
@@ -250,14 +253,14 @@ const CreateScreen = () => {
             // Handle Yup validation error
             if (validationError.inner && validationError.inner.length > 0) {
                 // Get all field-level errors
-                const errorMessages = validationError.inner.map((err: any) => err.message).join('\n');
-                setDialog({ visible: true, title: "Create Post", message: errorMessages });
+                const errorMessages = validationError.inner.map((err: any) => t(err.message as any)).join('\n');
+                setDialog({ visible: true, title: t("create.dialog.screenTitle"), message: errorMessages });
             } else if (validationError.message) {
                 // Form-level error (like from .test())
-                setDialog({ visible: true, title: "Create Post", message: validationError.message });
+                setDialog({ visible: true, title: t("create.dialog.screenTitle"), message: t(validationError.message as any) });
             }
         }
-    }, [values, handleSubmit]);
+    }, [values, handleSubmit, t]);
 
     // ============================================================================
     // Handlers
@@ -285,8 +288,8 @@ const CreateScreen = () => {
         if (status !== "granted") {
             setDialog({
                 visible: true,
-                title: "Permission Required",
-                message: "Please grant media library access to pick images.",
+                title: t("create.dialog.permissionTitle"),
+                message: t("create.dialog.mediaPermissionRequired"),
             });
             return;
         }
@@ -338,13 +341,13 @@ const CreateScreen = () => {
                 } catch (retryError) {
                     setDialog({
                         visible: true,
-                        title: "Error",
-                        message: "Failed to open media picker. Please try again.",
+                        title: t("create.dialog.errorTitle"),
+                        message: t("create.dialog.mediaPickerFailed"),
                     });
                 }
             }
         }
-    }, [values.selectedMedia, setFieldValue]);
+    }, [values.selectedMedia, setFieldValue, t]);
 
     const removeMedia = useCallback((index: number) => {
         setFieldValue('selectedMedia', values.selectedMedia.filter((_: SelectedMedia, i: number) => i !== index));
@@ -405,11 +408,11 @@ const CreateScreen = () => {
 
                 {/* Header */}
                 <Host matchContents>
-                    <AlertDialog
+                    <AlertDialogAny
                         visible={dialog.visible}
                         title={dialog.title}
                         text={dialog.message}
-                        confirmButtonText="OK"
+                        confirmButtonText={t("create.dialog.ok")}
                         onConfirmPressed={() => {
                             dialog.onConfirm?.();
                             setDialog((prev) => ({ ...prev, visible: false }));

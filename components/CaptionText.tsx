@@ -12,7 +12,7 @@ interface CaptionTextProps {
 
 // Simple text parsing for hashtags, mentions, and links
 const parseCaption = (text: string) => {
-  const regex = /(#[\p{L}\p{N}_]+|@[\p{L}\p{N}_]+|https?:\/\/[^\s]+)/gu;
+  const regex = /(#[^\s]+|@[^\s]+|https?:\/\/[^\s]+)/gu;
   const parts: { type: 'text' | 'tag' | 'mention' | 'link'; text: string }[] = [];
   let lastIndex = 0;
   let match;

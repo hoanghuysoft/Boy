@@ -1,12 +1,14 @@
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
-import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
+import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { useVideoDetailQuery } from "@/services/shows";
 import { useGalleryStore } from "@/stores/gallery";
+import { useShowWatchlistStore } from "@/stores/showWatchlist";
 import type { VideoCard } from "@/types/shows";
 import { Ionicons } from "@expo/vector-icons";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
+import { BookmarkBold, BookmarkOutline, CloudDownloadBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
@@ -218,6 +220,30 @@ const ChatScreen = () => {
 
   const { refetch } = useVideoDetailQuery(videoUrlOrSlug);
 
+  const watchlist = useShowWatchlistStore((s) => s.watchlist);
+  const addToWatchlist = useShowWatchlistStore((s) => s.add);
+  const removeFromWatchlist = useShowWatchlistStore((s) => s.remove);
+  const isSaved = useMemo(
+    () => watchlist.some((item) => item.video_url === (videoUrlOrSlug ?? "")),
+    [watchlist, videoUrlOrSlug]
+  );
+
+  const handleToggleWatchlist = () => {
+    if (!detail) return;
+    if (isSaved) {
+      removeFromWatchlist(videoUrlOrSlug ?? '');
+    } else {
+      addToWatchlist({
+        video_url: videoUrlOrSlug ?? '',
+        title: detail.title,
+        thumb_url: detail.poster_url,
+        views: detail.views,
+        duration: detail.duration,
+        added_at: Date.now(),
+      });
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -271,6 +297,9 @@ const ChatScreen = () => {
               onRefresh={() => {
                 refetch();
               }}
+              tintColor={"white"}
+              colors={["white"]}
+              progressBackgroundColor={withAlpha(darkDominant, "CC")}
             />
           }
         >
@@ -484,29 +513,57 @@ const ChatScreen = () => {
             <Ionicons name='chevron-back' size={24} color={'white'} />
           </TouchableOpacity>
         </BlurView>
-        <BlurView
-          tint={"systemMaterialDark"}
-          intensity={80}
-          blurTarget={blurTargetRef}
-          blurMethod="dimezisBlurViewSdk31Plus"
-          style={{
-            borderRadius: 999,
-            overflow: 'hidden',
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => { Linking.openURL(detail?.download_url ?? "") }}
-            style={{
-              borderRadius: 999,
-              width: 40,
-              height: 40,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {/* Watchlist toggle */}
+          <BlurView
+            tint={"systemMaterialDark"}
+            intensity={80}
+            blurTarget={blurTargetRef}
+            blurMethod="dimezisBlurViewSdk31Plus"
+            style={{ borderRadius: 999, overflow: 'hidden' }}
           >
-            <Ionicons name='download' size={24} color={'white'} />
-          </TouchableOpacity>
-        </BlurView>
+            <TouchableOpacity
+              onPress={handleToggleWatchlist}
+              style={{
+                borderRadius: 999,
+                width: 40,
+                height: 40,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              {
+                isSaved ? (
+                  <BookmarkBold size={22} color={'#facc15'} />
+                ) : (
+                  <BookmarkOutline size={22} color={'white'} />
+                )
+              }
+            </TouchableOpacity>
+          </BlurView>
+
+          {/* Download */}
+          <BlurView
+            tint={"systemMaterialDark"}
+            intensity={80}
+            blurTarget={blurTargetRef}
+            blurMethod="dimezisBlurViewSdk31Plus"
+            style={{ borderRadius: 999, overflow: 'hidden' }}
+          >
+            <TouchableOpacity
+              onPress={() => { Linking.openURL(detail?.download_url ?? ""); }}
+              style={{
+                borderRadius: 999,
+                width: 40,
+                height: 40,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <CloudDownloadBold size={24} color={'white'} />
+            </TouchableOpacity>
+          </BlurView>
+        </View>
       </View>
       <GalleryModal />
     </View>

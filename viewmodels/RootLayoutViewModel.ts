@@ -1,7 +1,9 @@
+import { focusManager } from '@tanstack/react-query';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import {
     checkProfileFromServer,
     getLocalHasProfile,
@@ -43,6 +45,13 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
         GoogleSignin.configure({
             webClientId: '674603557783-tn1v0di2jpgp87af41b1t1rok9sqelc1.apps.googleusercontent.com',
         });
+    }, []);
+
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', (status: AppStateStatus) => {
+            focusManager.setFocused(status === 'active');
+        });
+        return () => subscription.remove();
     }, []);
 
     // ─── Session + profile check ───────────────────────────────────────────────

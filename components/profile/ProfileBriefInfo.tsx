@@ -1,5 +1,6 @@
 import { CaseMinimalisticBold, NotebookBookmarkBold, PointOnMapBold, SquareAcademicCapBold } from '@solar-icons/react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from "react-native";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -16,12 +17,13 @@ interface ProfileBriefInfoProps {
 const ProfileBriefInfo: React.FC<ProfileBriefInfoProps> = ({ profile, workplaces = [], homeInfo }) => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const { t } = useTranslation();
 
     const workItems: any[] = [];
     if (workplaces.length > 0) {
         workItems.push({
             solarIcon: CaseMinimalisticBold,
-            label: `${workplaces[0].position} at ${workplaces[0].company_name}`
+            label: t('profile.briefInfo.workAt', { position: workplaces[0].position, company: workplaces[0].company_name })
         });
     }
 
@@ -58,9 +60,9 @@ const ProfileBriefInfo: React.FC<ProfileBriefInfoProps> = ({ profile, workplaces
 
     return (
         <View style={{ paddingTop: 16 }}>
-            <Section title="Work" items={workItems} />
-            <Section title="Education" items={eduItems} />
-            <Section title="Places Lived" items={homeItems} />
+            <Section title={t('profile.briefInfo.sections.work')} items={workItems} />
+            <Section title={t('profile.briefInfo.sections.education')} items={eduItems} />
+            <Section title={t('profile.briefInfo.sections.placesLived')} items={homeItems} />
         </View>
     );
 };

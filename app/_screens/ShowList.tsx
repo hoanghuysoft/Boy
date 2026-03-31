@@ -194,6 +194,7 @@ const ShowListScreen = () => {
             onRefresh={() => refetch()}
             tintColor={colors.text}
             colors={[colors.text]}
+            progressBackgroundColor={colors.card}
           />
         }
       />
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
     fontWeight: "400",
   },
   loadMoreButton: {
-    borderRadius: 14,
+    borderRadius: 9999,
     paddingVertical: 14,
     paddingHorizontal: 16,
     justifyContent: "center",

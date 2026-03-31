@@ -1,0 +1,24 @@
+const create = {
+    validation: {
+        contentTooLong: 'Content is too long (max 2000 characters)',
+        locationTooLong: 'Location is too long (max 200 characters)',
+        linkLabelRequired: 'Link label is required when URL is provided',
+        urlRequired: 'URL is required when label is provided',
+        urlInvalid: 'Please enter a valid URL',
+        contentOrMediaRequired: 'Please add some content or media to your post',
+    },
+    dialog: {
+        screenTitle: 'Create Post',
+        errorTitle: 'Error',
+        successTitle: 'Success',
+        permissionTitle: 'Permission Required',
+        profileNotLoaded: 'Profile not loaded. Please try again.',
+        postCreated: 'Your post has been created!',
+        createFailed: 'Failed to create post. Please try again.',
+        mediaPermissionRequired: 'Please grant media library access to pick images.',
+        mediaPickerFailed: 'Failed to open media picker. Please try again.',
+        ok: 'OK',
+    },
+} as const;
+
+export default create;

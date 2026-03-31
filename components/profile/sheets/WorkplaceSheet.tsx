@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import dayjs from 'dayjs';
 import React, { forwardRef, memo } from "react";
+import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -20,7 +21,7 @@ const formatDate = (date: string) => {
     return dayjs(date).format('MMM YYYY');
 };
 
-const calculateDuration = (startDate: string, endDate: string | null) => {
+const calculateDuration = (startDate: string, endDate: string | null, t: any) => {
     const start = dayjs(startDate);
     const end = endDate ? dayjs(endDate) : dayjs();
 
@@ -29,14 +30,15 @@ const calculateDuration = (startDate: string, endDate: string | null) => {
     const months = totalMonths % 12;
 
     const parts = [];
-    if (years > 0) parts.push(`${years} yr${years > 1 ? 's' : ''}`);
-    if (months > 0) parts.push(`${months} mo${months > 1 ? 's' : ''}`);
+    if (years > 0) parts.push(t('profile.sheets.work.durationYears', { count: years }));
+    if (months > 0) parts.push(t('profile.sheets.work.durationMonths', { count: months }));
 
-    return parts.length > 0 ? parts.join(' ') : 'Less than a month';
+    return parts.length > 0 ? parts.join(' ') : t('profile.sheets.work.durationLessThanMonth');
 };
 
 // --- Component ---
 const WorkplaceItem = memo(({ item, colors, common }: { item: Workplace, colors: any, common: any }) => {
+    const { t } = useTranslation();
     const isCurrent = !item.end_date;
 
     return (
@@ -66,12 +68,12 @@ const WorkplaceItem = memo(({ item, colors, common }: { item: Workplace, colors:
                 <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
                     <Ionicons name="calendar-outline" size={14} color={colors.muted} style={{ marginRight: 6 }} />
                     <FlexText style={[common.bodySmall, { color: colors.muted }]}>
-                        {formatDate(item.start_date)} - <Text style={{ color: isCurrent ? (colors.primary) : colors.muted, fontWeight: isCurrent ? '700' : '400' }}>{item.end_date ? formatDate(item.end_date) : 'Present'}</Text>
+                        {formatDate(item.start_date)} - <Text style={{ color: isCurrent ? (colors.primary) : colors.muted, fontWeight: isCurrent ? '700' : '400' }}>{item.end_date ? formatDate(item.end_date) : t('profile.sheets.work.present')}</Text>
                     </FlexText>
 
                     <FlexText style={[common.muted, { marginHorizontal: 6 }]}>•</FlexText>
                     <FlexText style={[common.bodySmall, { color: colors.muted }]}>
-                        {calculateDuration(item.start_date, item.end_date)}
+                        {calculateDuration(item.start_date, item.end_date, t)}
                     </FlexText>
                 </View>
 
@@ -98,6 +100,7 @@ const WorkplaceItem = memo(({ item, colors, common }: { item: Workplace, colors:
 export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({ data, onEndReached }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const { t } = useTranslation();
     const inset = useSafeAreaInsets();
     const backHandler = useSheetBackHandler(ref);
 
@@ -121,9 +124,9 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <FlexText style={[common.heading, { fontSize: 24 }]}>Work History</FlexText>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.sheets.work.title')}</FlexText>
                     <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-                        My professional timeline
+                        {t('profile.sheets.work.subtitle')}
                     </FlexText>
                 </View>
 

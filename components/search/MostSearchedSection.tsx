@@ -4,6 +4,7 @@ import { useMostSearchedViewModel } from '@/viewmodels/MostSearchedViewModel';
 import FastImage from '@d11/react-native-fast-image';
 import { SquircleView } from 'expo-squircle-view';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     StyleSheet,
     TouchableOpacity,
@@ -84,6 +85,7 @@ export const MostSearchedSection = () => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const vm = useMostSearchedViewModel();
+    const { t } = useTranslation();
 
     if (!vm.hasMostSearched) return null;
 
@@ -95,7 +97,7 @@ export const MostSearchedSection = () => {
     return (
         <View style={styles.container}>
             <FlexText style={[common.subheading, { fontSize: 15, marginBottom: 12 }]}>
-                Most Searched
+                {t('search.sections.mostSearched')}
             </FlexText>
 
             {pairs.map((pair, rowIdx) => (

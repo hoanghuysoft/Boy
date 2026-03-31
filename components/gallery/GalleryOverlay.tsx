@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingBottom: 12,
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
     },
     galleryButton: {
         width: 40,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     galleryBottomBar: {
         paddingHorizontal: 16,
         paddingTop: 16,
-        backgroundColor: 'rgba(0,0,0,0.4)',
+        backgroundColor: 'rgba(0, 0, 0, 0)',
     },
     galleryProfileName: {
         color: 'white',

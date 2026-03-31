@@ -1,7 +1,10 @@
 import { getLocales } from 'expo-localization';
+import dayjs from 'dayjs';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { createMMKV } from 'react-native-mmkv';
+import 'dayjs/locale/en';
+import 'dayjs/locale/vi';
 
 import en from './locales/en';
 import vi from './locales/vi';
@@ -14,6 +17,11 @@ export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
     en: 'English',
     vi: 'Tiếng Việt',
+};
+
+const DAYJS_LOCALE_BY_LANGUAGE: Record<SupportedLanguage, string> = {
+    en: 'en',
+    vi: 'vi',
 };
 
 // ─── MMKV storage (shared with language store) ────────────────────────────────
@@ -45,6 +53,10 @@ const getInitialLanguage = (): SupportedLanguage => {
     return getDeviceLanguage();
 };
 
+const applyDayjsLocale = (language: SupportedLanguage) => {
+    dayjs.locale(DAYJS_LOCALE_BY_LANGUAGE[language]);
+};
+
 // ─── i18next initialisation ───────────────────────────────────────────────────
 
 i18n.use(initReactI18next).init({
@@ -57,6 +69,14 @@ i18n.use(initReactI18next).init({
     interpolation: {
         escapeValue: false,
     },
+});
+
+// Keep dayjs locale in sync with app language globally.
+applyDayjsLocale(getInitialLanguage());
+i18n.on('languageChanged', (lng) => {
+    if ((SUPPORTED_LANGUAGES as readonly string[]).includes(lng)) {
+        applyDayjsLocale(lng as SupportedLanguage);
+    }
 });
 
 export default i18n;

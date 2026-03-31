@@ -19,20 +19,68 @@ import {
 } from "@solar-icons/react-native";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     Dimensions,
+    RefreshControl,
     StatusBar,
     StyleSheet,
     TouchableOpacity,
     View
 } from "react-native";
-import Reanimated, { useAnimatedStyle } from "react-native-reanimated";
+import Reanimated, { useAnimatedStyle, useSharedValue, withSpring, withTiming, withSequence, runOnJS } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Video, { VideoRef } from "react-native-video";
 import { useShotsViewModel } from "../../viewmodels/ShotsViewModel";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+// ─── Floating Heart Animation ──────────────────────────────────────────────
+const FloatingHeart = React.memo(({ x, y, onComplete }: { x: number, y: number, onComplete: () => void }) => {
+    const scale = useSharedValue(0);
+    const translateY = useSharedValue(0);
+    const opacity = useSharedValue(1);
+
+    useEffect(() => {
+        // Pop in
+        scale.value = withSequence(
+            withSpring(1.2, { damping: 10, stiffness: 200 }),
+            withSpring(1, { damping: 10, stiffness: 200 })
+        );
+        // Float up
+        translateY.value = withTiming(-150, { duration: 1000 });
+        // Fade out
+        opacity.value = withSequence(
+            withTiming(1, { duration: 600 }),
+            withTiming(0, { duration: 400 }, (finished) => {
+                if (finished) {
+                    runOnJS(onComplete)();
+                }
+            })
+        );
+    }, []);
+
+    const style = useAnimatedStyle(() => {
+        return {
+            position: 'absolute',
+            left: x - 50, // center horizontally (icon size 100)
+            top: y - 50,  // center vertically
+            transform: [
+                { translateY: translateY.value },
+                { scale: scale.value },
+                { rotate: '-15deg' }
+            ],
+            opacity: opacity.value,
+        };
+    });
+
+    return (
+        <Reanimated.View style={[style, { zIndex: 9999 }]} pointerEvents="none">
+            <HeartBold size={100} color="#ff4d6d" />
+        </Reanimated.View>
+    );
+});
 
 // ─── Single Video Item ──────────────────────────────────────────────
 interface ShotItemProps {
@@ -109,6 +157,39 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
 
     const shouldRenderVideo = isFocused ? (isActive || shouldPreload) : isActive;
 
+    const [hearts, setHearts] = useState<{ id: number, x: number, y: number }[]>([]);
+    const lastTapTime = useRef(0);
+    const singleTapTimer = useRef<NodeJS.Timeout | null>(null);
+
+    const handleVideoPress = (e: any) => {
+        const now = Date.now();
+        const DOUBLE_TAP_DELAY = 250; // Use 250ms for snappier double tap vs single tap separation
+        
+        if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
+            // Double tap!
+            if (singleTapTimer.current) {
+                clearTimeout(singleTapTimer.current);
+                singleTapTimer.current = null;
+            }
+            if (!isLiked) {
+                onLikePress();
+            }
+            const { locationX, locationY } = e.nativeEvent;
+            setHearts(prev => [...prev, { id: Date.now(), x: locationX, y: locationY }]);
+            lastTapTime.current = 0; // Reset
+        } else {
+            lastTapTime.current = now;
+            singleTapTimer.current = setTimeout(() => {
+                onTogglePause(); // Single tap behaviour executes after delay
+                singleTapTimer.current = null;
+            }, DOUBLE_TAP_DELAY);
+        }
+    };
+
+    const removeHeart = useCallback((id: number) => {
+        setHearts(prev => prev.filter(h => h.id !== id));
+    }, []);
+
     return (
         <View style={[styles.itemContainer, { height: SCREEN_HEIGHT }]}>
             {/* Video + thumbnail area — height tracks the sheet's top edge */}
@@ -148,12 +229,22 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
                 )}
             </Reanimated.View>
 
-            {/* Tap to pause/play — covers the full item */}
+            {/* Tap to pause/play / double tap to like — covers the full item */}
             <TouchableOpacity
                 activeOpacity={1}
                 style={StyleSheet.absoluteFill}
-                onPress={onTogglePause}
+                onPress={handleVideoPress}
             />
+
+            {/* Render Floating Hearts */}
+            {hearts.map(heart => (
+                <FloatingHeart 
+                    key={heart.id} 
+                    x={heart.x} 
+                    y={heart.y} 
+                    onComplete={() => removeHeart(heart.id)} 
+                />
+            ))}
 
             {/* Paused indicator */}
             {isPaused && isActive && (
@@ -237,6 +328,7 @@ const ShotsInner = () => {
     const vm = useShotsViewModel();
     const insets = useSafeAreaInsets();
     const isFocused = useIsFocused();
+    const { t } = useTranslation();
 
     const renderItem = useCallback(({ item, index }: { item: VideoItem; index: number }) => {
         const isActive = index === vm.activeIndex;
@@ -287,7 +379,7 @@ const ShotsInner = () => {
                 onPress={() => vm.switchFeedType('random')}
             >
                 <FlexText style={[styles.headerTitle, vm.feedType === 'random' ? styles.activeTabTitle : styles.inactiveTabTitle]}>
-                    Following
+                    {t('shots.tabs.following')}
                 </FlexText>
                 <View style={[styles.activeTabIndicator, vm.feedType !== 'random' && { backgroundColor: 'transparent' }]} />
             </TouchableOpacity>
@@ -297,7 +389,7 @@ const ShotsInner = () => {
                 onPress={() => vm.switchFeedType('on_this_day')}
             >
                 <FlexText style={[styles.headerTitle, vm.feedType === 'on_this_day' ? styles.activeTabTitle : styles.inactiveTabTitle]}>
-                    This day
+                    {t('shots.tabs.thisDay')}
                 </FlexText>
                 <View style={[styles.activeTabIndicator, vm.feedType !== 'on_this_day' && { backgroundColor: 'transparent' }]} />
             </TouchableOpacity>
@@ -320,13 +412,13 @@ const ShotsInner = () => {
                 <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
                 <Ionicons name="videocam-off-outline" size={48} color="rgba(255,255,255,0.5)" />
                 <FlexText style={{ color: 'rgba(255,255,255,0.5)', fontSize: 16, marginTop: 12 }}>
-                    {vm.isError ? "Failed to load videos" : "No videos yet"}
+                    {vm.isError ? t('shots.empty.error') : t('shots.empty.noVideos')}
                 </FlexText>
                 <TouchableOpacity
                     onPress={() => vm.refetch()}
                     style={{ marginTop: 16, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20 }}
                 >
-                    <FlexText style={{ color: 'white', fontSize: 14 }}>Retry</FlexText>
+                    <FlexText style={{ color: 'white', fontSize: 14 }}>{t('shots.actions.retry')}</FlexText>
                 </TouchableOpacity>
                 {topHeader}
             </View>
@@ -345,12 +437,20 @@ const ShotsInner = () => {
                 pagingEnabled
                 scrollEnabled={!vm.isCommentsOpen}
                 showsVerticalScrollIndicator={false}
-                bounces={false}
-                overScrollMode="never"
+                bounces
                 onViewableItemsChanged={vm.onViewableItemsChanged}
                 viewabilityConfig={vm.viewabilityConfig}
                 onEndReached={() => vm.loadMore()}
                 onEndReachedThreshold={0.8}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={vm.isRefetching}
+                        onRefresh={vm.refetch}
+                        tintColor={vm.colors.text}
+                        colors={[vm.colors.text]}
+                        progressBackgroundColor={vm.colors.card}
+                    />
+                }
                 ListFooterComponent={
                     vm.isFetchingNextPage ? (
                         <View style={{ paddingVertical: 24 }}>
@@ -408,6 +508,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 70,
         paddingHorizontal: 16,
+        zIndex: 1000,
     },
     profileRow: {
         flexDirection: 'row',

@@ -2,6 +2,7 @@ import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { FlatList, Linking, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from 'react-native-turbo-image';
@@ -103,6 +104,7 @@ const MusicItem = memo(({
 export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, onEndReached }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const { t } = useTranslation();
     const inset = useSafeAreaInsets();
     const { stopPlayback } = useAudioStore();
     const backHandler = useSheetBackHandler(ref);
@@ -127,9 +129,9 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <FlexText style={[common.heading, { fontSize: 24 }]}>Music</FlexText>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.sheets.music.title')}</FlexText>
                     <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-                        Listen to my favorite tracks
+                        {t('profile.sheets.music.subtitle')}
                     </FlexText>
                 </View>
 

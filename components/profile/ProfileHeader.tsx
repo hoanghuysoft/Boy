@@ -8,6 +8,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import React, { memo, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import {
     Animated,
     Pressable,
@@ -80,6 +81,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     postCount = 0,
     isMe = false,
 }) => {
+    const { t } = useTranslation();
     const vm = useProfileHeaderViewModel({
         scrollY,
         activeTab,
@@ -195,21 +197,21 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                         )}
                         <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 10 }}>
                             <View style={[vm.common.row, { gap: 4 }]}>
-                                <FlexText style={[vm.common.heading, { fontWeight: '700' }]}>{profile?.name || "Boy not found"}</FlexText>
+                                <FlexText style={[vm.common.heading, { fontWeight: '700' }]}>{profile?.name || t("profile.header.notFound")}</FlexText>
                                 {profile?.is_verified && <VerifiedIcon size={14} backgroundColor={vm.colors.verify} />}
                                 {vm.flagCode && <CountryFlag isoCode={vm.flagCode} size={12} style={{ borderRadius: 2, marginLeft: 4 }} />}
                             </View>
                             <View style={[vm.common.row, { gap: 6, marginTop: 2 }]}>
                                 <FlexText style={vm.common.bodySmall}>
-                                    <FlexText style={{ fontWeight: '700' }}>{imageCount}</FlexText> images
+                                    <FlexText style={{ fontWeight: '700' }}>{imageCount}</FlexText> {t('profile.header.countImages', { count: imageCount })}
                                 </FlexText>
                                 <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted }]}>·</FlexText>
                                 <FlexText style={vm.common.bodySmall}>
-                                    <FlexText style={{ fontWeight: '700' }}>{videoCount}</FlexText> videos
+                                    <FlexText style={{ fontWeight: '700' }}>{videoCount}</FlexText> {t('profile.header.countVideos', { count: videoCount })}
                                 </FlexText>
                                 <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted }]}>·</FlexText>
                                 <FlexText style={vm.common.bodySmall}>
-                                    <FlexText style={{ fontWeight: '700' }}>{postCount}</FlexText> posts
+                                    <FlexText style={{ fontWeight: '700' }}>{postCount}</FlexText> {t('profile.header.countPosts', { count: postCount })}
                                 </FlexText>
                             </View>
                         </View>
@@ -237,7 +239,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 style={{ flex: 1, backgroundColor: '#1877F2' }}>
                                 <TouchableOpacity style={{ borderRadius: 8, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1 }}>
                                     <HeartAngleBold size={22} color="#fff" />
-                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>Add love</FlexText>
+                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>{t('profile.header.actions.addLove')}</FlexText>
                                 </TouchableOpacity>
                             </SquircleView>
                             <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={8}
@@ -247,7 +249,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     style={{ borderRadius: 8, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1 }}
                                 >
                                     <ChatSquareLikeBold size={22} color={vm.colors.text} />
-                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }}>Know me</FlexText>
+                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }}>{t('profile.header.actions.knowMe')}</FlexText>
                                 </TouchableOpacity>
                             </SquircleView>
                         </View>
@@ -286,7 +288,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                 </View>
                                 <View style={{ flex: 1 }}>
                                     <FlexText style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }} numberOfLines={1}>
-                                        {profile.loved_ones.length} family member{profile.loved_ones.length > 1 ? 's' : ''}
+                                        {profile.loved_ones.length} {t('profile.header.countFamilyMembers', { count: profile.loved_ones.length })}
                                     </FlexText>
                                 </View>
                                 <HeartBold size={18} color={vm.colors.muted} />
@@ -339,7 +341,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                         <Ionicons name="logo-facebook" size={22} color="#FFF" />
                                     </View>
                                     <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: '#FFF' }]}>
-                                        Facebook Profile
+                                        {t('profile.header.cards.facebookProfile')}
                                     </FlexText>
                                 </TouchableOpacity>
                             )}
@@ -356,7 +358,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     />
                                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                                     <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: 'white', textAlign: 'center' }]}>
-                                        {socialLinks.length} social link{socialLinks.length > 1 ? 's' : ''}
+                                        {socialLinks.length} {t('profile.header.countSocialLinks', { count: socialLinks.length })}
                                     </FlexText>
                                 </TouchableOpacity>
                             )}
@@ -371,7 +373,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                         <PointOnMapBold size={20} color={vm.colors.text} />
                                     </View>
                                     <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1 }]}>
-                                        {addresses.length} address{addresses.length > 1 ? 'es' : ''}
+                                        {addresses.length} {t('profile.header.countAddresses', { count: addresses.length })}
                                     </FlexText>
                                 </TouchableOpacity>
                             )}
@@ -386,7 +388,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                         <CaseMinimalisticBold size={20} color={vm.colors.text} />
                                     </View>
                                     <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1 }]}>
-                                        {workplaces.length} workplace{workplaces.length > 1 ? 's' : ''}
+                                        {workplaces.length} {t('profile.header.countWorkplaces', { count: workplaces.length })}
                                     </FlexText>
                                 </TouchableOpacity>
                             )}

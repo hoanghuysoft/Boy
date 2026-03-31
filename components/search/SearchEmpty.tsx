@@ -1,5 +1,6 @@
 import React from "react";
 import { View } from "react-native";
+import { TFunction } from "i18next";
 import { FlexText } from "../FlexText";
 
 interface SearchEmptyProps {
@@ -8,9 +9,10 @@ interface SearchEmptyProps {
     common: any;
     searchQuery: string;
     isAdmin?: boolean;
+    t: TFunction;
 }
 
-export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin = false }: SearchEmptyProps) => (
+export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin = false, t }: SearchEmptyProps) => (
     <View style={styles.emptyState}>
         <FlexText
             style={[
@@ -19,10 +21,10 @@ export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin 
             ]}
         >
             {searchQuery
-                ? "No results found"
+                ? t('search.empty.titleNoResults')
                 : isAdmin
-                    ? "No people yet"
-                    : "Search for people"}
+                    ? t('search.empty.titleNoPeople')
+                    : t('search.empty.titleSearchPeople')}
         </FlexText>
         <FlexText
             style={[
@@ -36,10 +38,10 @@ export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin 
             ]}
         >
             {searchQuery
-                ? `No profiles match "${searchQuery}"`
+                ? t('search.empty.subtitleNoProfilesMatch', { query: searchQuery })
                 : isAdmin
-                    ? "No profiles available"
-                    : "Type a name to find people"}
+                    ? t('search.empty.subtitleNoProfilesAvailable')
+                    : t('search.empty.subtitleTypeName')}
         </FlexText>
     </View>
 );

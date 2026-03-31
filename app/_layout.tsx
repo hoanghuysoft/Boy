@@ -175,7 +175,7 @@ const RootContent = () => {
           />
           <Stack.Screen
             name="bookmarks"
-            options={{ headerShown: false, animation: "slide_from_right" }}
+            options={{ headerShown: false, animation: "slide_from_bottom" }}
           />
           <Stack.Screen
             name="language-settings"
@@ -199,15 +199,19 @@ const RootContent = () => {
           />
           <Stack.Screen
             name="show_detail"
-            options={{ headerShown: false, animation: "none" }}
+            options={{ headerShown: false, animation: "slide_from_left" }}
           />
           <Stack.Screen
             name="show_list"
-            options={{ headerShown: false, animation: "none" }}
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="watchlist"
+            options={{ headerShown: false, animation: "slide_from_right" }}
           />
           <Stack.Screen
             name="create"
-            options={{ headerShown: false, animation: "none" }}
+            options={{ headerShown: false, animation: "slide_from_bottom" }}
           />
         </Stack>
         <GlobalAudioPlayer />

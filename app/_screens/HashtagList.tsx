@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     ActivityIndicator,
     FlatList,
@@ -22,6 +23,7 @@ const HashtagListScreen = () => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const vm = useTrendingHashtagsViewModel();
+    const { t } = useTranslation();
 
     const renderItem = useCallback(
         ({ item }: { item: Hashtag }) => (
@@ -38,14 +40,14 @@ const HashtagListScreen = () => {
                         <FlexText
                             style={[
                                 common.body,
-                                { color: colors.secondary, fontWeight: '600' },
+                                { color: colors.text, fontWeight: '600' },
                             ]}
                         >
                             #{item.tag}
                         </FlexText>
                         {item.count != null && (
                             <FlexText style={[common.caption, { color: colors.muted, marginTop: 2 }]}>
-                                {item.count.toLocaleString()} post{item.count !== 1 ? 's' : ''}
+                                {t('hashtag.posts.count', { count: item.count })}
                             </FlexText>
                         )}
                     </View>
@@ -85,7 +87,7 @@ const HashtagListScreen = () => {
                         { fontSize: 20, marginTop: 20, marginBottom: 8 },
                     ]}
                 >
-                    No trending tags
+                    {t('hashtag.list.emptyTitle')}
                 </FlexText>
                 <FlexText
                     style={[
@@ -93,11 +95,11 @@ const HashtagListScreen = () => {
                         { color: colors.muted, textAlign: 'center', lineHeight: 22 },
                     ]}
                 >
-                    Check back later for trending hashtags.
+                    {t('hashtag.list.emptyBody')}
                 </FlexText>
             </View>
         );
-    }, [vm.isLoading, colors, common, theme]);
+    }, [vm.isLoading, colors, common, theme, t]);
 
     const ListHeaderComponent = useCallback(
         () => (
@@ -108,15 +110,15 @@ const HashtagListScreen = () => {
                     marginBottom: 16,
                 }}
             >
-                <FlexText style={[common.heading, { fontSize: 28 }]}>Trending Tags</FlexText>
+                <FlexText style={[common.heading, { fontSize: 28 }]}>{t('hashtag.list.title')}</FlexText>
                 <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
                     {vm.allTags.length > 0
-                        ? `${vm.allTags.length} tag${vm.allTags.length !== 1 ? 's' : ''}`
-                        : 'Discover what people are talking about'}
+                        ? t('hashtag.list.tagsCount', { count: vm.allTags.length })
+                        : t('hashtag.list.subtitle')}
                 </FlexText>
             </View>
         ),
-        [insets.top, common, colors.muted, vm.allTags.length]
+        [insets.top, common, colors.muted, vm.allTags.length, t]
     );
 
     return (

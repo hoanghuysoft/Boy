@@ -12,14 +12,18 @@ import {
     vec
 } from "@shopify/react-native-skia";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { memo, useMemo } from "react";
+import React, { memo, useCallback, useEffect, useMemo } from "react";
 import { Animated, StyleSheet } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { useSharedValue } from "react-native-reanimated";
 
 // Component for static images
-const StaticCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blurHeight }: { imageUrl: string; screenWidth: number; carouselHeight: number; blurHeight: number }) => {
+const StaticCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blurHeight, onImageLoaded }: { imageUrl: string; screenWidth: number; carouselHeight: number; blurHeight: number; onImageLoaded?: () => void }) => {
     const image = useImage(imageUrl);
+
+    useEffect(() => {
+        if (image) onImageLoaded?.();
+    }, [image]);
 
     if (!image) return null;
 
@@ -74,9 +78,13 @@ const StaticCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blurH
 });
 StaticCarouselImage.displayName = "StaticCarouselImage";
 
-const AnimatedCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blurHeight }: { imageUrl: string; screenWidth: number; carouselHeight: number; blurHeight: number }) => {
+const AnimatedCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blurHeight, onImageLoaded }: { imageUrl: string; screenWidth: number; carouselHeight: number; blurHeight: number; onImageLoaded?: () => void }) => {
     const isPaused = useSharedValue(false);
     const animatedImage = useAnimatedImageValue(imageUrl, isPaused);
+
+    useEffect(() => {
+        if (animatedImage) onImageLoaded?.();
+    }, [animatedImage]);
 
     if (!animatedImage) return null;
 
@@ -129,13 +137,13 @@ const AnimatedCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, blu
 });
 AnimatedCarouselImage.displayName = "AnimatedCarouselImage";
 
-const SkiaCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight }: { imageUrl: string | undefined, screenWidth: number, carouselHeight: number }) => {
+const SkiaCarouselImage = memo(({ imageUrl, screenWidth, carouselHeight, onImageLoaded }: { imageUrl: string | undefined, screenWidth: number, carouselHeight: number, onImageLoaded?: () => void }) => {
     const blurHeight = carouselHeight * 0.5;
     if (!imageUrl) return null;
     if (isGifUrl(imageUrl)) {
-        return <AnimatedCarouselImage imageUrl={imageUrl} screenWidth={screenWidth} carouselHeight={carouselHeight} blurHeight={blurHeight} />;
+        return <AnimatedCarouselImage imageUrl={imageUrl} screenWidth={screenWidth} carouselHeight={carouselHeight} blurHeight={blurHeight} onImageLoaded={onImageLoaded} />;
     }
-    return <StaticCarouselImage imageUrl={imageUrl} screenWidth={screenWidth} carouselHeight={carouselHeight} blurHeight={blurHeight} />;
+    return <StaticCarouselImage imageUrl={imageUrl} screenWidth={screenWidth} carouselHeight={carouselHeight} blurHeight={blurHeight} onImageLoaded={onImageLoaded} />;
 });
 SkiaCarouselImage.displayName = "SkiaCarouselImage";
 
@@ -181,9 +189,16 @@ interface HomeCarouselProps {
 const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
     const {
         currentImageUrl,
+        analyzeImageLuminance,
         SCREEN_WIDTH,
         CAROUSEL_HEIGHT,
     } = useHomeCarouselViewModel(animatedVisibility);
+
+    // Only fire text-color analysis once Skia confirms the image is actually painted,
+    // so overlayColor never jumps ahead of the visible image.
+    const handleImageLoaded = useCallback(() => {
+        if (currentImageUrl) analyzeImageLuminance(currentImageUrl);
+    }, [currentImageUrl, analyzeImageLuminance]);
 
     const animatedStyle = useMemo(() => {
         if (!animatedVisibility) return {};
@@ -219,6 +234,7 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
                 imageUrl={currentImageUrl}
                 screenWidth={SCREEN_WIDTH}
                 carouselHeight={CAROUSEL_HEIGHT}
+                onImageLoaded={handleImageLoaded}
             />
             <ColorGradientOverlay carouselHeight={CAROUSEL_HEIGHT} />
         </Animated.View>

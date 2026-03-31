@@ -9,6 +9,7 @@ import {
 import { useStatusBar } from "@/context/StatusBarContext";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useCachedVideoUri } from "@/hooks/useCachedVideoUri";
+import { useVideoResume, VIDEO_RESUME_MIN_DURATION } from "@/hooks/useVideoResume";
 import { createCommonStyles } from "@/styles/common";
 import * as IntentLauncher from "expo-intent-launcher";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -68,10 +69,18 @@ const VideoPlayer = () => {
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
   const [seekPosition, setSeekPosition] = useState<number | null>(null);
 
+  const { getResumePosition, savePosition, clearPosition } = useVideoResume(videoUrl);
+
   // Refs
   const ref = useRef<VideoRef>(null);
   const wasPlayingRef = useRef(false);
   const isSeekingRef = useRef(false);
+  // Track latest progress so handleClose always reads the current position
+  const progressRef = useRef<VideoProgress>({ currentTime: 0, seekableDuration: 0 });
+  // Track duration from onLoad so we can gate the resume threshold early
+  const durationRef = useRef(0);
+  // Ensure we only auto-seek to the resume position once per session
+  const hasResumedRef = useRef(false);
   const controlsOpacity = useRef(new Animated.Value(0)).current;
   const topBarTranslateY = useRef(new Animated.Value(-50)).current;
   const bottomBarTranslateY = useRef(new Animated.Value(50)).current;
@@ -159,8 +168,11 @@ const VideoPlayer = () => {
   };
 
   const handleClose = useCallback(() => {
+    const { currentTime, seekableDuration } = progressRef.current;
+    // seekableDuration may lag on early close; fall back to durationRef
+    savePosition(currentTime, seekableDuration || durationRef.current);
     router.back();
-  }, [router]);
+  }, [router, savePosition]);
 
   const openExternalLink = async () => {
     if (Platform.OS === "android") {
@@ -314,17 +326,28 @@ const VideoPlayer = () => {
           onLoadStart={() => setIsLoading(true)}
           onLoad={(data) => {
             setIsLoading(false);
-            // Calculate natural aspect ratio from video dimensions
             if (data.naturalSize) {
               const { width, height } = data.naturalSize;
               if (width && height) {
                 setVideoAspectRatio(width / height);
               }
             }
+            durationRef.current = data.duration ?? 0;
+            if (!hasResumedRef.current && data.duration >= VIDEO_RESUME_MIN_DURATION) {
+              hasResumedRef.current = true;
+              const savedPos = getResumePosition();
+              if (savedPos && savedPos > 0) {
+                ref.current?.seek(savedPos);
+              }
+            }
           }}
           onBuffer={({ isBuffering }) => setIsLoading(isBuffering)}
-          onProgress={(prog) => setProgress(prog)}
+          onProgress={(prog) => {
+            setProgress(prog);
+            progressRef.current = prog;
+          }}
           onEnd={() => {
+            clearPosition();
             if (!isLooping) {
               ref.current?.seek(0);
               setIsPaused(true);

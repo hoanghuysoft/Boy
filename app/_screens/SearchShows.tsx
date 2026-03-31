@@ -15,6 +15,7 @@ import {
   Keyboard,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -50,12 +51,13 @@ const SearchShowsScreen = () => {
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  const { data: categoriesData } = useCategoriesQuery();
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useCategoriesQuery();
   const categories = categoriesData?.categories ?? [];
 
   const {
     data,
     isLoading,
+    isRefetching,
     isFetchingNextPage,
     isError,
     fetchNextPage,
@@ -175,31 +177,52 @@ const SearchShowsScreen = () => {
         <FlexText style={[common.heading, { fontSize: 18, marginBottom: 8 }]}>
           Categories
         </FlexText>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 10 }}
-        >
-          {categories.map((c) => (
-            <TouchableOpacity
-              key={c.url}
-              onPress={() => handleCategoryPress(c)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.categoryPill}>
-                <FlexText
-                  numberOfLines={1}
-                  style={{ color: colors.text, fontWeight: "600" }}
-                >
-                  {c.name}
-                </FlexText>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {isCategoriesLoading ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 10 }}
+          >
+            {[0, 1, 2, 3].map((i) => (
+              <ShimmerEffect
+                key={i}
+                style={[
+                  styles.categoryPill,
+                  {
+                    width: i === 0 ? 96 : i === 1 ? 120 : i === 2 ? 88 : 110,
+                    backgroundColor: colors.card,
+                  },
+                ]}
+              />
+            ))}
+          </ScrollView>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 10 }}
+          >
+            {categories.map((c) => (
+              <TouchableOpacity
+                key={c.url}
+                onPress={() => handleCategoryPress(c)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.categoryPill}>
+                  <FlexText
+                    numberOfLines={1}
+                    style={{ color: colors.text, fontWeight: "600" }}
+                  >
+                    {c.name}
+                  </FlexText>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
       </View>
     );
-  }, [categories, common.heading, colors.text, handleCategoryPress, submittedQuery, styles.categoryPill]);
+  }, [categories, common.heading, colors.card, colors.text, handleCategoryPress, isCategoriesLoading, submittedQuery, styles.categoryPill]);
 
   const ListFooterComponent = useCallback(() => {
     if (!submittedQuery || !hasNextPage) return null;
@@ -300,6 +323,15 @@ const SearchShowsScreen = () => {
           paddingBottom: contentBottomPadding,
           gap: 12,
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
+            tintColor={colors.text}
+            colors={[colors.text]}
+            progressBackgroundColor={colors.card}
+          />
+        }
       />
 
       {/* Floating search bar */}

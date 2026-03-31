@@ -13,6 +13,7 @@ import LineiconsIcon from "@lineiconshq/react-native-lineicons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -39,6 +40,7 @@ const SearchScreen = () => {
   const navigation = useRouter();
   const { colors, typography } = useThemeContext();
   const common = createCommonStyles(colors, typography);
+  const { t } = useTranslation();
 
   // ─── ViewModel ─────────────────────────────────────────────────
   const vm = useSearchViewModel();
@@ -66,8 +68,9 @@ const SearchScreen = () => {
         common,
         searchQuery: vm.searchQuery,
         isAdmin: vm.isAdmin,
+        t,
       }),
-    [colors, common, vm.searchQuery, vm.isAdmin],
+    [colors, common, vm.searchQuery, vm.isAdmin, t],
   );
 
   const ListFooterComponent = useCallback(
@@ -123,13 +126,13 @@ const SearchScreen = () => {
       </View>
 
       <View style={[styles.header, { marginTop: vm.insets.top + 66 }]}>
-        <FlexText style={[common.heading, { fontSize: 28 }]}>Search</FlexText>
+        <FlexText style={[common.heading, { fontSize: 28 }]}>{t('search.header.title')}</FlexText>
         <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
           {vm.searchQuery
-            ? `${vm.totalResults} result(s)`
+            ? t('search.header.resultsCount', { count: vm.totalResults })
             : vm.isAdmin
-              ? `People ${vm.totalResults}`
-              : "Explore for more contents on the platform"}
+              ? t('search.header.peopleCount', { count: vm.totalResults })
+              : t('search.header.exploreSubtitle')}
         </FlexText>
       </View>
 
@@ -198,7 +201,7 @@ const SearchScreen = () => {
             <TextInput
               ref={vm.inputRef}
               style={[styles.searchInput, { color: "white", marginLeft: 12 }]}
-              placeholder="What are you looking for?"
+              placeholder={t('search.searchBar.placeholder')}
               placeholderTextColor={colors.muted}
               value={vm.searchQuery}
               onChangeText={vm.handleSearchChange}

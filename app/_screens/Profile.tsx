@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
-import React, { useCallback, useEffect, useMemo } from "react";
+import { Image } from "expo-image";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Animated,
   RefreshControl,
@@ -9,6 +11,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { Snackbar } from 'react-native-paper';
 import { PostItem } from '../../components/PostItem';
 import ProfileHeader, { COVER_HEIGHT } from '../../components/profile/ProfileHeader';
@@ -81,6 +84,39 @@ const ProfileSkeleton: React.FC = () => {
 // ─── ProfileContent — uses ViewModel for all logic ─────────────────────────────
 const ProfileContent = () => {
   const vm = useProfileViewModel();
+  const { t } = useTranslation();
+
+  // ─── Header avatar spring animation (native thread via Reanimated) ───
+  const headerAvatarProgress = useSharedValue(0);
+
+  useEffect(() => {
+    headerAvatarProgress.value = withSpring(vm.showHeaderAvatar ? 1 : 0, {
+      damping: 14,
+      stiffness: 180,
+      mass: 0.8,
+    });
+  }, [vm.showHeaderAvatar]);
+
+  const headerAvatarContainerStyle = useAnimatedStyle(() => {
+    // Clamp layout progress strictly between 0 and 1.
+    // This prevents the container's width/margin from overshooting > 1, 
+    // which stops the neighboring music pill from jittering back and forth!
+    const layoutProgress = Math.min(1, Math.max(0, headerAvatarProgress.value));
+    return {
+      width: layoutProgress * 40,
+      marginRight: layoutProgress * 8,
+      opacity: layoutProgress,
+    };
+  });
+
+  const headerAvatarImageStyle = useAnimatedStyle(() => {
+    // Let the image purely bounce above 1 for a satisfying spring effect.
+    // We only clamp at 0 so it doesn't invert (scale negative) when returning.
+    const scaleProgress = Math.max(0, headerAvatarProgress.value);
+    return {
+      transform: [{ scale: scaleProgress }],
+    };
+  });
 
   // Grid Hooks
   const {
@@ -226,16 +262,16 @@ const ProfileContent = () => {
     let message = "";
     switch (vm.activeTab) {
       case "Images":
-        title = "No Photos";
-        message = "No photos have been uploaded yet.";
+        title = t("profile.empty.images.title");
+        message = t("profile.empty.images.message");
         break;
       case "Videos":
-        title = "No Shots";
-        message = "No shots have been uploaded yet.";
+        title = t("profile.empty.videos.title");
+        message = t("profile.empty.videos.message");
         break;
       case "Feed":
-        title = "No Posts";
-        message = "No posts have been published yet.";
+        title = t("profile.empty.feed.title");
+        message = t("profile.empty.feed.message");
         break;
     }
     return (
@@ -244,7 +280,7 @@ const ProfileContent = () => {
         <FlexText style={[vm.common.body, styles.emptyMessage]}>{message}</FlexText>
       </View>
     );
-  }, [vm.activeTab, vm.common]);
+  }, [vm.activeTab, vm.common, t]);
 
   // Loading / Error state
   if (!vm.profile) {
@@ -309,10 +345,10 @@ const ProfileContent = () => {
           visible={vm.snackbarVisible}
           onDismiss={vm.dismissSnackbar}
           action={{
-            label: 'Retry',
+            label: t("profile.actions.retry"),
             onPress: vm.onRefresh,
           }}>
-          Failed to load profile
+          {t("profile.errors.failedToLoadProfile")}
         </Snackbar>
       </View>
     );
@@ -369,7 +405,7 @@ const ProfileContent = () => {
 
         {!vm.isMe && (
           <View style={{ position: 'absolute', top: vm.inset.top + 8, left: 16, zIndex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
 
               {/* Back Button */}
               <BlurView
@@ -380,6 +416,7 @@ const ProfileContent = () => {
                 style={{
                   borderRadius: 999,
                   overflow: 'hidden',
+                  marginRight: 8,
                 }}
               >
                 <TouchableOpacity
@@ -395,6 +432,46 @@ const ProfileContent = () => {
                   <Ionicons name='chevron-back' size={24} color={vm.colors.text} />
                 </TouchableOpacity>
               </BlurView>
+
+              {/* Header Avatar — springs in when scrolled past profile avatar */}
+              <Reanimated.View
+                style={[
+                  {
+                    height: 40,
+                    overflow: 'hidden',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                  headerAvatarContainerStyle,
+                ]}
+              >
+                <TouchableOpacity activeOpacity={0.8} onPress={vm.scrollToTop}>
+                  <Reanimated.View
+                    style={[
+                      {
+                        width: 40,
+                        height: 40,
+                        borderRadius: 999,
+                        overflow: 'hidden',
+                      },
+                      headerAvatarImageStyle,
+                    ]}
+                  >
+                    <Image
+                      source={
+                        vm.profile?.avatar_url
+                          ? { uri: vm.profile.avatar_url }
+                          : vm.profile?.gender === 'male'
+                            ? require('../../assets/images/AV17.png')
+                            : require('../../assets/images/AV86.png')
+                      }
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit="cover"
+                    />
+                  </Reanimated.View>
+                </TouchableOpacity>
+              </Reanimated.View>
+
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => vm.musicSheetRef.current?.present()}
@@ -419,13 +496,13 @@ const ProfileContent = () => {
                         style={[styles.titleText, { color: vm.colors.text }]}
                         numberOfLines={1}
                       >
-                        {vm.hasMusic ? vm.currentTrack?.title : 'Add Music'}
+                        {vm.hasMusic ? vm.currentTrack?.title : t("profile.music.addMusic")}
                       </FlexText>
                       <FlexText
                         style={[styles.artistText, { color: vm.colors.text }]}
                         numberOfLines={1}
                       >
-                        {vm.hasMusic ? vm.currentTrack?.artist : 'Select track'}
+                        {vm.hasMusic ? vm.currentTrack?.artist : t("profile.music.selectTrack")}
                       </FlexText>
                     </View>
                   </View>
@@ -436,46 +513,15 @@ const ProfileContent = () => {
           </View>
         )}
 
-        {/* Floating Scroll to Top Button */}
-        {!vm.isMe && (
-          <Animated.View
-            pointerEvents={vm.showScrollTop ? 'auto' : 'none'}
-            style={{
-              position: 'absolute',
-              bottom: vm.inset.bottom + 20,
-              right: 16,
-              opacity: vm.scrollTopButtonOpacity,
-              zIndex: 1000,
-            }}
-          >
-            <TouchableOpacity
-              onPress={vm.scrollToTop}
-              style={{
-                backgroundColor: vm.colors.containerContent,
-                borderRadius: 999,
-                width: 48,
-                height: 48,
-                justifyContent: 'center',
-                alignItems: 'center',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.25,
-                shadowRadius: 4,
-                elevation: 5,
-              }}
-            >
-              <Ionicons name='chevron-up' size={24} color={vm.colors.text} />
-            </TouchableOpacity>
-          </Animated.View>
-        )}
+
         <Snackbar
           visible={vm.snackbarVisible}
           onDismiss={vm.dismissSnackbar}
           action={{
-            label: 'Retry',
+            label: t("profile.actions.retry"),
             onPress: vm.onRefresh,
           }}>
-          Failed to load profile
+          {t("profile.errors.failedToLoadProfile")}
         </Snackbar>
 
         <MusicSheet

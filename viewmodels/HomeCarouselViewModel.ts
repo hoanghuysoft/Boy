@@ -7,7 +7,7 @@ import { Animated, Dimensions } from "react-native";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CAROUSEL_HEIGHT = SCREEN_HEIGHT * 0.28;
-const AUTO_SCROLL_INTERVAL = 5000;
+const AUTO_SCROLL_INTERVAL = 30000;
 
 export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) => {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -65,11 +65,9 @@ export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) =>
         };
     }, [activeCarouselData]);
 
-    useEffect(() => {
-        if (currentImageUrl) {
-            analyzeImageLuminance(currentImageUrl);
-        }
-    }, [currentImageUrl, analyzeImageLuminance]);
+    // analyzeImageLuminance is intentionally NOT called here.
+    // It is called by HomeCarousel once Skia confirms the image is rendered,
+    // so the text color change is always in sync with the image appearing.
 
     const remainingIndicesRef = useRef<number[]>([]);
     const currentIndexRef = useRef(currentIndex);
@@ -151,6 +149,7 @@ export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) =>
         currentLocalImageUrl, // <- Pass this to Skia
         cachedImagesMap: localCache, // <- Pass this if rendering a list of items
         activeCarouselData,
+        analyzeImageLuminance,
         SCREEN_WIDTH,
         CAROUSEL_HEIGHT,
     };

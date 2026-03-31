@@ -22,6 +22,7 @@ import {
     WomenBold,
 } from '@solar-icons/react-native';
 import React, { forwardRef, memo, useEffect, useMemo, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TurboImage from "react-native-turbo-image";
@@ -97,6 +98,7 @@ const InfoRow = memo(({ item, colors }: { item: InfoItem; colors: any }) => {
 export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({ profile, workplaces = [], homeInfo }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const { t } = useTranslation();
     const inset = useSafeAreaInsets();
     const backHandler = useSheetBackHandler(ref);
 
@@ -154,70 +156,85 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
         // Work
         if (workplaces.length > 0) {
             result.push({
-                title: 'Work',
+                title: t('profile.briefInfo.sections.work'),
                 items: workplaces.map(w => ({
                     kind: 'solar' as const,
                     icon: CaseMinimalisticBold,
-                    label: `${w.position} at ${w.company_name}`,
+                    label: t('profile.briefInfo.workAt', { position: w.position, company: w.company_name }),
                 })),
             });
         }
 
         // Education
         const eduItems: InfoItem[] = [];
-        if (profile?.college) eduItems.push({ kind: 'solar', icon: SquareAcademicCapBold, label: profile.college, sublabel: "College" });
-        if (profile?.highschool) eduItems.push({ kind: 'solar', icon: NotebookBookmarkBold, label: profile.highschool, sublabel: "High School" });
-        if (eduItems.length > 0) result.push({ title: 'Education', items: eduItems });
+        if (profile?.college) eduItems.push({ kind: 'solar', icon: SquareAcademicCapBold, label: profile.college, sublabel: t('profile.info.fields.college') });
+        if (profile?.highschool) eduItems.push({ kind: 'solar', icon: NotebookBookmarkBold, label: profile.highschool, sublabel: t('profile.info.fields.highSchool') });
+        if (eduItems.length > 0) result.push({ title: t('profile.briefInfo.sections.education'), items: eduItems });
 
         // Places
         if (homeInfo) {
             result.push({
-                title: 'Places Lived',
-                items: [{ kind: 'solar', icon: PointOnMapBold, label: homeInfo, sublabel: "Hometown" }],
+                title: t('profile.briefInfo.sections.placesLived'),
+                items: [{ kind: 'solar', icon: PointOnMapBold, label: homeInfo, sublabel: t('profile.info.fields.hometown') }],
             });
         }
 
         // Personal
         const personalItems: InfoItem[] = [];
         const birthdayStr = formatDate(profile?.birthday);
-        if (birthdayStr) personalItems.push({ kind: 'solar', icon: CalendarBold, label: birthdayStr, sublabel: `Lived for ${profileInfo?.daysLived} days, ${profileInfo?.moonPhase} moon phase` });
+        if (birthdayStr) personalItems.push({
+            kind: 'solar',
+            icon: CalendarBold,
+            label: birthdayStr,
+            sublabel: t('profile.sheets.brief.personalLived', {
+                days: String(profileInfo?.daysLived ?? 0),
+                moonPhase: profileInfo?.moonPhase
+                    ? t(`profile.sheets.brief.moonPhaseValue.${profileInfo.moonPhase}` as const)
+                    : '',
+            }),
+        });
         if (profile?.gender) {
+            const genderKey = profile.gender.toLowerCase() === 'male'
+                ? 'male'
+                : profile.gender.toLowerCase() === 'female'
+                    ? 'female'
+                    : 'other';
             personalItems.push({
                 kind: 'solar',
                 icon: profile.gender === 'male' ? MenBold : WomenBold,
-                label: profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1),
-                sublabel: "Gender",
+                label: t(`profile.sheets.brief.gender.${genderKey}` as const),
+                sublabel: t('profile.info.fields.gender'),
             });
         }
-        if (height) personalItems.push({ kind: 'material', name: 'height', label: `${height} cm`, sublabel: "Height" });
-        if (weight) personalItems.push({ kind: 'solar', icon: WeigherBold, label: `${weight} kg`, sublabel: "Weight" });
-        if (height && weight) personalItems.push({ kind: 'solar', icon: ClipboardHeartBold, label: `${BMI} BMI`, sublabel: `${BMIStatus} BMI` });
-        if (personalItems.length > 0) result.push({ title: 'Personal', items: personalItems });
-        if (profileInfo?.zodiacSign) personalItems.push({ kind: 'solar', icon: StarsMinimalisticBold, label: profileInfo.zodiacSign.charAt(0).toUpperCase() + profileInfo.zodiacSign.slice(1), sublabel: "Zodiac Sign" });
-        if (profileInfo?.chineseZodiac) personalItems.push({ kind: 'solar', icon: CatBold, label: profileInfo.chineseZodiac.charAt(0).toUpperCase() + profileInfo.chineseZodiac.slice(1), sublabel: "Chinese Zodiac" });
-        if (profileInfo?.lifePathNumber) personalItems.push({ kind: 'solar', icon: CalculatorBold, label: profileInfo.lifePathNumber.toString(), sublabel: "Life Path Number" });
-        if (profileInfo?.generation) personalItems.push({ kind: 'solar', icon: DumbbellLargeMinimalisticBold, label: profileInfo.generation, sublabel: "Generation" });
-        if (profileInfo?.historicalEvent) personalItems.push({ kind: 'solar', icon: HistoryBold, label: profileInfo.historicalEvent, sublabel: "Historical Event on your birthday" });
+        if (height) personalItems.push({ kind: 'material', name: 'height', label: `${height} cm`, sublabel: t('profile.info.fields.height') });
+        if (weight) personalItems.push({ kind: 'solar', icon: WeigherBold, label: `${weight} kg`, sublabel: t('profile.info.fields.weight') });
+        if (height && weight) personalItems.push({ kind: 'solar', icon: ClipboardHeartBold, label: `${BMI} BMI`, sublabel: t(`profile.sheets.brief.bmiStatusValue.${BMIStatus}` as const) });
+        if (profileInfo?.zodiacSign) personalItems.push({ kind: 'solar', icon: StarsMinimalisticBold, label: t(`profile.sheets.brief.zodiacValue.${profileInfo.zodiacSign}` as const), sublabel: t('profile.sheets.brief.zodiacSign') });
+        if (profileInfo?.chineseZodiac) personalItems.push({ kind: 'solar', icon: CatBold, label: t(`profile.sheets.brief.chineseZodiacValue.${profileInfo.chineseZodiac}` as const), sublabel: t('profile.sheets.brief.chineseZodiac') });
+        if (profileInfo?.lifePathNumber) personalItems.push({ kind: 'solar', icon: CalculatorBold, label: profileInfo.lifePathNumber.toString(), sublabel: t('profile.sheets.brief.lifePathNumber') });
+        if (profileInfo?.generation) personalItems.push({ kind: 'solar', icon: DumbbellLargeMinimalisticBold, label: t(`profile.sheets.brief.generationValue.${profileInfo.generation}` as const), sublabel: t('profile.sheets.brief.generation') });
+        if (profileInfo?.historicalEvent) personalItems.push({ kind: 'solar', icon: HistoryBold, label: profileInfo.historicalEvent, sublabel: t('profile.sheets.brief.historicalEventOnBirthday') });
+        if (personalItems.length > 0) result.push({ title: t('profile.sheets.brief.sections.personal'), items: personalItems });
         // Contact
         const contactItems: InfoItem[] = [];
-        if (profile?.email) contactItems.push({ kind: 'solar', icon: LetterBold, label: profile.email, sublabel: "Email" });
-        if (profile?.phone) contactItems.push({ kind: 'solar', icon: PhoneBold, label: profile.phone, sublabel: "Phone" });
-        if (profile?.username) contactItems.push({ kind: 'ionicons', name: 'at-circle-outline', label: `@${profile.username}`, sublabel: "Username" });
-        if (contactItems.length > 0) result.push({ title: 'Contact', items: contactItems });
+        if (profile?.email) contactItems.push({ kind: 'solar', icon: LetterBold, label: profile.email, sublabel: t('profile.info.fields.email') });
+        if (profile?.phone) contactItems.push({ kind: 'solar', icon: PhoneBold, label: profile.phone, sublabel: t('profile.info.fields.phone') });
+        if (profile?.username) contactItems.push({ kind: 'ionicons', name: 'at-circle-outline', label: `@${profile.username}`, sublabel: t('profile.info.fields.username') });
+        if (contactItems.length > 0) result.push({ title: t('profile.sheets.brief.sections.contact'), items: contactItems });
 
         // More
         const moreItems: InfoItem[] = [];
-        if (profile?.hobby) moreItems.push({ kind: 'ionicons', name: 'extension-puzzle-outline', label: profile.hobby, sublabel: "Hobby" });
-        if (profile?.talent) moreItems.push({ kind: 'ionicons', name: 'star-outline', label: profile.talent, sublabel: "Talent" });
-        if (profile?.license_plate) moreItems.push({ kind: 'solar', icon: WheelBold, label: profile.license_plate, sublabel: "License Plate" });
+        if (profile?.hobby) moreItems.push({ kind: 'ionicons', name: 'extension-puzzle-outline', label: profile.hobby, sublabel: t('profile.info.fields.hobby') });
+        if (profile?.talent) moreItems.push({ kind: 'ionicons', name: 'star-outline', label: profile.talent, sublabel: t('profile.info.fields.talent') });
+        if (profile?.license_plate) moreItems.push({ kind: 'solar', icon: WheelBold, label: profile.license_plate, sublabel: t('profile.info.fields.licensePlate') });
         const marriedStr = formatDate(profile?.married_date);
-        if (marriedStr) moreItems.push({ kind: 'ionicons', name: 'heart-outline', label: `Married: ${marriedStr}`, sublabel: "Married Date" });
-        if (moreItems.length > 0) result.push({ title: 'More', items: moreItems });
+        if (marriedStr) moreItems.push({ kind: 'ionicons', name: 'heart-outline', label: t('profile.sheets.brief.marriedOn', { date: marriedStr }), sublabel: t('profile.info.fields.marriedDate') });
+        if (moreItems.length > 0) result.push({ title: t('profile.sheets.brief.sections.more'), items: moreItems });
 
         // Banking
         if (bankinfo) {
             result.push({
-                title: 'Banking',
+                title: t('profile.sheets.brief.sections.banking'),
                 items: [{
                     kind: 'bank',
                     logo: bankinfo.logo,
@@ -230,7 +247,7 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
         // Family
         if (profile?.loved_ones && profile.loved_ones.length > 0) {
             result.push({
-                title: 'Family',
+                title: t('profile.sheets.brief.sections.family'),
                 items: profile.loved_ones.map(person => ({
                     kind: 'image' as const,
                     source: getFamilyAvatarSource(person.label),
@@ -241,7 +258,7 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
         }
 
         return result;
-    }, [profile, workplaces, homeInfo, height, weight, bankinfo, profileInfo]);
+    }, [profile, workplaces, homeInfo, height, weight, bankinfo, profileInfo, t, BMI, BMIStatus]);
 
     return (
         <TrueSheet
@@ -260,10 +277,10 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <FlexText style={[common.heading, { fontSize: 24 }]}>Know me</FlexText>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.header.actions.knowMe')}</FlexText>
                     {profile?.name && (
                         <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-                            Get to know {profile.name} better
+                            {t('profile.sheets.brief.getToKnow', { name: profile.name })}
                         </FlexText>
                     )}
                 </View>
@@ -284,7 +301,7 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
 
                 {sections.length === 0 && (
                     <FlexText style={[common.bodySmall, { color: colors.muted, textAlign: 'center' }]}>
-                        No information available
+                        {t('profile.sheets.brief.noInformation')}
                     </FlexText>
                 )}
 

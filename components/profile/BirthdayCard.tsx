@@ -1,6 +1,7 @@
 import { calculateAge, calculateDaysLeft } from '@/utils/timeandage';
 import { SquircleView } from "expo-squircle-view";
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
     Extrapolation,
@@ -21,6 +22,7 @@ interface BirthdayCardProps {
 const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const { t } = useTranslation();
 
     const animationState = useSharedValue(0);
 
@@ -87,7 +89,7 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
                         style={[common.label, { color: 'white', textAlign: 'center' }]}
                         numberOfLines={2}
                     >
-                        {isBirthdayToday ? "Happy Birthday!" : `${daysLeft} days left to birthday`}
+                        {isBirthdayToday ? t('profile.birthday.today') : t('profile.birthday.daysLeft', { count: daysLeft })}
                     </Animated.Text>
                 </Animated.View>
 
@@ -96,7 +98,7 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
                         style={[common.label, { color: 'white', textAlign: 'center' }]}
                         numberOfLines={2}
                     >
-                        {age} years old
+                        {t('profile.birthday.yearsOld', { count: age })}
                     </Animated.Text>
                 </Animated.View>
             </View>

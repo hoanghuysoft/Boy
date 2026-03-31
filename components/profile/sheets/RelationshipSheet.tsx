@@ -1,6 +1,7 @@
 import { FlexText } from "@/components/FlexText";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo } from "react";
+import { useTranslation } from 'react-i18next';
 import { FlatList, Image, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -41,6 +42,7 @@ const RelationshipItem = memo(({ item, colors, common }: { item: LovedOne; color
 export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetProps>(({ data }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
+    const { t } = useTranslation();
     const inset = useSafeAreaInsets();
     const backHandler = useSheetBackHandler(ref);
 
@@ -63,9 +65,9 @@ export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetPro
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
-                    <FlexText style={[common.heading, { fontSize: 24 }]}>Family & Relationships</FlexText>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.sheets.relationship.title')}</FlexText>
                     <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-                        {data.length} family member{data.length > 1 ? 's' : ''}
+                        {data.length} {t('profile.header.countFamilyMembers', { count: data.length })}
                     </FlexText>
                 </View>
 
