@@ -53,7 +53,7 @@ MediaThumbnail.displayName = "MediaThumbnail";
 
 interface MediaSectionProps {
     selectedMedia: SelectedMedia[];
-    uploadProgress: Record<number, number>;
+    uploadProgress?: Record<number, number>;
     colors: ThemeColors;
     common: any;
     onRemoveMedia: (index: number) => void;
@@ -61,7 +61,7 @@ interface MediaSectionProps {
 
 export const MediaSection = memo(({
     selectedMedia,
-    uploadProgress,
+    uploadProgress = {},
     colors,
     common,
     onRemoveMedia,

@@ -1,15 +1,13 @@
 /**
  * Client API service for profile owners to upload and manage media
  * Uses the /client endpoints which verify profile ownership
- * 
+ *
  * Supports both direct upload and pre-signed URL upload for large files
  */
 
 import { Media, MediaType } from '@/types/media';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { client } from './client';
-import { supabase } from './login';
 
 // ============================================================================
 // Types
@@ -19,7 +17,6 @@ export interface UploadMediaOptions {
     caption?: string;
     post_id?: string;
     type?: MediaType;
-    onProgress?: (progress: number) => void;
 }
 
 export interface UploadMediaResponse {
@@ -51,14 +48,6 @@ export interface FileAsset {
 // ============================================================================
 
 /**
- * Get auth token for requests
- */
-async function getAuthToken(): Promise<string | null> {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token || null;
-}
-
-/**
  * Determine media type from file
  */
 function getMediaType(file: FileAsset): MediaType {
@@ -85,7 +74,7 @@ function getFileExtension(file: FileAsset): string {
     if (type.includes('mov') || type.includes('quicktime')) return 'mov';
     if (type.includes('webm')) return 'webm';
 
-    return 'jpg'; // Default
+    return 'jpg';
 }
 
 // ============================================================================
@@ -101,11 +90,8 @@ export const uploadMedia = async (
     file: FileAsset,
     options: UploadMediaOptions = {}
 ): Promise<UploadMediaResponse> => {
-    const token = await getAuthToken();
-
     const formData = new FormData();
 
-    // React Native file object for FormData
     formData.append('file', {
         uri: file.uri,
         name: file.name || `upload.${getFileExtension(file)}`,
@@ -116,24 +102,11 @@ export const uploadMedia = async (
     if (options.post_id) formData.append('post_id', options.post_id);
     if (options.type) formData.append('type', options.type);
 
-    const response = await axios.post<UploadMediaResponse>(
-        `${process.env.EXPO_PUBLIC_SERVER_URL}/api/profiles/${profileId}/media/client`,
-        formData,
-        {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            onUploadProgress: (progressEvent) => {
-                if (progressEvent.total && options.onProgress) {
-                    const progress = Math.round((progressEvent.loaded / progressEvent.total) * 100);
-                    options.onProgress(progress);
-                }
-            },
-        }
-    );
+    const data = await client.ky
+        .post(`api/profiles/${profileId}/media/client`, { body: formData })
+        .json<UploadMediaResponse>();
 
-    return response.data;
+    return data;
 };
 
 /**
@@ -159,21 +132,15 @@ export const getUploadUrl = async (
 export const uploadWithPresignedUrl = async (
     uploadUrl: string,
     file: FileAsset,
-    onProgress?: (progress: number) => void
 ): Promise<void> => {
-    // Fetch the file as blob
-    const response = await fetch(file.uri);
-    const blob = await response.blob();
+    const fileResponse = await fetch(file.uri);
+    const blob = await fileResponse.blob();
 
-    await axios.put(uploadUrl, blob, {
+    await fetch(uploadUrl, {
+        method: 'PUT',
+        body: blob,
         headers: {
             'Content-Type': file.type || 'application/octet-stream',
-        },
-        onUploadProgress: (progressEvent) => {
-            if (progressEvent.total && onProgress) {
-                const progress = Math.round((progressEvent.loaded / progressEvent.total) * 100);
-                onProgress(progress);
-            }
         },
     });
 };
@@ -201,8 +168,7 @@ export const createMediaRecord = async (
 };
 
 /**
- * Upload a large file with progress tracking
- * Combines pre-signed URL approach with database record creation
+ * Upload a large file via pre-signed URL then create the media record
  */
 export const uploadLargeMedia = async (
     profileId: string,
@@ -212,13 +178,9 @@ export const uploadLargeMedia = async (
     const type = options.type || getMediaType(file);
     const filename = file.name || `upload.${getFileExtension(file)}`;
 
-    // 1. Get pre-signed upload URL
     const uploadInfo = await getUploadUrl(profileId, filename, type);
+    await uploadWithPresignedUrl(uploadInfo.uploadUrl, file);
 
-    // 2. Upload directly to storage
-    await uploadWithPresignedUrl(uploadInfo.uploadUrl, file, options.onProgress);
-
-    // 3. Create media record in database
     if (!uploadInfo.readUrl) {
         throw new Error('Failed to get read URL for uploaded file');
     }
@@ -230,8 +192,7 @@ export const uploadLargeMedia = async (
 };
 
 /**
- * Smart upload function - automatically chooses the best upload method
- * based on file size
+ * Smart upload — automatically chooses the best upload method based on file size
  */
 export const smartUpload = async (
     profileId: string,
@@ -283,7 +244,7 @@ export const updateMedia = async (
 // ============================================================================
 
 /**
- * Hook for uploading media
+ * Hook for uploading a single media file
  */
 export const useUploadMedia = (profileId: string) => {
     const queryClient = useQueryClient();
@@ -307,24 +268,15 @@ export const useUploadMultipleMedia = (profileId: string) => {
         mutationFn: async ({
             files,
             options,
-            onFileProgress,
-            onFileComplete,
         }: {
             files: FileAsset[];
-            options?: Omit<UploadMediaOptions, 'onProgress'>;
-            onFileProgress?: (index: number, progress: number) => void;
-            onFileComplete?: (index: number, media: Media) => void;
+            options?: UploadMediaOptions;
         }) => {
             const uploadedMedia: Media[] = [];
 
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const result = await smartUpload(profileId, file, {
-                    ...options,
-                    onProgress: (progress) => onFileProgress?.(i, progress),
-                });
+            for (const file of files) {
+                const result = await smartUpload(profileId, file, options);
                 uploadedMedia.push(result.data);
-                onFileComplete?.(i, result.data);
             }
 
             return uploadedMedia;

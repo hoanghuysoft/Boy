@@ -1,7 +1,7 @@
 import NetInfo from '@react-native-community/netinfo';
 import { onlineManager, QueryClient } from '@tanstack/react-query';
 import type { Persister } from '@tanstack/react-query-persist-client';
-import axios from 'axios';
+import ky, { KyInstance, Options } from 'ky';
 import { createMMKV } from 'react-native-mmkv';
 import { supabase } from './login';
 
@@ -39,25 +39,88 @@ export const queryClient = new QueryClient({
     },
 });
 
-export const client = axios.create({
-    baseURL: process.env.EXPO_PUBLIC_SERVER_URL,
+// ============================================================================
+// Axios-to-Ky Wrapper
+// ============================================================================
+
+interface KyConfig extends Omit<Options, 'searchParams'> {
+    params?: Record<string, any>;
+}
+
+/**
+ * Wraps a Ky instance to behave like Axios so we don't have to refactor the entire app.
+ * - Strips leading slashes (Ky's prefixUrl doesn't like them)
+ * - Maps `params` to `searchParams`
+ * - Extracts JSON and returns it as `{ data }`
+ */
+const createKyClient = (baseKy: KyInstance) => {
+    const normalizeUrl = (url: string) => (url.startsWith('/') ? url.slice(1) : url);
+
+    const mapConfig = (config?: KyConfig): Options => {
+        if (!config) return {};
+        const { params, ...rest } = config;
+        return {
+            ...rest,
+            // Convert standard object to Ky's searchParams
+            ...(params ? { searchParams: params } : {}),
+        };
+    };
+
+    return {
+        get: async <T = any>(url: string, config?: KyConfig) => {
+            const data = await baseKy.get(normalizeUrl(url), mapConfig(config)).json<T>();
+            return { data };
+        },
+        post: async <T = any>(url: string, payload?: any, config?: KyConfig) => {
+            const data = await baseKy.post(normalizeUrl(url), { ...mapConfig(config), json: payload }).json<T>();
+            return { data };
+        },
+        put: async <T = any>(url: string, payload?: any, config?: KyConfig) => {
+            const data = await baseKy.put(normalizeUrl(url), { ...mapConfig(config), json: payload }).json<T>();
+            return { data };
+        },
+        delete: async <T = any>(url: string, config?: KyConfig) => {
+            const data = await baseKy.delete(normalizeUrl(url), mapConfig(config)).json<T>();
+            return { data };
+        },
+        patch: async <T = any>(url: string, payload?: any, config?: KyConfig) => {
+            const data = await baseKy.patch(normalizeUrl(url), { ...mapConfig(config), json: payload }).json<T>();
+            return { data };
+        },
+        // Expose the raw ky instance in case you need advanced Ky features later
+        ky: baseKy,
+    };
+};
+
+// ============================================================================
+// Client Instances
+// ============================================================================
+
+const baseClient = ky.create({
+    prefixUrl: process.env.EXPO_PUBLIC_SERVER_URL || '',
     headers: {
         'Content-Type': 'application/json',
     },
-});
-
-export const showsClient = axios.create({
-    baseURL: process.env.EXPO_PUBLIC_SHOWS_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-client.interceptors.request.use(async (config) => {
-    const { data: { session } } = await supabase.auth.getSession()
-    const token = session?.access_token
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    hooks: {
+        beforeRequest: [
+            async (request) => {
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+                
+                if (token) {
+                    request.headers.set('Authorization', `Bearer ${token}`);
+                }
+            }
+        ]
     }
-    return config;
 });
+
+const baseShowsClient = ky.create({
+    prefixUrl: process.env.EXPO_PUBLIC_SHOWS_URL || '',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+export const client = createKyClient(baseClient);
+export const showsClient = createKyClient(baseShowsClient);

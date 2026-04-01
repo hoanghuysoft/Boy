@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Yup from "yup";
 
 // Components
-import { AlertDialog, Host } from '@expo/ui/jetpack-compose';
+import { AlertDialog, Host, TextButton, Text as UIText } from '@expo/ui/jetpack-compose';
 import {
     ContentInput,
     CreateActionBar,
@@ -90,7 +90,6 @@ const createPostValidationSchema = Yup.object().shape({
 // ============================================================================
 
 const CreateScreen = () => {
-    const AlertDialogAny = AlertDialog as any;
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { t } = useTranslation();
@@ -111,8 +110,6 @@ const CreateScreen = () => {
     const createPostMutation = useCreatePost(profileId);
     const uploadMediaMutation = useUploadMultipleMedia(profileId);
 
-    // Upload progress (not part of form values)
-    const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
 
     // Music State (search query is UI state, not form value)
     const [musicSearchQuery, setMusicSearchQuery] = useState("");
@@ -167,15 +164,7 @@ const CreateScreen = () => {
                         fileSize: media.fileSize,
                     }));
 
-                    const uploadedMedia = await uploadMediaMutation.mutateAsync({
-                        files,
-                        onFileProgress: (index, progress) => {
-                            setUploadProgress((prev) => ({ ...prev, [index]: progress }));
-                        },
-                        onFileComplete: (index: number, _media: unknown) => {
-                            setUploadProgress((prev) => ({ ...prev, [index]: 100 }));
-                        },
-                    });
+                    const uploadedMedia = await uploadMediaMutation.mutateAsync({ files });
 
                     mediaIds = uploadedMedia.map((m) => m.id);
                 }
@@ -222,7 +211,6 @@ const CreateScreen = () => {
     // ============================================================================
 
     const resetUIState = useCallback(() => {
-        setUploadProgress({});
         setMusicSearchQuery("");
         setShowMusicSearch(false);
         setShowLinkInput(false);
@@ -351,11 +339,6 @@ const CreateScreen = () => {
 
     const removeMedia = useCallback((index: number) => {
         setFieldValue('selectedMedia', values.selectedMedia.filter((_: SelectedMedia, i: number) => i !== index));
-        setUploadProgress((prev) => {
-            const newProgress = { ...prev };
-            delete newProgress[index];
-            return newProgress;
-        });
     }, [values.selectedMedia, setFieldValue]);
 
     const addLink = useCallback(() => {
@@ -406,22 +389,26 @@ const CreateScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Header */}
-                <Host matchContents>
-                    <AlertDialogAny
-                        visible={dialog.visible}
-                        title={dialog.title}
-                        text={dialog.message}
-                        confirmButtonText={t("create.dialog.ok")}
-                        onConfirmPressed={() => {
-                            dialog.onConfirm?.();
-                            setDialog((prev) => ({ ...prev, visible: false }));
-                        }}
-                        onDismissPressed={() => {
-                            setDialog((prev) => ({ ...prev, visible: false }));
-                        }}
-                    />
-                </Host>
+                {dialog.visible && (
+                    <Host matchContents>
+                        <AlertDialog onDismissRequest={() => setDialog((prev) => ({ ...prev, visible: false }))}>
+                            <AlertDialog.Title>
+                                <UIText style={{ typography: 'titleLarge' }}>{dialog.title}</UIText>
+                            </AlertDialog.Title>
+                            <AlertDialog.Text>
+                                <UIText>{dialog.message}</UIText>
+                            </AlertDialog.Text>
+                            <AlertDialog.ConfirmButton>
+                                <TextButton onClick={() => {
+                                    dialog.onConfirm?.();
+                                    setDialog((prev) => ({ ...prev, visible: false }));
+                                }}>
+                                    <UIText>{t("create.dialog.ok")}</UIText>
+                                </TextButton>
+                            </AlertDialog.ConfirmButton>
+                        </AlertDialog>
+                    </Host>
+                )}
                 <CreateScreenHeader
                     colors={colors}
                     common={common}
@@ -480,7 +467,6 @@ const CreateScreen = () => {
                     {/* Selected Media */}
                     <MediaSection
                         selectedMedia={values.selectedMedia}
-                        uploadProgress={uploadProgress}
                         colors={colors}
                         common={common}
                         onRemoveMedia={removeMedia}

@@ -213,6 +213,10 @@ const RootContent = () => {
             name="create"
             options={{ headerShown: false, animation: "slide_from_bottom" }}
           />
+          <Stack.Screen
+            name="inapp_browser"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
         </Stack>
         <GlobalAudioPlayer />
       </View>

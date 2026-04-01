@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "2026.4.2",
+    "version": "26.5.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -12,7 +12,9 @@
       "infoPlist": {
         "CFBundleLocalizations": [
           "en",
-          "vi"
+          "vi",
+          "zh-Hans",
+          "zh-Hant"
         ]
       }
     },
@@ -172,11 +174,15 @@
           "supportedLocales": {
             "ios": [
               "en",
-              "vi"
+              "vi",
+              "zh-Hans",
+              "zh-Hant"
             ],
             "android": [
               "en",
-              "vi"
+              "vi",
+              "zh-Hans",
+              "zh-Hant"
             ]
           }
         }

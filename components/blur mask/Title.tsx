@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+ 
 import { Text, useFont } from "@shopify/react-native-skia";
 import React, { useMemo } from "react";
 import { useWindowDimensions } from "react-native";

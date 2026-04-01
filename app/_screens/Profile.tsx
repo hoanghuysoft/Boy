@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Animated,
@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { Snackbar } from 'react-native-paper';
+import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { PostItem } from '../../components/PostItem';
 import ProfileHeader, { COVER_HEIGHT } from '../../components/profile/ProfileHeader';
 import { AddressSheet } from "../../components/profile/sheets/AddressSheet";

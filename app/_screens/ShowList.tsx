@@ -85,7 +85,7 @@ const ShowListScreen = () => {
           </FlexText>
           <FlexText
             numberOfLines={2}
-            style={[styles.description, { color: (colors as any).mutedText ?? "rgba(255,255,255,0.7)" }]}
+            style={[styles.description, { color: (colors as any).muted ?? "rgba(255,255,255,0.7)" }]}
           >
             {item.duration} • {item.views}
           </FlexText>

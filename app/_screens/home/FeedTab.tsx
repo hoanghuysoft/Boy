@@ -138,8 +138,8 @@ const FeedTab: React.FC<FeedTabProps> = ({
         if (all.length > 0) {
             const maxVisible = Math.max(...all);
             const aheadPosts = posts.slice(maxVisible + 1, maxVisible + 1 + PREFETCH_AHEAD);
-            const turboUrls: Array<{ uri: string }> = [];
-            const fastUrls: Array<{ uri: string }> = [];
+            const turboUrls: { uri: string }[] = [];
+            const fastUrls: { uri: string }[] = [];
             for (const p of aheadPosts) {
                 if (p.profile_avatar) turboUrls.push({ uri: p.profile_avatar });
                 for (const m of p.media ?? []) {

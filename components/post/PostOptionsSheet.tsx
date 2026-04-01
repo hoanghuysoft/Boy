@@ -1,4 +1,4 @@
-import { AlertDialog, Host } from "@expo/ui/jetpack-compose";
+import { AlertDialog, Host, TextButton, Text as UIText } from "@expo/ui/jetpack-compose";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { CopyBold, DangerBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
 import React, { forwardRef, memo, useCallback, useState } from "react";
@@ -199,17 +199,30 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
                     </View>
                 </TrueSheet>
 
-                <Host matchContents>
-                    <AlertDialog
-                        visible={dialog !== null}
-                        title={dialog?.title ?? ""}
-                        text={dialog?.text ?? ""}
-                        confirmButtonText={dialog?.confirmText ?? t('post.dialogs.ok')}
-                        dismissButtonText={dialog?.dismissText}
-                        onConfirmPressed={() => dialog?.onConfirm ? dialog.onConfirm() : closeDialog()}
-                        onDismissPressed={closeDialog}
-                    />
-                </Host>
+                {dialog !== null && (
+                    <Host matchContents>
+                        <AlertDialog onDismissRequest={closeDialog}>
+                            <AlertDialog.Title>
+                                <UIText style={{ typography: 'titleLarge' }}>{dialog.title}</UIText>
+                            </AlertDialog.Title>
+                            <AlertDialog.Text>
+                                <UIText>{dialog.text}</UIText>
+                            </AlertDialog.Text>
+                            <AlertDialog.ConfirmButton>
+                                <TextButton onClick={() => dialog.onConfirm ? dialog.onConfirm() : closeDialog()}>
+                                    <UIText>{dialog.confirmText ?? t('post.dialogs.ok')}</UIText>
+                                </TextButton>
+                            </AlertDialog.ConfirmButton>
+                            {dialog.dismissText && (
+                                <AlertDialog.DismissButton>
+                                    <TextButton onClick={closeDialog}>
+                                        <UIText>{dialog.dismissText}</UIText>
+                                    </TextButton>
+                                </AlertDialog.DismissButton>
+                            )}
+                        </AlertDialog>
+                    </Host>
+                )}
             </>
         );
     }

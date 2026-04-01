@@ -3,11 +3,11 @@ import { ScrollView, StyleSheet, View, ViewStyle } from "react-native";
 import TabPill from "./TabPill";
 
 export interface TabPillGroupProps {
-  tabs: Array<{
+  tabs: {
     name: string;
     onClick: () => void;
     component?: React.ReactNode;
-  }>;
+  }[];
   activeTab: string;
   containerStyle?: ViewStyle;
   scrollViewStyle?: ViewStyle;

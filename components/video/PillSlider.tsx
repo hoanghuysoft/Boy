@@ -1,15 +1,9 @@
+import { Host, Slider } from '@expo/ui/jetpack-compose';
+import {
+    fillMaxWidth,
+} from '@expo/ui/jetpack-compose/modifiers';
 import React, { useRef } from 'react';
 import { View } from 'react-native';
-import { Host, Slider, Shape, Row, Box } from '@expo/ui/jetpack-compose';
-import {
-  fillMaxWidth,
-  height,
-  weight,
-  size,
-  clip,
-  background,
-  Shapes,
-} from '@expo/ui/jetpack-compose/modifiers';
 
 export interface PillSliderProps {
     value: number;

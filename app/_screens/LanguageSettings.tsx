@@ -17,6 +17,20 @@ type LanguageOption =
     | { kind: 'auto' }
     | { kind: 'manual'; lang: SupportedLanguage };
 
+const LANGUAGE_NATIVE_NAMES: Record<SupportedLanguage, string> = {
+    en: 'English',
+    vi: 'Tiếng Việt',
+    zh: '简体中文',
+    'zh-Hant': '繁體中文',
+};
+
+const LANGUAGE_SHORT_CODES: Record<SupportedLanguage, string> = {
+    en: 'EN',
+    vi: 'VI',
+    zh: '简',
+    'zh-Hant': '繁',
+};
+
 const isOptionActive = (
     option: LanguageOption,
     mode: LanguageMode,
@@ -83,8 +97,8 @@ const LanguageSettingsScreen = () => {
                             : LANGUAGE_LABELS[option.lang];
                     const description =
                         option.kind === 'auto'
-                            ? t('languageSettings.autoOptionDesc')
-                            : LANGUAGE_LABELS[option.lang];
+                            ? `${t('languageSettings.autoOptionDesc')} (${LANGUAGE_LABELS[language]})`
+                            : `${LANGUAGE_NATIVE_NAMES[option.lang]} (${option.lang.toUpperCase()})`;
 
                     return (
                         <View key={option.kind === 'auto' ? 'auto' : option.lang}>
@@ -115,7 +129,7 @@ const LanguageSettingsScreen = () => {
                                                     { color: active ? '#fff' : colors.text },
                                                 ]}
                                             >
-                                                {option.lang.toUpperCase()}
+                                                {LANGUAGE_SHORT_CODES[option.lang]}
                                             </FlexText>
                                         )}
                                     </SquircleView>

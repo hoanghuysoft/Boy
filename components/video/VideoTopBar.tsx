@@ -1,5 +1,5 @@
 import { XmarkSolid } from "@lineiconshq/free-icons";
-import Lineicons from "@lineiconshq/react-native-lineicons";
+import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import { MutedBold, Pip2Bold, VolumeLoudBold } from "@solar-icons/react-native";
 import React from "react";
 import {

@@ -17,6 +17,7 @@ import TurboImage from 'react-native-turbo-image';
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
+import { PostAudioWaveform } from "./PostAudioWaveform";
 import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 
@@ -132,14 +133,14 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
             </View>
 
             {/* Audio Waveform — shown when post has a direct audio_url */}
-            {/* {!!post.audio_url && (
+            {!!post.audio_url && (
                 <PostAudioWaveform
                     postId={post.id}
                     audioUrl={post.audio_url}
                     colors={vm.colors}
                     label={post.profile_name}
                 />
-            )} */}
+            )}
 
             {/* Invisible Spacer for No-Media Posts */}
             {!vm.hasMedia && (

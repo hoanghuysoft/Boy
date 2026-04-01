@@ -13,7 +13,7 @@ import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { FlatList as GestureFlatList } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
 import { createMMKV } from "react-native-mmkv";
@@ -45,16 +45,6 @@ const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
     : null;
 };
 
-const luminance = (hex: string): number | null => {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return null;
-  const [rs, gs, bs] = [rgb.r, rgb.g, rgb.b].map((c) => {
-    const sRGB = c / 255;
-    return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
-  });
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-};
-
 const clamp255 = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
 
 const darkenHex = (hex: string, amount: number): string => {
@@ -82,6 +72,9 @@ const ChatScreen = () => {
   const relatedVideos = videoDetail?.related_videos;
   const posterUrl = detail?.poster_url ?? fallbackPosterUrl;
   const image = useImage(posterUrl);
+
+  // Keep the shimmer visible until both the API data and the Skia image are ready
+  const isLoading = (isVideoDetailLoading || image === null) && !isVideoDetailError;
   const { width, height } = useWindowDimensions();
   const posterHeight = 500;
   const inset = useSafeAreaInsets();
@@ -190,6 +183,14 @@ const ChatScreen = () => {
 
   const relatedVideoKeyExtractor = useCallback((item: VideoCard) => item.video_url, []);
 
+  const fallbackWebsiteUrl = useMemo(() => {
+    if (!videoUrlOrSlug) return "";
+    const normalizedSlug = String(videoUrlOrSlug).replace(/^\/+/, "");
+    return normalizedSlug ? `https://traingon.top/${normalizedSlug}` : "";
+  }, [videoUrlOrSlug]);
+
+  const webviewUrl = fallbackWebsiteUrl;
+
   const renderTag = useCallback(
     ({ item }: { item: string }) => {
       const slug = item.startsWith("#") ? item.slice(1) : item;
@@ -201,9 +202,9 @@ const ChatScreen = () => {
               params: { mode: "tag", slug },
             })
           }
-          style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: "rgba(121, 121, 121, 0.1)" }}
+          style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: colors.card }}
         >
-          <Text style={[styles.textStyle, { color: "rgb(121, 121, 121)" }]}>{item}</Text>
+          <Text style={[styles.textStyle, { color: colors.text }]}>{item}</Text>
         </TouchableOpacity>
       );
     },
@@ -293,7 +294,7 @@ const ChatScreen = () => {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={isVideoDetailLoading}
+              refreshing={isLoading}
               onRefresh={() => {
                 refetch();
               }}
@@ -303,7 +304,7 @@ const ChatScreen = () => {
             />
           }
         >
-          {isVideoDetailLoading && !isVideoDetailError ? (
+          {isLoading ? (
             <View style={{ gap: 16 }}>
                <ShimmerEffect style={{ height: posterHeight, width: '100%' }} />
                <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
@@ -372,9 +373,9 @@ const ChatScreen = () => {
               <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
                 {detail?.title ?? ""}
               </FlexText>
-              <Text numberOfLines={2} style={{ color: "white", fontSize: 16, fontWeight: "400", textAlign: "justify" }}>
+              <FlexText numberOfLines={2} style={{ color: "white", fontSize: 16, fontWeight: "400", textAlign: "justify" }}>
                 {detail?.description ?? ""}
-              </Text>
+              </FlexText>
               <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
                 <FlexText style={[styles.textStyle, { color: "white" }]}>{detail?.views ?? ""}</FlexText>
                 <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
@@ -395,6 +396,15 @@ const ChatScreen = () => {
                   <Pressable
                     key={`${ep.episode}-${ep.url}`}
                     onPress={() => {
+                      if (!ep.url) return;
+                      const isHls = ep.url.toLowerCase().includes(".m3u8");
+                      if (isHls && webviewUrl) {
+                        router.push({
+                          pathname: "/inapp_browser",
+                          params: { url: encodeURIComponent(webviewUrl) },
+                        });
+                        return;
+                      }
                       router.push({
                         pathname: "/video_player",
                         params: {
@@ -444,7 +454,7 @@ const ChatScreen = () => {
                 <Text style={[styles.textStyle, { color: "white", }]}>
                   Released
                 </Text>
-                <Text style={[styles.textStyle, { color: "rgb(121, 121, 121)", }]}>
+                <Text style={[styles.textStyle, { color: colors.muted }]}>
                   {detail?.uploaded ?? ""}
                 </Text>
               </View>
@@ -542,27 +552,33 @@ const ChatScreen = () => {
             </TouchableOpacity>
           </BlurView>
 
-          {/* Download */}
-          <BlurView
-            tint={"systemMaterialDark"}
-            intensity={80}
-            blurTarget={blurTargetRef}
-            blurMethod="dimezisBlurViewSdk31Plus"
-            style={{ borderRadius: 999, overflow: 'hidden' }}
-          >
-            <TouchableOpacity
-              onPress={() => { Linking.openURL(detail?.download_url ?? ""); }}
-              style={{
-                borderRadius: 999,
-                width: 40,
-                height: 40,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
+          {webviewUrl ? (
+            <BlurView
+              tint={"systemMaterialDark"}
+              intensity={80}
+              blurTarget={blurTargetRef}
+              blurMethod="dimezisBlurViewSdk31Plus"
+              style={{ borderRadius: 999, overflow: 'hidden' }}
             >
-              <CloudDownloadBold size={24} color={'white'} />
-            </TouchableOpacity>
-          </BlurView>
+              <TouchableOpacity
+                onPress={() => {
+                  router.push({
+                    pathname: "/inapp_browser",
+                    params: { url: encodeURIComponent(webviewUrl) },
+                  });
+                }}
+                style={{
+                  borderRadius: 999,
+                  width: 40,
+                  height: 40,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <CloudDownloadBold size={24} color={'white'} />
+              </TouchableOpacity>
+            </BlurView>
+          ) : null}
         </View>
       </View>
       <GalleryModal />
@@ -575,7 +591,6 @@ export default ChatScreen;
 const styles = StyleSheet.create({
   header: {
     position: "relative",
-    borderRadius: 16,
     overflow: "hidden",
   },
   headerOverlay: {

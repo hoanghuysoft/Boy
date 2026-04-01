@@ -1,0 +1,54 @@
+const post = {
+    audioPreview: '試聽',
+    createdOnDevice: '本則動態建立於 {{device}}',
+
+    optionsSheet: {
+        title: '動態',
+        subtitle: '有什麼想說的？',
+        share: '分享',
+        copyLink: '複製連結',
+        report: '檢舉',
+        deletePost: '刪除動態',
+    },
+
+    dialogs: {
+        deletePostTitle: '刪除動態',
+        deletePostBody: '確定要刪除這則動態嗎？此操作無法復原。',
+        delete: '刪除',
+        cancel: '取消',
+        successTitle: '成功',
+        postDeleted: '動態已刪除。',
+        errorTitle: '錯誤',
+        deleteFailed: '刪除失敗，請重試。',
+        ok: '確定',
+        reportTitle: '檢舉',
+        reportComingSoon: '檢舉功能即將上線！',
+        shareTitle: '分享',
+        shareComingSoon: '分享功能即將上線！',
+        copyLinkTitle: '複製連結',
+        linkCopied: '連結已複製到剪貼簿！',
+    },
+
+    commentsSheet: {
+        title: '評論',
+        emptyTitle: '暫無評論',
+        emptyBody: '來發表第一則評論吧！',
+        editingBanner: '正在編輯評論',
+        placeholderAdd: '寫一則評論…',
+        placeholderEdit: '編輯你的評論…',
+        actionEdit: '編輯',
+        actionDelete: '刪除',
+        sendPost: '發佈',
+        sendSave: '儲存',
+    },
+
+    likersSheet: {
+        title: '按讚',
+        subtitle_one: '{{count}} 人讚了這則動態',
+        subtitle_other: '{{count}} 人讚了這則動態',
+        emptyTitle: '暫無按讚',
+        emptyBody: '成為第一個按讚的人！',
+    },
+} as const;
+
+export default post;

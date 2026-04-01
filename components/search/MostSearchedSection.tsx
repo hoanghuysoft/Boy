@@ -10,7 +10,6 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
 import { FlexText } from '../FlexText';
