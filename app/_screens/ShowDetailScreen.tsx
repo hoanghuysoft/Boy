@@ -190,6 +190,7 @@ const ChatScreen = () => {
   }, [videoUrlOrSlug]);
 
   const webviewUrl = fallbackWebsiteUrl;
+  const downloadUrl = detail?.download_url ?? "";
 
   const renderTag = useCallback(
     ({ item }: { item: string }) => {
@@ -552,7 +553,7 @@ const ChatScreen = () => {
             </TouchableOpacity>
           </BlurView>
 
-          {webviewUrl ? (
+          {downloadUrl ? (
             <BlurView
               tint={"systemMaterialDark"}
               intensity={80}
@@ -564,7 +565,7 @@ const ChatScreen = () => {
                 onPress={() => {
                   router.push({
                     pathname: "/inapp_browser",
-                    params: { url: encodeURIComponent(webviewUrl) },
+                    params: { url: encodeURIComponent(downloadUrl) },
                   });
                 }}
                 style={{
