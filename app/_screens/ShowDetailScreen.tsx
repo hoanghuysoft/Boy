@@ -12,6 +12,7 @@ import { BookmarkBold, BookmarkOutline, CloudDownloadBold } from "@solar-icons/r
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { FlatList as GestureFlatList } from "react-native-gesture-handler";
@@ -400,10 +401,7 @@ const ChatScreen = () => {
                       if (!ep.url) return;
                       const isHls = ep.url.toLowerCase().includes(".m3u8");
                       if (isHls && webviewUrl) {
-                        router.push({
-                          pathname: "/inapp_browser",
-                          params: { url: encodeURIComponent(webviewUrl) },
-                        });
+                        WebBrowser.openBrowserAsync(webviewUrl);
                         return;
                       }
                       router.push({
@@ -563,10 +561,7 @@ const ChatScreen = () => {
             >
               <TouchableOpacity
                 onPress={() => {
-                  router.push({
-                    pathname: "/inapp_browser",
-                    params: { url: encodeURIComponent(downloadUrl) },
-                  });
+                  WebBrowser.openBrowserAsync(downloadUrl);
                 }}
                 style={{
                   borderRadius: 999,
