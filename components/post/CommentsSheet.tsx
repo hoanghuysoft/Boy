@@ -19,23 +19,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Comment } from "../../types/comment";
-import { useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
+import { parseCommentContent, useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
 import { FlexText } from "../FlexText";
 import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-/** Pattern: [<img https://example.com/image.png />] */
-const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>\]/gi;
-
-function parseCommentContent(content: string): { text: string; imageUrl: string | null } {
-    const matches = [...content.matchAll(IMG_PATTERN)];
-    const imageUrl = matches.length > 0 ? matches[0][1] : null;
-    const text = content.replace(IMG_PATTERN, '').trim();
-    return { text, imageUrl };
-}
 
 // ============================================================================
 // Types
@@ -175,19 +161,17 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const backHandler = useSheetBackHandler(ref);
 
         const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-        const [showUrlInput, setShowUrlInput] = useState(false);
-        const [imageUrlInput, setImageUrlInput] = useState("");
 
         useEffect(() => {
             const kbShow = Keyboard.addListener('keyboardWillShow', () => setKeyboardVisible(true));
             const kbHide = Keyboard.addListener('keyboardWillHide', () => {
                 setKeyboardVisible(false);
-                setShowUrlInput(false);
+                vm.setShowUrlInput(false);
             });
             const kbDidShow = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
             const kbDidHide = Keyboard.addListener('keyboardDidHide', () => {
                 setKeyboardVisible(false);
-                setShowUrlInput(false);
+                vm.setShowUrlInput(false);
             });
 
             return () => {
@@ -196,16 +180,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 kbDidShow.remove();
                 kbDidHide.remove();
             };
-        }, []);
-
-        const handleAddImageUrl = () => {
-            if (imageUrlInput.trim()) {
-                const syntax = `[<img ${imageUrlInput.trim()} />]`;
-                vm.setCommentText((vm.commentText ? vm.commentText + "\n" : "") + syntax);
-                setImageUrlInput("");
-                setShowUrlInput(false);
-            }
-        };
+        }, [vm]);
 
         const renderItem = useCallback(({ item }: { item: Comment }) => (
             <CommentItem
@@ -238,15 +213,16 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         useEffect(() => {
             const listener = GiphyDialog.addListener('onMediaSelect', (e) => {
                 const media = e.media;
-                if (media && media.images && media.images.original && media.images.original.url) {
-                    const imageUrl = media.images.original.url;
-                    const syntax = `[<img ${imageUrl} />]`;
-                    vm.setCommentText((vm.commentText ? vm.commentText + "\n" : "") + syntax);
+                const images = media?.data?.images || (media as any)?.images;
+
+                if (images && images.original && images.original.url) {
+                    const imageUrl = images.original.url;
+                    vm.setSelectedImageUrl(imageUrl);
                 }
                 GiphyDialog.hide();
             });
             return () => listener.remove();
-        }, [vm.commentText, vm.setCommentText]);
+        }, [vm.setSelectedImageUrl]);
 
         const renderEmpty = useCallback(() => {
             if (vm.isLoading) {
@@ -304,26 +280,36 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 )}
 
                 {/* URL Input */}
-                {isKeyboardVisible && showUrlInput && (
+                {isKeyboardVisible && vm.showUrlInput && (
                     <View style={[styles.urlInputWrapper, { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
                         <MaterialIcons name="link" size={18} color={vm.colors.muted} />
                         <TextInput
                             style={[styles.urlInput, { color: vm.colors.text }]}
                             placeholder="Enter image URL..."
                             placeholderTextColor={vm.colors.muted}
-                            value={imageUrlInput}
-                            onChangeText={setImageUrlInput}
+                            value={vm.imageUrlInput}
+                            onChangeText={vm.setImageUrlInput}
                             autoFocus
                             autoCapitalize="none"
                             keyboardType="url"
                             selectionColor={vm.colors.text}
-                            onSubmitEditing={handleAddImageUrl}
+                            onSubmitEditing={vm.handleAddImageUrl}
                         />
-                        {imageUrlInput.trim().length > 0 && (
-                            <TouchableOpacity onPress={handleAddImageUrl} style={{ marginLeft: 8 }}>
+                        {vm.imageUrlInput.trim().length > 0 && (
+                            <TouchableOpacity onPress={vm.handleAddImageUrl} style={{ marginLeft: 8 }}>
                                 <MaterialIcons name="check-circle" size={24} color={vm.colors.verify || vm.colors.text} />
                             </TouchableOpacity>
                         )}
+                    </View>
+                )}
+
+                {/* Selected Image Preview */}
+                {vm.selectedImageUrl && (
+                    <View style={styles.previewContainer}>
+                        <Image source={{ uri: vm.selectedImageUrl }} style={styles.previewImage} contentFit="cover" />
+                        <TouchableOpacity style={styles.previewRemoveButton} onPress={() => vm.setSelectedImageUrl(null)}>
+                            <MaterialIcons name="close" size={16} color="#fff" />
+                        </TouchableOpacity>
                     </View>
                 )}
 
@@ -342,14 +328,15 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         selectionColor={vm.colors.text}
                         autoFocus={vm.isEditing}
                     />
-                    {vm.commentText.trim().length > 0 && (
+                    {/* Note: since text and image are separated, allow submit if either exists */}
+                    {vm.canSubmit && (
                         <TouchableOpacity
-                            onPress={vm.isEditing ? vm.handleSaveEdit : vm.handleSubmitComment}
-                            disabled={vm.isEditing ? vm.isSaving : vm.isSubmitting}
+                            onPress={vm.onPrimaryAction}
+                            disabled={vm.isActionLoading}
                             style={styles.sendButton}
                         >
                             <View style={[styles.sendButtonBackground, { backgroundColor: vm.colors.text }]}>
-                                {(vm.isEditing ? vm.isSaving : vm.isSubmitting) ? (
+                                {vm.isActionLoading ? (
                                     <ActivityIndicator size="small" color={vm.colors.background} />
                                 ) : (
                                     <FlexText style={[styles.sendButtonText, { color: vm.colors.background }]}>
@@ -365,8 +352,13 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 {isKeyboardVisible && (
                     <View style={styles.keyboardToolbar}>
                         <TouchableOpacity
-                            style={[styles.toolbarButton, { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
-                            onPress={() => setShowUrlInput(!showUrlInput)}
+                            style={[
+                                styles.toolbarButton,
+                                { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                                vm.selectedImageUrl ? { opacity: 0.5 } : {}
+                            ]}
+                            onPress={() => vm.setShowUrlInput(!vm.showUrlInput)}
+                            disabled={!!vm.selectedImageUrl}
                         >
                             <MaterialIcons name="image" size={20} color={vm.colors.text} />
                             <FlexText style={[vm.common.bodySmall, { color: vm.colors.text, fontWeight: '600' }]}>
@@ -374,8 +366,13 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                             </FlexText>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.toolbarButton, { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
+                            style={[
+                                styles.toolbarButton,
+                                { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                                vm.selectedImageUrl ? { opacity: 0.5 } : {}
+                            ]}
                             onPress={() => { GiphyDialog.show() }}
+                            disabled={!!vm.selectedImageUrl}
                         >
                             <MaterialIcons name="gif" size={20} color={vm.colors.text} />
                             <FlexText style={[vm.common.bodySmall, { color: vm.colors.text, fontWeight: '600' }]}>
@@ -586,6 +583,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 8,
+        gap: 8,
     },
     toolbarButton: {
         flexDirection: 'row',
@@ -594,5 +592,29 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         borderRadius: 16,
         gap: 6,
+    },
+    previewContainer: {
+        alignSelf: 'flex-start',
+        marginBottom: 12,
+        marginLeft: 8,
+        position: 'relative',
+    },
+    previewImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 12,
+    },
+    previewRemoveButton: {
+        position: 'absolute',
+        top: -6,
+        right: -6,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#fff',
     },
 });

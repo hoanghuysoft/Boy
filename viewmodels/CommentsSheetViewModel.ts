@@ -12,6 +12,14 @@ import { Comment } from "../types/comment";
 
 dayjs.extend(relativeTime);
 
+const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>\]/gi;
+export function parseCommentContent(content: string): { text: string; imageUrl: string | null } {
+    const matches = [...content.matchAll(IMG_PATTERN)];
+    const imageUrl = matches.length > 0 ? matches[0][1] : null;
+    const text = content.replace(IMG_PATTERN, '').trim();
+    return { text, imageUrl };
+}
+
 export const useCommentsSheetViewModel = (
     postId: string | null,
     ref: RefObject<TrueSheet | null>
@@ -21,6 +29,10 @@ export const useCommentsSheetViewModel = (
     const router = useRouter();
 
     const [commentText, setCommentText] = useState("");
+    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+    const [imageUrlInput, setImageUrlInput] = useState("");
+    const [showUrlInput, setShowUrlInput] = useState(false);
+    
     const [editingComment, setEditingComment] = useState<Comment | null>(null);
     const [isLocalSubmitting, setIsLocalSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -75,14 +87,16 @@ export const useCommentsSheetViewModel = (
 
     const handleSubmitComment = useCallback(() => {
         const trimmed = commentText.trim();
-        if (!trimmed || !postId || isLocalSubmitting || createCommentMutation.isPending) return;
+        const payloadContent = selectedImageUrl ? (trimmed ? trimmed + '\n' : '') + `[<img ${selectedImageUrl} />]` : trimmed;
+        if (!payloadContent || !postId || isLocalSubmitting || createCommentMutation.isPending) return;
 
         setIsLocalSubmitting(true);
         createCommentMutation.mutate(
-            { content: trimmed },
+            { content: payloadContent },
             {
                 onSuccess: () => {
                     setCommentText("");
+                    setSelectedImageUrl(null);
                     Keyboard.dismiss();
                     setIsLocalSubmitting(false);
                 },
@@ -91,7 +105,7 @@ export const useCommentsSheetViewModel = (
                 }
             }
         );
-    }, [commentText, postId, createCommentMutation, isLocalSubmitting]);
+    }, [commentText, selectedImageUrl, postId, createCommentMutation, isLocalSubmitting]);
 
     const isSubmitting = createCommentMutation.isPending || isLocalSubmitting;
 
@@ -121,36 +135,66 @@ export const useCommentsSheetViewModel = (
 
     // Start editing a comment — pre-fill the input with its current content
     const handleEditComment = useCallback((comment: Comment) => {
+        const parsed = parseCommentContent(comment.content);
         setEditingComment(comment);
-        setCommentText(comment.content);
+        setCommentText(parsed.text);
+        setSelectedImageUrl(parsed.imageUrl);
     }, []);
 
     // Cancel editing and reset the input
     const handleCancelEdit = useCallback(() => {
         setEditingComment(null);
         setCommentText("");
+        setSelectedImageUrl(null);
         Keyboard.dismiss();
     }, []);
 
     // Save the edited comment
     const handleSaveEdit = useCallback(() => {
         const trimmed = commentText.trim();
-        if (!trimmed || !editingComment) return;
+        const payloadContent = selectedImageUrl ? (trimmed ? trimmed + '\n' : '') + `[<img ${selectedImageUrl} />]` : trimmed;
+        if (!payloadContent || !editingComment) return;
 
         updateCommentMutation.mutate(
-            { commentId: editingComment.id, data: { content: trimmed } },
+            { commentId: editingComment.id, data: { content: payloadContent } },
             {
                 onSuccess: () => {
                     setEditingComment(null);
                     setCommentText("");
+                    setSelectedImageUrl(null);
                     Keyboard.dismiss();
                 },
             }
         );
-    }, [commentText, editingComment, updateCommentMutation]);
+    }, [commentText, selectedImageUrl, editingComment, updateCommentMutation]);
+
+    const handleAddImageUrl = useCallback(() => {
+        if (imageUrlInput.trim()) {
+            setSelectedImageUrl(imageUrlInput.trim());
+            setImageUrlInput("");
+            setShowUrlInput(false);
+        }
+    }, [imageUrlInput]);
 
     const isEditing = editingComment !== null;
     const isSaving = updateCommentMutation.isPending;
+    
+    // Unified Action Handlers (MVVM)
+    const canSubmit = useMemo(() => {
+        return commentText.trim().length > 0 || selectedImageUrl !== null;
+    }, [commentText, selectedImageUrl]);
+
+    const isActionLoading = useMemo(() => {
+        return isEditing ? isSaving : isSubmitting;
+    }, [isEditing, isSaving, isSubmitting]);
+
+    const onPrimaryAction = useCallback(() => {
+        if (isEditing) {
+            handleSaveEdit();
+        } else {
+            handleSubmitComment();
+        }
+    }, [isEditing, handleSaveEdit, handleSubmitComment]);
 
     // Format relative time
     const formatTimeAgo = useCallback((dateString: string) => {
@@ -170,10 +214,21 @@ export const useCommentsSheetViewModel = (
         isFetchingNextPage,
         currentProfileId,
 
-        // Input
+        // Input states
         commentText,
         setCommentText,
-        isSubmitting,
+        selectedImageUrl,
+        setSelectedImageUrl,
+        imageUrlInput,
+        setImageUrlInput,
+        showUrlInput,
+        setShowUrlInput,
+        
+        // Computed & actions
+        canSubmit,
+        isActionLoading,
+        onPrimaryAction,
+        handleAddImageUrl,
 
         // Edit state
         editingComment,
