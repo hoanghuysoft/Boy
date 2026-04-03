@@ -3,21 +3,38 @@ import FastImage from "@d11/react-native-fast-image";
 import { MaterialIcons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
-import React, { forwardRef, memo, useCallback } from "react";
+import { Galeria } from '@nandorojo/galeria';
+import { Image } from "expo-image";
+import React, { forwardRef, memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     FlatList,
+    Keyboard,
     StyleSheet,
     TextInput,
     TouchableOpacity,
-    View
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Comment } from "../../types/comment";
 import { useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
 import { FlexText } from "../FlexText";
 import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+/** Pattern: [<img https://example.com/image.png />] */
+const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>\]/gi;
+
+function parseCommentContent(content: string): { text: string; imageUrl: string | null } {
+    const matches = [...content.matchAll(IMG_PATTERN)];
+    const imageUrl = matches.length > 0 ? matches[0][1] : null;
+    const text = content.replace(IMG_PATTERN, '').trim();
+    return { text, imageUrl };
+}
 
 // ============================================================================
 // Types
@@ -51,73 +68,97 @@ interface CommentItemProps {
 // CommentItem Component
 // ============================================================================
 
-const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDelete, onEdit, formatTimeAgo, editLabel, deleteLabel, isDeleting }: CommentItemProps) => (
-    <View style={styles.commentItem}>
-        {/* Avatar */}
-        <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
-            <FastImage
-                source={{ uri: comment.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                style={[styles.avatar, { backgroundColor: colors.divider }]}
-                resizeMode={FastImage.resizeMode.cover}
-            />
-        </TouchableOpacity>
+const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDelete, onEdit, formatTimeAgo, editLabel, deleteLabel, isDeleting }: CommentItemProps) => {
+    const { text, imageUrl } = parseCommentContent(comment.content);
 
-        {/* Content Bubble */}
-        <View style={styles.contentWrapper}>
-            <View style={[
-                styles.commentBubble,
-                { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }
-            ]}>
-                <View style={styles.commentHeader}>
-                    <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <FlexText style={[common.heading, { fontSize: 14, fontWeight: '700' }]} numberOfLines={1}>
-                            {comment.profile_name}
-                        </FlexText>
-                        {comment.profile_is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
-                    </TouchableOpacity>
-                </View>
-                <FlexText style={[common.body, { fontSize: 14, marginTop: 4, lineHeight: 20 }]}>
-                    {comment.content}
-                </FlexText>
-            </View>
-            <View style={[common.row, { alignItems: 'center', marginTop: 6, marginLeft: 12 }]}>
-                <FlexText style={[common.bodySmall, { color: colors.muted, fontSize: 12 }]}>
-                    {formatTimeAgo(comment.created_at)}
-                </FlexText>
+    return (
+        <View style={styles.commentItem}>
+            {/* Avatar */}
+            <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
+                <FastImage
+                    source={{ uri: comment.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                    style={[styles.avatar, { backgroundColor: colors.divider }]}
+                    resizeMode={FastImage.resizeMode.cover}
+                />
+            </TouchableOpacity>
 
-                {isOwn && (
-                    <>
-                        <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</FlexText>
-                        <TouchableOpacity
-                            onPress={onEdit}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            style={styles.actionButton}
-                        >
-                            <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
-                                {editLabel}
+            {/* Content Bubble */}
+            <View style={styles.contentWrapper}>
+                <View style={[
+                    styles.commentBubble,
+                    { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }
+                ]}>
+                    <View style={styles.commentHeader}>
+                        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <FlexText style={[common.heading, { fontSize: 14, fontWeight: '700' }]} numberOfLines={1}>
+                                {comment.profile_name}
                             </FlexText>
+                            {comment.profile_is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
                         </TouchableOpacity>
-                        <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</FlexText>
-                        <TouchableOpacity
-                            onPress={onDelete}
-                            disabled={isDeleting}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
-                        >
-                            {isDeleting ? (
-                                <ActivityIndicator size="small" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
-                            ) : (
+                    </View>
+
+                    {/* Text content (with image tags stripped) */}
+                    {text.length > 0 && (
+                        <FlexText style={[common.body, { fontSize: 14, marginTop: 4, lineHeight: 20 }]}>
+                            {text}
+                        </FlexText>
+                    )}
+
+                    {/* Inline image (first image only) — tap opens Galeria lightbox */}
+                    {imageUrl && (
+                        <Galeria urls={[imageUrl]}>
+                            <Galeria.Image index={0}>
+                                <Image
+                                    source={{ uri: imageUrl }}
+                                    style={[styles.commentImage, text.length > 0 && { marginTop: 8 }]}
+                                    contentFit="cover"
+                                />
+                            </Galeria.Image>
+                        </Galeria>
+                    )}
+                </View>
+
+                <View style={[common.row, { alignItems: 'center', marginTop: 6, marginLeft: 12 }]}>
+                    <FlexText style={[common.bodySmall, { color: colors.muted, fontSize: 12 }]}>
+                        {formatTimeAgo(comment.created_at)}
+                    </FlexText>
+
+                    {isOwn && (
+                        <>
+                            <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</FlexText>
+                            <TouchableOpacity
+                                onPress={onEdit}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                style={styles.actionButton}
+                            >
                                 <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
-                                    {deleteLabel}
+                                    {editLabel}
                                 </FlexText>
-                            )}
-                        </TouchableOpacity>
-                    </>
-                )}
+                            </TouchableOpacity>
+                            <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</FlexText>
+                            <TouchableOpacity
+                                onPress={onDelete}
+                                disabled={isDeleting}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
+                            >
+                                {isDeleting ? (
+                                    <ActivityIndicator size="small" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
+                                ) : (
+                                    <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
+                                        {deleteLabel}
+                                    </FlexText>
+                                )}
+                            </TouchableOpacity>
+                        </>
+                    )}
+                </View>
             </View>
+
+
         </View>
-    </View>
-));
+    );
+});
 
 CommentItem.displayName = "CommentItem";
 
@@ -131,6 +172,39 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const vm = useCommentsSheetViewModel(postId, ref as React.RefObject<TrueSheet | null>);
         const { t } = useTranslation();
         const backHandler = useSheetBackHandler(ref);
+
+        const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+        const [showUrlInput, setShowUrlInput] = useState(false);
+        const [imageUrlInput, setImageUrlInput] = useState("");
+
+        useEffect(() => {
+            const kbShow = Keyboard.addListener('keyboardWillShow', () => setKeyboardVisible(true));
+            const kbHide = Keyboard.addListener('keyboardWillHide', () => {
+                setKeyboardVisible(false);
+                setShowUrlInput(false);
+            });
+            const kbDidShow = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+            const kbDidHide = Keyboard.addListener('keyboardDidHide', () => {
+                setKeyboardVisible(false);
+                setShowUrlInput(false);
+            });
+
+            return () => {
+                kbShow.remove();
+                kbHide.remove();
+                kbDidShow.remove();
+                kbDidHide.remove();
+            };
+        }, []);
+
+        const handleAddImageUrl = () => {
+            if (imageUrlInput.trim()) {
+                const syntax = `[<img ${imageUrlInput.trim()} />]`;
+                vm.setCommentText((vm.commentText ? vm.commentText + "\n" : "") + syntax);
+                setImageUrlInput("");
+                setShowUrlInput(false);
+            }
+        };
 
         const renderItem = useCallback(({ item }: { item: Comment }) => (
             <CommentItem
@@ -214,6 +288,31 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         </TouchableOpacity>
                     </View>
                 )}
+
+                {/* URL Input */}
+                {isKeyboardVisible && showUrlInput && (
+                    <View style={[styles.urlInputWrapper, { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
+                        <MaterialIcons name="link" size={18} color={vm.colors.muted} />
+                        <TextInput
+                            style={[styles.urlInput, { color: vm.colors.text }]}
+                            placeholder="Enter image URL..."
+                            placeholderTextColor={vm.colors.muted}
+                            value={imageUrlInput}
+                            onChangeText={setImageUrlInput}
+                            autoFocus
+                            autoCapitalize="none"
+                            keyboardType="url"
+                            selectionColor={vm.colors.text}
+                            onSubmitEditing={handleAddImageUrl}
+                        />
+                        {imageUrlInput.trim().length > 0 && (
+                            <TouchableOpacity onPress={handleAddImageUrl} style={{ marginLeft: 8 }}>
+                                <MaterialIcons name="check-circle" size={24} color={vm.colors.verify || vm.colors.text} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+
                 <View style={styles.inputInnerWrapper}>
                     <TextInput
                         style={[styles.input, {
@@ -247,6 +346,21 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         </TouchableOpacity>
                     )}
                 </View>
+
+                {/* Toolbar under input when keyboard is visible */}
+                {isKeyboardVisible && (
+                    <View style={styles.keyboardToolbar}>
+                        <TouchableOpacity
+                            style={[styles.toolbarButton, { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
+                            onPress={() => setShowUrlInput(!showUrlInput)}
+                        >
+                            <MaterialIcons name="image" size={20} color={vm.colors.text} />
+                            <FlexText style={[vm.common.bodySmall, { color: vm.colors.text, fontWeight: '600' }]}>
+                                Add Image
+                            </FlexText>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
         );
 
@@ -361,6 +475,16 @@ const styles = StyleSheet.create({
     },
     actionButton: {
     },
+    commentImageWrapper: {
+        borderRadius: 12,
+        overflow: 'hidden',
+        alignSelf: 'flex-start',
+        maxWidth: '100%',
+    },
+    commentImage: {
+        height: 240,
+        borderRadius: 12,
+    },
     footerLoader: {
         paddingVertical: 20,
         alignItems: 'center',
@@ -420,5 +544,31 @@ const styles = StyleSheet.create({
     sendButtonText: {
         fontWeight: '700',
         fontSize: 14,
+    },
+    urlInputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        marginBottom: 8,
+    },
+    urlInput: {
+        flex: 1,
+        fontSize: 14,
+        marginLeft: 8,
+    },
+    keyboardToolbar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    toolbarButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        gap: 6,
     },
 });
