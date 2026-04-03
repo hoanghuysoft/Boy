@@ -236,7 +236,8 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         }, [vm.isFetchingNextPage, vm.colors.text]);
 
         useEffect(() => {
-            const listener = GiphyDialog.addListener('onMediaSelect', (media) => {
+            const listener = GiphyDialog.addListener('onMediaSelect', (e) => {
+                const media = e.media;
                 if (media && media.images && media.images.original && media.images.original.url) {
                     const imageUrl = media.images.original.url;
                     const syntax = `[<img ${imageUrl} />]`;
