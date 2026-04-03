@@ -235,14 +235,17 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             return null;
         }, [vm.isFetchingNextPage, vm.colors.text]);
 
-        GiphyDialog.addListener('onMediaSelect', (media) => {
-            if (media && media.images && media.images.original && media.images.original.url) {
-                const imageUrl = media.images.original.url;
-                const syntax = `[<img ${imageUrl} />]`;
-                vm.setCommentText((vm.commentText ? vm.commentText + "\n" : "") + syntax);
-            }
-            GiphyDialog.hide()
-        })
+        useEffect(() => {
+            const listener = GiphyDialog.addListener('onMediaSelect', (media) => {
+                if (media && media.images && media.images.original && media.images.original.url) {
+                    const imageUrl = media.images.original.url;
+                    const syntax = `[<img ${imageUrl} />]`;
+                    vm.setCommentText((vm.commentText ? vm.commentText + "\n" : "") + syntax);
+                }
+                GiphyDialog.hide();
+            });
+            return () => listener.remove();
+        }, [vm.commentText, vm.setCommentText]);
 
         const renderEmpty = useCallback(() => {
             if (vm.isLoading) {
