@@ -1,6 +1,7 @@
 import VerifiedIcon from "@/icons/verified";
 import FastImage from "@d11/react-native-fast-image";
 import { MaterialIcons } from "@expo/vector-icons";
+import { GiphyDialog } from "@giphy/react-native-sdk";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import { Galeria } from '@nandorojo/galeria';
@@ -234,6 +235,15 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             return null;
         }, [vm.isFetchingNextPage, vm.colors.text]);
 
+        GiphyDialog.addListener('onMediaSelect', (media) => {
+            if (media && media.images && media.images.original && media.images.original.url) {
+                const imageUrl = media.images.original.url;
+                const syntax = `[<img ${imageUrl} />]`;
+                vm.setCommentText((vm.commentText ? vm.commentText + "\n" : "") + syntax);
+            }
+            GiphyDialog.hide()
+        })
+
         const renderEmpty = useCallback(() => {
             if (vm.isLoading) {
                 return (
@@ -359,6 +369,16 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                                 Add Image
                             </FlexText>
                         </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.toolbarButton, { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
+                            onPress={() => { GiphyDialog.show() }}
+                        >
+                            <MaterialIcons name="gif" size={20} color={vm.colors.text} />
+                            <FlexText style={[vm.common.bodySmall, { color: vm.colors.text, fontWeight: '600' }]}>
+                                Add GIF
+                            </FlexText>
+                        </TouchableOpacity>
+
                     </View>
                 )}
             </View>

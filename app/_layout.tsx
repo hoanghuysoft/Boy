@@ -1,4 +1,5 @@
 import '@/i18n';
+import { GiphySDK } from '@giphy/react-native-sdk';
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, usePathname } from "expo-router";
@@ -23,6 +24,8 @@ import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
 import { clientPersister, queryClient } from "../services/client";
 import { useAutoLanguageSync } from "../stores/language";
 import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
+
+GiphySDK.configure({ apiKey: process.env.EXPO_PUBLIC_GIPHY_API_KEY || '' });
 
 // Disable Reanimated strict mode warning
 configureReanimatedLogger({
