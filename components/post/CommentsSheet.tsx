@@ -1,7 +1,7 @@
 import VerifiedIcon from "@/icons/verified";
 import FastImage from "@d11/react-native-fast-image";
 import { MaterialIcons } from "@expo/vector-icons";
-import { GiphyDialog } from "@giphy/react-native-sdk";
+import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import { Galeria } from '@nandorojo/galeria';
@@ -209,6 +209,13 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             }
             return null;
         }, [vm.isFetchingNextPage, vm.colors.text]);
+
+        useEffect(() => {
+            GiphyDialog.configure({
+                theme: vm.theme === 'dark' ? 'dark' : 'light',
+                rating: GiphyRating.R,
+            });
+        }, [vm.theme, t]);
 
         useEffect(() => {
             const listener = GiphyDialog.addListener('onMediaSelect', (e) => {
