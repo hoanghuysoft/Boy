@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { memo } from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
+import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 
@@ -23,7 +24,10 @@ export const ContentInput = memo(({
     colors,
     common,
     maxLength = 2000,
-}: ContentInputProps) => (
+}: ContentInputProps) => {
+    const { t } = useTranslation();
+    
+    return (
     <View style={createStyles.contentSection}>
         <View style={styles.inputContainer}>
             <TextInput
@@ -33,7 +37,7 @@ export const ContentInput = memo(({
                     styles.textInput,
                     { color: colors.text },
                 ]}
-                placeholder="What's on your mind?"
+                placeholder={t("create.form.contentPlaceholder")}
                 placeholderTextColor={colors.muted}
                 value={content}
                 onChangeText={onContentChange}
@@ -54,7 +58,7 @@ export const ContentInput = memo(({
             {content.length}/{maxLength}
         </FlexText>
     </View>
-));
+);});
 
 ContentInput.displayName = "ContentInput";
 

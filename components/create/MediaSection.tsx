@@ -4,6 +4,7 @@ import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import React, { memo } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
+import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS, SelectedMedia } from "./types";
@@ -66,12 +67,14 @@ export const MediaSection = memo(({
     common,
     onRemoveMedia,
 }: MediaSectionProps) => {
+    const { t } = useTranslation();
+
     if (selectedMedia.length === 0) return null;
 
     return (
         <View style={createStyles.mediaSection}>
             <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
-                Media ({selectedMedia.length}/10)
+                {t('create.form.media')} ({selectedMedia.length}/10)
             </FlexText>
             <FlatList
                 data={selectedMedia}

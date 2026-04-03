@@ -1,4 +1,23 @@
 const create = {
+    action: {
+        post: 'Post',
+    },
+    header: {
+        title: 'Create Post',
+        subtitle: 'Share something with your followers',
+    },
+    form: {
+        contentPlaceholder: "What's on your mind?",
+        ghost: 'Ghost',
+        sensitive: 'Sensitive',
+        linkLabelPlaceholder: 'Label (e.g. Website)',
+        linkUrlPlaceholder: 'URL (e.g. https://...)',
+        links: 'Links',
+        locationPlaceholder: 'Add location...',
+        media: 'Media',
+        addMusic: 'Add Music',
+        searchMusicPlaceholder: 'Search for songs...',
+    },
     validation: {
         contentTooLong: 'Content is too long (max 2000 characters)',
         locationTooLong: 'Location is too long (max 200 characters)',

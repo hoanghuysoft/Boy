@@ -2,6 +2,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import React, { memo } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
+import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
@@ -27,8 +28,10 @@ export const CreateScreenHeader = memo(({
     canSubmit,
     isSubmitting,
     onSubmit,
-    subtitle = "Share something with your followers",
-}: CreateScreenHeaderProps) => (
+}: CreateScreenHeaderProps) => {
+    const { t } = useTranslation();
+    
+    return (
     <View
         style={[
             createStyles.header,
@@ -40,10 +43,10 @@ export const CreateScreenHeader = memo(({
     >
         <View style={{ flex: 1, flexShrink: 1, marginRight: 12 }}>
             <FlexText style={[common.heading, { fontSize: 28 }]} numberOfLines={1}>
-                Create Post
+                {t('create.header.title')}
             </FlexText>
             <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
-                {subtitle}
+                {t('create.header.subtitle')}
             </FlexText>
         </View>
 
@@ -67,12 +70,12 @@ export const CreateScreenHeader = memo(({
                         style={createStyles.submitButtonText}
                         numberOfLines={1}
                     >
-                        Post
+                        {t('create.action.post')}
                     </FlexText>
                 </>
             )}
         </TouchableOpacity>
     </View>
-));
+);});
 
 CreateScreenHeader.displayName = "CreateScreenHeader";

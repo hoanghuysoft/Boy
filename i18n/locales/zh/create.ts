@@ -1,4 +1,23 @@
 const create = {
+    action: {
+        post: '发布',
+    },
+    header: {
+        title: '发布动态',
+        subtitle: '与您的粉丝分享内容',
+    },
+    form: {
+        contentPlaceholder: '想说点什么？',
+        ghost: '匿名',
+        sensitive: '敏感内容',
+        linkLabelPlaceholder: '标签 (例: 网站)',
+        linkUrlPlaceholder: 'URL (例: https://...)',
+        links: '链接',
+        locationPlaceholder: '添加位置...',
+        media: '媒体',
+        addMusic: '添加音乐',
+        searchMusicPlaceholder: '搜索歌曲...',
+    },
     validation: {
         contentTooLong: '内容过长（最多 2000 字）',
         locationTooLong: '位置过长（最多 200 字）',

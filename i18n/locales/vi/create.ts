@@ -1,4 +1,23 @@
 const create = {
+    action: {
+        post: 'Đăng',
+    },
+    header: {
+        title: 'Tạo bài viết',
+        subtitle: 'Chia sẻ nội dung với những người theo dõi bạn',
+    },
+    form: {
+        contentPlaceholder: 'Bạn đang nghĩ gì?',
+        ghost: 'Ẩn danh',
+        sensitive: 'Nhạy cảm',
+        linkLabelPlaceholder: 'Nhãn (VD: Trang web)',
+        linkUrlPlaceholder: 'URL (VD: https://...)',
+        links: 'Liên kết',
+        locationPlaceholder: 'Thêm vị trí...',
+        media: 'Phương tiện',
+        addMusic: 'Thêm nhạc',
+        searchMusicPlaceholder: 'Tìm bài hát...',
+    },
     validation: {
         contentTooLong: 'Nội dung quá dài (tối đa 2000 ký tự)',
         locationTooLong: 'Địa điểm quá dài (tối đa 200 ký tự)',

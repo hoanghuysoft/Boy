@@ -4,6 +4,7 @@ import React, { memo } from "react";
 import { Image, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { Profile } from "../../types/profile";
+import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
@@ -87,7 +88,10 @@ export const CreateProfileHeader = memo(({
     isAdult,
     onToggleGhost,
     onToggleAdult,
-}: CreateProfileHeaderProps) => (
+}: CreateProfileHeaderProps) => {
+    const { t } = useTranslation();
+
+    return (
     <View style={createStyles.profileRow}>
         <Image
             source={{ uri: profile.avatar_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
@@ -104,7 +108,7 @@ export const CreateProfileHeader = memo(({
                 <PostOptionBadge
                     icon="ghost-smile-outline"
                     iconActive="ghost-smile-bold"
-                    label="Ghost"
+                    label={t('create.form.ghost')}
                     isActive={isGhost}
                     onPress={onToggleGhost}
                     colors={colors}
@@ -114,7 +118,7 @@ export const CreateProfileHeader = memo(({
                 <PostOptionBadge
                     icon="heart-unlock-outline"
                     iconActive="heart-unlock"
-                    label="Sensitive"
+                    label={t('create.form.sensitive')}
                     isActive={isAdult}
                     onPress={onToggleAdult}
                     colors={colors}
@@ -124,6 +128,6 @@ export const CreateProfileHeader = memo(({
             </View>
         </View>
     </View>
-));
+);});
 
 CreateProfileHeader.displayName = "CreateProfileHeader";

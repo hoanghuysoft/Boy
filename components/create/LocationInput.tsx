@@ -3,6 +3,7 @@ import { MapPointBold } from "@solar-icons/react-native";
 import React, { memo } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
+import { useTranslation } from "react-i18next";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
 
@@ -27,6 +28,8 @@ export const LocationInput = memo(({
     colors,
     common,
 }: LocationInputProps) => {
+    const { t } = useTranslation();
+
     if (!visible) return null;
 
     return (
@@ -39,7 +42,7 @@ export const LocationInput = memo(({
             <MapPointBold size={24} color={COLORS.primary} />
             <TextInput
                 style={[common.body, createStyles.locationInput, { color: colors.text }]}
-                placeholder="Add location..."
+                placeholder={t('create.form.locationPlaceholder')}
                 placeholderTextColor={colors.muted}
                 value={location}
                 onChangeText={onLocationChange}

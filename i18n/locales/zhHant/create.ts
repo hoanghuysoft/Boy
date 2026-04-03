@@ -1,4 +1,23 @@
 const create = {
+    action: {
+        post: '發佈',
+    },
+    header: {
+        title: '發佈動態',
+        subtitle: '與您的粉絲分享內容',
+    },
+    form: {
+        contentPlaceholder: '想說點什麼？',
+        ghost: '匿名',
+        sensitive: '敏感內容',
+        linkLabelPlaceholder: '標籤 (例: 網站)',
+        linkUrlPlaceholder: 'URL (例: https://...)',
+        links: '連結',
+        locationPlaceholder: '新增位置...',
+        media: '媒體',
+        addMusic: '新增音樂',
+        searchMusicPlaceholder: '搜尋歌曲...',
+    },
     validation: {
         contentTooLong: '內容過長（最多 2000 字）',
         locationTooLong: '位置過長（最多 200 字）',

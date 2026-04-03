@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { DeezerTrack } from "../../services/deezer";
+import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
@@ -137,12 +138,14 @@ export const MusicSection = memo(({
     musicResults,
     isLoading,
 }: MusicSectionProps) => {
+    const { t } = useTranslation();
+
     if (!visible) return null;
 
     return (
         <View style={createStyles.musicSection}>
             <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
-                Add Music
+                {t('create.form.addMusic')}
             </FlexText>
 
             {selectedTrack && (
@@ -163,7 +166,7 @@ export const MusicSection = memo(({
                 <VinylRecordBold size={24} color={COLORS.primary} />
                 <TextInput
                     style={[createStyles.musicSearchInput, common.body, { color: colors.text }]}
-                    placeholder="Search for songs..."
+                    placeholder={t('create.form.searchMusicPlaceholder')}
                     placeholderTextColor={colors.muted}
                     value={searchQuery}
                     onChangeText={onSearchQueryChange}

@@ -4,6 +4,7 @@ import React, { memo } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { Link } from "../../types/post";
+import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
@@ -31,19 +32,22 @@ const LinkItem = memo(({
     onRemove,
     colors,
     common,
-}: LinkItemProps) => (
+}: LinkItemProps) => {
+    const { t } = useTranslation();
+
+    return (
     <View style={[createStyles.linkItemContainer, { backgroundColor: colors.card }]}>
         <View style={createStyles.linkInputsContainer}>
             <TextInput
                 style={[createStyles.linkInput, common.body, { color: colors.text, borderColor: colors.divider }]}
-                placeholder="Label (e.g. Website)"
+                placeholder={t('create.form.linkLabelPlaceholder')}
                 placeholderTextColor={colors.muted}
                 value={link.label}
                 onChangeText={(text) => onUpdate("label", text)}
             />
             <TextInput
                 style={[createStyles.linkInput, common.body, { color: colors.text, borderColor: colors.divider }]}
-                placeholder="URL (e.g. https://...)"
+                placeholder={t('create.form.linkUrlPlaceholder')}
                 placeholderTextColor={colors.muted}
                 value={link.url}
                 onChangeText={(text) => onUpdate("url", text)}
@@ -58,7 +62,7 @@ const LinkItem = memo(({
             <Lineicons icon={XmarkSolid} size={12} color="#fff" />
         </TouchableOpacity>
     </View>
-));
+);});
 
 LinkItem.displayName = "LinkItem";
 
@@ -83,12 +87,14 @@ export const LinksSection = memo(({
     onUpdateLink,
     onRemoveLink,
 }: LinksSectionProps) => {
+    const { t } = useTranslation();
+
     if (!visible || links.length === 0) return null;
 
     return (
         <View style={createStyles.linksSection}>
             <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
-                Links
+                {t('create.form.links')}
             </FlexText>
             {links.map((link, index) => (
                 <LinkItem
