@@ -180,6 +180,8 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
                     resizeMode="cover"
                     blur={shouldBlur ? 25 : undefined}
                     fadeDuration={150}
+                    placeholder={{blurhash: item.blurhash}}
+                    showPlaceholderOnFailure
                 />
             </Pressable>
         </View>

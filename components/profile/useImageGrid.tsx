@@ -123,6 +123,7 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
                 contentFit="cover"
                 transition={150}
                 onError={handleImageError}
+                placeholder={{blurhash: mediaItem.blurhash}}
             />
         </Pressable>
     );

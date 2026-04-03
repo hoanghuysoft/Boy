@@ -42,6 +42,7 @@ export interface Media {
     thumbnail_url: any
     caption: string
     backup1: string | null;
+    blurhash: string | 'LGF5?xYk^6#M@-5c,1J5@[or[Q6.';
 }
 
 export interface Music {
