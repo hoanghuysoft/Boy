@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 
-interface GalleryImage {
+export interface GalleryImage {
     uri: string;
     caption?: string;
     profileName?: string;
     isVerified?: boolean;
     musicUrl?: string;
     musicTitle?: string;
+    blurhash?: string | null;
 }
 
 interface GalleryState {

@@ -283,6 +283,7 @@ export const PostMediaCarousel = ({ media, postId, profileName, content, colors,
             isVerified: isVerified,
             musicUrl: musicUrl,
             musicTitle: musicTitle,
+            blurhash: m.blurhash,
         })),
         [media, content, profileName, isVerified, musicUrl, musicTitle]);
 

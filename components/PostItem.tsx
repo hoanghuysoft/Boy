@@ -9,11 +9,11 @@ import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Post } from "@/types/post";
 import { Ionicons } from "@expo/vector-icons";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
+import { Image } from "expo-image";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Dimensions, Linking, ScrollView, TouchableOpacity, View } from "react-native";
 import { Pressable } from 'react-native-gesture-handler';
-import TurboImage from 'react-native-turbo-image';
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
@@ -48,12 +48,11 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
                 <Pressable onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
-                    <TurboImage
+                    <Image
                         source={{ uri: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
                         style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: vm.colors.divider }}
-                        cachePolicy={IMAGE_CACHE_POLICY}
-                        fadeDuration={100}
-                        format={post.profile_avatar?.endsWith('.gif') ? 'gif' : undefined}
+                        transition={100}
+                        contentFit="cover"
                     />
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>

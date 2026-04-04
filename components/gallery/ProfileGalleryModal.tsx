@@ -52,9 +52,16 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
         });
     };
 
-    const renderItem = useCallback((item: string, index: number) => {
-        return <GalleryImage uri={item} index={index} />;
-    }, []);
+    const renderItem = useCallback(
+        (item: string, index: number) => (
+            <GalleryImage
+                uri={item}
+                index={index}
+                blurhash={photos[index]?.blurhash}
+            />
+        ),
+        [photos],
+    );
 
     const keyExtractor = useCallback((item: string, index: number) => {
         return `${item}-${index}`;

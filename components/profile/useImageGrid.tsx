@@ -163,7 +163,7 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
                     marginRight={0}
                     placeholderImageVideo={vm.placeholderImageVideo}
                     onPress={() => vm.onVideoPress?.(mediaItem)}
-                    onLongPress={() => vm.handleLongPress(mediaItem.thumbnail_url || mediaItem.url)}
+                    onLongPress={() => vm.handleLongPress(mediaItem.thumbnail_url || mediaItem.url, mediaItem.blurhash)}
                     onPressOut={vm.handlePressOut}
                 />
             );
@@ -177,7 +177,7 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
                 imageStyle={vm.imageStyle}
                 placeholderImage={vm.placeholderImage}
                 onImagePress={vm.onImagePress}
-                onLongPress={() => vm.handleLongPress(mediaPath)}
+                onLongPress={() => vm.handleLongPress(mediaPath, mediaItem.blurhash)}
                 onPressOut={vm.handlePressOut}
             />
         );
@@ -190,12 +190,13 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
         estimatedItemSize: vm.estimatedItemSize,
         renderItem,
         keyExtractor: vm.keyExtractor,
-        contentContainerStyle: styles.listContent,
+        contentContainerStyle: styles.listContent,  
         flatListProps: vm.flatListProps,
         renderQuickPreview: () => (
             <QuickPreviewModal
                 visible={vm.isPreviewVisible}
                 imageUrl={vm.previewUrl}
+                blurhash={vm.previewBlurhash}
                 onClose={vm.closePreview}
             />
         )
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     listContent: {
     },
     overlay: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         backgroundColor: 'rgba(0,0,0,0.2)',
         justifyContent: 'center',
         alignItems: 'center',

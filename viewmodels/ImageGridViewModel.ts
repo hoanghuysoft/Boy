@@ -64,13 +64,15 @@ export const useImageGridViewModel = (options: UseImageGridViewModelOptions = {}
     const [gridData, setGridData] = useState<GridItemType[]>([]);
     const [sortedUrls, setSortedUrls] = useState<string[]>([]);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewBlurhash, setPreviewBlurhash] = useState<string | null>(null);
     const [isPreviewVisible, setIsPreviewVisible] = useState(false);
 
     // ─── Quick Preview Handlers ────────────────────────────────────
-    const handleLongPress = useCallback((url: string) => {
+    const handleLongPress = useCallback((url: string, blurhash: string) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setPreviewUrl(url);
         setIsPreviewVisible(true);
+        setPreviewBlurhash(blurhash);
     }, []);
 
     const handlePressOut = useCallback(() => {
@@ -182,6 +184,7 @@ export const useImageGridViewModel = (options: UseImageGridViewModelOptions = {}
         // Quick Preview
         previewUrl,
         isPreviewVisible,
+        previewBlurhash,
         handleLongPress,
         handlePressOut,
         closePreview,

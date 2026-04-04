@@ -1,4 +1,5 @@
 import { calculateAge, calculateDaysLeft } from '@/utils/timeandage';
+import { Image } from 'expo-image';
 import { SquircleView } from "expo-squircle-view";
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +11,6 @@ import Animated, {
     useSharedValue,
     withSpring
 } from 'react-native-reanimated';
-import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
 
@@ -74,10 +74,10 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
 
     return (
         <SquircleView borderRadius={200} cornerSmoothing={100} preserveSmoothing={true} style={styles.cardContainer}>
-            <TurboImage
-                source={{ uri: "https://www.kudoboard.com/cdn-cgi/image/fit%3Dcover%2Cformat%3Dwebp%2Cquality%3D85%2Cwidth%3D1830%2Cheight%3D1041%2Conerror%3Dredirect/wp-content/uploads/2023/10/hero-bg-occasion-birthday.jpg" }}
+            <Image
+                source={require('@/assets/images/birthday.jpg')}
                 style={StyleSheet.absoluteFill}
-                resizeMode="cover"
+                contentFit="cover"
             />
             {/* Dark overlay */}
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />

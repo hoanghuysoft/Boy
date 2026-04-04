@@ -9,20 +9,12 @@ import { Modal, StatusBar, ToastAndroid } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Gallery, stackTransition, type GalleryRefType } from 'react-native-zoom-toolkit';
+import type { GalleryImage as GalleryImageMeta } from '@/stores/gallery';
 import GalleryImage from './GalleryImage';
-
-interface GalleryImage {
-    uri: string;
-    caption?: string;
-    profileName?: string;
-    isVerified?: boolean;
-    musicUrl?: string;
-    musicTitle?: string;
-}
 
 interface GalleryModalContentProps {
     imagesUrl: string[];
-    galleryImages: GalleryImage[];
+    galleryImages: GalleryImageMeta[];
     initialIndex: number;
     onClose: () => void;
     showDownload?: boolean;
@@ -55,9 +47,16 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
         });
     };
 
-    const renderItem = useCallback((item: string, index: number) => {
-        return <GalleryImage uri={item} index={index} />;
-    }, []);
+    const renderItem = useCallback(
+        (item: string, index: number) => (
+            <GalleryImage
+                uri={item}
+                index={index}
+                blurhash={galleryImages[index]?.blurhash}
+            />
+        ),
+        [galleryImages],
+    );
 
     const keyExtractor = useCallback((item: string, index: number) => {
         return `${item}-${index}`;

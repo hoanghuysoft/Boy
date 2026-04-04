@@ -1,17 +1,19 @@
 
+import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
 import { Modal, StyleSheet, View } from "react-native";
-import TurboImage from "react-native-turbo-image";
 
 interface QuickPreviewModalProps {
     visible: boolean;
     imageUrl: string | null;
+    blurhash: string | null;
     onClose: () => void;
 }
 
 const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
     visible,
     imageUrl,
+    blurhash,
     onClose,
 }) => {
     const [mounted, setMounted] = useState(visible);
@@ -33,11 +35,16 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
             backdropColor={"#000000e1"}
         >
             <View style={styles.container}>
-                <TurboImage
+                <Image
                     source={{ uri: imageUrl || "" }}
                     style={styles.image}
-                    resizeMode="contain"
-                    format={imageUrl?.endsWith('.gif') ? 'gif' : undefined}
+                    contentFit="contain"
+                    transition={150}
+                    placeholder={
+                        typeof blurhash === 'string' && blurhash.trim().length > 0
+                            ? { blurhash: blurhash.trim() }
+                            : undefined
+                    }
                 />
 
             </View>
