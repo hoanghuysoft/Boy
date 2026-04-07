@@ -306,6 +306,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                 visible={isModalVisible}
                 onClose={() => setIsModalVisible(false)}
                 imageUrl={selectedImage}
+                blurhash={null}
             />
         </View>
     )

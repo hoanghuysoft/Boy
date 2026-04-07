@@ -29,7 +29,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import Reanimated, { useAnimatedStyle, useSharedValue, withSpring, withTiming, withSequence, runOnJS } from "react-native-reanimated";
+import Reanimated, { runOnJS, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Video, { VideoRef } from "react-native-video";
 import { useShotsViewModel } from "../../viewmodels/ShotsViewModel";
@@ -164,7 +164,7 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
     const handleVideoPress = (e: any) => {
         const now = Date.now();
         const DOUBLE_TAP_DELAY = 250; // Use 250ms for snappier double tap vs single tap separation
-        
+
         if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
             // Double tap!
             if (singleTapTimer.current) {
@@ -238,11 +238,11 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
 
             {/* Render Floating Hearts */}
             {hearts.map(heart => (
-                <FloatingHeart 
-                    key={heart.id} 
-                    x={heart.x} 
-                    y={heart.y} 
-                    onComplete={() => removeHeart(heart.id)} 
+                <FloatingHeart
+                    key={heart.id}
+                    x={heart.x}
+                    y={heart.y}
+                    onComplete={() => removeHeart(heart.id)}
                 />
             ))}
 
@@ -449,6 +449,7 @@ const ShotsInner = () => {
                         tintColor={vm.colors.text}
                         colors={[vm.colors.text]}
                         progressBackgroundColor={vm.colors.card}
+                        progressViewOffset={insets.top + 30}
                     />
                 }
                 ListFooterComponent={

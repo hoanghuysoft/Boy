@@ -6,7 +6,7 @@ import { Modal, StyleSheet, View } from "react-native";
 interface QuickPreviewModalProps {
     visible: boolean;
     imageUrl: string | null;
-    blurhash: string | null;
+    blurhash: string | null | undefined;
     onClose: () => void;
 }
 

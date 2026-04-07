@@ -300,21 +300,22 @@ const ChatScreen = () => {
               onRefresh={() => {
                 refetch();
               }}
-              tintColor={"white"}
-              colors={["white"]}
-              progressBackgroundColor={withAlpha(darkDominant, "CC")}
+              tintColor={colors.text}
+              colors={[colors.text]}
+              progressBackgroundColor={colors.card}
+              progressViewOffset={inset.top}
             />
           }
         >
           {isLoading ? (
             <View style={{ gap: 16 }}>
-               <ShimmerEffect style={{ height: posterHeight, width: '100%' }} />
-               <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
-                 <ShimmerEffect style={{ height: 32, width: '60%', borderRadius: 8, alignSelf: 'center' }} />
-                 <ShimmerEffect style={{ height: 16, width: '100%', borderRadius: 8 }} />
-                 <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 8 }} />
-                 <ShimmerEffect style={{ height: 120, width: '100%', borderRadius: 12, marginTop: 24 }} />
-               </View>
+              <ShimmerEffect style={{ height: posterHeight, width: '100%' }} />
+              <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
+                <ShimmerEffect style={{ height: 32, width: '60%', borderRadius: 8, alignSelf: 'center' }} />
+                <ShimmerEffect style={{ height: 16, width: '100%', borderRadius: 8 }} />
+                <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 8 }} />
+                <ShimmerEffect style={{ height: 120, width: '100%', borderRadius: 12, marginTop: 24 }} />
+              </View>
             </View>
           ) : isVideoDetailError ? (
             <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 12, backgroundColor: "rgba(255,0,0,0.12)", marginTop: posterHeight * 0.5 }}>
@@ -326,166 +327,166 @@ const ChatScreen = () => {
               <View style={[styles.header, { height: posterHeight }]}>
                 <Canvas style={{ height: posterHeight }}>
                   <BlurMask
-                mask={
-                  <LinearGradient
-                    start={vec(0, posterHeight * 0.5)}
-                    end={vec(0, posterHeight)}
-                    colors={["transparent", "black"]}
-                  />
-                }
-              >
-                <ImageShader
-                  image={image}
-                  x={0}
-                  width={width}
-                  height={posterHeight}
-                  fit="cover"
-                  tx="clamp"
-                  ty="clamp"
-                />
-              </BlurMask>
-
-              {/* Bottom→top overlay to blend into the solid background */}
-              <Rect x={0} y={0} width={width} height={posterHeight}>
-                <LinearGradient
-                  start={vec(0, posterHeight)}
-                  end={vec(0, 0)}
-                  // Strong at bottom, fades out quickly (adjust positions to taste)
-                  colors={[
-                    withAlpha(darkDominant, "FF"), // solid at bottom
-                    withAlpha(darkDominant, "99"), // stronger mid fade
-                    "transparent",
-                  ]}
-                  positions={[0, 0.25, 1]}
-                />
-              </Rect>
-            </Canvas>
-
-            <View
-              pointerEvents="none"
-              style={[
-                styles.headerOverlay,
-                {
-                  paddingBottom: 24, // distance from bottom
-                },
-              ]}
-            >
-              {/* Badge */}
-              <Image source={require("../../assets/images/oscar.png")} style={{ width: 150, height: 150 }} contentFit="contain" />
-              <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
-                {detail?.title ?? ""}
-              </FlexText>
-              <FlexText numberOfLines={2} style={{ color: "white", fontSize: 16, fontWeight: "400", textAlign: "justify" }}>
-                {detail?.description ?? ""}
-              </FlexText>
-              <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-                <FlexText style={[styles.textStyle, { color: "white" }]}>{detail?.views ?? ""}</FlexText>
-                <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
-                <FlexText style={[styles.textStyle, { color: "white" }]}>{detail?.category ?? ""}</FlexText>
-                <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
-                <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
-                <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
-              </View>
-            </View>
-          </View>
-          <View>
-            <View style={{ paddingHorizontal: 16 }}>
-              <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12 }]}>
-                Episodes
-              </Text>
-              <View style={styles.episodeGrid}>
-                {episodes.map((ep) => (
-                  <Pressable
-                    key={`${ep.episode}-${ep.url}`}
-                    onPress={() => {
-                      if (!ep.url) return;
-                      const isHls = ep.url.toLowerCase().includes(".m3u8");
-                      if (isHls && webviewUrl) {
-                        WebBrowser.openBrowserAsync(webviewUrl);
-                        return;
-                      }
-                      router.push({
-                        pathname: "/video_player",
-                        params: {
-                          videoUrl: ep.url,
-                          name: detail?.title ?? "",
-                          caption: detail?.description ?? "",
-                          portrait: "true",
-                        },
-                      });
-                    }}
-                    style={({ pressed }) => [
-                      styles.episodeButton,
-                      {
-                        backgroundColor: withAlpha("#FFFFFF", "14"),
-                        borderColor: withAlpha("#FFFFFF", "2A"),
-                        opacity: pressed ? 0.85 : 1,
-                      },
-                    ]}
+                    mask={
+                      <LinearGradient
+                        start={vec(0, posterHeight * 0.5)}
+                        end={vec(0, posterHeight)}
+                        colors={["transparent", "black"]}
+                      />
+                    }
                   >
-                    <Text style={[styles.episodeText, { color: "white" }]}>
-                      Episode {ep.episode}
+                    <ImageShader
+                      image={image}
+                      x={0}
+                      width={width}
+                      height={posterHeight}
+                      fit="cover"
+                      tx="clamp"
+                      ty="clamp"
+                    />
+                  </BlurMask>
+
+                  {/* Bottom→top overlay to blend into the solid background */}
+                  <Rect x={0} y={0} width={width} height={posterHeight}>
+                    <LinearGradient
+                      start={vec(0, posterHeight)}
+                      end={vec(0, 0)}
+                      // Strong at bottom, fades out quickly (adjust positions to taste)
+                      colors={[
+                        withAlpha(darkDominant, "FF"), // solid at bottom
+                        withAlpha(darkDominant, "99"), // stronger mid fade
+                        "transparent",
+                      ]}
+                      positions={[0, 0.25, 1]}
+                    />
+                  </Rect>
+                </Canvas>
+
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.headerOverlay,
+                    {
+                      paddingBottom: 24, // distance from bottom
+                    },
+                  ]}
+                >
+                  {/* Badge */}
+                  <Image source={require("../../assets/images/oscar.png")} style={{ width: 150, height: 150 }} contentFit="contain" />
+                  <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
+                    {detail?.title ?? ""}
+                  </FlexText>
+                  <FlexText numberOfLines={2} style={{ color: "white", fontSize: 16, fontWeight: "400", textAlign: "justify" }}>
+                    {detail?.description ?? ""}
+                  </FlexText>
+                  <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+                    <FlexText style={[styles.textStyle, { color: "white" }]}>{detail?.views ?? ""}</FlexText>
+                    <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
+                    <FlexText style={[styles.textStyle, { color: "white" }]}>{detail?.category ?? ""}</FlexText>
+                    <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
+                    <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                    <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                  </View>
+                </View>
+              </View>
+              <View>
+                <View style={{ paddingHorizontal: 16 }}>
+                  <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12 }]}>
+                    Episodes
+                  </Text>
+                  <View style={styles.episodeGrid}>
+                    {episodes.map((ep, index) => (
+                      <Pressable
+                        key={`${ep.episode}-${ep.url}-${index}`}
+                        onPress={() => {
+                          if (!ep.url) return;
+                          const isHls = ep.url.toLowerCase().includes(".m3u8");
+                          if (isHls && webviewUrl) {
+                            WebBrowser.openBrowserAsync(webviewUrl);
+                            return;
+                          }
+                          router.push({
+                            pathname: "/video_player",
+                            params: {
+                              videoUrl: ep.url,
+                              name: detail?.title ?? "",
+                              caption: detail?.description ?? "",
+                              portrait: "true",
+                            },
+                          });
+                        }}
+                        style={({ pressed }) => [
+                          styles.episodeButton,
+                          {
+                            backgroundColor: withAlpha("#FFFFFF", "14"),
+                            borderColor: withAlpha("#FFFFFF", "2A"),
+                            opacity: pressed ? 0.85 : 1,
+                          },
+                        ]}
+                      >
+                        <Text style={[styles.episodeText, { color: "white" }]}>
+                          Episode {ep.episode}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+                {(detail?.extra_images?.length ?? 0) > 0 && (
+                  <View>
+                    <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 24, paddingHorizontal: 16 }]}>
+                      Gallery
                     </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-            {(detail?.extra_images?.length ?? 0) > 0 && (
-              <View>
-                <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 24, paddingHorizontal: 16 }]}>
-                  Gallery
+                    <GestureFlatList
+                      horizontal
+                      data={detail?.extra_images ?? []}
+                      keyExtractor={galleryKeyExtractor}
+                      renderItem={renderGalleryItem}
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+                    />
+                  </View>
+                )}
+                <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 20, paddingHorizontal: 16 }]}>
+                  Information
+                </Text>
+                <View style={{ gap: 8 }}>
+                  <View style={{ paddingHorizontal: 16 }}>
+                    <Text style={[styles.textStyle, { color: "white", }]}>
+                      Released
+                    </Text>
+                    <Text style={[styles.textStyle, { color: colors.muted }]}>
+                      {detail?.uploaded ?? ""}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text style={[styles.textStyle, { color: "white", paddingHorizontal: 16 }]}>
+                      Tags
+                    </Text>
+                    <GestureFlatList
+                      horizontal
+                      data={detail?.tags ?? []}
+                      keyExtractor={tagKeyExtractor}
+                      renderItem={renderTag}
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ gap: 8, marginTop: 8, paddingHorizontal: 16 }}
+                    />
+                  </View>
+                </View>
+                <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 20, paddingHorizontal: 16 }]}>
+                  Related Videos
                 </Text>
                 <GestureFlatList
                   horizontal
-                  data={detail?.extra_images ?? []}
-                  keyExtractor={galleryKeyExtractor}
-                  renderItem={renderGalleryItem}
+                  data={relatedVideos ?? []}
+                  keyExtractor={relatedVideoKeyExtractor}
+                  renderItem={renderRelatedVideo}
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+                  contentContainerStyle={{ paddingHorizontal: 16 }}
                 />
               </View>
-            )}
-            <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 20, paddingHorizontal: 16 }]}>
-              Information
-            </Text>
-            <View style={{ gap: 8 }}>
-              <View style={{ paddingHorizontal: 16 }}>
-                <Text style={[styles.textStyle, { color: "white", }]}>
-                  Released
-                </Text>
-                <Text style={[styles.textStyle, { color: colors.muted }]}>
-                  {detail?.uploaded ?? ""}
-                </Text>
-              </View>
-              <View>
-                <Text style={[styles.textStyle, { color: "white", paddingHorizontal: 16 }]}>
-                  Tags
-                </Text>
-                <GestureFlatList
-                  horizontal
-                  data={detail?.tags ?? []}
-                  keyExtractor={tagKeyExtractor}
-                  renderItem={renderTag}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 8, marginTop: 8, paddingHorizontal: 16 }}
-                />
-              </View>
-            </View>
-            <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 20, paddingHorizontal: 16 }]}>
-              Related Videos
-            </Text>
-            <GestureFlatList
-              horizontal
-              data={relatedVideos ?? []}
-              keyExtractor={relatedVideoKeyExtractor}
-              renderItem={renderRelatedVideo}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16 }}
-              />
-            </View>
-            <View style={{ height: inset.bottom }} />
-          </>
-        )}
+              <View style={{ height: inset.bottom }} />
+            </>
+          )}
         </ScrollView>
       </BlurTargetView>
       <View

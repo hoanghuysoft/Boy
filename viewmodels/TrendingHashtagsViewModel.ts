@@ -8,7 +8,7 @@ const PREVIEW_COUNT = 3;
 export const useTrendingHashtagsViewModel = () => {
     const router = useRouter();
 
-    const { data, isLoading } = useTrendingHashtags();
+    const { data, isLoading, refetch, isRefetching } = useTrendingHashtags();
 
     const allTags = useMemo((): Hashtag[] => {
         return data?.data ?? [];
@@ -30,6 +30,10 @@ export const useTrendingHashtagsViewModel = () => {
         [router]
     );
 
+    const handleRefresh = useCallback(async () => {
+        await refetch();
+    }, [refetch]);
+
     const navigateToAllTags = useCallback(() => {
         router.push('/hashtag-list' as any);
     }, [router]);
@@ -41,5 +45,7 @@ export const useTrendingHashtagsViewModel = () => {
         isLoading,
         navigateToTag,
         navigateToAllTags,
+        handleRefresh,
+        isRefetching,
     };
 };

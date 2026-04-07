@@ -7,6 +7,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import {
     ImageStyle,
     ListRenderItem,
+    ListRenderItemInfo,
     StyleSheet,
     TouchableOpacity,
     View,
@@ -183,8 +184,51 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
         );
     }, [vm.imageStyle, vm.videoStyle, vm.onVideoPress, vm.onImagePress, vm.handleLongPress, vm.handlePressOut, vm.colors.card, vm.placeholderImage, vm.placeholderImageVideo]);
 
+    /** Rows for FlashList with numColumns=1 (avoids remounting list header when columns change). */
+    const chunkedGridData = useMemo(() => {
+        const cols = vm.numColumns;
+        const flat = vm.gridData;
+        if (flat.length === 0) return [];
+        const rows: GridItemType[][] = [];
+        for (let i = 0; i < flat.length; i += cols) {
+            rows.push(flat.slice(i, i + cols));
+        }
+        return rows;
+    }, [vm.gridData, vm.numColumns]);
+
+    const renderChunkedRow = useCallback(
+        ({ item: row, index: rowIndex }: ListRenderItemInfo<GridItemType[]>) => (
+            <View style={{ flexDirection: "row", width: "100%" }}>
+                {row.map((subItem, subIndex) => (
+                    <View key={subIndex} style={{ flex: 1 }}>
+                        {renderItem({
+                            item: subItem,
+                            index: rowIndex * vm.numColumns + subIndex,
+                            separators: {} as any,
+                        } as ListRenderItemInfo<GridItemType>)}
+                    </View>
+                ))}
+                {Array.from({ length: vm.numColumns - row.length }).map((_, i) => (
+                    <View key={`spacer-${i}`} style={{ flex: 1 }} />
+                ))}
+            </View>
+        ),
+        [renderItem, vm.numColumns],
+    );
+
+    const chunkedKeyExtractor = useCallback(
+        (row: GridItemType[], index: number) => {
+            const first = row[0];
+            return vm.keyExtractor(first, index * vm.numColumns);
+        },
+        [vm.keyExtractor, vm.numColumns],
+    );
+
     return {
         gridData: vm.gridData,
+        chunkedGridData,
+        renderChunkedRow,
+        chunkedKeyExtractor,
         sortedUrls: vm.sortedUrls,
         numColumns: vm.numColumns,
         estimatedItemSize: vm.estimatedItemSize,

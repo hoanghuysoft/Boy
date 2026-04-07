@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import {
     ActivityIndicator,
     FlatList,
+    RefreshControl,
     StyleSheet,
     TouchableOpacity,
     View
@@ -62,9 +63,7 @@ const HashtagListScreen = () => {
         if (vm.isLoading) {
             return (
                 <View style={styles.emptyState}>
-                    <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
-                        <ActivityIndicator size="large" color={colors.text} />
-                    </View>
+                    <ActivityIndicator size="small" color={colors.text} />
                 </View>
             );
         }
@@ -160,6 +159,16 @@ const HashtagListScreen = () => {
                     { paddingHorizontal: 16, gap: 10, paddingBottom: 40 },
                     vm.allTags.length === 0 && styles.emptyContainer,
                 ]}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={vm.isRefetching}
+                        onRefresh={vm.handleRefresh}
+                        tintColor={colors.text}
+                        colors={[colors.text]}
+                        progressBackgroundColor={colors.card}
+                        progressViewOffset={insets.top}
+                    />
+                }
             />
         </View>
     );

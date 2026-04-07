@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     FlatList,
+    RefreshControl,
     StyleSheet,
     TouchableOpacity,
     View
@@ -38,7 +39,7 @@ const BookmarksScreen = () => {
         refetch,
         isRefetching,
     } = useBookmarks();
-    
+
     const posts = useMemo(() => {
         if (!data?.pages) return [];
         return data.pages.flatMap((page) => page.data);
@@ -68,8 +69,8 @@ const BookmarksScreen = () => {
     const renderItem = useCallback(
         ({ item }: { item: BookmarkedPost }) => (
             <View style={{ marginBottom: 30 }}>
-                <PostItem 
-                    post={item} 
+                <PostItem
+                    post={item}
                     isBookmarked={true}
                     onLikeCountPress={handleLikeCountPress}
                     onCommentPress={handleCommentPress}
@@ -96,9 +97,7 @@ const BookmarksScreen = () => {
         if (isLoading) {
             return (
                 <View style={styles.emptyState}>
-                    <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
-                        <ActivityIndicator size="large" color={colors.text} />
-                    </View>
+                    <ActivityIndicator size="small" color={colors.text} />
                 </View>
             );
         }
@@ -177,6 +176,15 @@ const BookmarksScreen = () => {
                 contentContainerStyle={
                     posts.length === 0 ? styles.emptyContainer : undefined
                 }
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefetching}
+                        onRefresh={refetch}
+                        tintColor={colors.text}
+                        colors={[colors.text]}
+                        progressBackgroundColor={colors.card}
+                        progressViewOffset={insets.top}
+                    />}
             />
 
             <LikersSheet ref={likersSheetRef} postId={selectedLikePostId} />

@@ -170,6 +170,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                                     visible={vm.avatarPreviewVisible}
                                     imageUrl={vm.currentAvatar}
                                     onClose={vm.hideAvatarPreview}
+                                    blurhash={null}
                                 />
                             </>
                         ) : vm.currentAvatar ? (

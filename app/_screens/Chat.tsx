@@ -99,29 +99,30 @@ const ChatScreen = () => {
               tintColor={colors.text}
               colors={[colors.text]}
               progressBackgroundColor={colors.card}
+              progressViewOffset={inset.top}
             />
           }
         >
           {/* Loading Shimmer */}
           {(vm.isLoadingSlider || vm.isLoadingSections) ? (
             <View style={{ gap: 24 }}>
-                <ShimmerEffect style={{ height: posterHeight, width: '100%' }} />
-                <View style={{ gap: 16 }}>
-                  <ShimmerEffect style={{ height: 24, width: 120, marginLeft: 16, borderRadius: 4 }} />
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  </ScrollView>
-                </View>
-                <View style={{ gap: 16 }}>
-                  <ShimmerEffect style={{ height: 24, width: 150, marginLeft: 16, borderRadius: 4 }} />
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  </ScrollView>
-                </View>
+              <ShimmerEffect style={{ height: posterHeight, width: '100%' }} />
+              <View style={{ gap: 16 }}>
+                <ShimmerEffect style={{ height: 24, width: 120, marginLeft: 16, borderRadius: 4 }} />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                </ScrollView>
+              </View>
+              <View style={{ gap: 16 }}>
+                <ShimmerEffect style={{ height: 24, width: 150, marginLeft: 16, borderRadius: 4 }} />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                </ScrollView>
+              </View>
             </View>
           ) : (
             <>

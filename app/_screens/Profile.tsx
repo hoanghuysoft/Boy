@@ -118,14 +118,12 @@ const ProfileContent = () => {
     };
   });
 
-  // Grid Hooks
+  // Grid Hooks (chunked rows for FlashList with numColumns=1)
   const {
-    gridData: imageData,
-    sortedUrls,
-    numColumns: imageNumColumns,
+    chunkedGridData: imageChunkedRows,
+    renderChunkedRow: renderImageChunkedRow,
+    chunkedKeyExtractor: imageChunkedKeyExtractor,
     estimatedItemSize: imageEstimatedItemSize,
-    renderItem: renderImageItem,
-    keyExtractor: imageKeyExtractor,
     flatListProps: imageFlatListProps,
     renderQuickPreview: renderImageQuickPreview,
   } = useImageGrid({
@@ -136,11 +134,10 @@ const ProfileContent = () => {
   });
 
   const {
-    gridData: videoData,
-    numColumns: videoNumColumns,
+    chunkedGridData: videoChunkedRows,
+    renderChunkedRow: renderVideoChunkedRow,
+    chunkedKeyExtractor: videoChunkedKeyExtractor,
     estimatedItemSize: videoEstimatedItemSize,
-    renderItem: renderVideoItem,
-    keyExtractor: videoKeyExtractor,
     contentContainerStyle: videoContainerStyle,
     flatListProps: videoFlatListProps,
     renderQuickPreview: renderVideoQuickPreview,
@@ -175,35 +172,14 @@ const ProfileContent = () => {
     />
   ), [vm.scrollY, vm.profile, vm.isMe, vm.workplaces, vm.music, vm.socialLinks, vm.addresses, vm.imageCount, vm.videoCount, vm.postCount, vm.stableTabChange, vm.selectedTab]);
 
-  // Dynamic data based on tab
+  // List data: image/video tabs use pre-chunked rows from useImageGrid; Feed stays flat posts.
   const data = useMemo(() => {
     switch (vm.activeTab) {
-      case "Images": return imageData;
-      case "Videos": return videoData;
+      case "Images": return imageChunkedRows;
+      case "Videos": return videoChunkedRows;
       case "Feed": return vm.feedPosts;
     }
-  }, [vm.activeTab, imageData, videoData, vm.feedPosts]);
-
-  // We extract the REAL column count for the active tab to chunk our data,
-  // but we will explicitly force FlashList to ALWAYS use numColumns=1.
-  // This completely stops FlashList from destroying and remounting the ListHeaderComponent (preventing the blink!)
-  const actualNumColumns = useMemo(() => {
-    switch (vm.activeTab) {
-      case "Images": return imageNumColumns;
-      case "Videos": return videoNumColumns;
-      default: return 1;
-    }
-  }, [vm.activeTab, imageNumColumns, videoNumColumns]);
-
-  // Manually chunk array into rows so the 1-column FlashList renders multi-column grids!
-  const chunkedData = useMemo(() => {
-    if (actualNumColumns === 1) return data;
-    const chunked = [];
-    for (let i = 0; i < data.length; i += actualNumColumns) {
-      chunked.push(data.slice(i, i + actualNumColumns));
-    }
-    return chunked;
-  }, [data, actualNumColumns]);
+  }, [vm.activeTab, imageChunkedRows, videoChunkedRows, vm.feedPosts]);
 
   // Dynamic estimatedItemSize based on tab
   const estimatedItemSize = useMemo(() => {
@@ -215,46 +191,29 @@ const ProfileContent = () => {
     }
   }, [vm.activeTab, imageEstimatedItemSize, videoEstimatedItemSize]);
 
-  // Dynamic renderItem based on tab
   const renderItem = useCallback(({ item, index }: { item: any; index: number }) => {
     switch (vm.activeTab) {
       case "Images":
-      case "Videos": {
-        const RenderFunc = vm.activeTab === "Images" ? renderImageItem : renderVideoItem;
-        return (
-          <View style={{ flexDirection: 'row', width: '100%' }}>
-            {item.map((subItem: any, subIndex: number) => (
-              <View key={subIndex} style={{ flex: 1 }}>
-                {RenderFunc({ item: subItem, index: index * actualNumColumns + subIndex, separators: {} as any })}
-              </View>
-            ))}
-            {/* Fill remaining flex space for incomplete rows so they don't stretch to fill the width */}
-            {Array.from({ length: actualNumColumns - item.length }).map((_, i) => (
-              <View key={`spacer-${i}`} style={{ flex: 1 }} />
-            ))}
-          </View>
-        );
-      }
+        return renderImageChunkedRow({ item, index, separators: {} as any });
+      case "Videos":
+        return renderVideoChunkedRow({ item, index, separators: {} as any });
       case "Feed":
         return <PostItem post={item as Post} key={item.id} onOptionsPress={vm.handlePostOptionsPress} onLikeCountPress={vm.handleLikeCountPress} onCommentPress={vm.handleCommentPress} />;
     }
-  }, [vm.activeTab, renderImageItem, renderVideoItem, actualNumColumns]);
+  }, [vm.activeTab, renderImageChunkedRow, renderVideoChunkedRow, vm.handlePostOptionsPress, vm.handleLikeCountPress, vm.handleCommentPress]);
 
-  // Dynamic keyExtractor
   const keyExtractor = useCallback((item: any, index: number) => {
     switch (vm.activeTab) {
       case "Images":
+        return imageChunkedKeyExtractor(item, index);
       case "Videos":
-        // Item is a row array. We extract the key by using the first element's key.
-        const firstItem = item[0];
-        const Extractor = vm.activeTab === "Images" ? imageKeyExtractor : videoKeyExtractor;
-        return Extractor ? Extractor(firstItem, index * actualNumColumns) : String(index);
+        return videoChunkedKeyExtractor(item, index);
       case "Feed":
         return (item as Post).id || String(index);
       default:
         return String(index);
     }
-  }, [vm.activeTab, imageKeyExtractor, videoKeyExtractor, actualNumColumns]);
+  }, [vm.activeTab, imageChunkedKeyExtractor, videoChunkedKeyExtractor]);
 
   // Empty component
   const ListEmpty = useMemo(() => {
@@ -375,7 +334,7 @@ const ProfileContent = () => {
           <AnimatedFlashList
             key="flashlist-profile-view" // Static key prevents component destruction
             ref={vm.listRef}
-            data={chunkedData}
+            data={data}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
             numColumns={1} // Hardcoded to 1 to prevent dynamic mount flashes

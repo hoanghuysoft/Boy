@@ -1,22 +1,23 @@
 import { FlexText } from '@/components/FlexText';
+import { CommentsSheet } from '@/components/post/CommentsSheet';
+import { LikersSheet } from '@/components/post/LikersSheet';
 import { PostItem } from '@/components/PostItem';
 import { useThemeContext } from '@/context/ThemeContext';
 import { createCommonStyles } from '@/styles/common';
 import { Post } from '@/types/post';
 import { useHashtagPostsViewModel } from '@/viewmodels/HashtagPostsViewModel';
 import { Ionicons } from '@expo/vector-icons';
+import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrueSheet } from '@lodev09/react-native-true-sheet';
-import { LikersSheet } from '@/components/post/LikersSheet';
-import { CommentsSheet } from '@/components/post/CommentsSheet';
 import {
     ActivityIndicator,
     FlatList,
+    RefreshControl,
     StyleSheet,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 
 interface HashtagPostsScreenProps {
@@ -48,7 +49,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
     const renderItem = useCallback(
         ({ item }: { item: Post }) => (
             <View style={{ marginBottom: 30 }}>
-                <PostItem 
+                <PostItem
                     post={item}
                     onLikeCountPress={handleLikeCountPress}
                     onCommentPress={handleCommentPress}
@@ -62,22 +63,18 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
         if (vm.isFetchingNextPage) {
             return (
                 <View style={styles.footerLoader}>
-                    <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
-                        <ActivityIndicator size="small" color={colors.text} />
-                    </View>
+                    <ActivityIndicator size="small" color={colors.text} />
                 </View>
             );
         }
         return <View style={{ height: 80 }} />;
-    }, [vm.isFetchingNextPage, colors.text, colors.card]);
+    }, [vm.isFetchingNextPage, colors.text]);
 
     const renderEmpty = useCallback(() => {
         if (vm.isLoading) {
             return (
                 <View style={styles.emptyState}>
-                    <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
-                        <ActivityIndicator size="large" color={colors.text} />
-                    </View>
+                    <ActivityIndicator size="large" color={colors.text} />
                 </View>
             );
         }
@@ -187,6 +184,16 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                 refreshing={vm.isRefetching}
                 contentContainerStyle={
                     vm.posts.length === 0 ? styles.emptyContainer : undefined
+                }
+                refreshControl={
+                    <RefreshControl
+                        refreshing={vm.isRefetching}
+                        onRefresh={vm.refetch}
+                        tintColor={colors.text}
+                        colors={[colors.text]}
+                        progressBackgroundColor={colors.card}
+                        progressViewOffset={vm.insets.top}
+                    />
                 }
             />
 

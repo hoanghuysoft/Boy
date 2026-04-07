@@ -330,6 +330,7 @@ const SearchShowsScreen = () => {
             tintColor={colors.text}
             colors={[colors.text]}
             progressBackgroundColor={colors.card}
+            progressViewOffset={insets.top}
           />
         }
       />
