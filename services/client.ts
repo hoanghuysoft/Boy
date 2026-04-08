@@ -1,50 +1,50 @@
-import NetInfo from '@react-native-community/netinfo';
-import { onlineManager, QueryClient } from '@tanstack/react-query';
-import type { Persister } from '@tanstack/react-query-persist-client';
-import ky, { KyInstance, Options } from 'ky';
-import { createMMKV } from 'react-native-mmkv';
-import { supabase } from './login';
+import NetInfo from "@react-native-community/netinfo";
+import { onlineManager, QueryClient } from "@tanstack/react-query";
+import type { Persister } from "@tanstack/react-query-persist-client";
+import ky, { KyInstance, Options } from "ky";
+import { createMMKV } from "react-native-mmkv";
+import { supabase } from "./login";
 
 onlineManager.setEventListener((setOnline) => {
-    return NetInfo.addEventListener((state) => {
-        setOnline(!!state.isConnected);
-    });
+  return NetInfo.addEventListener((state) => {
+    setOnline(!!state.isConnected);
+  });
 });
 
 const storage = createMMKV();
 
 export const clientPersister: Persister = {
-    persistClient: async (client) => {
-        storage.set('REACT_QUERY_OFFLINE_CACHE', JSON.stringify(client));
-    },
-    restoreClient: async () => {
-        const client = storage.getString('REACT_QUERY_OFFLINE_CACHE');
-        return client ? JSON.parse(client) : undefined;
-    },
-    removeClient: async () => {
-        storage.remove('REACT_QUERY_OFFLINE_CACHE');
-    },
+  persistClient: async (client) => {
+    storage.set("REACT_QUERY_OFFLINE_CACHE", JSON.stringify(client));
+  },
+  restoreClient: async () => {
+    const client = storage.getString("REACT_QUERY_OFFLINE_CACHE");
+    return client ? JSON.parse(client) : undefined;
+  },
+  removeClient: async () => {
+    storage.remove("REACT_QUERY_OFFLINE_CACHE");
+  },
 };
 
 export const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            gcTime: 1000 * 60 * 60 * 24, // 24 hours
-            staleTime: 1000 * 60 * 5, // 5 minutes
-            networkMode: 'offlineFirst',
-        },
-        mutations: {
-            networkMode: 'offlineFirst',
-        },
+  defaultOptions: {
+    queries: {
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      networkMode: "offlineFirst",
     },
+    mutations: {
+      networkMode: "offlineFirst",
+    },
+  },
 });
 
 // ============================================================================
 // Axios-to-Ky Wrapper
 // ============================================================================
 
-interface KyConfig extends Omit<Options, 'searchParams'> {
-    params?: Record<string, any>;
+interface KyConfig extends Omit<Options, "searchParams"> {
+  params?: Record<string, any>;
 }
 
 /**
@@ -54,42 +54,46 @@ interface KyConfig extends Omit<Options, 'searchParams'> {
  * - Extracts JSON and returns it as `{ data }`
  */
 const createKyClient = (baseKy: KyInstance) => {
-    const normalizeUrl = (url: string) => (url.startsWith('/') ? url.slice(1) : url);
-
-    const mapConfig = (config?: KyConfig): Options => {
-        if (!config) return {};
-        const { params, ...rest } = config;
-        return {
-            ...rest,
-            // Convert standard object to Ky's searchParams
-            ...(params ? { searchParams: params } : {}),
-        };
-    };
-
+  const mapConfig = (config?: KyConfig): Options => {
+    if (!config) return {};
+    const { params, ...rest } = config;
     return {
-        get: async <T = any>(url: string, config?: KyConfig) => {
-            const data = await baseKy.get(normalizeUrl(url), mapConfig(config)).json<T>();
-            return { data };
-        },
-        post: async <T = any>(url: string, payload?: any, config?: KyConfig) => {
-            const data = await baseKy.post(normalizeUrl(url), { ...mapConfig(config), json: payload }).json<T>();
-            return { data };
-        },
-        put: async <T = any>(url: string, payload?: any, config?: KyConfig) => {
-            const data = await baseKy.put(normalizeUrl(url), { ...mapConfig(config), json: payload }).json<T>();
-            return { data };
-        },
-        delete: async <T = any>(url: string, config?: KyConfig) => {
-            const data = await baseKy.delete(normalizeUrl(url), mapConfig(config)).json<T>();
-            return { data };
-        },
-        patch: async <T = any>(url: string, payload?: any, config?: KyConfig) => {
-            const data = await baseKy.patch(normalizeUrl(url), { ...mapConfig(config), json: payload }).json<T>();
-            return { data };
-        },
-        // Expose the raw ky instance in case you need advanced Ky features later
-        ky: baseKy,
+      ...rest,
+      // Convert standard object to Ky's searchParams
+      ...(params ? { searchParams: params } : {}),
     };
+  };
+
+  return {
+    get: async <T = any>(url: string, config?: KyConfig) => {
+      const data = await baseKy.get(url, mapConfig(config)).json<T>();
+      return { data };
+    },
+    post: async <T = any>(url: string, payload?: any, config?: KyConfig) => {
+      const data = await baseKy
+        .post(url, { ...mapConfig(config), json: payload })
+        .json<T>();
+      return { data };
+    },
+    put: async <T = any>(url: string, payload?: any, config?: KyConfig) => {
+      const data = await baseKy
+        .put(url, { ...mapConfig(config), json: payload })
+        .json<T>();
+      return { data };
+    },
+    delete: async <T = any>(url: string, config?: KyConfig) => {
+      const data = await baseKy.delete(url, mapConfig(config)).json<T>();
+      return { data };
+    },
+    patch: async <T = any>(url: string, payload?: any, config?: KyConfig) => {
+      const data = await baseKy
+        .patch(url, { ...mapConfig(config), json: payload })
+        .json<T>();
+      return { data };
+    },
+    // Expose the raw ky instance in case you need advanced Ky features later
+    ky: baseKy,
+  };
 };
 
 // ============================================================================
@@ -97,29 +101,31 @@ const createKyClient = (baseKy: KyInstance) => {
 // ============================================================================
 
 const baseClient = ky.create({
-    prefixUrl: process.env.EXPO_PUBLIC_SERVER_URL || '',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    hooks: {
-        beforeRequest: [
-            async (request) => {
-                const { data: { session } } = await supabase.auth.getSession();
-                const token = session?.access_token;
-                
-                if (token) {
-                    request.headers.set('Authorization', `Bearer ${token}`);
-                }
-            }
-        ]
-    }
+  prefix: process.env.EXPO_PUBLIC_SERVER_URL || "",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  hooks: {
+    beforeRequest: [
+      async ({ request }) => {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const token = session?.access_token;
+
+        if (token) {
+          request.headers.set("Authorization", `Bearer ${token}`);
+        }
+      },
+    ],
+  },
 });
 
 const baseShowsClient = ky.create({
-    prefixUrl: process.env.EXPO_PUBLIC_SHOWS_URL || '',
-    headers: {
-        'Content-Type': 'application/json',
-    },
+  prefix: process.env.EXPO_PUBLIC_SHOWS_URL || "",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 export const client = createKyClient(baseClient);
