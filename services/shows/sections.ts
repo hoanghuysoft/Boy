@@ -7,9 +7,10 @@ export const getSections = async (): Promise<SectionsResponse> => {
     return res.data;
 }
 
-export const useSectionsQuery = () => {
+export const useSectionsQuery = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ["shows_sections"],
         queryFn: () => getSections(),
+        enabled,
     })
 }

@@ -130,3 +130,17 @@ const baseShowsClient = ky.create({
 
 export const client = createKyClient(baseClient);
 export const showsClient = createKyClient(baseShowsClient);
+
+// ─── TMDB Client ──────────────────────────────────────────────────────────────
+
+const baseTmdbClient = ky.create({
+  prefix: 'https://api.themoviedb.org/3/',
+  headers: {
+    Authorization: `Bearer ${process.env.EXPO_PUBLIC_TMDB_API_KEY || ''}`,
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+});
+
+export const tmdbClient = createKyClient(baseTmdbClient);
+

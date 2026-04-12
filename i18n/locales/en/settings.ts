@@ -26,6 +26,8 @@ const settings = {
     maxCacheSize: 'Max cache size',
     clearCacheIdle: 'Clear video cache',
     clearCacheClearing: 'Clearing...',
+    service: 'Service',
+    trackerSource: 'Movie Service',
     account: 'Account',
     logout: 'Log out',
     loggingOut: 'Logging out...',

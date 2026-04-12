@@ -7,9 +7,10 @@ export const getSlider = async (): Promise<HeroSliderResponse> => {
     return res.data;
 }
 
-export const useSliderQuery = () => {
+export const useSliderQuery = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ["shows_slider"],
         queryFn: () => getSlider(),
+        enabled,
     })
 }

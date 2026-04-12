@@ -11,6 +11,7 @@ import search from './zhHant/search';
 import settings from './zhHant/settings';
 import shots from './zhHant/shots';
 import themeSettings from './zhHant/themeSettings';
+import serviceSettings from './zhHant/serviceSettings';
 
 const zhHant = {
     bookmarks,
@@ -26,6 +27,7 @@ const zhHant = {
     search,
     shots,
     themeSettings,
+    serviceSettings,
 } as const;
 
 export default zhHant;

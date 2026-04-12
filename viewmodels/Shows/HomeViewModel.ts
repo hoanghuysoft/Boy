@@ -1,20 +1,20 @@
 import { useSectionsQuery, useSliderQuery } from "@/services/shows";
 
-export function useHomeViewModel() {
+export function useHomeViewModel(enabled: boolean = true) {
 
     const { data: slider,
         isLoading: isLoadingSlider,
         isRefetching: isRefetchingSlider,
         isError: isErrorSlider,
         refetch: refetchSlider,
-    } = useSliderQuery();
+    } = useSliderQuery(enabled);
 
     const { data: sections,
         isLoading: isLoadingSections,
         isRefetching: isRefetchingSections,
         isError: isErrorSections,
         refetch: refetchSections,
-    } = useSectionsQuery();
+    } = useSectionsQuery(enabled);
 
     return {
         slider,

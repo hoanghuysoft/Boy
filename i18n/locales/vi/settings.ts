@@ -26,6 +26,8 @@ const settings = {
     maxCacheSize: 'Kích thước tối đa của bộ nhớ đệm',
     clearCacheIdle: 'Xóa bộ nhớ đệm video',
     clearCacheClearing: 'Đang xóa...',
+    service: 'Dịch vụ',
+    trackerSource: 'Dịch vụ phim',
     account: 'Tài khoản',
     logout: 'Đăng xuất',
     loggingOut: 'Đang đăng xuất...',

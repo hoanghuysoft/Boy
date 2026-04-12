@@ -13,6 +13,8 @@ import { FlatList as GestureFlatList, Pressable as GesturePressable } from "reac
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
+import { useMovieTrackerStore } from "@/stores/movieTracker";
+import { MovieDBView } from "@/components/tracker/MovieDBView";
 
 const ChatScreen = () => {
   const { colors, typography } = useThemeContext();
@@ -22,7 +24,8 @@ const ChatScreen = () => {
   const posterHeight = 600;
   const inset = useSafeAreaInsets();
   const headerScrollX = useRef(new Animated.Value(0)).current;
-  const vm = useHomeViewModel();
+  const trackerSource = useMovieTrackerStore(state => state.trackerSource);
+  const vm = useHomeViewModel(trackerSource !== 'moviedb');
 
   const renderSectionItem = useCallback(
     ({ item }: { item: VideoCard }) => (
@@ -86,6 +89,9 @@ const ChatScreen = () => {
   return (
     <View style={[common.screen, { backgroundColor: "#000000" }]}>
       <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+        {trackerSource === 'moviedb' ? (
+          <MovieDBView headerScrollX={headerScrollX} />
+        ) : (
         <ScrollView
           contentContainerStyle={[{ gap: 12, paddingBottom: 24 }]}
           showsVerticalScrollIndicator={false}
@@ -238,6 +244,7 @@ const ChatScreen = () => {
           )}
           <View style={{ height: inset.bottom + 80 }} />
         </ScrollView>
+        )}
       </BlurTargetView>
       <View
         style={{
@@ -269,7 +276,13 @@ const ChatScreen = () => {
             <FolderFavouriteBookmarkBold size={28} color={"white"} />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => router.push("/search_shows")}
+            onPress={() => {
+              if (trackerSource === "moviedb") {
+                router.push("/search_movies");
+              } else {
+                router.push("/search_shows");
+              }
+            }}
             style={{
               borderRadius: 999,
               width: 40,

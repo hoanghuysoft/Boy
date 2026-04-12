@@ -13,6 +13,7 @@ import search from './zh/search';
 import settings from './zh/settings';
 import shots from './zh/shots';
 import themeSettings from './zh/themeSettings';
+import serviceSettings from './zh/serviceSettings';
 
 const zh = {
     bookmarks,
@@ -28,6 +29,7 @@ const zh = {
     search,
     shots,
     themeSettings,
+    serviceSettings,
 } as const;
 
 export default zh;

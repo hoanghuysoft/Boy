@@ -35,10 +35,10 @@ configureReanimatedLogger({
 
 // Prevent global font scaling
 interface TextWithDefaultProps extends Text {
-    defaultProps?: { allowFontScaling?: boolean };
+  defaultProps?: { allowFontScaling?: boolean };
 }
 interface TextInputWithDefaultProps extends TextInput {
-    defaultProps?: { allowFontScaling?: boolean };
+  defaultProps?: { allowFontScaling?: boolean };
 }
 (Text as unknown as TextWithDefaultProps).defaultProps = (Text as unknown as TextWithDefaultProps).defaultProps || {};
 (Text as unknown as TextWithDefaultProps).defaultProps!.allowFontScaling = false;
@@ -202,7 +202,7 @@ const RootContent = () => {
           />
           <Stack.Screen
             name="show_detail"
-            options={{ headerShown: false, animation: "slide_from_left" }}
+            options={{ headerShown: false, animation: "slide_from_right" }}
           />
           <Stack.Screen
             name="show_list"

@@ -26,6 +26,8 @@ const settings = {
     maxCacheSize: '最大缓存大小',
     clearCacheIdle: '清除视频缓存',
     clearCacheClearing: '正在清除…',
+    service: '服务',
+    trackerSource: '影片服务',
     account: '账号',
     logout: '退出登录',
     loggingOut: '正在退出…',

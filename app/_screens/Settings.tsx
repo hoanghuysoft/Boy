@@ -5,6 +5,7 @@ import { clearVideoCache, formatBytes, getCacheCount, getCacheSize, setMaxCacheS
 import { useLanguageStore } from "@/stores/language";
 import { useSearchHistoryStore } from "@/stores/searchHistory";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
+import { useMovieTrackerStore } from "@/stores/movieTracker";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
 import { Logout3Bold } from '@solar-icons/react-native';
@@ -31,6 +32,10 @@ const SettingsScreen = () => {
         autoplayVideos, toggleAutoplayVideos,
         videoCacheSizeLimit, setVideoCacheSizeLimit,
     } = useSettingsStore();
+    const { trackerSource } = useMovieTrackerStore();
+    const trackerSourceLabel = trackerSource === 'shows'
+        ? t('serviceSettings.showsOption')
+        : t('serviceSettings.moviedbOption');
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isFocused, setIsFocused] = useState(false);
@@ -193,6 +198,18 @@ const SettingsScreen = () => {
                         onToggle={toggleAutoplayVideos}
                     />
                 </View>
+            </View>
+
+            {/* ─── Service ────────────────────────────────────────────── */}
+            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.service')}</FlexText>
+            <View style={[styles.card]}>
+                <TouchableOpacity style={[styles.option]} onPress={() => router.push('/movie-tracker-settings' as any)}>
+                    <View>
+                        <FlexText style={[common.body]}>{t('settings.trackerSource')}</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{trackerSourceLabel}</FlexText>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                </TouchableOpacity>
             </View>
 
             {/* ─── Storage & Cache ──────────────────────────────────── */}

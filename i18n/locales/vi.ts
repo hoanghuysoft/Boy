@@ -13,6 +13,7 @@ import search from './vi/search';
 import settings from './vi/settings';
 import shots from './vi/shots';
 import themeSettings from './vi/themeSettings';
+import serviceSettings from './vi/serviceSettings';
 
 const vi = {
     bookmarks,
@@ -28,6 +29,7 @@ const vi = {
     search,
     shots,
     themeSettings,
+    serviceSettings,
 } as const;
 
 export default vi;
