@@ -17,6 +17,7 @@ export function useTrendingAll() {
             // Filter out people types from the carousel
             return data.results.filter((item: any) => item.media_type !== 'person');
         },
+        staleTime: 5 * 60 * 1000, // 5 minutes — avoid refetch on tab switch
     });
 }
 
@@ -247,6 +248,7 @@ export function usePopularMoviesInfinite(language: string = 'en-US') {
         initialPageParam: 1,
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
+        staleTime: 5 * 60 * 1000,
     });
 }
 
@@ -263,6 +265,7 @@ export function usePopularPeopleInfinite(language: string = 'en-US') {
         initialPageParam: 1,
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
+        staleTime: 5 * 60 * 1000,
     });
 }
 
@@ -281,6 +284,7 @@ export function useAiringTodayTVInfinite(language: string = 'en-US') {
         initialPageParam: 1,
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
+        staleTime: 5 * 60 * 1000,
     });
 }
 
@@ -297,6 +301,7 @@ export function useOnTheAirTVInfinite(language: string = 'en-US') {
         initialPageParam: 1,
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
+        staleTime: 5 * 60 * 1000,
     });
 }
 
@@ -313,6 +318,7 @@ export function usePopularTVInfinite(language: string = 'en-US') {
         initialPageParam: 1,
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
+        staleTime: 5 * 60 * 1000,
     });
 }
 
@@ -329,6 +335,7 @@ export function useTopRatedTVInfinite(language: string = 'en-US') {
         initialPageParam: 1,
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
+        staleTime: 5 * 60 * 1000,
     });
 }
 
@@ -345,6 +352,7 @@ export function useTopRatedMoviesInfinite(language: string = 'en-US') {
         initialPageParam: 1,
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
+        staleTime: 5 * 60 * 1000,
     });
 }
 
@@ -361,6 +369,7 @@ export function useNowPlayingMoviesInfinite(language: string = 'en-US') {
         initialPageParam: 1,
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
+        staleTime: 5 * 60 * 1000,
     });
 }
 
@@ -377,6 +386,7 @@ export function useUpcomingMoviesInfinite(language: string = 'en-US') {
         initialPageParam: 1,
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
+        staleTime: 5 * 60 * 1000,
     });
 }
 

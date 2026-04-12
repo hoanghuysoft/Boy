@@ -46,6 +46,20 @@ export const IMDbBadge = ({ score, style }: { score?: number, style?: any }) => 
     );
 };
 
+/** Lightweight shimmer placeholder for a single horizontal section row */
+const SectionShimmer = ({ title }: { title: string }) => (
+    <View style={{ gap: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16 }}>
+            <ShimmerEffect style={{ height: 22, width: Math.min(title.length * 11, 200), borderRadius: 4, flex: 0 }} />
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
+            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
+            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
+        </ScrollView>
+    </View>
+);
+
 export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }) => {
     const { colors } = useThemeContext();
     const { width } = useWindowDimensions();
@@ -75,7 +89,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
     const tvPopular = popTvData?.pages[0]?.results ?? [];
     const tvTopRated = topTvData?.pages[0]?.results ?? [];
 
-    const isLoading = isTrendingLoading || isPopularLoading || isTopRatedLoading || isNowLoading || isUpLoading || isPopPeopleLoading || isAirTodayLoading || isOnAirLoading || isPopTvLoading || isTopTvLoading;
+    const isLoading = isTrendingLoading; // only the hero banner blocks initial render
     const isError = isTrendingError || isPopularError || isTopRatedError || isNowError || isUpError || isPopPeopleError || isAirTodayError || isOnAirError || isPopTvError || isTopTvError;
 
     const onRefresh = useCallback(() => {
@@ -90,6 +104,10 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
         refetchPopTv();
         refetchTopTv();
     }, [refetchTrending, refetchPopular, refetchTopRated, refetchNow, refetchUp, refetchPopPeople, refetchAirToday, refetchOnAir, refetchPopTv, refetchTopTv]);
+
+    const isRefreshing =
+        isTrendingLoading || isPopularLoading || isTopRatedLoading || isNowLoading || isUpLoading ||
+        isPopPeopleLoading || isAirTodayLoading || isOnAirLoading || isPopTvLoading || isTopTvLoading;
 
     const renderMovieItem = useCallback(
         ({ item }: { item: Movie }) => (
@@ -197,7 +215,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
             showsVerticalScrollIndicator={false}
             refreshControl={
                 <RefreshControl
-                    refreshing={isLoading}
+                    refreshing={isRefreshing}
                     onRefresh={onRefresh}
                     tintColor={colors.text}
                     colors={[colors.text]}
@@ -206,28 +224,12 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                 />
             }
         >
-            {/* Loading Shimmer — same structure as the shows shimmer */}
-            {isLoading ? (
-                <View style={{ gap: 24 }}>
-                    <ShimmerEffect style={{ height: posterHeight, width: "100%" }} />
-                    <View style={{ gap: 16 }}>
-                        <ShimmerEffect style={{ height: 24, width: 120, marginLeft: 16, borderRadius: 4 }} />
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-                            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-                            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-                        </ScrollView>
-                    </View>
-                    <View style={{ gap: 16 }}>
-                        <ShimmerEffect style={{ height: 24, width: 150, marginLeft: 16, borderRadius: 4 }} />
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-                            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-                            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-                        </ScrollView>
-                    </View>
-                </View>
-            ) : (
+            {/* Hero shimmer — only blocks on the trending banner */}
+            {isLoading && (
+                <ShimmerEffect style={{ height: posterHeight, width: "100%" }} />
+            )}
+
+            {!isLoading && (
                 <>
                     {isError && (
                         <View
@@ -328,9 +330,11 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* Now Playing Movies */}
-                    {nowPlaying && nowPlaying.length > 0 && (
+                    {isNowLoading ? (
+                        <SectionShimmer title="In Theatres" />
+                    ) : nowPlaying && nowPlaying.length > 0 && (
                         <View style={{ marginTop: 24 }}>
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push({ pathname: "/movie_list", params: { mode: "now_playing", title: "In Theatres" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
@@ -352,9 +356,11 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* Airing Today TV */}
-                    {tvAiringToday && tvAiringToday.length > 0 && (
+                    {isAirTodayLoading ? (
+                        <SectionShimmer title="Airing Today" />
+                    ) : tvAiringToday && tvAiringToday.length > 0 && (
                         <View>
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_airing_today", title: "Airing Today" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
@@ -376,9 +382,11 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* Upcoming Movies */}
-                    {upcoming && upcoming.length > 0 && (
+                    {isUpLoading ? (
+                        <SectionShimmer title="Upcoming Movies" />
+                    ) : upcoming && upcoming.length > 0 && (
                         <View>
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push({ pathname: "/movie_list", params: { mode: "upcoming", title: "Upcoming Movies" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
@@ -400,9 +408,11 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* On The Air TV */}
-                    {tvOnTheAir && tvOnTheAir.length > 0 && (
+                    {isOnAirLoading ? (
+                        <SectionShimmer title="Currently On TV" />
+                    ) : tvOnTheAir && tvOnTheAir.length > 0 && (
                         <View>
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_on_the_air", title: "On The Air" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
@@ -424,9 +434,11 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* Popular Movies */}
-                    {popular && popular.length > 0 && (
+                    {isPopularLoading ? (
+                        <SectionShimmer title="Popular Movies" />
+                    ) : popular && popular.length > 0 && (
                         <View>
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push({ pathname: "/movie_list", params: { mode: "popular", title: "Popular Movies" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
@@ -448,9 +460,11 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* Popular TV */}
-                    {tvPopular && tvPopular.length > 0 && (
+                    {isPopTvLoading ? (
+                        <SectionShimmer title="Popular TV Shows" />
+                    ) : tvPopular && tvPopular.length > 0 && (
                         <View>
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_popular", title: "Popular TV Shows" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
@@ -472,9 +486,11 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* Popular People */}
-                    {popularPeople && popularPeople.length > 0 && (
+                    {isPopPeopleLoading ? (
+                        <SectionShimmer title="Trending People" />
+                    ) : popularPeople && popularPeople.length > 0 && (
                         <View>
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push({ pathname: "/movie_list", params: { mode: "popular_people", title: "Trending People" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
@@ -496,9 +512,11 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* Top Rated Movies */}
-                    {topRated && topRated.length > 0 && (
+                    {isTopRatedLoading ? (
+                        <SectionShimmer title="Top Rated Movies" />
+                    ) : topRated && topRated.length > 0 && (
                         <View>
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push({ pathname: "/movie_list", params: { mode: "top_rated", title: "Top Rated Movies" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
@@ -520,9 +538,11 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* Top Rated TV */}
-                    {tvTopRated && tvTopRated.length > 0 && (
+                    {isTopTvLoading ? (
+                        <SectionShimmer title="Top Rated TV Shows" />
+                    ) : tvTopRated && tvTopRated.length > 0 && (
                         <View>
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_top_rated", title: "Top Rated TV" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>

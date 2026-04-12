@@ -6,6 +6,7 @@ import {
     useMovieRecommendationsInfinite, useMovieSimilarInfinite, useNowPlayingMoviesInfinite, 
     usePopularMoviesInfinite, usePopularPeopleInfinite, useTopRatedMoviesInfinite, useUpcomingMoviesInfinite,
     useAiringTodayTVInfinite, useOnTheAirTVInfinite, usePopularTVInfinite, useTopRatedTVInfinite,
+    useTvSimilarInfinite, useTvRecommendationsInfinite,
     useTvSeasonDetails,
 } from "@/hooks/useMovies";
 import { Movie } from "@/types/moviedb/movie";
@@ -28,7 +29,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 
-type ListMode = "similar" | "recommendations" | "now_playing" | "upcoming" | "popular" | "top_rated" | "popular_people" | "tv_airing_today" | "tv_on_the_air" | "tv_popular" | "tv_top_rated" | "tv_season_episodes";
+type ListMode = "similar" | "recommendations" | "tv_similar" | "tv_recommendations" | "now_playing" | "upcoming" | "popular" | "top_rated" | "popular_people" | "tv_airing_today" | "tv_on_the_air" | "tv_popular" | "tv_top_rated" | "tv_season_episodes";
 
 const getImageUrl = (path: string | null | undefined, size: number = 342) => {
     if (!path) return `https://via.placeholder.com/${size}x513?text=No+Image`;
@@ -62,6 +63,8 @@ const MovieListScreen = () => {
 
     const similarQuery = useMovieSimilarInfinite(mode === "similar" ? movieId : undefined);
     const recQuery = useMovieRecommendationsInfinite(mode === "recommendations" ? movieId : undefined);
+    const tvSimilarQuery = useTvSimilarInfinite(mode === "tv_similar" ? movieId : undefined);
+    const tvRecQuery = useTvRecommendationsInfinite(mode === "tv_recommendations" ? movieId : undefined);
     const popQuery = usePopularMoviesInfinite();
     const topQuery = useTopRatedMoviesInfinite();
     const nowQuery = useNowPlayingMoviesInfinite();
@@ -80,6 +83,8 @@ const MovieListScreen = () => {
     switch (mode) {
         case "similar": query = similarQuery; break;
         case "recommendations": query = recQuery; break;
+        case "tv_similar": query = tvSimilarQuery; break;
+        case "tv_recommendations": query = tvRecQuery; break;
         case "popular": query = popQuery; break;
         case "top_rated": query = topQuery; break;
         case "now_playing": query = nowQuery; break;
@@ -111,6 +116,8 @@ const MovieListScreen = () => {
     let subtitle = "";
     if (mode === "similar") subtitle = `Movies similar to "${title}"`;
     else if (mode === "recommendations") subtitle = `Recommended based on "${title}"`;
+    else if (mode === "tv_similar") subtitle = `TV shows similar to "${title}"`;
+    else if (mode === "tv_recommendations") subtitle = `TV shows recommended based on "${title}"`;
     else if (mode === "popular") subtitle = "Most popular movies right now";
     else if (mode === "top_rated") subtitle = "Highest rated movies of all time";
     else if (mode === "now_playing") subtitle = "Movies currently in theatres";
