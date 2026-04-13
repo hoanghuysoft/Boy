@@ -1,13 +1,12 @@
 import { useThemeContext } from "@/context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
-import { useRef, useState } from "react";
-import { ActivityIndicator, BackHandler, Linking, TouchableOpacity, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useCallback, useRef, useState } from "react";
+import { ActivityIndicator, BackHandler, Linking, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import WebView from "react-native-webview";
 import type WebViewType from "react-native-webview";
+import WebView from "react-native-webview";
 
 interface ReVideoProps {
     isUseSafeArea?: boolean;
@@ -80,6 +79,7 @@ const ReVideo = ({ isUseSafeArea = false, safeAreaColor = "transparent", urlWebv
                         Linking.openURL(downloadUrl)
                     }
                 }}
+                allowsFullscreenVideo
             >
                 {isLoading && (
                     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
