@@ -1,5 +1,7 @@
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
+    BoxMinimalisticBold,
+    BoxMinimalisticOutline,
     ClapperboardBold,
     ClapperboardOutline,
     HomeBold,
@@ -19,7 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useScrollStore } from "../../stores/scroll";
 
-type TabName = "index" | "shots" | "chat" | "profile";
+type TabName = "index" | "shots" | "tv" | "profile" | "chat";
 
 interface TabConfig {
     name: TabName;
@@ -39,9 +41,14 @@ const tabs: TabConfig[] = [
         IconSolid: VideoLibraryBold
     },
     {
-        name: "chat",
+        name: "tv",
         IconOutlined: ClapperboardOutline,
         IconSolid: ClapperboardBold,
+    },
+    {
+        name: "chat",
+        IconOutlined: BoxMinimalisticOutline,
+        IconSolid: BoxMinimalisticBold,
     },
     {
         name: "profile",
@@ -312,7 +319,7 @@ const styles = StyleSheet.create({
     tabBarContainer: {
         height: 58,
         position: "absolute",
-        marginHorizontal: 40,
+        marginHorizontal: 20,
         borderRadius: 999,
         borderTopWidth: 0,
         shadowColor: "#000",

@@ -1,16 +1,21 @@
 import { FlexText } from "@/components/FlexText";
 import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { useThemeContext } from "@/context/ThemeContext";
-import { 
-    useNowPlayingMoviesInfinite, usePopularMoviesInfinite, usePopularPeopleInfinite, 
-    useTopRatedMoviesInfinite, useTrendingAll, useUpcomingMoviesInfinite,
-    useAiringTodayTVInfinite, useOnTheAirTVInfinite, usePopularTVInfinite, useTopRatedTVInfinite
+import {
+    useAiringTodayTVInfinite,
+    useNowPlayingMoviesInfinite,
+    useOnTheAirTVInfinite,
+    usePopularMoviesInfinite, usePopularPeopleInfinite,
+    usePopularTVInfinite,
+    useTopRatedMoviesInfinite,
+    useTopRatedTVInfinite,
+    useTrendingAll, useUpcomingMoviesInfinite
 } from "@/hooks/useMovies";
 import { Movie } from "@/types/moviedb";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     Animated,
     Pressable,
@@ -66,17 +71,24 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
     const posterHeight = width * 1.5; // portrait 2/3 ratio
     const inset = useSafeAreaInsets();
 
+    // Defer below-fold sections until after tab/push animation completes
+    const [isBelowFoldReady, setIsBelowFoldReady] = useState(false);
+    useEffect(() => {
+        const timer = setTimeout(() => setIsBelowFoldReady(true), 300);
+        return () => clearTimeout(timer);
+    }, []);
+
     const { data: trending, isLoading: isTrendingLoading, isError: isTrendingError, refetch: refetchTrending } = useTrendingAll();
-    const { data: popData, isLoading: isPopularLoading, isError: isPopularError, refetch: refetchPopular } = usePopularMoviesInfinite();
-    const { data: topData, isLoading: isTopRatedLoading, isError: isTopRatedError, refetch: refetchTopRated } = useTopRatedMoviesInfinite();
+    const { data: popData, isLoading: isPopularLoading, isError: isPopularError, refetch: refetchPopular } = usePopularMoviesInfinite("en-US", isBelowFoldReady);
+    const { data: topData, isLoading: isTopRatedLoading, isError: isTopRatedError, refetch: refetchTopRated } = useTopRatedMoviesInfinite("en-US", isBelowFoldReady);
     const { data: nowData, isLoading: isNowLoading, isError: isNowError, refetch: refetchNow } = useNowPlayingMoviesInfinite();
-    const { data: upData, isLoading: isUpLoading, isError: isUpError, refetch: refetchUp } = useUpcomingMoviesInfinite();
-    const { data: popPeopleData, isLoading: isPopPeopleLoading, isError: isPopPeopleError, refetch: refetchPopPeople } = usePopularPeopleInfinite();
+    const { data: upData, isLoading: isUpLoading, isError: isUpError, refetch: refetchUp } = useUpcomingMoviesInfinite("en-US", isBelowFoldReady);
+    const { data: popPeopleData, isLoading: isPopPeopleLoading, isError: isPopPeopleError, refetch: refetchPopPeople } = usePopularPeopleInfinite("en-US", isBelowFoldReady);
 
     const { data: airTodayData, isLoading: isAirTodayLoading, isError: isAirTodayError, refetch: refetchAirToday } = useAiringTodayTVInfinite();
-    const { data: onAirData, isLoading: isOnAirLoading, isError: isOnAirError, refetch: refetchOnAir } = useOnTheAirTVInfinite();
-    const { data: popTvData, isLoading: isPopTvLoading, isError: isPopTvError, refetch: refetchPopTv } = usePopularTVInfinite();
-    const { data: topTvData, isLoading: isTopTvLoading, isError: isTopTvError, refetch: refetchTopTv } = useTopRatedTVInfinite();
+    const { data: onAirData, isLoading: isOnAirLoading, isError: isOnAirError, refetch: refetchOnAir } = useOnTheAirTVInfinite("en-US", isBelowFoldReady);
+    const { data: popTvData, isLoading: isPopTvLoading, isError: isPopTvError, refetch: refetchPopTv } = usePopularTVInfinite("en-US", isBelowFoldReady);
+    const { data: topTvData, isLoading: isTopTvLoading, isError: isTopTvError, refetch: refetchTopTv } = useTopRatedTVInfinite("en-US", isBelowFoldReady);
 
     const popular = popData?.pages[0]?.results ?? [];
     const topRated = topData?.pages[0]?.results ?? [];
@@ -112,7 +124,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
     const renderMovieItem = useCallback(
         ({ item }: { item: Movie }) => (
             <GesturePressable
-                onPress={() => router.push({ pathname: "/movie_detail", params: { id: item.id } })}
+                onPress={() => router.navigate({ pathname: "/movie_detail", params: { id: item.id } })}
                 style={{ width: CARD_WIDTH, marginRight: 12, overflow: "hidden", position: "relative" }}
             >
                 <View style={{ width: CARD_WIDTH, borderRadius: 16, overflow: "hidden", position: "relative" }}>
@@ -144,7 +156,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
     const renderTvItem = useCallback(
         ({ item }: { item: any }) => (
             <GesturePressable
-                onPress={() => router.push({ pathname: "/tv_detail", params: { id: item.id } })}
+                onPress={() => router.navigate({ pathname: "/tv_detail", params: { id: item.id } })}
                 style={{ width: CARD_WIDTH, marginRight: 12, overflow: "hidden", position: "relative" }}
             >
                 <View style={{ width: CARD_WIDTH, borderRadius: 16, overflow: "hidden", position: "relative" }}>
@@ -176,7 +188,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
     const renderPersonItem = useCallback(
         ({ item }: { item: any }) => (
             <GesturePressable
-                onPress={() => router.push({ pathname: "/person_detail", params: { id: item.id } })}
+                onPress={() => router.navigate({ pathname: "/person_detail", params: { id: item.id } })}
                 style={{ width: 100, marginRight: 16, alignItems: "center" }}
             >
                 <Image
@@ -335,7 +347,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     ) : nowPlaying && nowPlaying.length > 0 && (
                         <View style={{ marginTop: 24 }}>
                             <Pressable
-                                onPress={() => router.push({ pathname: "/movie_list", params: { mode: "now_playing", title: "In Theatres" } })}
+                                onPress={() => router.navigate({ pathname: "/movie_list", params: { mode: "now_playing", title: "In Theatres" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
                                     In Theatres
@@ -351,6 +363,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                 renderItem={renderMovieItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ paddingHorizontal: 16 }}
+                                initialNumToRender={5}
                             />
                         </View>
                     )}
@@ -361,7 +374,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     ) : tvAiringToday && tvAiringToday.length > 0 && (
                         <View>
                             <Pressable
-                                onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_airing_today", title: "Airing Today" } })}
+                                onPress={() => router.navigate({ pathname: "/movie_list", params: { mode: "tv_airing_today", title: "Airing Today" } })}
                                 style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
                                 <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
                                     Airing Today
@@ -377,190 +390,202 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                 renderItem={renderTvItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ paddingHorizontal: 16 }}
+                                initialNumToRender={5}
                             />
                         </View>
                     )}
 
-                    {/* Upcoming Movies */}
-                    {isUpLoading ? (
-                        <SectionShimmer title="Upcoming Movies" />
-                    ) : upcoming && upcoming.length > 0 && (
-                        <View>
-                            <Pressable
-                                onPress={() => router.push({ pathname: "/movie_list", params: { mode: "upcoming", title: "Upcoming Movies" } })}
-                                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                    Upcoming Movies
-                                </FlexText>
-                                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                    <Ionicons name="chevron-forward" size={20} color="white" />
+                    {!isBelowFoldReady ? null : (
+                        <>
+                            {/* Upcoming Movies */}
+                            {isUpLoading ? (
+                                <SectionShimmer title="Upcoming Movies" />
+                            ) : upcoming && upcoming.length > 0 && (
+                                <View>
+                                    <Pressable
+                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "upcoming", title: "Upcoming Movies" } })}
+                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
+                                            Upcoming Movies
+                                        </FlexText>
+                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
+                                            <Ionicons name="chevron-forward" size={20} color="white" />
+                                        </View>
+                                    </Pressable>
+                                    <GestureFlatList
+                                        horizontal
+                                        data={upcoming}
+                                        keyExtractor={movieKeyExtractor}
+                                        renderItem={renderMovieItem}
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={{ paddingHorizontal: 16 }}
+                                        initialNumToRender={5}
+                                    />
                                 </View>
-                            </Pressable>
-                            <GestureFlatList
-                                horizontal
-                                data={upcoming}
-                                keyExtractor={movieKeyExtractor}
-                                renderItem={renderMovieItem}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            />
-                        </View>
-                    )}
+                            )}
 
-                    {/* On The Air TV */}
-                    {isOnAirLoading ? (
-                        <SectionShimmer title="Currently On TV" />
-                    ) : tvOnTheAir && tvOnTheAir.length > 0 && (
-                        <View>
-                            <Pressable
-                                onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_on_the_air", title: "On The Air" } })}
-                                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                    Currently On TV
-                                </FlexText>
-                                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                    <Ionicons name="chevron-forward" size={20} color="white" />
+                            {/* On The Air TV */}
+                            {isOnAirLoading ? (
+                                <SectionShimmer title="Currently On TV" />
+                            ) : tvOnTheAir && tvOnTheAir.length > 0 && (
+                                <View>
+                                    <Pressable
+                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_on_the_air", title: "On The Air" } })}
+                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
+                                            Currently On TV
+                                        </FlexText>
+                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
+                                            <Ionicons name="chevron-forward" size={20} color="white" />
+                                        </View>
+                                    </Pressable>
+                                    <GestureFlatList
+                                        horizontal
+                                        data={tvOnTheAir}
+                                        keyExtractor={(item: any, index) => `${item.id}-${index}`}
+                                        renderItem={renderTvItem}
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={{ paddingHorizontal: 16 }}
+                                        initialNumToRender={5}
+                                    />
                                 </View>
-                            </Pressable>
-                            <GestureFlatList
-                                horizontal
-                                data={tvOnTheAir}
-                                keyExtractor={(item: any, index) => `${item.id}-${index}`}
-                                renderItem={renderTvItem}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            />
-                        </View>
-                    )}
+                            )}
 
-                    {/* Popular Movies */}
-                    {isPopularLoading ? (
-                        <SectionShimmer title="Popular Movies" />
-                    ) : popular && popular.length > 0 && (
-                        <View>
-                            <Pressable
-                                onPress={() => router.push({ pathname: "/movie_list", params: { mode: "popular", title: "Popular Movies" } })}
-                                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                    Popular Movies
-                                </FlexText>
-                                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                    <Ionicons name="chevron-forward" size={20} color="white" />
+                            {/* Popular Movies */}
+                            {isPopularLoading ? (
+                                <SectionShimmer title="Popular Movies" />
+                            ) : popular && popular.length > 0 && (
+                                <View>
+                                    <Pressable
+                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "popular", title: "Popular Movies" } })}
+                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
+                                            Popular Movies
+                                        </FlexText>
+                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
+                                            <Ionicons name="chevron-forward" size={20} color="white" />
+                                        </View>
+                                    </Pressable>
+                                    <GestureFlatList
+                                        horizontal
+                                        data={popular}
+                                        keyExtractor={movieKeyExtractor}
+                                        renderItem={renderMovieItem}
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={{ paddingHorizontal: 16 }}
+                                        initialNumToRender={5}
+                                    />
                                 </View>
-                            </Pressable>
-                            <GestureFlatList
-                                horizontal
-                                data={popular}
-                                keyExtractor={movieKeyExtractor}
-                                renderItem={renderMovieItem}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            />
-                        </View>
-                    )}
+                            )}
 
-                    {/* Popular TV */}
-                    {isPopTvLoading ? (
-                        <SectionShimmer title="Popular TV Shows" />
-                    ) : tvPopular && tvPopular.length > 0 && (
-                        <View>
-                            <Pressable
-                                onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_popular", title: "Popular TV Shows" } })}
-                                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                    Popular TV Shows
-                                </FlexText>
-                                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                    <Ionicons name="chevron-forward" size={20} color="white" />
+                            {/* Popular TV */}
+                            {isPopTvLoading ? (
+                                <SectionShimmer title="Popular TV Shows" />
+                            ) : tvPopular && tvPopular.length > 0 && (
+                                <View>
+                                    <Pressable
+                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_popular", title: "Popular TV Shows" } })}
+                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
+                                            Popular TV Shows
+                                        </FlexText>
+                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
+                                            <Ionicons name="chevron-forward" size={20} color="white" />
+                                        </View>
+                                    </Pressable>
+                                    <GestureFlatList
+                                        horizontal
+                                        data={tvPopular}
+                                        keyExtractor={(item: any, index) => `${item.id}-${index}`}
+                                        renderItem={renderTvItem}
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={{ paddingHorizontal: 16 }}
+                                        initialNumToRender={5}
+                                    />
                                 </View>
-                            </Pressable>
-                            <GestureFlatList
-                                horizontal
-                                data={tvPopular}
-                                keyExtractor={(item: any, index) => `${item.id}-${index}`}
-                                renderItem={renderTvItem}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            />
-                        </View>
-                    )}
+                            )}
 
-                    {/* Popular People */}
-                    {isPopPeopleLoading ? (
-                        <SectionShimmer title="Trending People" />
-                    ) : popularPeople && popularPeople.length > 0 && (
-                        <View>
-                            <Pressable
-                                onPress={() => router.push({ pathname: "/movie_list", params: { mode: "popular_people", title: "Trending People" } })}
-                                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                    Trending People
-                                </FlexText>
-                                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                    <Ionicons name="chevron-forward" size={20} color="white" />
+                            {/* Popular People */}
+                            {isPopPeopleLoading ? (
+                                <SectionShimmer title="Trending People" />
+                            ) : popularPeople && popularPeople.length > 0 && (
+                                <View>
+                                    <Pressable
+                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "popular_people", title: "Trending People" } })}
+                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
+                                            Trending People
+                                        </FlexText>
+                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
+                                            <Ionicons name="chevron-forward" size={20} color="white" />
+                                        </View>
+                                    </Pressable>
+                                    <GestureFlatList
+                                        horizontal
+                                        data={popularPeople}
+                                        keyExtractor={(item) => item.id.toString()}
+                                        renderItem={renderPersonItem}
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={{ paddingHorizontal: 16 }}
+                                        initialNumToRender={5}
+                                    />
                                 </View>
-                            </Pressable>
-                            <GestureFlatList
-                                horizontal
-                                data={popularPeople}
-                                keyExtractor={(item) => item.id.toString()}
-                                renderItem={renderPersonItem}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            />
-                        </View>
-                    )}
+                            )}
 
-                    {/* Top Rated Movies */}
-                    {isTopRatedLoading ? (
-                        <SectionShimmer title="Top Rated Movies" />
-                    ) : topRated && topRated.length > 0 && (
-                        <View>
-                            <Pressable
-                                onPress={() => router.push({ pathname: "/movie_list", params: { mode: "top_rated", title: "Top Rated Movies" } })}
-                                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                    Top Rated Movies
-                                </FlexText>
-                                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                    <Ionicons name="chevron-forward" size={20} color="white" />
+                            {/* Top Rated Movies */}
+                            {isTopRatedLoading ? (
+                                <SectionShimmer title="Top Rated Movies" />
+                            ) : topRated && topRated.length > 0 && (
+                                <View>
+                                    <Pressable
+                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "top_rated", title: "Top Rated Movies" } })}
+                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
+                                            Top Rated Movies
+                                        </FlexText>
+                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
+                                            <Ionicons name="chevron-forward" size={20} color="white" />
+                                        </View>
+                                    </Pressable>
+                                    <GestureFlatList
+                                        horizontal
+                                        data={topRated}
+                                        keyExtractor={movieKeyExtractor}
+                                        renderItem={renderMovieItem}
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={{ paddingHorizontal: 16 }}
+                                        initialNumToRender={5}
+                                    />
                                 </View>
-                            </Pressable>
-                            <GestureFlatList
-                                horizontal
-                                data={topRated}
-                                keyExtractor={movieKeyExtractor}
-                                renderItem={renderMovieItem}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            />
-                        </View>
-                    )}
+                            )}
 
-                    {/* Top Rated TV */}
-                    {isTopTvLoading ? (
-                        <SectionShimmer title="Top Rated TV Shows" />
-                    ) : tvTopRated && tvTopRated.length > 0 && (
-                        <View>
-                            <Pressable
-                                onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_top_rated", title: "Top Rated TV" } })}
-                                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                    Top Rated TV Shows
-                                </FlexText>
-                                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                    <Ionicons name="chevron-forward" size={20} color="white" />
+                            {/* Top Rated TV */}
+                            {isTopTvLoading ? (
+                                <SectionShimmer title="Top Rated TV Shows" />
+                            ) : tvTopRated && tvTopRated.length > 0 && (
+                                <View>
+                                    <Pressable
+                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_top_rated", title: "Top Rated TV" } })}
+                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
+                                            Top Rated TV Shows
+                                        </FlexText>
+                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
+                                            <Ionicons name="chevron-forward" size={20} color="white" />
+                                        </View>
+                                    </Pressable>
+                                    <GestureFlatList
+                                        horizontal
+                                        data={tvTopRated}
+                                        keyExtractor={(item: any, index) => `${item.id}-${index}`}
+                                        renderItem={renderTvItem}
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={{ paddingHorizontal: 16 }}
+                                        initialNumToRender={5}
+                                    />
                                 </View>
-                            </Pressable>
-                            <GestureFlatList
-                                horizontal
-                                data={tvTopRated}
-                                keyExtractor={(item: any, index) => `${item.id}-${index}`}
-                                renderItem={renderTvItem}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            />
-                        </View>
+                            )}
+                        </>
                     )}
                 </>
             )}

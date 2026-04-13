@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "26.5.2",
+    "version": "26.5.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -197,7 +197,8 @@
       ],
       "expo-sharing",
       "@react-native-community/datetimepicker",
-      "expo-image"
+      "expo-image",
+      "react-native-nitro-wallpaper"
     ],
     "experiments": {
       "typedRoutes": true,

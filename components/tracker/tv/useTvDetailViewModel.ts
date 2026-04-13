@@ -20,20 +20,20 @@ import {
     tvDetailStorage,
 } from "./shared/tvDetailUtils";
 
-export function useTvDetailViewModel(tvId: number) {
+export function useTvDetailViewModel(tvId: number, isReady: boolean) {
     const { colors } = useThemeContext();
 
     // ─── Remote data ─────────────────────────────────────────────────────────
     const { data: tv, isLoading, isError } = useTvDetails(tvId);
-    const { data: images } = useTvImages(tvId);
-    const { data: similarData } = useTvSimilarInfinite(tvId);
-    const { data: recData } = useTvRecommendationsInfinite(tvId);
+    const { data: images } = useTvImages(isReady ? tvId : undefined);
+    const { data: similarData } = useTvSimilarInfinite(isReady ? tvId : undefined);
+    const { data: recData } = useTvRecommendationsInfinite(isReady ? tvId : undefined);
     const {
         data: reviewsData,
         fetchNextPage: fetchNextReviews,
         isFetchingNextPage: isFetchingReviews,
-    } = useTvReviewsInfinite(tvId);
-    const { data: watchProvidersData } = useTvWatchProviders(tvId);
+    } = useTvReviewsInfinite(isReady ? tvId : undefined);
+    const { data: watchProvidersData } = useTvWatchProviders(isReady ? tvId : undefined);
 
     // ─── Season / episode state ───────────────────────────────────────────────
     const [selectedSeasonNumber, setSelectedSeasonNumber] = useState<number>(1);
@@ -41,7 +41,7 @@ export function useTvDetailViewModel(tvId: number) {
     const [selectedEpisodeNumber, setSelectedEpisodeNumber] = useState<number | null>(null);
     const [episodesVisible, setEpisodesVisible] = useState(true);
 
-    const { data: seasonData, isLoading: isSeasonLoading } = useTvSeasonDetails(tvId, selectedSeasonNumber);
+    const { data: seasonData, isLoading: isSeasonLoading } = useTvSeasonDetails(isReady ? tvId : undefined, selectedSeasonNumber);
     const episodes = useMemo(() => seasonData?.episodes ?? [], [seasonData?.episodes]);
 
     // Initialize to the first real (non-specials) season

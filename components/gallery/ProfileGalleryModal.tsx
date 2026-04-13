@@ -1,4 +1,5 @@
 import { GalleryOverlay } from '@/components/gallery/GalleryOverlay';
+import WallpaperOverlay from '@/components/WallpaperOverlay';
 import { Media } from '@/types/media';
 import { ProfileMusic } from '@/types/profilemusic';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -35,21 +36,15 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
     const router = useRouter();
     const ref = useRef<GalleryRefType>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
+    const [isWallpaperVisible, setIsWallpaperVisible] = useState(false);
 
     const currentPhoto = photos[currentIndex];
     const currentMusic = music?.[0];
 
     const handlePoster = () => {
-        router.push({
-            pathname: '/image_poster' as any,
-            params: {
-                imageUrl: currentPhoto?.url,
-                name: profileName || '',
-                description: currentPhoto?.caption || '',
-                musicUrl: currentMusic?.preview_url || '',
-                musicTitle: currentMusic ? `${currentMusic.artist} - ${currentMusic.title}` : '',
-            }
-        });
+        if (currentPhoto?.url) {
+            setIsWallpaperVisible(true);
+        }
     };
 
     const renderItem = useCallback(
@@ -167,6 +162,11 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
                     }
                 }}
                 isVerified={isVerified}
+            />
+            <WallpaperOverlay
+                isVisible={isWallpaperVisible}
+                url={currentPhoto?.url ?? ''}
+                onClose={() => setIsWallpaperVisible(false)}
             />
         </GestureHandlerRootView>
     );

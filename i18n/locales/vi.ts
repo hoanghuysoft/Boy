@@ -2,6 +2,7 @@
 
 import bookmarks from './vi/bookmarks';
 import create from './vi/create';
+import dashboard from './vi/dashboard';
 import hashtag from './vi/hashtag';
 import home from './vi/home';
 import languageSettings from './vi/languageSettings';
@@ -14,10 +15,12 @@ import settings from './vi/settings';
 import shots from './vi/shots';
 import themeSettings from './vi/themeSettings';
 import serviceSettings from './vi/serviceSettings';
+import wallpaperOverlay from './vi/wallpaperOverlay';
 
 const vi = {
     bookmarks,
     create,
+    dashboard,
     hashtag,
     home,
     settings,
@@ -30,6 +33,7 @@ const vi = {
     shots,
     themeSettings,
     serviceSettings,
+    wallpaperOverlay,
 } as const;
 
 export default vi;

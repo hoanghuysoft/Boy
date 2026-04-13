@@ -1,5 +1,7 @@
 import { FlexText } from "@/components/FlexText";
 import { ShimmerEffect } from "@/components/shimmer/Shimmer";
+import { MovieDBView } from "@/components/tracker/MovieDBView";
+import { useMovieTrackerStore } from "@/stores/movieTracker";
 import type { VideoCard } from "@/types/shows";
 import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,8 +15,6 @@ import { FlatList as GestureFlatList, Pressable as GesturePressable } from "reac
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
-import { useMovieTrackerStore } from "@/stores/movieTracker";
-import { MovieDBView } from "@/components/tracker/MovieDBView";
 
 const ChatScreen = () => {
   const { colors, typography } = useThemeContext();
@@ -92,158 +92,158 @@ const ChatScreen = () => {
         {trackerSource === 'moviedb' ? (
           <MovieDBView headerScrollX={headerScrollX} />
         ) : (
-        <ScrollView
-          contentContainerStyle={[{ gap: 12, paddingBottom: 24 }]}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={vm.isRefetchingSections || vm.isRefetchingSlider}
-              onRefresh={() => {
-                vm.refetchSections();
-                vm.refetchSlider();
-              }}
-              tintColor={colors.text}
-              colors={[colors.text]}
-              progressBackgroundColor={colors.card}
-              progressViewOffset={inset.top}
-            />
-          }
-        >
-          {/* Loading Shimmer */}
-          {(vm.isLoadingSlider || vm.isLoadingSections) ? (
-            <View style={{ gap: 24 }}>
-              <ShimmerEffect style={{ height: posterHeight, width: '100%' }} />
-              <View style={{ gap: 16 }}>
-                <ShimmerEffect style={{ height: 24, width: 120, marginLeft: 16, borderRadius: 4 }} />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                </ScrollView>
-              </View>
-              <View style={{ gap: 16 }}>
-                <ShimmerEffect style={{ height: 24, width: 150, marginLeft: 16, borderRadius: 4 }} />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                </ScrollView>
-              </View>
-            </View>
-          ) : (
-            <>
-              {(vm.isErrorSlider || vm.isErrorSections) && (
-                <View
-                  style={{
-                    marginHorizontal: 16,
-                    marginTop: 8,
-                    padding: 12,
-                    borderRadius: 12,
-                    backgroundColor: "rgba(255, 0, 0, 0.12)",
-                  }}
-                >
-                  <Text style={{ color: "white", fontWeight: "700" }}>Failed to load shows.</Text>
-                  <Text style={{ color: "rgba(255,255,255,0.8)", marginTop: 4 }}>
-                    Pull to refresh and try again.
-                  </Text>
+          <ScrollView
+            contentContainerStyle={[{ gap: 12, paddingBottom: 24 }]}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={vm.isRefetchingSections || vm.isRefetchingSlider}
+                onRefresh={() => {
+                  vm.refetchSections();
+                  vm.refetchSlider();
+                }}
+                tintColor={colors.text}
+                colors={[colors.text]}
+                progressBackgroundColor={colors.card}
+                progressViewOffset={inset.top}
+              />
+            }
+          >
+            {/* Loading Shimmer */}
+            {(vm.isLoadingSlider || vm.isLoadingSections) ? (
+              <View style={{ gap: 24 }}>
+                <ShimmerEffect style={{ height: posterHeight, width: '100%' }} />
+                <View style={{ gap: 16 }}>
+                  <ShimmerEffect style={{ height: 24, width: 120, marginLeft: 16, borderRadius: 4 }} />
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                  </ScrollView>
                 </View>
-              )}
-              <Animated.ScrollView
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                scrollEventThrottle={16}
-                onScroll={Animated.event(
-                  [{ nativeEvent: { contentOffset: { x: headerScrollX } } }],
-                  { useNativeDriver: true }
+                <View style={{ gap: 16 }}>
+                  <ShimmerEffect style={{ height: 24, width: 150, marginLeft: 16, borderRadius: 4 }} />
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                    <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
+                  </ScrollView>
+                </View>
+              </View>
+            ) : (
+              <>
+                {(vm.isErrorSlider || vm.isErrorSections) && (
+                  <View
+                    style={{
+                      marginHorizontal: 16,
+                      marginTop: 8,
+                      padding: 12,
+                      borderRadius: 12,
+                      backgroundColor: "rgba(255, 0, 0, 0.12)",
+                    }}
+                  >
+                    <Text style={{ color: "white", fontWeight: "700" }}>Failed to load shows.</Text>
+                    <Text style={{ color: "rgba(255,255,255,0.8)", marginTop: 4 }}>
+                      Pull to refresh and try again.
+                    </Text>
+                  </View>
                 )}
-                style={{ height: posterHeight }}
-              >
-                {vm.slider?.slider_items.map((slider, i) => {
-                  const extra = width * 0.7; // Deep parallax depth
-                  const translateX = headerScrollX.interpolate({
-                    inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-                    outputRange: [-extra, 0, extra],
-                    extrapolate: "clamp",
-                  });
-                  const scale = headerScrollX.interpolate({
-                    inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-                    outputRange: [1, 1.05, 1], // Subtle scale-in to create focus
-                    extrapolate: "clamp",
-                  });
-                  const overlayOpacity = headerScrollX.interpolate({
-                    inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-                    outputRange: [0, 1, 0],
-                    extrapolate: "clamp",
-                  });
+                <Animated.ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  scrollEventThrottle={16}
+                  onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { x: headerScrollX } } }],
+                    { useNativeDriver: true }
+                  )}
+                  style={{ height: posterHeight }}
+                >
+                  {vm.slider?.slider_items.map((slider, i) => {
+                    const extra = width * 0.7; // Deep parallax depth
+                    const translateX = headerScrollX.interpolate({
+                      inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+                      outputRange: [-extra, 0, extra],
+                      extrapolate: "clamp",
+                    });
+                    const scale = headerScrollX.interpolate({
+                      inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+                      outputRange: [1, 1.05, 1], // Subtle scale-in to create focus
+                      extrapolate: "clamp",
+                    });
+                    const overlayOpacity = headerScrollX.interpolate({
+                      inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+                      outputRange: [0, 1, 0],
+                      extrapolate: "clamp",
+                    });
 
-                  return (
-                    <Pressable
-                      key={i}
-                      onPress={() =>
-                        router.push({
-                          pathname: "/show_detail",
-                          params: { video_url: slider.video_url },
-                        })
-                      }
-                      style={{ width, height: posterHeight, overflow: "hidden" }}
-                    >
-                      <Animated.View
-                        style={{
-                          width: width + extra * 2,
-                          height: posterHeight,
-                          marginLeft: -extra,
-                          transform: [{ translateX }, { scale }],
-                        }}
+                    return (
+                      <Pressable
+                        key={i}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/show_detail",
+                            params: { video_url: slider.video_url },
+                          })
+                        }
+                        style={{ width, height: posterHeight, overflow: "hidden" }}
                       >
-                        <Image
-                          source={{ uri: slider.background_image }}
-                          style={{ width: "100%", height: "100%" }}
-                          contentFit="cover"
-                        />
-                      </Animated.View>
-                      <Animated.View
-                        pointerEvents="none"
-                        style={[styles.headerOverlay, { paddingBottom: 24, opacity: overlayOpacity }]}
-                      >
-                        <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
-                          {slider.title}
-                        </FlexText>
-                        <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-                          <FlexText style={[styles.textStyle, { color: "white" }]}>{slider.category}</FlexText>
-                          <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }} />
-                          <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
-                          <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
-                        </View>
-                      </Animated.View>
+                        <Animated.View
+                          style={{
+                            width: width + extra * 2,
+                            height: posterHeight,
+                            marginLeft: -extra,
+                            transform: [{ translateX }, { scale }],
+                          }}
+                        >
+                          <Image
+                            source={{ uri: slider.background_image }}
+                            style={{ width: "100%", height: "100%" }}
+                            contentFit="cover"
+                          />
+                        </Animated.View>
+                        <Animated.View
+                          pointerEvents="none"
+                          style={[styles.headerOverlay, { paddingBottom: 24, opacity: overlayOpacity }]}
+                        >
+                          <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
+                            {slider.title}
+                          </FlexText>
+                          <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+                            <FlexText style={[styles.textStyle, { color: "white" }]}>{slider.category}</FlexText>
+                            <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }} />
+                            <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                            <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                          </View>
+                        </Animated.View>
+                      </Pressable>
+                    );
+                  })}
+                </Animated.ScrollView>
+                {vm.sections?.sections?.map((section, index) => (
+                  <View key={index}>
+                    <Pressable onPress={() => { router.push("/show_list") }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                      <FlexText style={[styles.sectionTitle, { color: "white", marginBottom: 12, flex: 1 }]}>
+                        {section.heading}
+                      </FlexText>
+                      <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 999 }}>
+                        <Ionicons name='chevron-forward' size={20} color={'white'} />
+                      </View>
                     </Pressable>
-                  );
-                })}
-              </Animated.ScrollView>
-              {vm.sections?.sections?.map((section, index) => (
-                <View key={index}>
-                  <Pressable onPress={() => { router.push("/show_list") }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                    <FlexText style={[styles.sectionTitle, { color: "white", marginBottom: 12, flex: 1 }]}>
-                      {section.heading}
-                    </FlexText>
-                    <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: 'center', alignItems: 'center', borderRadius: 999 }}>
-                      <Ionicons name='chevron-forward' size={20} color={'white'} />
-                    </View>
-                  </Pressable>
-                  <GestureFlatList
-                    horizontal
-                    data={section.items}
-                    keyExtractor={sectionKeyExtractor}
-                    renderItem={renderSectionItem}
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 16 }}
-                  />
-                </View>
-              ))}
-            </>
-          )}
-          <View style={{ height: inset.bottom + 80 }} />
-        </ScrollView>
+                    <GestureFlatList
+                      horizontal
+                      data={section.items}
+                      keyExtractor={sectionKeyExtractor}
+                      renderItem={renderSectionItem}
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ paddingHorizontal: 16 }}
+                    />
+                  </View>
+                ))}
+              </>
+            )}
+            <View style={{ height: inset.bottom + 80 }} />
+          </ScrollView>
         )}
       </BlurTargetView>
       <View

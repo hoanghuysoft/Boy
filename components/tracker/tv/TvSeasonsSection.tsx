@@ -3,8 +3,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { EpisodeCard, SeasonDropdown } from "./shared/TvEpisodeWidgets";
 import { sharedStyles } from "./shared/TvDetailAtoms";
+import { EpisodeCard, SeasonDropdown } from "./shared/TvEpisodeWidgets";
 
 const EPISODE_PREVIEW_LIMIT = 2;
 

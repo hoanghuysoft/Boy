@@ -220,6 +220,34 @@ const RootContent = () => {
             name="inapp_browser"
             options={{ headerShown: false, animation: "slide_from_right" }}
           />
+          <Stack.Screen
+            name="movie_detail"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="tv_detail"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="person_detail"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="movie_list"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="search_movies"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="webview"
+            options={{ headerShown: false, animation: "fade" }}
+          />
+          <Stack.Screen
+            name="movie-tracker-settings"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
         </Stack>
         <GlobalAudioPlayer />
       </View>

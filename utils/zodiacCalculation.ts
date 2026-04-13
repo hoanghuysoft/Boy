@@ -168,14 +168,40 @@ const getMoonPhase = (year: number, month: number, day: number): MoonPhaseKey =>
  * 4. Historical "On This Day"
  * Uses the Wikimedia API (Free, no API key required)
  */
+interface WikiOnThisDayEvent {
+    text: string;
+    year: number;
+    pages: {
+        type: string;
+        title: string;
+        displaytitle: string;
+        thumbnail?: { source: string; width: number; height: number };
+        originalimage?: { source: string; width: number; height: number };
+        description: string;
+        extract: string;
+        content_urls: {
+            desktop: { page: string; revisions: string; edit: string; talk: string };
+            mobile: { page: string; revisions: string; edit: string; talk: string };
+        };
+    }[];
+}
+
+interface WikiOnThisDayResponse {
+    events: WikiOnThisDayEvent[];
+}
+
 const getHistoricalEvent = async (month: number, day: number): Promise<string> => {
     try {
-        const paddedMonth = month.toString().padStart(2, '0');
-        const paddedDay = day.toString().padStart(2, '0');
-        const response = await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${paddedMonth}/${paddedDay}`);
-        const data = await response.json();
-        // Return the first interesting event found
-        return data.events[0]?.text || "A quiet day in history.";
+        // const paddedMonth = month.toString().padStart(2, '0');
+        // const paddedDay = day.toString().padStart(2, '0');
+        // const response = await fetch(
+        //     `https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${paddedMonth}/${paddedDay}`,
+        //     { headers: { 'User-Agent': 'WeLoveApp/1.0 (mobile; contact@welove.app)' } }
+        // );
+        // if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        // const data: WikiOnThisDayResponse = await response.json();
+        // return data.events[0]?.text ?? "A quiet day in history.";
+        return "A quiet day in history.";
     } catch (error) {
         return "History is still being written...";
     }

@@ -46,6 +46,7 @@ export function useMovieDetails(movieId?: number) {
             return data;
         },
         enabled: !!movieId,
+        staleTime: 10 * 60 * 1000, // 10 min — avoid refetch on re-visit
     });
 }
 
@@ -63,6 +64,7 @@ export function usePersonDetails(personId?: number) {
             return data;
         },
         enabled: !!personId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -75,6 +77,7 @@ export function useMovieImages(movieId?: number) {
             return data;
         },
         enabled: !!movieId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -87,6 +90,7 @@ export function useMovieWatchProviders(movieId?: number) {
             return data;
         },
         enabled: !!movieId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -104,6 +108,7 @@ export function useMovieSimilarInfinite(movieId?: number, language: string = 'en
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         enabled: !!movieId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -121,6 +126,7 @@ export function useMovieRecommendationsInfinite(movieId?: number, language: stri
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         enabled: !!movieId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -138,6 +144,7 @@ export function useMovieReviewsInfinite(movieId?: number, language: string = 'en
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         enabled: !!movieId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -157,6 +164,7 @@ export function useTvDetails(tvId?: number) {
             return data;
         },
         enabled: !!tvId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -169,6 +177,7 @@ export function useTvImages(tvId?: number) {
             return data;
         },
         enabled: !!tvId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -181,6 +190,7 @@ export function useTvWatchProviders(tvId?: number) {
             return data;
         },
         enabled: !!tvId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -198,6 +208,7 @@ export function useTvSimilarInfinite(tvId?: number, language: string = 'en-US') 
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         enabled: !!tvId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -215,6 +226,7 @@ export function useTvRecommendationsInfinite(tvId?: number, language: string = '
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         enabled: !!tvId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
@@ -232,11 +244,12 @@ export function useTvReviewsInfinite(tvId?: number, language: string = 'en-US') 
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         enabled: !!tvId,
+        staleTime: 10 * 60 * 1000,
     });
 }
 
 // Infinite — Popular Movies
-export function usePopularMoviesInfinite(language: string = 'en-US') {
+export function usePopularMoviesInfinite(language: string = 'en-US', enabled: boolean = true) {
     return useInfiniteQuery({
         queryKey: ['movies', 'popular', 'inf', language],
         queryFn: async ({ pageParam = 1 }) => {
@@ -249,11 +262,12 @@ export function usePopularMoviesInfinite(language: string = 'en-US') {
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         staleTime: 5 * 60 * 1000,
+        enabled,
     });
 }
 
 // Infinite — Popular People
-export function usePopularPeopleInfinite(language: string = 'en-US') {
+export function usePopularPeopleInfinite(language: string = 'en-US', enabled: boolean = true) {
     return useInfiniteQuery({
         queryKey: ['people', 'popular', 'inf', language],
         queryFn: async ({ pageParam = 1 }) => {
@@ -266,6 +280,7 @@ export function usePopularPeopleInfinite(language: string = 'en-US') {
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         staleTime: 5 * 60 * 1000,
+        enabled,
     });
 }
 
@@ -289,7 +304,7 @@ export function useAiringTodayTVInfinite(language: string = 'en-US') {
 }
 
 // Infinite — On The Air TV
-export function useOnTheAirTVInfinite(language: string = 'en-US') {
+export function useOnTheAirTVInfinite(language: string = 'en-US', enabled: boolean = true) {
     return useInfiniteQuery({
         queryKey: ['tv', 'on_the_air', 'inf', language],
         queryFn: async ({ pageParam = 1 }) => {
@@ -302,11 +317,12 @@ export function useOnTheAirTVInfinite(language: string = 'en-US') {
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         staleTime: 5 * 60 * 1000,
+        enabled,
     });
 }
 
 // Infinite — Popular TV
-export function usePopularTVInfinite(language: string = 'en-US') {
+export function usePopularTVInfinite(language: string = 'en-US', enabled: boolean = true) {
     return useInfiniteQuery({
         queryKey: ['tv', 'popular', 'inf', language],
         queryFn: async ({ pageParam = 1 }) => {
@@ -319,11 +335,12 @@ export function usePopularTVInfinite(language: string = 'en-US') {
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         staleTime: 5 * 60 * 1000,
+        enabled,
     });
 }
 
 // Infinite — Top Rated TV
-export function useTopRatedTVInfinite(language: string = 'en-US') {
+export function useTopRatedTVInfinite(language: string = 'en-US', enabled: boolean = true) {
     return useInfiniteQuery({
         queryKey: ['tv', 'top_rated', 'inf', language],
         queryFn: async ({ pageParam = 1 }) => {
@@ -336,11 +353,12 @@ export function useTopRatedTVInfinite(language: string = 'en-US') {
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         staleTime: 5 * 60 * 1000,
+        enabled,
     });
 }
 
 // Infinite — Top Rated Movies
-export function useTopRatedMoviesInfinite(language: string = 'en-US') {
+export function useTopRatedMoviesInfinite(language: string = 'en-US', enabled: boolean = true) {
     return useInfiniteQuery({
         queryKey: ['movies', 'top_rated', 'inf', language],
         queryFn: async ({ pageParam = 1 }) => {
@@ -353,6 +371,7 @@ export function useTopRatedMoviesInfinite(language: string = 'en-US') {
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         staleTime: 5 * 60 * 1000,
+        enabled,
     });
 }
 
@@ -374,7 +393,7 @@ export function useNowPlayingMoviesInfinite(language: string = 'en-US') {
 }
 
 // Infinite — Upcoming Movies
-export function useUpcomingMoviesInfinite(language: string = 'en-US') {
+export function useUpcomingMoviesInfinite(language: string = 'en-US', enabled: boolean = true) {
     return useInfiniteQuery({
         queryKey: ['movies', 'upcoming', 'inf', language],
         queryFn: async ({ pageParam = 1 }) => {
@@ -387,6 +406,7 @@ export function useUpcomingMoviesInfinite(language: string = 'en-US') {
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         staleTime: 5 * 60 * 1000,
+        enabled,
     });
 }
 
@@ -406,6 +426,7 @@ export function useTvSeasonDetails(tvId?: number, seasonNumber?: number) {
             return data;
         },
         enabled: !!tvId && seasonNumber !== undefined && seasonNumber !== null,
+        staleTime: 10 * 60 * 1000,
     });
 }
 

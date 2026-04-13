@@ -1,8 +1,8 @@
 import { GalleryOverlay } from '@/components/gallery/GalleryOverlay';
+import WallpaperOverlay from '@/components/WallpaperOverlay';
 import { useGalleryStore } from '@/stores/gallery';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
-import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useCallback, useRef, useState } from 'react';
 import { Modal, StatusBar, ToastAndroid } from 'react-native';
@@ -28,23 +28,16 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
     onClose,
     showDownload = false,
 }) => {
-    const router = useRouter();
     const ref = useRef<GalleryRefType>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
+    const [isWallpaperVisible, setIsWallpaperVisible] = useState(false);
 
     const currentImage = galleryImages[currentIndex];
 
     const handlePoster = () => {
-        router.push({
-            pathname: '/image_poster' as any,
-            params: {
-                imageUrl: currentImage?.uri,
-                name: currentImage?.profileName || '',
-                description: currentImage?.caption || '',
-                musicUrl: currentImage?.musicUrl || '',
-                musicTitle: currentImage?.musicTitle || '',
-            }
-        });
+        if (currentImage?.uri) {
+            setIsWallpaperVisible(true);
+        }
     };
 
     const renderItem = useCallback(
@@ -154,6 +147,11 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
                 }}
                 onPoster={handlePoster}
                 isVerified={currentImage?.isVerified}
+            />
+            <WallpaperOverlay
+                isVisible={isWallpaperVisible}
+                url={currentImage?.uri ?? ''}
+                onClose={() => setIsWallpaperVisible(false)}
             />
         </GestureHandlerRootView>
     );

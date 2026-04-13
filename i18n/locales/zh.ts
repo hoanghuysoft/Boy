@@ -2,6 +2,7 @@
 
 import bookmarks from './zh/bookmarks';
 import create from './zh/create';
+import dashboard from './zh/dashboard';
 import hashtag from './zh/hashtag';
 import home from './zh/home';
 import languageSettings from './zh/languageSettings';
@@ -14,10 +15,12 @@ import settings from './zh/settings';
 import shots from './zh/shots';
 import themeSettings from './zh/themeSettings';
 import serviceSettings from './zh/serviceSettings';
+import wallpaperOverlay from './zh/wallpaperOverlay';
 
 const zh = {
     bookmarks,
     create,
+    dashboard,
     hashtag,
     home,
     settings,
@@ -30,6 +33,7 @@ const zh = {
     shots,
     themeSettings,
     serviceSettings,
+    wallpaperOverlay,
 } as const;
 
 export default zh;

@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CheckCircleBold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,12 +39,23 @@ const SERVICE_OPTIONS: ServiceOption[] = [
 
 const MovieTrackerSettingsScreen = () => {
     const { colors, typography } = useThemeContext();
-    const common = createCommonStyles(colors, typography);
-    const styles = style(colors, common);
+    const common = useMemo(() => createCommonStyles(colors, typography), [colors, typography]);
+    const styles = useMemo(() => style(colors, common), [colors, common]);
     const inset = useSafeAreaInsets();
     const { t } = useTranslation();
 
     const { trackerSource, setTrackerSource } = useMovieTrackerStore();
+
+    // Defer heavy rendering until after the push animation
+    const [isReady, setIsReady] = useState(false);
+    useEffect(() => {
+        const timer = setTimeout(() => setIsReady(true), 300);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (!isReady) {
+        return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+    }
 
     return (
         <ScrollView style={[common.screenPadding, { backgroundColor: colors.background }]}>

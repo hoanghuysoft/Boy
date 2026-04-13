@@ -1,2 +1,2 @@
-import ChatScreen from "../_screens/Chat";
-export default ChatScreen;
+import DashboardScreen from "@/app/_screens/Dashboard";
+export default DashboardScreen;

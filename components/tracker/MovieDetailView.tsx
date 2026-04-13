@@ -14,13 +14,13 @@ import { TMDBMovieImage } from "@/types/moviedb/movie-images";
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
+import { DialogBold, WallpaperBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -28,10 +28,11 @@ import {
     useWindowDimensions,
     View,
 } from "react-native";
-import { FlatList as GestureFlatList, Pressable as GesturePressable } from "react-native-gesture-handler";
+import { FlatList as GestureFlatList, Pressable as GesturePressable, Pressable } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
 import { createMMKV } from "react-native-mmkv";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import WallpaperOverlay from "../WallpaperOverlay";
 
 // ─── MMKV cache (same pattern as ShowDetailScreen) ────────────────────────────
 const storage = createMMKV({ id: "movie-detail-image-colors" });
@@ -83,7 +84,7 @@ const InfoRow = ({ label, value, isLink = false }: { label: string; value: strin
                 <Text style={[styles.textStyle, { color: "#007AFF" }]}>{value}</Text>
             </Pressable>
         ) : (
-            <Text style={[styles.textStyle, { color: "rgb(121, 121, 121)" }]}>{value}</Text>
+            <Text style={[styles.textStyle, { color: "rgba(255, 255, 255, 0.7)" }]}>{value}</Text>
         )}
     </View>
 );
@@ -117,11 +118,19 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     const inset = useSafeAreaInsets();
 
     const { data: movie, isLoading, isError } = useMovieDetails(movieId);
-    const { data: images } = useMovieImages(movieId);
-    const { data: similarData } = useMovieSimilarInfinite(movieId);
-    const { data: recData } = useMovieRecommendationsInfinite(movieId);
-    const { data: reviewsData, fetchNextPage: fetchNextReviews, isFetchingNextPage: isFetchingReviews } = useMovieReviewsInfinite(movieId);
-    const { data: watchProvidersData } = useMovieWatchProviders(movieId);
+
+    // Defer heavy rendering until after push animation
+    const [isReady, setIsReady] = useState(false);
+    useEffect(() => {
+        const timer = setTimeout(() => setIsReady(true), 300);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const { data: images } = useMovieImages(isReady ? movieId : undefined);
+    const { data: similarData } = useMovieSimilarInfinite(isReady ? movieId : undefined);
+    const { data: recData } = useMovieRecommendationsInfinite(isReady ? movieId : undefined);
+    const { data: reviewsData, fetchNextPage: fetchNextReviews, isFetchingNextPage: isFetchingReviews } = useMovieReviewsInfinite(isReady ? movieId : undefined);
+    const { data: watchProvidersData } = useMovieWatchProviders(isReady ? movieId : undefined);
 
     const posterUrl = movie ? getImageUrl(movie.poster_path, 780) : null;
     const skiaImage = useImage(posterUrl ?? "");
@@ -147,6 +156,9 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     const cast = useMemo(() => movie?.credits?.cast?.slice(0, 20) ?? [], [movie?.credits?.cast]);
     const videos = useMemo(() => movie?.videos?.results?.slice(0, 10) ?? [], [movie?.videos?.results]);
     const reviews = useMemo(() => reviewsData?.pages.flatMap((p) => p.results) ?? [], [reviewsData]);
+
+    const [showWallpaper, setShowWallpaper] = useState(false);
+    const [urlWallpaper, setUrlWallpaper] = useState("");
 
     const watchProviders = useMemo(() => {
         if (!watchProvidersData?.results) return null;
@@ -219,7 +231,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
             };
 
             return (
-                <GesturePressable 
+                <GesturePressable
                     onPress={() => router.push({ pathname: "/person_detail", params: { id: item.id } })}
                     style={{ gap: 6, alignItems: "center", width: 80 }}
                 >
@@ -228,14 +240,15 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                         style={{ width: 70, height: 70, borderRadius: 9999 }}
                         contentFit="cover"
                     />
-                <Text numberOfLines={2} style={[styles.textStyle, { color: "white", textAlign: "center", fontSize: 12 }]}>
-                    {item.name}
-                </Text>
-                <Text numberOfLines={1} style={[styles.textStyle, { color: "rgb(121,121,121)", fontSize: 11 }]}>
-                    {item.character}
-                </Text>
-            </GesturePressable>
-        )},
+                    <Text numberOfLines={2} style={[styles.textStyle, { color: "white", textAlign: "center", fontSize: 12 }]}>
+                        {item.name}
+                    </Text>
+                    <Text numberOfLines={1} style={[styles.textStyle, { color: "rgba(255, 255, 255, 0.7)", fontSize: 11 }]}>
+                        {item.character}
+                    </Text>
+                </GesturePressable>
+            )
+        },
         [router],
     );
 
@@ -269,7 +282,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                     <FlexText numberOfLines={2} style={[styles.textStyle, { color: "white", marginTop: 8, fontSize: 13 }]}>
                         {item.name}
                     </FlexText>
-                    <FlexText numberOfLines={1} style={[styles.textStyle, { color: "rgb(121,121,121)", fontSize: 11, marginTop: 2 }]}>
+                    <FlexText numberOfLines={1} style={[styles.textStyle, { color: "rgba(255, 255, 255, 0.7)", fontSize: 11, marginTop: 2 }]}>
                         {item.type}
                     </FlexText>
                 </Pressable>
@@ -305,7 +318,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
 
     // ─── Loading / Error ─────────────────────────────────────────────────────
 
-    if (isLoading || skiaImage === null) {
+    if (isLoading || !isReady || skiaImage === null) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
                 <View style={{ gap: 16 }}>
@@ -413,7 +426,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                                 <FlexText style={[styles.textStyle, { color: "white" }]}>{runtime}</FlexText>
                                 <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }} />
                                 <IMDbBadge score={movie.vote_average} />
-                                {movie.production_companies?.map((c) => (
+                                {movie.production_companies?.slice(0, 3).map((c) => (
                                     <React.Fragment key={c.id}>
                                         <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }} />
                                         <FlexText style={[styles.textStyle, { color: "white" }]} numberOfLines={1}>
@@ -421,6 +434,12 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                                         </FlexText>
                                     </React.Fragment>
                                 ))}
+                                {movie.production_companies?.length > 3 && (
+                                    <>
+                                        <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }} />
+                                        <FlexText style={[styles.textStyle, { color: "white" }]}>More</FlexText>
+                                    </>
+                                )}
                             </View>
                         </View>
                     </View>
@@ -586,19 +605,37 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                             blurTarget={blurTargetRef} blurMethod="dimezisBlurViewSdk31Plus"
                             style={{ borderRadius: 999, overflow: "hidden" }}
                         >
-                            <TouchableOpacity
+                            <Pressable
                                 onPress={() => reviewsSheetRef.current?.present()}
                                 style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                             >
-                                <Ionicons name="chatbubbles-outline" size={24} color="white" />
-                            </TouchableOpacity>
+                                <DialogBold size={28} color="white" />
+                            </Pressable>
                         </BlurView>
                     )}
+                    {!!movie.backdrop_path && <BlurView
+                        tint="systemMaterialDark" intensity={80}
+                        blurTarget={blurTargetRef} blurMethod="dimezisBlurViewSdk31Plus"
+                        style={{ borderRadius: 999, overflow: "hidden" }}
+                    >
+                        <Pressable
+                            onPress={() => { setShowWallpaper(true); setUrlWallpaper(posterUrl || ""); }}
+                            style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
+                        >
+                            <WallpaperBold size={28} color="white" />
+                        </Pressable>
+                    </BlurView>}
                 </View>
             </View>
 
             {/* GalleryModal overlay — exact same as ShowDetailScreen */}
             <GalleryModal />
+
+            <WallpaperOverlay
+                isVisible={showWallpaper}
+                onClose={() => setShowWallpaper(false)}
+                url={urlWallpaper}
+            />
 
             {/* Reviews Sheet */}
             <ReviewsSheet

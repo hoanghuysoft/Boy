@@ -1,7 +1,7 @@
 import { useThemeContext } from '@/context/ThemeContext';
 import VerifiedIcon from '@/icons/verified';
 import { Ionicons } from '@expo/vector-icons';
-import { GalleryBold, GalleryDownloadBold, ShareBold } from '@solar-icons/react-native';
+import { GalleryDownloadBold, ShareBold, WallpaperBold } from '@solar-icons/react-native';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,7 +57,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                     onPress={onClose}
                     style={[styles.galleryButton, styles.galleryButtonBg]}
                 >
-                    <Ionicons name="close" size={22} color="white" />
+                    <Ionicons name="close" size={24} color="white" />
                 </TouchableOpacity>
 
                 <View style={styles.galleryPagination}>
@@ -72,7 +72,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                             onPress={onShare}
                             style={[styles.galleryButton, styles.galleryButtonBg]}
                         >
-                            <ShareBold size={20} color="white" />
+                            <ShareBold size={24} color="white" />
                         </TouchableOpacity>
                     )}
                     {onPoster && (
@@ -80,7 +80,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                             onPress={onPoster}
                             style={[styles.galleryButton, styles.galleryButtonBg]}
                         >
-                            <GalleryBold size={20} color="white" />
+                            <WallpaperBold size={24} color="white" />
                         </TouchableOpacity>
                     )}
                     {showDownload && onDownload && (
@@ -88,7 +88,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                             onPress={onDownload}
                             style={[styles.galleryButton, styles.galleryButtonBg]}
                         >
-                            <GalleryDownloadBold size={20} color="white" />
+                            <GalleryDownloadBold size={24} color="white" />
                         </TouchableOpacity>
                     )}
                     {/* Placeholder to maintain spacing when no buttons */}
@@ -145,9 +145,9 @@ const styles = StyleSheet.create({
     },
     galleryPagination: {
         backgroundColor: 'rgba(255,255,255,0.15)',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
+        paddingHorizontal: 18,
+        paddingVertical: 10,
+        borderRadius: 9999,
     },
     galleryPaginationText: {
         color: 'white',

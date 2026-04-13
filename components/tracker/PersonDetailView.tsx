@@ -72,6 +72,13 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
 
     const { data: person, isLoading, isError } = usePersonDetails(personId);
 
+    // Defer heavy rendering until after push animation
+    const [isReady, setIsReady] = useState(false);
+    useEffect(() => {
+        const timer = setTimeout(() => setIsReady(true), 300);
+        return () => clearTimeout(timer);
+    }, []);
+
     const [enrichedData, setEnrichedData] = useState<any>(null);
 
     useEffect(() => {
@@ -226,7 +233,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
 
     // ─── Loading / Error ─────────────────────────────────────────────────────
 
-    if (isLoading || skiaImage === null) {
+    if (isLoading || !isReady || skiaImage === null) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
                 <View style={{ gap: 16 }}>

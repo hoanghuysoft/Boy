@@ -1,19 +1,17 @@
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
-import { Ionicons } from "@expo/vector-icons";
 import { Canvas, ImageShader, LinearGradient, Rect, SkImage, vec } from "@shopify/react-native-skia";
-import { Image } from "expo-image";
 import React from "react";
 import { Text, useWindowDimensions, View } from "react-native";
 import {
     ContentRatingPill,
     DotSep,
     GenrePill,
+    sharedStyles,
     WatchProviderIcon,
 } from "./shared/TvDetailAtoms";
-import { sharedStyles } from "./shared/TvDetailAtoms";
-import { getImageUrl, withAlpha } from "./shared/tvDetailUtils";
+import { withAlpha } from "./shared/tvDetailUtils";
 
 interface TvPosterHeaderProps {
     tv: any;
@@ -126,12 +124,18 @@ export const TvPosterHeader = ({
                     <FlexText style={sharedStyles.label}>{runtime}</FlexText>
                     <DotSep />
                     <IMDbBadge score={tv.vote_average} />
-                    {tv.networks?.map((n: any) => (
+                    {tv.networks?.slice(0, 3).map((n: any) => (
                         <React.Fragment key={n.id}>
                             <DotSep />
                             <FlexText style={sharedStyles.label} numberOfLines={1}>{n.name}</FlexText>
                         </React.Fragment>
                     ))}
+                    {tv.networks?.length > 3 && (
+                        <>
+                            <DotSep />
+                            <FlexText style={sharedStyles.label}>More</FlexText>
+                        </>
+                    )}
                 </View>
             </View>
         </View>

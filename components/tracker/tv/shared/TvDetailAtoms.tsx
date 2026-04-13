@@ -75,6 +75,6 @@ export const WatchProviderIcon = ({ logoPath, providerId }: { logoPath: string |
 export const sharedStyles = StyleSheet.create({
     sectionTitle: { fontSize: 20, fontWeight: "700", color: "white" },
     label: { fontSize: 14, color: "white" },
-    muted: { fontSize: 14, color: "rgb(121, 121, 121)" },
+    muted: { fontSize: 14, color: "rgba(255, 255, 255, 0.7)" },
     link: { fontSize: 14, color: "#007AFF" },
 });

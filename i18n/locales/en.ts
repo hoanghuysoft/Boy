@@ -2,6 +2,7 @@
 
 import bookmarks from './en/bookmarks';
 import create from './en/create';
+import dashboard from './en/dashboard';
 import hashtag from './en/hashtag';
 import home from './en/home';
 import languageSettings from './en/languageSettings';
@@ -14,10 +15,12 @@ import settings from './en/settings';
 import shots from './en/shots';
 import themeSettings from './en/themeSettings';
 import serviceSettings from './en/serviceSettings';
+import wallpaperOverlay from './en/wallpaperOverlay';
 
 const en = {
     bookmarks,
     create,
+    dashboard,
     hashtag,
     home,
     settings,
@@ -30,6 +33,7 @@ const en = {
     shots,
     themeSettings,
     serviceSettings,
+    wallpaperOverlay,
 } as const;
 
 export default en;

@@ -1,5 +1,6 @@
 import bookmarks from './zhHant/bookmarks';
 import create from './zhHant/create';
+import dashboard from './zhHant/dashboard';
 import hashtag from './zhHant/hashtag';
 import home from './zhHant/home';
 import languageSettings from './zhHant/languageSettings';
@@ -12,10 +13,12 @@ import settings from './zhHant/settings';
 import shots from './zhHant/shots';
 import themeSettings from './zhHant/themeSettings';
 import serviceSettings from './zhHant/serviceSettings';
+import wallpaperOverlay from './zhHant/wallpaperOverlay';
 
 const zhHant = {
     bookmarks,
     create,
+    dashboard,
     hashtag,
     home,
     settings,
@@ -28,6 +31,7 @@ const zhHant = {
     shots,
     themeSettings,
     serviceSettings,
+    wallpaperOverlay,
 } as const;
 
 export default zhHant;

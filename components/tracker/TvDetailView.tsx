@@ -3,9 +3,10 @@ import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import { Ionicons } from "@expo/vector-icons";
+import { DialogBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { router } from "expo-router";
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TvInfoSection } from "./tv/TvInfoSection";
@@ -21,10 +22,17 @@ interface TvDetailViewProps {
 export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
     const inset = useSafeAreaInsets();
     const blurTargetRef = useRef<View | null>(null);
-    const vm = useTvDetailViewModel(tvId);
+    // Defer heavy rendering until after push animation
+    const [isReady, setIsReady] = useState(false);
+    useEffect(() => {
+        const timer = setTimeout(() => setIsReady(true), 300);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const vm = useTvDetailViewModel(tvId, isReady);
 
     // ─── Loading ──────────────────────────────────────────────────────────────
-    if (vm.isLoading || vm.skiaImage === null) {
+    if (vm.isLoading || !isReady || vm.skiaImage === null) {
         return (
             <View style={[styles.screen, { backgroundColor: vm.darkDominant }]}>
                 <View style={{ gap: 16 }}>
@@ -142,7 +150,7 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
                                 onPress={vm.openReviewsSheet}
                                 style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                             >
-                                <Ionicons name="chatbubbles-outline" size={24} color="white" />
+                                <DialogBold size={28} color="white" />
                             </TouchableOpacity>
                         </BlurView>
                     )}

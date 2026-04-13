@@ -84,7 +84,7 @@ const EpisodeVideoItem = memo(({ item }: { item: TMDBVideoResult }) => {
             <FlexText numberOfLines={2} style={{ color: "white", marginTop: 6, fontSize: 12, fontFamily: 'GoogleSansFlexRegular' }}>
                 {item.name}
             </FlexText>
-            <FlexText numberOfLines={1} style={{ color: "rgb(121,121,121)", fontSize: 11, marginTop: 2, fontFamily: 'GoogleSansFlexRegular' }}>
+            <FlexText numberOfLines={1} style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: 11, marginTop: 2, fontFamily: 'GoogleSansFlexRegular' }}>
                 {item.type}
             </FlexText>
         </Pressable>
