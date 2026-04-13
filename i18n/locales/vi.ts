@@ -11,10 +11,10 @@ import onboarding from './vi/onboarding';
 import post from './vi/post';
 import profile from './vi/profile';
 import search from './vi/search';
+import serviceSettings from './vi/serviceSettings';
 import settings from './vi/settings';
 import shots from './vi/shots';
 import themeSettings from './vi/themeSettings';
-import serviceSettings from './vi/serviceSettings';
 import wallpaperOverlay from './vi/wallpaperOverlay';
 
 const vi = {
