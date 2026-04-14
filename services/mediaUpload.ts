@@ -102,11 +102,12 @@ export const uploadMedia = async (
     if (options.post_id) formData.append('post_id', options.post_id);
     if (options.type) formData.append('type', options.type);
 
-    const data = await client.ky
-        .post(`api/profiles/${profileId}/media/client`, { body: formData })
-        .json<UploadMediaResponse>();
+    const response = await client.post<UploadMediaResponse>(
+        `api/profiles/${profileId}/media/client`,
+        formData,
+    );
 
-    return data;
+    return response.data;
 };
 
 /**

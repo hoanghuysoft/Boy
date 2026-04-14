@@ -9,6 +9,7 @@ import { ImageBackground, StatusBar, StyleSheet, Text, TextInput, View } from "r
 import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -24,6 +25,7 @@ import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
 import { clientPersister, queryClient } from "../services/client";
 import { useAutoLanguageSync } from "../stores/language";
 import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
+global.fetch = nitroFetch;
 
 GiphySDK.configure({ apiKey: process.env.EXPO_PUBLIC_GIPHY_API_KEY || '' });
 
@@ -32,7 +34,6 @@ configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false,
 });
-
 // Prevent global font scaling
 interface TextWithDefaultProps extends Text {
   defaultProps?: { allowFontScaling?: boolean };
@@ -222,23 +223,23 @@ const RootContent = () => {
           />
           <Stack.Screen
             name="movie_detail"
-            options={{ headerShown: false, animation: "slide_from_right" }}
+            options={{ headerShown: false, animation: "none" }}
           />
           <Stack.Screen
             name="tv_detail"
-            options={{ headerShown: false, animation: "slide_from_right" }}
+            options={{ headerShown: false, animation: "none" }}
           />
           <Stack.Screen
             name="person_detail"
-            options={{ headerShown: false, animation: "slide_from_right" }}
+            options={{ headerShown: false, animation: "none" }}
           />
           <Stack.Screen
             name="movie_list"
-            options={{ headerShown: false, animation: "slide_from_right" }}
+            options={{ headerShown: false, animation: "none" }}
           />
           <Stack.Screen
             name="search_movies"
-            options={{ headerShown: false, animation: "slide_from_right" }}
+            options={{ headerShown: false, animation: "none" }}
           />
           <Stack.Screen
             name="webview"
