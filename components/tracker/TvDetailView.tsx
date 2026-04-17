@@ -3,12 +3,13 @@ import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import { Ionicons } from "@expo/vector-icons";
-import { DialogBold } from "@solar-icons/react-native";
+import { DialogBold, WallpaperBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import WallpaperOverlay from "../WallpaperOverlay";
 import { TvInfoSection } from "./tv/TvInfoSection";
 import { TvCastRow, TvGalleryRow, TvRecommendationsRow, TvSimilarRow, TvVideosRow } from "./tv/TvMediaRows";
 import { TvPosterHeader } from "./tv/TvPosterHeader";
@@ -144,6 +145,18 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
                 </BlurView>
 
                 <View style={{ flexDirection: "row", gap: 8 }}>
+                    {!!vm.tv.backdrop_path && <BlurView
+                        tint="systemMaterialDark" intensity={80}
+                        blurTarget={blurTargetRef} blurMethod="dimezisBlurViewSdk31Plus"
+                        style={{ borderRadius: 999, overflow: "hidden" }}
+                    >
+                        <Pressable
+                            onPress={() => { vm.setShowWallpaper(true); vm.setUrlWallpaper(vm.posterUrl || "");}}
+                            style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
+                        >
+                            <WallpaperBold size={28} color="white" />
+                        </Pressable>
+                    </BlurView>}
                     {vm.reviews.length > 0 && (
                         <BlurView tint="systemMaterialDark" intensity={80} blurTarget={blurTargetRef} blurMethod="dimezisBlurViewSdk31Plus" style={{ borderRadius: 999, overflow: "hidden" }}>
                             <TouchableOpacity
@@ -159,6 +172,12 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
 
             {/* ─── Overlays & Sheets ─── */}
             <GalleryModal />
+
+            <WallpaperOverlay
+                isVisible={vm.showWallpaper}
+                onClose={() => vm.setShowWallpaper(false)}
+                url={vm.urlWallpaper}
+            />
 
             <ReviewsSheet
                 ref={vm.reviewsSheetRef}

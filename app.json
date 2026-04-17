@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "26.6.0",
+    "version": "26.6.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -81,7 +81,7 @@
           }
         }
       ],
-      "@react-native-google-signin/google-signin",
+      "@novastera-oss/rn-google-signin",
       "expo-audio",
       [
         "expo-font",

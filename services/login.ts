@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import RnGoogleSignin from "@novastera-oss/rn-google-signin";
+// import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { createClient } from "@supabase/supabase-js";
 import { createMMKV } from "react-native-mmkv";
 import "react-native-url-polyfill/auto";
@@ -33,13 +34,13 @@ export async function getCurrentSession() {
 
 export async function signInWithGoogle() {
     try {
-        await GoogleSignin.hasPlayServices();
-        const userInfo = await GoogleSignin.signIn();
+        await RnGoogleSignin.hasPlayServices({});
+        const userInfo = await RnGoogleSignin.signIn({});
 
-        if (userInfo.data?.idToken) {
+        if (userInfo.idToken) {
             const { data, error } = await supabase.auth.signInWithIdToken({
                 provider: 'google',
-                token: userInfo.data.idToken,
+                token: userInfo.idToken,
             });
 
             if (error) throw error;
@@ -54,7 +55,7 @@ export async function signInWithGoogle() {
 
 export async function signOut() {
     const { error } = await supabase.auth.signOut();
-    await GoogleSignin.signOut();
+    await RnGoogleSignin.signOut();
     mmkv.clearAll();
     if (error) {
         throw error;

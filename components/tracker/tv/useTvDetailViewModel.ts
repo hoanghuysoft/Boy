@@ -9,10 +9,10 @@ import {
     useTvWatchProviders,
 } from "@/hooks/useMovies";
 import { useGalleryStore } from "@/stores/gallery";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useImage } from "@shopify/react-native-skia";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getColors } from "react-native-image-colors";
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import {
     DARK_DOMINANT_CACHE_PREFIX,
     darkenHex,
@@ -40,6 +40,8 @@ export function useTvDetailViewModel(tvId: number, isReady: boolean) {
     const [seasonDropdownOpen, setSeasonDropdownOpen] = useState(false);
     const [selectedEpisodeNumber, setSelectedEpisodeNumber] = useState<number | null>(null);
     const [episodesVisible, setEpisodesVisible] = useState(true);
+    const [showWallpaper, setShowWallpaper] = useState(false);
+    const [urlWallpaper, setUrlWallpaper] = useState("");
 
     const { data: seasonData, isLoading: isSeasonLoading } = useTvSeasonDetails(isReady ? tvId : undefined, selectedSeasonNumber);
     const episodes = useMemo(() => seasonData?.episodes ?? [], [seasonData?.episodes]);
@@ -168,6 +170,11 @@ export function useTvDetailViewModel(tvId: number, isReady: boolean) {
         isError,
         skiaImage,
         darkDominant,
+        showWallpaper,
+        urlWallpaper,
+        setShowWallpaper,
+        setUrlWallpaper,
+        posterUrl,
         // season / episode
         seasons,
         selectedSeasonNumber,

@@ -95,6 +95,8 @@ const FeedTab: React.FC<FeedTabProps> = ({
     // Track last scroll offset for velocity detection
     const lastScrollOffsetRef = useRef(0);
     const lastScrollTimeRef = useRef(Date.now());
+    // Track the last known visible indices so momentumScrollEnd can use them
+    const lastVisibleIndicesRef = useRef<number[]>([]);
 
     // Clear active video when component unmounts (tab switch)
     useEffect(() => {
@@ -116,10 +118,15 @@ const FeedTab: React.FC<FeedTabProps> = ({
         for (const idx of sorted) {
             const post = posts[idx];
             if (post?.media?.some((m: any) => m.type === 'video')) {
-                // Find the first video media item in this post
-                const videoMedia = post.media.find((m: any) => m.type === 'video');
-                if (videoMedia) {
-                    return { postId: post.id, mediaId: videoMedia.id, videoUrl: choosenMediaPath(videoMedia) };
+                // Only immediately activate the video if the carousel's first slot is a video.
+                // If the first slot is an image (mixed-media carousel), activate the post
+                // without a specific mediaId — the carousel's own viewability handler will
+                // set the correct media once it knows which slot is visible.
+                const firstMedia = post.media[0];
+                if (firstMedia?.type === 'video') {
+                    return { postId: post.id, mediaId: firstMedia.id as string | null, videoUrl: choosenMediaPath(firstMedia) as string | null };
+                } else {
+                    return { postId: post.id, mediaId: null as string | null, videoUrl: null as string | null };
                 }
             }
         }
@@ -129,8 +136,26 @@ const FeedTab: React.FC<FeedTabProps> = ({
     // Autoplay setting
     const autoplayVideos = useSettingsStore(s => s.autoplayVideos);
 
+    // Shared helper: activate the best video post from a set of visible indices
+    const activateVideoFromIndices = useCallback((indices: number[]) => {
+        if (!autoplayVideos) {
+            clearActiveVideo();
+            return;
+        }
+        const result = findTopmostVideoPost(indices);
+        if (result) {
+            setActiveVideo(result.postId, result.mediaId, result.videoUrl);
+            stopAudioPlayback();
+        } else {
+            clearActiveVideo();
+        }
+    }, [autoplayVideos, findTopmostVideoPost, setActiveVideo, clearActiveVideo, stopAudioPlayback]);
+
     // Handle visible indices change from RecyclerListView
     const handleVisibleIndicesChanged = useCallback((all: number[]) => {
+        // Always keep a reference to the latest visible indices
+        lastVisibleIndicesRef.current = all;
+
         // Prefetch images for posts just beyond the visible window.
         // Route each URL to the cache of the component that will render it:
         // avatars + photo media → TurboImage.prefetch
@@ -162,18 +187,23 @@ const FeedTab: React.FC<FeedTabProps> = ({
             clearTimeout(videoDebounceRef.current);
         }
 
-        // Debounce by 300ms to ignore fast scrolling
+        // Debounce: wait for indices to settle before activating video.
+        // onMomentumScrollEnd provides a faster path when the list fully stops.
         videoDebounceRef.current = setTimeout(() => {
-            const result = findTopmostVideoPost(all);
-            if (result) {
-                setActiveVideo(result.postId, result.mediaId, result.videoUrl);
-                // Stop music playback when video starts to avoid audio conflict
-                stopAudioPlayback();
-            } else {
-                clearActiveVideo();
-            }
-        }, 500);
-    }, [posts, autoplayVideos, findTopmostVideoPost, setActiveVideo, clearActiveVideo, stopAudioPlayback]);
+            activateVideoFromIndices(all);
+        }, 400);
+    }, [posts, autoplayVideos, activateVideoFromIndices, clearActiveVideo]);
+
+    // Immediately activate video when momentum scroll fully stops.
+    // This prevents the debounce from being constantly reset during deceleration,
+    // which caused the "fast scroll + stop at video = no autoplay" bug.
+    const handleMomentumScrollEnd = useCallback(() => {
+        if (videoDebounceRef.current) {
+            clearTimeout(videoDebounceRef.current);
+            videoDebounceRef.current = null;
+        }
+        activateVideoFromIndices(lastVisibleIndicesRef.current);
+    }, [activateVideoFromIndices]);
 
     const handleRefresh = async () => {
         queryClient.removeQueries({ queryKey: ['feed', feedType] });
@@ -380,6 +410,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                     contentContainerStyle: {
                         paddingTop: headerHeight + 10,
                     },
+                    onMomentumScrollEnd: handleMomentumScrollEnd,
                     refreshControl: (
                         <RefreshControl
                             refreshing={isRefetching}

@@ -1,5 +1,6 @@
 import { focusManager } from '@tanstack/react-query';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import RnGoogleSignin from '@novastera-oss/rn-google-signin';
+// import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef, useState } from 'react';
@@ -42,7 +43,7 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
     const initialSessionCheckDoneRef = useRef(false);
 
     useEffect(() => {
-        GoogleSignin.configure({
+        RnGoogleSignin.configure({
             webClientId: '674603557783-tn1v0di2jpgp87af41b1t1rok9sqelc1.apps.googleusercontent.com',
         });
     }, []);

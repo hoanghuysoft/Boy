@@ -7,7 +7,7 @@ import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import FastImage from "@d11/react-native-fast-image";
 import { PlayBold, RestartCircleBold } from "@solar-icons/react-native";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dimensions, Pressable as RNPressable, View } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import TurboImage from "react-native-turbo-image";
@@ -256,6 +256,9 @@ MediaCarouselItem.displayName = "MediaCarouselItem";
 
 export const PostMediaCarousel = ({ media, postId, profileName, content, colors, isAdult = false, isVerified, musicUrl, musicTitle }: PostMediaCarouselProps) => {
     const [activeIndex, setActiveIndex] = useState(0);
+    // Ref mirrors activeIndex so effects and callbacks always read the latest value
+    // without needing to list it as a dependency (avoids stale closures in FlatList).
+    const currentIndexRef = useRef(0);
     const { showSensitiveContent, setShowSensitiveContent } = useSettingsStore();
     const openGallery = useGalleryStore(state => state.openGallery);
     const [isRevealed, setIsRevealed] = useState(false);
@@ -300,6 +303,7 @@ export const PostMediaCarousel = ({ media, postId, profileName, content, colors,
         if (viewableItems.length > 0) {
             const idx = viewableItems[0].index || 0;
             setActiveIndex(idx);
+            currentIndexRef.current = idx;
 
             // If this post is the active video post, update which media is playing
             if (activePostId === postId) {
@@ -314,6 +318,26 @@ export const PostMediaCarousel = ({ media, postId, profileName, content, colors,
             }
         }
     }, [activePostId, postId, media, setActiveMedia]);
+
+    // When this post becomes the active feed post, sync activeMediaId with whatever
+    // carousel slot is currently visible. This covers two cases:
+    //  1. FlatList's onViewableItemsChanged uses a stale closure and didn't fire after
+    //     the post was activated (known React Native limitation with that prop).
+    //  2. findTopmostVideoPost passed mediaId=null for mixed-media carousels; this
+    //     effect fills in the correct value once we know the visible slot.
+    useEffect(() => {
+        if (activePostId === postId) {
+            const currentItem = media[currentIndexRef.current];
+            if (currentItem?.type === 'video') {
+                setActiveMedia(currentItem.id, choosenMediaPath(currentItem));
+            } else {
+                setActiveMedia(null, null);
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activePostId, postId]);
+    // Intentionally omit `media` and `setActiveMedia` — they don't change the
+    // triggering condition. We only want to react to the post becoming active.
 
     // Calculate media height based on aspect ratio
     const mediaHeight = SCREEN_WIDTH / ASPECT_RATIO;
