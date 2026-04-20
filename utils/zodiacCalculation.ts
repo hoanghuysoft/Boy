@@ -192,16 +192,15 @@ interface WikiOnThisDayResponse {
 
 const getHistoricalEvent = async (month: number, day: number): Promise<string> => {
     try {
-        // const paddedMonth = month.toString().padStart(2, '0');
-        // const paddedDay = day.toString().padStart(2, '0');
-        // const response = await fetch(
-        //     `https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${paddedMonth}/${paddedDay}`,
-        //     { headers: { 'User-Agent': 'WeLoveApp/1.0 (mobile; contact@welove.app)' } }
-        // );
-        // if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        // const data: WikiOnThisDayResponse = await response.json();
-        // return data.events[0]?.text ?? "A quiet day in history.";
-        return "A quiet day in history.";
+        const paddedMonth = month.toString().padStart(2, '0');
+        const paddedDay = day.toString().padStart(2, '0');
+        const response = await fetch(
+            `https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${paddedMonth}/${paddedDay}`,
+            { headers: { 'User-Agent': 'WeLoveApp/1.0 (mobile; contact@welove.app)' } }
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data: WikiOnThisDayResponse = await response.json();
+        return data.events[0]?.text ?? "A quiet day in history.";
     } catch (error) {
         return "History is still being written...";
     }

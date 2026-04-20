@@ -318,7 +318,7 @@ const SearchMoviesScreen = () => {
                          No results found
                      </FlexText>
                      <FlexText style={{ color: (colors as any).muted ?? "rgba(255,255,255,0.7)", marginTop: 8, textAlign: "center" }}>
-                         We couldn't find anything matching "{submittedQuery}". Try adjusting your search query.
+                        We couldn&apos;t find anything matching &quot;{submittedQuery}&quot;. Try adjusting your search query.
                      </FlexText>
                  </View>
               );

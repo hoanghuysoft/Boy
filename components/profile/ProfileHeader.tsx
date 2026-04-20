@@ -153,49 +153,58 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
 
                 <View style={vm.common.screenPadding}>
                     <View style={[vm.common.row, { marginTop: -40, gap: 12, alignItems: 'stretch' }]}>
-                        {vm.threedEmoji ? (
-                            <>
-                                <Pressable
-                                    onLongPress={vm.showAvatarPreview}
-                                    onPressOut={vm.hideAvatarPreview}
-                                    delayLongPress={200}
-                                >
-                                    <DynamicAvatar
-                                        uri={vm.currentAvatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
-                                        threedEmoji={vm.threedEmoji}
-                                        styles={vm.common.avatarLarge}
+                        <View style={{ position: 'relative' }}>
+                            {vm.threedEmoji ? (
+                                <>
+                                    <Pressable
+                                        onLongPress={vm.showAvatarPreview}
+                                        onPressOut={vm.hideAvatarPreview}
+                                        delayLongPress={200}
+                                    >
+                                        <DynamicAvatar
+                                            uri={vm.currentAvatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                                            threedEmoji={vm.threedEmoji}
+                                            styles={vm.common.avatarLarge}
+                                        />
+                                    </Pressable>
+                                    <QuickPreviewModal
+                                        visible={vm.avatarPreviewVisible}
+                                        imageUrl={vm.currentAvatar}
+                                        onClose={vm.hideAvatarPreview}
+                                        blurhash={null}
                                     />
-                                </Pressable>
-                                <QuickPreviewModal
-                                    visible={vm.avatarPreviewVisible}
-                                    imageUrl={vm.currentAvatar}
-                                    onClose={vm.hideAvatarPreview}
-                                    blurhash={null}
+                                </>
+                            ) : vm.currentAvatar ? (
+                                <Galeria urls={[vm.currentAvatar]}>
+                                    <Galeria.Image>
+                                        <Image
+                                            source={{ uri: vm.currentAvatar }}
+                                            contentFit="cover"
+                                            style={vm.common.avatarLarge}
+                                        />
+                                    </Galeria.Image>
+                                </Galeria>
+                            ) : vm.genderFallbackSource ? (
+                                <Image
+                                    source={vm.genderFallbackSource}
+                                    contentFit="cover"
+                                    style={vm.common.avatarLarge}
                                 />
-                            </>
-                        ) : vm.currentAvatar ? (
-                            <Galeria urls={[vm.currentAvatar]}>
-                                <Galeria.Image>
-                                    <Image
-                                        source={{ uri: vm.currentAvatar }}
-                                        contentFit="cover"
-                                        style={vm.common.avatarLarge}
-                                    />
-                                </Galeria.Image>
-                            </Galeria>
-                        ) : vm.genderFallbackSource ? (
+                            ) : (
+                                <Image
+                                    source={{ uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                                    contentFit='cover'
+                                    style={vm.common.avatarLarge}
+                                />
+                            )}
+                            {/* Avatar frame overlay */}
                             <Image
-                                source={vm.genderFallbackSource}
+                                source={{ uri: 'https://cdn.discordapp.com/media/v1/collectibles-shop/1481384635886862397/animated' }}
+                                style={[StyleSheet.absoluteFill, { zIndex: 10 }]}
                                 contentFit="cover"
-                                style={vm.common.avatarLarge}
                             />
-                        ) : (
-                            <Image
-                                source={{ uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                                contentFit='cover'
-                                style={vm.common.avatarLarge}
-                            />
-                        )}
+                            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: vm.colors.background, zIndex: -1 }} />
+                        </View>
                         <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 10 }}>
                             <View style={[vm.common.row, { gap: 4 }]}>
                                 <FlexText style={[vm.common.heading, { fontWeight: '700' }]}>{profile?.name || t("profile.header.notFound")}</FlexText>
@@ -264,28 +273,28 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                             >
                                 <View style={{ flexDirection: 'row' }}>
                                     {profile.loved_ones.slice(0, 4).map((person, i) => (
-                                            <View
-                                                key={`fam-${i}`}
-                                                style={{
-                                                    width: 36,
-                                                    height: 36,
-                                                    borderRadius: 18,
-                                                    overflow: 'hidden',
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                    marginLeft: i === 0 ? 0 : -10,
-                                                    borderWidth: 2,
-                                                    borderColor: vm.colors.background,
-                                                    zIndex: 10 - i,
-                                                }}
-                                            >
-                                                <Image
-                                                    source={getFamilyAvatarSource(person.label)}
-                                                    style={{ width: 36, height: 36 }}
-                                                    resizeMode="cover"
-                                                />
-                                            </View>
-                                        ))}
+                                        <View
+                                            key={`fam-${i}`}
+                                            style={{
+                                                width: 36,
+                                                height: 36,
+                                                borderRadius: 18,
+                                                overflow: 'hidden',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                marginLeft: i === 0 ? 0 : -10,
+                                                borderWidth: 2,
+                                                borderColor: vm.colors.background,
+                                                zIndex: 10 - i,
+                                            }}
+                                        >
+                                            <Image
+                                                source={getFamilyAvatarSource(person.label)}
+                                                style={{ width: 36, height: 36 }}
+                                                resizeMode="cover"
+                                            />
+                                        </View>
+                                    ))}
                                 </View>
                                 <View style={{ flex: 1 }}>
                                     <FlexText style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }} numberOfLines={1}>

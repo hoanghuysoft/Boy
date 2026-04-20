@@ -7,6 +7,7 @@ import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Post } from "@/types/post";
+import { stripYouTubeUrls } from "@/utils/youtube";
 import { Ionicons } from "@expo/vector-icons";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import { Image } from "expo-image";
@@ -20,6 +21,7 @@ import { FlexText } from "./FlexText";
 import { PostAudioWaveform } from "./PostAudioWaveform";
 import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
+import { YouTubePostPlayer } from "./YouTubePostPlayer";
 
 // TurboImage cache policy - use dataCache for aggressive local caching
 const IMAGE_CACHE_POLICY = "dataCache" as const;
@@ -42,6 +44,12 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
     const toggleVideoMute = useFeedVideoStore(s => s.toggleMute);
     const isActiveVideoPost = activeVideoPostId === post.id;
     const hasVideo = post.media?.some(m => m.type === 'video');
+
+    // Caption without any YouTube URLs — those are rendered by YouTubePostPlayer.
+    const captionWithoutYouTube = React.useMemo(
+        () => (post.content ? stripYouTubeUrls(post.content) : ''),
+        [post.content]
+    );
 
     return (
         <View style={{}}>
@@ -73,11 +81,16 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
                 )}
             </View>
 
-            {/* Caption */}
-            {post.content ? (
+            {/* Caption — YouTube URLs are stripped since they're rendered by YouTubePostPlayer below */}
+            {captionWithoutYouTube ? (
                 <View style={{ paddingHorizontal: 16 }}>
-                    <CaptionText caption={post.content} colors={vm.colors} common={vm.common} />
+                    <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />
                 </View>
+            ) : null}
+
+            {/* YouTube links detected in the caption — single player or carousel */}
+            {post.content ? (
+                <YouTubePostPlayer postId={post.id} caption={post.content} />
             ) : null}
 
             {/* Media & Audio Overlay */}

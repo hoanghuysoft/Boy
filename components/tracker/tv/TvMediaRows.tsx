@@ -16,8 +16,8 @@ import { getImageUrl } from "./shared/tvDetailUtils";
 
 interface TvGalleryRowProps {
     backdrops: TMDBMovieImage[];
-    galleryImages: Array<{ uri: string; caption?: string }>;
-    openGallery: (images: Array<{ uri: string; caption?: string }>, index: number) => void;
+    galleryImages: { uri: string; caption?: string }[];
+    openGallery: (images: { uri: string; caption?: string }[], index: number) => void;
 }
 
 export const TvGalleryRow = ({ backdrops, galleryImages, openGallery }: TvGalleryRowProps) => {
