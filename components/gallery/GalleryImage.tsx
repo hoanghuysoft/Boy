@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import TurboImage from 'react-native-turbo-image';
 import { fitContainer } from 'react-native-zoom-toolkit';
+import { getCachedImageDimension, setCachedImageDimension } from './imageDimensionCache';
 
 type GalleryImageProps = {
     uri: string;
@@ -11,10 +12,10 @@ type GalleryImageProps = {
 
 const GalleryImage: React.FC<GalleryImageProps> = ({ uri, index, blurhash }) => {
     const { width, height } = useWindowDimensions();
-    const [resolution, setResolution] = useState<{ width: number; height: number }>({
-        width: 1,
-        height: 1,
-    });
+    const cachedResolution = getCachedImageDimension(uri);
+    const [resolution, setResolution] = useState<{ width: number; height: number }>(
+        cachedResolution ?? { width: 1, height: 1 }
+    );
 
     const size = fitContainer(resolution.width / resolution.height, { width, height });
 
@@ -33,6 +34,7 @@ const GalleryImage: React.FC<GalleryImageProps> = ({ uri, index, blurhash }) => 
                     const w = e?.nativeEvent?.width ?? e?.width ?? 0;
                     const h = e?.nativeEvent?.height ?? e?.height ?? 0;
                     if (w > 0 && h > 0) {
+                        setCachedImageDimension(uri, w, h);
                         setResolution({ width: w, height: h });
                     }
                 }}

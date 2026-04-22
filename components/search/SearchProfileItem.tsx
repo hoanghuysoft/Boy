@@ -43,7 +43,6 @@ export const SearchProfileItem = React.memo(({
     return (
         <SquircleView
             cornerSmoothing={60}
-            preserveSmoothing={true}
             borderRadius={9999}
             style={{ backgroundColor: colors.containerContent }}
         >

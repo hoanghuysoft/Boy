@@ -30,7 +30,6 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
     >
         <SquircleView
             cornerSmoothing={60}
-            preserveSmoothing={true}
             style={[styles.card, { backgroundColor: colors.containerContent }]}
 
         >

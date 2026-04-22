@@ -1,20 +1,18 @@
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { useCachedVideoUri } from "@/hooks/useCachedVideoUri";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
-import FastImage from "@d11/react-native-fast-image";
 import { PlayBold, RestartCircleBold } from "@solar-icons/react-native";
+import { Image as ExpoImage } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions, Pressable as RNPressable, View } from "react-native";
+import { Dimensions, Pressable as RNPressable, StyleSheet, View } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import TurboImage from "react-native-turbo-image";
 import { FeedVideoPlayer } from "./FeedVideoPlayer";
-
-// TurboImage cache policy - use dataCache for aggressive local caching
-const IMAGE_CACHE_POLICY = "dataCache" as const;
 
 interface PostMediaCarouselProps {
     media: Media[];
@@ -69,6 +67,10 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
 
     const fallbackUrls = useMemo(() => buildFallbackUrls(item, placeholderImageVideo), [item, placeholderImageVideo]);
     const [prev, setPrev] = useState(0);
+    const placeholderBlurhash = useMemo(
+        () => resolveBlurhash(item.blurhash, item.id),
+        [item.blurhash, item.id],
+    );
     const handleThumbnailError = useCallback(() => {
         setPrev(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
     }, [fallbackUrls.length]);
@@ -94,12 +96,14 @@ const VideoCarouselItem: React.FC<VideoCarouselItemProps> = React.memo(({
         <View style={{ width: SCREEN_WIDTH }}>
             <RNPressable onPress={handleFullScreenPress} style={{ width: '100%', aspectRatio: ASPECT_RATIO }}>
                 {/* Base layer: thumbnail always present (stable dimensions, acts as poster) */}
-                <FastImage
+                <ExpoImage
                     source={{ uri: fallbackUrls[prev] }}
-                    style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
-                    resizeMode="cover"
-                    blurRadius={shouldBlur ? 25 : undefined}
+                    style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO }}
+                    contentFit="cover"
+                    blurRadius={shouldBlur ? 25 : 0}
                     onError={handleThumbnailError}
+                    transition={150}
+                    placeholder={{ blurhash: placeholderBlurhash }}
                 />
 
                 {/* Video layer: overlays on top of thumbnail when active */}
@@ -171,6 +175,10 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
     mediaHeight,
     onPress,
 }) => {
+    const placeholderBlurhash = useMemo(
+        () => resolveBlurhash(item.blurhash, item.id),
+        [item.blurhash, item.id],
+    );
     return (
         <View style={{ width: SCREEN_WIDTH }}>
             <Pressable android_ripple={{ color: colors.divider, foreground: true }} onPress={onPress}>
@@ -180,7 +188,7 @@ const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
                     resizeMode="cover"
                     blur={shouldBlur ? 25 : undefined}
                     fadeDuration={150}
-                    placeholder={{blurhash: item.blurhash}}
+                    placeholder={{ blurhash: placeholderBlurhash }}
                     showPlaceholderOnFailure
                 />
             </Pressable>
@@ -344,20 +352,20 @@ export const PostMediaCarousel = ({ media, postId, profileName, content, colors,
     const placeholderImageVideo = 'https://placehold.net/3-600x800.png';
 
     // Prefetch carousel images — route each URL to the cache of the component that will render it:
-    // video thumbnails → FastImage.preload (rendered by FastImage in VideoCarouselItem)
+    // video thumbnails → ExpoImage.prefetch (rendered by ExpoImage in VideoCarouselItem)
     // photo URLs       → TurboImage.prefetch (rendered by TurboImage in PhotoCarouselItem)
     useEffect(() => {
         if (!media || media.length === 0) return;
 
         const videoThumbnails = media
             .filter(m => m.type === 'video' && m.thumbnail_url)
-            .map(m => ({ uri: m.thumbnail_url as string }));
+            .map(m => m.thumbnail_url as string);
 
         const photoUrls = media
             .filter(m => m.type === 'photo' && m.url)
             .map(m => ({ uri: m.url }));
 
-        if (videoThumbnails.length > 0) FastImage.preload(videoThumbnails);
+        if (videoThumbnails.length > 0) ExpoImage.prefetch(videoThumbnails);
         if (photoUrls.length > 0) TurboImage.prefetch(photoUrls);
     }, [media]);
 

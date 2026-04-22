@@ -3,6 +3,7 @@
 import bookmarks from './en/bookmarks';
 import create from './en/create';
 import dashboard from './en/dashboard';
+import gallery from './en/gallery';
 import hashtag from './en/hashtag';
 import home from './en/home';
 import languageSettings from './en/languageSettings';
@@ -21,6 +22,7 @@ const en = {
     bookmarks,
     create,
     dashboard,
+    gallery,
     hashtag,
     home,
     settings,

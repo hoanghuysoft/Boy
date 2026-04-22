@@ -3,6 +3,7 @@
 import bookmarks from './zh/bookmarks';
 import create from './zh/create';
 import dashboard from './zh/dashboard';
+import gallery from './zh/gallery';
 import hashtag from './zh/hashtag';
 import home from './zh/home';
 import languageSettings from './zh/languageSettings';
@@ -21,6 +22,7 @@ const zh = {
     bookmarks,
     create,
     dashboard,
+    gallery,
     hashtag,
     home,
     settings,

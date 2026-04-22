@@ -34,7 +34,6 @@ const HashtagListScreen = () => {
             >
                 <SquircleView
                     cornerSmoothing={60}
-                    preserveSmoothing={true}
                     style={[styles.tagRow, { backgroundColor: colors.containerContent }]}
                 >
                     <View style={styles.tagRowLeft}>

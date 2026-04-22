@@ -1,9 +1,9 @@
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
-    BoxMinimalisticBold,
-    BoxMinimalisticOutline,
     ClapperboardBold,
     ClapperboardOutline,
+    GalleryWideBold,
+    GalleryWideOutline,
     HomeBold,
     HomeOutline,
     UserRoundedBold,
@@ -47,13 +47,13 @@ const tabs: TabConfig[] = [
     },
     {
         name: "chat",
-        IconOutlined: BoxMinimalisticOutline,
-        IconSolid: BoxMinimalisticBold,
+        IconOutlined: UserRoundedOutline,
+        IconSolid: UserRoundedBold,
     },
     {
         name: "profile",
-        IconOutlined: UserRoundedOutline,
-        IconSolid: UserRoundedBold,
+        IconOutlined: GalleryWideOutline,
+        IconSolid: GalleryWideBold ,
     },
 ];
 
@@ -217,7 +217,6 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
             />
             <SquircleView
                 cornerSmoothing={60}
-                preserveSmoothing
                 borderRadius={999}
                 style={[
                     styles.tabBarContainer,
@@ -248,7 +247,6 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                         >
                             <SquircleView
                                 cornerSmoothing={60}
-                                preserveSmoothing
                                 style={{
                                     flex: 1,
                                     backgroundColor: colors.secondaryMuted + "CC",

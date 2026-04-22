@@ -3,6 +3,7 @@
 import bookmarks from './vi/bookmarks';
 import create from './vi/create';
 import dashboard from './vi/dashboard';
+import gallery from './vi/gallery';
 import hashtag from './vi/hashtag';
 import home from './vi/home';
 import languageSettings from './vi/languageSettings';
@@ -21,6 +22,7 @@ const vi = {
     bookmarks,
     create,
     dashboard,
+    gallery,
     hashtag,
     home,
     settings,

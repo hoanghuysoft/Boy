@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
-import { FasterImageView } from '@rraut/react-native-faster-image';
 import { Image } from "expo-image";
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -22,9 +22,6 @@ import {
 } from "../../viewmodels/ImageGridViewModel";
 import { ShimmerEffect } from "../shimmer/Shimmer";
 import QuickPreviewModal from "./QuickPreviewModal";
-
-// TurboImage cache policy
-const IMAGE_CACHE_POLICY = "dataCache" as const;
 
 // ─── Video Grid Item (View) ────────────────────────────────────────────────────
 interface VideoGridItemProps {
@@ -48,6 +45,10 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
 }) => {
     const fallbackUrls = useMemo(() => buildFallbackUrls(mediaItem, placeholderImageVideo), [mediaItem, placeholderImageVideo]);
     const [urlIndex, setUrlIndex] = useState(0);
+    const placeholderBlurhash = useMemo(
+        () => resolveBlurhash(mediaItem.blurhash, mediaItem.id),
+        [mediaItem.blurhash, mediaItem.id],
+    );
 
     const handleImageError = useCallback(() => {
         setUrlIndex(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
@@ -63,10 +64,13 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
                 { marginRight, justifyContent: 'center', alignItems: 'center' }
             ]}
         >
-            <FasterImageView
-                source={{ uri: fallbackUrls[urlIndex], resizeMode: 'cover' }}
+            <Image
+                source={{ uri: fallbackUrls[urlIndex] }}
                 onError={handleImageError}
                 style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                transition={150}
+                placeholder={{ blurhash: placeholderBlurhash }}
             />
             <View style={styles.overlay}>
                 <Ionicons name="play" size={24} color="white" />
@@ -97,6 +101,10 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
 }) => {
     const fallbackUrls = useMemo(() => buildFallbackUrls(mediaItem, placeholderImage), [mediaItem, placeholderImage]);
     const [urlIndex, setUrlIndex] = useState(0);
+    const placeholderBlurhash = useMemo(
+        () => resolveBlurhash(mediaItem.blurhash, mediaItem.id),
+        [mediaItem.blurhash, mediaItem.id],
+    );
 
     const handleImageError = useCallback(() => {
         setUrlIndex(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
@@ -124,7 +132,7 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
                 contentFit="cover"
                 transition={150}
                 onError={handleImageError}
-                placeholder={{blurhash: mediaItem.blurhash}}
+                placeholder={{ blurhash: placeholderBlurhash }}
             />
         </Pressable>
     );

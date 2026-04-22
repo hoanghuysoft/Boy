@@ -37,7 +37,6 @@ export const TrendingHashtagsSection = () => {
                     {[0, 1, 2].map((i) => (
                         <SquircleView
                             cornerSmoothing={60}
-                            preserveSmoothing={true}
                             key={i}
                             style={[
                                 styles.tagPillSkeleton,
@@ -56,8 +55,7 @@ export const TrendingHashtagsSection = () => {
                             style={styles.tagPillWrapper}
                         >
                             <SquircleView
-                                cornerSmoothing={100}
-                                preserveSmoothing={true}
+                                cornerSmoothing={60}
                                 style={[
                                     styles.tagPill,
                                     { backgroundColor: colors.containerContent },

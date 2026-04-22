@@ -1,6 +1,7 @@
 import bookmarks from './zhHant/bookmarks';
 import create from './zhHant/create';
 import dashboard from './zhHant/dashboard';
+import gallery from './zhHant/gallery';
 import hashtag from './zhHant/hashtag';
 import home from './zhHant/home';
 import languageSettings from './zhHant/languageSettings';
@@ -19,6 +20,7 @@ const zhHant = {
     bookmarks,
     create,
     dashboard,
+    gallery,
     hashtag,
     home,
     settings,
