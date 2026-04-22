@@ -215,7 +215,10 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                     zIndex: 0,
                 }}
             />
-            <View
+            <SquircleView
+                cornerSmoothing={60}
+                preserveSmoothing
+                borderRadius={999}
                 style={[
                     styles.tabBarContainer,
                     {
@@ -244,7 +247,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                             }}
                         >
                             <SquircleView
-                                cornerSmoothing={100}
+                                cornerSmoothing={60}
                                 preserveSmoothing
                                 style={{
                                     flex: 1,
@@ -310,7 +313,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                         );
                     })}
                 </View>
-            </View>
+            </SquircleView>
         </>
     );
 };
@@ -320,7 +323,6 @@ const styles = StyleSheet.create({
         height: 58,
         position: "absolute",
         marginHorizontal: 20,
-        borderRadius: 999,
         borderTopWidth: 0,
         shadowColor: "#000",
         shadowOffset: {

@@ -82,6 +82,7 @@ export const useProfileHeaderViewModel = ({
     }, [profile?.metadata]);
 
     const threedEmoji = parsedMetadata?.threed_emoji || null;
+    const hasFacebook = !!parsedMetadata?.facebook;
 
     const primaryAddress = addresses.find(a => a.is_primary) || addresses[0];
     const homeInfo = profile?.hometown || (primaryAddress ? `${primaryAddress.city}${primaryAddress.country ? `, ${primaryAddress.country}` : ''}` : null);
@@ -219,6 +220,7 @@ export const useProfileHeaderViewModel = ({
         currentAvatar,
         genderFallbackSource,
         threedEmoji,
+        hasFacebook,
         homeInfo,
         flagCode,
 

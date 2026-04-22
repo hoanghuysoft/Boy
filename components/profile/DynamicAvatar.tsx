@@ -1,6 +1,6 @@
+import { Image } from 'expo-image';
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, ImageStyle, StyleSheet, View } from "react-native";
-import { Image } from 'expo-image';
 
 interface DynamicAvatarProps {
     uri: string;
@@ -83,7 +83,7 @@ const DynamicAvatar: React.FC<DynamicAvatarProps> = ({
         return (
             <Image
                 source={{ uri }}
-                resizeMode="cover"
+                contentFit="cover"
                 style={styles}
             />
         );

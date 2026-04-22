@@ -1,462 +1,241 @@
-import VerifiedIcon from '@/icons/verified';
 import { Ionicons } from '@expo/vector-icons';
-import { MeshGradient } from '@kuss/react-native-mesh-gradient';
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { Galeria } from '@nandorojo/galeria';
-import { CaseMinimalisticBold, ChatSquareLikeBold, HeartAngleBold, HeartBold, PlayCircleBold, PlayCircleOutline, PointOnMapBold } from '@solar-icons/react-native';
-import { Image } from 'expo-image';
+import { TrueSheet } from '@lodev09/react-native-true-sheet';
+import { CaseMinimalisticBold, PlayCircleBold, PlayCircleOutline, PointOnMapBold } from '@solar-icons/react-native';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
-import React, { memo, useMemo } from "react";
+import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-    Animated,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View
-} from "react-native";
-import CountryFlag from "react-native-country-flag";
-import { ProfileAddress } from "../../types/profileaddress";
-import { ProfileDetail } from "../../types/profiledetail";
-import { ProfileLink } from "../../types/profilelink";
-import { ProfileMusic } from "../../types/profilemusic";
-import { Workplace } from "../../types/profileworplace";
-import { getFamilyAvatarSource } from "../../utils/familyAvatar";
-import type { TabType } from "../../viewmodels/ProfileHeaderViewModel";
-import { useProfileHeaderViewModel } from "../../viewmodels/ProfileHeaderViewModel";
+import { Animated, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ProfileAddress } from '../../types/profileaddress';
+import { ProfileDetail } from '../../types/profiledetail';
+import { ProfileLink } from '../../types/profilelink';
+import { ProfileMusic } from '../../types/profilemusic';
+import { Workplace } from '../../types/profileworplace';
+import type { TabType } from '../../viewmodels/ProfileHeaderViewModel';
+import { useProfileHeaderViewModel } from '../../viewmodels/ProfileHeaderViewModel';
 import { FlexText } from '../FlexText';
 import BirthdayCard from './BirthdayCard';
-import DynamicAvatar from './DynamicAvatar';
-import QuickPreviewModal from './QuickPreviewModal';
-
-const COVER_HEIGHT = 280;
-const AnimatedExpoImage = Animated.createAnimatedComponent(Image);
+import { COVER_HEIGHT, FACEBOOK_BLUE, SOCIAL_BG_URL } from './header/constants';
+import {
+  ActionButtonsSection,
+  AvatarSection,
+  CoverSection,
+  FamilyStackSection,
+  HeaderInfoCard,
+  HeaderTabBar,
+  IdentitySection,
+} from './header/parts';
+import { headerStyles } from './header/styles';
 
 interface ProfileHeaderProps {
-    scrollY: Animated.Value;
-    activeTab: TabType;
-    onTabChange: (tab: TabType) => void;
-    tabContent?: React.ReactNode;
-    profile?: ProfileDetail | null;
-    isMe?: boolean;
-    musicSheetRef?: React.RefObject<TrueSheet | null>;
-    socialSheetRef?: React.RefObject<TrueSheet | null>;
-    addressSheetRef?: React.RefObject<TrueSheet | null>;
-    workplaceSheetRef?: React.RefObject<TrueSheet | null>;
-    familySheetRef?: React.RefObject<TrueSheet | null>;
-    briefSheetRef?: React.RefObject<TrueSheet | null>;
-    workplaces?: Workplace[];
-    music?: ProfileMusic[];
-    socialLinks?: ProfileLink[];
-    addresses?: ProfileAddress[];
-    onMusicEndReached?: () => void;
-    onSocialEndReached?: () => void;
-    onAddressesEndReached?: () => void;
-    onWorkplacesEndReached?: () => void;
-    imageCount?: number;
-    videoCount?: number;
-    postCount?: number;
+  scrollY: Animated.Value;
+  activeTab: TabType;
+  onTabChange: (tab: TabType) => void;
+  tabContent?: React.ReactNode;
+  profile?: ProfileDetail | null;
+  isMe?: boolean;
+  musicSheetRef?: React.RefObject<TrueSheet | null>;
+  socialSheetRef?: React.RefObject<TrueSheet | null>;
+  addressSheetRef?: React.RefObject<TrueSheet | null>;
+  workplaceSheetRef?: React.RefObject<TrueSheet | null>;
+  familySheetRef?: React.RefObject<TrueSheet | null>;
+  briefSheetRef?: React.RefObject<TrueSheet | null>;
+  workplaces?: Workplace[];
+  music?: ProfileMusic[];
+  socialLinks?: ProfileLink[];
+  addresses?: ProfileAddress[];
+  onMusicEndReached?: () => void;
+  onSocialEndReached?: () => void;
+  onAddressesEndReached?: () => void;
+  onWorkplacesEndReached?: () => void;
+  imageCount?: number;
+  videoCount?: number;
+  postCount?: number;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
+  scrollY,
+  activeTab,
+  onTabChange,
+  tabContent,
+  profile,
+  musicSheetRef,
+  socialSheetRef,
+  addressSheetRef,
+  workplaceSheetRef,
+  familySheetRef,
+  briefSheetRef,
+  workplaces = [],
+  music = [],
+  socialLinks = [],
+  addresses = [],
+  imageCount = 0,
+  videoCount = 0,
+  postCount = 0,
+  isMe = false,
+}) => {
+  const { t } = useTranslation();
+  const router = useRouter();
+
+  const vm = useProfileHeaderViewModel({
     scrollY,
     activeTab,
     onTabChange,
-    tabContent,
     profile,
-    musicSheetRef,
-    socialSheetRef,
-    addressSheetRef,
-    workplaceSheetRef,
-    familySheetRef,
-    briefSheetRef,
-    workplaces = [],
-    music = [],
-    socialLinks = [],
-    addresses = [],
-    imageCount = 0,
-    videoCount = 0,
-    postCount = 0,
-    isMe = false,
-}) => {
-    const { t } = useTranslation();
-    const vm = useProfileHeaderViewModel({
-        scrollY,
-        activeTab,
-        onTabChange,
-        profile,
-        isMe,
-        music,
-        addresses,
-    });
-    const router = useRouter();
+    isMe,
+    music,
+    addresses,
+  });
 
-    const style = componentStyles(vm.colors);
+  const showMusicCard = !!vm.currentMusic && isMe;
+  const showFacebookCard = vm.hasFacebook && !!profile;
+  const showSocialCard = socialLinks.length > 0;
+  const showAddressesCard = addresses.length > 0;
+  const showWorkplacesCard = workplaces.length > 0;
 
-    // Parse metadata to check for facebook section
-    const hasFacebook = useMemo(() => {
-        if (!profile?.metadata) return false;
-        try {
-            const meta = typeof profile.metadata === 'string'
-                ? JSON.parse(profile.metadata)
-                : profile.metadata;
-            return !!meta?.facebook;
-        } catch {
-            return false;
-        }
-    }, [profile?.metadata]);
+  return (
+    <>
+      <CoverSection vm={vm} coverUrl={profile?.cover_url} />
 
-    return (
-        <>
-            {vm.hasCover ? (
-                <AnimatedExpoImage
-                    source={{
-                        uri: profile?.cover_url || '',
-                    }}
-                    style={[
-                        style.coverImage,
-                        {
-                            transform: [{ translateY: vm.coverTranslateY }],
-                        },
-                    ]}
-                    contentFit={'cover'}
-                />
-            ) : (
-                <Animated.View
-                    style={[
-                        style.coverImage,
-                        {
-                            transform: [{ translateY: vm.coverTranslateY }],
-                        },
-                    ]}
-                >
-                    {vm.gradientColors.length === 4 && (
-                        <MeshGradient
-                            brightness={vm.meshGradientDefaults.brightness}
-                            contrast={vm.meshGradientDefaults.contrast}
-                            speed={vm.meshGradientDefaults.speed}
-                            colors={vm.gradientColors}
-                            frequency={vm.meshGradientDefaults.frequency}
-                            amplitude={vm.meshGradientDefaults.amplitude}
-                            style={style.meshGradient}
-                        />
-                    )}
-                </Animated.View>
+      <SquircleView
+        cornerSmoothing={100}
+        preserveSmoothing
+        style={[headerStyles.contentWrapper, { backgroundColor: vm.colors.background }]}
+      >
+        <View style={vm.common.screenPadding}>
+          <View style={headerStyles.topRow}>
+            <AvatarSection vm={vm} />
+            <IdentitySection
+              vm={vm}
+              profile={profile}
+              imageCount={imageCount}
+              videoCount={videoCount}
+              postCount={postCount}
+            />
+          </View>
+
+          <View>
+            {profile?.username && (
+              <FlexText style={[headerStyles.usernameText, { color: vm.colors.text }]}>@{profile.username}</FlexText>
             )}
-            <SquircleView cornerSmoothing={100} preserveSmoothing style={{
-                borderRadius: 28,
-                marginTop: -70,
-                backgroundColor: vm.colors.background,
-            }}>
+            {profile?.pronouns && (
+              <FlexText style={[vm.common.muted, headerStyles.pronounsText]}>{profile.pronouns}</FlexText>
+            )}
+            {profile?.bio && (
+              <FlexText style={[vm.common.bodySmall, headerStyles.bioText]}>{profile.bio}</FlexText>
+            )}
 
-                <View style={vm.common.screenPadding}>
-                    <View style={[vm.common.row, { marginTop: -40, gap: 12, alignItems: 'stretch' }]}>
-                        <View style={{ position: 'relative' }}>
-                            {vm.threedEmoji ? (
-                                <>
-                                    <Pressable
-                                        onLongPress={vm.showAvatarPreview}
-                                        onPressOut={vm.hideAvatarPreview}
-                                        delayLongPress={200}
-                                    >
-                                        <DynamicAvatar
-                                            uri={vm.currentAvatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
-                                            threedEmoji={vm.threedEmoji}
-                                            styles={vm.common.avatarLarge}
-                                        />
-                                    </Pressable>
-                                    <QuickPreviewModal
-                                        visible={vm.avatarPreviewVisible}
-                                        imageUrl={vm.currentAvatar}
-                                        onClose={vm.hideAvatarPreview}
-                                        blurhash={null}
-                                    />
-                                </>
-                            ) : vm.currentAvatar ? (
-                                <Galeria urls={[vm.currentAvatar]}>
-                                    <Galeria.Image>
-                                        <Image
-                                            source={{ uri: vm.currentAvatar }}
-                                            contentFit="cover"
-                                            style={vm.common.avatarLarge}
-                                        />
-                                    </Galeria.Image>
-                                </Galeria>
-                            ) : vm.genderFallbackSource ? (
-                                <Image
-                                    source={vm.genderFallbackSource}
-                                    contentFit="cover"
-                                    style={vm.common.avatarLarge}
-                                />
-                            ) : (
-                                <Image
-                                    source={{ uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                                    contentFit='cover'
-                                    style={vm.common.avatarLarge}
-                                />
-                            )}
-                            {/* Avatar frame overlay */}
-                            <Image
-                                source={{ uri: 'https://cdn.discordapp.com/media/v1/collectibles-shop/1481384635886862397/animated' }}
-                                style={[StyleSheet.absoluteFill, { zIndex: 10 }]}
-                                contentFit="cover"
-                            />
-                            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: vm.colors.background, zIndex: -1 }} />
-                        </View>
-                        <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: 10 }}>
-                            <View style={[vm.common.row, { gap: 4 }]}>
-                                <FlexText style={[vm.common.heading, { fontWeight: '700' }]}>{profile?.name || t("profile.header.notFound")}</FlexText>
-                                {profile?.is_verified && <VerifiedIcon size={14} backgroundColor={vm.colors.verify} />}
-                                {vm.flagCode && <CountryFlag isoCode={vm.flagCode} size={12} style={{ borderRadius: 2, marginLeft: 4 }} />}
-                            </View>
-                            <View style={[vm.common.row, { gap: 6, marginTop: 2 }]}>
-                                <FlexText style={vm.common.bodySmall}>
-                                    <FlexText style={{ fontWeight: '700' }}>{imageCount}</FlexText> {t('profile.header.countImages', { count: imageCount })}
-                                </FlexText>
-                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted }]}>·</FlexText>
-                                <FlexText style={vm.common.bodySmall}>
-                                    <FlexText style={{ fontWeight: '700' }}>{videoCount}</FlexText> {t('profile.header.countVideos', { count: videoCount })}
-                                </FlexText>
-                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted }]}>·</FlexText>
-                                <FlexText style={vm.common.bodySmall}>
-                                    <FlexText style={{ fontWeight: '700' }}>{postCount}</FlexText> {t('profile.header.countPosts', { count: postCount })}
-                                </FlexText>
-                            </View>
-                        </View>
+            <ActionButtonsSection vm={vm} onKnowMe={() => briefSheetRef?.current?.present()} />
+
+            {profile && (
+              <FamilyStackSection
+                vm={vm}
+                profile={profile}
+                onPress={() => familySheetRef?.current?.present()}
+              />
+            )}
+
+            <ScrollView
+              style={headerStyles.cardsScroll}
+              contentContainerStyle={headerStyles.cardsScrollContent}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {profile?.birthday && <BirthdayCard birthday={profile.birthday} />}
+
+              {showMusicCard && vm.currentMusic && (
+                <HeaderInfoCard
+                  onPress={() => musicSheetRef?.current?.present()}
+                  backgroundImageUri={vm.currentMusic.cover_url}
+                  showDimOverlay
+                  textColor="white"
+                  labelStyle={vm.common.bodySmall}
+                  leading={(
+                    <TouchableOpacity
+                      onPress={vm.toggleMusic}
+                      style={[headerStyles.musicPlayBtn, { backgroundColor: vm.colors.card }]}
+                    >
+                      {vm.isPlaying
+                        ? <PlayCircleBold size={32} color={vm.colors.text} />
+                        : <PlayCircleOutline size={32} color={vm.colors.text} />}
+                    </TouchableOpacity>
+                  )}
+                >
+                  {vm.currentMusic.artist} - {vm.currentMusic.title}
+                </HeaderInfoCard>
+              )}
+
+              {showFacebookCard && (
+                <HeaderInfoCard
+                  onPress={() => router.push({ pathname: '/fprofile', params: { profile: JSON.stringify(profile) } })}
+                  backgroundColor={FACEBOOK_BLUE}
+                  textColor="#FFF"
+                  labelStyle={vm.common.label}
+                  leading={(
+                    <View style={headerStyles.facebookIconBubble}>
+                      <Ionicons name="logo-facebook" size={28} color="#FFF" />
                     </View>
-                    <View>
-                        {profile?.username && (
-                            <FlexText style={[{ fontSize: 12, marginTop: 8, fontWeight: '700', color: vm.colors.text }]}>
-                                @{profile.username}
-                            </FlexText>
-                        )}
-                        {profile?.pronouns && (
-                            <FlexText style={[vm.common.muted, { fontSize: 12, marginTop: 8 }]}>
-                                {profile.pronouns}
-                            </FlexText>
-                        )}
-                        {profile?.bio && (
-                            <FlexText style={[vm.common.bodySmall, { paddingTop: 8 }]}>
-                                {profile.bio}
-                            </FlexText>
-                        )}
+                  )}
+                >
+                  {t('profile.header.cards.facebookProfile')}
+                </HeaderInfoCard>
+              )}
 
-                        {/* Action buttons — FProfile style */}
-                        <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-                            <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={8}
-                                style={{ flex: 1, backgroundColor: '#1877F2' }}>
-                                <TouchableOpacity style={{ borderRadius: 8, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1 }}>
-                                    <HeartAngleBold size={22} color="#fff" />
-                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>{t('profile.header.actions.addLove')}</FlexText>
-                                </TouchableOpacity>
-                            </SquircleView>
-                            <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={8}
-                                style={{ flex: 1, backgroundColor: vm.colors.card }}>
-                                <TouchableOpacity
-                                    onPress={() => briefSheetRef?.current?.present()}
-                                    style={{ borderRadius: 8, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1 }}
-                                >
-                                    <ChatSquareLikeBold size={22} color={vm.colors.text} />
-                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }}>{t('profile.header.actions.knowMe')}</FlexText>
-                                </TouchableOpacity>
-                            </SquircleView>
-                        </View>
+              {showSocialCard && (
+                <HeaderInfoCard
+                  onPress={() => socialSheetRef?.current?.present()}
+                  backgroundColor={vm.colors.card}
+                  backgroundImageUri={SOCIAL_BG_URL}
+                  showDimOverlay
+                  textColor="white"
+                  centerText
+                  labelStyle={vm.common.label}
+                >
+                  {socialLinks.length} {t('profile.header.countSocialLinks', { count: socialLinks.length })}
+                </HeaderInfoCard>
+              )}
 
-                        {/* Family stacked avatars — FProfile style */}
-                        {profile?.loved_ones && profile.loved_ones.length > 0 && (
-                            <TouchableOpacity
-                                onPress={() => familySheetRef?.current?.present()}
-                                activeOpacity={0.7}
-                                style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 10 }}
-                            >
-                                <View style={{ flexDirection: 'row' }}>
-                                    {profile.loved_ones.slice(0, 4).map((person, i) => (
-                                        <View
-                                            key={`fam-${i}`}
-                                            style={{
-                                                width: 36,
-                                                height: 36,
-                                                borderRadius: 18,
-                                                overflow: 'hidden',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                marginLeft: i === 0 ? 0 : -10,
-                                                borderWidth: 2,
-                                                borderColor: vm.colors.background,
-                                                zIndex: 10 - i,
-                                            }}
-                                        >
-                                            <Image
-                                                source={getFamilyAvatarSource(person.label)}
-                                                style={{ width: 36, height: 36 }}
-                                                resizeMode="cover"
-                                            />
-                                        </View>
-                                    ))}
-                                </View>
-                                <View style={{ flex: 1 }}>
-                                    <FlexText style={{ fontSize: 14, fontWeight: '600', color: vm.colors.text }} numberOfLines={1}>
-                                        {profile.loved_ones.length} {t('profile.header.countFamilyMembers', { count: profile.loved_ones.length })}
-                                    </FlexText>
-                                </View>
-                                <HeartBold size={18} color={vm.colors.muted} />
-                            </TouchableOpacity>
-                        )}
-
-                        <ScrollView
-                            style={{ marginTop: 16, marginHorizontal: -16 }}
-                            contentContainerStyle={{ paddingHorizontal: 16 }}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                        >
-
-                            {profile?.birthday && (
-                                <BirthdayCard birthday={profile.birthday} />
-                            )}
-                            {vm.currentMusic && isMe && (
-                                <TouchableOpacity
-                                    onPress={() => musicSheetRef?.current?.present()}
-                                    activeOpacity={0.9}
-                                    style={{ height: 70, backgroundColor: vm.colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
-                                >
-                                    <Image
-                                        source={{ uri: vm.currentMusic.cover_url }}
-                                        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-                                        contentFit='cover'
-                                    />
-                                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
-                                    <TouchableOpacity onPress={vm.toggleMusic} style={{ borderRadius: 999, padding: 6, backgroundColor: vm.colors.card, justifyContent: "center", alignItems: "center", marginLeft: 8 }}>
-                                        {vm.isPlaying ? <PlayCircleBold size={20} color={vm.colors.text} /> : <PlayCircleOutline size={20} color={vm.colors.text} />}
-                                    </TouchableOpacity>
-                                    <FlexText numberOfLines={2} style={[vm.common.bodySmall, { marginLeft: 8, marginRight: 4, flex: 1, color: 'white' }]}>
-                                        {vm.currentMusic.artist} - {vm.currentMusic.title}
-                                    </FlexText>
-                                </TouchableOpacity>
-                            )}
-
-                            {hasFacebook && profile && (
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        router.push({
-                                            pathname: '/fprofile',
-                                            params: { profile: JSON.stringify(profile) },
-                                        });
-                                    }}
-                                    activeOpacity={0.9}
-                                    style={{ height: 70, backgroundColor: '#1877F2', width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
-                                >
-                                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}>
-                                        <Ionicons name="logo-facebook" size={22} color="#FFF" />
-                                    </View>
-                                    <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: '#FFF' }]}>
-                                        {t('profile.header.cards.facebookProfile')}
-                                    </FlexText>
-                                </TouchableOpacity>
-                            )}
-
-                            {socialLinks && socialLinks.length > 0 && (
-                                <TouchableOpacity
-                                    onPress={() => socialSheetRef?.current?.present()}
-                                    style={{ height: 70, backgroundColor: vm.colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
-                                >
-                                    <Image
-                                        source={{ uri: "https://womendobusiness.eu/wp-content/uploads/social-media.jpg" }}
-                                        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-                                        contentFit='cover'
-                                    />
-                                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
-                                    <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1, color: 'white', textAlign: 'center' }]}>
-                                        {socialLinks.length} {t('profile.header.countSocialLinks', { count: socialLinks.length })}
-                                    </FlexText>
-                                </TouchableOpacity>
-                            )}
-
-                            {addresses && addresses.length > 0 && (
-                                <TouchableOpacity
-                                    onPress={() => addressSheetRef?.current?.present()}
-                                    style={{ height: 70, backgroundColor: vm.colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
-                                >
-                                    <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0, backgroundColor: vm.colors.text, opacity: 0.1 }} />
-                                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: vm.colors.card, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}>
-                                        <PointOnMapBold size={20} color={vm.colors.text} />
-                                    </View>
-                                    <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1 }]}>
-                                        {addresses.length} {t('profile.header.countAddresses', { count: addresses.length })}
-                                    </FlexText>
-                                </TouchableOpacity>
-                            )}
-
-                            {workplaces.length > 0 && (
-                                <TouchableOpacity
-                                    onPress={() => workplaceSheetRef?.current?.present()}
-                                    style={{ height: 70, backgroundColor: vm.colors.card, width: 170, borderRadius: 100, overflow: "hidden", justifyContent: "space-between", alignItems: "center", flexDirection: "row", marginRight: 8 }}
-                                >
-                                    <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0, backgroundColor: vm.colors.text, opacity: 0.1 }} />
-                                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: vm.colors.card, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}>
-                                        <CaseMinimalisticBold size={20} color={vm.colors.text} />
-                                    </View>
-                                    <FlexText numberOfLines={2} style={[vm.common.label, { marginHorizontal: 10, flex: 1 }]}>
-                                        {workplaces.length} {t('profile.header.countWorkplaces', { count: workplaces.length })}
-                                    </FlexText>
-                                </TouchableOpacity>
-                            )}
-                        </ScrollView>
-
-                        <View style={{ flexDirection: 'row', gap: 6, marginTop: 16, marginHorizontal: -16, paddingHorizontal: 16, paddingVertical: 8 }}>
-                            {vm.tabs.map((tab) => {
-                                const isActive = activeTab === tab.name;
-                                const pt = vm.colors.pillTab;
-                                return (
-                                    <TouchableOpacity
-                                        key={tab.name}
-                                        onPress={tab.onClick}
-                                        style={{
-                                            paddingHorizontal: 16,
-                                            paddingVertical: 6,
-                                            borderRadius: 999,
-                                            backgroundColor: isActive ? pt.activeBg : pt.inactiveBg,
-                                        }}
-                                        activeOpacity={0.7}
-                                    >
-                                        <FlexText style={{
-                                            fontSize: 14,
-                                            fontWeight: '600',
-                                            color: isActive ? pt.activeText : pt.inactiveText,
-                                        }}>
-                                            {tab.label}
-                                        </FlexText>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
-                        {tabContent}
+              {showAddressesCard && (
+                <HeaderInfoCard
+                  onPress={() => addressSheetRef?.current?.present()}
+                  backgroundColor={vm.colors.card}
+                  showTintOverlay={vm.colors.text}
+                  labelStyle={vm.common.label}
+                  leading={(
+                    <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>
+                      <PointOnMapBold size={28} color={vm.colors.text} />
                     </View>
-                </View>
-            </SquircleView>
-        </>
-    );
+                  )}
+                >
+                  {addresses.length} {t('profile.header.countAddresses', { count: addresses.length })}
+                </HeaderInfoCard>
+              )}
+
+              {showWorkplacesCard && (
+                <HeaderInfoCard
+                  onPress={() => workplaceSheetRef?.current?.present()}
+                  backgroundColor={vm.colors.card}
+                  showTintOverlay={vm.colors.text}
+                  labelStyle={vm.common.label}
+                  leading={(
+                    <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>
+                      <CaseMinimalisticBold size={28} color={vm.colors.text} />
+                    </View>
+                  )}
+                >
+                  {workplaces.length} {t('profile.header.countWorkplaces', { count: workplaces.length })}
+                </HeaderInfoCard>
+              )}
+            </ScrollView>
+
+            <HeaderTabBar vm={vm} activeTab={activeTab} />
+            {tabContent}
+          </View>
+        </View>
+      </SquircleView>
+    </>
+  );
 });
-
-const componentStyles = (colors: any) =>
-    StyleSheet.create({
-        coverImage: {
-            width: "100%",
-            height: COVER_HEIGHT,
-            overflow: 'hidden',
-        },
-        meshGradient: {
-            flex: 1,
-            height: '100%',
-            width: '100%',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-        },
-    });
 
 export { COVER_HEIGHT };
 export default ProfileHeader;

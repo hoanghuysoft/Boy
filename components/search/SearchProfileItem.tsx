@@ -2,10 +2,10 @@ import VerifiedIcon from "@/icons/verified";
 import { Profile } from "@/types/profile";
 import { calculateAge } from "@/utils/timeandage";
 import FastImage from "@d11/react-native-fast-image";
+import { SquircleView } from "expo-squircle-view";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
-import TurboImage from "react-native-turbo-image";
 import { FlexText } from "../FlexText";
 
 interface SearchProfileItemProps {
@@ -41,72 +41,76 @@ export const SearchProfileItem = React.memo(({
     };
 
     return (
-        <TouchableOpacity
-            style={[
-                styles.profileCard,
-                { backgroundColor: colors.containerContent },
-            ]}
-            activeOpacity={0.7}
-            onPress={handlePress}
+        <SquircleView
+            cornerSmoothing={60}
+            preserveSmoothing={true}
+            borderRadius={9999}
+            style={{ backgroundColor: colors.containerContent }}
         >
-            {item.avatar_url ? <FastImage
-                source={{ uri: item.avatar_url }}
-                style={styles.avatar}
-                resizeMode={FastImage.resizeMode.cover}
-            /> : <FastImage
-                source={
-                    item.gender === "male"
-                        ? require("../../assets/images/AV17.png")
-                        : item.gender
-                            ? require("../../assets/images/AV86.png")
-                            : {
-                                uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-                            }
-                }
-                style={styles.avatar}
-                resizeMode={FastImage.resizeMode.cover}
-            />}
-            <View style={styles.profileInfo}>
-                <View style={[common.row, { gap: 4 }]}>
-                    <FlexText
-                        style={[common.subheading, { color: colors.text }]}
-                        numberOfLines={1}
-                    >
-                        {item.name}
-                    </FlexText>
-                    {item.is_verified && (
-                        <VerifiedIcon size={14} backgroundColor={colors.verify} />
+            <TouchableOpacity
+                style={[styles.profileCard]}
+                activeOpacity={0.7}
+                onPress={handlePress}
+            >
+                {item.avatar_url ? <FastImage
+                    source={{ uri: item.avatar_url }}
+                    style={styles.avatar}
+                    resizeMode={FastImage.resizeMode.cover}
+                /> : <FastImage
+                    source={
+                        item.gender === "male"
+                            ? require("../../assets/images/AV17.png")
+                            : item.gender
+                                ? require("../../assets/images/AV86.png")
+                                : {
+                                    uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                                }
+                    }
+                    style={styles.avatar}
+                    resizeMode={FastImage.resizeMode.cover}
+                />}
+                <View style={styles.profileInfo}>
+                    <View style={[common.row, { gap: 4 }]}>
+                        <FlexText
+                            style={[common.subheading, { color: colors.text }]}
+                            numberOfLines={1}
+                        >
+                            {item.name}
+                        </FlexText>
+                        {item.is_verified && (
+                            <VerifiedIcon size={14} backgroundColor={colors.verify} />
+                        )}
+                    </View>
+                    {item.username ? (
+                        <FlexText
+                            style={[common.caption, { color: colors.muted, marginTop: 2 }]}
+                            numberOfLines={1}
+                        >
+                            @{item.username}
+                        </FlexText>
+                    ) : item.bio ? (
+                        <FlexText
+                            style={[common.caption, { color: colors.muted, marginTop: 2 }]}
+                            numberOfLines={1}
+                        >
+                            {item.bio}
+                        </FlexText>
+                    ) : null}
+                    {item.birthday && (
+                        <FlexText
+                            style={[common.caption, { color: colors.muted, marginTop: 2 }]}
+                            numberOfLines={1}
+                        >
+                            {t('search.profile.yearsOld', { count: calculateAge(item.birthday) })}
+                        </FlexText>
                     )}
                 </View>
-                {item.username ? (
-                    <FlexText
-                        style={[common.caption, { color: colors.muted, marginTop: 2 }]}
-                        numberOfLines={1}
-                    >
-                        @{item.username}
+                <View style={[styles.viewButton, { backgroundColor: colors.card }]}>
+                    <FlexText style={[common.label, { color: colors.text, fontSize: 12 }]}>
+                        {t('search.profile.view')}
                     </FlexText>
-                ) : item.bio ? (
-                    <FlexText
-                        style={[common.caption, { color: colors.muted, marginTop: 2 }]}
-                        numberOfLines={1}
-                    >
-                        {item.bio}
-                    </FlexText>
-                ) : null}
-                {item.birthday && (
-                    <FlexText
-                        style={[common.caption, { color: colors.muted, marginTop: 2 }]}
-                        numberOfLines={1}
-                    >
-                        {t('search.profile.yearsOld', { count: calculateAge(item.birthday) })}
-                    </FlexText>
-                )}
-            </View>
-            <View style={[styles.viewButton, { backgroundColor: colors.card }]}>
-                <FlexText style={[common.label, { color: colors.text, fontSize: 12 }]}>
-                    {t('search.profile.view')}
-                </FlexText>
-            </View>
-        </TouchableOpacity>
+                </View>
+            </TouchableOpacity>
+        </SquircleView>
     );
 });

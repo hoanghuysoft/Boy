@@ -73,7 +73,7 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
     });
 
     return (
-        <SquircleView borderRadius={200} cornerSmoothing={100} preserveSmoothing={true} style={styles.cardContainer}>
+        <SquircleView borderRadius={200} cornerSmoothing={60} preserveSmoothing={true} style={styles.cardContainer}>
             <Image
                 source={require('@/assets/images/birthday.jpg')}
                 style={StyleSheet.absoluteFill}

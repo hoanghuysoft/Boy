@@ -36,7 +36,7 @@ export const TrendingHashtagsSection = () => {
                 <View style={styles.loadingRow}>
                     {[0, 1, 2].map((i) => (
                         <SquircleView
-                            cornerSmoothing={100}
+                            cornerSmoothing={60}
                             preserveSmoothing={true}
                             key={i}
                             style={[
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     tagPillSkeleton: {
         flex: 1,
         height: 52,
-        borderRadius: 16,
+        borderRadius: 12,
         opacity: 0.5,
     },
 });

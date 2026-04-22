@@ -33,7 +33,7 @@ const HashtagListScreen = () => {
                 activeOpacity={0.7}
             >
                 <SquircleView
-                    cornerSmoothing={100}
+                    cornerSmoothing={60}
                     preserveSmoothing={true}
                     style={[styles.tagRow, { backgroundColor: colors.containerContent }]}
                 >
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingVertical: 14,
-        borderRadius: 16,
+        borderRadius: 12,
     },
     tagRowLeft: {
         flex: 1,

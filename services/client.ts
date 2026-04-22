@@ -209,7 +209,7 @@ client.interceptors.request.use(async ({ url, headers }) => {
 });
 
 export const showsClient = createClient({
-  baseURL: process.env.EXPO_PUBLIC_SHOWS_URL || "",
+  baseURL: "https://flaskmovieapi.vercel.app",
   headers: {
     "Content-Type": "application/json",
   },
