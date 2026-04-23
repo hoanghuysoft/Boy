@@ -35,8 +35,8 @@ const DashboardScreen = () => {
         }, [statusBar]),
     );
     return (
-        <View style={[common.screen, { gap: 12 }]}>
-            <View style={{ height: 200, width: '100%', backgroundColor: colors.containerContent }}>
+        <View style={[common.screen, { gap: 4 }]}>
+            <View style={{ height: 180, width: '100%', backgroundColor: colors.containerContent }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, padding: 16, paddingTop: insets.top + 50 }}>
                     <Image source={{ uri: profile?.avatar_url }} style={{
                         width: 64, height: 64, borderRadius: 8,
@@ -57,11 +57,11 @@ const DashboardScreen = () => {
                 <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.muted, marginBottom: 8 }}>
                     {t('dashboard.sections.services')}
                 </FlexText>
-                <TouchableOpacity onPress={() => router.push("/webview?url=https://reclipnew.onrender.com/")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8}}>
+                <TouchableOpacity onPress={() => router.push("/webview?url=https://reclipnew.onrender.com/")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                     <Image source={{ uri: 'https://wsrv.nl/?url=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&w=256&h=undefined&q=75&ll=&default=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&output=webp' }} style={{ width: 28, height: 28, borderRadius: 8 }} />
                     <FlexText style={{ fontSize: 16, color: colors.text }}>ReClip</FlexText>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push("/webview?url=https://onflix.my/&isUseSafeArea=true&safeAreaColor=black&isShowBackButton=false")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8}}>
+                <TouchableOpacity onPress={() => router.push("/webview?url=https://onflix.my/&isUseSafeArea=true&safeAreaColor=black&isShowBackButton=false")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                     <Image source={{ uri: 'https://onflix.my/app/asset/logo.png' }} style={{ width: 28, height: 28, borderRadius: 8 }} contentFit="contain" />
                     <FlexText style={{ fontSize: 16, color: colors.text }}>OnFlix</FlexText>
                 </TouchableOpacity>
@@ -71,11 +71,11 @@ const DashboardScreen = () => {
                 <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.muted, marginBottom: 8 }}>
                     {t('dashboard.sections.entertainment')}
                 </FlexText>
-                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8}}>
+                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                     <TvBold size={28} color={colors.text} />
                     <FlexText style={{ fontSize: 16, color: colors.text }}>WeLoveTV</FlexText>
                 </TouchableOpacity>
-                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8}}>
+                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                     <ClapperboardBold size={28} color={colors.text} />
                     <FlexText style={{ fontSize: 16, color: colors.text }}>Movies & TV</FlexText>
                 </TouchableOpacity>

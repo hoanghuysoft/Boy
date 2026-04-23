@@ -5,15 +5,19 @@ import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerShe
 import { useThemeContext } from "@/context/ThemeContext";
 import { useInfiniteMedia } from "@/services/media";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
+import { useScrollStore } from "@/stores/scroll";
 import { createCommonStyles } from "@/styles/common";
+import { Media } from "@/types/media";
 import { Profile } from "@/types/profile";
 import { choosenMediaPath } from "@/utils/imageurl";
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from "@nandorojo/galeria";
 import { FlashList } from "@shopify/flash-list";
+import dayjs from "dayjs";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { SquircleView } from "expo-squircle-view";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -51,7 +55,7 @@ const prefetchPhotoDimensions = async (items: any[]) => {
         .filter(Boolean);
 
     if (allPhotoUrls.length > 0) {
-        Image.prefetch(allPhotoUrls).catch(() => {});
+        Image.prefetch(allPhotoUrls).catch(() => { });
     }
 
     // 3) For items still missing dimensions (no server value AND no cache),
@@ -88,7 +92,30 @@ const prefetchPhotoDimensions = async (items: any[]) => {
 // every scroll/parent render, which breaks Galeria's source-rect measurement
 // and also defeats FlashList cell recycling. React.memo keeps re-renders
 // scoped to actual prop changes.
-const PhotoCard = React.memo(({ item, colors }: any) => {
+
+const MediaFooter = React.memo(({ item, colors }: { item: Media; colors: any }) => (
+    <>
+        {item.caption ? (
+            <FlexText
+                numberOfLines={2}
+                style={[styles.caption, { color: colors.text }]}
+            >
+                {item.caption}
+            </FlexText>
+        ) : null}
+        {item.created_at ? (
+            <FlexText
+                numberOfLines={2}
+                style={[styles.caption, { color: colors.text, textAlign: "right", fontWeight: "500" }]}
+            >
+                {dayjs(item.created_at).format("DD/MM/YYYY")}
+            </FlexText>
+        ) : null}
+    </>
+));
+MediaFooter.displayName = "MediaFooter";
+
+const PhotoCard = React.memo(({ item, colors }: { item: Media & { photoIndex?: number }, colors: any }) => {
     const sourceUrl = choosenMediaPath(item);
 
     // Priority: server-provided width/height → MMKV cache → fallback 200.
@@ -114,72 +141,66 @@ const PhotoCard = React.memo(({ item, colors }: any) => {
     }, [sourceUrl]);
 
     return (
-        <View style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-            <Galeria urls={[sourceUrl]}>
-                <Galeria.Image>
-                    <Image
-                        source={{ uri: sourceUrl }}
-                        recyclingKey={sourceUrl}
-                        style={{ width: "100%", height: imageHeight }}
-                        contentFit="cover"
-                        placeholder={{ blurhash: placeholderBlurhash }}
-                        onLoad={handleLoad}
-                    />
-                </Galeria.Image>
-            </Galeria>
-            {item.caption ? (
-                <FlexText
-                    numberOfLines={2}
-                    style={[styles.caption, { color: colors.text }]}
-                >
-                    {item.caption}
-                </FlexText>
-            ) : null}
-        </View>
+        <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
+            <Galeria.Image index={item.photoIndex ?? 0}>
+                <Image
+                    source={{ uri: sourceUrl! }}
+                    recyclingKey={sourceUrl}
+                    style={{ width: "100%", height: imageHeight, borderRadius: 12 }}
+                    contentFit="cover"
+                    placeholder={{ blurhash: placeholderBlurhash }}
+                    onLoad={handleLoad}
+                />
+            </Galeria.Image>
+            <MediaFooter item={item} colors={colors} />
+        </SquircleView>
     );
 });
 PhotoCard.displayName = "PhotoCard";
 
-const VideoCard = React.memo(({ item, colors, onPress }: any) => {
+const VideoCard = React.memo(({ item, colors, onPress }: { item: Media, colors: any, onPress: (item: Media) => void }) => {
     const thumbnailUrl = item.thumbnail_url || choosenMediaPath(item);
     const placeholderBlurhash = resolveBlurhash(item.blurhash, item.id || thumbnailUrl);
 
     const handlePress = useCallback(() => onPress?.(item), [onPress, item]);
 
     return (
-        <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={handlePress}
-            style={[styles.cardContainer, { backgroundColor: colors.background }]}
-        >
-            <View style={{ width: "100%", height: VIDEO_HEIGHT }}>
-                <Image
-                    source={{ uri: thumbnailUrl }}
-                    recyclingKey={thumbnailUrl}
-                    style={{ width: "100%", height: "100%" }}
-                    contentFit="cover"
-                    transition={200}
-                    placeholder={{ blurhash: placeholderBlurhash }}
-                />
-                <View style={styles.playBadge}>
-                    <Ionicons name="play" size={18} color="white" />
+        <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
+            <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handlePress}
+            >
+                <View style={{ width: "100%", height: VIDEO_HEIGHT }}>
+                    <Image
+                        source={{ uri: thumbnailUrl }}
+                        recyclingKey={thumbnailUrl}
+                        style={{ width: "100%", height: "100%", borderRadius: 12 }}
+                        contentFit="cover"
+                        transition={200}
+                        placeholder={{ blurhash: placeholderBlurhash }}
+                    />
+                    <View style={styles.playBadge}>
+                        <Ionicons name="play" size={18} color="white" />
+                    </View>
                 </View>
-            </View>
-            {item.caption ? (
-                <FlexText
-                    numberOfLines={2}
-                    style={[styles.caption, { color: colors.text }]}
-                >
-                    {item.caption}
-                </FlexText>
-            ) : null}
-        </TouchableOpacity>
+                <MediaFooter item={item} colors={colors} />
+            </TouchableOpacity>
+        </SquircleView>
     );
 });
 VideoCard.displayName = "VideoCard";
 
 const MansoryListScreen = () => {
     const router = useRouter();
+    const scrollTrigger = useScrollStore((state) => state.triggers["profile"]);
+    const listRef = useRef<any>(null);
+
+    useEffect(() => {
+        if (scrollTrigger && listRef.current) {
+            listRef.current.scrollToOffset({ offset: 0, animated: true });
+        }
+    }, [scrollTrigger]);
+
     const insets = useSafeAreaInsets();
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -205,10 +226,22 @@ const MansoryListScreen = () => {
         isLoading,
     } = useInfiniteMedia(effectiveProfileId);
 
-    const media = useMemo(
-        () => data?.pages.flatMap((page) => page.data) ?? [],
-        [data],
-    );
+    const { media, photoUrls } = useMemo(() => {
+        const flat = data?.pages.flatMap((page) => page.data) ?? [];
+        let pIdx = 0;
+        const urls: string[] = [];
+        const items = flat.map(item => {
+            if (item.type === 'photo') {
+                const url = choosenMediaPath(item);
+                if (url) {
+                    urls.push(url);
+                    return { ...item, photoIndex: pIdx++ };
+                }
+            }
+            return item;
+        });
+        return { media: items, photoUrls: urls };
+    }, [data]);
 
     const [isPrefetching, setIsPrefetching] = useState(true);
     const didInitialPrefetchRef = useRef(false);
@@ -327,9 +360,7 @@ const MansoryListScreen = () => {
                         style={[
                             styles.headerAvatarButton,
                             {
-                                borderColor: isViewingOther
-                                    ? colors.verify || colors.text
-                                    : "transparent",
+                                borderColor: "transparent",
                             },
                         ]}
                     >
@@ -423,26 +454,30 @@ const MansoryListScreen = () => {
 
     return (
         <View style={common.screen}>
-            <FlashList
-                data={media}
-                keyExtractor={(item: any, index: number) => item.id + index.toString()}
-                renderItem={renderItem}
-                numColumns={2}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 8, paddingBottom: insets.bottom + 66 }}
-                masonry={true}
-                onEndReached={handleEndReached}
-                onEndReachedThreshold={0.5}
-                ListHeaderComponent={ListHeaderComponent}
-                ListFooterComponent={
-                    isFetchingNextPage ? (
-                        <View style={styles.footer}>
-                            <ActivityIndicator size="small" color={colors.text} />
-                        </View>
-                    ) : null
-                }
-                ListEmptyComponent={renderEmpty}
-            />
+            <Galeria urls={photoUrls}>
+                <FlashList
+                    ref={listRef}
+                    data={media}
+                    keyExtractor={(item: any, index: number) => item.id + index.toString()}
+                    getItemType={(item: any) => item.type}
+                    renderItem={renderItem}
+                    numColumns={2}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 8, paddingBottom: insets.bottom + 66 }}
+                    masonry={true}
+                    onEndReached={handleEndReached}
+                    onEndReachedThreshold={0.5}
+                    ListHeaderComponent={ListHeaderComponent}
+                    ListFooterComponent={
+                        isFetchingNextPage ? (
+                            <View style={styles.footer}>
+                                <ActivityIndicator size="small" color={colors.text} />
+                            </View>
+                        ) : null
+                    }
+                    ListEmptyComponent={renderEmpty}
+                />
+            </Galeria>
 
             {isAdmin && (
                 <ProfilePickerSheet
@@ -459,13 +494,8 @@ const styles = StyleSheet.create({
     cardContainer: {
         marginHorizontal: 4,
         marginBottom: 8,
-        borderRadius: 4,
-        overflow: "hidden",
-        elevation: 2,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+        borderRadius: 12,
+        overflow: "hidden"
     },
     caption: {
         fontSize: 14,
@@ -517,7 +547,6 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        borderWidth: 2,
         overflow: "visible",
         justifyContent: "center",
         alignItems: "center",

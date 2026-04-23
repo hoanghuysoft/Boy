@@ -1,13 +1,14 @@
 import { FlexText } from "@/components/FlexText";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { getCachedUri } from "@/services/videoCache";
-import { VideoItem } from "@/types/video";
+import { VideoFeedType, VideoItem } from "@/types/video";
 import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
 import {
     ReanimatedTrueSheetProvider,
     useReanimatedTrueSheet,
 } from "@lodev09/react-native-true-sheet/reanimated";
+import { createMaterialTopTabNavigator, MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
 import { useIsFocused } from "@react-navigation/native";
 import { FlashList } from "@shopify/flash-list";
 import {
@@ -163,21 +164,26 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
 
     const handleVideoPress = (e: any) => {
         const now = Date.now();
-        const DOUBLE_TAP_DELAY = 250; // Use 250ms for snappier double tap vs single tap separation
+        const DOUBLE_TAP_DELAY = 300;
+
+        // Always clear the single tap timeout if a new tap arrives
+        if (singleTapTimer.current) {
+            clearTimeout(singleTapTimer.current);
+            singleTapTimer.current = null;
+        }
 
         if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
-            // Double tap!
-            if (singleTapTimer.current) {
-                clearTimeout(singleTapTimer.current);
-                singleTapTimer.current = null;
-            }
+            // Double tap or rapid multi-tap!
             if (!isLiked) {
                 onLikePress();
             }
             const { locationX, locationY } = e.nativeEvent;
-            setHearts(prev => [...prev, { id: Date.now(), x: locationX, y: locationY }]);
-            lastTapTime.current = 0; // Reset
+            // Use something unique for ID in case of ultra-fast taps with same ms
+            setHearts(prev => [...prev, { id: now + Math.random(), x: locationX, y: locationY }]);
+            // Keep the chain alive! No reset to 0 so 3rd taps also register as multi-taps
+            lastTapTime.current = now;
         } else {
+            // First tap of a new sequence
             lastTapTime.current = now;
             singleTapTimer.current = setTimeout(() => {
                 onTogglePause(); // Single tap behaviour executes after delay
@@ -324,8 +330,8 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
 ShotItem.displayName = 'ShotItem';
 
 // ─── Inner screen (needs to be inside ReanimatedTrueSheetProvider) ─
-const ShotsInner = () => {
-    const vm = useShotsViewModel();
+const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
+    const vm = useShotsViewModel(feedType);
     const insets = useSafeAreaInsets();
     const isFocused = useIsFocused();
     const { t } = useTranslation();
@@ -371,37 +377,11 @@ const ShotsInner = () => {
 
     const keyExtractor = useCallback((item: VideoItem) => item.id, []);
 
-    // ─── Shared top header ──────────────────────────────────────
-    const topHeader = !vm.isCommentsOpen && (
-        <View style={[styles.topHeader, { paddingTop: insets.top + 8 }]}>
-            <TouchableOpacity
-                style={styles.headerTab}
-                onPress={() => vm.switchFeedType('random')}
-            >
-                <FlexText style={[styles.headerTitle, vm.feedType === 'random' ? styles.activeTabTitle : styles.inactiveTabTitle]}>
-                    {t('shots.tabs.following')}
-                </FlexText>
-                <View style={[styles.activeTabIndicator, vm.feedType !== 'random' && { backgroundColor: 'transparent' }]} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={styles.headerTab}
-                onPress={() => vm.switchFeedType('on_this_day')}
-            >
-                <FlexText style={[styles.headerTitle, vm.feedType === 'on_this_day' ? styles.activeTabTitle : styles.inactiveTabTitle]}>
-                    {t('shots.tabs.thisDay')}
-                </FlexText>
-                <View style={[styles.activeTabIndicator, vm.feedType !== 'on_this_day' && { backgroundColor: 'transparent' }]} />
-            </TouchableOpacity>
-        </View>
-    );
-
     if (vm.isLoading) {
         return (
             <View style={[styles.container, { backgroundColor: '#000' }]}>
                 <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
                 <ActivityIndicator size="large" color="white" style={{ flex: 1 }} />
-                {topHeader}
             </View>
         );
     }
@@ -420,7 +400,6 @@ const ShotsInner = () => {
                 >
                     <FlexText style={{ color: 'white', fontSize: 14 }}>{t('shots.actions.retry')}</FlexText>
                 </TouchableOpacity>
-                {topHeader}
             </View>
         );
     }
@@ -461,8 +440,6 @@ const ShotsInner = () => {
                 }
             />
 
-            {topHeader}
-
             {/* Comments sheet — ReanimatedTrueSheet so animatedPosition drives video height */}
             <CommentsSheet
                 ref={vm.commentsSheetRef}
@@ -472,6 +449,65 @@ const ShotsInner = () => {
                 detents={[0.6]}
             />
         </View>
+    );
+};
+
+// ─── Tab Bar Implementation ──────────────────────────────────────────
+
+const TopTabBar = ({ state, navigation, insets, t }: MaterialTopTabBarProps & { insets: any, t: any }) => {
+    return (
+        <View style={[styles.topHeader, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
+            {state.routes.map((route, index) => {
+                const isFocused = state.index === index;
+                const title = route.name === 'random' ? t('shots.tabs.following') : t('shots.tabs.thisDay');
+
+                const onPress = () => {
+                    const event = navigation.emit({
+                        type: 'tabPress',
+                        target: route.key,
+                        canPreventDefault: true,
+                    });
+                    if (!isFocused && !event.defaultPrevented) {
+                        navigation.navigate(route.name);
+                    }
+                };
+
+                return (
+                    <TouchableOpacity
+                        key={route.key}
+                        style={styles.headerTab}
+                        onPress={onPress}
+                    >
+                        <FlexText style={[styles.headerTitle, isFocused ? styles.activeTabTitle : styles.inactiveTabTitle]}>
+                            {title}
+                        </FlexText>
+                        <View style={[styles.activeTabIndicator, !isFocused && { backgroundColor: 'transparent' }]} />
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+    );
+};
+
+// ─── Navigator ──────────────────────────────────────────────────────
+
+const Tab = createMaterialTopTabNavigator();
+
+const RandomFeedScreen = () => <ShotsFeedTab feedType="random" />;
+const OnThisDayFeedScreen = () => <ShotsFeedTab feedType="on_this_day" />;
+
+const ShotsInner = () => {
+    const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
+
+    return (
+        <Tab.Navigator
+            tabBar={(props: any) => <TopTabBar {...props} insets={insets} t={t} />}
+            screenOptions={{ sceneStyle: { backgroundColor: '#000' } }}
+        >
+            <Tab.Screen name="random" component={RandomFeedScreen} />
+            <Tab.Screen name="on_this_day" component={OnThisDayFeedScreen} />
+        </Tab.Navigator>
     );
 };
 

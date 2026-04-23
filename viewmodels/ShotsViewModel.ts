@@ -24,13 +24,13 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
  * Single decoder pattern — one video source is active at a time,
  * controlled via paused prop (not mount/unmount).
  */
-export const useShotsViewModel = () => {
+export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
     const queryClient = useQueryClient();
 
-    const [feedType, setFeedType] = useState<VideoFeedType>('random');
+    const [feedType, setFeedType] = useState<VideoFeedType>(initialFeedType);
     const scrollTrigger = useScrollStore(state => state.triggers['shots']);
     const listRef = useRef<any>(null);
 
