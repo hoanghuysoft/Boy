@@ -12,4 +12,6 @@ export interface Media {
     updated_at: string;
     backup1: string | null;
     blurhash: string | 'LGF5?xYk^6#M@-5c,1J5@[or[Q6.';
+    width: number | null;
+    height: number | null;
 }

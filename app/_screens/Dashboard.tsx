@@ -5,10 +5,11 @@ import VerifiedIcon from "@/icons/verified";
 import { useProfile } from "@/services/userprofile";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { ClapperboardBold, TvBold } from "@solar-icons/react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { useEffect } from "react";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,12 +21,19 @@ const DashboardScreen = () => {
     const insets = useSafeAreaInsets();
     const statusBar = useStatusBar();
     const { t } = useTranslation();
-    useEffect(() => {
-        statusBar.setShowStatusBarFade(false);
-        return () => {
-            statusBar.setShowStatusBarFade(true);
-        };
-    }, []);
+
+    // Disable the status bar fade only while this screen is focused.
+    // Using useFocusEffect (instead of useEffect) ensures we also re-enable
+    // the fade when the user navigates to another tab/screen, even if this
+    // screen stays mounted in the background.
+    useFocusEffect(
+        useCallback(() => {
+            statusBar.setShowStatusBarFade(false);
+            return () => {
+                statusBar.setShowStatusBarFade(true);
+            };
+        }, [statusBar]),
+    );
     return (
         <View style={[common.screen, { gap: 12 }]}>
             <View style={{ height: 200, width: '100%', backgroundColor: colors.containerContent }}>

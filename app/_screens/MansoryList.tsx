@@ -32,8 +32,33 @@ const VIDEO_ASPECT_RATIO = 9 / 16;
 const VIDEO_HEIGHT = COLUMN_WIDTH / VIDEO_ASPECT_RATIO;
 
 const prefetchPhotoDimensions = async (items: any[]) => {
+    // 1) Server-provided dimensions → seed into MMKV cache immediately.
+    //    This avoids any getSize network round-trip and prevents layout jump.
+    items.forEach((item) => {
+        if (item.type !== "photo") return;
+        if (!item.width || !item.height) return;
+        const url = choosenMediaPath(item);
+        if (!url) return;
+        if (getCachedImageDimension(url)) return;
+        setCachedImageDimension(url, item.width, item.height);
+    });
+
+    // 2) Warm the expo-image byte cache for every photo URL in the batch,
+    //    regardless of whether we already know dimensions.
+    const allPhotoUrls = items
+        .filter((item) => item.type === "photo")
+        .map((item) => choosenMediaPath(item))
+        .filter(Boolean);
+
+    if (allPhotoUrls.length > 0) {
+        Image.prefetch(allPhotoUrls).catch(() => {});
+    }
+
+    // 3) For items still missing dimensions (no server value AND no cache),
+    //    fall back to RNImage.getSize.
     const pending = items.filter((item) => {
         if (item.type !== "photo") return false;
+        if (item.width && item.height) return false;
         const url = choosenMediaPath(item);
         if (!url) return false;
         return !getCachedImageDimension(url);
@@ -41,25 +66,20 @@ const prefetchPhotoDimensions = async (items: any[]) => {
 
     if (pending.length === 0) return;
 
-    const urls = pending.map((item) => choosenMediaPath(item));
-
-    // Warm expo-image cache in parallel (fire and forget)
-    Image.prefetch(urls).catch(() => {});
-
     await Promise.all(
-        urls.map(
-            (url) =>
-                new Promise<void>((resolve) => {
-                    RNImage.getSize(
-                        url,
-                        (width, height) => {
-                            setCachedImageDimension(url, width, height);
-                            resolve();
-                        },
-                        () => resolve(),
-                    );
-                }),
-        ),
+        pending.map((item) => {
+            const url = choosenMediaPath(item);
+            return new Promise<void>((resolve) => {
+                RNImage.getSize(
+                    url,
+                    (width, height) => {
+                        setCachedImageDimension(url, width, height);
+                        resolve();
+                    },
+                    () => resolve(),
+                );
+            });
+        }),
     );
 };
 
@@ -70,10 +90,19 @@ const prefetchPhotoDimensions = async (items: any[]) => {
 // scoped to actual prop changes.
 const PhotoCard = React.memo(({ item, colors }: any) => {
     const sourceUrl = choosenMediaPath(item);
-    const cached = getCachedImageDimension(sourceUrl);
-    const imageHeight = cached
-        ? COLUMN_WIDTH / (cached.width / cached.height)
+
+    // Priority: server-provided width/height → MMKV cache → fallback 200.
+    // Server values are authoritative and skip any measurement work.
+    const serverW = item.width;
+    const serverH = item.height;
+    const hasServerDims = !!(serverW && serverH);
+    const cached = hasServerDims ? null : getCachedImageDimension(sourceUrl);
+    const resolvedWidth = hasServerDims ? serverW : cached?.width;
+    const resolvedHeight = hasServerDims ? serverH : cached?.height;
+    const imageHeight = resolvedWidth && resolvedHeight
+        ? COLUMN_WIDTH / (resolvedWidth / resolvedHeight)
         : 200;
+
     const placeholderBlurhash = resolveBlurhash(item.blurhash, item.id || sourceUrl);
 
     const handleLoad = useCallback((event: any) => {
