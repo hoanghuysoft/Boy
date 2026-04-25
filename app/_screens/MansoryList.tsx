@@ -12,11 +12,10 @@ import { Profile } from "@/types/profile";
 import { choosenMediaPath } from "@/utils/imageurl";
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { Galeria } from "@nandorojo/galeria";
+import { MediaViewer } from "expo-media-viewer";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -115,7 +114,7 @@ const MediaFooter = React.memo(({ item, colors }: { item: Media; colors: any }) 
 ));
 MediaFooter.displayName = "MediaFooter";
 
-const PhotoCard = React.memo(({ item, colors }: { item: Media & { photoIndex?: number }, colors: any }) => {
+const PhotoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: number }, colors: any }) => {
     const sourceUrl = choosenMediaPath(item);
 
     // Priority: server-provided width/height → MMKV cache → fallback 200.
@@ -142,7 +141,7 @@ const PhotoCard = React.memo(({ item, colors }: { item: Media & { photoIndex?: n
 
     return (
         <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-            <Galeria.Image index={item.photoIndex ?? 0}>
+            <MediaViewer.Image index={item.mediaIndex ?? 0}>
                 <Image
                     source={{ uri: sourceUrl! }}
                     recyclingKey={sourceUrl}
@@ -151,25 +150,20 @@ const PhotoCard = React.memo(({ item, colors }: { item: Media & { photoIndex?: n
                     placeholder={{ blurhash: placeholderBlurhash }}
                     onLoad={handleLoad}
                 />
-            </Galeria.Image>
+            </MediaViewer.Image>
             <MediaFooter item={item} colors={colors} />
         </SquircleView>
     );
 });
 PhotoCard.displayName = "PhotoCard";
 
-const VideoCard = React.memo(({ item, colors, onPress }: { item: Media, colors: any, onPress: (item: Media) => void }) => {
+const VideoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: number }, colors: any }) => {
     const thumbnailUrl = item.thumbnail_url || choosenMediaPath(item);
     const placeholderBlurhash = resolveBlurhash(item.blurhash, item.id || thumbnailUrl);
 
-    const handlePress = useCallback(() => onPress?.(item), [onPress, item]);
-
     return (
         <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-            <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={handlePress}
-            >
+            <MediaViewer.Image index={item.mediaIndex ?? 0}>
                 <View style={{ width: "100%", height: VIDEO_HEIGHT }}>
                     <Image
                         source={{ uri: thumbnailUrl }}
@@ -183,15 +177,14 @@ const VideoCard = React.memo(({ item, colors, onPress }: { item: Media, colors: 
                         <Ionicons name="play" size={18} color="white" />
                     </View>
                 </View>
-                <MediaFooter item={item} colors={colors} />
-            </TouchableOpacity>
+            </MediaViewer.Image>
+            <MediaFooter item={item} colors={colors} />
         </SquircleView>
     );
 });
 VideoCard.displayName = "VideoCard";
 
 const MansoryListScreen = () => {
-    const router = useRouter();
     const scrollTrigger = useScrollStore((state) => state.triggers["profile"]);
     const listRef = useRef<any>(null);
 
@@ -226,21 +219,28 @@ const MansoryListScreen = () => {
         isLoading,
     } = useInfiniteMedia(effectiveProfileId);
 
-    const { media, photoUrls } = useMemo(() => {
+    const { media, allUrls, allMediaTypes, allPosterUrls } = useMemo(() => {
         const flat = data?.pages.flatMap((page) => page.data) ?? [];
-        let pIdx = 0;
+        let idx = 0;
         const urls: string[] = [];
+        const types: string[] = [];
+        const posters: string[] = [];
         const items = flat.map(item => {
-            if (item.type === 'photo') {
-                const url = choosenMediaPath(item);
-                if (url) {
-                    urls.push(url);
-                    return { ...item, photoIndex: pIdx++ };
+            const url = choosenMediaPath(item);
+            if (url) {
+                urls.push(url);
+                if (item.type === 'video') {
+                    types.push('video');
+                    posters.push(item.thumbnail_url || url);
+                } else {
+                    types.push('image');
+                    posters.push('');
                 }
+                return { ...item, mediaIndex: idx++ };
             }
             return item;
         });
-        return { media: items, photoUrls: urls };
+        return { media: items, allUrls: urls, allMediaTypes: types, allPosterUrls: posters };
     }, [data]);
 
     const [isPrefetching, setIsPrefetching] = useState(true);
@@ -273,19 +273,6 @@ const MansoryListScreen = () => {
         });
     }, [media, isLoading, effectiveProfileId]);
 
-    const handleVideoPress = useCallback((video: any) => {
-        const videoUrl = choosenMediaPath(video);
-        router.push({
-            pathname: "/video_player",
-            params: {
-                videoUrl,
-                name: activeProfile?.name || "Video",
-                caption: video.caption || "",
-                portrait: "true",
-            },
-        });
-    }, [router, activeProfile?.name]);
-
     const handlePickProfile = useCallback((profile: Profile | null) => {
         if (profile && profile.id === myProfile?.id) {
             setSelectedProfile(null);
@@ -302,16 +289,10 @@ const MansoryListScreen = () => {
 
     const renderItem = useCallback(({ item }: any) => {
         if (item.type === "video") {
-            return (
-                <VideoCard
-                    item={item}
-                    colors={colors}
-                    onPress={handleVideoPress}
-                />
-            );
+            return <VideoCard item={item} colors={colors} />;
         }
         return <PhotoCard item={item} colors={colors} />;
-    }, [colors, handleVideoPress]);
+    }, [colors]);
 
     const handleEndReached = useCallback(() => {
         if (hasNextPage && !isFetchingNextPage) {
@@ -454,7 +435,7 @@ const MansoryListScreen = () => {
 
     return (
         <View style={common.screen}>
-            <Galeria urls={photoUrls}>
+            <MediaViewer urls={allUrls} mediaTypes={allMediaTypes} posterUrls={allPosterUrls} theme="dark">
                 <FlashList
                     ref={listRef}
                     data={media}
@@ -477,7 +458,7 @@ const MansoryListScreen = () => {
                     }
                     ListEmptyComponent={renderEmpty}
                 />
-            </Galeria>
+            </MediaViewer>
 
             {isAdmin && (
                 <ProfilePickerSheet

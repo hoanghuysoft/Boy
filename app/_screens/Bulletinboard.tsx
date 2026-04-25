@@ -3,7 +3,7 @@ import { useThemeContext } from "@/context/ThemeContext";
 import { useBulletinboard } from "@/services/bulletinboard";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
-import { Galeria } from '@nandorojo/galeria';
+import { MediaViewer } from 'expo-media-viewer';
 import dayjs from "dayjs";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
@@ -105,15 +105,19 @@ const Bulletinboard = () => {
 
                         {isImage && item.images[0]?.origin_url?.url_list?.[0] && (
                             <SquircleView cornerSmoothing={60} borderRadius={20} style={{ overflow: 'hidden' }}>
-                                <Galeria urls={[item.images[0].origin_url.url_list[0]]}>
-                                    <Galeria.Image>
+                                <MediaViewer
+                                    urls={[item.images[0].origin_url.url_list[0]]}
+                                    mediaTypes={["image"]}
+                                    theme="dark"
+                                >
+                                    <MediaViewer.Image index={0}>
                                         <Image
                                             source={{ uri: item.images[0].origin_url.url_list[0] }}
                                             style={{ width: width * 0.7, height: (width * 0.7) * 1.3 }}
                                             contentFit="cover"
                                         />
-                                    </Galeria.Image>
-                                </Galeria>
+                                    </MediaViewer.Image>
+                                </MediaViewer>
                             </SquircleView>
                         )}
 
@@ -160,49 +164,6 @@ const Bulletinboard = () => {
             <Stack.Screen options={{ headerShown: false }} />
 
             <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
-                <View style={{ position: 'absolute', top: insets.top + 8, left: 16, zIndex: 10, flexDirection: 'row', alignItems: 'center' }}>
-                    <BlurView
-                        tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
-                        intensity={80}
-                        blurTarget={blurTargetRef}
-                        blurMethod="dimezisBlurViewSdk31Plus"
-                        style={{
-                            borderRadius: 999,
-                            overflow: 'hidden',
-                            marginRight: 8,
-                        }}
-                    >
-                        <TouchableOpacity
-                            onPress={() => router.back()}
-                            style={{
-                                width: 40,
-                                height: 40,
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <Ionicons name='chevron-back' size={24} color={colors.text} />
-                        </TouchableOpacity>
-                    </BlurView>
-
-                    <BlurView
-                        tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
-                        intensity={80}
-                        blurTarget={blurTargetRef}
-                        blurMethod="dimezisBlurViewSdk31Plus"
-                        style={{
-                            borderRadius: 999,
-                            overflow: 'hidden',
-                        }}
-                    >
-                        <View style={{ paddingHorizontal: 16, height: 40, justifyContent: 'center' }}>
-                            <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>
-                                {ownerInfo?.nickname ? `${ownerInfo.nickname}'s Channel` : 'Broadcast Channel'}
-                            </FlexText>
-                        </View>
-                    </BlurView>
-                </View>
-
                 <FlatList
                     data={bulletinData?.item_list || []}
                     inverted
@@ -221,6 +182,48 @@ const Bulletinboard = () => {
                     }
                 />
             </BlurTargetView>
+            <View style={{ position: 'absolute', top: insets.top + 8, left: 16, zIndex: 10, flexDirection: 'row', alignItems: 'center' }}>
+                <BlurView
+                    tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
+                    intensity={80}
+                    blurTarget={blurTargetRef}
+                    blurMethod="dimezisBlurViewSdk31Plus"
+                    style={{
+                        borderRadius: 999,
+                        overflow: 'hidden',
+                        marginRight: 8,
+                    }}
+                >
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={{
+                            width: 40,
+                            height: 40,
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <Ionicons name='chevron-back' size={24} color={colors.text} />
+                    </TouchableOpacity>
+                </BlurView>
+
+                <BlurView
+                    tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
+                    intensity={80}
+                    blurTarget={blurTargetRef}
+                    blurMethod="dimezisBlurViewSdk31Plus"
+                    style={{
+                        borderRadius: 999,
+                        overflow: 'hidden',
+                    }}
+                >
+                    <View style={{ paddingHorizontal: 16, height: 40, justifyContent: 'center' }}>
+                        <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>
+                            {ownerInfo?.nickname ? `${ownerInfo.nickname}'s Channel` : 'Broadcast Channel'}
+                        </FlexText>
+                    </View>
+                </BlurView>
+            </View>
         </View>
     );
 };
