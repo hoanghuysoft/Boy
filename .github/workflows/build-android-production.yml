@@ -17,7 +17,7 @@ on:
         default: ''
 
 env:
-  GRADLE_OPTS: -Xmx4g -XX:MaxMetaspaceSize=512m
+  GRADLE_OPTS: -Xmx4g -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8
 
 jobs:
   build-android:
@@ -60,6 +60,16 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('package-lock.json') }}
           restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Configure Gradle JVM heap
+        run: |
+          mkdir -p ~/.gradle
+          cat > ~/.gradle/gradle.properties << 'EOF'
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+          org.gradle.parallel=true
+          org.gradle.workers.max=2
+          org.gradle.daemon=true
+          EOF
 
       - name: Install npm dependencies
         run: npm ci
