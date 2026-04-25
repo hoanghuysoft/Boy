@@ -98,6 +98,8 @@ jobs:
             > credentials.json
 
       - name: Build Android APK
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: eas build --local --profile ${{ inputs.profile }} --platform android --non-interactive
 
       - name: Upload APK artifact

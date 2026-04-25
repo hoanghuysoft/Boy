@@ -44,3 +44,5 @@ app-example
 # EAS local credentials (generated in CI, never commit)
 credentials.json
 android.keystore
+
+.env.local
