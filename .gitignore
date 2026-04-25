@@ -40,3 +40,7 @@ app-example
 # generated native folders
 /ios
 /android
+
+# EAS local credentials (generated in CI, never commit)
+credentials.json
+android.keystore

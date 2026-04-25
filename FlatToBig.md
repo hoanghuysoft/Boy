@@ -1,0 +1,142 @@
+[Skip to main content](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/#)
+
+On this page
+
+Migration and then the replacement of a FlatList is very simple.
+
+BigList permit a fast way replacement of the FlatList component using some aliases of props that **replace** the default props.
+The props compatibles are listed on [Props List](https://marcocesarato.github.io/react-native-big-list-docs/props#flatlist).
+All of them should be replaced with their related props of BigList _(recommended)_.
+
+The main props of FlatList are compatible with BigList like `data` and its structure, `ListHeaderComponent`, `ListHeaderComponentStyle` etc...
+
+## Getting started [​](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/\#getting-started "Direct link to heading")
+
+You just need to:
+
+- Import the component
+- Replace the name of the component from `FlatList` to `BigList`.
+- Add the props for the heights
+
+##### note
+
+BigList need to define a static height of the items for maintain great performances.
+If you use `getItemLayout` you don't need to define `itemHeight`
+
+- `itemHeight` for items _(default 50)_
+- `headerHeight` for the header _(default 0)_
+- `footerHeight` for the footer _(default 0)_
+
+### Example [​](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/\#example "Direct link to heading")
+
+#### Before: [​](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/\#before "Direct link to heading")
+
+```js
+import { FlatList } from "react-native";
+
+const ITEM_HEIGHT = 50;
+
+/* ... */
+
+<FlatList
+  style={styles.list}
+  data={data}
+  ListHeaderComponent={renderHeader}
+  ListFooterComponent={renderFooter}
+  ListFooterComponentStyle={styles.footer}
+  ListEmptyComponent={renderEmpty}
+  getItemLayout={(data, index) => ({
+    length: ITEM_HEIGHT,
+    offset: ITEM_HEIGHT * index,
+    index,
+  })}
+  renderItem={renderItem}
+  keyExtractor={(item) => item.value}
+/>;
+```
+
+Copy
+
+#### After: [​](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/\#after "Direct link to heading")
+
+```js
+import BigList from "react-native-big-list";
+
+const ITEM_HEIGHT = 50;
+
+/* ... */
+
+<BigList
+  style={styles.list}
+  data={data}
+  renderItem={renderItem}
+  keyExtractor={(item) => item.value}
+  ListHeaderComponent={renderHeader} // Replaceable with `renderHeader`
+  ListFooterComponent={renderFooter} // Replaceable with `renderFooter`
+  ListFooterComponentStyle={styles.footer} // This works only with `ListFooterComponent`
+  ListEmptyComponent={renderEmpty} // Replaceable with `renderEmpty`
+  getItemLayout={(data, index) => ({
+    length: ITEM_HEIGHT,
+    offset: ITEM_HEIGHT * index,
+    index,
+  })} // Replaceable with `itemHeight={ITEM_HEIGHT}`
+  keyExtractor={(item) => item.value}
+  //  New props
+  headerHeight={100} // Default 0, need to specify the header height
+  footerHeight={100} // Default 0, need to specify the foorer height
+/>;
+```
+
+Copy
+
+## Optional Next steps [​](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/\#optional-next-steps "Direct link to heading")
+
+##### info
+
+These steps are recommended but, if you want turn back to FlatList in anytime, you can keep only the first steps without any problems.
+
+##### note
+
+To have more details about props check the [Props list](https://marcocesarato.github.io/react-native-big-list-docs/props)
+
+#### Replacing [​](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/\#replacing "Direct link to heading")
+
+- Replace `ListHeaderComponent` with `renderHeader`
+- Replace `ListFooterComponent` with `renderFooter`
+- Replace `ListEmptyComponent` with `renderEmpty`
+- Replace `getItemLayout` with `itemHeight`
+
+#### Removing [​](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/\#removing "Direct link to heading")
+
+- Remove `ListFooterComponentStyle`
+- Remove `ListHeaderComponentStyle`
+
+### Final result [​](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/\#final-result "Direct link to heading")
+
+```js
+import BigList from "react-native-big-list";
+
+const ITEM_HEIGHT = 50;
+
+/* ... */
+
+<BigList
+  style={styles.list}
+  data={data}
+  keyExtractor={(item) => item.value}
+  renderItem={renderItem}
+  renderHeader={renderHeader}
+  renderFooter={renderFooter}
+  renderEmpty={renderEmpty}
+  itemHeight={ITEM_HEIGHT}
+  headerHeight={100}
+  footerHeight={100}
+/>;
+```
+
+Copy
+
+- [Getting started](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/#getting-started)
+  - [Example](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/#example)
+- [Optional Next steps](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/#optional-next-steps)
+  - [Final result](https://marcocesarato.github.io/react-native-big-list-docs/extras/migrate-flatlist/#final-result)

@@ -225,3 +225,23 @@ export const tmdbClient = createClient({
   },
   timeout: 10000,
 });
+
+// ─── Bulletin Client ──────────────────────────────────────────────────────────
+
+const bulletinUrlStr = process.env.EXPO_PUBLIC_BULLETINBOARD_URL || "";
+let bulletinBaseUrl = bulletinUrlStr;
+try {
+  if (bulletinUrlStr) {
+    const urlObj = new URL(bulletinUrlStr);
+    bulletinBaseUrl = urlObj.origin;
+  }
+} catch (e) {}
+
+export const bulletinClient = createClient({
+  baseURL: bulletinBaseUrl,
+  headers: {
+    "Cookie": process.env.EXPO_PUBLIC_BULLETINBOARD_COOKIE_HEADER || "",
+    "Accept": "application/json",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+  },
+});

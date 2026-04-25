@@ -65,6 +65,12 @@ const DashboardScreen = () => {
                     <Image source={{ uri: 'https://onflix.my/app/asset/logo.png' }} style={{ width: 28, height: 28, borderRadius: 8 }} contentFit="contain" />
                     <FlexText style={{ fontSize: 16, color: colors.text }}>OnFlix</FlexText>
                 </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/_screens/Bulletinboard")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                    <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center' }}>
+                        <Ionicons name="megaphone" size={16} color="#fff" />
+                    </View>
+                    <FlexText style={{ fontSize: 16, color: colors.text }}>Bulletin Board</FlexText>
+                </TouchableOpacity>
             </View>
 
             <View style={{ width: '100%', backgroundColor: colors.containerContent, padding: 16, gap: 12 }}>

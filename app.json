@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "26.6.3",
+    "version": "26.6.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
