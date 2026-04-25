@@ -23,7 +23,7 @@ jobs:
   build-android:
     name: Android ${{ inputs.profile }} APK
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 150
 
     steps:
       - name: Free disk space
@@ -64,12 +64,7 @@ jobs:
       - name: Configure Gradle JVM heap
         run: |
           mkdir -p ~/.gradle
-          cat > ~/.gradle/gradle.properties << 'EOF'
-          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
-          org.gradle.parallel=true
-          org.gradle.workers.max=2
-          org.gradle.daemon=true
-          EOF
+          printf 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8\norg.gradle.parallel=true\norg.gradle.workers.max=2\norg.gradle.daemon=true\n' > ~/.gradle/gradle.properties
 
       - name: Install npm dependencies
         run: npm ci
