@@ -226,6 +226,16 @@ export const tmdbClient = createClient({
   timeout: 10000,
 });
 
+// ─── Weather Client ───────────────────────────────────────────────────────────
+
+export const weatherClient = createClient({
+  baseURL: "https://api.open-meteo.com/v1",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 10000,
+});
+
 // ─── Bulletin Client ──────────────────────────────────────────────────────────
 
 const bulletinUrlStr = process.env.EXPO_PUBLIC_BULLETINBOARD_URL || "";

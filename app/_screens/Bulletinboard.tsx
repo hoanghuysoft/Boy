@@ -3,10 +3,10 @@ import { useThemeContext } from "@/context/ThemeContext";
 import { useBulletinboard } from "@/services/bulletinboard";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
-import { MediaViewer } from 'expo-media-viewer';
 import dayjs from "dayjs";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
+import { MediaViewer } from 'expo-media-viewer';
 import { Stack, router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { useRef } from "react";
@@ -24,6 +24,43 @@ const Bulletinboard = () => {
 
     // We assume the first item's author is the channel owner
     const ownerInfo = bulletinData?.item_list?.[0]?.publish_user;
+
+    const renderTextMessage = (text: string) => {
+        const bubbleColor = colors.card;
+
+        return (
+            <View style={{ maxWidth: width * 0.75, marginLeft: 6 }}>
+                <View
+                    style={{
+                        position: 'absolute',
+                        left: -7,
+                        top: 12,
+                        width: 0,
+                        height: 0,
+                        borderTopWidth: 7,
+                        borderBottomWidth: 7,
+                        borderRightWidth: 9,
+                        borderTopColor: 'transparent',
+                        borderBottomColor: 'transparent',
+                        borderRightColor: bubbleColor,
+                    }}
+                />
+                <View
+                    style={{
+                        backgroundColor: bubbleColor,
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                        borderTopLeftRadius: 4,
+                        borderTopRightRadius: 5,
+                        borderBottomLeftRadius: 5,
+                        borderBottomRightRadius: 5,
+                    }}
+                >
+                    <FlexText style={{ fontSize: 16, color: colors.text, lineHeight: 22 }}>{text}</FlexText>
+                </View>
+            </View>
+        );
+    };
 
     const renderPoll = (poll: any) => {
         return (
@@ -71,7 +108,7 @@ const Bulletinboard = () => {
         }
 
         if (showDateDivider) {
-            const today = dayjs().startOf('day');
+            const today = dayjs(bulletinData?.current_timestamp ?? Date.now()).startOf('day');
             const itemDay = dayjs(item.create_time).startOf('day');
             if (itemDay.isSame(today)) {
                 dateString = 'Today';
@@ -84,6 +121,13 @@ const Bulletinboard = () => {
 
         return (
             <View>
+                {showDateDivider && (
+                    <View style={{ alignItems: 'center', marginBottom: 24, marginTop: 8 }}>
+                        <SquircleView cornerSmoothing={60} borderRadius={16} style={{ backgroundColor: colors.card, paddingHorizontal: 16, paddingVertical: 6 }}>
+                            <FlexText style={{ fontSize: 12, color: colors.muted, fontWeight: 'bold' }}>{dateString}</FlexText>
+                        </SquircleView>
+                    </View>
+                )}
                 <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 24, alignItems: 'flex-end' }}>
                     <Image
                         source={{ uri: item.publish_user?.avatar_thumb?.url_list?.[0] }}
@@ -98,9 +142,7 @@ const Bulletinboard = () => {
                         </View>
 
                         {isText && (
-                            <SquircleView cornerSmoothing={60} borderRadius={20} style={{ backgroundColor: colors.card, padding: 14, maxWidth: width * 0.75 }}>
-                                <FlexText style={{ fontSize: 16, color: colors.text, lineHeight: 22 }}>{item.text}</FlexText>
-                            </SquircleView>
+                            renderTextMessage(item.text)
                         )}
 
                         {isImage && item.images[0]?.origin_url?.url_list?.[0] && (
@@ -110,7 +152,7 @@ const Bulletinboard = () => {
                                     mediaTypes={["image"]}
                                     theme="dark"
                                 >
-                                    <MediaViewer.Image index={0}>
+                                    <MediaViewer.Image index={0} edgeToEdge={true}>
                                         <Image
                                             source={{ uri: item.images[0].origin_url.url_list[0] }}
                                             style={{ width: width * 0.7, height: (width * 0.7) * 1.3 }}
@@ -140,13 +182,6 @@ const Bulletinboard = () => {
                         )}
                     </View>
                 </View>
-                {showDateDivider && (
-                    <View style={{ alignItems: 'center', marginBottom: 24, marginTop: 8 }}>
-                        <SquircleView cornerSmoothing={60} borderRadius={16} style={{ backgroundColor: colors.card, paddingHorizontal: 16, paddingVertical: 6 }}>
-                            <FlexText style={{ fontSize: 12, color: colors.muted, fontWeight: 'bold' }}>{dateString}</FlexText>
-                        </SquircleView>
-                    </View>
-                )}
             </View>
         );
     }

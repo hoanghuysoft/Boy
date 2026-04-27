@@ -141,7 +141,7 @@ const PhotoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: n
 
     return (
         <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-            <MediaViewer.Image index={item.mediaIndex ?? 0}>
+            <MediaViewer.Image index={item.mediaIndex ?? 0} edgeToEdge={true}>
                 <Image
                     source={{ uri: sourceUrl! }}
                     recyclingKey={sourceUrl}
@@ -163,7 +163,7 @@ const VideoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: n
 
     return (
         <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-            <MediaViewer.Image index={item.mediaIndex ?? 0}>
+            <MediaViewer.Image index={item.mediaIndex ?? 0} edgeToEdge={true}>
                 <View style={{ width: "100%", height: VIDEO_HEIGHT }}>
                     <Image
                         source={{ uri: thumbnailUrl }}

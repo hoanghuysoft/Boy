@@ -1,7 +1,9 @@
 import { GalleryOverlay } from '@/components/gallery/GalleryOverlay';
 import WallpaperOverlay from '@/components/WallpaperOverlay';
+import { getOrDownloadFile } from '@/services/fileCacheUtils';
+import type { GalleryImage as GalleryImageMeta } from '@/stores/gallery';
 import { useGalleryStore } from '@/stores/gallery';
-import * as FileSystem from 'expo-file-system/legacy';
+import { Directory, Paths } from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import React, { useCallback, useRef, useState } from 'react';
@@ -9,7 +11,6 @@ import { Modal, StatusBar, ToastAndroid } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Gallery, stackTransition, type GalleryRefType } from 'react-native-zoom-toolkit';
-import type { GalleryImage as GalleryImageMeta } from '@/stores/gallery';
 import GalleryImage from './GalleryImage';
 
 interface GalleryModalContentProps {
@@ -31,6 +32,7 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
     const ref = useRef<GalleryRefType>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [isWallpaperVisible, setIsWallpaperVisible] = useState(false);
+    const destination = new Directory(Paths.cache, 'images');
 
     const currentImage = galleryImages[currentIndex];
 
@@ -71,11 +73,8 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
                 return;
             }
 
-            const fileUri = FileSystem.cacheDirectory + 'downloaded_image.jpg';
-
-            const downloadResult = await FileSystem.downloadAsync(remoteUrl, fileUri);
-
-            const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
+            const localFile = await getOrDownloadFile(remoteUrl, destination, 'image.jpg');
+            const asset = await MediaLibrary.createAssetAsync(localFile.uri);
 
             await MediaLibrary.createAlbumAsync('MyApp Downloads', asset, false);
 
@@ -94,12 +93,8 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
         }
 
         try {
-            const filename = imageUrl.split('/').pop()?.split('?')[0] || 'shared_image.jpg';
-            const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-
-            const downloadResult = await FileSystem.downloadAsync(imageUrl, fileUri);
-
-            await Sharing.shareAsync(downloadResult.uri);
+            const localFile = await getOrDownloadFile(imageUrl, destination, 'image.jpg');
+            await Sharing.shareAsync(localFile.uri);
         } catch (error) {
             console.error('Error sharing image:', error);
             alert("An error occurred while sharing the image");

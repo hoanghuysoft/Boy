@@ -1,9 +1,10 @@
 import * as Crypto from 'expo-crypto';
-import * as FileSystem from 'expo-file-system/legacy';
+import { Directory, File, Paths } from 'expo-file-system';
+import { deleteFileIfExists, ensureDirectory, readJsonFileOrNull, resetDirectory, writeJsonFile } from './fileCacheUtils';
 
 // ─── Constants ──────────────────────────────────────────────────────
-const CACHE_DIR = `${FileSystem.cacheDirectory}image-cache/`;
-const MANIFEST_PATH = `${CACHE_DIR}manifest.json`;
+const CACHE_DIR = new Directory(Paths.cache, 'image-cache');
+const MANIFEST_FILE = new File(CACHE_DIR, 'manifest.json');
 
 // Default max cache size: 200 MB
 const DEFAULT_MAX_CACHE_BYTES = 200 * 1024 * 1024;
@@ -47,10 +48,7 @@ const getExtension = (url: string): string => {
 };
 
 const ensureCacheDir = async () => {
-    const info = await FileSystem.getInfoAsync(CACHE_DIR);
-    if (!info.exists) {
-        await FileSystem.makeDirectoryAsync(CACHE_DIR, { intermediates: true });
-    }
+    ensureDirectory(CACHE_DIR);
 };
 
 // ─── Manifest Management ────────────────────────────────────────────
@@ -59,10 +57,9 @@ const loadManifest = async (): Promise<Manifest> => {
     if (manifest) return manifest;
 
     try {
-        const info = await FileSystem.getInfoAsync(MANIFEST_PATH);
-        if (info.exists) {
-            const raw = await FileSystem.readAsStringAsync(MANIFEST_PATH);
-            manifest = JSON.parse(raw) as Manifest;
+        const savedManifest = await readJsonFileOrNull<Manifest>(MANIFEST_FILE);
+        if (savedManifest) {
+            manifest = savedManifest;
             return manifest;
         }
     } catch (e) {
@@ -77,7 +74,7 @@ const saveManifest = async () => {
     if (!manifest) return;
     try {
         await ensureCacheDir();
-        await FileSystem.writeAsStringAsync(MANIFEST_PATH, JSON.stringify(manifest));
+        writeJsonFile(MANIFEST_FILE, manifest);
     } catch (e) {
         console.warn('[ImageCache] Failed to save manifest:', e);
     }
@@ -99,7 +96,7 @@ const evictIfNeeded = async (reserveBytes: number = 0) => {
         if (m.totalSize <= targetSize) break;
 
         try {
-            await FileSystem.deleteAsync(entry.localUri, { idempotent: true });
+            deleteFileIfExists(entry.localUri);
         } catch { }
 
         m.totalSize -= entry.size;
@@ -122,8 +119,8 @@ export const getCachedImageUri = async (url: string): Promise<string> => {
         const entry = m.entries[hash];
 
         if (entry) {
-            const info = await FileSystem.getInfoAsync(entry.localUri);
-            if (info.exists) {
+            const file = new File(entry.localUri);
+            if (file.exists) {
                 entry.lastAccess = Date.now();
                 saveManifest();
                 return entry.localUri;
@@ -151,8 +148,8 @@ export const cacheImage = async (url: string): Promise<string> => {
     const m = await loadManifest();
     const existing = m.entries[hash];
     if (existing) {
-        const info = await FileSystem.getInfoAsync(existing.localUri);
-        if (info.exists) {
+        const existingFile = new File(existing.localUri);
+        if (existingFile.exists) {
             existing.lastAccess = Date.now();
             saveManifest();
             return existing.localUri;
@@ -167,35 +164,29 @@ export const cacheImage = async (url: string): Promise<string> => {
         try {
             await ensureCacheDir();
             const ext = getExtension(url);
-            const localUri = `${CACHE_DIR}${hash}${ext}`;
+            const localFile = new File(CACHE_DIR, `${hash}${ext}`);
+            const localUri = localFile.uri;
 
             await evictIfNeeded(5 * 1024 * 1024);
 
-            const downloadResult = await FileSystem.downloadAsync(url, localUri);
+            await File.downloadFileAsync(url, localFile);
+            const fileSize = localFile.size || 0;
 
-            if (downloadResult.status === 200) {
-                const info = await FileSystem.getInfoAsync(localUri);
-                const fileSize = (info as any).size || 0;
+            const entry: CacheEntry = {
+                url,
+                localUri,
+                size: fileSize,
+                lastAccess: Date.now(),
+                createdAt: Date.now(),
+            };
 
-                const entry: CacheEntry = {
-                    url,
-                    localUri,
-                    size: fileSize,
-                    lastAccess: Date.now(),
-                    createdAt: Date.now(),
-                };
+            const m = await loadManifest();
+            m.entries[hash] = entry;
+            m.totalSize += fileSize;
+            await saveManifest();
+            await evictIfNeeded();
 
-                const m = await loadManifest();
-                m.entries[hash] = entry;
-                m.totalSize += fileSize;
-                await saveManifest();
-                await evictIfNeeded();
-
-                return localUri;
-            } else {
-                await FileSystem.deleteAsync(localUri, { idempotent: true });
-                return url;
-            }
+            return localUri;
         } catch (e) {
             console.warn('[ImageCache] Download failed for:', url, e);
             return url;
@@ -222,9 +213,8 @@ export const precacheImages = (urls: string[]) => {
  */
 export const clearImageCache = async () => {
     try {
-        await FileSystem.deleteAsync(CACHE_DIR, { idempotent: true });
+        resetDirectory(CACHE_DIR);
         manifest = { entries: {}, totalSize: 0 };
-        await ensureCacheDir();
         await saveManifest();
     } catch (e) {
         console.warn('[ImageCache] Failed to clear cache:', e);

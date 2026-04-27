@@ -1,6 +1,6 @@
 import { useCarouselQuery } from "@/services/carousel";
 import { useCarouselColorStore } from "@/stores/carouselColor";
-import * as FileSystem from 'expo-file-system/legacy';
+import { Directory, File, Paths } from 'expo-file-system';
 import _ from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Dimensions } from "react-native";
@@ -8,6 +8,7 @@ import { Animated, Dimensions } from "react-native";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CAROUSEL_HEIGHT = SCREEN_HEIGHT * 0.28;
 const AUTO_SCROLL_INTERVAL = 30000;
+const CAROUSEL_CACHE_DIR = new Directory(Paths.cache, 'carousel-images');
 
 export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) => {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -35,19 +36,19 @@ export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) =>
                 if (!url || localCache[url]) continue;
 
                 try {
+                    CAROUSEL_CACHE_DIR.create({ idempotent: true, intermediates: true });
                     const safeFilename = url.replace(/[^a-zA-Z0-9]/g, '_') + '.jpg';
-                    const fileUri = `${FileSystem.cacheDirectory}${safeFilename}`;
+                    const localFile = new File(CAROUSEL_CACHE_DIR, safeFilename);
+                    const fileUri = localFile.uri;
 
-                    const fileInfo = await FileSystem.getInfoAsync(fileUri);
-
-                    if (fileInfo.exists) {
+                    if (localFile.exists) {
                         if (isMounted) {
                             setLocalCache(prev => ({ ...prev, [url]: fileUri }));
                         }
                     } else {
-                        const downloadResult = await FileSystem.downloadAsync(url, fileUri);
-                        if (downloadResult.status === 200 && isMounted) {
-                            setLocalCache(prev => ({ ...prev, [url]: downloadResult.uri }));
+                        await File.downloadFileAsync(url, localFile);
+                        if (localFile.exists && isMounted) {
+                            setLocalCache(prev => ({ ...prev, [url]: localFile.uri }));
                         }
                     }
                 } catch (error) {

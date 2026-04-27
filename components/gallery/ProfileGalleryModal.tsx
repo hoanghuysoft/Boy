@@ -1,8 +1,9 @@
 import { GalleryOverlay } from '@/components/gallery/GalleryOverlay';
 import WallpaperOverlay from '@/components/WallpaperOverlay';
+import { getOrDownloadFile } from '@/services/fileCacheUtils';
 import { Media } from '@/types/media';
 import { ProfileMusic } from '@/types/profilemusic';
-import * as FileSystem from 'expo-file-system/legacy';
+import { Directory, Paths } from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
@@ -37,6 +38,7 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
     const ref = useRef<GalleryRefType>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [isWallpaperVisible, setIsWallpaperVisible] = useState(false);
+    const destination = new Directory(Paths.cache, 'images');
 
     const currentPhoto = photos[currentIndex];
     const currentMusic = music?.[0];
@@ -77,18 +79,8 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
                 ToastAndroid.show("Permission Denied! We need access to your photos to save images.", ToastAndroid.SHORT);
                 return;
             }
-
-            if (!FileSystem.cacheDirectory) {
-                ToastAndroid.show("Cache directory not available", ToastAndroid.SHORT);
-                return;
-            }
-
-            const filename = remoteUrl.split('/').pop()?.split('?')[0] || 'downloaded_image.jpg';
-            const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-
-            const downloadResult = await FileSystem.downloadAsync(remoteUrl, fileUri);
-
-            const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
+            const localFile = await getOrDownloadFile(remoteUrl, destination, 'image.jpg');
+            const asset = await MediaLibrary.createAssetAsync(localFile.uri);
 
             await MediaLibrary.createAlbumAsync('WeLove', asset, false);
 
@@ -107,14 +99,8 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
         }
 
         try {
-            if (!FileSystem.cacheDirectory) {
-                alert("Cache directory not available");
-                return;
-            }
-            const filename = imageUrl.split('/').pop()?.split('?')[0] || 'shared_image.jpg';
-            const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-            const downloadResult = await FileSystem.downloadAsync(imageUrl, fileUri);
-            await Sharing.shareAsync(downloadResult.uri);
+            const localFile = await getOrDownloadFile(imageUrl, destination, 'image.jpg');
+            await Sharing.shareAsync(localFile.uri);
         } catch (error) {
             console.error('Error sharing image:', error);
             alert("An error occurred while sharing the image");
