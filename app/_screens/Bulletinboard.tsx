@@ -64,13 +64,13 @@ const Bulletinboard = () => {
 
     const renderPoll = (poll: any) => {
         return (
-            <SquircleView cornerSmoothing={60} borderRadius={20} style={{ backgroundColor: colors.card, padding: 16, width: width * 0.75 }}>
+            <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ backgroundColor: colors.card, padding: 16, width: width * 0.75 }}>
                 <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 16 }}>{poll.title}</FlexText>
                 {poll.options.map((opt: any, i: number) => {
                     const percentage = poll.total_voted_count > 0 ? (opt.voted_count / poll.total_voted_count) * 100 : 0;
                     return (
                         <View key={i} style={{ marginBottom: 12 }}>
-                            <SquircleView cornerSmoothing={60} borderRadius={12} style={{ height: 40, backgroundColor: colors.background, overflow: 'hidden', justifyContent: 'center' }}>
+                            <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={12} style={{ height: 40, backgroundColor: colors.background, overflow: 'hidden', justifyContent: 'center' }}>
                                 <View style={{ position: 'absolute', width: `${percentage}%`, height: '100%', backgroundColor: colors.containerContent }} />
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, width: '100%' }}>
                                     <FlexText style={{ fontSize: 14, color: colors.text, fontWeight: '600' }}>{opt.content}</FlexText>
@@ -80,7 +80,7 @@ const Bulletinboard = () => {
                         </View>
                     )
                 })}
-                <FlexText style={{ fontSize: 13, color: colors.muted, textAlign: 'center', marginTop: 4 }}>
+                <FlexText style={{ fontSize: 13, color: colors.text, textAlign: 'center', marginTop: 4 }}>
                     {poll.total_voted_count} votes • {poll.poll_expired ? 'Ended' : 'Active'}
                 </FlexText>
             </SquircleView>
@@ -123,8 +123,8 @@ const Bulletinboard = () => {
             <View>
                 {showDateDivider && (
                     <View style={{ alignItems: 'center', marginBottom: 24, marginTop: 8 }}>
-                        <SquircleView cornerSmoothing={60} borderRadius={16} style={{ backgroundColor: colors.card, paddingHorizontal: 16, paddingVertical: 6 }}>
-                            <FlexText style={{ fontSize: 12, color: colors.muted, fontWeight: 'bold' }}>{dateString}</FlexText>
+                        <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ backgroundColor: colors.card, paddingHorizontal: 16, paddingVertical: 6 }}>
+                            <FlexText style={{ fontSize: 12, color: colors.text, fontWeight: 'bold' }}>{dateString}</FlexText>
                         </SquircleView>
                     </View>
                 )}
@@ -135,8 +135,8 @@ const Bulletinboard = () => {
                     />
                     <View style={{ flex: 1, alignItems: 'flex-start' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                            <FlexText style={{ fontSize: 13, color: colors.muted, marginLeft: 4, fontWeight: '600' }}>{item.publish_user?.nickname}</FlexText>
-                            <FlexText style={{ fontSize: 12, color: colors.muted, marginLeft: 8 }}>
+                            <FlexText style={{ fontSize: 13, color: colors.text, marginLeft: 4, fontWeight: '600' }}>{item.publish_user?.nickname}</FlexText>
+                            <FlexText style={{ fontSize: 12, color: colors.text, marginLeft: 8 }}>
                                 {dayjs(item.create_time).format('HH:mm')}
                             </FlexText>
                         </View>
@@ -146,7 +146,7 @@ const Bulletinboard = () => {
                         )}
 
                         {isImage && item.images[0]?.origin_url?.url_list?.[0] && (
-                            <SquircleView cornerSmoothing={60} borderRadius={20} style={{ overflow: 'hidden' }}>
+                            <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ overflow: 'hidden' }}>
                                 <MediaViewer
                                     urls={[item.images[0].origin_url.url_list[0]]}
                                     mediaTypes={["image"]}
@@ -167,17 +167,12 @@ const Bulletinboard = () => {
 
                         {reactions.length > 0 && (
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginLeft: 4 }}>
-                                {reactions.slice(0, 4).map((r: any, i: number) => (
-                                    <SquircleView cornerSmoothing={60} borderRadius={16} key={i} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, paddingHorizontal: 8, paddingVertical: 4 }}>
+                                {reactions.map((r: any, i: number) => (
+                                    <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} key={i} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, paddingHorizontal: 8, paddingVertical: 4 }}>
                                         <FlexText style={{ fontSize: 13 }}>{r.emoji}</FlexText>
-                                        <FlexText style={{ fontSize: 12, color: colors.muted, marginLeft: 4, fontWeight: '600' }}>{r.count}</FlexText>
+                                        <FlexText style={{ fontSize: 12, color: colors.text, marginLeft: 4, fontWeight: '600' }}>{r.count}</FlexText>
                                     </SquircleView>
                                 ))}
-                                {reactions.length > 4 && (
-                                    <SquircleView cornerSmoothing={60} borderRadius={16} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, paddingHorizontal: 8, paddingVertical: 4 }}>
-                                        <Ionicons name="add" size={14} color={colors.muted} />
-                                    </SquircleView>
-                                )}
                             </View>
                         )}
                     </View>
@@ -189,7 +184,7 @@ const Bulletinboard = () => {
     if (isLoading) {
         return (
             <View style={[common.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-                <FlexText style={{ color: colors.muted }}>Loading channel...</FlexText>
+                <FlexText style={{ color: colors.text }}>Loading channel...</FlexText>
             </View>
         );
     }

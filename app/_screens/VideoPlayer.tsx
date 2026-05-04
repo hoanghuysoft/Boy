@@ -12,7 +12,6 @@ import { useCachedVideoUri } from "@/hooks/useCachedVideoUri";
 import { useVideoResume, VIDEO_RESUME_MIN_DURATION } from "@/hooks/useVideoResume";
 import { createCommonStyles } from "@/styles/common";
 import * as IntentLauncher from "expo-intent-launcher";
-import * as NavigationBar from "expo-navigation-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -29,6 +28,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import SystemNavigationBar from "react-native-system-navigation-bar";
 import Video, { VideoRef } from "react-native-video";
 
 interface VideoProgress {
@@ -232,7 +232,9 @@ const VideoPlayer = () => {
         : ScreenOrientation.OrientationLock.LANDSCAPE,
     );
     if (Platform.OS === 'android') {
-      NavigationBar.setVisibilityAsync('hidden');
+      SystemNavigationBar.stickyImmersive();
+    } else {
+      SystemNavigationBar.fullScreen(true);
     }
     setShowStatusBarFade(false);
 
@@ -241,7 +243,7 @@ const VideoPlayer = () => {
         const orientation = event.orientationInfo.orientation;
         setIsLandscape(
           orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-            orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT,
+          orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT,
         );
       },
     );
@@ -250,9 +252,7 @@ const VideoPlayer = () => {
       setShowStatusBarFade(true);
       subscription.remove();
       ScreenOrientation.unlockAsync();
-      if (Platform.OS === 'android') {
-        NavigationBar.setVisibilityAsync('visible');
-      }
+      SystemNavigationBar.fullScreen(false);
     };
   }, []);
 
@@ -369,8 +369,8 @@ const VideoPlayer = () => {
           <LongPressSpeedZone
             onShowControls={handleVideoPress}
             setPlaybackRate={setPlaybackRate}
-            onDoubleTap={(direction) => 
-               direction === 'forward' ? moveForward() : moveBackward()
+            onDoubleTap={(direction) =>
+              direction === 'forward' ? moveForward() : moveBackward()
             }
           />
         )}

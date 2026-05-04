@@ -1,3 +1,4 @@
+import AssemblyText from "@/components/AssemblyText";
 import { FlexText } from "@/components/FlexText";
 import { useStatusBar } from "@/context/StatusBarContext";
 import { useThemeContext } from "@/context/ThemeContext";
@@ -75,6 +76,12 @@ const DashboardScreenV1 = () => {
                     </View>
                     <FlexText style={{ fontSize: 16, color: colors.text }}>Bulletin Board</FlexText>
                 </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/notes")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                    <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center' }}>
+                        <Ionicons name="document-text" size={16} color="#fff" />
+                    </View>
+                    <FlexText style={{ fontSize: 16, color: colors.text }}>Notes</FlexText>
+                </TouchableOpacity>
             </View>
 
             <View style={{ width: '100%', backgroundColor: colors.containerContent, padding: 16, gap: 12 }}>
@@ -102,6 +109,14 @@ const DashboardScreen = () => {
     const statusBar = useStatusBar();
     const { t } = useTranslation();
     const blurTargetRef = useRef<View | null>(null);
+    const [focusTrigger, setFocusTrigger] = useState(0);
+
+    // Replay the assembly animation every time the screen gains focus.
+    useFocusEffect(
+        useCallback(() => {
+            setFocusTrigger(prev => prev + 1);
+        }, [])
+    );
 
     const { data: mediaPages } = useInfiniteMedia(profile?.id ?? "", "photo");
     const photos = mediaPages?.pages.flatMap((p) => p.data) ?? [];
@@ -121,7 +136,7 @@ const DashboardScreen = () => {
             });
         }, 30_000);
         return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [photos.length]);
 
     const { data: trending, isLoading: isTrendingLoading } = useTrendingAll();
@@ -147,11 +162,25 @@ const DashboardScreen = () => {
                 </BlurTargetView>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 250 + insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 99 }}>
-                <FlexText style={{ fontSize: 46, fontWeight: 'bold', color: 'white' }}>{profile?.name} </FlexText>
-                <FlexText style={{ fontSize: 16, color: 'white' }}>{profile?.username || profile?.email}</FlexText>
+                <AssemblyText
+                    text={profile?.name ?? ""}
+                    fontSize={46}
+                    fontWeight="bold"
+                    color="white"
+                    delayOffset={200}
+                    trigger={focusTrigger}
+                />
+                <AssemblyText
+                    text={profile?.username || profile?.email || ""}
+                    fontSize={16}
+                    fontWeight="normal"
+                    color="white"
+                    delayOffset={600}
+                    trigger={focusTrigger}
+                />
                 <SquircleView cornerSmoothing={100} borderRadius={16} style={{ marginTop: 16, overflow: 'hidden' }}>
                     <BlurView blurMethod="dimezisBlurViewSdk31Plus" tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
-                        intensity={50} blurTarget={blurTargetRef} style={{ padding: 16 }}>
+                        intensity={80} blurTarget={blurTargetRef} style={{ padding: 16 }}>
                         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                             <View style={{ flex: 1, paddingRight: 10 }}>
                                 <FlexText style={{ fontSize: 16, fontWeight: "bold", color: colors.text }}>
@@ -182,29 +211,44 @@ const DashboardScreen = () => {
                 </SquircleView>
                 <SquircleView cornerSmoothing={100} borderRadius={16} style={{ marginTop: 50, overflow: 'hidden' }}>
                     <BlurView blurMethod="dimezisBlurViewSdk31Plus" tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
-                        intensity={50} blurTarget={blurTargetRef} style={{ padding: 16 }}>
-                        <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 8 }}>
+                        intensity={80} blurTarget={blurTargetRef} style={{ padding: 16 }}>
+                        <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 16 }}>
                             {t('dashboard.sections.services')}
                         </FlexText>
-                        <TouchableOpacity onPress={() => router.push("/webview?url=https://reclipnew.onrender.com/")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                            <Image source={{ uri: 'https://wsrv.nl/?url=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&w=256&h=undefined&q=75&ll=&default=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&output=webp' }} style={{ width: 28, height: 28, borderRadius: 8 }} />
-                            <FlexText style={{ fontSize: 16, color: colors.text }}>ReClip</FlexText>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => router.push("/webview?url=https://onflix.my/&isUseSafeArea=true&safeAreaColor=black&isShowBackButton=false")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                            <Image source={{ uri: 'https://onflix.run/app/asset/logo.png' }} style={{ width: 28, height: 28, borderRadius: 8 }} contentFit="contain" />
-                            <FlexText style={{ fontSize: 16, color: colors.text }}>OnFlix</FlexText>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => router.push("/_screens/Bulletinboard")} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                            <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center' }}>
-                                <Ionicons name="megaphone" size={16} color="#fff" />
-                            </View>
-                            <FlexText style={{ fontSize: 16, color: colors.text }}>Bulletin Board</FlexText>
-                        </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', marginTop: 4 }}>
+                            <TouchableOpacity onPress={() => router.push("/webview?url=https://reclipnew.onrender.com/")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                    <Image source={{ uri: 'https://wsrv.nl/?url=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&w=256&h=undefined&q=75&ll=&default=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&output=webp' }} style={{ width: 34, height: 34, borderRadius: 10 }} />
+                                </SquircleView>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>ReClip</FlexText>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={() => router.push("/webview?url=https://onflix.my/&isUseSafeArea=true&safeAreaColor=black&isShowBackButton=false")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                    <Image source={{ uri: 'https://onflix.run/app/asset/logo.png' }} style={{ width: 34, height: 34, borderRadius: 10 }} contentFit="contain" />
+                                </SquircleView>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>OnFlix</FlexText>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={() => router.push("/_screens/Bulletinboard")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name="megaphone" size={26} color="#fff" />
+                                </SquircleView>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }} numberOfLines={1}>Bulletin</FlexText>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={() => router.push("/notes")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name="document-text" size={26} color="#fff" />
+                                </SquircleView>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>Notes</FlexText>
+                            </TouchableOpacity>
+                        </View>
                     </BlurView>
                 </SquircleView>
                 <SquircleView cornerSmoothing={100} borderRadius={16} style={{ marginTop: 10, overflow: 'hidden' }}>
                     <BlurView blurMethod="dimezisBlurViewSdk31Plus" tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
-                        intensity={50} blurTarget={blurTargetRef} style={{ padding: 16 }}>
+                        intensity={80} blurTarget={blurTargetRef} style={{ padding: 16 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                             <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>
                                 {t('dashboard.sections.entertainment')}
