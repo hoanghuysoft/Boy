@@ -153,8 +153,8 @@ const AssemblyText: React.FC<AssemblyTextProps> = ({
 }) => {
     const font = useFont(
         fontWeight === "bold"
-            ? require("../assets/fonts/GoogleSansRounded-Bold.ttf")
-            : require("../assets/fonts/GoogleSansRounded-Regular.ttf"),
+            ? require("../assets/fonts/NotoSansSC-Bold.ttf")
+            : require("../assets/fonts/NotoSansSC-Regular.ttf"),
         fontSize
     );
 
