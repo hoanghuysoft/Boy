@@ -56,6 +56,8 @@ const EpisodeCastItem = memo(({ item, colors, common }: { item: CastMember; colo
     );
 });
 
+EpisodeCastItem.displayName = "EpisodeCastItem";
+
 const EpisodeVideoItem = memo(({ item }: { item: TMDBVideoResult }) => {
     const isYouTube = item.site.toLowerCase() === "youtube";
     const thumbnailUrl = isYouTube ? `https://img.youtube.com/vi/${item.key}/hqdefault.jpg` : null;
@@ -90,6 +92,8 @@ const EpisodeVideoItem = memo(({ item }: { item: TMDBVideoResult }) => {
         </Pressable>
     );
 });
+
+EpisodeVideoItem.displayName = "EpisodeVideoItem";
 
 export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetProps>(({ tvId, seasonNumber, episodeNumber }, ref) => {
     const { colors, typography, theme } = useThemeContext();

@@ -16,7 +16,7 @@ import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const DashboardScreenV1 = () => {
@@ -106,7 +106,6 @@ const DashboardScreen = () => {
     const common = createCommonStyles(colors, typography);
     const { data: profile } = useProfile("me", true);
     const insets = useSafeAreaInsets();
-    const statusBar = useStatusBar();
     const { t } = useTranslation();
     const blurTargetRef = useRef<View | null>(null);
     const [focusTrigger, setFocusTrigger] = useState(0);
@@ -119,7 +118,9 @@ const DashboardScreen = () => {
     );
 
     const { data: mediaPages } = useInfiniteMedia(profile?.id ?? "", "photo");
-    const photos = mediaPages?.pages.flatMap((p) => p.data) ?? [];
+    const photos = mediaPages?.pages
+        .flatMap((p) => p.data)
+        .filter((photo) => photo.width !== null && photo.height !== null && photo.height > photo.width) ?? [];
     const [bgImageUrl, setBgImageUrl] = useState<string | undefined>(undefined);
 
     useEffect(() => {
@@ -162,6 +163,7 @@ const DashboardScreen = () => {
                 </BlurTargetView>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 250 + insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 99 }}>
+                <Pressable onPress={() => router.push(`/profile/${profile?.id}`)}>
                 <AssemblyText
                     text={profile?.name ?? ""}
                     fontSize={46}
@@ -178,6 +180,7 @@ const DashboardScreen = () => {
                     delayOffset={600}
                     trigger={focusTrigger}
                 />
+                </Pressable>
                 <SquircleView cornerSmoothing={100} borderRadius={16} style={{ marginTop: 16, overflow: 'hidden' }}>
                     <BlurView blurMethod="dimezisBlurViewSdk31Plus" tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
                         intensity={80} blurTarget={blurTargetRef} style={{ padding: 16 }}>

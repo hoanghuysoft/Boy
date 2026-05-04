@@ -18,8 +18,9 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpaci
 import { FlatList as GestureFlatList } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
 import { createMMKV } from "react-native-mmkv";
+import { NitroImage } from "react-native-nitro-image";
+import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import TurboImage from "react-native-turbo-image";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 
@@ -100,7 +101,9 @@ const ChatScreen = () => {
   useEffect(() => {
     const uris = detail?.extra_images;
     if (!uris || uris.length === 0) return;
-    TurboImage.prefetch(uris.map((uri) => ({ uri })));
+    for (const uri of uris) {
+      WebImages.preload(uri);
+    }
   }, [detail?.extra_images]);
 
   const renderGalleryItem = useCallback(
@@ -109,11 +112,10 @@ const ChatScreen = () => {
         onPress={() => openGallery(galleryImages, index)}
         style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
       >
-        <TurboImage
-          source={{ uri: item }}
+        <NitroImage
+          image={{ url: item }}
           style={{ width: 250, aspectRatio: 16 / 9, borderRadius: 12 }}
           resizeMode="cover"
-          fadeDuration={150}
         />
       </Pressable>
     ),

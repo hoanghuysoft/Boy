@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "WeLove",
-    "slug": "boy",
-    "version": "26.6.4",
+    "slug": "Boy",
+    "version": "26.6.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -206,7 +206,8 @@
           "project": "react-native",
           "organization": "techfox-ap"
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -215,14 +216,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "cfe29796-dcdc-4629-aa71-10f0832192c7"
+        "projectId": "ddac2295-af33-4e05-b689-6caa80c1d9d3"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/cfe29796-dcdc-4629-aa71-10f0832192c7"
+      "url": "https://u.expo.dev/ddac2295-af33-4e05-b689-6caa80c1d9d3"
     }
   }
 }
