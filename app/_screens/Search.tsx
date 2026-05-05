@@ -31,9 +31,6 @@ import { useSearchViewModel } from "../../viewmodels/SearchViewModel";
 
 const FlashList = FlashListOriginal as any;
 
-// TurboImage cache policy - use dataCache for aggressive local caching
-const IMAGE_CACHE_POLICY = "dataCache" as const;
-
 const ITEM_SEPARATOR = () => <View style={{ height: 12 }} />;
 
 const SearchScreen = () => {
@@ -53,7 +50,6 @@ const SearchScreen = () => {
         styles={styles}
         common={common}
         navigation={navigation}
-        imageCachePolicy={IMAGE_CACHE_POLICY}
         onPress={vm.handleProfilePress}
       />
     ),

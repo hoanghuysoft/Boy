@@ -116,9 +116,6 @@ MediaFooter.displayName = "MediaFooter";
 
 const PhotoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: number }, colors: any }) => {
     const sourceUrl = choosenMediaPath(item);
-
-    // Priority: server-provided width/height → MMKV cache → fallback 200.
-    // Server values are authoritative and skip any measurement work.
     const serverW = item.width;
     const serverH = item.height;
     const hasServerDims = !!(serverW && serverH);

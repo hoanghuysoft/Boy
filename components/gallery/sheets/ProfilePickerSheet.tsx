@@ -7,7 +7,6 @@ import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { Image } from "expo-image";
 import { debounce, flatMap } from "lodash";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,7 +18,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import TurboImage from "react-native-turbo-image";
+import { NitroImage } from "react-native-nitro-image";
 
 interface ProfilePickerSheetProps {
     selectedProfileId?: string | null;
@@ -48,21 +47,27 @@ const ProfileRow = memo(
             >
                 <View style={styles.avatarContainer}>
                     {item.avatar_url ? (
-                        <Image
-                            source={{ uri: item.avatar_url }}
-                            style={styles.avatar}
-                            contentFit="cover"
-                        />
+                        <View style={[styles.avatar, { overflow: 'hidden' }]}>
+                            <NitroImage
+                                image={{
+                                    url: item.avatar_url
+                                }}
+                                style={styles.avatar}
+                                resizeMode="cover"
+                            />
+                        </View>
                     ) : (
-                        <TurboImage
-                            source={
-                                item.gender === "male"
-                                    ? require("../../../assets/images/AV17.png")
-                                    : require("../../../assets/images/AV86.png")
-                            }
-                            style={styles.avatar}
-                            resizeMode="cover"
-                        />
+                        <View style={[styles.avatar, { overflow: 'hidden' }]}>
+                            <NitroImage
+                                image={
+                                    item.gender === "male"
+                                        ? require("../../../assets/images/AV17.png")
+                                        : require("../../../assets/images/AV86.png")
+                                }
+                                style={styles.avatar}
+                                resizeMode="cover"
+                            />
+                        </View>
                     )}
                 </View>
 

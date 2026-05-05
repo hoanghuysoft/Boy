@@ -1,11 +1,11 @@
 import VerifiedIcon from "@/icons/verified";
 import { Profile } from "@/types/profile";
 import { calculateAge } from "@/utils/timeandage";
-import FastImage from "@d11/react-native-fast-image";
 import { SquircleView } from "expo-squircle-view";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
+import { NitroImage } from "react-native-nitro-image";
 import { FlexText } from "../FlexText";
 
 interface SearchProfileItemProps {
@@ -14,7 +14,6 @@ interface SearchProfileItemProps {
     styles: any;
     common: any;
     navigation: any;
-    imageCachePolicy: any;
     onPress?: (item: Profile) => void;
 }
 
@@ -24,7 +23,6 @@ export const SearchProfileItem = React.memo(({
     styles,
     common,
     navigation,
-    imageCachePolicy,
     onPress,
 }: SearchProfileItemProps) => {
     const { t } = useTranslation();
@@ -51,23 +49,30 @@ export const SearchProfileItem = React.memo(({
                 activeOpacity={0.7}
                 onPress={handlePress}
             >
-                {item.avatar_url ? <FastImage
-                    source={{ uri: item.avatar_url }}
-                    style={styles.avatar}
-                    resizeMode={FastImage.resizeMode.cover}
-                /> : <FastImage
-                    source={
-                        item.gender === "male"
-                            ? require("../../assets/images/AV17.png")
-                            : item.gender
-                                ? require("../../assets/images/AV86.png")
-                                : {
-                                    uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-                                }
-                    }
-                    style={styles.avatar}
-                    resizeMode={FastImage.resizeMode.cover}
-                />}
+                {item.avatar_url ?
+                    <View style={[styles.avatar, { overflow: "hidden" }]}>
+                        <NitroImage
+                            image={{ url: item.avatar_url }}
+                            style={styles.avatar}
+                            resizeMode={"cover"}
+                        />
+                    </View> :
+                    <View style={[styles.avatar, { overflow: "hidden" }]}>
+                        <NitroImage
+                            image={
+                                item.gender === "male"
+                                    ? require("../../assets/images/AV17.png")
+                                    : item.gender
+                                        ? require("../../assets/images/AV86.png")
+                                        : {
+                                            url: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                                        }
+                            }
+                            style={styles.avatar}
+                            resizeMode={"cover"}
+                        />
+                    </View>
+                }
                 <View style={styles.profileInfo}>
                     <View style={[common.row, { gap: 4 }]}>
                         <FlexText

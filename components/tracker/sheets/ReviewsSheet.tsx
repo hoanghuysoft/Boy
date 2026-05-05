@@ -3,9 +3,9 @@ import { TMDBReview } from '@/types/moviedb/movie-entities';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Image } from "expo-image";
-import * as WebBrowser from "expo-web-browser";
 import React, { forwardRef, memo, useCallback } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
 import { ActivityIndicator } from 'react-native-paper';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -29,9 +29,18 @@ const getAvatarSource = (path: string | null | undefined, author: string) => {
 };
 
 const ReviewItem = memo(({ item, colors, common }: { item: TMDBReview; colors: any; common: any }) => {
-    const handleOpenReview = () => {
+    const handleOpenReview = async () => {
         if (item.url) {
-            WebBrowser.openBrowserAsync(item.url);
+            try {
+            await NitroInAppBrowser.open(item.url, {
+              barColor: 'red',
+              controlColor: '#000000',
+              dismissButtonLabel: 'close',
+              presentationStyle: 'fullScreen',
+            });
+          } catch (error) {
+            console.error(error);
+          }
         }
     };
 
@@ -73,6 +82,8 @@ const ReviewItem = memo(({ item, colors, common }: { item: TMDBReview; colors: a
         </TouchableOpacity>
     );
 });
+
+ReviewItem.displayName = "ReviewItem";
 
 export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ data, onEndReached, isLoadingItems }, ref) => {
     const { colors, typography, theme } = useThemeContext();

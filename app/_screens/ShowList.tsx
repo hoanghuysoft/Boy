@@ -4,7 +4,6 @@ import { useCategoryInfiniteQuery } from "@/services/shows/category";
 import { useTagInfiniteQuery } from "@/services/shows/tag";
 import type { VideoCard } from "@/types/shows";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import {
@@ -17,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -74,10 +74,10 @@ const ShowListScreen = () => {
           { backgroundColor: colors.background, opacity: pressed ? 0.9 : 1 },
         ]}
       >
-        <Image
-          source={{ uri: item.thumb_url }}
+        <NitroImage
+          image={{ url: item.thumb_url }}
           style={styles.thumbnail}
-          contentFit="cover"
+          resizeMode="cover"
         />
         <View style={{ flex: 1, gap: 4 }}>
           <FlexText numberOfLines={1} style={[styles.title, { color: colors.text }]}>
