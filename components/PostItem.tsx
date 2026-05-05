@@ -10,11 +10,11 @@ import { Link, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
 import { Ionicons } from "@expo/vector-icons";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
-import { Image } from "expo-image";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Dimensions, Linking, ScrollView, TouchableOpacity, View } from "react-native";
 import { Pressable } from 'react-native-gesture-handler';
+import { NitroImage } from "react-native-nitro-image";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
@@ -56,12 +56,13 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
                 <Pressable onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
-                    <Image
-                        source={{ uri: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: vm.colors.divider }}
-                        transition={100}
-                        contentFit="cover"
-                    />
+                    <View style={{ borderRadius: 9999, overflow: "hidden", width: 40, height: 40 }}>
+                        <NitroImage
+                            image={{ url: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                            style={{ width: 40, height: 40 }}
+                            resizeMode="cover"
+                        />
+                    </View>
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>
                             <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>

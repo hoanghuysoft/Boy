@@ -7,7 +7,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import LineiconsIcon from "@lineiconshq/react-native-lineicons";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -23,6 +22,7 @@ import {
   View
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -140,11 +140,13 @@ const SearchShowsScreen = () => {
           },
         ]}
       >
-        <Image
-          source={{ uri: item.thumb_url }}
-          style={styles.thumbnail}
-          contentFit="cover"
-        />
+        <View style={{ borderRadius: 12, overflow: "hidden", width: 150, height: 80 }}>
+          <NitroImage
+            image={{ url: item.thumb_url }}
+            style={styles.thumbnail}
+            resizeMode="cover"
+          />
+        </View>
         <View style={{ flex: 1, gap: 4 }}>
           <FlexText
             numberOfLines={1}

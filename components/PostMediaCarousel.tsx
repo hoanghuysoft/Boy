@@ -9,9 +9,10 @@ import { PlayBold, RestartCircleBold } from "@solar-icons/react-native";
 import { Image as ExpoImage } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions, Pressable as RNPressable, StyleSheet, View } from "react-native";
+import { Dimensions, Pressable as RNPressable, View } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
-import TurboImage from "react-native-turbo-image";
+import { NitroImage } from "react-native-nitro-image";
+import { WebImages } from "react-native-nitro-web-image";
 import { FeedVideoPlayer } from "./FeedVideoPlayer";
 
 interface PostMediaCarouselProps {
@@ -168,29 +169,30 @@ interface PhotoCarouselItemProps {
 
 const PhotoCarouselItem: React.FC<PhotoCarouselItemProps> = React.memo(({
     item,
-    photoIndex,
     colors,
     shouldBlur,
-    onReveal,
-    mediaHeight,
     onPress,
 }) => {
-    const placeholderBlurhash = useMemo(
-        () => resolveBlurhash(item.blurhash, item.id),
-        [item.blurhash, item.id],
-    );
     return (
         <View style={{ width: SCREEN_WIDTH }}>
             <Pressable android_ripple={{ color: colors.divider, foreground: true }} onPress={onPress}>
-                <TurboImage
-                    source={{ uri: choosenMediaPath(item) }}
-                    style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / ASPECT_RATIO, backgroundColor: colors.divider }}
-                    resizeMode="cover"
-                    blur={shouldBlur ? 25 : undefined}
-                    fadeDuration={150}
-                    placeholder={{ blurhash: placeholderBlurhash }}
-                    showPlaceholderOnFailure
-                />
+                {/* NitroImage is a HybridView — wrap with overflow: 'hidden' for clipping */}
+                <View style={{
+                    width: SCREEN_WIDTH,
+                    height: SCREEN_WIDTH / ASPECT_RATIO,
+                    backgroundColor: colors.divider,
+                    overflow: 'hidden',
+                }}>
+                    <NitroImage
+                        image={{ url: choosenMediaPath(item) }}
+                        recyclingKey={choosenMediaPath(item)}
+                        resizeMode="cover"
+                        style={[
+                            { width: '100%', height: '100%' },
+                            shouldBlur && { opacity: 0.1 },
+                        ]}
+                    />
+                </View>
             </Pressable>
         </View>
     );
@@ -342,7 +344,7 @@ export const PostMediaCarousel = ({ media, postId, profileName, content, colors,
                 setActiveMedia(null, null);
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activePostId, postId]);
     // Intentionally omit `media` and `setActiveMedia` — they don't change the
     // triggering condition. We only want to react to the post becoming active.
@@ -351,9 +353,10 @@ export const PostMediaCarousel = ({ media, postId, profileName, content, colors,
     const mediaHeight = SCREEN_WIDTH / ASPECT_RATIO;
     const placeholderImageVideo = 'https://placehold.net/3-600x800.png';
 
-    // Prefetch carousel images — route each URL to the cache of the component that will render it:
-    // video thumbnails → ExpoImage.prefetch (rendered by ExpoImage in VideoCarouselItem)
-    // photo URLs       → TurboImage.prefetch (rendered by TurboImage in PhotoCarouselItem)
+    // Prefetch carousel images — route each URL to the correct native cache:
+    // video thumbnails → ExpoImage.prefetch  (rendered by ExpoImage in VideoCarouselItem)
+    // photo URLs       → WebImages.preload   (rendered by NitroImage in PhotoCarouselItem)
+    //                    NitroImage's preload API takes a single string, so we iterate.
     useEffect(() => {
         if (!media || media.length === 0) return;
 
@@ -363,10 +366,10 @@ export const PostMediaCarousel = ({ media, postId, profileName, content, colors,
 
         const photoUrls = media
             .filter(m => m.type === 'photo' && m.url)
-            .map(m => ({ uri: m.url }));
+            .map(m => m.url);
 
         if (videoThumbnails.length > 0) ExpoImage.prefetch(videoThumbnails);
-        if (photoUrls.length > 0) TurboImage.prefetch(photoUrls);
+        for (const url of photoUrls) WebImages.preload(url);
     }, [media]);
 
     // Memoized keyExtractor

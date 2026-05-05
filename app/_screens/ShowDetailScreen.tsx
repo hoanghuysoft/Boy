@@ -10,7 +10,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { BookmarkBold, BookmarkOutline, CloudDownloadBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
-import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -112,11 +111,13 @@ const ChatScreen = () => {
         onPress={() => openGallery(galleryImages, index)}
         style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
       >
-        <NitroImage
-          image={{ url: item }}
-          style={{ width: 250, aspectRatio: 16 / 9, borderRadius: 12 }}
-          resizeMode="cover"
-        />
+        <View style={{ width: 250, aspectRatio: 16 / 9, borderRadius: 12, overflow: "hidden" }}>
+          <NitroImage
+            image={{ url: item }}
+            style={{ width: 250, aspectRatio: 16 / 9 }}
+            resizeMode="cover"
+          />
+        </View>
       </Pressable>
     ),
     [galleryImages, openGallery],
@@ -139,16 +140,13 @@ const ChatScreen = () => {
         style={{ width: 200, marginRight: 12, overflow: "hidden", position: "relative" }}
       >
         <View style={{ width: 200, borderRadius: 16, overflow: "hidden", position: "relative" }}>
-          <Image
-            source={{ uri: item.thumb_url }}
+          <NitroImage
+            image={{ url: item.thumb_url }}
             style={{
               width: 200,
               aspectRatio: 16 / 9,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: "rgba(132,132,132,0.34)",
             }}
-            contentFit="cover"
+            resizeMode="cover"
           />
           <View
             style={{
@@ -374,7 +372,7 @@ const ChatScreen = () => {
                   ]}
                 >
                   {/* Badge */}
-                  <Image source={require("../../assets/images/oscar.png")} style={{ width: 150, height: 150 }} contentFit="contain" />
+                  <NitroImage image={require("../../assets/images/oscar.png")} style={{ width: 150, height: 150 }} resizeMode="contain" />
                   <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
                     {detail?.title ?? ""}
                   </FlexText>
@@ -386,8 +384,8 @@ const ChatScreen = () => {
                     <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
                     <FlexText style={[styles.textStyle, { color: "white" }]}>{detail?.category ?? ""}</FlexText>
                     <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }}></View>
-                    <Image source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
-                    <Image source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                    <NitroImage image={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} resizeMode="contain" />
+                    <NitroImage image={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} resizeMode="contain" />
                   </View>
                 </View>
               </View>
@@ -402,11 +400,12 @@ const ChatScreen = () => {
                         key={`${ep.episode}-${ep.url}-${index}`}
                         onPress={() => {
                           if (!ep.url) return;
-                          const isHls = ep.url.toLowerCase().includes(".m3u8");
-                          if (isHls && webviewUrl) {
-                            WebBrowser.openBrowserAsync(webviewUrl);
-                            return;
-                          }
+                          // const isHls = ep.url.toLowerCase().includes(".m3u8");
+                          // if (isHls && webviewUrl) {
+                          //   WebBrowser.openBrowserAsync(webviewUrl);
+                          //   return;
+                          // }
+                          console.log("ep.url", ep.url);
                           router.push({
                             pathname: "/video_player",
                             params: {

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
-import TurboImage from 'react-native-turbo-image';
+import { NativeNitroImage, useImage } from 'react-native-nitro-image';
 import { fitContainer } from 'react-native-zoom-toolkit';
 import { getCachedImageDimension, setCachedImageDimension } from './imageDimensionCache';
 
@@ -10,49 +10,40 @@ type GalleryImageProps = {
     blurhash?: string | null;
 };
 
-const GalleryImage: React.FC<GalleryImageProps> = ({ uri, index, blurhash }) => {
+const GalleryImage: React.FC<GalleryImageProps> = ({ uri }) => {
     const { width, height } = useWindowDimensions();
+
+    // Seed the resolution from MMKV cache so the layout is correct on first render.
     const cachedResolution = getCachedImageDimension(uri);
     const [resolution, setResolution] = useState<{ width: number; height: number }>(
         cachedResolution ?? { width: 1, height: 1 }
     );
 
+    // useImage fully loads the image into memory and exposes .width / .height
+    // directly on the returned Image object — no onSuccess event needed.
+    const { image } = useImage({ url: uri });
+
+    useEffect(() => {
+        if (image && image.width > 0 && image.height > 0) {
+            setCachedImageDimension(uri, image.width, image.height);
+            setResolution({ width: image.width, height: image.height });
+        }
+    }, [image, uri]);
+
     const size = fitContainer(resolution.width / resolution.height, { width, height });
 
     return (
         <View style={[size, { justifyContent: 'center', alignItems: 'center' }]}>
-            <TurboImage
-                source={{ uri }}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="contain"
-                placeholder={
-                    typeof blurhash === 'string' && blurhash.trim().length > 0
-                        ? { blurhash: blurhash.trim() }
-                        : undefined
-                }
-                onSuccess={(e: any) => {
-                    const w = e?.nativeEvent?.width ?? e?.width ?? 0;
-                    const h = e?.nativeEvent?.height ?? e?.height ?? 0;
-                    if (w > 0 && h > 0) {
-                        setCachedImageDimension(uri, w, h);
-                        setResolution({ width: w, height: h });
-                    }
-                }}
-                format={uri.endsWith('.gif') ? 'gif' : undefined}
-            />
-            {/* <Image
-                source={{ uri }}
-                style={{ width: '100%', height: '100%' }}
-                contentFit="contain"
-                transition={150}
-                onLoad={(e: any) => {
-                    const w = e?.source?.width ?? e?.nativeEvent?.width ?? e?.width ?? 0;
-                    const h = e?.source?.height ?? e?.nativeEvent?.height ?? e?.height ?? 0;
-                    if (w > 0 && h > 0) {
-                        setResolution({ width: w, height: h });
-                    }
-                }}
-            /> */}
+            {/* NitroImage is a HybridView — it must be clipped by a View with
+                overflow: 'hidden', not by borderRadius on the NitroImage itself. */}
+            <View style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
+                <NativeNitroImage
+                    image={image}
+                    recyclingKey={uri}
+                    resizeMode="contain"
+                    style={{ width: '100%', height: '100%' }}
+                />
+            </View>
         </View>
     );
 };

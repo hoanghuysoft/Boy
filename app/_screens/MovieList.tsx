@@ -2,17 +2,22 @@ import { FlexText } from "@/components/FlexText";
 import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
-import { 
-    useMovieRecommendationsInfinite, useMovieSimilarInfinite, useNowPlayingMoviesInfinite, 
-    usePopularMoviesInfinite, usePopularPeopleInfinite, useTopRatedMoviesInfinite, useUpcomingMoviesInfinite,
-    useAiringTodayTVInfinite, useOnTheAirTVInfinite, usePopularTVInfinite, useTopRatedTVInfinite,
-    useTvSimilarInfinite, useTvRecommendationsInfinite,
+import {
+    useAiringTodayTVInfinite,
+    useMovieRecommendationsInfinite, useMovieSimilarInfinite, useNowPlayingMoviesInfinite,
+    useOnTheAirTVInfinite,
+    usePopularMoviesInfinite, usePopularPeopleInfinite,
+    usePopularTVInfinite,
+    useTopRatedMoviesInfinite,
+    useTopRatedTVInfinite,
+    useTvRecommendationsInfinite,
     useTvSeasonDetails,
+    useTvSimilarInfinite,
+    useUpcomingMoviesInfinite,
 } from "@/hooks/useMovies";
 import { Movie } from "@/types/moviedb/movie";
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -25,6 +30,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -154,10 +160,10 @@ const MovieListScreen = () => {
                         { backgroundColor: colors.background, opacity: pressed ? 0.9 : 1 },
                     ]}
                 >
-                    <Image
-                        source={{ uri: getImageUrl(thumbnailPath) }}
+                    <NitroImage
+                        image={{ url: getImageUrl(thumbnailPath) }}
                         style={isPerson ? [styles.thumbnail, { height: 90, width: 90, borderRadius: 9999 }] : styles.thumbnail}
-                        contentFit="cover"
+                        resizeMode="cover"
                     />
                     <View style={{ flex: 1, gap: 4 }}>
                         <FlexText numberOfLines={2} style={[styles.title, { color: colors.text }]}>
@@ -206,10 +212,10 @@ const MovieListScreen = () => {
                     flexShrink: 0,
                 }}>
                     {item.still_path ? (
-                        <Image
-                            source={{ uri: `https://image.tmdb.org/t/p/w300${item.still_path}` }}
+                        <NitroImage
+                            image={{ url: `https://image.tmdb.org/t/p/w300${item.still_path}` }}
                             style={{ width: "100%", height: "100%" }}
-                            contentFit="cover"
+                            resizeMode="cover"
                         />
                     ) : (
                         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

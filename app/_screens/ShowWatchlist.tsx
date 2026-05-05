@@ -3,7 +3,6 @@ import { WatchlistShow, useShowWatchlistStore } from '@/stores/showWatchlist';
 import { Ionicons } from '@expo/vector-icons';
 import { RoundedMagnifierOutline, TrashBinTrashBold } from '@solar-icons/react-native';
 import dayjs from 'dayjs';
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -17,6 +16,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { NitroImage } from 'react-native-nitro-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
@@ -99,11 +99,13 @@ const ShowWatchlistScreen = () => {
                     { backgroundColor: colors.background, opacity: pressed ? 0.9 : 1 },
                 ]}
             >
-                <Image
-                    source={{ uri: item.thumb_url }}
-                    style={styles.thumbnail}
-                    contentFit="cover"
-                />
+                <View style={{ borderRadius: 12, overflow: "hidden", width: 150, height: 80 }}>
+                    <NitroImage
+                        image={{ url: item.thumb_url }}
+                        style={styles.thumbnail}
+                        resizeMode="cover"
+                    />
+                </View>
                 <View style={{ flex: 1, gap: 4 }}>
                     <FlexText numberOfLines={1} style={[styles.title, { color: colors.text }]}>
                         {item.title}

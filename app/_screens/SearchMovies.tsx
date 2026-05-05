@@ -6,7 +6,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import LineiconsIcon from "@lineiconshq/react-native-lineicons";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -22,6 +21,7 @@ import {
   View
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -29,8 +29,8 @@ import { createCommonStyles } from "../../styles/common";
 const SEARCH_BAR_HEIGHT = 58;
 
 const getImageUrl = (path: string | null | undefined, size: number = 342) => {
-    if (!path) return `https://via.placeholder.com/${size}x513?text=No+Image`;
-    return `https://image.tmdb.org/t/p/w${size}${path}`;
+  if (!path) return `https://via.placeholder.com/${size}x513?text=No+Image`;
+  return `https://image.tmdb.org/t/p/w${size}${path}`;
 };
 
 const CATEGORIES = [
@@ -133,43 +133,43 @@ const SearchMoviesScreen = () => {
       const thumbnailPath = isPerson ? item.profile_path : item.poster_path;
 
       const handlePress = () => {
-          if (isMovie) {
-             router.push({ pathname: "/movie_detail", params: { id: item.id } });
-          } else if (isPerson) {
-             router.push({ pathname: "/person_detail", params: { id: item.id } });
-          } else {
-             router.push({ pathname: "/tv_detail", params: { id: item.id } });
-          }
+        if (isMovie) {
+          router.push({ pathname: "/movie_detail", params: { id: item.id } });
+        } else if (isPerson) {
+          router.push({ pathname: "/person_detail", params: { id: item.id } });
+        } else {
+          router.push({ pathname: "/tv_detail", params: { id: item.id } });
+        }
       };
 
       return (
         <Pressable
-            onPress={handlePress}
-            style={({ pressed }) => [
+          onPress={handlePress}
+          style={({ pressed }) => [
             styles.row,
             {
-                backgroundColor: colors.background,
-                opacity: pressed ? 0.9 : 1,
+              backgroundColor: colors.background,
+              opacity: pressed ? 0.9 : 1,
             },
-            ]}
+          ]}
         >
-            <Image
-                source={{ uri: getImageUrl(thumbnailPath) }}
-                style={isPerson ? [styles.thumbnail, { height: 90, width: 90, borderRadius: 9999 }] : styles.thumbnail}
-                contentFit="cover"
-            />
-            <View style={{ flex: 1, gap: 4 }}>
+          <NitroImage
+            image={{ url: getImageUrl(thumbnailPath) }}
+            style={isPerson ? [styles.thumbnail, { height: 90, width: 90, borderRadius: 9999 }] : styles.thumbnail}
+            resizeMode="cover"
+          />
+          <View style={{ flex: 1, gap: 4 }}>
             <FlexText numberOfLines={2} style={[styles.title, { color: colors.text }]}>
-                {title}
+              {title}
             </FlexText>
             <FlexText
-                numberOfLines={1}
-                style={[styles.description, { color: (colors as any).mutedText ?? "rgba(255,255,255,0.7)" }]}
+              numberOfLines={1}
+              style={[styles.description, { color: (colors as any).mutedText ?? "rgba(255,255,255,0.7)" }]}
             >
-                {isPerson ? item.known_for_department : (dateRaw ? new Date(dateRaw).getFullYear() : "—")}
+              {isPerson ? item.known_for_department : (dateRaw ? new Date(dateRaw).getFullYear() : "—")}
             </FlexText>
             {!isPerson && <IMDbBadge score={item.vote_average} />}
-            </View>
+          </View>
         </Pressable>
       );
     },
@@ -185,26 +185,26 @@ const SearchMoviesScreen = () => {
           Explore
         </FlexText>
         <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 10 }}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 10 }}
         >
-        {CATEGORIES.map((c) => (
+          {CATEGORIES.map((c) => (
             <TouchableOpacity
-            key={c.name}
-            onPress={() => handleCategoryPress(c)}
-            activeOpacity={0.7}
+              key={c.name}
+              onPress={() => handleCategoryPress(c)}
+              activeOpacity={0.7}
             >
-            <View style={styles.categoryPill}>
+              <View style={styles.categoryPill}>
                 <FlexText
-                numberOfLines={1}
-                style={{ color: colors.text, fontWeight: "600" }}
+                  numberOfLines={1}
+                  style={{ color: colors.text, fontWeight: "600" }}
                 >
-                {c.name}
+                  {c.name}
                 </FlexText>
-            </View>
+              </View>
             </TouchableOpacity>
-        ))}
+          ))}
         </ScrollView>
       </View>
     );
@@ -279,13 +279,13 @@ const SearchMoviesScreen = () => {
       </View>
 
       <View style={{ flexDirection: "row", paddingHorizontal: 16, marginTop: 16, marginBottom: 8, gap: 16 }}>
-          {(['movie', 'tv', 'person'] as const).map(type => (
-              <TouchableOpacity key={type} onPress={() => setSearchType(type)} style={{ paddingBottom: 8, borderBottomWidth: searchType === type ? 2 : 0, borderBottomColor: (colors as any).primary ?? "white" }}>
-                  <FlexText style={{ color: searchType === type ? colors.text : colors.muted, fontWeight: searchType === type ? "700" : "500" }}>
-                      {type === 'movie' ? 'Movies' : type === 'tv' ? 'TV Shows' : 'People'}
-                  </FlexText>
-              </TouchableOpacity>
-          ))}
+        {(['movie', 'tv', 'person'] as const).map(type => (
+          <TouchableOpacity key={type} onPress={() => setSearchType(type)} style={{ paddingBottom: 8, borderBottomWidth: searchType === type ? 2 : 0, borderBottomColor: (colors as any).primary ?? "white" }}>
+            <FlexText style={{ color: searchType === type ? colors.text : colors.muted, fontWeight: searchType === type ? "700" : "500" }}>
+              {type === 'movie' ? 'Movies' : type === 'tv' ? 'TV Shows' : 'People'}
+            </FlexText>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <FlashList
@@ -309,19 +309,19 @@ const SearchMoviesScreen = () => {
               </View>
             );
           }
-          
+
           if (!isLoading && submittedQuery && items.length === 0) {
-              return (
-                 <View style={{ padding: 16, alignItems: 'center', marginTop: 40 }}>
-                     <Ionicons name="search-outline" size={48} color={(colors as any).muted ?? "rgba(255,255,255,0.5)"} />
-                     <FlexText style={{ color: colors.text, fontSize: 18, fontWeight: "600", marginTop: 16 }}>
-                         No results found
-                     </FlexText>
-                     <FlexText style={{ color: (colors as any).muted ?? "rgba(255,255,255,0.7)", marginTop: 8, textAlign: "center" }}>
-                        We couldn&apos;t find anything matching &quot;{submittedQuery}&quot;. Try adjusting your search query.
-                     </FlexText>
-                 </View>
-              );
+            return (
+              <View style={{ padding: 16, alignItems: 'center', marginTop: 40 }}>
+                <Ionicons name="search-outline" size={48} color={(colors as any).muted ?? "rgba(255,255,255,0.5)"} />
+                <FlexText style={{ color: colors.text, fontSize: 18, fontWeight: "600", marginTop: 16 }}>
+                  No results found
+                </FlexText>
+                <FlexText style={{ color: (colors as any).muted ?? "rgba(255,255,255,0.7)", marginTop: 8, textAlign: "center" }}>
+                  We couldn&apos;t find anything matching &quot;{submittedQuery}&quot;. Try adjusting your search query.
+                </FlexText>
+              </View>
+            );
           }
 
           return null;

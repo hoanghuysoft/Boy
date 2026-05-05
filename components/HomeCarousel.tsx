@@ -5,16 +5,15 @@ import { useHomeCarouselViewModel } from "@/viewmodels/HomeCarouselViewModel";
 import {
     Canvas,
     ImageShader,
+    Rect,
     Image as SkiaImage,
     LinearGradient as SkiaLinearGradient,
     useAnimatedImageValue,
     useImage,
     vec
 } from "@shopify/react-native-skia";
-import { LinearGradient } from "expo-linear-gradient";
 import React, { memo, useCallback, useEffect, useMemo } from "react";
-import { Animated, StyleSheet } from "react-native";
-import { easeGradient } from "react-native-easing-gradient";
+import { Animated, StyleSheet, useWindowDimensions } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 
 // Component for static images
@@ -149,35 +148,32 @@ SkiaCarouselImage.displayName = "SkiaCarouselImage";
 
 const ColorGradientOverlay = memo(({ carouselHeight }: { carouselHeight: number }) => {
     const { theme } = useThemeContext();
-    const { colors, locations } = useMemo(() => easeGradient({
-        colorStops: {
-            0: {
-                color: "transparent",
-            },
-            1: {
-                color: theme === "light"
-                    ? "rgba(241, 241, 243, 1)"
-                    : "rgba(0,0,0,1)",
-            },
-        },
-        extraColorStopsPerTransition: 12,
-    }), [theme]);
+    const { width: screenWidth } = useWindowDimensions();
+    const overlayHeight = carouselHeight * 0.5;
+    // Solid target colour that matches the app background (light or dark)
+    const bgColor = theme === "light" ? "rgba(255, 255, 255, 1)" : "rgba(0,0,0,1)";
 
     return (
-        <LinearGradient
+        // Skia Canvas renders the gradient entirely on the GPU — no JS bridge
+        // involvement after the first paint, unlike expo-linear-gradient.
+        <Canvas
             pointerEvents="none"
-            colors={colors as [string, string, ...string[]]}
-            locations={locations as [number, number, ...number[]]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
             style={{
                 position: "absolute",
                 bottom: 0,
                 left: 0,
                 right: 0,
-                height: carouselHeight * 0.4,
+                height: overlayHeight,
             }}
-        />
+        >
+            <Rect x={0} y={0} width={screenWidth} height={overlayHeight}>
+                <SkiaLinearGradient
+                    start={vec(0, 0)}
+                    end={vec(0, overlayHeight)}
+                    colors={["transparent", bgColor]}
+                />
+            </Rect>
+        </Canvas>
     );
 });
 ColorGradientOverlay.displayName = "ColorGradientOverlay";
