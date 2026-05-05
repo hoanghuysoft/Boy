@@ -216,14 +216,15 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "ddac2295-af33-4e05-b689-6caa80c1d9d3"
+        "projectId": "cfe29796-dcdc-4629-aa71-10f0832192c7"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/ddac2295-af33-4e05-b689-6caa80c1d9d3"
+      "url": "https://u.expo.dev/cfe29796-dcdc-4629-aa71-10f0832192c7",
+      "enableBsdiffPatchSupport": true
     }
   }
 }
