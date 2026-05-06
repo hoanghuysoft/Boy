@@ -8,6 +8,7 @@ import hashtag from './en/hashtag';
 import home from './en/home';
 import languageSettings from './en/languageSettings';
 import navigation from './en/navigation';
+import notes from './en/notes';
 import onboarding from './en/onboarding';
 import post from './en/post';
 import profile from './en/profile';
@@ -28,6 +29,7 @@ const en = {
     settings,
     languageSettings,
     navigation,
+    notes,
     onboarding,
     post,
     profile,

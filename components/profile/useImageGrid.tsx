@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import { Image } from "expo-image";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ImageStyle,
     ListRenderItem,
@@ -14,6 +14,7 @@ import {
     ViewStyle,
 } from "react-native";
 import { Pressable } from "react-native-gesture-handler";
+import { NitroImage, useImage } from "react-native-nitro-image";
 import { Media } from "../../types/media";
 import {
     GridItemType,
@@ -101,14 +102,12 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
 }) => {
     const fallbackUrls = useMemo(() => buildFallbackUrls(mediaItem, placeholderImage), [mediaItem, placeholderImage]);
     const [urlIndex, setUrlIndex] = useState(0);
-    const placeholderBlurhash = useMemo(
-        () => resolveBlurhash(mediaItem.blurhash, mediaItem.id),
-        [mediaItem.blurhash, mediaItem.id],
-    );
+    const { error } = useImage({ url: fallbackUrls[urlIndex] });
 
-    const handleImageError = useCallback(() => {
+    useEffect(() => {
+        if (!error) return;
         setUrlIndex(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
-    }, [fallbackUrls.length]);
+    }, [error, fallbackUrls.length]);
 
     return (
         <Pressable
@@ -126,14 +125,14 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
                 fadeDuration={150}
                 onFailure={handleImageError}
             /> */}
-            <Image
-                source={{ uri: fallbackUrls[urlIndex] }}
-                style={imageStyle}
-                contentFit="cover"
-                transition={150}
-                onError={handleImageError}
-                placeholder={{ blurhash: placeholderBlurhash }}
-            />
+            <View style={[imageStyle, { overflow: "hidden" }]}>
+                <NitroImage
+                    image={{ url: fallbackUrls[urlIndex] }}
+                    recyclingKey={fallbackUrls[urlIndex]}
+                    style={StyleSheet.absoluteFill}
+                    resizeMode="cover"
+                />
+            </View>
         </Pressable>
     );
 });

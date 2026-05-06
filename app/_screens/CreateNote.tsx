@@ -5,6 +5,7 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     Alert,
@@ -31,6 +32,7 @@ type Block =
 
 const CreateNoteScreen = () => {
     const { colors, typography, theme } = useThemeContext();
+    const { t } = useTranslation();
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
 
@@ -116,7 +118,7 @@ const CreateNoteScreen = () => {
             // Ensure the URL has a valid domain (e.g., containing a dot like .com) or is localhost
             const urlRegex = /^(https?:\/\/)?(localhost|[\w\-]+(\.[\w\-]+)+)(:\d+)?(\/.*)?$/i;
             if (!urlRegex.test(urlStr)) {
-                Alert.alert("Invalid URL", "Please enter a valid URL (e.g., example.com).");
+                Alert.alert(t("notes.editor.invalidUrlTitle"), t("notes.editor.invalidUrlMessage"));
                 return;
             }
 
@@ -129,7 +131,7 @@ const CreateNoteScreen = () => {
             try {
                 new URL(formattedUrl);
             } catch (error) {
-                Alert.alert("Invalid URL", "Please enter a valid, well-formed URL.");
+                Alert.alert(t("notes.editor.invalidUrlTitle"), t("notes.editor.invalidUrlMalformedMessage"));
                 return;
             }
 
@@ -145,7 +147,7 @@ const CreateNoteScreen = () => {
             setUrlInput("");
             setInputType(null);
         }
-    }, [urlInput, inputType]);
+    }, [urlInput, inputType, t]);
 
     const handleSave = useCallback(() => {
         const fullContent = [
@@ -239,7 +241,7 @@ const CreateNoteScreen = () => {
                         paddingVertical: 8,
                         borderRadius: 20,
                     }}>
-                    <FlexText style={[common.heading, { fontSize: 20 }]}>{isEditMode ? 'Edit Note' : 'New Note'}</FlexText>
+                    <FlexText style={[common.heading, { fontSize: 20 }]}>{isEditMode ? t("notes.editor.titleEdit") : t("notes.editor.titleNew")}</FlexText>
                 </SquircleView>
                 <TouchableOpacity
                     onPress={handleSave}
@@ -254,7 +256,7 @@ const CreateNoteScreen = () => {
                     {isSubmitting ? (
                         <ActivityIndicator size="small" color={colors.background} />
                     ) : (
-                        <FlexText style={{ color: colors.background, fontWeight: 'bold' }}>Save</FlexText>
+                        <FlexText style={{ color: colors.background, fontWeight: 'bold' }}>{t("notes.editor.save")}</FlexText>
                     )}
                 </TouchableOpacity>
             </SquircleView>
@@ -271,7 +273,7 @@ const CreateNoteScreen = () => {
                         fontWeight: 'bold',
                         marginBottom: 16,
                     }}
-                    placeholder="Note Title"
+                    placeholder={t("notes.editor.noteTitlePlaceholder")}
                     placeholderTextColor={colors.muted}
                     value={title}
                     onChangeText={setTitle}
@@ -288,7 +290,7 @@ const CreateNoteScreen = () => {
                                     textAlignVertical: 'top',
                                     minHeight: blocks.length === 1 ? 120 : undefined,
                                 }}
-                                placeholder={index === 0 ? "Write your note here... You can also add images or GIFs from the toolbar below." : undefined}
+                                placeholder={index === 0 ? t("notes.editor.contentPlaceholder") : undefined}
                                 placeholderTextColor={colors.muted}
                                 multiline
                                 value={block.text}
@@ -318,7 +320,7 @@ const CreateNoteScreen = () => {
                             <View key={block.id} style={{ marginTop: 12, marginBottom: 12, position: 'relative' }}>
                                 <LinkPreview
                                     text={block.url}
-                                    renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>Click to open on your browser</FlexText>}
+                                    renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>{t("notes.common.linkPreviewHint")}</FlexText>}
                                     renderTitle={(title) => <FlexText style={{ color: colors.text, fontWeight: 'bold', fontSize: 15 }} numberOfLines={2}>{title}</FlexText>}
                                     renderDescription={(desc) => <FlexText style={{ color: colors.muted, fontSize: 13, marginTop: 4 }} numberOfLines={3}>{desc}</FlexText>}
                                     containerStyle={{ borderRadius: 12, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', overflow: 'hidden' }}
@@ -357,7 +359,7 @@ const CreateNoteScreen = () => {
                                 <MaterialIcons name="link" size={18} color={colors.muted} />
                                 <TextInput
                                     style={{ flex: 1, fontSize: 14, marginLeft: 8, color: colors.text }}
-                                    placeholder={inputType === 'image' ? "Enter image URL..." : "Enter link URL..."}
+                                    placeholder={inputType === 'image' ? t("notes.editor.imageUrlPlaceholder") : t("notes.editor.linkUrlPlaceholder")}
                                     placeholderTextColor={colors.muted}
                                     value={urlInput}
                                     onChangeText={setUrlInput}
@@ -377,19 +379,19 @@ const CreateNoteScreen = () => {
                                     <TouchableOpacity onPress={() => setInputType(inputType === 'image' ? null : 'image')}>
                                         <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
                                             <MaterialIcons name="image" size={20} color={colors.text} />
-                                            <FlexText style={{ color: colors.text, fontWeight: '600' }}>Image URL</FlexText>
+                                            <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.imageUrlAction")}</FlexText>
                                         </SquircleView>
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={() => setInputType(inputType === 'link' ? null : 'link')}>
                                         <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
                                             <MaterialIcons name="public" size={20} color={colors.text} />
-                                            <FlexText style={{ color: colors.text, fontWeight: '600' }}>Link</FlexText>
+                                            <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.linkAction")}</FlexText>
                                         </SquircleView>
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={() => GiphyDialog.show()}>
                                         <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
                                             <MaterialIcons name="gif" size={20} color={colors.text} />
-                                            <FlexText style={{ color: colors.text, fontWeight: '600' }}>GIF</FlexText>
+                                            <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.gifAction")}</FlexText>
                                         </SquircleView>
                                     </TouchableOpacity>
                                 </ScrollView>
@@ -421,19 +423,19 @@ const CreateNoteScreen = () => {
                                 <TouchableOpacity onPress={() => setInputType(inputType === 'image' ? null : 'image')}>
                                     <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
                                         <MaterialIcons name="image" size={20} color={colors.text} />
-                                        <FlexText style={{ color: colors.text, fontWeight: '600' }}>Image URL</FlexText>
+                                        <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.imageUrlAction")}</FlexText>
                                     </SquircleView>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => setInputType(inputType === 'link' ? null : 'link')}>
                                     <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
                                         <MaterialIcons name="public" size={20} color={colors.text} />
-                                        <FlexText style={{ color: colors.text, fontWeight: '600' }}>Link</FlexText>
+                                        <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.linkAction")}</FlexText>
                                     </SquircleView>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => GiphyDialog.show()}>
                                     <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
                                         <MaterialIcons name="gif" size={20} color={colors.text} />
-                                        <FlexText style={{ color: colors.text, fontWeight: '600' }}>GIF</FlexText>
+                                        <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.gifAction")}</FlexText>
                                     </SquircleView>
                                 </TouchableOpacity>
                             </ScrollView>

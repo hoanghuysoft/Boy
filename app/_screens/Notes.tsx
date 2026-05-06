@@ -5,6 +5,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     Alert,
@@ -46,6 +47,7 @@ function parseNoteContent(content: string) {
 
 const NotesScreen = () => {
     const router = useRouter();
+    const { t } = useTranslation();
     const insets = useSafeAreaInsets();
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -79,12 +81,12 @@ const NotesScreen = () => {
         if (deletingId === note.id || deleteNoteMutation.isPending) return;
 
         Alert.alert(
-            'Delete Note',
-            'Are you sure you want to delete this note?',
+            t("notes.list.deleteDialogTitle"),
+            t("notes.list.deleteDialogMessage"),
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t("notes.list.cancelAction"), style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: t("notes.list.deleteAction"),
                     style: 'destructive',
                     onPress: () => {
                         setDeletingId(note.id);
@@ -97,7 +99,7 @@ const NotesScreen = () => {
                 },
             ]
         );
-    }, [deleteNoteMutation, deletingId]);
+    }, [deleteNoteMutation, deletingId, t]);
 
     const renderItem = useCallback(({ item }: { item: Note }) => {
         const { title, text, imageUrl, linkUrls } = parseNoteContent(item.content);
@@ -133,7 +135,7 @@ const NotesScreen = () => {
                     <View style={{ marginTop: text.length > 0 ? 12 : 0 }} pointerEvents="none">
                         <LinkPreview
                             text={linkUrls[0]}
-                            renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>Open note to visit link</FlexText>}
+                            renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>{t("notes.list.openNoteToVisitLink")}</FlexText>}
                             renderTitle={(title) => <FlexText style={{ color: colors.text, fontWeight: 'bold', fontSize: 15 }} numberOfLines={2}>{title}</FlexText>}
                             renderDescription={(desc) => <FlexText style={{ color: colors.muted, fontSize: 13, marginTop: 4 }} numberOfLines={3}>{desc}</FlexText>}
                             containerStyle={{ borderRadius: 12, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', overflow: 'hidden' }}
@@ -154,7 +156,7 @@ const NotesScreen = () => {
                             style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
                         >
                             <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
-                                Edit
+                                {t("notes.list.editAction")}
                             </FlexText>
                         </TouchableOpacity>
 
@@ -168,7 +170,7 @@ const NotesScreen = () => {
                                 <ActivityIndicator size="small" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
                             ) : (
                                 <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
-                                    Delete
+                                    {t("notes.list.deleteAction")}
                                 </FlexText>
                             )}
                         </TouchableOpacity>
@@ -176,7 +178,7 @@ const NotesScreen = () => {
                 </View>
             </TouchableOpacity>
         );
-    }, [theme, common.body, common.row, common.bodySmall, colors.muted, deletingId, handleDeleteNote]);
+    }, [theme, common.body, common.row, common.bodySmall, colors.muted, deletingId, handleDeleteNote, t]);
 
     const renderFooter = useCallback(() => {
         if (isFetchingNextPage) {
@@ -210,25 +212,25 @@ const NotesScreen = () => {
                     <Ionicons name="document-text" size={32} color={colors.muted} />
                 </View>
                 <FlexText style={[common.heading, { fontSize: 20, marginTop: 20, marginBottom: 8 }]}>
-                    No Notes Yet
+                    {t("notes.list.emptyTitle")}
                 </FlexText>
                 <FlexText style={[common.body, { color: colors.muted, textAlign: "center", lineHeight: 22 }]}>
-                    Tap the + button to create your first note.
+                    {t("notes.list.emptyDescription")}
                 </FlexText>
             </View>
         );
-    }, [isLoading, colors, common, theme]);
+    }, [isLoading, colors, common, theme, t]);
 
     const ListHeaderComponent = useCallback(() => (
         <View style={{ marginTop: insets.top + 66, paddingHorizontal: 16, marginBottom: 16 }}>
             <FlexText style={[common.heading, { fontSize: 28 }]}>
-                My Notes
+                {t("notes.list.title")}
             </FlexText>
             <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
-                Your personal notes and ideas
+                {t("notes.list.subtitle")}
             </FlexText>
         </View>
-    ), [insets.top, common, colors.muted]);
+    ), [insets.top, common, colors.muted, t]);
 
     return (
         <View style={common.screen}>

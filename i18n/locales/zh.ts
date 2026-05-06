@@ -8,6 +8,7 @@ import hashtag from './zh/hashtag';
 import home from './zh/home';
 import languageSettings from './zh/languageSettings';
 import navigation from './zh/navigation';
+import notes from './zh/notes';
 import onboarding from './zh/onboarding';
 import post from './zh/post';
 import profile from './zh/profile';
@@ -28,6 +29,7 @@ const zh = {
     settings,
     languageSettings,
     navigation,
+    notes,
     onboarding,
     post,
     profile,

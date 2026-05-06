@@ -2,7 +2,7 @@ import { FlexText } from "@/components/FlexText";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { getCachedImageDimension, setCachedImageDimension } from "@/components/gallery/imageDimensionCache";
 import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerSheet";
-import { useThemeContext } from "@/context/ThemeContext";
+import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { useInfiniteMedia } from "@/services/media";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
 import { useScrollStore } from "@/stores/scroll";
@@ -27,6 +27,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { NitroImage } from "react-native-nitro-image";
+import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -54,7 +56,7 @@ const prefetchPhotoDimensions = async (items: any[]) => {
         .filter(Boolean);
 
     if (allPhotoUrls.length > 0) {
-        Image.prefetch(allPhotoUrls).catch(() => { });
+        for (const url of allPhotoUrls) WebImages.preload(url);
     }
 
     // 3) For items still missing dimensions (no server value AND no cache),
@@ -126,26 +128,22 @@ const PhotoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: n
         ? COLUMN_WIDTH / (resolvedWidth / resolvedHeight)
         : 200;
 
-    const placeholderBlurhash = resolveBlurhash(item.blurhash, item.id || sourceUrl);
-
-    const handleLoad = useCallback((event: any) => {
-        const sourceWidth = event.source?.width;
-        const sourceHeight = event.source?.height;
-        if (sourceWidth && sourceHeight) {
-            setCachedImageDimension(sourceUrl, sourceWidth, sourceHeight);
-        }
-    }, [sourceUrl]);
-
     return (
-        <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-            <MediaViewer.Image index={item.mediaIndex ?? 0} edgeToEdge={true}>
-                <Image
-                    source={{ uri: sourceUrl! }}
+        <SquircleView cornerSmoothing={100} preserveSmoothing={true} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
+            <MediaViewer.Image
+                index={item.mediaIndex ?? 0}
+                style={{
+                    width: "100%",
+                    height: imageHeight,
+                    overflow: "hidden",
+                    borderRadius: 12,
+                }}
+            >
+                <NitroImage
+                    image={{ url: sourceUrl! }}
                     recyclingKey={sourceUrl}
-                    style={{ width: "100%", height: imageHeight, borderRadius: 12 }}
-                    contentFit="cover"
-                    placeholder={{ blurhash: placeholderBlurhash }}
-                    onLoad={handleLoad}
+                    style={{ width: "100%", height: "100%" }}
+                    resizeMode="cover"
                 />
             </MediaViewer.Image>
             <MediaFooter item={item} colors={colors} />
@@ -154,25 +152,23 @@ const PhotoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: n
 });
 PhotoCard.displayName = "PhotoCard";
 
-const VideoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: number }, colors: any }) => {
+const VideoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: number }, colors: ThemeColors }) => {
     const thumbnailUrl = item.thumbnail_url || choosenMediaPath(item);
     const placeholderBlurhash = resolveBlurhash(item.blurhash, item.id || thumbnailUrl);
 
     return (
-        <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-            <MediaViewer.Image index={item.mediaIndex ?? 0} edgeToEdge={true}>
-                <View style={{ width: "100%", height: VIDEO_HEIGHT }}>
-                    <Image
-                        source={{ uri: thumbnailUrl }}
-                        recyclingKey={thumbnailUrl}
-                        style={{ width: "100%", height: "100%", borderRadius: 12 }}
-                        contentFit="cover"
-                        transition={200}
-                        placeholder={{ blurhash: placeholderBlurhash }}
-                    />
-                    <View style={styles.playBadge}>
-                        <Ionicons name="play" size={18} color="white" />
-                    </View>
+        <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.containerContent }]}>
+            <MediaViewer.Image index={item.mediaIndex ?? 0} style={{ width: "100%", height: VIDEO_HEIGHT, overflow: "hidden", borderRadius: 12 }}>
+                <Image
+                    source={{ uri: thumbnailUrl }}
+                    recyclingKey={thumbnailUrl}
+                    style={{ width: "100%", height: "100%", borderRadius: 12 }}
+                    contentFit="cover"
+                    transition={200}
+                    placeholder={{ blurhash: placeholderBlurhash }}
+                />
+                <View style={styles.playBadge}>
+                    <Ionicons name="play" size={18} color="white" />
                 </View>
             </MediaViewer.Image>
             <MediaFooter item={item} colors={colors} />
@@ -343,22 +339,26 @@ const MansoryListScreen = () => {
                         ]}
                     >
                         {activeProfile?.avatar_url ? (
-                            <Image
-                                source={{ uri: activeProfile.avatar_url }}
-                                style={styles.headerAvatar}
-                                contentFit="cover"
-                                recyclingKey={activeProfile.avatar_url}
-                            />
+                            <View style={styles.headerAvatar}>
+                                <NitroImage
+                                    image={{ url: activeProfile.avatar_url }}
+                                    style={styles.headerAvatar}
+                                    resizeMode="cover"
+                                    recyclingKey={activeProfile.avatar_url}
+                                />
+                            </View>
                         ) : (
-                            <Image
-                                source={
-                                    activeProfile?.gender === "male"
-                                        ? require("../../assets/images/AV17.png")
-                                        : require("../../assets/images/AV86.png")
-                                }
-                                style={styles.headerAvatar}
-                                contentFit="cover"
-                            />
+                            <View style={styles.headerAvatar}>
+                                <NitroImage
+                                    image={
+                                        activeProfile?.gender === "male"
+                                            ? require("../../assets/images/AV17.png")
+                                            : require("../../assets/images/AV86.png")
+                                    }
+                                    style={styles.headerAvatar}
+                                    resizeMode="cover"
+                                />
+                            </View>
                         )}
                         <View
                             style={[
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     cardContainer: {
         marginHorizontal: 4,
         marginBottom: 8,
-        borderRadius: 12,
+        borderRadius: 16,
         overflow: "hidden"
     },
     caption: {
@@ -530,9 +530,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     headerAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 46,
+        height: 46,
+        borderRadius: 23,
+        overflow: "hidden",
     },
     headerAvatarBadge: {
         position: "absolute",

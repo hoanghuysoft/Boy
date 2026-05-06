@@ -3,6 +3,7 @@ import { Galeria } from '@nandorojo/galeria';
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     ScrollView,
@@ -61,6 +62,7 @@ function parseTokens(content: string) {
 
 const NoteDetailScreen = () => {
     const { id } = useLocalSearchParams();
+    const { t } = useTranslation();
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
@@ -79,9 +81,9 @@ const NoteDetailScreen = () => {
     if (!note) {
         return (
             <View style={[common.screen, { justifyContent: 'center', alignItems: 'center' }]}>
-                <FlexText style={{ color: colors.text }}>Note not found</FlexText>
+                <FlexText style={{ color: colors.text }}>{t("notes.detail.notFound")}</FlexText>
                 <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-                    <FlexText style={{ color: colors.secondary }}>Go Back</FlexText>
+                    <FlexText style={{ color: colors.secondary }}>{t("notes.detail.goBack")}</FlexText>
                 </TouchableOpacity>
             </View>
         );
@@ -134,7 +136,7 @@ const NoteDetailScreen = () => {
                     }}
                 >
                     <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>
-                        {title || 'Note Detail'}
+                        {title || t("notes.detail.fallbackTitle")}
                     </FlexText>
                 </SquircleView>
                 </View>
@@ -182,7 +184,7 @@ const NoteDetailScreen = () => {
                                     <View key={index} style={{ marginBottom: 16 }}>
                                         <LinkPreview
                                             text={el.url}
-                                            renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>Click to open on your browser</FlexText>}
+                                            renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>{t("notes.common.linkPreviewHint")}</FlexText>}
                                             renderTitle={(title) => <FlexText style={{ color: colors.text, fontWeight: 'bold', fontSize: 15 }} numberOfLines={2}>{title}</FlexText>}
                                             renderDescription={(desc) => <FlexText style={{ color: colors.muted, fontSize: 13, marginTop: 4 }} numberOfLines={3}>{desc}</FlexText>}
                                             containerStyle={{ borderRadius: 12, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', overflow: 'hidden' }}

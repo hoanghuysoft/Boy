@@ -1,10 +1,10 @@
 import { useThemeContext } from "@/context/ThemeContext";
-import { Image } from 'expo-image';
 import { SquircleView } from "expo-squircle-view";
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { WallpaperSet } from 'react-native-nitro-wallpaper';
 import { useTranslation } from "react-i18next";
+import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { NitroImage } from "react-native-nitro-image";
+import { WallpaperSet } from 'react-native-nitro-wallpaper';
 import { FlexText } from "./FlexText";
 
 interface WallpaperOverlayProps {
@@ -52,10 +52,10 @@ const WallpaperOverlay = ({ isVisible, url, onClose }: WallpaperOverlayProps) =>
             onRequestClose={onClose}
         >
             <View style={styles.container}>
-                <Image
-                    source={{ uri: url }}
+                <NitroImage
+                    image={{ url: url }}
                     style={StyleSheet.absoluteFill}
-                    contentFit="cover"
+                    resizeMode="cover"
                 />
 
                 <View style={styles.darkenOverlay} />

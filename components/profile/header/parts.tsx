@@ -8,6 +8,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
+import { NitroImage } from 'react-native-nitro-image';
 import { ProfileDetail } from '../../../types/profiledetail';
 import { getFamilyAvatarSource } from '../../../utils/familyAvatar';
 import { FlexText } from '../../FlexText';
@@ -88,7 +89,7 @@ export const AvatarSection = ({ vm }: { vm: any }) => {
       ) : (
         <Image source={{ uri: FALLBACK_AVATAR_URL }} contentFit="cover" style={avatarStyle} />
       )}
-      <Image source={{ uri: AVATAR_FRAME_URL }} style={headerStyles.avatarFrame} contentFit="cover" />
+      <NitroImage image={{ url: AVATAR_FRAME_URL }} style={headerStyles.avatarFrame} resizeMode="cover" />
       <View style={[headerStyles.avatarBackplate, { backgroundColor: vm.colors.background }]} />
     </View>
   );
@@ -225,7 +226,7 @@ export const HeaderInfoCard = ({
   <SquircleView cornerSmoothing={60} preserveSmoothing borderRadius={9999} style={headerStyles.infoCardOuter}>
     <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={[headerStyles.infoCardInner, backgroundColor ? { backgroundColor } : null]}>
       {backgroundImageUri && (
-        <Image source={{ uri: backgroundImageUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <NitroImage image={{ url: backgroundImageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
       )}
       {showDimOverlay && <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />}
       {showTintOverlay && <View style={[StyleSheet.absoluteFill, { backgroundColor: showTintOverlay, opacity: 0.1 }]} />}

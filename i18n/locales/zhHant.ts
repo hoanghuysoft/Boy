@@ -6,6 +6,7 @@ import hashtag from './zhHant/hashtag';
 import home from './zhHant/home';
 import languageSettings from './zhHant/languageSettings';
 import navigation from './zhHant/navigation';
+import notes from './zhHant/notes';
 import onboarding from './zhHant/onboarding';
 import post from './zhHant/post';
 import profile from './zhHant/profile';
@@ -26,6 +27,7 @@ const zhHant = {
     settings,
     languageSettings,
     navigation,
+    notes,
     onboarding,
     post,
     profile,

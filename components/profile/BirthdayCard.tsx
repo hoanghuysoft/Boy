@@ -1,9 +1,9 @@
 import { calculateAge, calculateDaysLeft } from '@/utils/timeandage';
-import { Image } from 'expo-image';
 import { SquircleView } from "expo-squircle-view";
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
+import { NitroImage } from 'react-native-nitro-image';
 import Animated, {
     Extrapolation,
     interpolate,
@@ -74,10 +74,10 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
 
     return (
         <SquircleView borderRadius={200} cornerSmoothing={60} style={styles.cardContainer}>
-            <Image
-                source={require('@/assets/images/birthday.jpg')}
+            <NitroImage
+                image={require('@/assets/images/birthday.jpg')}
                 style={StyleSheet.absoluteFill}
-                contentFit="cover"
+                resizeMode="cover"
             />
             {/* Dark overlay */}
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />

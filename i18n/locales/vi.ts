@@ -8,6 +8,7 @@ import hashtag from './vi/hashtag';
 import home from './vi/home';
 import languageSettings from './vi/languageSettings';
 import navigation from './vi/navigation';
+import notes from './vi/notes';
 import onboarding from './vi/onboarding';
 import post from './vi/post';
 import profile from './vi/profile';
@@ -28,6 +29,7 @@ const vi = {
     settings,
     languageSettings,
     navigation,
+    notes,
     onboarding,
     post,
     profile,
