@@ -1,18 +1,21 @@
 import AssemblyText from "@/components/AssemblyText";
 import { FlexText } from "@/components/FlexText";
+import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerSheet";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useTrendingAll } from "@/hooks/useMovies";
 import { useInfiniteMedia } from "@/services/media";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
 import { createCommonStyles } from "@/styles/common";
+import { Profile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useFocusEffect } from "@react-navigation/native";
 import { ClapperboardBold, TvBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { NitroImage } from "react-native-nitro-image";
@@ -103,13 +106,28 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const DashboardScreen = () => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
-    const { data: profile } = useProfile("me", true);
+    const { data: myProfile } = useProfile("me", true);
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
     const blurTargetRef = useRef<View | null>(null);
+    const pickerSheetRef = useRef<TrueSheet>(null);
     const [focusTrigger, setFocusTrigger] = useState(0);
+    const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
     const { data: adminData } = useAdminCheck();
-    const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin ?? profile?.is_admin);
+    const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin ?? myProfile?.is_admin);
+    const activeProfile = selectedProfile ?? myProfile ?? null;
+
+    const handlePickProfile = useCallback((picked: Profile | null) => {
+        if (picked && picked.id === myProfile?.id) {
+            setSelectedProfile(null);
+            return;
+        }
+        setSelectedProfile(picked);
+    }, [myProfile?.id]);
+
+    const openProfilePicker = useCallback(() => {
+        pickerSheetRef.current?.present();
+    }, []);
 
     // Replay the assembly animation every time the screen gains focus.
     useFocusEffect(
@@ -118,11 +136,23 @@ const DashboardScreen = () => {
         }, [])
     );
 
-    const { data: mediaPages } = useInfiniteMedia(profile?.id ?? "", "photo");
-    const photos = mediaPages?.pages
-        .flatMap((p) => p.data)
-        .filter((photo) => photo.width !== null && photo.height !== null && photo.height > photo.width) ?? [];
+    const { data: mediaPages } = useInfiniteMedia(activeProfile?.id ?? "", "photo");
+    const photos = useMemo(
+        () =>
+            mediaPages?.pages
+                .flatMap((p) => p.data)
+                .filter((photo) => photo.width !== null && photo.height !== null && photo.height >= photo.width) ?? [],
+        [mediaPages]
+    );
     const [bgImageUrl, setBgImageUrl] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        const urls = Array.from(new Set(photos.map((photo) => photo.url).filter(Boolean)));
+        if (urls.length === 0) return;
+
+        // Warm image cache so background transitions are smoother.
+        void Image.prefetch(urls);
+    }, [photos]);
 
     useEffect(() => {
         if (photos.length === 0) return;
@@ -142,7 +172,7 @@ const DashboardScreen = () => {
     }, [photos.length]);
 
     const { data: trending, isLoading: isTrendingLoading } = useTrendingAll();
-    const weatherCity = profile?.hometown?.trim() || "Ho Chi Minh City";
+    const weatherCity = activeProfile?.hometown?.trim() || "Ho Chi Minh City";
     // useFocusEffect(
     //     useCallback(() => {
     //         statusBar.setShowStatusBarFade(false);
@@ -156,17 +186,35 @@ const DashboardScreen = () => {
             <View style={StyleSheet.absoluteFill}>
                 <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
                     <Image
-                        source={{ uri: bgImageUrl ?? profile?.avatar_url }}
+                        source={{ uri: bgImageUrl ?? activeProfile?.avatar_url }}
                         style={{ width: '100%', height: '100%' }}
                         contentFit="cover"
                         transition={{ effect: 'cross-dissolve', duration: 1200 }}
                     />
                 </BlurTargetView>
             </View>
+            {isAdmin && (
+                <View style={{ position: "absolute", top: insets.top + 16, right: 16, zIndex: 1000 }}>
+                    <TouchableOpacity
+                        onPress={openProfilePicker}
+                        activeOpacity={0.75}
+                        style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 999,
+                            backgroundColor: colors.containerContent,
+                            justifyContent: "center",
+                            alignItems: "center",
+                        }}
+                    >
+                        <Ionicons name="people" size={20} color={colors.text} />
+                    </TouchableOpacity>
+                </View>
+            )}
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 250 + insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 99 }}>
-                <Pressable onPress={() => router.push(`/profile/${profile?.id}`)}>
+                <Pressable onPress={() => activeProfile?.id && router.push(`/profile/${activeProfile.id}`)}>
                     <AssemblyText
-                        text={profile?.name ?? ""}
+                        text={activeProfile?.name ?? ""}
                         fontSize={46}
                         fontWeight="bold"
                         color="white"
@@ -174,7 +222,12 @@ const DashboardScreen = () => {
                         trigger={focusTrigger}
                     />
                     <AssemblyText
-                        text={profile?.username || profile?.email || ""}
+                        text={
+                            activeProfile?.username
+                                ? `@${activeProfile.username}`
+                                : activeProfile?.email || ""
+                        }
+                   
                         fontSize={16}
                         fontWeight="normal"
                         color="white"
@@ -324,6 +377,13 @@ const DashboardScreen = () => {
                     </BlurView>
                 </SquircleView>
             </ScrollView>
+            {isAdmin && (
+                <ProfilePickerSheet
+                    ref={pickerSheetRef}
+                    selectedProfileId={activeProfile?.id ?? null}
+                    onSelect={handlePickProfile}
+                />
+            )}
         </View>
     )
 }

@@ -1,18 +1,19 @@
-import { focusManager } from '@tanstack/react-query';
 import RnGoogleSignin from '@novastera-oss/rn-google-signin';
+import { focusManager } from '@tanstack/react-query';
 // import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Updates from 'expo-updates';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
+import { useMMKVBoolean } from 'react-native-mmkv';
+import { supabase } from '../services/login';
 import {
     checkProfileFromServer,
     getLocalHasProfile,
     onboardingMmkv,
     PROFILE_KEY,
 } from '../services/onboarding';
-import { supabase } from '../services/login';
-import { useMMKVBoolean } from 'react-native-mmkv';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,7 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
 
     const [session, setSession] = useState<any>(null);
     const [isSessionReady, setIsSessionReady] = useState(false);
-    
+
     // Reactively watch MMKV for changes so Onboarding form submission triggers an instant update
     const [hasProfile, setHasProfile] = useMMKVBoolean(PROFILE_KEY, onboardingMmkv);
 
@@ -46,6 +47,30 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
         RnGoogleSignin.configure({
             webClientId: '674603557783-tn1v0di2jpgp87af41b1t1rok9sqelc1.apps.googleusercontent.com',
         });
+    }, []);
+
+    useEffect(() => {
+        async function onFetchUpdateAsync() {
+            // expo-updates is unavailable in dev builds / Expo Go.
+            if (__DEV__ || !Updates.isEnabled) {
+                return;
+            }
+            try {
+                const update = await Updates.checkForUpdateAsync();
+
+                if (update.isAvailable) {
+                    // Download the new bundle
+                    await Updates.fetchUpdateAsync();
+
+                    // Force the app to reload immediately
+                    await Updates.reloadAsync();
+                }
+            } catch (error) {
+                console.error("Error fetching updates:", error);
+            }
+        }
+
+        onFetchUpdateAsync();
     }, []);
 
     useEffect(() => {
