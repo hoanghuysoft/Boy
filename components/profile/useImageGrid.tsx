@@ -80,6 +80,8 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
     );
 });
 
+VideoGridItem.displayName = 'VideoGridItem';
+
 // ─── Image Grid Item (View) ────────────────────────────────────────────────────
 interface ImageGridItemProps {
     mediaItem: Media;
@@ -136,6 +138,8 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
         </Pressable>
     );
 });
+
+ImageGridItem.displayName = 'ImageGridItem';
 
 // ─── useImageGrid (View Hook) ──────────────────────────────────────────────────
 // Thin View layer — consumes ViewModel and provides render functions

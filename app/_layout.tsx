@@ -2,7 +2,6 @@ import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
 import * as Sentry from '@sentry/react-native';
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { useCustomUpdater } from 'expo-custom-updater';
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -142,7 +141,6 @@ const RootContent = () => {
 
   const { isReady, session, hasProfile } = useRootLayoutViewModel();
   useAutoLanguageSync();
-  useCustomUpdater();
 
   useEffect(() => {
     SplashScreen.hideAsync();

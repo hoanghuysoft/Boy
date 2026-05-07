@@ -224,8 +224,7 @@
     },
     "updates": {
       "url": "https://u.expo.dev/cfe29796-dcdc-4629-aa71-10f0832192c7",
-      "enableBsdiffPatchSupport": true,
-      "checkAutomatically": "ON_ERROR_RECOVERY"
+      "enableBsdiffPatchSupport": true
     }
   }
 }

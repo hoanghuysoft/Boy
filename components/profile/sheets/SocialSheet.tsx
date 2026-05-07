@@ -190,11 +190,13 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
                     const imageUrl = previewData?.image?.url;
 
                     const IconNode = imageUrl ? (
-                        <NitroImage
-                            image={{ url: imageUrl }}
-                            style={{ width: 48, height: 48, borderRadius: 999 }}
-                            resizeMode="cover"
-                        />
+                        <View style={{ width: 48, height: 48, borderRadius: 999, overflow: 'hidden' }}>
+                            <NitroImage
+                                image={{ url: imageUrl }}
+                                style={{ width: 48, height: 48, borderRadius: 999 }}
+                                resizeMode="cover"
+                            />
+                        </View>
                     ) : (
                         <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
                             <EarthBold size={24} color={colors.text} />
