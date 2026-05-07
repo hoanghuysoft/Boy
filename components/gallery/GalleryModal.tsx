@@ -156,17 +156,17 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
 export const GalleryModal: React.FC = () => {
     const { isVisible, images, imagesUrl, initialIndex, closeGallery } = useGalleryStore();
 
-    if (!isVisible) return null;
-
     return (
         <Modal visible={isVisible} transparent animationType="fade" onRequestClose={closeGallery}>
-            <GalleryModalContent
-                imagesUrl={imagesUrl}
-                galleryImages={images}
-                initialIndex={initialIndex}
-                onClose={closeGallery}
-                showDownload={true}
-            />
+            {isVisible && (
+                <GalleryModalContent
+                    imagesUrl={imagesUrl}
+                    galleryImages={images}
+                    initialIndex={initialIndex}
+                    onClose={closeGallery}
+                    showDownload={true}
+                />
+            )}
         </Modal>
     );
 };

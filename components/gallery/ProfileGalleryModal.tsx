@@ -179,20 +179,21 @@ export const ProfileGalleryModal: React.FC<ProfileGalleryModalProps> = ({
     isVerified,
 }) => {
     const imagesUrl = photos.map(p => p.url);
-
-    if (!visible || photos.length === 0) return null;
+    const isOpen = visible && photos.length > 0;
 
     return (
-        <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-            <ProfileGalleryModalContent
-                imagesUrl={imagesUrl}
-                photos={photos}
-                music={music}
-                initialIndex={initialIndex}
-                onClose={onClose}
-                profileName={profileName}
-                isVerified={isVerified}
-            />
+        <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
+            {isOpen && (
+                <ProfileGalleryModalContent
+                    imagesUrl={imagesUrl}
+                    photos={photos}
+                    music={music}
+                    initialIndex={initialIndex}
+                    onClose={onClose}
+                    profileName={profileName}
+                    isVerified={isVerified}
+                />
+            )}
         </Modal>
     );
 };
