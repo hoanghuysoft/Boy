@@ -2,17 +2,19 @@ import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from '@shopify/flash-list';
 import { EarthBold } from '@solar-icons/react-native';
-import * as WebBrowser from 'expo-web-browser';
-import React, { forwardRef, memo } from "react";
+import React, { forwardRef, memo, useCallback } from "react";
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { NitroImage } from 'react-native-nitro-image';
+import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import TurboImage from 'react-native-turbo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileLink } from '../../../types/profilelink';
 import { useSheetBackHandler } from "./useSheetBackHandler";
+
 
 interface SocialSheetProps {
     data: ProfileLink[];
@@ -69,9 +71,6 @@ const getPlatformDetails = (platform: string, theme: 'light' | 'dark') => {
     } else if (p.includes('reddit')) {
         icon = 'logo-reddit';
         color = theme === 'dark' ? '#ffffff' : '#000000';
-    } else if (p.includes('spotify')) {
-        icon = 'logo-spotify';
-        color = theme === 'dark' ? '#ffffff' : '#000000';
     } else if (p.includes('soundcloud')) {
         icon = 'logo-soundcloud';
         color = theme === 'dark' ? '#ffffff' : '#000000';
@@ -107,6 +106,7 @@ const FormattedLink = ({ url, username, common, color }: { url: string, username
             }
         } catch (e) {
             display = url;
+            console.error(e);
         }
     } else if (username && !username.startsWith('@')) {
         display = '@' + username;
@@ -170,6 +170,17 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
     const { icon, color } = getPlatformDetails(item.platform, theme);
     const isGeneric = icon === 'link-outline';
 
+    const handleOpenLink = useCallback(async () => {
+        try {
+            await NitroInAppBrowser.open(item.url, {
+                presentationStyle: 'fullScreen',
+                dismissButtonLabel: 'close',
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }, [item.url]);
+
     if (isGeneric) {
         return (
             <LinkPreview
@@ -179,8 +190,8 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
                     const imageUrl = previewData?.image?.url;
 
                     const IconNode = imageUrl ? (
-                        <TurboImage
-                            source={{ uri: imageUrl }}
+                        <NitroImage
+                            image={{ url: imageUrl }}
                             style={{ width: 48, height: 48, borderRadius: 999 }}
                             resizeMode="cover"
                         />
@@ -192,11 +203,7 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
 
                     return (
                         <LinkCard
-                            onPress={() => WebBrowser.openBrowserAsync(item.url, {
-                                toolbarColor: colors.background,
-                                controlsColor: colors.primary,
-                                showTitle: true,
-                            })}
+                            onPress={() => handleOpenLink()}
                             iconNode={IconNode}
                             title={previewData?.title || item.platform || t('profile.sheets.social.website')}
                             url={item.url}
@@ -219,11 +226,7 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
 
     return (
         <LinkCard
-            onPress={() => WebBrowser.openBrowserAsync(item.url, {
-                toolbarColor: colors.background,
-                controlsColor: colors.primary,
-                showTitle: true,
-            })}
+            onPress={() => handleOpenLink()}
             iconNode={IconNode}
             title={item.platform}
             url={item.url}
@@ -233,6 +236,8 @@ const SocialLinkItem = memo(({ item, colors, common, theme }: { item: ProfileLin
         />
     );
 });
+SocialLinkItem.displayName = 'SocialLinkItem';
+
 
 
 export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data, onEndReached }, ref) => {
@@ -255,6 +260,7 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data,
                 height: 5,
                 width: 40,
             }}
+            detents={['auto']}
             onDidPresent={backHandler.onDidPresent}
             onDidDismiss={backHandler.onDidDismiss}
         >
@@ -271,7 +277,7 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data,
                 </View>
 
                 {/* List */}
-                <FlatList
+                <FlashList
                     nestedScrollEnabled
                     onEndReached={onEndReached}
                     onEndReachedThreshold={0.5}

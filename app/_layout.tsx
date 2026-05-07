@@ -1,15 +1,18 @@
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
+import * as Sentry from '@sentry/react-native';
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { useCustomUpdater } from 'expo-custom-updater';
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
-import { ImageBackground, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
+import { NitroImage } from 'react-native-nitro-image';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -25,7 +28,6 @@ import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
 import { clientPersister, queryClient } from "../services/client";
 import { useAutoLanguageSync } from "../stores/language";
 import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
-import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
   dsn: 'https://1ef88f34edcb93fd745ae50c49114de5@o4511278698397696.ingest.de.sentry.io/4511278700494928',
@@ -118,8 +120,8 @@ const StatusBarFade = () => {
 
 const FakeSplashScreen = () => {
   return (
-    <ImageBackground
-      source={require("../assets/images/bg.png")}
+    <NitroImage
+      image={require("../assets/images/bg.png")}
       style={StyleSheet.absoluteFill}
       resizeMode="cover"
     >
@@ -129,7 +131,7 @@ const FakeSplashScreen = () => {
         barStyle="light-content"
         animated
       />
-    </ImageBackground>
+    </NitroImage>
   );
 };
 
@@ -140,6 +142,7 @@ const RootContent = () => {
 
   const { isReady, session, hasProfile } = useRootLayoutViewModel();
   useAutoLanguageSync();
+  useCustomUpdater();
 
   useEffect(() => {
     SplashScreen.hideAsync();

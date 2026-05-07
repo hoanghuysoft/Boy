@@ -1,7 +1,7 @@
 import { FBPost } from '@/types/localfb';
 import { Ionicons } from '@expo/vector-icons';
-import { Galeria } from '@nandorojo/galeria';
 import { LinkRoundBold, PinBold } from '@solar-icons/react-native';
+import { MediaViewer } from 'expo-media-viewer';
 import React, { memo, useState } from 'react';
 import {
     Dimensions,
@@ -63,15 +63,15 @@ const FBMediaGrid: React.FC<{
 
     if (photoUrls.length === 1) {
         return (
-            <Galeria urls={photoUrls}>
+            <MediaViewer urls={photoUrls} mediaTypes={["image"]}>
                 <View style={{ position: 'relative' }}>
-                    <Galeria.Image index={0}>
+                    <MediaViewer.Image index={0}>
                         <CachedImage
                             uri={photoUrls[0]}
                             style={{ width: SCREEN_WIDTH, aspectRatio: 3 / 4 }}
                             resizeMode="cover"
                         />
-                    </Galeria.Image>
+                    </MediaViewer.Image>
                     {hasVideo && (
                         <View style={{
                             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -87,12 +87,12 @@ const FBMediaGrid: React.FC<{
                         </View>
                     )}
                 </View>
-            </Galeria>
+            </MediaViewer>
         );
     }
 
     return (
-        <Galeria urls={photoUrls}>
+        <MediaViewer urls={photoUrls} mediaTypes={["image"]}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}>
                 {photoUrls.slice(0, 4).map((url, i) => {
                     const isDoubleWide = photoUrls.length === 2 || (photoUrls.length === 3 && i === 0);
@@ -103,13 +103,13 @@ const FBMediaGrid: React.FC<{
 
                     return (
                         <View key={i} style={{ position: 'relative' }}>
-                            <Galeria.Image index={i}>
+                            <MediaViewer.Image index={i}>
                                 <CachedImage
                                     uri={url}
                                     style={{ width: itemWidth, height: itemHeight }}
                                     resizeMode="cover"
                                 />
-                            </Galeria.Image>
+                            </MediaViewer.Image>
 
                             {i === 3 && photoUrls.length > 4 && (
                                 <View style={{
@@ -142,7 +142,7 @@ const FBMediaGrid: React.FC<{
                     );
                 })}
             </View>
-        </Galeria>
+        </MediaViewer>
     );
 };
 

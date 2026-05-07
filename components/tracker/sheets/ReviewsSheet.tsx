@@ -2,9 +2,10 @@ import { FlexText } from '@/components/FlexText';
 import { TMDBReview } from '@/types/moviedb/movie-entities';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from '@shopify/flash-list';
 import { Image } from "expo-image";
 import React, { forwardRef, memo, useCallback } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
 import { ActivityIndicator } from 'react-native-paper';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -123,7 +124,7 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
                 </View>
 
                 {/* List */}
-                <FlatList
+                <FlashList
                     nestedScrollEnabled
                     onEndReached={onEndReached}
                     onEndReachedThreshold={0.5}

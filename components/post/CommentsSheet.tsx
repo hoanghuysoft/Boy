@@ -1,22 +1,22 @@
 import VerifiedIcon from "@/icons/verified";
-import FastImage from "@d11/react-native-fast-image";
 import { MaterialIcons } from "@expo/vector-icons";
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
-import { Galeria } from '@nandorojo/galeria';
+import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
+import { MediaViewer } from "expo-media-viewer";
 import React, { forwardRef, memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
-    FlatList,
     Keyboard,
     StyleSheet,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
+import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Comment } from "../../types/comment";
 import { parseCommentContent, useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
@@ -62,11 +62,13 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
         <View style={styles.commentItem}>
             {/* Avatar */}
             <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
-                <FastImage
-                    source={{ uri: comment.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                    style={[styles.avatar, { backgroundColor: colors.divider }]}
-                    resizeMode={FastImage.resizeMode.cover}
-                />
+                <View style={[styles.avatar, { overflow: 'hidden' }]}>
+                    <NitroImage
+                        image={{ url: comment.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                        style={[styles.avatar, { backgroundColor: colors.divider }]}
+                        resizeMode="cover"
+                    />
+                </View>
             </TouchableOpacity>
 
             {/* Content Bubble */}
@@ -91,17 +93,16 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                         </FlexText>
                     )}
 
-                    {/* Inline image (first image only) — tap opens Galeria lightbox */}
                     {imageUrl && (
-                        <Galeria urls={[imageUrl]}>
-                            <Galeria.Image index={0}>
-                                <Image
-                                    source={{ uri: imageUrl }}
+                        <MediaViewer urls={[imageUrl]} mediaTypes={["image"]} theme="dark">
+                            <MediaViewer.Image index={0} style={{borderRadius: 12, overflow: 'hidden'}}>
+                                <NitroImage
+                                    image={{ url: imageUrl }}
                                     style={[styles.commentImage, text.length > 0 && { marginTop: 8 }]}
-                                    contentFit="cover"
+                                    resizeMode="cover"
                                 />
-                            </Galeria.Image>
-                        </Galeria>
+                            </MediaViewer.Image>
+                        </MediaViewer>
                     )}
                 </View>
 
@@ -419,7 +420,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 </View>
 
                 {/* Comments List */}
-                <FlatList
+                <FlashList
                     nestedScrollEnabled
                     data={vm.comments}
                     keyExtractor={(item) => item.id}

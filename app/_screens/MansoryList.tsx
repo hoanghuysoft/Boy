@@ -88,12 +88,6 @@ const prefetchPhotoDimensions = async (items: any[]) => {
     );
 };
 
-// Memoized card components — FlashList + Galeria rely on stable measurement
-// refs for the zoom-open animation. Plain function components re-render on
-// every scroll/parent render, which breaks Galeria's source-rect measurement
-// and also defeats FlashList cell recycling. React.memo keeps re-renders
-// scoped to actual prop changes.
-
 const MediaFooter = React.memo(({ item, colors }: { item: Media; colors: any }) => (
     <>
         {item.caption ? (
@@ -157,7 +151,7 @@ const VideoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: n
     const placeholderBlurhash = resolveBlurhash(item.blurhash, item.id || thumbnailUrl);
 
     return (
-        <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.containerContent }]}>
+        <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
             <MediaViewer.Image index={item.mediaIndex ?? 0} style={{ width: "100%", height: VIDEO_HEIGHT, overflow: "hidden", borderRadius: 12 }}>
                 <Image
                     source={{ uri: thumbnailUrl }}
@@ -386,7 +380,6 @@ const MansoryListScreen = () => {
             t,
             isBusy,
             isAdmin,
-            isViewingOther,
             activeProfile,
             theme,
             insets.top,

@@ -18,17 +18,17 @@ import {
 import { Movie } from "@/types/moviedb/movie";
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from "@shopify/flash-list";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
-    FlatList,
     Pressable,
     RefreshControl,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -324,7 +324,7 @@ const MovieListScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                <FlatList
+                <FlashList
                     data={episodes}
                     keyExtractor={(item) => `ep-${item.episode_number}`}
                     ListHeaderComponent={ListHeaderComponent}
@@ -380,7 +380,7 @@ const MovieListScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <FlatList
+            <FlashList
                 data={items}
                 keyExtractor={(item) => item.id.toString()}
                 ListHeaderComponent={ListHeaderComponent}

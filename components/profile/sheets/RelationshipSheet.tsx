@@ -1,8 +1,9 @@
 import { FlexText } from "@/components/FlexText";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from "@shopify/flash-list";
 import React, { forwardRef, memo } from "react";
 import { useTranslation } from 'react-i18next';
-import { FlatList, Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -39,6 +40,8 @@ const RelationshipItem = memo(({ item, colors, common }: { item: LovedOne; color
     );
 });
 
+RelationshipItem.displayName = 'RelationshipItem';
+
 export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetProps>(({ data }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -72,7 +75,7 @@ export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetPro
                 </View>
 
                 {/* List */}
-                <FlatList
+                <FlashList
                     nestedScrollEnabled
                     data={data}
                     keyExtractor={(item, index) => `${item.name}-${index}`}

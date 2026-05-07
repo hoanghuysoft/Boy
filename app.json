@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "boy",
-    "version": "26.6.5",
+    "version": "26.7.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -224,7 +224,8 @@
     },
     "updates": {
       "url": "https://u.expo.dev/cfe29796-dcdc-4629-aa71-10f0832192c7",
-      "enableBsdiffPatchSupport": true
+      "enableBsdiffPatchSupport": true,
+      "checkAutomatically": "ON_ERROR_RECOVERY"
     }
   }
 }

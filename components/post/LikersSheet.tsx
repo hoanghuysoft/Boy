@@ -1,8 +1,9 @@
-import FastImage from "@d11/react-native-fast-image";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
+import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import VerifiedIcon from "../../icons/verified";
 import { LikeUser } from "../../types/like";
@@ -35,11 +36,13 @@ const LikerItem = memo(({ user, colors, common, onPress }: LikerItemProps) => (
         onPress={onPress}
         activeOpacity={0.7}
     >
-        <FastImage
-            source={{ uri: user.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-            style={[styles.avatar, { backgroundColor: colors.divider }]}
-            resizeMode={FastImage.resizeMode.cover}
-        />
+        <View style={[styles.avatar, { overflow: 'hidden' }]}>
+            <NitroImage
+                image={{ url: user.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                style={[styles.avatar, { backgroundColor: colors.divider }]}
+                resizeMode="cover"
+            />
+        </View>
         <View style={styles.userInfo}>
             <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
                 <FlexText style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>

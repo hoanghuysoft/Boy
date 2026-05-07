@@ -4,17 +4,17 @@ import { useCategoryInfiniteQuery } from "@/services/shows/category";
 import { useTagInfiniteQuery } from "@/services/shows/tag";
 import type { VideoCard } from "@/types/shows";
 import { Ionicons } from "@expo/vector-icons";
+import { FlashList } from "@shopify/flash-list";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -177,7 +177,7 @@ const ShowListScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <FlatList
+      <FlashList
         data={items}
         keyExtractor={(item) => item.video_url}
         ListHeaderComponent={ListHeaderComponent}

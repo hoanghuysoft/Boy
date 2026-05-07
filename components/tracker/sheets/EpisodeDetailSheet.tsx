@@ -8,11 +8,12 @@ import { CastMember } from '@/types/moviedb';
 import { TMDBVideoResult } from '@/types/moviedb/movie-entities';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from '@shopify/flash-list';
 import { Image } from "expo-image";
 import { router } from 'expo-router';
 import * as WebBrowser from "expo-web-browser";
 import React, { forwardRef, memo, useCallback, useMemo } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Pressable as GesturePressable } from 'react-native-gesture-handler';
 import { createCommonStyles } from "../../../styles/common";
 import { useSheetBackHandler } from "../../profile/sheets/useSheetBackHandler";
@@ -240,7 +241,7 @@ export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetP
                                 <View style={{ paddingHorizontal: 16 }}>
                                     <SectionLabel title="Stills" />
                                 </View>
-                                <FlatList
+                                <FlashList
                                     horizontal
                                     nestedScrollEnabled
                                     data={stills}
@@ -266,7 +267,7 @@ export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetP
                                 <View style={{ paddingHorizontal: 16 }}>
                                     <SectionLabel title="Videos" />
                                 </View>
-                                <FlatList
+                                <FlashList
                                     horizontal
                                     nestedScrollEnabled
                                     data={videos}
@@ -284,7 +285,7 @@ export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetP
                                 <View style={{ paddingHorizontal: 16 }}>
                                     <SectionLabel title="Cast" />
                                 </View>
-                                <FlatList
+                                <FlashList
                                     horizontal
                                     nestedScrollEnabled
                                     data={cast}
@@ -302,7 +303,7 @@ export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetP
                                 <View style={{ paddingHorizontal: 16 }}>
                                     <SectionLabel title="Guest Stars" />
                                 </View>
-                                <FlatList
+                                <FlashList
                                     horizontal
                                     nestedScrollEnabled
                                     data={guestStars}

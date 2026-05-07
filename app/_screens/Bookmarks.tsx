@@ -3,12 +3,12 @@ import { useBookmarks } from "@/services/bookmark";
 import { BookmarkedPost } from "@/types/bookmarkedpost";
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
-    FlatList,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -124,7 +124,7 @@ const BookmarksScreen = () => {
                 </FlexText>
             </View>
         );
-    }, [isLoading, colors, common, theme]);
+    }, [isLoading, colors, common, theme, t]);
 
     // Title + subtitle rendered as the first item in the list,
     // sits below the spacer that clears the floating back button.
@@ -139,7 +139,7 @@ const BookmarksScreen = () => {
                     : t('bookmarks.yourSavedPosts')}
             </FlexText>
         </View>
-    ), [insets.top, common, colors.muted, posts.length]);
+    ), [insets.top, common, colors.muted, posts.length, t]);
 
     return (
         <View style={common.screen}>
@@ -161,7 +161,7 @@ const BookmarksScreen = () => {
             </View>
 
             {/* Bookmarks list */}
-            <FlatList
+            <FlashList
                 data={posts}
                 keyExtractor={(item) => item.bookmark_id ?? item.id}
                 renderItem={renderItem}

@@ -4,13 +4,13 @@ import { useFeed } from "@/services/feed";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Post } from "@/types/post";
 import { choosenMediaPath } from "@/utils/imageurl";
+import { Image } from "expo-image";
 import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Dimensions, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import FastImage from "@d11/react-native-fast-image";
-import TurboImage from "react-native-turbo-image";
 import { DataProvider, LayoutProvider, RecyclerListView } from "recyclerlistview";
 import { PostItem } from "../../../components/PostItem";
 import { ShimmerEffect } from "../../../components/shimmer/Shimmer";
@@ -163,17 +163,17 @@ const FeedTab: React.FC<FeedTabProps> = ({
         if (all.length > 0) {
             const maxVisible = Math.max(...all);
             const aheadPosts = posts.slice(maxVisible + 1, maxVisible + 1 + PREFETCH_AHEAD);
-            const turboUrls: { uri: string }[] = [];
-            const fastUrls: { uri: string }[] = [];
+            const nitroUrls: { url: string }[] = [];
+            const expoUrls: { uri: string }[] = [];
             for (const p of aheadPosts) {
-                if (p.profile_avatar) turboUrls.push({ uri: p.profile_avatar });
+                if (p.profile_avatar) nitroUrls.push({ url: p.profile_avatar });
                 for (const m of p.media ?? []) {
-                    if (m.type === 'video' && m.thumbnail_url) fastUrls.push({ uri: m.thumbnail_url });
-                    else if (m.type === 'photo' && m.url) turboUrls.push({ uri: m.url });
+                    if (m.type === 'video' && m.thumbnail_url) expoUrls.push({ uri: m.thumbnail_url });
+                    else if (m.type === 'photo' && m.url) nitroUrls.push({ url: m.url });
                 }
             }
-            if (turboUrls.length > 0) TurboImage.prefetch(turboUrls);
-            if (fastUrls.length > 0) FastImage.preload(fastUrls);
+            if (expoUrls.length > 0) for (const url of expoUrls) Image.prefetch(url.uri);
+            if (nitroUrls.length > 0) for (const url of nitroUrls) WebImages.preload(url.url);
         }
 
         // Skip video autoplay if disabled
@@ -205,10 +205,10 @@ const FeedTab: React.FC<FeedTabProps> = ({
         activateVideoFromIndices(lastVisibleIndicesRef.current);
     }, [activateVideoFromIndices]);
 
-    const handleRefresh = async () => {
+    const handleRefresh = useCallback(async () => {
         queryClient.removeQueries({ queryKey: ['feed', feedType] });
         refetch();
-    };
+    }, [feedType, refetch]);
 
     // Create DataProvider with rowHasChanged comparison
     const [dataProvider, setDataProvider] = useState<DataProvider>(
@@ -249,7 +249,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
         );
     }, [onOptionsPress, onLikeCountPress, onCommentPress]);
 
-    const renderPostSkeleton = () => {
+    const renderPostSkeleton = useCallback(() => {
         return (
             <View style={{ marginTop: 20 }}>
                 <View style={[common.row, { gap: 10, marginBottom: 12, paddingHorizontal: 16 }]}>
@@ -278,7 +278,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 />
             </View>
         );
-    };
+    }, [colors.divider, common.row]);
 
     const renderEmptyState = () => {
         const emptyMessages: Record<string, string> = {
@@ -334,32 +334,13 @@ const FeedTab: React.FC<FeedTabProps> = ({
         }
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    // Custom external scroll view with RefreshControl
-    const renderScrollComponent = useCallback((props: any) => {
-        return (
-            <ScrollView
-                {...props}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={isRefetching}
-                        onRefresh={handleRefresh}
-                        tintColor={colors.text}
-                        colors={[colors.text]}
-                        progressBackgroundColor={colors.card}
-                    />
-                }
-            />
-        );
-    }, [isRefetching, handleRefresh, colors]);
-
     // Render footer for loading state
     const renderFooter = useCallback(() => {
         if (isFetchingNextPage) {
             return renderPostSkeleton();
         }
         return <View style={{ height: bottomPadding }} />;
-    }, [isFetchingNextPage, bottomPadding]);
+    }, [isFetchingNextPage, bottomPadding, renderPostSkeleton]);
 
     if (isLoading) {
         return (

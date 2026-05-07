@@ -12,7 +12,7 @@ import { FBPhotoList } from '@/types/localfb';
 import { Profile } from '@/types/profile';
 import { useFProfileViewModel } from '@/viewmodels/FProfileViewModel';
 import { Ionicons } from '@expo/vector-icons';
-import { Galeria } from '@nandorojo/galeria';
+import { MediaViewer } from 'expo-media-viewer';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -51,13 +51,13 @@ const PhotoRowItem = React.memo<{
 }>(({ row, startIndex }) => (
     <View style={{ flexDirection: 'row', gap: PHOTO_GAP }}>
         {row.map((photo, colIndex) => (
-            <Galeria.Image index={startIndex + colIndex} key={photo.id}>
+            <MediaViewer.Image index={startIndex + colIndex} key={photo.id}>
                 <CachedImage
                     uri={photo.thumbnail}
                     style={{ width: PHOTO_SIZE, height: PHOTO_SIZE, marginBottom: 1 }}
                     resizeMode="cover"
                 />
-            </Galeria.Image>
+            </MediaViewer.Image>
         ))}
     </View>
 ));
@@ -308,7 +308,7 @@ const FProfileScreen = () => {
     return (
         <View style={[styles.screen, { backgroundColor: c.screenBg }]}>
             {activeTab === 'Photos' && photoUrls.length > 0 ? (
-                <Galeria urls={photoUrls}>{list}</Galeria>
+                <MediaViewer urls={photoUrls} mediaTypes={["image"]}>{list}</MediaViewer>
             ) : (
                 list
             )}

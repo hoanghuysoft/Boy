@@ -1,20 +1,20 @@
 import { FlexText } from '@/components/FlexText';
 import { WatchlistShow, useShowWatchlistStore } from '@/stores/showWatchlist';
 import { Ionicons } from '@expo/vector-icons';
+import { FlashList } from '@shopify/flash-list';
 import { RoundedMagnifierOutline, TrashBinTrashBold } from '@solar-icons/react-native';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
     Alert,
-    FlatList,
     Keyboard,
     Platform,
     Pressable,
     StyleSheet,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { NitroImage } from 'react-native-nitro-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -182,7 +182,7 @@ const ShowWatchlistScreen = () => {
                 </View>
             )}
 
-            <FlatList
+            <FlashList
                 data={filtered}
                 keyExtractor={keyExtractor}
                 renderItem={renderItem}

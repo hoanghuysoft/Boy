@@ -2,7 +2,6 @@ import { FlexText } from "@/components/FlexText";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { getCachedUri } from "@/services/videoCache";
 import { VideoFeedType, VideoItem } from "@/types/video";
-import FastImage from "@d11/react-native-fast-image";
 import { Ionicons } from "@expo/vector-icons";
 import {
     ReanimatedTrueSheetProvider,
@@ -30,9 +29,11 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import Reanimated, { runOnJS, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import { NitroImage } from "react-native-nitro-image";
+import Reanimated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Video, { VideoRef } from "react-native-video";
+import { scheduleOnRN } from "react-native-worklets";
 import { useShotsViewModel } from "../../viewmodels/ShotsViewModel";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -56,7 +57,7 @@ const FloatingHeart = React.memo(({ x, y, onComplete }: { x: number, y: number, 
             withTiming(1, { duration: 600 }),
             withTiming(0, { duration: 400 }, (finished) => {
                 if (finished) {
-                    runOnJS(onComplete)();
+                    scheduleOnRN(onComplete);
                 }
             })
         );
@@ -82,7 +83,7 @@ const FloatingHeart = React.memo(({ x, y, onComplete }: { x: number, y: number, 
         </Reanimated.View>
     );
 });
-
+FloatingHeart.displayName = 'FloatingHeart';
 // ─── Single Video Item ──────────────────────────────────────────────
 interface ShotItemProps {
     item: VideoItem;
@@ -201,8 +202,8 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
             {/* Video + thumbnail area — height tracks the sheet's top edge */}
             <Reanimated.View style={[styles.videoArea, videoAreaStyle]}>
                 {item.thumbnail_url && (
-                    <FastImage
-                        source={{ uri: item.thumbnail_url }}
+                    <NitroImage
+                        image={{ url: item.thumbnail_url }}
                         style={StyleSheet.absoluteFill}
                         resizeMode="contain"
                     />
@@ -263,55 +264,61 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
             <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 100 }]} pointerEvents="none">
                 <TouchableOpacity onPress={() => router.push(`/profile/${item.profile_id}`)} style={styles.profileRow}>
                     {item.profile_avatar && (
-                        <FastImage
-                            source={{ uri: item.profile_avatar }}
-                            style={styles.avatar}
-                        />
+                        <View style={[styles.avatar, { overflow: 'hidden' }]}>
+                            <NitroImage
+                                image={{ url: item.profile_avatar }}
+                                style={styles.avatar}
+                            />
+                        </View>
                     )}
                     <FlexText style={styles.profileName}>{item.profile_name}</FlexText>
                 </TouchableOpacity>
-                {item.caption && (
-                    <FlexText style={styles.caption} numberOfLines={2}>
-                        {item.caption}
-                    </FlexText>
-                )}
-            </View>
+                {
+                    item.caption && (
+                        <FlexText style={styles.caption} numberOfLines={2}>
+                            {item.caption}
+                        </FlexText>
+                    )
+                }
+            </View >
 
             {/* Right side actions */}
-            <View style={[styles.rightActions, { bottom: insets.bottom + 110 }]}>
+            < View style={[styles.rightActions, { bottom: insets.bottom + 110 }]} >
                 {/* Mute/Unmute */}
-                <TouchableOpacity style={styles.actionButton} onPress={onToggleMute}>
-                    {isMuted
-                        ? <MutedBold size={26} color="white" />
-                        : <VolumeLoudBold size={26} color="white" />
+                < TouchableOpacity style={styles.actionButton} onPress={onToggleMute} >
+                    {
+                        isMuted
+                            ? <MutedBold size={26} color="white" />
+                            : <VolumeLoudBold size={26} color="white" />
                     }
-                </TouchableOpacity>
+                </TouchableOpacity >
 
                 {/* Like */}
-                <TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10}>
-                    {isLiked
-                        ? <HeartBold size={28} color="#ff4d6d" />
-                        : <HeartBold size={28} color="white" />
+                < TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10} >
+                    {
+                        isLiked
+                            ? <HeartBold size={28} color="#ff4d6d" />
+                            : <HeartBold size={28} color="white" />
                     }
                     <FlexText style={[styles.actionText, isLiked && { color: '#ff4d6d' }]}>
                         {likeCount > 0 ? likeCount : 0}
                     </FlexText>
-                </TouchableOpacity>
+                </TouchableOpacity >
 
                 {/* Comments */}
-                <TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10}>
+                < TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10} >
                     <ChatRoundLikeBold size={26} color="white" />
                     <FlexText style={styles.actionText}>
                         {item.comment_count > 0 ? item.comment_count : 0}
                     </FlexText>
-                </TouchableOpacity>
+                </TouchableOpacity >
 
                 {/* Share (placeholder) */}
-                <TouchableOpacity style={styles.actionButton}>
+                < TouchableOpacity style={styles.actionButton} >
                     <SquareShareLineBold size={26} color="white" />
-                </TouchableOpacity>
-            </View>
-        </View>
+                </TouchableOpacity >
+            </View >
+        </View >
     );
 }, (prevProps, nextProps) => {
     return (
@@ -502,11 +509,12 @@ const ShotsInner = () => {
 
     return (
         <Tab.Navigator
+            initialRouteName="random"
             tabBar={(props: any) => <TopTabBar {...props} insets={insets} t={t} />}
             screenOptions={{ sceneStyle: { backgroundColor: '#000' } }}
         >
-            <Tab.Screen name="random" component={RandomFeedScreen} />
             <Tab.Screen name="on_this_day" component={OnThisDayFeedScreen} />
+            <Tab.Screen name="random" component={RandomFeedScreen} />
         </Tab.Navigator>
     );
 };

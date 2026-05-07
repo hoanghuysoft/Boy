@@ -5,12 +5,12 @@ import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import { BlurTargetView, BlurView } from "expo-blur";
-import { Image } from "expo-image";
 import { MediaViewer } from 'expo-media-viewer';
 import { Stack, router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { useRef } from "react";
 import { Dimensions, FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
+import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get('window');
@@ -129,8 +129,8 @@ const Bulletinboard = () => {
                     </View>
                 )}
                 <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 24, alignItems: 'flex-end' }}>
-                    <Image
-                        source={{ uri: item.publish_user?.avatar_thumb?.url_list?.[0] }}
+                    <NitroImage
+                        image={{ url: item.publish_user?.avatar_thumb?.url_list?.[0] }}
                         style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10, marginBottom: reactions.length > 0 ? 16 : 0 }}
                     />
                     <View style={{ flex: 1, alignItems: 'flex-start' }}>
@@ -152,11 +152,11 @@ const Bulletinboard = () => {
                                     mediaTypes={["image"]}
                                     theme="dark"
                                 >
-                                    <MediaViewer.Image index={0} edgeToEdge={true}>
-                                        <Image
-                                            source={{ uri: item.images[0].origin_url.url_list[0] }}
+                                    <MediaViewer.Image index={0}>
+                                        <NitroImage
+                                            image={{ url: item.images[0].origin_url.url_list[0] }}
                                             style={{ width: width * 0.7, height: (width * 0.7) * 1.3 }}
-                                            contentFit="cover"
+                                            resizeMode="cover"
                                         />
                                     </MediaViewer.Image>
                                 </MediaViewer>

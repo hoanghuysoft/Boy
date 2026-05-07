@@ -1,13 +1,13 @@
 import { FlexText } from '@/components/FlexText';
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
 import { Ionicons } from '@expo/vector-icons';
+import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     ActivityIndicator,
-    FlatList,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -55,7 +55,7 @@ const HashtagListScreen = () => {
                 </SquircleView>
             </TouchableOpacity>
         ),
-        [colors, common, vm.navigateToTag]
+        [colors, common, vm.navigateToTag, t]
     );
 
     const renderEmpty = useCallback(() => {
@@ -147,7 +147,7 @@ const HashtagListScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <FlatList
+            <FlashList
                 data={vm.allTags}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}

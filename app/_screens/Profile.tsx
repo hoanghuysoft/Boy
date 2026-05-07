@@ -95,7 +95,7 @@ const ProfileContent = () => {
       stiffness: 180,
       mass: 0.8,
     });
-  }, [vm.showHeaderAvatar]);
+  }, [vm.showHeaderAvatar, headerAvatarProgress]);
 
   const headerAvatarContainerStyle = useAnimatedStyle(() => {
     // Clamp layout progress strictly between 0 and 1.
@@ -124,7 +124,6 @@ const ProfileContent = () => {
     renderChunkedRow: renderImageChunkedRow,
     chunkedKeyExtractor: imageChunkedKeyExtractor,
     estimatedItemSize: imageEstimatedItemSize,
-    flatListProps: imageFlatListProps,
     renderQuickPreview: renderImageQuickPreview,
   } = useImageGrid({
     photos: vm.photos,
@@ -138,8 +137,6 @@ const ProfileContent = () => {
     renderChunkedRow: renderVideoChunkedRow,
     chunkedKeyExtractor: videoChunkedKeyExtractor,
     estimatedItemSize: videoEstimatedItemSize,
-    contentContainerStyle: videoContainerStyle,
-    flatListProps: videoFlatListProps,
     renderQuickPreview: renderVideoQuickPreview,
   } = useImageGrid({
     photos: vm.videos,
@@ -170,7 +167,7 @@ const ProfileContent = () => {
       familySheetRef={vm.familySheetRef}
       briefSheetRef={vm.briefSheetRef}
     />
-  ), [vm.scrollY, vm.profile, vm.isMe, vm.workplaces, vm.music, vm.socialLinks, vm.addresses, vm.imageCount, vm.videoCount, vm.postCount, vm.stableTabChange, vm.selectedTab]);
+  ), [vm.scrollY, vm.selectedTab, vm.stableTabChange, vm.profile, vm.isMe, vm.musicSheetRef, vm.socialSheetRef, vm.addressSheetRef, vm.workplaceSheetRef, vm.workplaces, vm.music, vm.socialLinks, vm.addresses, vm.imageCount, vm.videoCount, vm.postCount, vm.familySheetRef, vm.briefSheetRef]);
 
   // List data: image/video tabs use pre-chunked rows from useImageGrid; Feed stays flat posts.
   const data = useMemo(() => {

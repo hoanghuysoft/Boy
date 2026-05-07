@@ -29,17 +29,19 @@ import {
     MusicSection,
     SelectedMedia,
 } from "../../components/create";
-
+import { ProfilePickerSheet } from "../../components/gallery/sheets/ProfilePickerSheet";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 
 // Context & Services
 import { useThemeContext } from "../../context/ThemeContext";
 import { DeezerTrack, useDeezerSearch } from "../../services/deezer";
 import { FileAsset, useUploadMultipleMedia } from "../../services/mediaUpload";
 import { CreatePostInput, useCreatePost } from "../../services/post";
-import { useProfile } from "../../services/userprofile";
+import { useAdminCheck, useProfile } from "../../services/userprofile";
 import { useScrollStore } from "../../stores/scroll";
 import { createCommonStyles } from "../../styles/common";
 import { Link } from "../../types/post";
+import { Profile } from "../../types/profile";
 
 // ============================================================================
 // Form Types & Validation Schema
@@ -103,8 +105,17 @@ const CreateScreen = () => {
     }>({ visible: false, title: "", message: "", onConfirm: undefined });
 
     // Profile data
-    const { data: profile } = useProfile('me', true);
-    const profileId = profile?.id ?? '';
+    const { data: myProfile } = useProfile('me', true);
+    const { data: adminData } = useAdminCheck();
+    const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin ?? myProfile?.is_admin);
+
+    // Admin: selected profile (null = post as myself)
+    const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+    const pickerSheetRef = useRef<TrueSheet>(null);
+
+    const activeProfile = selectedProfile ?? myProfile ?? null;
+    const profile = activeProfile;
+    const profileId = activeProfile?.id ?? '';
 
     // Mutations
     const createPostMutation = useCreatePost(profileId);
@@ -216,6 +227,19 @@ const CreateScreen = () => {
         setShowLinkInput(false);
         setShowLocationInput(false);
         setShowActionBar(true);
+        setSelectedProfile(null);
+    }, []);
+
+    const handlePickProfile = useCallback((picked: Profile | null) => {
+        if (picked && picked.id === myProfile?.id) {
+            setSelectedProfile(null);
+        } else {
+            setSelectedProfile(picked);
+        }
+    }, [myProfile?.id]);
+
+    const openProfilePicker = useCallback(() => {
+        pickerSheetRef.current?.present();
     }, []);
 
     const resetForm = useCallback(() => {
@@ -440,6 +464,8 @@ const CreateScreen = () => {
                             isAdult={values.isAdult}
                             onToggleGhost={() => setFieldValue('isGhost', !values.isGhost)}
                             onToggleAdult={() => setFieldValue('isAdult', !values.isAdult)}
+                            isAdmin={isAdmin}
+                            onSwitchProfile={isAdmin ? openProfilePicker : undefined}
                         />
                     )}
 
@@ -513,6 +539,14 @@ const CreateScreen = () => {
                     onAddLink={addLink}
                 />
             </View>
+
+            {isAdmin && (
+                <ProfilePickerSheet
+                    ref={pickerSheetRef}
+                    selectedProfileId={activeProfile?.id ?? null}
+                    onSelect={handlePickProfile}
+                />
+            )}
         </View>
     );
 };

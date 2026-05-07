@@ -1,11 +1,11 @@
 import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from '@shopify/flash-list';
 import React, { forwardRef, memo, useCallback } from "react";
 import { useTranslation } from 'react-i18next';
-import { FlatList, Linking, StyleSheet, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import TurboImage from 'react-native-turbo-image';
+import { Linking, StyleSheet, TouchableOpacity, View } from "react-native";
+import { NitroImage } from 'react-native-nitro-image';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { useAudioStore } from '../../../stores/audio';
 import { createCommonStyles } from "../../../styles/common";
@@ -59,8 +59,8 @@ const MusicItem = memo(({
         >
             {/* Album Art & Play Overlay */}
             <View style={styles.artworkContainer}>
-                <TurboImage
-                    source={{ uri: item.cover_url }}
+                <NitroImage
+                    image={{ url: item.cover_url }}
                     style={styles.artwork}
                     resizeMode="cover"
                 />
@@ -101,11 +101,12 @@ const MusicItem = memo(({
     );
 });
 
+MusicItem.displayName = 'MusicItem';
+
 export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, onEndReached }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { t } = useTranslation();
-    const inset = useSafeAreaInsets();
     const { stopPlayback } = useAudioStore();
     const backHandler = useSheetBackHandler(ref);
 
@@ -136,7 +137,7 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, o
                 </View>
 
                 {/* List */}
-                <FlatList
+                <FlashList
                     nestedScrollEnabled={true}
                     onEndReached={onEndReached}
                     onEndReachedThreshold={0.5}

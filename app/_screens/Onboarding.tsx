@@ -2,8 +2,8 @@ import { FlexText } from '@/components/FlexText';
 import { useThemeContext } from '@/context/ThemeContext';
 import { createCommonStyles } from '@/styles/common';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import FastImage from '@d11/react-native-fast-image';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     ActivityIndicator,
     Platform,
@@ -13,8 +13,8 @@ import {
     View,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { NitroImage } from 'react-native-nitro-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 import { useOnboardingViewModel } from '../../viewmodels/OnboardingViewModel';
 
 const OnboardingScreen = () => {
@@ -50,10 +50,12 @@ const OnboardingScreen = () => {
                 {/* Avatar picker */}
                 <TouchableOpacity style={style.avatarWrapper} onPress={pickAvatar} activeOpacity={0.8}>
                     {form.avatarUri ? (
-                        <FastImage
-                            source={{ uri: form.avatarUri }}
-                            style={style.avatar}
-                        />
+                        <View style={[style.avatar, { overflow: 'hidden' }]}>
+                            <NitroImage
+                                image={{ url: form.avatarUri }}
+                                style={style.avatar}
+                            />
+                        </View>
                     ) : (
                         <View style={[style.avatar, style.avatarPlaceholder, { backgroundColor: colors.containerContent }]}>
                             <FlexText style={[common.body, { color: colors.muted }]}>

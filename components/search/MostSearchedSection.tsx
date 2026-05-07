@@ -1,7 +1,6 @@
 import VerifiedIcon from '@/icons/verified';
 import { LocalProfile } from '@/stores/searchHistory';
 import { useMostSearchedViewModel } from '@/viewmodels/MostSearchedViewModel';
-import FastImage from '@d11/react-native-fast-image';
 import { SquircleView } from 'expo-squircle-view';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +9,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { NitroImage } from 'react-native-nitro-image';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
 import { FlexText } from '../FlexText';
@@ -34,23 +34,27 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
 
         >
             {profile.avatar_url ? (
-                <FastImage
-                    source={{ uri: profile.avatar_url }}
-                    style={styles.avatar}
-                    resizeMode={FastImage.resizeMode.cover}
-                />
+                <View style={[styles.avatar, { overflow: 'hidden' }]}>
+                    <NitroImage
+                        image={{ url: profile.avatar_url }}
+                        style={styles.avatar}
+                        resizeMode="cover"
+                    />
+                </View>
             ) : (
-                <FastImage
-                    source={
-                        profile.gender === 'male'
-                            ? require('../../assets/images/AV17.png')
-                            : profile.gender
-                                ? require('../../assets/images/AV86.png')
-                                : { uri: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }
-                    }
-                    style={styles.avatar}
-                    resizeMode={FastImage.resizeMode.cover}
-                />
+                <View style={[styles.avatar, { overflow: 'hidden' }]}>
+                    <NitroImage
+                        image={
+                            profile.gender === 'male'
+                                ? require('../../assets/images/AV17.png')
+                                : profile.gender
+                                    ? require('../../assets/images/AV86.png')
+                                    : { uri: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }
+                        }
+                        style={styles.avatar}
+                        resizeMode="cover"
+                    />
+                </View>
             )}
             <View style={styles.textBlock}>
                 <View style={styles.nameRow}>
@@ -76,6 +80,8 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
         </SquircleView>
     </TouchableOpacity>
 ));
+
+MostSearchedCard.displayName = 'MostSearchedCard';
 
 // ─── Section ─────────────────────────────────────────────────────────────────
 

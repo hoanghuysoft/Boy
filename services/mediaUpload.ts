@@ -43,6 +43,11 @@ export interface FileAsset {
     fileSize?: number;
 }
 
+interface TinyVaultUploadResponse {
+    token: string;
+    download_url: string;
+}
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -53,6 +58,12 @@ export interface FileAsset {
 function getMediaType(file: FileAsset): MediaType {
     const type = file.type || '';
     if (type.startsWith('video/')) return 'video';
+
+    const source = `${file.name || ''} ${file.uri || ''}`.toLowerCase();
+    if (source.includes('.mp4') || source.includes('.mov') || source.includes('.webm') || source.includes('.m4v')) {
+        return 'video';
+    }
+
     return 'photo';
 }
 
@@ -90,6 +101,11 @@ export const uploadMedia = async (
     file: FileAsset,
     options: UploadMediaOptions = {}
 ): Promise<UploadMediaResponse> => {
+    const type = options.type || getMediaType(file);
+    if (type === 'video') {
+        return uploadVideoViaTinyVault(profileId, file, options);
+    }
+
     const formData = new FormData();
 
     formData.append('file', {
@@ -108,6 +124,67 @@ export const uploadMedia = async (
     );
 
     return response.data;
+};
+
+const TINYVAULT_UPLOAD_URL = 'https://tinyvault.space/api/upload';
+const VIDEO_UPLOAD_MAX_RETRIES = 5;
+const VIDEO_UPLOAD_RETRY_DELAY_MS = 2000;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const uploadVideoToTinyVault = async (file: FileAsset): Promise<TinyVaultUploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', {
+        uri: file.uri,
+        name: file.name || `upload.${getFileExtension(file)}`,
+        type: file.type || 'video/mp4',
+    } as any);
+
+    const response = await fetch(TINYVAULT_UPLOAD_URL, {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error(`TinyVault upload failed (${response.status})`);
+    }
+
+    const data = (await response.json()) as Partial<TinyVaultUploadResponse>;
+    if (!data.download_url || !data.token) {
+        throw new Error('TinyVault response is missing token or download_url');
+    }
+
+    return {
+        token: data.token,
+        download_url: data.download_url,
+    };
+};
+
+const uploadVideoViaTinyVault = async (
+    profileId: string,
+    file: FileAsset,
+    options: UploadMediaOptions = {}
+): Promise<UploadMediaResponse> => {
+    let lastError: unknown = null;
+
+    for (let attempt = 1; attempt <= VIDEO_UPLOAD_MAX_RETRIES; attempt += 1) {
+        try {
+            const uploaded = await uploadVideoToTinyVault(file);
+            return createMediaRecord(profileId, uploaded.download_url, 'video', {
+                caption: options.caption,
+                post_id: options.post_id,
+            });
+        } catch (error) {
+            lastError = error;
+            if (attempt < VIDEO_UPLOAD_MAX_RETRIES) {
+                await sleep(VIDEO_UPLOAD_RETRY_DELAY_MS);
+            }
+        }
+    }
+
+    throw new Error(
+        `Video upload failed after ${VIDEO_UPLOAD_MAX_RETRIES} retries. Post creation has been postponed. ${lastError instanceof Error ? lastError.message : ''}`.trim()
+    );
 };
 
 /**
@@ -177,6 +254,10 @@ export const uploadLargeMedia = async (
     options: UploadMediaOptions = {}
 ): Promise<UploadMediaResponse> => {
     const type = options.type || getMediaType(file);
+    if (type === 'video') {
+        return uploadVideoViaTinyVault(profileId, file, options);
+    }
+
     const filename = file.name || `upload.${getFileExtension(file)}`;
 
     const uploadInfo = await getUploadUrl(profileId, filename, type);

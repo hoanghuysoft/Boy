@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { XmarkSolid } from "@lineiconshq/free-icons";
 import { Lineicons } from "@lineiconshq/react-native-lineicons";
+import { FlashList } from "@shopify/flash-list";
 import { CheckCircleBold, VinylRecordBold } from "@solar-icons/react-native";
 import { SquircleView } from "expo-squircle-view";
 import React, { memo } from "react";
+import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
-    FlatList,
     Image,
     TextInput,
     TouchableOpacity,
@@ -14,7 +15,6 @@ import {
 } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { DeezerTrack } from "../../services/deezer";
-import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
@@ -183,7 +183,7 @@ export const MusicSection = memo(({
             )}
 
             {musicResults.length > 0 && (
-                <FlatList
+                <FlashList
                     data={musicResults}
                     keyExtractor={(item) => item.deezer_id}
                     renderItem={({ item }) => (

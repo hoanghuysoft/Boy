@@ -2,7 +2,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { Image } from "expo-image";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,7 +23,6 @@ import { FlexText } from "../../components/FlexText";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useCreateNote, useNote, useUpdateNote } from "../../services/note";
 import { createCommonStyles } from "../../styles/common";
-import { useLocalSearchParams } from "expo-router";
 
 type Block =
   | { id: string; type: 'text'; text: string }

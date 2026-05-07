@@ -1,14 +1,15 @@
 import VerifiedIcon from '@/icons/verified';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
-import { Galeria } from '@nandorojo/galeria';
 import { ChatSquareLikeBold, HeartAngleBold, HeartBold } from '@solar-icons/react-native';
 import { Image } from 'expo-image';
+import { MediaViewer } from 'expo-media-viewer';
 import { SquircleView } from 'expo-squircle-view';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
 import { NitroImage } from 'react-native-nitro-image';
+import TurboImage from 'react-native-turbo-image';
 import { ProfileDetail } from '../../../types/profiledetail';
 import { getFamilyAvatarSource } from '../../../utils/familyAvatar';
 import { FlexText } from '../../FlexText';
@@ -79,11 +80,11 @@ export const AvatarSection = ({ vm }: { vm: any }) => {
           />
         </>
       ) : vm.currentAvatar ? (
-        <Galeria urls={[vm.currentAvatar]}>
-          <Galeria.Image>
-            <Image source={{ uri: vm.currentAvatar }} contentFit="cover" style={avatarStyle} />
-          </Galeria.Image>
-        </Galeria>
+        <MediaViewer urls={[vm.currentAvatar]}>
+          <MediaViewer.Image index={0}>
+            <TurboImage source={{ uri: vm.currentAvatar }} resizeMode="cover" style={avatarStyle} />
+          </MediaViewer.Image>
+        </MediaViewer>
       ) : vm.genderFallbackSource ? (
         <Image source={vm.genderFallbackSource} contentFit="cover" style={avatarStyle} />
       ) : (

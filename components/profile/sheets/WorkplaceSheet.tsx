@@ -1,11 +1,11 @@
 import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from '@shopify/flash-list';
 import dayjs from 'dayjs';
 import React, { forwardRef, memo } from "react";
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View } from "react-native";
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { Workplace } from '../../../types/profileworplace';
@@ -97,11 +97,12 @@ const WorkplaceItem = memo(({ item, colors, common }: { item: Workplace, colors:
     );
 });
 
+WorkplaceItem.displayName = 'WorkplaceItem';
+
 export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({ data, onEndReached }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { t } = useTranslation();
-    const inset = useSafeAreaInsets();
     const backHandler = useSheetBackHandler(ref);
 
     // Safety check
@@ -117,6 +118,7 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({
                 height: 5,
                 width: 40,
             }}
+            detents={['auto']}
             onDidPresent={backHandler.onDidPresent}
             onDidDismiss={backHandler.onDidDismiss}
         >
@@ -131,7 +133,7 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(({
                 </View>
 
                 {/* List */}
-                <FlatList
+                <FlashList
                     nestedScrollEnabled
                     onEndReached={onEndReached}
                     onEndReachedThreshold={0.5}

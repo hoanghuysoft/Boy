@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { XmarkSolid } from "@lineiconshq/free-icons";
 import { Lineicons } from "@lineiconshq/react-native-lineicons";
+import { FlashList } from "@shopify/flash-list";
 import React, { memo } from "react";
-import { FlatList, Image, TouchableOpacity, View } from "react-native";
-import { ThemeColors } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
+import { Image, TouchableOpacity, View } from "react-native";
+import { ThemeColors } from "../../context/ThemeContext";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS, SelectedMedia } from "./types";
@@ -76,7 +77,7 @@ export const MediaSection = memo(({
             <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
                 {t('create.form.media')} ({selectedMedia.length}/10)
             </FlexText>
-            <FlatList
+            <FlashList
                 data={selectedMedia}
                 horizontal
                 showsHorizontalScrollIndicator={false}

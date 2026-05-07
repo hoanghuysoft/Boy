@@ -1,6 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Galeria } from '@nandorojo/galeria';
-import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -17,7 +15,9 @@ import { useNote } from "../../services/note";
 import { createCommonStyles } from "../../styles/common";
 
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
+import { MediaViewer } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
+import { NitroImage } from "react-native-nitro-image";
 
 const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>\]/i;
 const LINK_PATTERN = /\[<link\s+(.*?)\s*\/>\]/i;
@@ -166,17 +166,17 @@ const NoteDetailScreen = () => {
 
             <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 80, paddingBottom: insets.bottom + 40 }}>
                 {elements.length > 0 && (
-                    <Galeria urls={imageUrls}>
+                    <MediaViewer urls={imageUrls} mediaTypes={["image"]} theme="dark">
                         {elements.map((el, index) => {
                             if (el.type === 'image') {
                                 return (
-                                    <Galeria.Image key={index} index={el.imageIndex}>
-                                        <Image
-                                            source={{ uri: el.url }}
+                                    <MediaViewer.Image key={index} index={el.imageIndex}>
+                                        <NitroImage
+                                            image={{ url: el.url }}
                                             style={{ width: '100%', height: 300, borderRadius: 16, marginBottom: 16 }}
-                                            contentFit="cover"
+                                            resizeMode="cover"
                                         />
-                                    </Galeria.Image>
+                                    </MediaViewer.Image>
                                 );
                             }
                             if (el.type === 'link') {
@@ -201,7 +201,7 @@ const NoteDetailScreen = () => {
                             }
                             return null;
                         })}
-                    </Galeria>
+                    </MediaViewer>
                 )}
             </ScrollView>
         </View>

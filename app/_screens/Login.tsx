@@ -1,8 +1,8 @@
 import { FlexText } from "@/components/FlexText";
 import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
-import FastImage from "@d11/react-native-fast-image";
 import { ActivityIndicator, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
+import { NitroImage } from "react-native-nitro-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLoginViewModel } from "../../viewmodels/LoginViewModel";
 
@@ -15,10 +15,10 @@ const LoginScreen = () => {
 
     return (
         <SafeAreaView style={[style.container, { backgroundColor: colors.background }]}>
-            <FastImage source={require("../../assets/images/bg.png")} style={[StyleSheet.absoluteFill, { opacity: 0.8 }]} />
+            <NitroImage image={require("../../assets/images/bg.png")} style={[StyleSheet.absoluteFill, { opacity: 0.8 }]} />
             <View style={{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
                 <View style={{ alignItems: "center" }}>
-                    <FastImage source={require("../../assets/images/logo_head.png")} resizeMode={FastImage.resizeMode.contain} style={{ width: 85, height: 85 }} />
+                    <NitroImage image={require("../../assets/images/logo_head.png")} resizeMode="contain" style={{ width: 85, height: 85 }} />
                     <FlexText style={[common.headline, { color: 'white', fontWeight: "bold" }]}>WeLove</FlexText>
                 </View>
             </View>
@@ -29,10 +29,10 @@ const LoginScreen = () => {
                     onPress={handleGoogleLogin}
                     style={[common.button, { borderRadius: 9999, flexDirection: "row", gap: 10, width: "100%", justifyContent: "center", alignItems: "center" }]}
                 >
-                    <FastImage
+                    <NitroImage
                         resizeMode="contain"
-                        source={{
-                            uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Google_Favicon_2025.svg/960px-Google_Favicon_2025.svg.png",
+                        image={{
+                            url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Google_Favicon_2025.svg/960px-Google_Favicon_2025.svg.png",
                         }}
                         style={{ width: 25, height: 30 }}
                     />

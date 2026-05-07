@@ -8,16 +8,16 @@ import { Post } from '@/types/post';
 import { useHashtagPostsViewModel } from '@/viewmodels/HashtagPostsViewModel';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
+import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     ActivityIndicator,
-    FlatList,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 
 interface HashtagPostsScreenProps {
@@ -170,7 +170,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                 </TouchableOpacity>
             </View>
 
-            <FlatList
+            <FlashList
                 data={vm.posts}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}

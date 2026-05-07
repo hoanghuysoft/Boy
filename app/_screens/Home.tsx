@@ -2,7 +2,6 @@ import HomeCarousel from "@/components/HomeCarousel";
 import OptionModal from "@/components/HomeOptionModal";
 import SettingsIcon from "@/icons/settings";
 import { useHomeViewModel } from "@/viewmodels/HomeViewModel";
-import FastImage from "@d11/react-native-fast-image";
 import {
   AddCircleLineDuotone,
   BookmarkOpenedLineDuotone,
@@ -10,6 +9,7 @@ import {
 } from "@solar-icons/react-native";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
+import { NitroImage } from "react-native-nitro-image";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { CommentsSheet } from "../../components/post/CommentsSheet";
 import { LikersSheet } from "../../components/post/LikersSheet";
@@ -99,11 +99,13 @@ const HomeScreen = () => {
                   opacity: vm.pillBgOpacity,
                 }}
               />
-              <FastImage
-                resizeMode="contain"
-                source={require("../../assets/images/logo_head.png")}
-                style={{ width: 40, height: 30, borderRadius: 100 }}
-              />
+              <View style={{ width: 40, height: 30, borderRadius: 100, overflow: 'hidden' }}>
+                <NitroImage
+                  resizeMode="contain"
+                  image={require("../../assets/images/logo_head.png")}
+                  style={{ width: 40, height: 30}}
+                />
+              </View>
             </Animated.View>
 
             <Animated.View
@@ -169,22 +171,3 @@ const HomeScreen = () => {
 };
 
 export default HomeScreen;
-
-const styles = StyleSheet.create({
-  tabItem: {
-    paddingRight: 16,
-  },
-  activeIndicator: {
-    width: "100%",
-    height: 2,
-    backgroundColor: "orange",
-    borderRadius: 999,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 60,
-    paddingHorizontal: 24,
-  },
-});

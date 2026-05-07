@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
+import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Image } from "expo-image";
@@ -9,7 +10,6 @@ import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
     Alert,
-    FlatList,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -251,7 +251,7 @@ const NotesScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <FlatList
+            <FlashList
                 data={notes}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderItem}

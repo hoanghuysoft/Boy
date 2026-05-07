@@ -7,16 +7,16 @@ import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { FlashList } from "@shopify/flash-list";
 import { debounce, flatMap } from "lodash";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
-    FlatList,
     StyleSheet,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { NitroImage } from "react-native-nitro-image";
 
@@ -107,6 +107,8 @@ const ProfileRow = memo(
         );
     },
 );
+
+ProfileRow.displayName = "ProfileRow";
 
 export const ProfilePickerSheet = memo(
     forwardRef<TrueSheet, ProfilePickerSheetProps>(({ selectedProfileId, onSelect }, ref) => {
@@ -244,7 +246,7 @@ export const ProfilePickerSheet = memo(
                         )}
                     </View>
 
-                    <FlatList
+                    <FlashList
                         nestedScrollEnabled
                         data={profiles}
                         keyExtractor={(item) => item.id}

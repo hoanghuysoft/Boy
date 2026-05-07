@@ -95,6 +95,8 @@ const InfoRow = memo(({ item, colors }: { item: InfoItem; colors: any }) => {
     );
 });
 
+InfoRow.displayName = 'InfoRow';
+
 export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({ profile, workplaces = [], homeInfo }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -270,6 +272,7 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
                 height: 5,
                 width: 40,
             }}
+            detents={['auto']}
             onDidPresent={backHandler.onDidPresent}
             onDidDismiss={backHandler.onDidDismiss}
         >
