@@ -4,10 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
+import { SkeletonGroup } from 'heroui-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    ActivityIndicator,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -31,6 +31,9 @@ const HashtagListScreen = () => {
             <TouchableOpacity
                 onPress={() => vm.navigateToTag(item.tag)}
                 activeOpacity={0.7}
+                style={{
+                    marginBottom: 12,
+                }}
             >
                 <SquircleView
                     cornerSmoothing={60}
@@ -61,8 +64,21 @@ const HashtagListScreen = () => {
     const renderEmpty = useCallback(() => {
         if (vm.isLoading) {
             return (
-                <View style={styles.emptyState}>
-                    <ActivityIndicator size="small" color={colors.text} />
+                <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 10 }}>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <SkeletonGroup
+                            key={i}
+                            isLoading
+                            variant="pulse"
+                            style={[styles.tagRow, { backgroundColor: colors.containerContent }]}
+                        >
+                            <View style={styles.tagRowLeft}>
+                                <SkeletonGroup.Item className="h-5 w-32 rounded-md mb-2" />
+                                <SkeletonGroup.Item className="h-4 w-16 rounded-md" />
+                            </View>
+                            <SkeletonGroup.Item className="h-4 w-4 rounded-full" />
+                        </SkeletonGroup>
+                    ))}
                 </View>
             );
         }

@@ -6,6 +6,7 @@ import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { MediaViewer } from "expo-media-viewer";
+import { Button, Dialog, SkeletonGroup } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -95,7 +96,7 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
 
                     {imageUrl && (
                         <MediaViewer urls={[imageUrl]} mediaTypes={["image"]} theme="dark">
-                            <MediaViewer.Image index={0} style={{borderRadius: 12, overflow: 'hidden'}}>
+                            <MediaViewer.Image index={0} style={{ borderRadius: 12, overflow: 'hidden' }}>
                                 <NitroImage
                                     image={{ url: imageUrl }}
                                     style={[styles.commentImage, text.length > 0 && { marginTop: 8 }]}
@@ -203,13 +204,17 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const renderListFooter = useCallback(() => {
             if (vm.isFetchingNextPage) {
                 return (
-                    <View style={styles.footerLoader}>
-                        <ActivityIndicator size="small" color={vm.colors.text} />
-                    </View>
+                    <SkeletonGroup isLoading variant="pulse" style={[styles.footerLoader, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
+                        <SkeletonGroup.Item className="rounded-full" style={{ width: 38, height: 38 }} />
+                        <View style={{ flex: 1, gap: 6 }}>
+                            <SkeletonGroup.Item className="rounded-md" style={{ width: '55%', height: 12 }} />
+                            <SkeletonGroup.Item className="rounded-md" style={{ width: '80%', height: 10 }} />
+                        </View>
+                    </SkeletonGroup>
                 );
             }
             return null;
-        }, [vm.isFetchingNextPage, vm.colors.text]);
+        }, [vm.isFetchingNextPage]);
 
         useEffect(() => {
             GiphyDialog.configure({
@@ -235,8 +240,17 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const renderEmpty = useCallback(() => {
             if (vm.isLoading) {
                 return (
-                    <View style={styles.emptyState}>
-                        <ActivityIndicator size="large" color={vm.colors.text} />
+                    <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <SkeletonGroup key={i} isLoading variant="pulse" style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
+                                <SkeletonGroup.Item className="rounded-full" style={{ width: 38, height: 38 }} />
+                                <View style={{ flex: 1, gap: 6 }}>
+                                    <SkeletonGroup.Item className="rounded-md" style={{ width: '40%', height: 12 }} />
+                                    <SkeletonGroup.Item className="rounded-lg" style={{ width: '100%', height: 52 }} />
+                                    <SkeletonGroup.Item className="rounded-md" style={{ width: '20%', height: 10 }} />
+                                </View>
+                            </SkeletonGroup>
+                        ))}
                     </View>
                 );
             }
@@ -402,7 +416,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 height: 5,
                 width: 40,
             },
-            cornerRadius: 24,
+            cornerRadius: 32,
             detents,
             footer: commentInputFooter,
             onDidPresent: backHandler.onDidPresent,
@@ -436,18 +450,49 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             </>
         );
 
+        const deleteDialog = (
+            <Dialog isOpen={vm.isDeleteDialogOpen} onOpenChange={vm.setIsDeleteDialogOpen}>
+                <Dialog.Portal>
+                    <Dialog.Overlay />
+                    <Dialog.Content>
+                        <Dialog.Close />
+                        <View style={{ marginBottom: 20, gap: 6 }}>
+                            <Dialog.Title>{t('post.commentsSheet.actionDelete')}</Dialog.Title>
+                            <Dialog.Description>
+                                Are you sure you want to delete this comment?
+                            </Dialog.Description>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                            <Button variant="ghost" onPress={() => vm.setIsDeleteDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button variant="danger" onPress={vm.confirmDeleteComment}>
+                                {t('post.commentsSheet.actionDelete')}
+                            </Button>
+                        </View>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
+        );
+
         if (useReanimated) {
             return (
-                <ReanimatedTrueSheet dimmed={false} {...sharedProps}>
-                    {sheetContent}
-                </ReanimatedTrueSheet>
+                <>
+                    <ReanimatedTrueSheet dimmed={false} {...sharedProps}>
+                        {sheetContent}
+                    </ReanimatedTrueSheet>
+                    {deleteDialog}
+                </>
             );
         }
 
         return (
-            <TrueSheet {...sharedProps}>
-                {sheetContent}
-            </TrueSheet>
+            <>
+                <TrueSheet {...sharedProps}>
+                    {sheetContent}
+                </TrueSheet>
+                {deleteDialog}
+            </>
         );
     }
 ));

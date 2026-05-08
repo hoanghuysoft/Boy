@@ -1,9 +1,8 @@
-import { AlertDialog, Host, TextButton, Text as UIText } from "@expo/ui/jetpack-compose";
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { CopyBold, DangerBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
-import React, { forwardRef, memo, useCallback, useState } from "react";
+import { BottomSheet, Button, Dialog, useToast } from "heroui-native";
+import React, { forwardRef, memo, useCallback, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useDeletePost } from "../../services/post";
@@ -19,6 +18,11 @@ interface PostOptionsSheetProps {
     post: Post | null;
     currentProfileId: string | null;
     onDeleted?: () => void;
+}
+
+export interface PostOptionsSheetHandle {
+    present: () => void;
+    dismiss: () => void;
 }
 
 interface OptionItemProps {
@@ -43,14 +47,14 @@ const OptionItem = memo(({
     common,
 }: OptionItemProps) => (
     <TouchableOpacity
-        style={styles.optionItem}
+        className="flex-row items-center gap-4 py-2"
         onPress={onPress}
         activeOpacity={0.7}
     >
-        <View style={[
-            styles.iconContainer,
-            { backgroundColor: destructive ? "#EF444420" : colors.card }
-        ]}>
+        <View
+            className="h-12 w-12 items-center justify-center rounded-full"
+            style={{ backgroundColor: destructive ? "#EF444420" : colors.card }}
+        >
             <Icon
                 size={24}
                 color={destructive ? "#EF4444" : colors.text}
@@ -71,15 +75,17 @@ OptionItem.displayName = "OptionItem";
 // PostOptionsSheet Component
 // ============================================================================
 
-export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps>(
+export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOptionsSheetProps>(
     ({ post, currentProfileId, onDeleted }, ref) => {
-        const { colors, typography, theme } = useThemeContext();
+        const { colors, typography } = useThemeContext();
         const common = createCommonStyles(colors, typography);
-        const insets = useSafeAreaInsets();
         const { t } = useTranslation();
+        const { toast } = useToast();
 
         const isOwner = post?.profile_id === currentProfileId;
         const deletePostMutation = useDeletePost(currentProfileId || "");
+        const [isOpen, setIsOpen] = useState(false);
+        const insets = useSafeAreaInsets();
 
         type DialogConfig = {
             title: string;
@@ -92,11 +98,14 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
         const [dialog, setDialog] = useState<DialogConfig | null>(null);
         const closeDialog = useCallback(() => setDialog(null), []);
 
+        useImperativeHandle(ref, () => ({
+            present: () => setIsOpen(true),
+            dismiss: () => setIsOpen(false),
+        }), []);
+
         const dismissSheet = useCallback(() => {
-            if (ref && typeof ref !== "function" && ref.current) {
-                ref.current.dismiss();
-            }
-        }, [ref]);
+            setIsOpen(false);
+        }, []);
 
         const handleDelete = useCallback(() => {
             if (!post) return;
@@ -111,151 +120,117 @@ export const PostOptionsSheet = memo(forwardRef<TrueSheet, PostOptionsSheetProps
                         await deletePostMutation.mutateAsync({ postId: post.id, deleteMedia: false });
                         dismissSheet();
                         onDeleted?.();
-                        setDialog({ title: t('post.dialogs.successTitle'), text: t('post.dialogs.postDeleted'), confirmText: t('post.dialogs.ok') });
+                        toast.show({ label: t('post.dialogs.successTitle'), description: t('post.dialogs.postDeleted'), variant: "success" });
                     } catch (error: any) {
-                        setDialog({
-                            title: t('post.dialogs.errorTitle'),
-                            text: error.message || t('post.dialogs.deleteFailed'),
-                            confirmText: t('post.dialogs.ok'),
-                        });
+                        toast.show({ label: t('post.dialogs.errorTitle'), description: error.message || t('post.dialogs.deleteFailed'), variant: "danger" });
                     }
                 },
             });
-        }, [post, deletePostMutation, dismissSheet, closeDialog, onDeleted, t]);
+        }, [post, deletePostMutation, dismissSheet, closeDialog, onDeleted, t, toast]);
 
         const handleReport = useCallback(() => {
             dismissSheet();
-            setDialog({ title: t('post.dialogs.reportTitle'), text: t('post.dialogs.reportComingSoon'), confirmText: t('post.dialogs.ok') });
-        }, [dismissSheet, t]);
+            toast.show({ label: t('post.dialogs.reportTitle'), description: t('post.dialogs.reportComingSoon'), variant: "default" });
+        }, [dismissSheet, t, toast]);
 
         const handleShare = useCallback(() => {
             dismissSheet();
-            setDialog({ title: t('post.dialogs.shareTitle'), text: t('post.dialogs.shareComingSoon'), confirmText: t('post.dialogs.ok') });
-        }, [dismissSheet, t]);
+            toast.show({ label: t('post.dialogs.shareTitle'), description: t('post.dialogs.shareComingSoon'), variant: "default" });
+        }, [dismissSheet, t, toast]);
 
         const handleCopyLink = useCallback(() => {
             dismissSheet();
-            setDialog({ title: t('post.dialogs.copyLinkTitle'), text: t('post.dialogs.linkCopied'), confirmText: t('post.dialogs.ok') });
-        }, [dismissSheet, t]);
+            toast.show({ label: t('post.dialogs.copyLinkTitle'), description: t('post.dialogs.linkCopied'), variant: "success" });
+        }, [dismissSheet, t, toast]);
 
         return (
             <>
-                <TrueSheet
-                    ref={ref}
-                    backgroundColor={theme === "dark" ? colors.containerContent : "#ffffff"}
-                    grabberOptions={{
-                        color: colors.muted || "#C4C4C4",
-                        height: 4,
-                        width: 32,
-                    }}
-                    detents={['auto']}
-                >
-                    <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
-                        {/* Header */}
-                        <View style={styles.header}>
-                            <FlexText style={[common.heading]}>{t('post.optionsSheet.title')}</FlexText>
-                            <FlexText style={common.bodySmall}>{t('post.optionsSheet.subtitle')}</FlexText>
-                        </View>
+                <BottomSheet isOpen={isOpen} onOpenChange={setIsOpen}>
+                    <BottomSheet.Portal>
+                        <BottomSheet.Overlay />
+                        <BottomSheet.Content detached={true}
+                            bottomInset={insets.bottom + 12}
+                            className="mx-1"
+                            backgroundClassName="rounded-[32px]">
+                            <View>
+                                {/* Header */}
+                                <View className="mb-5">
+                                    <FlexText style={[common.heading]}>{t('post.optionsSheet.title')}</FlexText>
+                                    <FlexText style={common.bodySmall}>{t('post.optionsSheet.subtitle')}</FlexText>
+                                </View>
 
-                        {/* Options List */}
-                        <View style={styles.optionsList}>
-                            <OptionItem
-                                icon={ShareBold}
-                                label={t('post.optionsSheet.share')}
-                                onPress={handleShare}
-                                colors={colors}
-                                common={common}
-                            />
+                                {/* Options List */}
+                                <View>
+                                    <OptionItem
+                                        icon={ShareBold}
+                                        label={t('post.optionsSheet.share')}
+                                        onPress={handleShare}
+                                        colors={colors}
+                                        common={common}
+                                    />
 
-                            <OptionItem
-                                icon={CopyBold}
-                                label={t('post.optionsSheet.copyLink')}
-                                onPress={handleCopyLink}
-                                colors={colors}
-                                common={common}
-                            />
+                                    <OptionItem
+                                        icon={CopyBold}
+                                        label={t('post.optionsSheet.copyLink')}
+                                        onPress={handleCopyLink}
+                                        colors={colors}
+                                        common={common}
+                                    />
 
-                            {!isOwner && (
-                                <OptionItem
-                                    icon={DangerBold}
-                                    label={t('post.optionsSheet.report')}
-                                    onPress={handleReport}
-                                    colors={colors}
-                                    common={common}
-                                />
-                            )}
+                                    {!isOwner && (
+                                        <OptionItem
+                                            icon={DangerBold}
+                                            label={t('post.optionsSheet.report')}
+                                            onPress={handleReport}
+                                            colors={colors}
+                                            common={common}
+                                        />
+                                    )}
 
-                            {isOwner && (
-                                <OptionItem
-                                    icon={TrashBinTrashBold}
-                                    label={t('post.optionsSheet.deletePost')}
-                                    onPress={handleDelete}
-                                    destructive
-                                    colors={colors}
-                                    common={common}
-                                />
-                            )}
-                        </View>
-                    </View>
-                </TrueSheet>
+                                    {isOwner && (
+                                        <OptionItem
+                                            icon={TrashBinTrashBold}
+                                            label={t('post.optionsSheet.deletePost')}
+                                            onPress={handleDelete}
+                                            destructive
+                                            colors={colors}
+                                            common={common}
+                                        />
+                                    )}
+                                </View>
+                            </View>
+                        </BottomSheet.Content>
+                    </BottomSheet.Portal>
+                </BottomSheet>
 
-                {dialog !== null && (
-                    <Host matchContents>
-                        <AlertDialog onDismissRequest={closeDialog}>
-                            <AlertDialog.Title>
-                                <UIText style={{ typography: 'titleLarge' }}>{dialog.title}</UIText>
-                            </AlertDialog.Title>
-                            <AlertDialog.Text>
-                                <UIText>{dialog.text}</UIText>
-                            </AlertDialog.Text>
-                            <AlertDialog.ConfirmButton>
-                                <TextButton onClick={() => dialog.onConfirm ? dialog.onConfirm() : closeDialog()}>
-                                    <UIText>{dialog.confirmText ?? t('post.dialogs.ok')}</UIText>
-                                </TextButton>
-                            </AlertDialog.ConfirmButton>
-                            {dialog.dismissText && (
-                                <AlertDialog.DismissButton>
-                                    <TextButton onClick={closeDialog}>
-                                        <UIText>{dialog.dismissText}</UIText>
-                                    </TextButton>
-                                </AlertDialog.DismissButton>
-                            )}
-                        </AlertDialog>
-                    </Host>
-                )}
+                <Dialog isOpen={dialog !== null} onOpenChange={(open) => !open && closeDialog()}>
+                    <Dialog.Portal>
+                        <Dialog.Overlay />
+                        <Dialog.Content>
+                            <Dialog.Close />
+                            <View style={{ marginBottom: 20, gap: 6 }}>
+                                <Dialog.Title>{dialog?.title}</Dialog.Title>
+                                <Dialog.Description>{dialog?.text}</Dialog.Description>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                                {dialog?.dismissText && (
+                                    <Button variant="ghost" onPress={closeDialog}>
+                                        {dialog.dismissText}
+                                    </Button>
+                                )}
+                                <Button
+                                    variant={dialog?.onConfirm ? "danger" : "primary"}
+                                    onPress={() => dialog?.onConfirm ? dialog.onConfirm() : closeDialog()}
+                                >
+                                    {dialog?.confirmText ?? t('post.dialogs.ok')}
+                                </Button>
+                            </View>
+                        </Dialog.Content>
+                    </Dialog.Portal>
+                </Dialog>
             </>
         );
     }
 ));
 
 PostOptionsSheet.displayName = "PostOptionsSheet";
-
-// ============================================================================
-// Styles
-// ============================================================================
-
-const styles = StyleSheet.create({
-    container: {
-        paddingHorizontal: 24,
-        paddingTop: 16,
-    },
-    header: {
-        marginBottom: 20,
-        paddingTop: 10,
-    },
-    optionsList: {
-    },
-    optionItem: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 8,
-        gap: 16,
-    },
-    iconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-});

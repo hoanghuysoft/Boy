@@ -5,6 +5,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { HeroUINativeProvider } from 'heroui-native';
 import React, { useEffect } from "react";
 import { StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
@@ -24,6 +25,7 @@ import { GlobalAudioPlayer } from "../components/GlobalAudioPlayer";
 import { SessionProvider } from "../context/SessionContext";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
+import '../global.css';
 import { clientPersister, queryClient } from "../services/client";
 import { useAutoLanguageSync } from "../stores/language";
 import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
@@ -275,20 +277,22 @@ const RootContent = () => {
 export default Sentry.wrap(function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister: clientPersister }}
-      >
-        <SafeAreaProvider>
-          <KeyboardProvider>
-            <ThemeProvider>
-              <StatusBarProvider>
-                <RootContent />
-              </StatusBarProvider>
-            </ThemeProvider>
-          </KeyboardProvider>
-        </SafeAreaProvider>
-      </PersistQueryClientProvider>
+      <HeroUINativeProvider>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister: clientPersister }}
+        >
+          <SafeAreaProvider>
+            <KeyboardProvider>
+              <ThemeProvider>
+                <StatusBarProvider>
+                  <RootContent />
+                </StatusBarProvider>
+              </ThemeProvider>
+            </KeyboardProvider>
+          </SafeAreaProvider>
+        </PersistQueryClientProvider>
+      </HeroUINativeProvider>
     </GestureHandlerRootView>
   );
 });

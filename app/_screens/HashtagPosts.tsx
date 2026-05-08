@@ -4,12 +4,14 @@ import { LikersSheet } from '@/components/post/LikersSheet';
 import { PostItem } from '@/components/PostItem';
 import { useThemeContext } from '@/context/ThemeContext';
 import { createCommonStyles } from '@/styles/common';
+import type { LikersSheetHandle } from '@/types/sheetHandles';
 import { Post } from '@/types/post';
 import { useHashtagPostsViewModel } from '@/viewmodels/HashtagPostsViewModel';
 import { Ionicons } from '@expo/vector-icons';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
+import { SkeletonGroup } from 'heroui-native';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -31,7 +33,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
     const vm = useHashtagPostsViewModel(tag);
     const { t } = useTranslation();
 
-    const likersSheetRef = useRef<TrueSheet>(null);
+    const likersSheetRef = useRef<LikersSheetHandle>(null);
     const commentsSheetRef = useRef<TrueSheet>(null);
     const [selectedLikePostId, setSelectedLikePostId] = useState<string | null>(null);
     const [selectedCommentPostId, setSelectedCommentPostId] = useState<string | null>(null);
@@ -73,8 +75,24 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
     const renderEmpty = useCallback(() => {
         if (vm.isLoading) {
             return (
-                <View style={styles.emptyState}>
-                    <ActivityIndicator size="large" color={colors.text} />
+                <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <SkeletonGroup key={i} isLoading variant="pulse" style={{ marginBottom: 30 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                                <SkeletonGroup.Item className="h-10 w-10 rounded-full" />
+                                <View style={{ marginLeft: 12, flex: 1, gap: 6 }}>
+                                    <SkeletonGroup.Item className="h-4 w-32 rounded-md" />
+                                    <SkeletonGroup.Item className="h-3 w-24 rounded-md" />
+                                </View>
+                            </View>
+                            <View style={{ gap: 8, marginBottom: 12 }}>
+                                <SkeletonGroup.Item className="h-4 w-full rounded-md" />
+                                <SkeletonGroup.Item className="h-4 w-5/6 rounded-md" />
+                                <SkeletonGroup.Item className="h-4 w-2/3 rounded-md" />
+                            </View>
+                            <SkeletonGroup.Item className="h-48 w-full rounded-xl" />
+                        </SkeletonGroup>
+                    ))}
                 </View>
             );
         }

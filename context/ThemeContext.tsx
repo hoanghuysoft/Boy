@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Appearance } from 'react-native';
+import { Uniwind } from "uniwind";
 import { ThemePreference, useSettingsStore } from "../stores/settings";
 import { createTypography, TypographyScale } from "../styles/typography";
 
@@ -126,6 +127,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     themePreference === "system" ? systemTheme :
       themePreference === "adaptive" ? adaptiveTheme :
         themePreference;
+
+  // Sync theme with Uniwind (HeroUI Native)
+  useEffect(() => {
+    Uniwind.setTheme(theme);
+  }, [theme]);
 
   const toggleTheme = () => {
     // Toggle between light and dark (not system)

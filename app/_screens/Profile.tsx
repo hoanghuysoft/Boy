@@ -20,7 +20,7 @@ import { MusicSheet } from "../../components/profile/sheets/MusicSheet";
 import { SocialSheet } from "../../components/profile/sheets/SocialSheet";
 import { WorkplaceSheet } from "../../components/profile/sheets/WorkplaceSheet";
 import { useImageGrid } from '../../components/profile/useImageGrid';
-import { ShimmerEffect } from '../../components/shimmer/Shimmer';
+import { SkeletonGroup } from 'heroui-native';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from '../../types/post';
@@ -45,36 +45,37 @@ const ProfileSkeleton: React.FC = () => {
   const common = createCommonStyles(colors, typography);
   return (
     <View style={common.screen}>
-      <ShimmerEffect
-        isLoading
-        style={{ width: '100%', height: COVER_HEIGHT, backgroundColor: colors.divider }}
-      />
+      <SkeletonGroup isLoading variant="pulse" isSkeletonOnly>
+        <SkeletonGroup.Item style={{ width: '100%', height: COVER_HEIGHT }} />
+      </SkeletonGroup>
       <View style={{ borderRadius: 8, marginTop: -8, backgroundColor: colors.background, flex: 1 }}>
         <View style={common.screenPadding}>
-          <View style={[common.row, { marginTop: -55, gap: 5 }]}>
-            <View style={[common.avatarLarge, { overflow: 'hidden', borderWidth: 3, borderColor: colors.background, backgroundColor: colors.background }]}>
-              <ShimmerEffect isLoading style={{ width: '100%', height: '100%' }} />
+          <SkeletonGroup isLoading variant="pulse">
+            <View style={[common.row, { marginTop: -55, gap: 5 }]}>
+              <View style={[common.avatarLarge, { overflow: 'hidden', borderWidth: 3, borderColor: colors.background, backgroundColor: colors.background }]}>
+                <SkeletonGroup.Item style={{ width: '100%', height: '100%' }} />
+              </View>
             </View>
-          </View>
-          <View style={{ marginTop: 8, gap: 8 }}>
-            <ShimmerEffect isLoading style={{ width: 150, height: 24, borderRadius: 8, backgroundColor: colors.divider }} />
-            <ShimmerEffect isLoading style={{ width: 100, height: 14, borderRadius: 8, backgroundColor: colors.divider }} />
-            <ShimmerEffect isLoading style={{ width: '80%', height: 16, borderRadius: 8, marginTop: 8, backgroundColor: colors.divider }} />
-          </View>
-          <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
-            <ShimmerEffect isLoading style={{ width: 170, height: 70, borderRadius: 35, backgroundColor: colors.divider }} />
-            <ShimmerEffect isLoading style={{ width: 170, height: 70, borderRadius: 35, backgroundColor: colors.divider }} />
-          </View>
-          <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
-            <ShimmerEffect isLoading style={{ width: 100, height: 36, borderRadius: 18, backgroundColor: colors.divider }} />
-            <ShimmerEffect isLoading style={{ width: 100, height: 36, borderRadius: 18, backgroundColor: colors.divider }} />
-            <ShimmerEffect isLoading style={{ width: 100, height: 36, borderRadius: 18, backgroundColor: colors.divider }} />
-          </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 16, gap: 10 }}>
-            {Array.from({ length: 9 }).map((_, i) => (
-              <ShimmerEffect key={i} isLoading style={{ width: '31%', aspectRatio: 1, borderRadius: 8, backgroundColor: colors.divider }} />
-            ))}
-          </View>
+            <View style={{ marginTop: 8, gap: 8 }}>
+              <SkeletonGroup.Item className="rounded-lg" style={{ width: 150, height: 24 }} />
+              <SkeletonGroup.Item className="rounded-lg" style={{ width: 100, height: 14 }} />
+              <SkeletonGroup.Item className="rounded-lg" style={{ width: '80%', height: 16, marginTop: 8 }} />
+            </View>
+            <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
+              <SkeletonGroup.Item className="rounded-full" style={{ width: 170, height: 70 }} />
+              <SkeletonGroup.Item className="rounded-full" style={{ width: 170, height: 70 }} />
+            </View>
+            <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
+              <SkeletonGroup.Item className="rounded-full" style={{ width: 100, height: 36 }} />
+              <SkeletonGroup.Item className="rounded-full" style={{ width: 100, height: 36 }} />
+              <SkeletonGroup.Item className="rounded-full" style={{ width: 100, height: 36 }} />
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 16, gap: 10 }}>
+              {Array.from({ length: 9 }).map((_, i) => (
+                <SkeletonGroup.Item key={i} className="rounded-lg" style={{ width: '31%', aspectRatio: 1 }} />
+              ))}
+            </View>
+          </SkeletonGroup>
         </View>
       </View>
     </View>
@@ -256,10 +257,9 @@ const ProfileContent = () => {
             />
           }
         >
-          <ShimmerEffect
-            isLoading={true}
-            style={{ width: "100%", height: COVER_HEIGHT, backgroundColor: vm.colors.divider }}
-          />
+          <SkeletonGroup isLoading variant="pulse" isSkeletonOnly>
+            <SkeletonGroup.Item style={{ width: '100%', height: COVER_HEIGHT }} />
+          </SkeletonGroup>
           <View style={{
             borderRadius: 8,
             marginTop: -8,
@@ -267,33 +267,32 @@ const ProfileContent = () => {
             flex: 1
           }}>
             <View style={vm.common.screenPadding}>
-              <View style={[vm.common.row, { marginTop: -55, gap: 5 }]}>
-                <View style={[vm.common.avatarLarge, { overflow: 'hidden', borderWidth: 3, borderColor: vm.colors.background, backgroundColor: vm.colors.background }]}>
-                  <ShimmerEffect
-                    isLoading={true}
-                    style={{ width: '100%', height: '100%' }}
-                  />
+              <SkeletonGroup isLoading variant="pulse">
+                <View style={[vm.common.row, { marginTop: -55, gap: 5 }]}>
+                  <View style={[vm.common.avatarLarge, { overflow: 'hidden', borderWidth: 3, borderColor: vm.colors.background, backgroundColor: vm.colors.background }]}>
+                    <SkeletonGroup.Item style={{ width: '100%', height: '100%' }} />
+                  </View>
                 </View>
-              </View>
-              <View style={{ marginTop: 8, gap: 8 }}>
-                <ShimmerEffect isLoading={true} style={{ width: 150, height: 24, borderRadius: 8, backgroundColor: vm.colors.divider }} />
-                <ShimmerEffect isLoading={true} style={{ width: 100, height: 14, borderRadius: 8, backgroundColor: vm.colors.divider }} />
-                <ShimmerEffect isLoading={true} style={{ width: '80%', height: 16, borderRadius: 8, marginTop: 8, backgroundColor: vm.colors.divider }} />
-              </View>
-              <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
-                <ShimmerEffect isLoading={true} style={{ width: 170, height: 70, borderRadius: 35, backgroundColor: vm.colors.divider }} />
-                <ShimmerEffect isLoading={true} style={{ width: 170, height: 70, borderRadius: 35, backgroundColor: vm.colors.divider }} />
-              </View>
-              <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
-                <ShimmerEffect isLoading={true} style={{ width: 100, height: 36, borderRadius: 18, backgroundColor: vm.colors.divider }} />
-                <ShimmerEffect isLoading={true} style={{ width: 100, height: 36, borderRadius: 18, backgroundColor: vm.colors.divider }} />
-                <ShimmerEffect isLoading={true} style={{ width: 100, height: 36, borderRadius: 18, backgroundColor: vm.colors.divider }} />
-              </View>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 16, gap: 10 }}>
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <ShimmerEffect key={i} isLoading={true} style={{ width: '31%', aspectRatio: 1, borderRadius: 8, backgroundColor: vm.colors.divider }} />
-                ))}
-              </View>
+                <View style={{ marginTop: 8, gap: 8 }}>
+                  <SkeletonGroup.Item className="rounded-lg" style={{ width: 150, height: 24 }} />
+                  <SkeletonGroup.Item className="rounded-lg" style={{ width: 100, height: 14 }} />
+                  <SkeletonGroup.Item className="rounded-lg" style={{ width: '80%', height: 16, marginTop: 8 }} />
+                </View>
+                <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
+                  <SkeletonGroup.Item className="rounded-full" style={{ width: 170, height: 70 }} />
+                  <SkeletonGroup.Item className="rounded-full" style={{ width: 170, height: 70 }} />
+                </View>
+                <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
+                  <SkeletonGroup.Item className="rounded-full" style={{ width: 100, height: 36 }} />
+                  <SkeletonGroup.Item className="rounded-full" style={{ width: 100, height: 36 }} />
+                  <SkeletonGroup.Item className="rounded-full" style={{ width: 100, height: 36 }} />
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 16, gap: 10 }}>
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <SkeletonGroup.Item key={i} className="rounded-lg" style={{ width: '31%', aspectRatio: 1 }} />
+                  ))}
+                </View>
+              </SkeletonGroup>
             </View>
           </View>
         </ScrollView>

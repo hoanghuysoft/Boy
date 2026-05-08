@@ -11,9 +11,12 @@ import Animated, {
 } from "react-native-reanimated";
 
 const SEEK_SECONDS = 5;
-const DOUBLE_TAP_DELAY = 300;
+const DOUBLE_TAP_DELAY = 280;
 // Long-press threshold must be clearly above DOUBLE_TAP_DELAY to avoid conflict
-const LONG_PRESS_DELAY = 500;
+const LONG_PRESS_DELAY = 400;
+// Movement threshold in px — if finger moves more than this before long-press
+// fires, we cancel the long-press (prevents accidental speed-up on swipe)
+const MOVE_CANCEL_THRESHOLD = 15;
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 // Speed scrubber config
@@ -117,22 +120,29 @@ const TapIndicator: React.FC<TapIndicatorProps> = ({ direction, animatedStyle })
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+// Gesture states to clearly distinguish what is happening
+type GestureState = 'idle' | 'pending' | 'long-press' | 'consumed';
+
 interface LongPressSpeedZoneProps {
-    onShowControls: () => void;
+    onToggleControls: () => void;
     setPlaybackRate: (rate: number) => void;
     onDoubleTap: (direction: "forward" | "backward") => void;
 }
 
 export const LongPressSpeedZone: React.FC<LongPressSpeedZoneProps> = ({
-    onShowControls,
+    onToggleControls,
     setPlaybackRate,
     onDoubleTap,
 }) => {
+    // ── Gesture state machine ──
+    const gestureStateRef = useRef<GestureState>('idle');
+
     // ── Long-press / drag refs ──
     const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const wasLongPressRef = useRef(false);
     const dragAnchorXRef = useRef(0);
     const currentSpeedRef = useRef(BASE_SPEED);
+    const touchStartXRef = useRef(0);
+    const touchStartYRef = useRef(0);
 
     // ── Tap detection refs ──
     const tapCountRef = useRef(0);
@@ -176,63 +186,93 @@ export const LongPressSpeedZone: React.FC<LongPressSpeedZoneProps> = ({
         }
     };
 
+    const cancelLongPressTimer = () => {
+        if (longPressTimeoutRef.current) {
+            clearTimeout(longPressTimeoutRef.current);
+            longPressTimeoutRef.current = null;
+        }
+    };
+
     const activateLongPress = (anchorX: number) => {
-        wasLongPressRef.current = true;
+        gestureStateRef.current = 'long-press';
         dragAnchorXRef.current = anchorX;
         currentSpeedRef.current = BASE_SPEED;
         scrubSpeed.value = BASE_SPEED;
         setPlaybackRate(BASE_SPEED);
         // Animate scrub HUD in
         scrubOpacity.value = withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) });
-        // Kill any in-flight tap timers
+        // Kill any in-flight tap timers — long-press takes priority
         cancelDoubleTapTimer();
         tapCountRef.current = 0;
     };
 
     const deactivateLongPress = () => {
-        wasLongPressRef.current = false;
+        gestureStateRef.current = 'consumed';
         setPlaybackRate(1);
         scrubOpacity.value = withTiming(0, { duration: 200, easing: Easing.in(Easing.quad) });
     };
+
 
     return (
         <View
             style={StyleSheet.absoluteFill}
             onTouchStart={(e) => {
-                wasLongPressRef.current = false;
                 const startX = e.nativeEvent.pageX;
+                const startY = e.nativeEvent.pageY;
+                touchStartXRef.current = startX;
+                touchStartYRef.current = startY;
+                gestureStateRef.current = 'pending';
+
+                // Start long-press timer
                 longPressTimeoutRef.current = setTimeout(() => {
-                    activateLongPress(startX);
+                    if (gestureStateRef.current === 'pending') {
+                        activateLongPress(startX);
+                    }
                 }, LONG_PRESS_DELAY);
             }}
             onTouchMove={(e) => {
-                // Only handle drag if long-press is active
-                if (!wasLongPressRef.current) return;
+                const dx = e.nativeEvent.pageX - touchStartXRef.current;
+                const dy = e.nativeEvent.pageY - touchStartYRef.current;
 
-                const dragDelta = e.nativeEvent.pageX - dragAnchorXRef.current;
-                // Right = faster, Left = slower
-                const rawSpeed = BASE_SPEED + dragDelta / PX_PER_SPEED_UNIT;
-                const snapped = snapSpeed(rawSpeed);
+                if (gestureStateRef.current === 'long-press') {
+                    // Already in long-press mode — handle speed drag
+                    const dragDelta = e.nativeEvent.pageX - dragAnchorXRef.current;
+                    const rawSpeed = BASE_SPEED + dragDelta / PX_PER_SPEED_UNIT;
+                    const snapped = snapSpeed(rawSpeed);
 
-                if (snapped !== currentSpeedRef.current) {
-                    currentSpeedRef.current = snapped;
-                    scrubSpeed.value = withTiming(snapped, { duration: 80 });
-                    setPlaybackRate(snapped);
+                    if (snapped !== currentSpeedRef.current) {
+                        currentSpeedRef.current = snapped;
+                        scrubSpeed.value = withTiming(snapped, { duration: 80 });
+                        setPlaybackRate(snapped);
+                    }
+                } else if (gestureStateRef.current === 'pending') {
+                    // If finger moved too far before long-press triggered, cancel it
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance > MOVE_CANCEL_THRESHOLD) {
+                        cancelLongPressTimer();
+                        gestureStateRef.current = 'consumed'; // prevent tap on release
+                    }
                 }
             }}
             onTouchEnd={(e) => {
-                if (longPressTimeoutRef.current) {
-                    clearTimeout(longPressTimeoutRef.current);
-                    longPressTimeoutRef.current = null;
-                }
+                cancelLongPressTimer();
 
-                if (wasLongPressRef.current) {
-                    // Long-press (or drag) ended — restore speed; do NOT treat as tap
+                const state = gestureStateRef.current;
+
+                if (state === 'long-press') {
+                    // Long-press ended — restore speed; do NOT treat as tap
                     deactivateLongPress();
                     return;
                 }
 
+                if (state === 'consumed') {
+                    // Gesture was consumed (e.g. by swipe) — ignore
+                    gestureStateRef.current = 'idle';
+                    return;
+                }
+
                 // ── Tap detection ──
+                gestureStateRef.current = 'idle';
                 tapCountRef.current += 1;
                 tapPageXRef.current = e.nativeEvent.pageX;
 
@@ -240,7 +280,7 @@ export const LongPressSpeedZone: React.FC<LongPressSpeedZoneProps> = ({
                     // Start window for a possible second tap
                     doubleTapTimeoutRef.current = setTimeout(() => {
                         tapCountRef.current = 0;
-                        onShowControls();
+                        onToggleControls();
                     }, DOUBLE_TAP_DELAY);
                 } else if (tapCountRef.current === 2) {
                     // Double-tap confirmed
@@ -255,23 +295,27 @@ export const LongPressSpeedZone: React.FC<LongPressSpeedZoneProps> = ({
                         flashIndicator(forwardOpacity);
                     }
                 } else {
-                    // 3rd+ tap: gracefully reset
+                    // 3rd+ tap: treat as a new first tap
                     cancelDoubleTapTimer();
-                    tapCountRef.current = 0;
+                    tapCountRef.current = 1;
+                    doubleTapTimeoutRef.current = setTimeout(() => {
+                        tapCountRef.current = 0;
+                        onToggleControls();
+                    }, DOUBLE_TAP_DELAY);
                 }
             }}
             onTouchCancel={() => {
-                if (longPressTimeoutRef.current) {
-                    clearTimeout(longPressTimeoutRef.current);
-                    longPressTimeoutRef.current = null;
-                }
-                if (wasLongPressRef.current) {
+                const state = gestureStateRef.current;
+                cancelLongPressTimer();
+
+                if (state === 'long-press') {
                     deactivateLongPress();
                 } else {
                     cancelDoubleTapTimer();
                     tapCountRef.current = 0;
                     setPlaybackRate(1);
                 }
+                gestureStateRef.current = 'idle';
             }}
         >
             <TapIndicator direction="backward" animatedStyle={backwardStyle} />

@@ -13,7 +13,7 @@ import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DataProvider, LayoutProvider, RecyclerListView } from "recyclerlistview";
 import { PostItem } from "../../../components/PostItem";
-import { ShimmerEffect } from "../../../components/shimmer/Shimmer";
+import { SkeletonGroup } from "heroui-native";
 import { useThemeContext } from "../../../context/ThemeContext";
 import { useAudioStore } from "../../../stores/audio";
 import { useScrollStore } from "../../../stores/scroll";
@@ -251,34 +251,23 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
     const renderPostSkeleton = useCallback(() => {
         return (
-            <View style={{ marginTop: 20 }}>
+            <SkeletonGroup
+                isLoading={true}
+                variant="pulse"
+                style={{ marginTop: 20 }}
+            >
                 <View style={[common.row, { gap: 10, marginBottom: 12, paddingHorizontal: 16 }]}>
-                    <ShimmerEffect
-                        isLoading={true}
-                        style={{ width: 30, height: 30, borderRadius: 100, backgroundColor: colors.divider }}
-                    />
-                    <ShimmerEffect
-                        isLoading={true}
-                        style={{ width: 120, height: 16, borderRadius: 8, backgroundColor: colors.divider }}
-                    />
+                    <SkeletonGroup.Item className="rounded-full" style={{ width: 30, height: 30 }} />
+                    <SkeletonGroup.Item className="rounded-lg" style={{ width: 120, height: 16 }} />
                 </View>
                 <View style={{ gap: 8, marginBottom: 12, paddingHorizontal: 16 }}>
-                    <ShimmerEffect
-                        isLoading={true}
-                        style={{ width: '100%', height: 14, borderRadius: 6, backgroundColor: colors.divider }}
-                    />
-                    <ShimmerEffect
-                        isLoading={true}
-                        style={{ width: '80%', height: 14, borderRadius: 6, backgroundColor: colors.divider }}
-                    />
+                    <SkeletonGroup.Item className="rounded-md" style={{ width: '100%', height: 14 }} />
+                    <SkeletonGroup.Item className="rounded-md" style={{ width: '80%', height: 14 }} />
                 </View>
-                <ShimmerEffect
-                    isLoading={true}
-                    style={{ width: "100%", height: 200, backgroundColor: colors.divider }}
-                />
-            </View>
+                <SkeletonGroup.Item style={{ width: '100%', height: 200 }} />
+            </SkeletonGroup>
         );
-    }, [colors.divider, common.row]);
+    }, [common.row]);
 
     const renderEmptyState = () => {
         const emptyMessages: Record<string, string> = {

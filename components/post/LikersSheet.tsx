@@ -1,5 +1,5 @@
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import React, { forwardRef, memo, useCallback } from "react";
+import { BottomSheet } from "heroui-native";
+import React, { forwardRef, memo, useCallback, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
@@ -7,9 +7,9 @@ import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import VerifiedIcon from "../../icons/verified";
 import { LikeUser } from "../../types/like";
+import type { LikersSheetHandle } from "../../types/sheetHandles";
 import { useLikersSheetViewModel } from "../../viewmodels/LikersSheetViewModel";
 import { FlexText } from "../FlexText";
-import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
 
 // ============================================================================
 // Types
@@ -36,7 +36,7 @@ const LikerItem = memo(({ user, colors, common, onPress }: LikerItemProps) => (
         onPress={onPress}
         activeOpacity={0.7}
     >
-        <View style={[styles.avatar, { overflow: 'hidden' }]}>
+        <View style={styles.avatarContainer}>
             <NitroImage
                 image={{ url: user.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
                 style={[styles.avatar, { backgroundColor: colors.divider }]}
@@ -44,7 +44,7 @@ const LikerItem = memo(({ user, colors, common, onPress }: LikerItemProps) => (
             />
         </View>
         <View style={styles.userInfo}>
-            <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+            <View style={styles.nameRow}>
                 <FlexText style={[common.heading, { fontSize: 16 }]} numberOfLines={1}>
                     {user.profile_name}
                 </FlexText>
@@ -62,117 +62,129 @@ LikerItem.displayName = "LikerItem";
 // LikersSheet Component
 // ============================================================================
 
-export const LikersSheet = memo(forwardRef<TrueSheet, LikersSheetProps>(
+export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
     ({ postId }, ref) => {
         const insets = useSafeAreaInsets();
-        const vm = useLikersSheetViewModel(postId, ref as React.RefObject<TrueSheet | null>);
+        const vm = useLikersSheetViewModel(postId, ref as React.RefObject<LikersSheetHandle | null>);
         const { t } = useTranslation();
-        const backHandler = useSheetBackHandler(ref);
+        const [isOpen, setIsOpen] = useState(false);
+        const {
+            colors,
+            common,
+            likers,
+            totalLikes,
+            isLoading,
+            isFetchingNextPage,
+            handleEndReached,
+            handleUserPress,
+        } = vm;
+
+        useImperativeHandle(ref, () => ({
+            present: () => setIsOpen(true),
+            dismiss: () => setIsOpen(false),
+        }), []);
 
         const renderItem = useCallback(({ item }: { item: LikeUser }) => (
             <LikerItem
                 user={item}
-                colors={vm.colors}
-                common={vm.common}
-                onPress={() => vm.handleUserPress(item)}
+                colors={colors}
+                common={common}
+                onPress={() => handleUserPress(item)}
             />
-        ), [vm.colors, vm.common, vm.handleUserPress]);
+        ), [colors, common, handleUserPress]);
 
         const renderFooter = useCallback(() => {
-            if (vm.isFetchingNextPage) {
+            if (isFetchingNextPage) {
                 return (
                     <View style={styles.footerLoader}>
-                        <ActivityIndicator size="small" color={vm.colors.text} />
+                        <ActivityIndicator size="small" color={colors.text} />
                     </View>
                 );
             }
             return null;
-        }, [vm.isFetchingNextPage, vm.colors.text]);
+        }, [isFetchingNextPage, colors.text]);
 
         const renderEmpty = useCallback(() => {
-            if (vm.isLoading) {
+            if (isLoading) {
                 return (
                     <View style={styles.emptyState}>
-                        <ActivityIndicator size="small" color={vm.colors.text} />
+                        <ActivityIndicator size="small" color={colors.text} />
                     </View>
                 );
             }
             return (
                 <View style={styles.emptyState}>
-                    <FlexText style={[vm.common.body, { color: vm.colors.muted, textAlign: 'center' }]}>
+                    <FlexText style={[common.body, { color: colors.muted, textAlign: 'center' }]}>
                         {t('post.likersSheet.emptyTitle')}
                     </FlexText>
-                    <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted, textAlign: 'center', marginTop: 4 }]}>
+                    <FlexText style={[common.bodySmall, { color: colors.muted, textAlign: 'center', marginTop: 4 }]}>
                         {t('post.likersSheet.emptyBody')}
                     </FlexText>
                 </View>
             );
-        }, [vm.isLoading, vm.colors, vm.common, t]);
+        }, [isLoading, colors, common, t]);
+
+        const renderHeader = useCallback(() => (
+            <View style={styles.header}>
+                <FlexText style={[common.heading]}>{t('post.likersSheet.title')}</FlexText>
+                <FlexText style={common.bodySmall}>
+                    {totalLikes > 0
+                        ? t('post.likersSheet.subtitle', { count: totalLikes })
+                        : t('post.likersSheet.emptyTitle')}
+                </FlexText>
+            </View>
+        ), [common, t, totalLikes]);
 
         return (
-            <TrueSheet
-                ref={ref}
-                scrollable
-                backgroundColor={vm.theme === "dark" ? vm.colors.containerContent : "#ffffff"}
-                grabberOptions={{
-                    color: vm.colors.muted || "#C4C4C4",
-                    height: 5,
-                    width: 40,
-                }}
-                cornerRadius={24}
-                detents={[0.7]}
-                onDidPresent={backHandler.onDidPresent}
-                onDidDismiss={backHandler.onDidDismiss}
-            >
-                <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <FlexText style={[vm.common.heading]}>{t('post.likersSheet.title')}</FlexText>
-                        <FlexText style={vm.common.bodySmall}>
-                            {vm.totalLikes > 0
-                                ? t('post.likersSheet.subtitle', { count: vm.totalLikes })
-                                : t('post.likersSheet.emptyTitle')}
-                        </FlexText>
-                    </View>
-
-                    {/* Likers List */}
-                    <FlatList
-                        nestedScrollEnabled
-                        data={vm.likers}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderItem}
-                        onEndReached={vm.handleEndReached}
-                        onEndReachedThreshold={0.5}
-                        ListFooterComponent={renderFooter}
-                        ListEmptyComponent={renderEmpty}
-                        contentContainerStyle={{ paddingBottom: 20 }}
-                    />
-                </View>
-            </TrueSheet>
+            <BottomSheet isOpen={isOpen} onOpenChange={setIsOpen}>
+                <BottomSheet.Trigger ></BottomSheet.Trigger>
+                <BottomSheet.Portal>
+                    <BottomSheet.Overlay />
+                    <BottomSheet.Content
+                        detached={true}
+                        bottomInset={insets.bottom + 12}
+                        className="mx-1"
+                        backgroundClassName="rounded-[32px]"
+                        enableDynamicSizing={false}
+                        snapPoints={['85%']}
+                        disableContentView={true}
+                    >
+                        <FlatList
+                            data={likers}
+                            keyExtractor={(item) => item.id}
+                            renderItem={renderItem}
+                            onEndReached={handleEndReached}
+                            onEndReachedThreshold={0.5}
+                            ListHeaderComponent={renderHeader}
+                            ListFooterComponent={renderFooter}
+                            ListEmptyComponent={renderEmpty}
+                            contentContainerStyle={styles.listContent}
+                            showsVerticalScrollIndicator={true}
+                        />
+                    </BottomSheet.Content>
+                </BottomSheet.Portal>
+            </BottomSheet>
         );
     }
 ));
 
 LikersSheet.displayName = "LikersSheet";
 
-// ============================================================================
-// Styles
-// ============================================================================
-
 const styles = StyleSheet.create({
-    container: {
-        paddingHorizontal: 24,
-        paddingTop: 16,
-    },
     header: {
-        marginBottom: 20,
-        paddingTop: 10,
+        marginBottom: 12,
     },
     likerItem: {
         flexDirection: "row",
         alignItems: "center",
         paddingVertical: 8,
         gap: 16,
+    },
+    avatarContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        overflow: "hidden",
     },
     avatar: {
         width: 48,
@@ -181,14 +193,23 @@ const styles = StyleSheet.create({
     },
     userInfo: {
         flex: 1,
-        justifyContent: 'center',
+        justifyContent: "center",
+    },
+    nameRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
     },
     footerLoader: {
+        alignItems: "center",
         paddingVertical: 16,
-        alignItems: 'center',
     },
     emptyState: {
+        alignItems: "center",
         paddingVertical: 32,
-        alignItems: 'center',
+    },
+    listContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 40,
     },
 });

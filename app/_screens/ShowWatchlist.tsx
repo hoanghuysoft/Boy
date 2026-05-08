@@ -5,9 +5,9 @@ import { FlashList } from '@shopify/flash-list';
 import { RoundedMagnifierOutline, TrashBinTrashBold } from '@solar-icons/react-native';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
+import { Button, Dialog } from "heroui-native";
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-    Alert,
     Keyboard,
     Platform,
     Pressable,
@@ -36,6 +36,10 @@ const ShowWatchlistScreen = () => {
     const [keyboardHeight, setKeyboardHeight] = useState(0);
     const searchBarBottom = insets.bottom + 16 + keyboardHeight;
 
+    const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+    const [itemToRemove, setItemToRemove] = useState<WatchlistShow | null>(null);
+    const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+
     React.useEffect(() => {
         const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
         const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
@@ -61,29 +65,16 @@ const ShowWatchlistScreen = () => {
 
     const handleRemove = useCallback(
         (item: WatchlistShow) => {
-            Alert.alert(
-                'Remove from Watchlist',
-                `Remove "${item.title}"?`,
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Remove', style: 'destructive', onPress: () => remove(item.video_url) },
-                ]
-            );
+            setItemToRemove(item);
+            setIsRemoveDialogOpen(true);
         },
-        [remove]
+        []
     );
 
     const handleClearAll = useCallback(() => {
         if (watchlist.length === 0) return;
-        Alert.alert(
-            'Clear Watchlist',
-            'Remove all saved shows?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Clear All', style: 'destructive', onPress: clear },
-            ]
-        );
-    }, [watchlist.length, clear]);
+        setIsClearDialogOpen(true);
+    }, [watchlist.length]);
 
     const renderItem = useCallback(
         ({ item }: { item: WatchlistShow }) => (
@@ -242,6 +233,67 @@ const ShowWatchlistScreen = () => {
                     </View>
                 </View>
             )}
+            {/* Remove Confirmation Dialog */}
+            <Dialog isOpen={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
+                <Dialog.Portal>
+                    <Dialog.Overlay />
+                    <Dialog.Content>
+                        <Dialog.Close />
+                        <View style={{ marginBottom: 20, gap: 6 }}>
+                            <Dialog.Title>Remove from Watchlist</Dialog.Title>
+                            <Dialog.Description>
+                                Remove &ldquo;{itemToRemove?.title}&rdquo;?
+                            </Dialog.Description>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                            <Button variant="ghost" onPress={() => setIsRemoveDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onPress={() => {
+                                    setIsRemoveDialogOpen(false);
+                                    if (itemToRemove) {
+                                        remove(itemToRemove.video_url);
+                                    }
+                                }}
+                            >
+                                Remove
+                            </Button>
+                        </View>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
+
+            {/* Clear All Confirmation Dialog */}
+            <Dialog isOpen={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                <Dialog.Portal>
+                    <Dialog.Overlay />
+                    <Dialog.Content>
+                        <Dialog.Close />
+                        <View style={{ marginBottom: 20, gap: 6 }}>
+                            <Dialog.Title>Clear Watchlist</Dialog.Title>
+                            <Dialog.Description>
+                                Remove all saved shows?
+                            </Dialog.Description>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                            <Button variant="ghost" onPress={() => setIsClearDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onPress={() => {
+                                    setIsClearDialogOpen(false);
+                                    clear();
+                                }}
+                            >
+                                Clear All
+                            </Button>
+                        </View>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
         </View>
     );
 };

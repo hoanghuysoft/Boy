@@ -1,6 +1,8 @@
 import { useCarouselColorStore } from "@/stores/carouselColor";
 import { useSettingsStore } from "@/stores/settings";
+import type { LikersSheetHandle } from "@/types/sheetHandles";
 import { Post } from "@/types/post";
+import type { PostOptionsSheetHandle } from "@/components/post/PostOptionsSheet";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -24,11 +26,11 @@ export const useHomeViewModel = () => {
   const { data: myProfile } = useProfile("me", true);
 
   // ─── Post Options Sheet ────────────────────────────────────────
-  const optionsSheetRef = useRef<TrueSheet>(null);
+  const optionsSheetRef = useRef<PostOptionsSheetHandle>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   // ─── Likers Sheet ───────────────────────────────────────────────
-  const likersSheetRef = useRef<TrueSheet>(null);
+  const likersSheetRef = useRef<LikersSheetHandle>(null);
   const [selectedLikePostId, setSelectedLikePostId] = useState<string | null>(
     null,
   );

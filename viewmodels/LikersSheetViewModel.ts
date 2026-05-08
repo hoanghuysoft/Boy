@@ -1,14 +1,14 @@
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useRouter } from "expo-router";
 import { RefObject, useCallback, useEffect, useMemo } from "react";
 import { useThemeContext } from "../context/ThemeContext";
 import { useLikers } from "../services/like";
 import { createCommonStyles } from "../styles/common";
+import type { LikersSheetHandle } from "../types/sheetHandles";
 import { LikeUser } from "../types/like";
 
 export const useLikersSheetViewModel = (
     postId: string | null,
-    ref: RefObject<TrueSheet | null>
+    ref: RefObject<LikersSheetHandle | null>
 ) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);

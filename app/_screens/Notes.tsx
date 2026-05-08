@@ -9,7 +9,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
-    Alert,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -21,6 +20,7 @@ import { useThemeContext } from "../../context/ThemeContext";
 import { useDeleteNote, useNotes } from "../../services/note";
 import { createCommonStyles } from "../../styles/common";
 import { Note } from "../../types/note";
+import { Dialog, Button } from "heroui-native";
 
 dayjs.extend(relativeTime);
 
@@ -70,6 +70,8 @@ const NotesScreen = () => {
 
     const deleteNoteMutation = useDeleteNote();
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
 
     const handleEndReached = useCallback(() => {
         if (hasNextPage && !isFetchingNextPage) {
@@ -79,27 +81,9 @@ const NotesScreen = () => {
 
     const handleDeleteNote = useCallback((note: Note) => {
         if (deletingId === note.id || deleteNoteMutation.isPending) return;
-
-        Alert.alert(
-            t("notes.list.deleteDialogTitle"),
-            t("notes.list.deleteDialogMessage"),
-            [
-                { text: t("notes.list.cancelAction"), style: 'cancel' },
-                {
-                    text: t("notes.list.deleteAction"),
-                    style: 'destructive',
-                    onPress: () => {
-                        setDeletingId(note.id);
-                        deleteNoteMutation.mutate(note.id, {
-                            onSettled: () => {
-                                setDeletingId(null);
-                            }
-                        });
-                    },
-                },
-            ]
-        );
-    }, [deleteNoteMutation, deletingId, t]);
+        setNoteToDelete(note);
+        setIsDeleteDialogOpen(true);
+    }, [deleteNoteMutation, deletingId]);
 
     const renderItem = useCallback(({ item }: { item: Note }) => {
         const { title, text, imageUrl, linkUrls } = parseNoteContent(item.content);
@@ -278,7 +262,6 @@ const NotesScreen = () => {
                     />}
             />
 
-            {/* Floating Action Button for Create Note */}
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => router.push("/create-note")}
@@ -292,6 +275,41 @@ const NotesScreen = () => {
             >
                 <Ionicons name="add" size={32} color={colors.background} />
             </TouchableOpacity>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog isOpen={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <Dialog.Portal>
+                    <Dialog.Overlay />
+                    <Dialog.Content>
+                        <Dialog.Close />
+                        <View style={{ marginBottom: 20, gap: 6 }}>
+                            <Dialog.Title>{t('notes.list.deleteDialogTitle')}</Dialog.Title>
+                            <Dialog.Description>
+                                {t('notes.list.deleteDialogMessage')}
+                            </Dialog.Description>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                            <Button variant="ghost" onPress={() => setIsDeleteDialogOpen(false)}>
+                                {t('notes.list.cancelAction')}
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onPress={() => {
+                                    setIsDeleteDialogOpen(false);
+                                    if (noteToDelete) {
+                                        setDeletingId(noteToDelete.id);
+                                        deleteNoteMutation.mutate(noteToDelete.id, {
+                                            onSettled: () => setDeletingId(null)
+                                        });
+                                    }
+                                }}
+                            >
+                                {t('notes.list.deleteAction')}
+                            </Button>
+                        </View>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
         </View>
     );
 };

@@ -8,11 +8,12 @@ import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import React, { useCallback, useRef, useState } from 'react';
-import { Modal, StatusBar, ToastAndroid } from 'react-native';
+import { Modal, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Gallery, stackTransition, type GalleryRefType } from 'react-native-zoom-toolkit';
 import GalleryImage from './GalleryImage';
+import { useToast } from 'heroui-native';
 
 interface ProfileGalleryModalContentProps {
     imagesUrl: string[];
@@ -39,6 +40,7 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [isWallpaperVisible, setIsWallpaperVisible] = useState(false);
     const destination = new Directory(Paths.cache, 'images');
+    const { toast } = useToast();
 
     const currentPhoto = photos[currentIndex];
     const currentMusic = music?.[0];
@@ -76,7 +78,7 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
         try {
             const { status } = await MediaLibrary.requestPermissionsAsync();
             if (status !== 'granted') {
-                ToastAndroid.show("Permission Denied! We need access to your photos to save images.", ToastAndroid.SHORT);
+                toast.show({ label: "Permission Denied", description: "We need access to your photos to save images.", variant: "danger" });
                 return;
             }
             const localFile = await getOrDownloadFile(remoteUrl, destination, 'image.jpg');
@@ -84,17 +86,17 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
 
             await MediaLibrary.createAlbumAsync('WeLove', asset, false);
 
-            ToastAndroid.show("Image saved to gallery!", ToastAndroid.SHORT);
+            toast.show({ label: "Success", description: "Image saved to gallery!", variant: "success" });
         } catch (error) {
             console.error(error);
-            ToastAndroid.show("Failed to save image.", ToastAndroid.SHORT);
+            toast.show({ label: "Error", description: "Failed to save image.", variant: "danger" });
         }
     };
 
     const onShare = async (imageUrl: string) => {
         const isAvailable = await Sharing.isAvailableAsync();
         if (!isAvailable) {
-            alert("Sharing is not available on this platform");
+            toast.show({ label: "Error", description: "Sharing is not available on this platform", variant: "warning" });
             return;
         }
 
@@ -103,7 +105,7 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
             await Sharing.shareAsync(localFile.uri);
         } catch (error) {
             console.error('Error sharing image:', error);
-            alert("An error occurred while sharing the image");
+            toast.show({ label: "Error", description: "An error occurred while sharing the image", variant: "danger" });
         }
     };
 

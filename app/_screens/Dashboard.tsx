@@ -4,6 +4,7 @@ import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerShe
 import { useThemeContext } from "@/context/ThemeContext";
 import { useTrendingAll } from "@/hooks/useMovies";
 import { useInfiniteMedia } from "@/services/media";
+import { useWeather } from "@/services/weather";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
 import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
@@ -173,6 +174,8 @@ const DashboardScreen = () => {
 
     const { data: trending, isLoading: isTrendingLoading } = useTrendingAll();
     const weatherCity = activeProfile?.hometown?.trim() || "Ho Chi Minh City";
+
+    const { data: weather, refetch: refetchWeather, isFetching: isWeatherFetching } = useWeather(weatherCity);
     // useFocusEffect(
     //     useCallback(() => {
     //         statusBar.setShowStatusBarFade(false);
@@ -247,21 +250,24 @@ const DashboardScreen = () => {
                                     {weatherCity}
                                 </FlexText>
                             </View>
-                            <TouchableOpacity style={{ borderRadius: 999, backgroundColor: `${colors.text}18`, paddingHorizontal: 10, paddingVertical: 6 }}>
+                            <TouchableOpacity onPress={() => refetchWeather()} style={{ borderRadius: 999, backgroundColor: `${colors.text}18`, paddingHorizontal: 10, paddingVertical: 6 }}>
                                 <FlexText style={{ fontSize: 12, color: colors.text, fontWeight: "600" }}>
-                                    Refresh
+                                    {isWeatherFetching ? "Refreshing..." : "Refresh"}
                                 </FlexText>
                             </TouchableOpacity>
                         </View>
                         <View style={{ marginTop: 10 }}>
                             <FlexText style={{ fontSize: 34, fontWeight: "700", color: colors.text }}>
-                                --°C
+                                {weather?.temperatureC !== undefined ? `${weather.temperatureC}°C` : "--°C"}
                             </FlexText>
                             <FlexText style={{ fontSize: 14, color: colors.text, opacity: 0.82 }}>
-                                Weather data will be available soon.
+                                {weather?.condition ?? (isWeatherFetching ? "Fetching..." : "Weather data will be available soon.")}
                             </FlexText>
-                            <FlexText style={{ fontSize: 12, color: colors.text, opacity: 0.65, marginTop: 8 }}>
-                                Coming soon.
+                            <FlexText style={{ fontSize: 12, color: colors.text, opacity: 0.65, marginTop: 4 }}>
+                                {weather?.windSpeedKmh !== undefined ? `Wind ${weather.windSpeedKmh} km/h` : ""}
+                            </FlexText>
+                            <FlexText style={{ fontSize: 11, color: colors.text, opacity: 0.55, marginTop: 4 }}>
+                                {weather?.updatedAt ? `Updated ${new Date(weather.updatedAt).toLocaleTimeString()}` : ""}
                             </FlexText>
                         </View>
                     </BlurView>

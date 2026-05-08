@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useRouter } from "expo-router";
 import { RefObject, useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Keyboard } from "react-native";
+import { Keyboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
 import { useComments, useCreateComment, useDeleteComment, useUpdateComment } from "../services/comment";
 import { useProfile } from "../services/userprofile";
@@ -36,6 +36,8 @@ export const useCommentsSheetViewModel = (
     const [editingComment, setEditingComment] = useState<Comment | null>(null);
     const [isLocalSubmitting, setIsLocalSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
     const { data: myProfile } = useProfile('me', true);
     const currentProfileId = myProfile?.id || null;
 
@@ -111,27 +113,21 @@ export const useCommentsSheetViewModel = (
 
     const handleDeleteComment = useCallback((comment: Comment) => {
         if (deletingId === comment.id || deleteCommentMutation.isPending) return;
-        
-        Alert.alert(
-            'Delete Comment',
-            'Are you sure you want to delete this comment?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () => {
-                        setDeletingId(comment.id);
-                        deleteCommentMutation.mutate(comment.id, {
-                            onSettled: () => {
-                                setDeletingId(null);
-                            }
-                        });
-                    },
-                },
-            ]
-        );
+        setCommentToDelete(comment);
+        setIsDeleteDialogOpen(true);
     }, [deleteCommentMutation, deletingId]);
+
+    const confirmDeleteComment = useCallback(() => {
+        if (!commentToDelete) return;
+        setIsDeleteDialogOpen(false);
+        setDeletingId(commentToDelete.id);
+        deleteCommentMutation.mutate(commentToDelete.id, {
+            onSettled: () => {
+                setDeletingId(null);
+                setCommentToDelete(null);
+            }
+        });
+    }, [commentToDelete, deleteCommentMutation]);
 
     // Start editing a comment — pre-fill the input with its current content
     const handleEditComment = useCallback((comment: Comment) => {
@@ -245,5 +241,10 @@ export const useCommentsSheetViewModel = (
         handleCancelEdit,
         handleSaveEdit,
         formatTimeAgo,
+        
+        // Delete Dialog
+        isDeleteDialogOpen,
+        setIsDeleteDialogOpen,
+        confirmDeleteComment,
     };
 };

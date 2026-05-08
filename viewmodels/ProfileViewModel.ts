@@ -1,4 +1,6 @@
 import { choosenMediaPath } from "@/utils/imageurl";
+import type { PostOptionsSheetHandle } from "@/components/post/PostOptionsSheet";
+import type { LikersSheetHandle } from "@/types/sheetHandles";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -139,12 +141,12 @@ export const useProfileViewModel = () => {
     const isMusicPlaying = !!profileId && currentlyPlayingId === `profile-music-${profileId}`;
 
     // ─── Post Options Sheet ────────────────────────────────────────
-    const optionsSheetRef = useRef<TrueSheet>(null);
+    const optionsSheetRef = useRef<PostOptionsSheetHandle>(null);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const { data: myProfile } = useProfile('me', true);
 
     // ─── Likers Sheet ──────────────────────────────────────────────
-    const likersSheetRef = useRef<TrueSheet>(null);
+    const likersSheetRef = useRef<LikersSheetHandle>(null);
     const [selectedLikePostId, setSelectedLikePostId] = useState<string | null>(null);
 
     // ─── Comments Sheet ────────────────────────────────────────────

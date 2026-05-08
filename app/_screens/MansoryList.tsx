@@ -19,8 +19,8 @@ import { MediaViewer } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SkeletonGroup } from "heroui-native";
 import {
-    ActivityIndicator,
     Dimensions,
     Image as RNImage,
     StyleSheet,
@@ -390,9 +390,19 @@ const MansoryListScreen = () => {
 
     const renderEmpty = useCallback(() => {
         if (isBusy) {
+            // 2-column masonry skeleton grid
+            const skeletonHeights = [200, 140, 170, 110, 220, 150];
             return (
-                <View style={styles.emptyState}>
-                    <ActivityIndicator size="small" color={colors.text} />
+                <View style={{ flexDirection: 'row', paddingHorizontal: 8, gap: 8, paddingTop: 4 }}>
+                    {[0, 1].map((col) => (
+                        <View key={col} style={{ flex: 1, gap: 8 }}>
+                            {skeletonHeights
+                                .filter((_, i) => i % 2 === col)
+                                .map((h, i) => (
+                                    <SkeletonGroup key={i} isLoading variant="pulse" className="rounded-2xl" style={{ height: h }} />
+                                ))}
+                        </View>
+                    ))}
                 </View>
             );
         }
@@ -441,9 +451,10 @@ const MansoryListScreen = () => {
                     ListHeaderComponent={ListHeaderComponent}
                     ListFooterComponent={
                         isFetchingNextPage ? (
-                            <View style={styles.footer}>
-                                <ActivityIndicator size="small" color={colors.text} />
-                            </View>
+                            <SkeletonGroup isLoading variant="pulse" style={[styles.footer, { flexDirection: 'row', gap: 8, paddingHorizontal: 8 }]}>
+                                <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
+                                <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
+                            </SkeletonGroup>
                         ) : null
                     }
                     ListEmptyComponent={renderEmpty}

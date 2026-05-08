@@ -1,8 +1,9 @@
 const {
     getSentryExpoConfig
 } = require("@sentry/react-native/metro");
+const { withUniwindConfig } = require("uniwind/metro");
 
-module.exports = (() => {
+module.exports = withUniwindConfig((() => {
     const config = getSentryExpoConfig(__dirname);
 
     const { transformer, resolver } = config;
@@ -18,4 +19,7 @@ module.exports = (() => {
     };
 
     return config;
-})();
+})(), {
+    cssEntryFile: "./global.css",
+    dtsFile: "./uniwind-types.d.ts",
+});

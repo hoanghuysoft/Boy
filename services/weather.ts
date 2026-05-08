@@ -1,12 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetch as nitroFetch } from "react-native-nitro-fetch";
+import * as Location from "expo-location";
+import { createMMKV } from "react-native-mmkv";
 import { weatherClient } from "./client";
+import { fetch as nitroFetch } from "react-native-nitro-fetch";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface OpenMeteoCurrentResponse {
   current: {
     time: string;
     temperature_2m: number;
     weather_code: number;
+    wind_speed_10m: number;
+  };
+  hourly: {
+    time: string[];
+    temperature_2m: number[];
+    relative_humidity_2m: number[];
+    wind_speed_10m: number[];
   };
 }
 
@@ -25,10 +36,23 @@ interface OpenMeteoGeocodeResponse {
 export interface WeatherSummary {
   place: string;
   temperatureC: number;
+  windSpeedKmh: number;
   weatherCode: number;
   condition: string;
   updatedAt: string;
+  hourly?: {
+    time: string[];
+    temperature_2m: number[];
+    relative_humidity_2m: number[];
+    wind_speed_10m: number[];
+  };
 }
+
+// ─── Storage ──────────────────────────────────────────────────────────────────
+
+const storage = createMMKV({ id: "weather-service" });
+
+// ─── Weather Code Map ─────────────────────────────────────────────────────────
 
 const weatherCodeMap: Record<number, string> = {
   0: "Clear sky",
@@ -61,61 +85,167 @@ const weatherCodeMap: Record<number, string> = {
   99: "Severe thunderstorm with hail",
 };
 
-const getConditionLabel = (weatherCode: number) => {
-  return weatherCodeMap[weatherCode] ?? "Unknown";
+const getConditionLabel = (code: number) => weatherCodeMap[code] ?? "Unknown";
+
+// ─── Location Resolvers ───────────────────────────────────────────────────────
+
+type Coords = { latitude: number; longitude: number };
+
+const getDeviceLocation = async (): Promise<Coords | null> => {
+  try {
+    const { status } = await Location.getForegroundPermissionsAsync();
+    if (status !== "granted") {
+      const { status: asked } = await Location.requestForegroundPermissionsAsync();
+      if (asked !== "granted") return null;
+    }
+    const loc = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+  } catch {
+    return null;
+  }
+};
+
+const getCachedLocation = (): Coords | null => {
+  try {
+    const raw = storage.getString("LAST_KNOWN_LOCATION");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const getIPLocation = async (): Promise<Coords | null> => {
+  try {
+    const response = await fetch("https://ipapi.co/json/");
+    const data = await response.json();
+    if (data?.latitude && data?.longitude) {
+      return {
+        latitude: parseFloat(data.latitude),
+        longitude: parseFloat(data.longitude),
+      };
+    }
+  } catch {}
+  return null;
 };
 
 const geocodeCity = async (city: string): Promise<OpenMeteoGeocodeResult> => {
-  const geocodeUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-    city,
-  )}&count=1&language=en&format=json`;
-
-  const response = await nitroFetch(geocodeUrl);
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+  const response = await nitroFetch(url);
   if (!response.ok) {
-    throw new Error(`Geocoding request failed with status ${response.status}`);
+    throw new Error(`Geocoding failed: ${response.status}`);
   }
-
   const data = (await response.json()) as OpenMeteoGeocodeResponse;
-  const result = data.results?.[0];
-
-  if (!result) {
-    throw new Error("No weather location found for this city");
-  }
-
-  return result;
+  if (!data.results?.[0]) throw new Error("No location found for city");
+  return data.results[0];
 };
 
-export const getWeatherByCity = async (city: string): Promise<WeatherSummary> => {
-  const trimmedCity = city.trim();
-  if (!trimmedCity) {
-    throw new Error("City is required");
-  }
+// ─── Core Fetch ───────────────────────────────────────────────────────────────
 
-  const location = await geocodeCity(trimmedCity);
-
-  const weatherResponse = await weatherClient.get<OpenMeteoCurrentResponse>("/forecast", {
+const fetchWeatherByCoords = async (
+  coords: Coords,
+  placeName: string
+): Promise<WeatherSummary> => {
+  const { data } = await weatherClient.get<OpenMeteoCurrentResponse>("/forecast", {
     params: {
-      latitude: location.latitude,
-      longitude: location.longitude,
-      current: "temperature_2m,weather_code",
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      current: "temperature_2m,weather_code,wind_speed_10m",
+      hourly: "temperature_2m,relative_humidity_2m,wind_speed_10m",
       timezone: "auto",
     },
   });
 
   return {
-    place: location.admin1 ? `${location.name}, ${location.admin1}` : location.name,
-    temperatureC: weatherResponse.data.current.temperature_2m,
-    weatherCode: weatherResponse.data.current.weather_code,
-    condition: getConditionLabel(weatherResponse.data.current.weather_code),
-    updatedAt: weatherResponse.data.current.time,
+    place: placeName,
+    temperatureC: data.current.temperature_2m,
+    windSpeedKmh: data.current.wind_speed_10m,
+    weatherCode: data.current.weather_code,
+    condition: getConditionLabel(data.current.weather_code),
+    updatedAt: data.current.time,
+    hourly: data.hourly,
   };
 };
 
+// ─── Smart Weather (Priority chain) ──────────────────────────────────────────
+// 1. Device GPS  2. Cached coords  3. IP-based  4. Hometown geocode  5. IP fallback
+
+export const getSmartWeather = async (hometown?: string): Promise<WeatherSummary | null> => {
+  let coords: Coords | null = null;
+  let placeName = hometown ?? "Current Location";
+
+  // 1. Device GPS
+  coords = await getDeviceLocation();
+  if (coords) placeName = "Your Location";
+
+  // 2. Cached last-known location
+  if (!coords) {
+    coords = getCachedLocation();
+    if (coords) placeName = hometown ?? "Recent Location";
+  }
+
+  // 3. IP-based location
+  if (!coords) {
+    coords = await getIPLocation();
+    if (coords) placeName = hometown ?? "Your Location";
+  }
+
+  // 4. Geocode hometown address
+  if (!coords && hometown?.trim()) {
+    try {
+      const geo = await geocodeCity(hometown.trim());
+      coords = { latitude: geo.latitude, longitude: geo.longitude };
+      placeName = geo.admin1 ? `${geo.name}, ${geo.admin1}` : geo.name;
+    } catch {}
+  }
+
+  // 5. IP fallback (last resort)
+  if (!coords) {
+    coords = await getIPLocation();
+    if (coords) placeName = "Your Location";
+  }
+
+  if (!coords) return null;
+
+  // Persist resolved coords for next cold start
+  storage.set("LAST_KNOWN_LOCATION", JSON.stringify(coords));
+
+  try {
+    return await fetchWeatherByCoords(coords, placeName);
+  } catch (e) {
+    console.error("[weather] fetchWeatherByCoords error", e);
+    return null;
+  }
+};
+
+// ─── City-based helper (for when you have an explicit city name) ──────────────
+
+export const getWeatherByCity = async (city: string): Promise<WeatherSummary> => {
+  const trimmed = city.trim();
+  if (!trimmed) throw new Error("City is required");
+  const geo = await geocodeCity(trimmed);
+  return fetchWeatherByCoords(
+    { latitude: geo.latitude, longitude: geo.longitude },
+    geo.admin1 ? `${geo.name}, ${geo.admin1}` : geo.name
+  );
+};
+
+// ─── React Query Hook ─────────────────────────────────────────────────────────
+
+export const useWeather = (hometown?: string) =>
+  useQuery({
+    queryKey: ["weather", hometown ?? "__smart__"],
+    queryFn: () => getSmartWeather(hometown),
+    staleTime: 1000 * 60 * 15,   // 15 min
+    gcTime: 1000 * 60 * 60,      // 1 hr
+    retry: 1,
+  });
+
 export const useWeatherByCity = (city?: string) => {
   const normalizedCity = city?.trim() ?? "";
-
   return useQuery({
-    queryKey: ["weather", normalizedCity],
+    queryKey: ["weather", "city", normalizedCity],
     queryFn: () => getWeatherByCity(normalizedCity),
     enabled: normalizedCity.length > 0,
     staleTime: 1000 * 60 * 10,

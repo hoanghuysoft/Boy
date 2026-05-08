@@ -21,7 +21,6 @@ import {
   Platform,
   StatusBar,
   StyleSheet,
-  TouchableOpacity,
   View,
 } from "react-native";
 import {
@@ -85,24 +84,9 @@ const VideoPlayer = () => {
   const topBarTranslateY = useRef(new Animated.Value(-50)).current;
   const bottomBarTranslateY = useRef(new Animated.Value(50)).current;
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Track videoPressed in a ref so callbacks always see the latest value
-  const videoPressedRef = useRef(false);
-  // Prevent rapid consecutive taps from toggling controls back immediately
-  const lastControlsToggleRef = useRef<number>(0);
-
   // Handlers
   const handleVideoPress = useCallback(() => {
-    // Debounce: ignore taps within 300ms of the last toggle to prevent
-    // rapid show/hide from interfering with double-tap detection
-    const now = Date.now();
-    if (now - lastControlsToggleRef.current < 300) return;
-    lastControlsToggleRef.current = now;
-
-    setVideoPressed((prev) => {
-      const next = !prev;
-      videoPressedRef.current = next;
-      return next;
-    });
+    setVideoPressed((prev) => !prev);
   }, []);
 
   const moveBackward = () => {
@@ -285,7 +269,6 @@ const VideoPlayer = () => {
 
     if (videoPressed && !isPaused) {
       hideTimeoutRef.current = setTimeout(() => {
-        videoPressedRef.current = false;
         setVideoPressed(false);
       }, 5000);
     }
@@ -364,25 +347,15 @@ const VideoPlayer = () => {
 
       {/* Controls Layer */}
       <View style={styles.videoControlsContainer}>
-        {/* Long press speed up zone - only active when controls are hidden */}
-        {!videoPressed && (
-          <LongPressSpeedZone
-            onShowControls={handleVideoPress}
-            setPlaybackRate={setPlaybackRate}
-            onDoubleTap={(direction) =>
-              direction === 'forward' ? moveForward() : moveBackward()
-            }
-          />
-        )}
-
-        {/* Tap zone when controls are visible */}
-        {videoPressed && (
-          <TouchableOpacity
-            onPress={handleVideoPress}
-            activeOpacity={1}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
+        {/* Unified gesture zone — always mounted, handles single tap (toggle controls),
+            double tap (seek), and long press (speed up) without conflicts */}
+        <LongPressSpeedZone
+          onToggleControls={handleVideoPress}
+          setPlaybackRate={setPlaybackRate}
+          onDoubleTap={(direction) =>
+            direction === 'forward' ? moveForward() : moveBackward()
+          }
+        />
 
         {/* Speed indicator */}
         <SpeedIndicator playbackRate={playbackRate} />

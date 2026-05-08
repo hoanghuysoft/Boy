@@ -1,8 +1,8 @@
 import NetInfo from "@react-native-community/netinfo";
 import { onlineManager, QueryClient } from "@tanstack/react-query";
 import type { Persister } from "@tanstack/react-query-persist-client";
-import { fetch as nitroFetch } from "react-native-nitro-fetch";
 import { createMMKV } from "react-native-mmkv";
+import { fetch as nitroFetch } from "react-native-nitro-fetch";
 import { supabase } from "./login";
 
 onlineManager.setEventListener((setOnline) => {
@@ -245,7 +245,9 @@ try {
     const urlObj = new URL(bulletinUrlStr);
     bulletinBaseUrl = urlObj.origin;
   }
-} catch (e) {}
+} catch (e) {
+  console.log("Bulletin URL error", e);
+}
 
 export const bulletinClient = createClient({
   baseURL: bulletinBaseUrl,

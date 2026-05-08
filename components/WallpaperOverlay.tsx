@@ -2,8 +2,9 @@ import { useThemeContext } from "@/context/ThemeContext";
 import { SquircleView } from "expo-squircle-view";
 import React, { useState } from 'react';
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { NitroImage } from "react-native-nitro-image";
+import { useToast } from "heroui-native";
 import { WallpaperSet } from 'react-native-nitro-wallpaper';
 import { FlexText } from "./FlexText";
 
@@ -17,9 +18,13 @@ const WallpaperOverlay = ({ isVisible, url, onClose }: WallpaperOverlayProps) =>
     const { colors } = useThemeContext();
     const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
 
     const handleSetWallpaper = async (type: 'both' | 'home' | 'lock') => {
-        if (!url) return Alert.alert(t('wallpaperOverlay.alert.errorTitle'), t('wallpaperOverlay.alert.noUrl'));
+        if (!url) {
+            toast.show({ label: t('wallpaperOverlay.alert.errorTitle'), description: t('wallpaperOverlay.alert.noUrl'), variant: 'danger' });
+            return;
+        }
 
         setIsLoading(true);
         try {
@@ -34,10 +39,10 @@ const WallpaperOverlay = ({ isVisible, url, onClose }: WallpaperOverlayProps) =>
                     await WallpaperSet.setWallpaper(url, 'lock');
                     break;
             }
-            Alert.alert(t('wallpaperOverlay.alert.successTitle'), t('wallpaperOverlay.alert.setSuccess'));
+            toast.show({ label: t('wallpaperOverlay.alert.successTitle'), description: t('wallpaperOverlay.alert.setSuccess'), variant: 'success' });
             onClose();
         } catch (error) {
-            Alert.alert(t('wallpaperOverlay.alert.errorTitle'), t('wallpaperOverlay.alert.setFailed'));
+            toast.show({ label: t('wallpaperOverlay.alert.errorTitle'), description: t('wallpaperOverlay.alert.setFailed'), variant: 'danger' });
             console.error(error);
         } finally {
             setIsLoading(false);

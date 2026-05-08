@@ -10,11 +10,11 @@ import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
 import { Logout3Bold } from '@solar-icons/react-native';
 import { Href, router } from "expo-router";
+import { ControlField, Description, Label, Dialog, Button } from "heroui-native";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ToggleSwitch from 'toggle-switch-react-native';
 
 
 
@@ -46,6 +46,7 @@ const SettingsScreen = () => {
     const [cacheCount, setCacheCount] = useState(0);
     const [isClearing, setIsClearing] = useState(false);
     const [showCacheSizePicker, setShowCacheSizePicker] = useState(false);
+    const [isClearCacheDialogOpen, setIsClearCacheDialogOpen] = useState(false);
 
     const refreshCacheInfo = useCallback(async () => {
         const [size, count] = await Promise.all([getCacheSize(), getCacheCount()]);
@@ -70,24 +71,8 @@ const SettingsScreen = () => {
     }, [videoCacheSizeLimit]);
 
     const handleClearCache = useCallback(() => {
-        Alert.alert(
-            t('settings.clearVideoCache'),
-            t('settings.clearVideoCacheConfirmation', { size: formatBytes(cacheSize) }),
-            [
-                { text: t('settings.cancel'), style: "cancel" },
-                {
-                    text: t('settings.clear'),
-                    style: "destructive",
-                    onPress: async () => {
-                        setIsClearing(true);
-                        await clearVideoCache();
-                        await refreshCacheInfo();
-                        setIsClearing(false);
-                    }
-                }
-            ]
-        );
-    }, [cacheSize, refreshCacheInfo]);
+        setIsClearCacheDialogOpen(true);
+    }, []);
 
     const handleSetCacheLimit = useCallback(async (sizeBytes: number) => {
         setVideoCacheSizeLimit(sizeBytes);
@@ -157,47 +142,41 @@ const SettingsScreen = () => {
                     <Ionicons name="chevron-forward" size={24} color={colors.text} />
                 </TouchableOpacity>
                 <View style={styles.divider}></View>
-                <View style={[styles.option]}>
-                    <View>
-                        <FlexText style={[common.body]}>{t('settings.adultFilter')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{showSensitiveContent ? t('settings.adultFilterOff') : t('settings.adultFilterOn')}</FlexText>
-                    </View>
-                    <ToggleSwitch
-                        isOn={!showSensitiveContent}
-                        onColor="#54d340"
-                        offColor={colors.card}
-                        size="medium"
-                        onToggle={toggleShowSensitiveContent}
-                    />
-                </View>
-                <View style={styles.divider}></View>
-                <View style={[styles.option]}>
+                <ControlField
+                    isSelected={!showSensitiveContent}
+                    onSelectedChange={toggleShowSensitiveContent}
+                    style={styles.option}
+                >
                     <View style={{ flex: 1 }}>
-                        <FlexText style={[common.body]}>{t('settings.homeCarousel')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.homeCarouselDescription')}</FlexText>
+                        <Label>{t('settings.adultFilter')}</Label>
+                        <Description>{showSensitiveContent ? t('settings.adultFilterOff') : t('settings.adultFilterOn')}</Description>
                     </View>
-                    <ToggleSwitch
-                        isOn={showCarousel}
-                        onColor="#54d340"
-                        offColor={colors.card}
-                        size="medium"
-                        onToggle={toggleCarousel}
-                    />
-                </View>
+                    <ControlField.Indicator />
+                </ControlField>
                 <View style={styles.divider}></View>
-                <View style={[styles.option]}>
+                <ControlField
+                    isSelected={showCarousel}
+                    onSelectedChange={toggleCarousel}
+                    style={styles.option}
+                >
                     <View style={{ flex: 1 }}>
-                        <FlexText style={[common.body]}>{t('settings.autoplayVideos')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.autoplayVideosDescription')}</FlexText>
+                        <Label>{t('settings.homeCarousel')}</Label>
+                        <Description>{t('settings.homeCarouselDescription')}</Description>
                     </View>
-                    <ToggleSwitch
-                        isOn={autoplayVideos}
-                        onColor="#54d340"
-                        offColor={colors.card}
-                        size="medium"
-                        onToggle={toggleAutoplayVideos}
-                    />
-                </View>
+                    <ControlField.Indicator />
+                </ControlField>
+                <View style={styles.divider}></View>
+                <ControlField
+                    isSelected={autoplayVideos}
+                    onSelectedChange={toggleAutoplayVideos}
+                    style={styles.option}
+                >
+                    <View style={{ flex: 1 }}>
+                        <Label>{t('settings.autoplayVideos')}</Label>
+                        <Description>{t('settings.autoplayVideosDescription')}</Description>
+                    </View>
+                    <ControlField.Indicator />
+                </ControlField>
             </View>
 
             {/* ─── Service ────────────────────────────────────────────── */}
@@ -339,6 +318,37 @@ const SettingsScreen = () => {
                     </View>
                 </TouchableOpacity>
             </Modal>
+            <Dialog isOpen={isClearCacheDialogOpen} onOpenChange={setIsClearCacheDialogOpen}>
+                <Dialog.Portal>
+                    <Dialog.Overlay />
+                    <Dialog.Content>
+                        <Dialog.Close />
+                        <View style={{ marginBottom: 20, gap: 6 }}>
+                            <Dialog.Title>{t('settings.clearVideoCache')}</Dialog.Title>
+                            <Dialog.Description>
+                                {t('settings.clearVideoCacheConfirmation', { size: formatBytes(cacheSize) })}
+                            </Dialog.Description>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                            <Button variant="ghost" onPress={() => setIsClearCacheDialogOpen(false)}>
+                                {t('settings.cancel')}
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onPress={async () => {
+                                    setIsClearCacheDialogOpen(false);
+                                    setIsClearing(true);
+                                    await clearVideoCache();
+                                    await refreshCacheInfo();
+                                    setIsClearing(false);
+                                }}
+                            >
+                                {t('settings.clear')}
+                            </Button>
+                        </View>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
             <View style={{ marginBottom: inset.bottom + 16 }}></View>
         </ScrollView >
     );

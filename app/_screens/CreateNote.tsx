@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
-    Alert,
     Keyboard,
     Platform,
     ScrollView,
@@ -23,6 +22,7 @@ import { FlexText } from "../../components/FlexText";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useCreateNote, useNote, useUpdateNote } from "../../services/note";
 import { createCommonStyles } from "../../styles/common";
+import { useToast } from "heroui-native";
 
 type Block =
   | { id: string; type: 'text'; text: string }
@@ -34,6 +34,7 @@ const CreateNoteScreen = () => {
     const { t } = useTranslation();
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
+    const { toast } = useToast();
 
     const [title, setTitle] = useState("");
     const [blocks, setBlocks] = useState<Block[]>([{ id: 'init', type: 'text', text: '' }]);
@@ -117,7 +118,11 @@ const CreateNoteScreen = () => {
             // Ensure the URL has a valid domain (e.g., containing a dot like .com) or is localhost
             const urlRegex = /^(https?:\/\/)?(localhost|[\w\-]+(\.[\w\-]+)+)(:\d+)?(\/.*)?$/i;
             if (!urlRegex.test(urlStr)) {
-                Alert.alert(t("notes.editor.invalidUrlTitle"), t("notes.editor.invalidUrlMessage"));
+                toast.show({
+                    variant: 'danger',
+                    label: t("notes.editor.invalidUrlTitle"),
+                    description: t("notes.editor.invalidUrlMessage"),
+                });
                 return;
             }
 
@@ -130,7 +135,11 @@ const CreateNoteScreen = () => {
             try {
                 new URL(formattedUrl);
             } catch (error) {
-                Alert.alert(t("notes.editor.invalidUrlTitle"), t("notes.editor.invalidUrlMalformedMessage"));
+                toast.show({
+                    variant: 'danger',
+                    label: t("notes.editor.invalidUrlTitle"),
+                    description: t("notes.editor.invalidUrlMalformedMessage"),
+                });
                 return;
             }
 
