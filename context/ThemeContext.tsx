@@ -130,8 +130,12 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Sync theme with Uniwind (HeroUI Native)
   useEffect(() => {
-    Uniwind.setTheme(theme);
-  }, [theme]);
+    if (themePreference === 'system') {
+      Uniwind.setTheme('system');
+    } else {
+      Uniwind.setTheme(theme);
+    }
+  }, [theme, themePreference]);
 
   const toggleTheme = () => {
     // Toggle between light and dark (not system)

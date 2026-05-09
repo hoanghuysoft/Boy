@@ -31,6 +31,9 @@ const settings = {
     account: 'Tài khoản',
     logout: 'Đăng xuất',
     loggingOut: 'Đang đăng xuất...',
+    about: 'Thông tin',
+    aboutApp: 'Về WeLove',
+    aboutAppDescription: 'Kiểm tra cập nhật',
 } as const;
 
 export default settings;

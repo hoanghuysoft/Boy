@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CheckCircleBold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
+import { Surface } from "heroui-native";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -88,7 +89,7 @@ const LanguageSettingsScreen = () => {
                 {t('languageSettings.subtitle')}
             </FlexText>
 
-            <View style={styles.card}>
+            <Surface variant="default">
                 {options.map((option, index) => {
                     const active = isOptionActive(option, mode, language);
                     const label =
@@ -147,7 +148,7 @@ const LanguageSettingsScreen = () => {
                         </View>
                     );
                 })}
-            </View>
+            </Surface>
         </ScrollView>
     );
 };

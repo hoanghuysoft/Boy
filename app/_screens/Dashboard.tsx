@@ -4,8 +4,8 @@ import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerShe
 import { useThemeContext } from "@/context/ThemeContext";
 import { useTrendingAll } from "@/hooks/useMovies";
 import { useInfiniteMedia } from "@/services/media";
-import { useWeather } from "@/services/weather";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
+import { useWeather } from "@/services/weather";
 import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
@@ -230,7 +230,7 @@ const DashboardScreen = () => {
                                 ? `@${activeProfile.username}`
                                 : activeProfile?.email || ""
                         }
-                   
+
                         fontSize={16}
                         fontWeight="normal"
                         color="white"
@@ -238,7 +238,7 @@ const DashboardScreen = () => {
                         trigger={focusTrigger}
                     />
                 </Pressable>
-                <SquircleView cornerSmoothing={100} borderRadius={16} style={{ marginTop: 16, overflow: 'hidden' }}>
+                <SquircleView cornerSmoothing={100} borderRadius={32} style={{ marginTop: 16, overflow: 'hidden' }}>
                     <BlurView blurMethod="dimezisBlurViewSdk31Plus" tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
                         intensity={80} blurTarget={blurTargetRef} style={{ padding: 16 }}>
                         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -272,7 +272,7 @@ const DashboardScreen = () => {
                         </View>
                     </BlurView>
                 </SquircleView>
-                <SquircleView cornerSmoothing={100} borderRadius={16} style={{ marginTop: 50, overflow: 'hidden' }}>
+                <SquircleView cornerSmoothing={100} borderRadius={32} style={{ marginTop: 50, overflow: 'hidden' }}>
                     <BlurView blurMethod="dimezisBlurViewSdk31Plus" tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
                         intensity={80} blurTarget={blurTargetRef} style={{ padding: 16 }}>
                         <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 16 }}>
@@ -280,15 +280,15 @@ const DashboardScreen = () => {
                         </FlexText>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', marginTop: 4 }}>
                             <TouchableOpacity onPress={() => router.push("/webview?url=https://reclipnew.onrender.com/")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
-                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
-                                    <Image source={{ uri: 'https://wsrv.nl/?url=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&w=256&h=undefined&q=75&ll=&default=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&output=webp' }} style={{ width: 34, height: 34, borderRadius: 10 }} />
+                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                    <Image source={{ uri: 'https://wsrv.nl/?url=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&w=256&h=undefined&q=75&ll=&default=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&output=webp' }} style={{ width: 34, height: 34, borderRadius: 6 }} />
                                 </SquircleView>
                                 <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>ReClip</FlexText>
                             </TouchableOpacity>
 
                             {isAdmin && (
                                 <TouchableOpacity onPress={() => router.push("/webview?url=https://boy-server.vercel.app/&isUseSafeArea=true&safeAreaColor=white&isShowBackButton=true")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
-                                    <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                    <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
                                         <NitroImage image={require("../../assets/images/logo_head.png")} style={{ width: 34, height: 34 }} resizeMode="contain" />
                                     </SquircleView>
                                     <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>WeLove Admin</FlexText>
@@ -296,14 +296,14 @@ const DashboardScreen = () => {
                             )}
 
                             <TouchableOpacity onPress={() => router.push("/_screens/Bulletinboard")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
-                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
                                     <Ionicons name="megaphone" size={26} color="#fff" />
                                 </SquircleView>
                                 <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }} numberOfLines={1}>Bulletin</FlexText>
                             </TouchableOpacity>
 
                             <TouchableOpacity onPress={() => router.push("/notes")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
-                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
                                     <Ionicons name="document-text" size={26} color="#fff" />
                                 </SquircleView>
                                 <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>Notes</FlexText>
@@ -311,7 +311,7 @@ const DashboardScreen = () => {
                         </View>
                     </BlurView>
                 </SquircleView>
-                <SquircleView cornerSmoothing={100} borderRadius={16} style={{ marginTop: 10, overflow: 'hidden' }}>
+                <SquircleView cornerSmoothing={100} borderRadius={32} style={{ marginTop: 10, overflow: 'hidden' }}>
                     <BlurView blurMethod="dimezisBlurViewSdk31Plus" tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
                         intensity={80} blurTarget={blurTargetRef} style={{ padding: 16 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -326,26 +326,26 @@ const DashboardScreen = () => {
                             Personalized channels, quick resume, and curated picks will appear here.
                         </FlexText>
                         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-                            <SquircleView cornerSmoothing={100} borderRadius={12} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
+                            <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
                                 <TvBold size={20} color={colors.text} />
                                 <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>Live Channels</FlexText>
                                 <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Preview mode</FlexText>
                             </SquircleView>
-                            <SquircleView cornerSmoothing={100} borderRadius={12} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
+                            <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
                                 <ClapperboardBold size={20} color={colors.text} />
                                 <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>Movies Hub</FlexText>
                                 <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Preview mode</FlexText>
                             </SquircleView>
                         </View>
-                        <SquircleView cornerSmoothing={100} borderRadius={12} style={{ backgroundColor: `${colors.text}10`, padding: 12, gap: 10 }}>
+                        <SquircleView cornerSmoothing={100} borderRadius={16} style={{ backgroundColor: `${colors.text}10`, padding: 12, gap: 10 }}>
                             <FlexText style={{ fontSize: 13, color: colors.text, opacity: 0.75 }}>
                                 Trending
                             </FlexText>
                             {isTrendingLoading ? (
                                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                                    <View style={{ flex: 1, height: 110, borderRadius: 10, backgroundColor: `${colors.text}14` }} />
-                                    <View style={{ flex: 1, height: 110, borderRadius: 10, backgroundColor: `${colors.text}14` }} />
-                                    <View style={{ flex: 1, height: 110, borderRadius: 10, backgroundColor: `${colors.text}14` }} />
+                                    <View style={{ flex: 1, height: 110, borderRadius: 4, backgroundColor: `${colors.text}14` }} />
+                                    <View style={{ flex: 1, height: 110, borderRadius: 4, backgroundColor: `${colors.text}14` }} />
+                                    <View style={{ flex: 1, height: 110, borderRadius: 4, backgroundColor: `${colors.text}14` }} />
                                 </View>
                             ) : (trending ?? []).length > 0 ? (
                                 <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -365,7 +365,7 @@ const DashboardScreen = () => {
                                                         ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
                                                         : undefined,
                                                 }}
-                                                style={{ width: '100%', aspectRatio: 2 / 3, borderRadius: 10, backgroundColor: `${colors.text}12` }}
+                                                style={{ width: '100%', aspectRatio: 2 / 3, borderRadius: 4, backgroundColor: `${colors.text}12` }}
                                                 contentFit="cover"
                                             />
                                             <FlexText numberOfLines={1} style={{ fontSize: 11, color: colors.text, opacity: 0.85 }}>

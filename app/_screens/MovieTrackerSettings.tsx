@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CheckCircleBold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
+import { Surface } from "heroui-native";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -81,7 +82,7 @@ const MovieTrackerSettingsScreen = () => {
                 {t('serviceSettings.subtitle')}
             </FlexText>
 
-            <View style={styles.card}>
+            <Surface variant="default">
                 {SERVICE_OPTIONS.map((option, index) => {
                     const active = trackerSource === option.value;
                     return (
@@ -120,7 +121,7 @@ const MovieTrackerSettingsScreen = () => {
                         </View>
                     );
                 })}
-            </View>
+            </Surface>
         </ScrollView>
     );
 };

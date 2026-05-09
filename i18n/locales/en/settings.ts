@@ -31,6 +31,9 @@ const settings = {
     account: 'Account',
     logout: 'Log out',
     loggingOut: 'Logging out...',
+    about: 'About',
+    aboutApp: 'About WeLove',
+    aboutAppDescription: 'Check for updates',
 } as const;
 
 export default settings;

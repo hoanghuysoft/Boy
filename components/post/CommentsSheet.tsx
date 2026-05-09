@@ -439,12 +439,14 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     data={vm.comments}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
+                    estimatedItemSize={90}
                     onEndReached={vm.handleEndReached}
                     onEndReachedThreshold={0.5}
                     ListFooterComponent={renderListFooter}
                     ListEmptyComponent={renderEmpty}
                     contentContainerStyle={styles.listContent}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 />
             </>

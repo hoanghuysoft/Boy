@@ -31,6 +31,9 @@ const settings = {
     account: '账号',
     logout: '退出登录',
     loggingOut: '正在退出…',
+    about: '关于',
+    aboutApp: '关于 WeLove',
+    aboutAppDescription: '检查更新',
 } as const;
 
 export default settings;

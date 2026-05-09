@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CheckCircleBold, ClockCircleBold, MoonBold, SmartphoneBold, Sun2Bold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
+import { Surface } from "heroui-native";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,9 +18,9 @@ type ThemeOption = {
 };
 
 const themeOptions: ThemeOption[] = [
-    { id: "light",    icon: Sun2Bold },
-    { id: "dark",     icon: MoonBold },
-    { id: "system",   icon: SmartphoneBold },
+    { id: "light", icon: Sun2Bold },
+    { id: "dark", icon: MoonBold },
+    { id: "system", icon: SmartphoneBold },
     { id: "adaptive", icon: ClockCircleBold },
 ];
 
@@ -54,7 +55,7 @@ const ThemeSettingsScreen = () => {
                 {t('themeSettings.subtitle')}
             </FlexText>
 
-            <View style={[styles.card]}>
+            <Surface variant="default">
                 {themeOptions.map((option, index) => (
                     <View key={option.id}>
                         {index > 0 && <View style={styles.divider} />}
@@ -84,7 +85,7 @@ const ThemeSettingsScreen = () => {
                         </TouchableOpacity>
                     </View>
                 ))}
-            </View>
+            </Surface>
         </ScrollView>
     );
 };

@@ -140,13 +140,12 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
         return () => { cancelled = true; };
     }, [item.media_url]);
 
-    // ─── Shrink via animatedPosition (UI-thread, zero JS overhead) ──
-    // animatedPosition = Y of the sheet's top edge from screen top.
-    // When the sheet is dismissed it returns to ~SCREEN_HEIGHT (full video).
-    // When the sheet is open at detent 0.5 it is SCREEN_HEIGHT * 0.5.
+    // ─── Shrink via animatedPosition (UI-thread) ─────────────────────
+    // Container height follows the sheet's top edge. Content is centered
+    // vertically inside with overflow:hidden, so as the container shrinks
+    // equal amounts of top and bottom are clipped — no distortion, no black bars.
     const { animatedPosition } = useReanimatedTrueSheet();
     const videoAreaStyle = useAnimatedStyle(() => {
-        // Limit the video shrink to the initial comment sheet size (detent 0.6 -> top edge at 0.4)
         const minHeight = SCREEN_HEIGHT * 0.4;
         return {
             height: Math.max(animatedPosition.value, minHeight),
@@ -199,41 +198,44 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
 
     return (
         <View style={[styles.itemContainer, { height: SCREEN_HEIGHT }]}>
-            {/* Video + thumbnail area — height tracks the sheet's top edge */}
+            {/* Video area — clips equally from top and bottom as sheet rises */}
             <Reanimated.View style={[styles.videoArea, videoAreaStyle]}>
-                {item.thumbnail_url && (
-                    <NitroImage
-                        image={{ url: item.thumbnail_url }}
-                        style={StyleSheet.absoluteFill}
-                        resizeMode="contain"
-                    />
-                )}
+                {/* Fixed full-screen inner view, centered by parent → symmetric clip */}
+                <View style={styles.videoContent}>
+                    {item.thumbnail_url && (
+                        <NitroImage
+                            image={{ url: item.thumbnail_url }}
+                            style={StyleSheet.absoluteFill}
+                            resizeMode="contain"
+                        />
+                    )}
 
-                {shouldRenderVideo && (
-                    <Video
-                        ref={videoRef}
-                        source={{
-                            uri: resolvedUri,
-                            bufferConfig: {
-                                minBufferMs: 3000,
-                                maxBufferMs: 15000,
-                                bufferForPlaybackMs: 500,
-                                bufferForPlaybackAfterRebufferMs: 1500,
-                            }
-                        }}
-                        style={StyleSheet.absoluteFill}
-                        resizeMode="contain"
-                        controls={false}
-                        muted={isMuted}
-                        paused={!isActive || isPaused || !isFocused}
-                        repeat={true}
-                        onLoad={handleLoad}
-                        onProgress={isActive ? onVideoProgress : undefined}
-                        onBuffer={isActive ? onVideoBuffer : undefined}
-                        onEnd={isActive ? onVideoEnd : undefined}
-                        pointerEvents="none"
-                    />
-                )}
+                    {shouldRenderVideo && (
+                        <Video
+                            ref={videoRef}
+                            source={{
+                                uri: resolvedUri,
+                                bufferConfig: {
+                                    minBufferMs: 3000,
+                                    maxBufferMs: 15000,
+                                    bufferForPlaybackMs: 500,
+                                    bufferForPlaybackAfterRebufferMs: 1500,
+                                }
+                            }}
+                            style={StyleSheet.absoluteFill}
+                            resizeMode="contain"
+                            controls={false}
+                            muted={isMuted}
+                            paused={!isActive || isPaused || !isFocused}
+                            repeat={true}
+                            onLoad={handleLoad}
+                            onProgress={isActive ? onVideoProgress : undefined}
+                            onBuffer={isActive ? onVideoBuffer : undefined}
+                            onEnd={isActive ? onVideoEnd : undefined}
+                            pointerEvents="none"
+                        />
+                    )}
+                </View>
             </Reanimated.View>
 
             {/* Tap to pause/play / double tap to like — covers the full item */}
@@ -462,8 +464,19 @@ const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
 // ─── Tab Bar Implementation ──────────────────────────────────────────
 
 const TopTabBar = ({ state, navigation, insets, t }: MaterialTopTabBarProps & { insets: any, t: any }) => {
+    // Hide the tab bar when comment sheet is open
+    const { animatedPosition } = useReanimatedTrueSheet();
+    const tabBarStyle = useAnimatedStyle(() => {
+        // animatedPosition ≈ SCREEN_HEIGHT when sheet is dismissed, smaller when open
+        const isSheetOpen = animatedPosition.value < SCREEN_HEIGHT - 10;
+        return {
+            opacity: isSheetOpen ? 0 : 1,
+            pointerEvents: isSheetOpen ? 'none' : 'auto',
+        };
+    });
+
     return (
-        <View style={[styles.topHeader, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
+        <Reanimated.View style={[styles.topHeader, { paddingTop: insets.top + 8 }, tabBarStyle]}>
             {state.routes.map((route, index) => {
                 const isFocused = state.index === index;
                 const title = route.name === 'random' ? t('shots.tabs.following') : t('shots.tabs.thisDay');
@@ -492,7 +505,7 @@ const TopTabBar = ({ state, navigation, insets, t }: MaterialTopTabBarProps & { 
                     </TouchableOpacity>
                 );
             })}
-        </View>
+        </Reanimated.View>
     );
 };
 
@@ -511,7 +524,10 @@ const ShotsInner = () => {
         <Tab.Navigator
             initialRouteName="random"
             tabBar={(props: any) => <TopTabBar {...props} insets={insets} t={t} />}
-            screenOptions={{ sceneStyle: { backgroundColor: '#000' } }}
+            screenOptions={{
+                sceneStyle: { backgroundColor: '#000' },
+                swipeEnabled: false, // disable horizontal swipe between tabs
+            }}
         >
             <Tab.Screen name="on_this_day" component={OnThisDayFeedScreen} />
             <Tab.Screen name="random" component={RandomFeedScreen} />
@@ -541,6 +557,14 @@ const styles = StyleSheet.create({
     videoArea: {
         width: SCREEN_WIDTH,
         overflow: 'hidden',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    // Fixed full-screen size so the video is never resized/distorted.
+    // The parent's overflow:hidden + justifyContent:center clips symmetrically.
+    videoContent: {
+        width: SCREEN_WIDTH,
+        height: SCREEN_HEIGHT,
     },
     pausedOverlay: {
         ...StyleSheet.absoluteFill,

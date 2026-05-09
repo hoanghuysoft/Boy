@@ -1,16 +1,17 @@
 import { FlexText } from "@/components/FlexText";
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { LANGUAGE_LABELS } from "@/i18n";
+import { useAdminCheck } from "@/services/userprofile";
 import { clearVideoCache, formatBytes, getCacheCount, getCacheSize, setMaxCacheSize } from "@/services/videoCache";
 import { useLanguageStore } from "@/stores/language";
+import { useMovieTrackerStore } from "@/stores/movieTracker";
 import { useSearchHistoryStore } from "@/stores/searchHistory";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
-import { useMovieTrackerStore } from "@/stores/movieTracker";
 import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
 import { Logout3Bold } from '@solar-icons/react-native';
 import { Href, router } from "expo-router";
-import { ControlField, Description, Label, Dialog, Button } from "heroui-native";
+import { Button, ControlField, Description, Dialog, Label, Surface } from "heroui-native";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
@@ -47,6 +48,10 @@ const SettingsScreen = () => {
     const [isClearing, setIsClearing] = useState(false);
     const [showCacheSizePicker, setShowCacheSizePicker] = useState(false);
     const [isClearCacheDialogOpen, setIsClearCacheDialogOpen] = useState(false);
+    const { data: adminData } = useAdminCheck();
+    const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin);
+
+
 
     const refreshCacheInfo = useCallback(async () => {
         const [size, count] = await Promise.all([getCacheSize(), getCacheCount()]);
@@ -121,9 +126,9 @@ const SettingsScreen = () => {
                         <FlexText style={[common.body, { color: colors.muted, marginLeft: 6 }]}>{t('settings.search')}</FlexText>
                     </View>
                 )}
-            </View> 
+            </View>
             <FlexText style={[styles.title]}>{t('settings.preferences')}</FlexText>
-            <View style={[styles.card]}>
+            <Surface variant="default">
                 <TouchableOpacity style={[styles.option]} onPress={() => router.push('/theme-settings')}>
                     <View>
                         <FlexText style={[common.body]}>{t('settings.theme')}</FlexText>
@@ -177,23 +182,24 @@ const SettingsScreen = () => {
                     </View>
                     <ControlField.Indicator />
                 </ControlField>
-            </View>
+            </Surface>
 
             {/* ─── Service ────────────────────────────────────────────── */}
-            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.service')}</FlexText>
-            <View style={[styles.card]}>
-                <TouchableOpacity style={[styles.option]} onPress={() => router.push('/movie-tracker-settings' as any)}>
-                    <View>
-                        <FlexText style={[common.body]}>{t('settings.trackerSource')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{trackerSourceLabel}</FlexText>
-                    </View>
-                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
-                </TouchableOpacity>
-            </View>
+            {isAdmin && <><FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.service')}</FlexText>
+                <Surface variant="default">
+                    <TouchableOpacity style={[styles.option]} onPress={() => router.push('/movie-tracker-settings' as any)}>
+                        <View>
+                            <FlexText style={[common.body]}>{t('settings.trackerSource')}</FlexText>
+                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>{trackerSourceLabel}</FlexText>
+                        </View>
+                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                </Surface>
+            </>}
 
             {/* ─── Storage & Cache ──────────────────────────────────── */}
             <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.storageCache')}</FlexText>
-            <View style={[styles.card]}>
+            <Surface variant="default">
                 {/* Cache usage bar */}
                 <View style={{ marginBottom: 12 }}>
                     <View style={styles.cacheInfoRow}>
@@ -240,10 +246,21 @@ const SettingsScreen = () => {
                     </FlexText>
                     {isClearing && <ActivityIndicator size="small" color={colors.muted} />}
                 </TouchableOpacity>
-            </View>
+            </Surface>
+
+            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.about')}</FlexText>
+            <Surface variant="default">
+                <TouchableOpacity style={[styles.option]} onPress={() => router.push('/about' as any)}>
+                    <View>
+                        <FlexText style={[common.body]}>{t('settings.aboutApp')}</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.aboutAppDescription')}</FlexText>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                </TouchableOpacity>
+            </Surface>
 
             <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.account')}</FlexText>
-            <View style={[styles.card]}>
+            <Surface variant="default">
                 <TouchableOpacity style={[styles.option]} onPress={async () => {
                     try {
                         setIsLoggingOut(true);
@@ -261,7 +278,7 @@ const SettingsScreen = () => {
                     <FlexText style={[common.body, { color: colors.text }]}>{t('settings.logout')}</FlexText>
                     <Logout3Bold size={24} color={colors.text} />
                 </TouchableOpacity>
-            </View>
+            </Surface>
 
             {/* ─── Logging Out Modal ─────────────────────────────────── */}
             <Modal
