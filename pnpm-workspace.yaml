@@ -1,0 +1,4 @@
+allowBuilds:
+  '@sentry/cli': false
+  '@shopify/react-native-skia': false
+  unrs-resolver: false
