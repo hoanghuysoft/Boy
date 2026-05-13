@@ -1,6 +1,7 @@
-const { withDangerousMod } = require('@expo/config-plugins');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+const expoDir = path.dirname(require.resolve('expo/package.json'));
+const { withDangerousMod } = require(require.resolve('@expo/config-plugins', { paths: [expoDir] }));
 
 /**
  * Expo Config Plugin to patch @kaannn/react-native-waveform
@@ -30,7 +31,7 @@ const withWaveformFix = (config) => {
             let content = fs.readFileSync(filePath, 'utf-8');
 
             const BROKEN = 'val array = samples.asArray()';
-            const FIXED  = 'val array = samples.asArray() ?: return';
+            const FIXED = 'val array = samples.asArray() ?: return';
 
             if (content.includes(FIXED)) {
                 console.log('ℹ️  [WaveformFix] Already patched. Skipping.');

@@ -1,4 +1,7 @@
-const { withAppBuildGradle } = require('@expo/config-plugins');
+const path = require('path');
+const expoDir = path.dirname(require.resolve('expo/package.json'));
+const { withAppBuildGradle } = require(require.resolve('@expo/config-plugins', { paths: [expoDir] }));
+
 
 module.exports = function withAndroidBuildFixes(config) {
   return withAppBuildGradle(config, (config) => {

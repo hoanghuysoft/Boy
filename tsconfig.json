@@ -4,6 +4,8 @@
     "strict": true,
     "skipLibCheck": true,
     "incremental": true,
+    "jsx": "react-native",
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
       "@/*": [
