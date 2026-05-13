@@ -5,9 +5,9 @@ import {
     FBPostList,
     FBVideoList,
 } from '@/types/localfb';
-import { createMMKV } from 'react-native-mmkv';
+import { localFbStorage as storage } from './storage';
 
-const storage = createMMKV({ id: 'localfb-cache' });
+
 
 const STORAGE_PREFIX = 'localfb_';
 const URL_PREFIX = 'localfb_url_';

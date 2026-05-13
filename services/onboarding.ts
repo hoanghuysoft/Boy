@@ -1,9 +1,10 @@
-import { createMMKV } from 'react-native-mmkv';
+import { storage } from './storage';
 import { client } from './client';
 import { supabase } from './login';
 
 export const PROFILE_KEY = 'onboarding_has_profile';
-export const onboardingMmkv = createMMKV();
+/** Alias for the default storage — kept for backward compatibility with callers using `onboardingMmkv`. */
+export const onboardingMmkv = storage;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

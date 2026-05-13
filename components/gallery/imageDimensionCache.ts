@@ -1,6 +1,6 @@
-import { createMMKV } from "react-native-mmkv";
+import { imageDimensionStorage as storage } from "../../services/storage";
 
-const storage = createMMKV({ id: "gallery-image-dimensions" });
+
 const DIMENSION_CACHE_PREFIX = "dimension:v1:";
 
 export const getCachedImageDimension = (uri?: string | null) => {

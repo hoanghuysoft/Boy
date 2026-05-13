@@ -1,8 +1,8 @@
 import ImageColors from 'react-native-image-colors';
-import { createMMKV } from 'react-native-mmkv';
+import { carouselColorStorage as storage } from '../services/storage';
 import { create } from 'zustand';
 
-const storage = createMMKV({ id: 'carousel-colors' });
+
 
 // Cache key prefix
 const LUMINANCE_CACHE_PREFIX = 'luminance:';

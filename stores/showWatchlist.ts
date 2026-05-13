@@ -1,4 +1,4 @@
-import { createMMKV } from 'react-native-mmkv';
+import { showWatchlistStorage as mmkv } from '../services/storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -26,7 +26,7 @@ interface ShowWatchlistState {
 
 // ─── MMKV Storage ─────────────────────────────────────────────────────────────
 
-const mmkv = createMMKV({ id: 'show-watchlist' });
+
 
 const mmkvZustandStorage = createJSONStorage(() => ({
     getItem: (name: string): string | null => mmkv.getString(name) ?? null,

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { createMMKV } from 'react-native-mmkv';
+import { videoResumeStorage as resumeStorage } from '../services/storage';
 
-const resumeStorage = createMMKV({ id: 'video-resume-cache' });
+
 
 // Only track videos at least 5 minutes long
 export const VIDEO_RESUME_MIN_DURATION = 300;

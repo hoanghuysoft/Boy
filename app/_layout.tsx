@@ -43,7 +43,7 @@ Sentry.init({
   // uncomment the line below to enable Spotlight (https://spotlightjs.com)
   // spotlight: __DEV__,
 });
-global.fetch = nitroFetch;
+(globalThis as any).fetch = nitroFetch;
 
 GiphySDK.configure({ apiKey: process.env.EXPO_PUBLIC_GIPHY_API_KEY || '' });
 

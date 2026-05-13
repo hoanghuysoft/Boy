@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
-import { createMMKV } from "react-native-mmkv";
+import { weatherStorage as storage } from "./storage";
 import { weatherClient } from "./client";
 import { fetch as nitroFetch } from "react-native-nitro-fetch";
 
@@ -50,7 +50,7 @@ export interface WeatherSummary {
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
 
-const storage = createMMKV({ id: "weather-service" });
+
 
 // ─── Weather Code Map ─────────────────────────────────────────────────────────
 
@@ -93,15 +93,25 @@ type Coords = { latitude: number; longitude: number };
 
 const getDeviceLocation = async (): Promise<Coords | null> => {
   try {
-    const { status } = await Location.getForegroundPermissionsAsync();
-    if (status !== "granted") {
+    const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
+    if (status === "granted") {
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+    }
+    // Only prompt if the permission is undetermined (never asked before).
+    // If the user explicitly denied location access, respect that silently —
+    // never re-prompt on every auto-refresh.
+    if (canAskAgain) {
       const { status: asked } = await Location.requestForegroundPermissionsAsync();
       if (asked !== "granted") return null;
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
     }
-    const loc = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+    return null;
   } catch {
     return null;
   }

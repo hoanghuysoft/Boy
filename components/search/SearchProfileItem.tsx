@@ -118,3 +118,5 @@ export const SearchProfileItem = React.memo(({
         </SquircleView>
     );
 });
+
+SearchProfileItem.displayName = 'SearchProfileItem';

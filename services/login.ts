@@ -2,12 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import RnGoogleSignin from "@novastera-oss/rn-google-signin";
 // import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { createClient } from "@supabase/supabase-js";
-import { createMMKV } from "react-native-mmkv";
+import { storage } from "./storage";
 import "react-native-url-polyfill/auto";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
-const mmkv = createMMKV();
+
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
@@ -56,7 +56,7 @@ export async function signInWithGoogle() {
 export async function signOut() {
     const { error } = await supabase.auth.signOut();
     await RnGoogleSignin.signOut();
-    mmkv.clearAll();
+    storage.clearAll();
     if (error) {
         throw error;
     }

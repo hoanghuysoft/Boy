@@ -30,13 +30,13 @@ import {
 } from "react-native";
 import { FlatList as GestureFlatList, Pressable as GesturePressable, Pressable } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
-import { createMMKV } from "react-native-mmkv";
+import { movieDetailStorage as storage } from "../../services/storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import WallpaperOverlay from "../WallpaperOverlay";
 
 // ─── MMKV cache (same pattern as ShowDetailScreen) ────────────────────────────
-const storage = createMMKV({ id: "movie-detail-image-colors" });
-const DARK_DOMINANT_CACHE_PREFIX = "darkDominant:";
+
+const DARK_DOMINANT_CACHE_PREFIX = "movie:darkDominant:";
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 const withAlpha = (hex: string, alphaHex: string) => {

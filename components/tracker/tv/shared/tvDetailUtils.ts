@@ -1,8 +1,6 @@
 // ─── MMKV cache ────────────────────────────────────────────
-import { createMMKV } from "react-native-mmkv";
-
-export const tvDetailStorage = createMMKV({ id: "tv-detail-image-colors" });
-export const DARK_DOMINANT_CACHE_PREFIX = "darkDominant:";
+export { tvDetailStorage } from '../../../../services/storage';
+export const DARK_DOMINANT_CACHE_PREFIX = "tv:darkDominant:";
 
 // ─── Image URL ────────────────────────────────────────────────────────────────
 export const getImageUrl = (path: string | null | undefined, size: number = 500) => {

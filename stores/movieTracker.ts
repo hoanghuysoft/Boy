@@ -1,4 +1,4 @@
-import { createMMKV } from 'react-native-mmkv';
+import { movieTrackerStorage as mmkv } from '../services/storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -19,7 +19,7 @@ interface MovieTrackerSettingsState {
 
 // ─── MMKV Storage ─────────────────────────────────────────────────────────────
 
-const mmkv = createMMKV({ id: 'movie-tracker-settings' });
+
 
 const mmkvStorage = createJSONStorage(() => ({
     getItem: (name: string): string | null => mmkv.getString(name) ?? null,

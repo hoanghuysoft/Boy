@@ -24,12 +24,12 @@ import {
 } from "react-native";
 import { FlatList as GestureFlatList, Pressable as GesturePressable } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
-import { createMMKV } from "react-native-mmkv";
+import { personDetailStorage as storage } from "../../services/storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ─── MMKV cache ────────────────────────────────────────────
-const storage = createMMKV({ id: "person-detail-image-colors" });
-const DARK_DOMINANT_CACHE_PREFIX = "darkDominant:";
+
+const DARK_DOMINANT_CACHE_PREFIX = "person:darkDominant:";
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 const withAlpha = (hex: string, alphaHex: string) => {

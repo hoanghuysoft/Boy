@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated } from "react-native";
 import { getColors } from 'react-native-image-colors';
-import { createMMKV } from 'react-native-mmkv';
+import { storage } from '../services/storage';
 import { useThemeContext } from "../context/ThemeContext";
 import { useAudioStore } from '../stores/audio';
 import { createCommonStyles } from "../styles/common";
@@ -22,7 +22,7 @@ const MESH_GRADIENT_DEFAULTS = {
     amplitude: 30,
 };
 
-const storage = createMMKV();
+
 
 export type TabType = "Images" | "Videos" | "Feed";
 

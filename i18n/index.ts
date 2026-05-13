@@ -6,7 +6,7 @@ import 'dayjs/locale/zh-tw';
 import { getLocales } from 'expo-localization';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { createMMKV } from 'react-native-mmkv';
+import { languageStorage } from '../services/storage';
 
 import en from './locales/en';
 import vi from './locales/vi';
@@ -36,7 +36,7 @@ const DAYJS_LOCALE_BY_LANGUAGE: Record<SupportedLanguage, string> = {
 
 export const LANGUAGE_KEY = 'app-language';
 export const LANGUAGE_MODE_KEY = 'app-language-mode';
-export const languageStorage = createMMKV({ id: 'language-storage' });
+export { languageStorage };
 
 // ─── Resolve the device locale to a supported language ───────────────────────
 

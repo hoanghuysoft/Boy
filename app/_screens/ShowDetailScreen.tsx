@@ -16,15 +16,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { FlatList as GestureFlatList } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
-import { createMMKV } from "react-native-mmkv";
+import { showDetailStorage as storage } from "../../services/storage";
 import { NitroImage } from "react-native-nitro-image";
 import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 
-const storage = createMMKV({ id: "showdetail-image-colors" });
-const DARK_DOMINANT_CACHE_PREFIX = "darkDominant:";
+
+const DARK_DOMINANT_CACHE_PREFIX = "show:darkDominant:";
 
 const withAlpha = (hex: string, alphaHex: string) => {
   // Supports '#RRGGBB' and '#RRGGBBAA'. If not hex, fall back to original.

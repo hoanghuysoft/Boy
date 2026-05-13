@@ -160,7 +160,7 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
 
     const [hearts, setHearts] = useState<{ id: number, x: number, y: number }[]>([]);
     const lastTapTime = useRef(0);
-    const singleTapTimer = useRef<NodeJS.Timeout | null>(null);
+    const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleVideoPress = (e: any) => {
         const now = Date.now();

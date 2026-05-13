@@ -38,6 +38,7 @@
     "@react-native-google-signin/google-signin": "16.1.2",
     "@react-native-vector-icons/material-design-icons": "13.1.1",
     "@react-navigation/material-top-tabs": "^7.4.24",
+    "@react-navigation/native": "^7.2.4",
     "@rraut/react-native-faster-image": "1.0.4",
     "@sbaiahmed1/react-native-biometrics": "^0.15.0",
     "@sentry/react-native": "~7.11.0",
