@@ -40,7 +40,7 @@ export const headerStyles = StyleSheet.create({
     paddingTop: 8,
   },
   cardsScroll: {
-    marginTop: 16,
+    marginVertical: 16,
     marginHorizontal: -16,
   },
   cardsScrollContent: {

@@ -14,12 +14,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
-import { Image } from "expo-image";
-import { MediaViewer } from "expo-media-viewer";
+
+
+import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
+import { SkeletonGroup } from "heroui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SkeletonGroup } from "heroui-native";
 import {
     Dimensions,
     Image as RNImage,
@@ -28,6 +29,7 @@ import {
     View,
 } from "react-native";
 import { NitroImage } from "react-native-nitro-image";
+
 import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -110,7 +112,7 @@ const MediaFooter = React.memo(({ item, colors }: { item: Media; colors: any }) 
 ));
 MediaFooter.displayName = "MediaFooter";
 
-const PhotoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: number }, colors: any }) => {
+const PhotoCard = React.memo(({ item, colors, renderMediaItem }: { item: Media & { mediaIndex?: number }, colors: any, renderMediaItem: (index: number, options: any) => React.ReactNode }) => {
     const sourceUrl = choosenMediaPath(item);
     const serverW = item.width;
     const serverH = item.height;
@@ -124,47 +126,25 @@ const PhotoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: n
 
     return (
         <SquircleView cornerSmoothing={100} preserveSmoothing={true} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-            <MediaViewer.Image
-                index={item.mediaIndex ?? 0}
-                style={{
-                    width: "100%",
+            {renderMediaItem(item.mediaIndex ?? 0, {
+                frame: {
+                    width: "100%" as any,
                     height: imageHeight,
-                    overflow: "hidden",
                     borderRadius: 12,
-                }}
-            >
-                <NitroImage
-                    image={{ url: sourceUrl! }}
-                    recyclingKey={sourceUrl}
-                    style={{ width: "100%", height: "100%" }}
-                    resizeMode="cover"
-                />
-            </MediaViewer.Image>
+                },
+            })}
             <MediaFooter item={item} colors={colors} />
         </SquircleView>
     );
 });
 PhotoCard.displayName = "PhotoCard";
 
-const VideoCard = React.memo(({ item, colors }: { item: Media & { mediaIndex?: number }, colors: ThemeColors }) => {
-    const thumbnailUrl = item.thumbnail_url || choosenMediaPath(item);
-    const placeholderBlurhash = resolveBlurhash(item.blurhash, item.id || thumbnailUrl);
-
+const VideoCard = React.memo(({ item, colors, renderMediaItem }: { item: Media & { mediaIndex?: number }, colors: ThemeColors, renderMediaItem: (index: number, options: any) => React.ReactNode }) => {
     return (
         <SquircleView cornerSmoothing={60} preserveSmoothing={false} style={[styles.cardContainer, { backgroundColor: colors.background }]}>
-            <MediaViewer.Image index={item.mediaIndex ?? 0} style={{ width: "100%", height: VIDEO_HEIGHT, overflow: "hidden", borderRadius: 12 }}>
-                <Image
-                    source={{ uri: thumbnailUrl }}
-                    recyclingKey={thumbnailUrl}
-                    style={{ width: "100%", height: "100%", borderRadius: 12 }}
-                    contentFit="cover"
-                    transition={200}
-                    placeholder={{ blurhash: placeholderBlurhash }}
-                />
-                <View style={styles.playBadge}>
-                    <Ionicons name="play" size={18} color="white" />
-                </View>
-            </MediaViewer.Image>
+            {renderMediaItem(item.mediaIndex ?? 0, {
+                frame: { width: "100%" as any, height: VIDEO_HEIGHT, borderRadius: 12 },
+            })}
             <MediaFooter item={item} colors={colors} />
         </SquircleView>
     );
@@ -206,28 +186,37 @@ const MansoryListScreen = () => {
         isLoading,
     } = useInfiniteMedia(effectiveProfileId);
 
-    const { media, allUrls, allMediaTypes, allPosterUrls } = useMemo(() => {
+    const { media, mediaItems } = useMemo(() => {
         const flat = data?.pages.flatMap((page) => page.data) ?? [];
         let idx = 0;
-        const urls: string[] = [];
-        const types: string[] = [];
-        const posters: string[] = [];
-        const items = flat.map(item => {
+        const items: MediaViewerItem[] = [];
+        const mapped = flat.map(item => {
             const url = choosenMediaPath(item);
             if (url) {
-                urls.push(url);
                 if (item.type === 'video') {
-                    types.push('video');
-                    posters.push(item.thumbnail_url || url);
+                    const thumbnailUrl = item.thumbnail_url || url;
+                    const placeholderBlurhash = resolveBlurhash(item.blurhash, item.id || thumbnailUrl);
+                    items.push({
+                        type: 'video',
+                        source: url,
+                        thumbnail: {
+                            source: thumbnailUrl,
+                            ...(placeholderBlurhash ? { blurhash: placeholderBlurhash } : {}),
+                        },
+                    } as MediaViewerItem);
                 } else {
-                    types.push('image');
-                    posters.push('');
+                    const placeholderBlurhash = resolveBlurhash(item.blurhash, item.id || url);
+                    items.push({
+                        type: 'image',
+                        source: url,
+                        ...(placeholderBlurhash ? { blurhash: placeholderBlurhash } : {}),
+                    } as MediaViewerItem);
                 }
                 return { ...item, mediaIndex: idx++ };
             }
             return item;
         });
-        return { media: items, allUrls: urls, allMediaTypes: types, allPosterUrls: posters };
+        return { media: mapped, mediaItems: items };
     }, [data]);
 
     const [isPrefetching, setIsPrefetching] = useState(true);
@@ -274,11 +263,11 @@ const MansoryListScreen = () => {
 
     const isViewingOther = !!selectedProfile && selectedProfile.id !== myProfile?.id;
 
-    const renderItem = useCallback(({ item }: any) => {
+    const renderItem = useCallback(({ item }: any, renderMediaItem: (index: number, options: any) => React.ReactNode) => {
         if (item.type === "video") {
-            return <VideoCard item={item} colors={colors} />;
+            return <VideoCard item={item} colors={colors} renderMediaItem={renderMediaItem} />;
         }
-        return <PhotoCard item={item} colors={colors} />;
+        return <PhotoCard item={item} colors={colors} renderMediaItem={renderMediaItem} />;
     }, [colors]);
 
     const handleEndReached = useCallback(() => {
@@ -435,31 +424,38 @@ const MansoryListScreen = () => {
 
     return (
         <View style={common.screen}>
-            <MediaViewer urls={allUrls} mediaTypes={allMediaTypes} posterUrls={allPosterUrls} theme="dark">
-                <FlashList
-                    ref={listRef}
-                    data={media}
-                    keyExtractor={(item: any, index: number) => item.id + index.toString()}
-                    getItemType={(item: any) => item.type}
-                    renderItem={renderItem}
-                    numColumns={2}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 8, paddingBottom: insets.bottom + 66 }}
-                    masonry={true}
-                    onEndReached={handleEndReached}
-                    onEndReachedThreshold={0.5}
-                    ListHeaderComponent={ListHeaderComponent}
-                    ListFooterComponent={
-                        isFetchingNextPage ? (
-                            <SkeletonGroup isLoading variant="pulse" style={[styles.footer, { flexDirection: 'row', gap: 8, paddingHorizontal: 8 }]}>
-                                <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
-                                <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
-                            </SkeletonGroup>
-                        ) : null
-                    }
-                    ListEmptyComponent={renderEmpty}
-                />
-            </MediaViewer>
+            <MediaViewer
+                items={mediaItems}
+                config={{
+                    theme: "dark",
+                    thumbnail: { fit: "cover", videoMode: "static" },
+                }}
+                renderLayout={({ renderItem: renderMediaItem }) => (
+                    <FlashList
+                        ref={listRef}
+                        data={media}
+                        keyExtractor={(item: any, index: number) => item.id + index.toString()}
+                        getItemType={(item: any) => item.type}
+                        renderItem={(info) => renderItem(info, renderMediaItem)}
+                        numColumns={2}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 8, paddingBottom: insets.bottom + 66 }}
+                        masonry={true}
+                        onEndReached={handleEndReached}
+                        onEndReachedThreshold={0.5}
+                        ListHeaderComponent={ListHeaderComponent}
+                        ListFooterComponent={
+                            isFetchingNextPage ? (
+                                <SkeletonGroup isLoading variant="pulse" style={[styles.footer, { flexDirection: 'row', gap: 8, paddingHorizontal: 8 }]}>
+                                    <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
+                                    <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
+                                </SkeletonGroup>
+                            ) : null
+                        }
+                        ListEmptyComponent={renderEmpty}
+                    />
+                )}
+            />
 
             {isAdmin && (
                 <ProfilePickerSheet

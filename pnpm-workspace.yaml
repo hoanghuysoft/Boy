@@ -1,4 +1,6 @@
 allowBuilds:
-  '@sentry/cli': false
-  '@shopify/react-native-skia': false
-  unrs-resolver: false
+  '@sentry/cli': true
+  '@shopify/react-native-skia': true
+  react-native-nitro-player: true
+  unrs-resolver: true
+patchedDependencies: { '@mstfmedeni/collapsible-tab-view': patches/@mstfmedeni__collapsible-tab-view.patch }

@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "WeLove",
-    "slug": "boy",
-    "version": "26.8.0",
+    "slug": "Boy",
+    "version": "26.9.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -40,7 +40,6 @@
     },
     "plugins": [
       "./withAndroidSvgFix",
-      "./withWaveformFix",
       [
         "@bam.tech/react-native-app-security",
         {
@@ -207,7 +206,8 @@
           "organization": "techfox-ap"
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -216,14 +216,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "cfe29796-dcdc-4629-aa71-10f0832192c7"
+        "projectId": "dac8585b-45f2-4ae7-a3b5-adfc3b76af46"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/cfe29796-dcdc-4629-aa71-10f0832192c7",
+      "url": "https://u.expo.dev/dac8585b-45f2-4ae7-a3b5-adfc3b76af46",
       "enableBsdiffPatchSupport": true
     }
   }

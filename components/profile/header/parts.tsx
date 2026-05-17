@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Animated, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
 import { NitroImage } from 'react-native-nitro-image';
-import TurboImage from 'react-native-turbo-image';
+
 import { ProfileDetail } from '../../../types/profiledetail';
 import { getFamilyAvatarSource } from '../../../utils/familyAvatar';
 import { FlexText } from '../../FlexText';
@@ -80,11 +80,13 @@ export const AvatarSection = ({ vm }: { vm: any }) => {
           />
         </>
       ) : vm.currentAvatar ? (
-        <MediaViewer urls={[vm.currentAvatar]}>
-          <MediaViewer.Image index={0}>
-            <TurboImage source={{ uri: vm.currentAvatar }} resizeMode="cover" style={avatarStyle} />
-          </MediaViewer.Image>
-        </MediaViewer>
+        <MediaViewer
+          items={[{ type: 'image', source: vm.currentAvatar }]}
+          config={{ theme: 'dark', thumbnail: { fit: 'cover' } }}
+          renderLayout={({ renderItem }) =>
+            renderItem(0, { frame: { ...avatarStyle } })
+          }
+        />
       ) : vm.genderFallbackSource ? (
         <Image source={vm.genderFallbackSource} contentFit="cover" style={avatarStyle} />
       ) : (

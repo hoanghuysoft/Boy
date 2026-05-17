@@ -48,3 +48,6 @@ android.keystore
 .env.local
 # heroui-agents-md
 .heroui-docs/
+
+pnpm-lock.yaml
+pnpm-workspace.yaml

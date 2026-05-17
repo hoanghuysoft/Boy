@@ -11,7 +11,7 @@ import { createCommonStyles } from "@/styles/common";
 import { Ionicons } from "@expo/vector-icons";
 import { Logout3Bold } from '@solar-icons/react-native';
 import { Href, router } from "expo-router";
-import { Button, ControlField, Description, Dialog, Label, Surface } from "heroui-native";
+import { Button, ControlField, Description, Dialog, Label, Select, Surface } from "heroui-native";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
@@ -32,6 +32,7 @@ const SettingsScreen = () => {
         showCarousel, toggleCarousel,
         autoplayVideos, toggleAutoplayVideos,
         videoCacheSizeLimit, setVideoCacheSizeLimit,
+        profileDesign, setProfileDesign
     } = useSettingsStore();
     const { trackerSource } = useMovieTrackerStore();
     const trackerSourceLabel = trackerSource === 'shows'
@@ -46,7 +47,6 @@ const SettingsScreen = () => {
     const [cacheSize, setCacheSize] = useState(0);
     const [cacheCount, setCacheCount] = useState(0);
     const [isClearing, setIsClearing] = useState(false);
-    const [showCacheSizePicker, setShowCacheSizePicker] = useState(false);
     const [isClearCacheDialogOpen, setIsClearCacheDialogOpen] = useState(false);
     const { data: adminData } = useAdminCheck();
     const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin);
@@ -83,7 +83,6 @@ const SettingsScreen = () => {
         setVideoCacheSizeLimit(sizeBytes);
         await setMaxCacheSize(sizeBytes);
         await refreshCacheInfo();
-        setShowCacheSizePicker(false);
     }, [setVideoCacheSizeLimit, refreshCacheInfo]);
 
     const cacheUsagePercent = videoCacheSizeLimit > 0
@@ -184,6 +183,33 @@ const SettingsScreen = () => {
                 </ControlField>
             </Surface>
 
+            {/* ─── Experimental Features ──────────────────────────────── */}
+            <FlexText style={[styles.title, { marginTop: 24 }]}>Experimental Features</FlexText>
+            <Select
+                value={{ value: profileDesign, label: profileDesign === 'new' ? 'Experimental' : 'Classic' }}
+                onValueChange={(opt: any) => setProfileDesign(opt.value as 'classic' | 'new')}
+                presentation="bottom-sheet"
+            >
+                <Select.Trigger asChild>
+                    <TouchableOpacity style={[styles.option]}>
+                        <View>
+                            <FlexText style={[common.body]}>Profile UIAB Test</FlexText>
+                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>
+                                {profileDesign === 'new' ? 'Experimental' : 'Classic'}
+                            </FlexText>
+                        </View>
+                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                </Select.Trigger>
+                <Select.Portal>
+                    <Select.Overlay />
+                    <Select.Content presentation="bottom-sheet" snapPoints={['35%']}>
+                        <Select.Item value="classic" label="Classic" />
+                        <Select.Item value="new" label="Experimental (New)" />
+                    </Select.Content>
+                </Select.Portal>
+            </Select>
+
             {/* ─── Service ────────────────────────────────────────────── */}
             {isAdmin && <><FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.service')}</FlexText>
                 <Surface variant="default">
@@ -226,13 +252,29 @@ const SettingsScreen = () => {
                 <View style={styles.divider}></View>
 
                 {/* Cache size limit picker */}
-                <TouchableOpacity style={[styles.option]} onPress={() => setShowCacheSizePicker(true)}>
-                    <View>
-                        <FlexText style={[common.body]}>{t('settings.maxCacheSize')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{currentLimitLabel}</FlexText>
-                    </View>
-                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
-                </TouchableOpacity>
+                <Select
+                    value={{ value: videoCacheSizeLimit.toString(), label: currentLimitLabel }}
+                    onValueChange={(opt: any) => handleSetCacheLimit(Number(opt.value))}
+                    presentation="bottom-sheet"
+                >
+                    <Select.Trigger asChild>
+                        <TouchableOpacity style={[styles.option]}>
+                            <View>
+                                <FlexText style={[common.body]}>{t('settings.maxCacheSize')}</FlexText>
+                                <FlexText style={[common.bodySmall, { color: colors.muted }]}>{currentLimitLabel}</FlexText>
+                            </View>
+                            <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                        </TouchableOpacity>
+                    </Select.Trigger>
+                    <Select.Portal>
+                        <Select.Overlay />
+                        <Select.Content presentation="bottom-sheet" snapPoints={['40%']}>
+                            {CACHE_SIZE_OPTIONS.map((option) => (
+                                <Select.Item key={option.value} value={option.value.toString()} label={option.label} />
+                            ))}
+                        </Select.Content>
+                    </Select.Portal>
+                </Select>
                 <View style={styles.divider}></View>
 
                 {/* Clear cache button */}
@@ -295,46 +337,7 @@ const SettingsScreen = () => {
                 </View>
             </Modal>
 
-            {/* ─── Cache Size Picker Modal ────────────────────────────── */}
-            <Modal
-                visible={showCacheSizePicker}
-                transparent
-                animationType="fade"
-                statusBarTranslucent
-                onRequestClose={() => setShowCacheSizePicker(false)}
-            >
-                <TouchableOpacity
-                    style={styles.modalOverlay}
-                    activeOpacity={1}
-                    onPress={() => setShowCacheSizePicker(false)}
-                >
-                    <View style={styles.pickerModal}>
-                        <FlexText style={[common.body, { fontWeight: '700', marginBottom: 16, textAlign: 'center' }]}>
-                            {t('settings.maxCacheSize')}
-                        </FlexText>
-                        {CACHE_SIZE_OPTIONS.map((option) => {
-                            const isSelected = option.value === videoCacheSizeLimit;
-                            return (
-                                <TouchableOpacity
-                                    key={option.value}
-                                    style={[
-                                        styles.pickerOption,
-                                        isSelected && { backgroundColor: colors.verify + '22' },
-                                    ]}
-                                    onPress={() => handleSetCacheLimit(option.value)}
-                                >
-                                    <FlexText style={[common.body, isSelected && { color: colors.verify, fontWeight: '700' }]}>
-                                        {option.label}
-                                    </FlexText>
-                                    {isSelected && (
-                                        <Ionicons name="checkmark-circle" size={22} color={colors.verify} />
-                                    )}
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-                </TouchableOpacity>
-            </Modal>
+
             <Dialog isOpen={isClearCacheDialogOpen} onOpenChange={setIsClearCacheDialogOpen}>
                 <Dialog.Portal>
                     <Dialog.Overlay />
@@ -450,28 +453,7 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
         height: '100%',
         borderRadius: 3,
     },
-    pickerModal: {
-        backgroundColor: colors.containerContent,
-        borderRadius: 16,
-        paddingVertical: 20,
-        paddingHorizontal: 24,
-        width: '80%',
-        maxWidth: 340,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 10,
-    },
-    pickerOption: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderRadius: 10,
-        marginBottom: 4,
-    },
+
 });
 
 export default SettingsScreen;

@@ -95,15 +95,15 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                     )}
 
                     {imageUrl && (
-                        <MediaViewer urls={[imageUrl]} mediaTypes={["image"]} theme="dark">
-                            <MediaViewer.Image index={0} style={{ borderRadius: 12, overflow: 'hidden' }}>
-                                <NitroImage
-                                    image={{ url: imageUrl }}
-                                    style={[styles.commentImage, text.length > 0 && { marginTop: 8 }]}
-                                    resizeMode="cover"
-                                />
-                            </MediaViewer.Image>
-                        </MediaViewer>
+                        <MediaViewer
+                            items={[{ type: 'image', source: imageUrl }]}
+                            config={{ theme: 'dark', thumbnail: { fit: 'cover' } }}
+                            renderLayout={({ renderItem }) =>
+                                renderItem(0, {
+                                    frame: { width: '100%' as any, borderRadius: 12 },
+                                })
+                            }
+                        />
                     )}
                 </View>
 

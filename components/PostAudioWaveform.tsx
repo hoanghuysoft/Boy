@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import AudioWaveView from '@kaannn/react-native-waveform';
 import { SquircleView } from 'expo-squircle-view';
 import React, { useCallback } from 'react';
-import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useAudioStore } from '../stores/audio';
 import { FlexText } from './FlexText';
 
@@ -78,30 +77,14 @@ export const PostAudioWaveform = React.memo(({
 
             {/* Waveform + Time */}
             <View style={styles.waveWrapper}>
-                {Platform.OS === 'android' ? (
-                    <AudioWaveView
-                        style={styles.wave}
-                        audioSource={audioUrl}
-                        progress={progress}
-                        maxProgress={100}
-                        waveWidth={4}
-                        waveGap={2}
-                        waveMinHeight={4}
-                        waveCornerRadius={2}
-                        waveBackgroundColor={waveBackgroundColor}
-                        waveProgressColor={waveProgressColor}
+                <View style={[styles.iosFallbackTrack, { backgroundColor: waveBackgroundColor }]}>
+                    <View
+                        style={[
+                            styles.iosFallbackFill,
+                            { width: `${progress}%` as any, backgroundColor: waveProgressColor },
+                        ]}
                     />
-                ) : (
-                    /* iOS fallback – plain progress bar */
-                    <View style={styles.iosFallbackTrack}>
-                        <View
-                            style={[
-                                styles.iosFallbackFill,
-                                { width: `${progress}%` as any, backgroundColor: waveProgressColor },
-                            ]}
-                        />
-                    </View>
-                )}
+                </View>
 
                 {/* Duration label */}
                 <FlexText style={[styles.timeLabel, { color: colors.muted }]}>

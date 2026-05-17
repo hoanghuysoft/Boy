@@ -177,18 +177,17 @@ const BulletinItem = memo(({
                     {isImage && item.images[0]?.origin_url?.url_list?.[0] && (
                         <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={20} style={{ overflow: 'hidden' }}>
                             <MediaViewer
-                                urls={[item.images[0].origin_url.url_list[0]]}
-                                mediaTypes={["image"]}
-                                theme="dark"
-                            >
-                                <MediaViewer.Image index={0}>
-                                    <NitroImage
-                                        image={{ url: item.images[0].origin_url.url_list[0] }}
-                                        style={{ width: width * 0.7, height: (width * 0.7) * 1.3 }}
-                                        resizeMode="cover"
-                                    />
-                                </MediaViewer.Image>
-                            </MediaViewer>
+                                items={[{
+                                    type: "image",
+                                    source: item.images[0].origin_url.url_list[0],
+                                }]}
+                                config={{ theme: "dark", thumbnail: { fit: "cover" } }}
+                                renderLayout={({ renderItem }) =>
+                                    renderItem(0, {
+                                        frame: { width: width * 0.7, aspectRatio: 1 / 1.3 },
+                                    })
+                                }
+                            />
                         </SquircleView>
                     )}
 

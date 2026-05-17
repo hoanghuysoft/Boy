@@ -1,63 +1,141 @@
-import { useAudioPlayer } from "expo-audio";
 import { useEffect, useRef } from "react";
+import {
+    PlayerQueue,
+    TrackPlayer,
+    useOnPlaybackProgressChange,
+    useOnPlaybackStateChange,
+} from "react-native-nitro-player";
 import { useAudioStore } from "../stores/audio";
 
 /**
  * GlobalAudioPlayer - A component that manages audio playback globally.
  * This component should be mounted at the root level (e.g., in _layout.tsx)
  * to avoid issues with RecyclerListView's view recycling.
- * 
- * It listens to the audio store and plays/pauses audio based on state changes.
+ *
+ * It listens to the audio store and bridges to react-native-nitro-player.
  * All audio sources across the app (posts, profile header, music sheet)
  * go through this single player.
+ *
+ * Architecture:
+ *  - A single persistent playlist (GLOBAL_PLAYLIST_ID) holds at most one track.
+ *  - When a new URL is requested the track is replaced and playSong() is called.
+ *  - nitro-player hooks push progress / state changes back into the Zustand store.
  */
+
+const GLOBAL_PLAYLIST_NAME = "__global__";
+const GLOBAL_TRACK_ID = "__global_track__";
+
+/** Lazily create (or re-use) the global single-track playlist. */
+let globalPlaylistId: string | null = null;
+let playerConfigured = false;
+
+async function ensureConfigured(): Promise<void> {
+    if (playerConfigured) return;
+    await TrackPlayer.configure({
+        androidAutoEnabled: false,
+        carPlayEnabled: false,
+        showInNotification: true,
+    });
+    playerConfigured = true;
+}
+
+async function ensurePlaylist(): Promise<string> {
+    if (globalPlaylistId) return globalPlaylistId;
+
+    const existing = PlayerQueue.getAllPlaylists();
+    const found = existing.find((p) => p.name === GLOBAL_PLAYLIST_NAME);
+    if (found) {
+        globalPlaylistId = found.id;
+        return globalPlaylistId;
+    }
+
+    globalPlaylistId = await PlayerQueue.createPlaylist(GLOBAL_PLAYLIST_NAME);
+    return globalPlaylistId;
+}
+
 export const GlobalAudioPlayer = () => {
-    const { currentAudioUrl, currentlyPlayingId, stopPlayback, setPlaybackStatus } = useAudioStore();
+    const { currentAudioUrl, currentlyPlayingId, metadata, stopPlayback, setPlaybackStatus } =
+        useAudioStore();
 
-    // Track the current audio source
-    const audioSource = currentAudioUrl ? { uri: currentAudioUrl } : null;
-    const player = useAudioPlayer(audioSource);
-
-    // Track previous URL to detect changes
+    // Track the URL we last loaded so we don't re-trigger on unrelated re-renders
     const prevUrlRef = useRef<string | null>(null);
+    // Track whether we've successfully started playing (guards the stopped-state handler)
+    const hasStartedPlayingRef = useRef(false);
 
-    // Handle audio URL changes
+    // ── Configure player once on mount ───────────────────────────────────────
     useEffect(() => {
-        if (!player) return;
+        void ensureConfigured().catch((err) =>
+            console.error("[GlobalAudioPlayer] configure failed:", err)
+        );
+    }, []);
 
+    // ── Sync store → player ──────────────────────────────────────────────────
+    useEffect(() => {
         if (currentAudioUrl && currentAudioUrl !== prevUrlRef.current) {
-            // New audio URL - start playing
             prevUrlRef.current = currentAudioUrl;
-            player.play();
-        } else if (!currentAudioUrl && prevUrlRef.current) {
-            // Audio was stopped
-            prevUrlRef.current = null;
-            player.pause();
-        }
-    }, [currentAudioUrl, player]);
+            hasStartedPlayingRef.current = false; // reset until playSong resolves
 
-    // Handle player state changes (e.g., audio finished)
-    useEffect(() => {
-        if (!player) return;
+            void (async () => {
+                try {
+                    await ensureConfigured();
+                    const playlistId = await ensurePlaylist();
 
-        const checkPlayerState = setInterval(() => {
-            // Update playback status for subscribers
-            if (player.duration > 0) {
-                setPlaybackStatus(player.currentTime, player.duration);
-            }
+                    // Replace any existing track with the new one
+                    const playlist = PlayerQueue.getPlaylist(playlistId);
+                    if (playlist?.tracks.length) {
+                        await PlayerQueue.removeTrackFromPlaylist(
+                            playlistId,
+                            playlist.tracks[0].id,
+                        );
+                    }
 
-            // If the audio finished naturally, reset the store
-            if (prevUrlRef.current && !player.playing && currentlyPlayingId) {
-                // Check if audio has reached the end
-                if (player.duration > 0 && player.currentTime >= player.duration - 0.1) {
-                    stopPlayback();
-                    prevUrlRef.current = null;
+                    await PlayerQueue.addTrackToPlaylist(playlistId, {
+                        id: GLOBAL_TRACK_ID,
+                        title: metadata?.title ?? "Unknown",
+                        artist: metadata?.artist ?? "",
+                        album: "",
+                        duration: 0,
+                        url: currentAudioUrl,
+                        // artwork is optional — works fine without a cover image
+                        artwork: metadata?.coverUrl ?? null,
+                    });
+
+                    await PlayerQueue.loadPlaylist(playlistId);
+                    await TrackPlayer.playSong(GLOBAL_TRACK_ID, playlistId);
+                    await TrackPlayer.play();
+                    hasStartedPlayingRef.current = true;
+                } catch (err) {
+                    console.error("[GlobalAudioPlayer] Failed to start playback:", err);
                 }
-            }
-        }, 500);
+            })();
+        } else if (!currentAudioUrl && prevUrlRef.current) {
+            prevUrlRef.current = null;
+            hasStartedPlayingRef.current = false;
+            void TrackPlayer.pause();
+        }
+    }, [currentAudioUrl, metadata]);
 
-        return () => clearInterval(checkPlayerState);
-    }, [player, currentlyPlayingId, stopPlayback, setPlaybackStatus]);
+    // ── Push progress → store ────────────────────────────────────────────────
+    const { position, totalDuration } = useOnPlaybackProgressChange();
+
+    useEffect(() => {
+        if (totalDuration > 0) {
+            setPlaybackStatus(position, totalDuration);
+        }
+    }, [position, totalDuration, setPlaybackStatus]);
+
+    // ── Detect natural end of track → reset store ────────────────────────────
+    const { state: playbackState } = useOnPlaybackStateChange();
+
+    useEffect(() => {
+        // Only react to stopped state AFTER we've confirmed playback actually started.
+        // This avoids the race where the player briefly reports 'stopped' during loading.
+        if (playbackState === "stopped" && currentlyPlayingId && hasStartedPlayingRef.current) {
+            hasStartedPlayingRef.current = false;
+            stopPlayback();
+            prevUrlRef.current = null;
+        }
+    }, [playbackState, currentlyPlayingId, stopPlayback]);
 
     // This component doesn't render anything
     return null;

@@ -1,77 +1,152 @@
 # Global Audio Player System
 
-This project uses a centralized audio playback system managed via **Zustand** and **expo-audio**. This ensures that only one audio track plays at a time across the entire application (e.g., between Post items, Profile headers, and Music sheets).
+This project uses a centralized audio playback system managed via **Zustand** and **react-native-nitro-player**. It ensures that only one audio track plays at a time across the entire application (posts, profile headers, music sheets, etc.).
 
 ## Key Components
 
-1.  **`stores/audio.ts`**: The Zustand store that holds the global state of the player.
-2.  **`components/GlobalAudioPlayer.tsx`**: A invisible component mounted at the root (`app/_layout.tsx`) that listens to the store and performs the actual audio playback.
+| File | Role |
+|------|------|
+| `stores/audio.ts` | Zustand store — single source of truth for playback state |
+| `components/GlobalAudioPlayer.tsx` | Invisible component at the root (`app/_layout.tsx`) that bridges the store to the nitro player |
 
 ---
 
-## How to Use
+## How It Works Internally
 
-### 1. Access the Store
-Import the hook in your component:
+`GlobalAudioPlayer` maintains a **single persistent playlist** (`__global__`) inside `react-native-nitro-player`. Every call to `playTrack` swaps the one track in that playlist and calls `TrackPlayer.playSong()`. Progress and state events from nitro-player are pushed back into the Zustand store via hooks.
+
+```
+useAudioStore.playTrack()
+      ↓
+GlobalAudioPlayer (useEffect detects URL change)
+      ↓
+PlayerQueue.removeTrackFromPlaylist  ← remove old track
+PlayerQueue.addTrackToPlaylist       ← add new track (with optional artwork)
+PlayerQueue.loadPlaylist
+TrackPlayer.playSong
+      ↓
+useOnPlaybackProgressChange  →  useAudioStore.setPlaybackStatus()
+useOnPlaybackStateChange     →  stopPlayback() on natural end
+```
+
+---
+
+## Public API (unchanged for callers)
+
+### 1. Import the store
 
 ```tsx
 import { useAudioStore } from '@/stores/audio';
 ```
 
-### 2. Check Playback Status
-To see if a specific item is playing, use the `currentlyPlayingId` from the store:
+### 2. Check if a specific item is playing
 
 ```tsx
 const { currentlyPlayingId } = useAudioStore();
 
-// Use a unique ID for your item
-const trackId = `my-track-${item.id}`;
+const trackId = `post-${item.id}`;       // use a unique namespaced ID
 const isPlaying = currentlyPlayingId === trackId;
 ```
 
-### 3. Play a Track
-Use the `playTrack` action. It takes the ID, the audio URL, and optional metadata:
+### 3. Play a track
+
+`artwork` / `coverUrl` is **optional** — the player works fine without an image.
 
 ```tsx
 const { playTrack } = useAudioStore();
 
-const handlePlay = () => {
-  playTrack(trackId, item.preview_url, {
-    title: item.title,
-    artist: item.artist,
-    coverUrl: item.cover_url,
-  });
-};
+// With artwork
+playTrack(trackId, item.audio_url, {
+  title: item.title,
+  artist: item.artist,
+  coverUrl: item.cover_url,   // optional
+});
+
+// Without artwork
+playTrack(trackId, item.audio_url, {
+  title: item.title,
+  artist: item.artist,
+});
+
+// Minimal (no metadata at all)
+playTrack(trackId, item.audio_url);
 ```
 
-### 4. Stop Playback
-Use the `stopPlayback` action:
+### 4. Stop playback
 
 ```tsx
 const { stopPlayback } = useAudioStore();
+stopPlayback();
+```
 
-const handleStop = () => {
-  stopPlayback();
+### 5. Toggle pattern (recommended)
+
+```tsx
+const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
+const trackId = `profile-music-${item.id}`;
+const isPlaying = currentlyPlayingId === trackId;
+
+const toggleMusic = () => {
+  if (isPlaying) {
+    stopPlayback();
+  } else {
+    playTrack(trackId, item.audio_url, {
+      title: item.title,
+      artist: item.artist,
+      coverUrl: item.cover_url,  // omit if unavailable
+    });
+  }
 };
 ```
 
-### 5. Toggle Pattern (Recommended)
-Most components implement a toggle logic like this:
+### 6. Read playback progress
 
 ```tsx
-const toggleMusic = () => {
-    if (isPlaying) {
-        stopPlayback();
-    } else {
-        playTrack(trackId, url, { title, artist, coverUrl });
-    }
-};
+const { currentTime, duration } = useAudioStore();
+const progress = duration > 0 ? currentTime / duration : 0;  // 0–1
+```
+
+---
+
+## Zustand Store Shape
+
+```ts
+interface AudioStore {
+  // Identity
+  currentlyPlayingId: string | null;
+  currentAudioUrl: string | null;
+  metadata: { title?: string; artist?: string; coverUrl?: string } | null;
+
+  // Progress (updated by GlobalAudioPlayer)
+  currentTime: number;   // seconds
+  duration: number;      // seconds
+
+  // Actions
+  playTrack(id: string, url: string, metadata?: AudioMetadata): void;
+  stopPlayback(): void;
+  setPlaybackStatus(currentTime: number, duration: number): void;
+  // (lower-level setters also available if needed)
+}
 ```
 
 ---
 
 ## Best Practices
 
--   **Stable IDs**: Always use a unique prefix for your IDs to avoid collisions between different types of content (e.g., `post-123`, `profile-music-456`, `music-sheet-789`).
--   **Cleanup**: If a view contains a lot of audio items (like a Sheet), consider calling `stopPlayback()` when the view is dismissed to ensure the app doesn't keep playing audio unexpectedly.
--   **Metadata**: Always provide metadata when playing. This allows future enhancements like a global "Now Playing" bar.
+- **Stable, namespaced IDs** — prefix by content type to avoid collisions:
+  - Posts: `post-${id}`
+  - Profile music: `profile-music-${id}`
+  - Music sheet: `music-sheet-${id}`
+- **Cleanup on dismiss** — call `stopPlayback()` when a sheet/modal that contains audio is closed.
+- **Always provide metadata** — even without artwork. The `title` and `artist` fields appear in the native OS notification/lock-screen controls.
+- **Artwork is optional** — `coverUrl` can be omitted; nitro-player accepts `artwork: null`.
+
+---
+
+## Native Notification / Lock-Screen Controls
+
+Because `react-native-nitro-player` integrates with the OS media session, the metadata passed to `playTrack` is automatically shown in:
+- **Android** — notification player and lock-screen controls
+- **iOS** — Control Centre and lock-screen controls (CarPlay if configured)
+
+No extra configuration is needed for basic notification controls. To enable Android Auto or CarPlay, call `TrackPlayer.configure()` at app startup (see `nitro-player.md`).

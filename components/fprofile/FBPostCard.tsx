@@ -1,7 +1,7 @@
 import { FBPost } from '@/types/localfb';
 import { Ionicons } from '@expo/vector-icons';
 import { LinkRoundBold, PinBold } from '@solar-icons/react-native';
-import { MediaViewer } from 'expo-media-viewer';
+import { MediaViewer, type MediaViewerItem } from 'expo-media-viewer';
 import React, { memo, useState } from 'react';
 import {
     Dimensions,
@@ -53,96 +53,67 @@ const FBMediaGrid: React.FC<{
 }> = ({ attachments }) => {
     if (!attachments || attachments.length === 0) return null;
 
-    const photoUrls = attachments
-        .filter((a) => a.thumbnail)
-        .map((a) => a.thumbnail);
+    const validAttachments = attachments.filter((a) => a.thumbnail);
+    if (validAttachments.length === 0) return null;
 
-    if (photoUrls.length === 0) return null;
+    const items: MediaViewerItem[] = validAttachments.map((a) => ({
+        type: a.type === 'Video' ? 'video' : 'image',
+        source: a.thumbnail,
+        ...(a.type === 'Video' ? { thumbnail: { source: a.thumbnail, mode: 'static' as const } } : {}),
+    }));
 
-    const hasVideo = attachments.some((a) => a.type === 'Video');
-
-    if (photoUrls.length === 1) {
+    if (items.length === 1) {
         return (
-            <MediaViewer urls={photoUrls} mediaTypes={["image"]}>
-                <View style={{ position: 'relative' }}>
-                    <MediaViewer.Image index={0}>
-                        <CachedImage
-                            uri={photoUrls[0]}
-                            style={{ width: SCREEN_WIDTH, aspectRatio: 3 / 4 }}
-                            resizeMode="cover"
-                        />
-                    </MediaViewer.Image>
-                    {hasVideo && (
-                        <View style={{
-                            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                            alignItems: 'center', justifyContent: 'center',
-                        }}>
-                            <View style={{
-                                width: 48, height: 48, borderRadius: 24,
-                                backgroundColor: 'rgba(0,0,0,0.5)',
-                                alignItems: 'center', justifyContent: 'center',
-                            }}>
-                                <Ionicons name="play" size={24} color="#FFF" style={{ marginLeft: 3 }} />
-                            </View>
-                        </View>
-                    )}
-                </View>
-            </MediaViewer>
+            <MediaViewer
+                items={items}
+                config={{ theme: 'dark', thumbnail: { fit: 'cover' }, videoIndicator: true }}
+                renderLayout={({ renderItem }) => (
+                    <View style={{ position: 'relative' }}>
+                        {renderItem(0, {
+                            frame: { width: SCREEN_WIDTH, aspectRatio: 3 / 4 },
+                        })}
+                    </View>
+                )}
+            />
         );
     }
 
     return (
-        <MediaViewer urls={photoUrls} mediaTypes={["image"]}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}>
-                {photoUrls.slice(0, 4).map((url, i) => {
-                    const isDoubleWide = photoUrls.length === 2 || (photoUrls.length === 3 && i === 0);
-                    const itemWidth = isDoubleWide
-                        ? (photoUrls.length === 2 ? (SCREEN_WIDTH - 2) / 2 : SCREEN_WIDTH)
-                        : (SCREEN_WIDTH - 2) / 2;
-                    const itemHeight = 200;
+        <MediaViewer
+            items={items}
+            config={{ theme: 'dark', thumbnail: { fit: 'cover' }, videoIndicator: true }}
+            renderLayout={({ renderItem }) => (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}>
+                    {items.slice(0, 4).map((_, i) => {
+                        const isDoubleWide = items.length === 2 || (items.length === 3 && i === 0);
+                        const itemWidth = isDoubleWide
+                            ? (items.length === 2 ? (SCREEN_WIDTH - 2) / 2 : SCREEN_WIDTH)
+                            : (SCREEN_WIDTH - 2) / 2;
+                        const itemHeight = 200;
 
-                    return (
-                        <View key={i} style={{ position: 'relative' }}>
-                            <MediaViewer.Image index={i}>
-                                <CachedImage
-                                    uri={url}
-                                    style={{ width: itemWidth, height: itemHeight }}
-                                    resizeMode="cover"
-                                />
-                            </MediaViewer.Image>
-
-                            {i === 3 && photoUrls.length > 4 && (
-                                <View style={{
-                                    position: 'absolute', top: 0, left: 0,
-                                    width: itemWidth, height: itemHeight,
-                                    backgroundColor: 'rgba(0,0,0,0.5)',
-                                    alignItems: 'center', justifyContent: 'center',
-                                }}>
-                                    <FlexText style={{ color: '#FFF', fontSize: 24, fontWeight: '700' }}>
-                                        +{photoUrls.length - 4}
-                                    </FlexText>
-                                </View>
-                            )}
-
-                            {i === 0 && attachments[i]?.type === 'Video' && (
-                                <View style={{
-                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                                    alignItems: 'center', justifyContent: 'center',
-                                }}>
+                        return (
+                            <View key={i} style={{ position: 'relative' }}>
+                                {renderItem(i, {
+                                    frame: { width: itemWidth, height: itemHeight },
+                                })}
+                                {i === 3 && items.length > 4 && (
                                     <View style={{
-                                        width: 40, height: 40, borderRadius: 20,
+                                        position: 'absolute', top: 0, left: 0,
+                                        width: itemWidth, height: itemHeight,
                                         backgroundColor: 'rgba(0,0,0,0.5)',
                                         alignItems: 'center', justifyContent: 'center',
                                     }}>
-                                        <Ionicons name="play" size={20} color="#FFF" style={{ marginLeft: 2 }} />
+                                        <FlexText style={{ color: '#FFF', fontSize: 24, fontWeight: '700' }}>
+                                            +{items.length - 4}
+                                        </FlexText>
                                     </View>
-                                </View>
-                            )}
-                        </View>
-                    );
-                })}
-            </View>
-        </MediaViewer>
+                                )}
+                            </View>
+                        );
+                    })}
+                </View>
+            )}
+        />
     );
 };
 

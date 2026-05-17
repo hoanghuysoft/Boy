@@ -2,3 +2,4 @@
 // export default ProfileScreen;
 import MansoryListScreen from "../_screens/MansoryList";
 export default MansoryListScreen;
+

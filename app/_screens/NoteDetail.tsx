@@ -15,9 +15,9 @@ import { useNote } from "../../services/note";
 import { createCommonStyles } from "../../styles/common";
 
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
-import { MediaViewer } from "expo-media-viewer";
+import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
-import { NitroImage } from "react-native-nitro-image";
+
 
 const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>\]/i;
 const LINK_PATTERN = /\[<link\s+(.*?)\s*\/>\]/i;
@@ -166,42 +166,46 @@ const NoteDetailScreen = () => {
 
             <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 80, paddingBottom: insets.bottom + 40 }}>
                 {elements.length > 0 && (
-                    <MediaViewer urls={imageUrls} mediaTypes={["image"]} theme="dark">
-                        {elements.map((el, index) => {
-                            if (el.type === 'image') {
-                                return (
-                                    <MediaViewer.Image key={index} index={el.imageIndex}>
-                                        <NitroImage
-                                            image={{ url: el.url }}
-                                            style={{ width: '100%', height: 300, borderRadius: 16, marginBottom: 16 }}
-                                            resizeMode="cover"
-                                        />
-                                    </MediaViewer.Image>
-                                );
-                            }
-                            if (el.type === 'link') {
-                                return (
-                                    <View key={index} style={{ marginBottom: 16 }}>
-                                        <LinkPreview
-                                            text={el.url}
-                                            renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>{t("notes.common.linkPreviewHint")}</FlexText>}
-                                            renderTitle={(title) => <FlexText style={{ color: colors.text, fontWeight: 'bold', fontSize: 15 }} numberOfLines={2}>{title}</FlexText>}
-                                            renderDescription={(desc) => <FlexText style={{ color: colors.muted, fontSize: 13, marginTop: 4 }} numberOfLines={3}>{desc}</FlexText>}
-                                            containerStyle={{ borderRadius: 12, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', overflow: 'hidden' }}
-                                        />
-                                    </View>
-                                );
-                            }
-                            if (el.type === 'text') {
-                                return (
-                                    <FlexText key={index} style={[common.body, { fontSize: 18, lineHeight: 28, color: colors.text, marginBottom: 16 }]}>
-                                        {el.text}
-                                    </FlexText>
-                                );
-                            }
-                            return null;
-                        })}
-                    </MediaViewer>
+                    <MediaViewer
+                        items={imageUrls.map((url): MediaViewerItem => ({ type: 'image', source: url }))}
+                        config={{ theme: 'dark', thumbnail: { fit: 'cover' } }}
+                        renderLayout={({ renderItem }) => (
+                            <>
+                                {elements.map((el, index) => {
+                                    if (el.type === 'image') {
+                                        return (
+                                            <View key={index} style={{ marginBottom: 16 }}>
+                                                {renderItem(el.imageIndex, {
+                                                    frame: { width: '100%' as any, aspectRatio: 1 / 1, borderRadius: 16 },
+                                                })}
+                                            </View>
+                                        );
+                                    }
+                                    if (el.type === 'link') {
+                                        return (
+                                            <View key={index} style={{ marginBottom: 16 }}>
+                                                <LinkPreview
+                                                    text={el.url}
+                                                    renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>{t("notes.common.linkPreviewHint")}</FlexText>}
+                                                    renderTitle={(title) => <FlexText style={{ color: colors.text, fontWeight: 'bold', fontSize: 15 }} numberOfLines={2}>{title}</FlexText>}
+                                                    renderDescription={(desc) => <FlexText style={{ color: colors.muted, fontSize: 13, marginTop: 4 }} numberOfLines={3}>{desc}</FlexText>}
+                                                    containerStyle={{ borderRadius: 12, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', overflow: 'hidden' }}
+                                                />
+                                            </View>
+                                        );
+                                    }
+                                    if (el.type === 'text') {
+                                        return (
+                                            <FlexText key={index} style={[common.body, { fontSize: 18, lineHeight: 28, color: colors.text, marginBottom: 16 }]}>
+                                                {el.text}
+                                            </FlexText>
+                                        );
+                                    }
+                                    return null;
+                                })}
+                            </>
+                        )}
+                    />
                 )}
             </ScrollView>
         </View>

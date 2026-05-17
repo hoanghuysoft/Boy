@@ -1,4 +1,4 @@
-import * as Haptics from "expo-haptics";
+import { Haptics } from "react-native-nitro-haptics";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import TurboImage from "react-native-turbo-image";
@@ -69,7 +69,7 @@ export const useImageGridViewModel = (options: UseImageGridViewModelOptions = {}
 
     // ─── Quick Preview Handlers ────────────────────────────────────
     const handleLongPress = useCallback((url: string, blurhash: string) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Haptics.impact('medium');
         setPreviewUrl(url);
         setIsPreviewVisible(true);
         setPreviewBlurhash(blurhash);

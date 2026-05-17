@@ -12,7 +12,7 @@ import { FBPhotoList } from '@/types/localfb';
 import { Profile } from '@/types/profile';
 import { useFProfileViewModel } from '@/viewmodels/FProfileViewModel';
 import { Ionicons } from '@expo/vector-icons';
-import { MediaViewer } from 'expo-media-viewer';
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -48,16 +48,15 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 const PhotoRowItem = React.memo<{
     row: FBPhotoList;
     startIndex: number;
-}>(({ row, startIndex }) => (
+}>(({ row }) => (
     <View style={{ flexDirection: 'row', gap: PHOTO_GAP }}>
-        {row.map((photo, colIndex) => (
-            <MediaViewer.Image index={startIndex + colIndex} key={photo.id}>
-                <CachedImage
-                    uri={photo.thumbnail}
-                    style={{ width: PHOTO_SIZE, height: PHOTO_SIZE, marginBottom: 1 }}
-                    resizeMode="cover"
-                />
-            </MediaViewer.Image>
+        {row.map((photo) => (
+            <CachedImage
+                key={photo.id}
+                uri={photo.thumbnail}
+                style={{ width: PHOTO_SIZE, height: PHOTO_SIZE, marginBottom: 1 }}
+                resizeMode="cover"
+            />
         ))}
     </View>
 ));
@@ -281,21 +280,6 @@ const FProfileScreen = () => {
         return `${activeTab}-${item.type}-${index}`;
     }, [activeTab]);
 
-    const photoUrls = useMemo(() => (vm.fbData.photos || []).map(p => p.image || p.thumbnail), [vm.fbData.photos]);
-
-    const list = (
-        <FlatList
-            ref={listRef}
-            style={{ flex: 1, backgroundColor: c.contentBg }}
-            data={data}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            ListHeaderComponent={listHeader}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
-        />
-    );
-
     // ─── Loading state ──────────────────────────────────────────────────
     if (!profile) {
         return (
@@ -307,11 +291,16 @@ const FProfileScreen = () => {
 
     return (
         <View style={[styles.screen, { backgroundColor: c.screenBg }]}>
-            {activeTab === 'Photos' && photoUrls.length > 0 ? (
-                <MediaViewer urls={photoUrls} mediaTypes={["image"]}>{list}</MediaViewer>
-            ) : (
-                list
-            )}
+            <FlatList
+                ref={listRef}
+                style={{ flex: 1, backgroundColor: c.contentBg }}
+                data={data}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
+                ListHeaderComponent={listHeader}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+            />
         </View>
     );
 };
