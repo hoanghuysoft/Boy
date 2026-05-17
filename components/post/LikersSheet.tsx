@@ -1,4 +1,4 @@
-import { BottomSheet } from "heroui-native";
+import { BottomSheet, SkeletonGroup } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -107,8 +107,15 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
         const renderEmpty = useCallback(() => {
             if (isLoading) {
                 return (
-                    <View style={styles.emptyState}>
-                        <ActivityIndicator size="small" color={colors.text} />
+                    <View style={{ paddingTop: 8 }}>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <SkeletonGroup key={i} isLoading variant="pulse" style={{ flexDirection: 'row', marginBottom: 20, gap: 16 }}>
+                                <SkeletonGroup.Item className="rounded-full" style={{ width: 48, height: 48 }} />
+                                <View style={{ gap: 4, flex: 1, justifyContent: 'center' }}>
+                                    <SkeletonGroup.Item className="rounded-lg" style={{ width: '40%', height: 16 }} />
+                                </View>
+                            </SkeletonGroup>
+                        ))}
                     </View>
                 );
             }

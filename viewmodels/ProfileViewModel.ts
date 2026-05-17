@@ -16,6 +16,7 @@ import { useProfile } from "../services/userprofile";
 import { useInfiniteWorkplaces } from "../services/workplace";
 import { useAudioStore } from "../stores/audio";
 import { useScrollStore } from "../stores/scroll";
+import { useSettingsStore } from "../stores/settings";
 import { createCommonStyles } from "../styles/common";
 import { Media } from "../types/media";
 import { Post } from "../types/post";
@@ -44,8 +45,11 @@ export const useProfileViewModel = () => {
     const currentScrollY = useRef(0);
 
     // ─── State ─────────────────────────────────────────────────────
-    const [selectedTab, setSelectedTab] = useState<TabType>("Images");
-    const [activeTab, setActiveTab] = useState<TabType>("Images");
+    const profileDesign = useSettingsStore(s => s.profileDesign);
+    const defaultTab: TabType = profileDesign === 'v3' ? 'Feed' : 'Images';
+    
+    const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab);
+    const [activeTab, setActiveTab] = useState<TabType>(defaultTab);
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [showHeaderAvatar, setShowHeaderAvatar] = useState(false);
     const [galleryVisible, setGalleryVisible] = useState(false);

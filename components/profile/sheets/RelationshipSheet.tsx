@@ -61,6 +61,8 @@ export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetPro
                 height: 5,
                 width: 40,
             }}
+            cornerRadius={32}
+            detents={[0.7, 1]}
             onDidPresent={backHandler.onDidPresent}
             onDidDismiss={backHandler.onDidDismiss}
         >

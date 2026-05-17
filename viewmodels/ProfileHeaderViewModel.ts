@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated } from "react-native";
 import { getColors } from 'react-native-image-colors';
-import { storage } from '../services/storage';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../context/ThemeContext";
+import { storage } from '../services/storage';
 import { useAudioStore } from '../stores/audio';
 import { createCommonStyles } from "../styles/common";
 import { ProfileAddress } from "../types/profileaddress";
@@ -49,6 +50,7 @@ export const useProfileHeaderViewModel = ({
     const { t } = useTranslation();
     const common = createCommonStyles(colors, typography);
     const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
+    const insets = useSafeAreaInsets();
 
     // ─── State ─────────────────────────────────────────────────────
     const [gradientColors, setGradientColors] = useState<string[]>([]);
@@ -213,6 +215,7 @@ export const useProfileHeaderViewModel = ({
         typography,
         theme,
         common,
+        insets,
 
         // Profile derived data
         hasCover,

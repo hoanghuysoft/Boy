@@ -3,10 +3,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
+import { Galeria } from "@nandorojo/galeria";
 import { FlashList } from "@shopify/flash-list";
+import { GalleryAddBold, PenNewRoundBold, Plain2Bold } from "@solar-icons/react-native";
 import { Image } from "expo-image";
-import { MediaViewer } from "expo-media-viewer";
-import { Button, Dialog, SkeletonGroup } from "heroui-native";
+import { Button, SkeletonGroup, Spinner } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -74,57 +75,66 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
 
             {/* Content Bubble */}
             <View style={styles.contentWrapper}>
-                <View style={[
-                    styles.commentBubble,
-                    { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }
-                ]}>
+                <View>
                     <View style={styles.commentHeader}>
                         <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <FlexText style={[common.heading, { fontSize: 14, fontWeight: '700' }]} numberOfLines={1}>
+                            <FlexText style={[common.bodySmall, { color: colors.muted, fontSize: 13, fontWeight: '600' }]} numberOfLines={1}>
                                 {comment.profile_name}
                             </FlexText>
-                            {comment.profile_is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
+                            {comment.profile_is_verified && <VerifiedIcon size={12} backgroundColor={colors.verify} />}
                         </TouchableOpacity>
                     </View>
 
                     {/* Text content (with image tags stripped) */}
                     {text.length > 0 && (
-                        <FlexText style={[common.body, { fontSize: 14, marginTop: 4, lineHeight: 20 }]}>
+                        <FlexText style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
                             {text}
                         </FlexText>
                     )}
 
                     {imageUrl && (
-                        <MediaViewer
-                            items={[{ type: 'image', source: imageUrl }]}
-                            config={{ theme: 'dark', thumbnail: { fit: 'cover' } }}
-                            renderLayout={({ renderItem }) =>
-                                renderItem(0, {
-                                    frame: { width: '100%' as any, borderRadius: 12 },
-                                })
-                            }
-                        />
+                        <View style={{ marginTop: 8, position: 'relative' }}>
+                            <Galeria urls={[imageUrl]} theme={theme}>
+                                <Galeria.Image>
+                                    <Image
+                                        source={{ uri: imageUrl }}
+                                        style={[styles.commentImage, { width: '100%' }]}
+                                        contentFit="cover"
+                                    />
+                                </Galeria.Image>
+                            </Galeria>
+                            {imageUrl.includes('giphy.com') && (
+                                <View style={{ position: 'absolute', bottom: 8, left: 8, pointerEvents: 'none' }}>
+                                    <Image
+                                        source={theme === 'dark'
+                                            ? require('@/assets/images/giphy/Light Backgrounds/PoweredBy_200px-White_HorizLogo.png')
+                                            : require('@/assets/images/giphy/Dark Backgrounds/PoweredBy_200px-Black_HorizLogo.png')}
+                                        style={{ width: 100, height: 14 }}
+                                    />
+                                </View>
+                            )}
+                        </View>
                     )}
                 </View>
 
-                <View style={[common.row, { alignItems: 'center', marginTop: 6, marginLeft: 12 }]}>
+                <View style={[common.row, { alignItems: 'center', marginTop: 4 }]}>
                     <FlexText style={[common.bodySmall, { color: colors.muted, fontSize: 12 }]}>
                         {formatTimeAgo(comment.created_at)}
                     </FlexText>
 
                     {isOwn && (
                         <>
-                            <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</FlexText>
+                            <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
                             <TouchableOpacity
                                 onPress={onEdit}
                                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                 style={styles.actionButton}
                             >
-                                <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
+                                <FlexText style={{ color: colors.muted, fontSize: 12, fontWeight: '600' }}>
                                     {editLabel}
                                 </FlexText>
                             </TouchableOpacity>
-                            <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 4 }}>•</FlexText>
+                            <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
                             <TouchableOpacity
                                 onPress={onDelete}
                                 disabled={isDeleting}
@@ -134,7 +144,7 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                                 {isDeleting ? (
                                     <ActivityIndicator size="small" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
                                 ) : (
-                                    <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
+                                    <FlexText style={{ color: colors.muted, fontSize: 12, fontWeight: '600' }}>
                                         {deleteLabel}
                                     </FlexText>
                                 )}
@@ -240,7 +250,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const renderEmpty = useCallback(() => {
             if (vm.isLoading) {
                 return (
-                    <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
+                    <View style={{ paddingTop: 8 }}>
                         {Array.from({ length: 5 }).map((_, i) => (
                             <SkeletonGroup key={i} isLoading variant="pulse" style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
                                 <SkeletonGroup.Item className="rounded-full" style={{ width: 38, height: 38 }} />
@@ -329,6 +339,17 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 {vm.selectedImageUrl && (
                     <View style={styles.previewContainer}>
                         <Image source={{ uri: vm.selectedImageUrl }} style={styles.previewImage} contentFit="cover" />
+                        {vm.selectedImageUrl.includes('giphy.com') && (
+                            <View style={{ position: 'absolute', bottom: 4, left: 4, pointerEvents: 'none' }}>
+                                <Image
+                                    source={vm.theme === 'dark'
+                                        ? require('@/assets/images/giphy/Light Backgrounds/PoweredBy_200px-White_HorizLogo.png')
+                                        : require('@/assets/images/giphy/Dark Backgrounds/PoweredBy_200px-Black_HorizLogo.png')}
+                                    style={{ width: 60, height: 10 }}
+                                    contentFit="contain"
+                                />
+                            </View>
+                        )}
                         <TouchableOpacity style={styles.previewRemoveButton} onPress={() => vm.setSelectedImageUrl(null)}>
                             <MaterialIcons name="close" size={16} color="#fff" />
                         </TouchableOpacity>
@@ -352,21 +373,27 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     />
                     {/* Note: since text and image are separated, allow submit if either exists */}
                     {vm.canSubmit && (
-                        <TouchableOpacity
+                        <Button
+                            isIconOnly
+                            isDisabled={vm.isActionLoading}
                             onPress={vm.onPrimaryAction}
-                            disabled={vm.isActionLoading}
-                            style={styles.sendButton}
+                            style={{ backgroundColor: vm.colors.text, width: 44, height: 44, borderRadius: 22, marginBottom: 2 }}
                         >
-                            <View style={[styles.sendButtonBackground, { backgroundColor: vm.colors.text }]}>
-                                {vm.isActionLoading ? (
-                                    <ActivityIndicator size="small" color={vm.colors.background} />
-                                ) : (
-                                    <FlexText style={[styles.sendButtonText, { color: vm.colors.background }]}>
-                                        {vm.isEditing ? t('post.commentsSheet.sendSave') : t('post.commentsSheet.sendPost')}
-                                    </FlexText>
-                                )}
-                            </View>
-                        </TouchableOpacity>
+                            {vm.isActionLoading ? (
+                                <Spinner className="md" color={vm.colors.background} />
+                            ) : (
+
+                                !vm.isEditing ? (<Plain2Bold
+                                    size={24}
+                                    color={vm.colors.background}
+                                />)
+                                    : (<PenNewRoundBold
+                                        size={24}
+                                        color={vm.colors.background}
+                                    />)
+
+                            )}
+                        </Button>
                     )}
                 </View>
 
@@ -382,24 +409,18 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                             onPress={() => vm.setShowUrlInput(!vm.showUrlInput)}
                             disabled={!!vm.selectedImageUrl}
                         >
-                            <MaterialIcons name="image" size={20} color={vm.colors.text} />
-                            <FlexText style={[vm.common.bodySmall, { color: vm.colors.text, fontWeight: '600' }]}>
-                                Add Image
-                            </FlexText>
+                            <GalleryAddBold size={24} color={vm.colors.text} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
                                 styles.toolbarButton,
-                                { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                                { backgroundColor: 'rgba(238, 238, 238, 0.95)' },
                                 vm.selectedImageUrl ? { opacity: 0.5 } : {}
                             ]}
                             onPress={() => { GiphyDialog.show() }}
                             disabled={!!vm.selectedImageUrl}
                         >
-                            <MaterialIcons name="gif" size={20} color={vm.colors.text} />
-                            <FlexText style={[vm.common.bodySmall, { color: vm.colors.text, fontWeight: '600' }]}>
-                                Add GIF
-                            </FlexText>
+                            <Image source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/8/82/Giphy-logo.svg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original" }} style={{ width: 64, height: 24 }} contentFit="contain" />
                         </TouchableOpacity>
 
                     </View>
@@ -439,7 +460,6 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     data={vm.comments}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
-                    estimatedItemSize={90}
                     onEndReached={vm.handleEndReached}
                     onEndReachedThreshold={0.5}
                     ListFooterComponent={renderListFooter}
@@ -452,49 +472,18 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             </>
         );
 
-        const deleteDialog = (
-            <Dialog isOpen={vm.isDeleteDialogOpen} onOpenChange={vm.setIsDeleteDialogOpen}>
-                <Dialog.Portal>
-                    <Dialog.Overlay />
-                    <Dialog.Content>
-                        <Dialog.Close />
-                        <View style={{ marginBottom: 20, gap: 6 }}>
-                            <Dialog.Title>{t('post.commentsSheet.actionDelete')}</Dialog.Title>
-                            <Dialog.Description>
-                                Are you sure you want to delete this comment?
-                            </Dialog.Description>
-                        </View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-                            <Button variant="ghost" onPress={() => vm.setIsDeleteDialogOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button variant="danger" onPress={vm.confirmDeleteComment}>
-                                {t('post.commentsSheet.actionDelete')}
-                            </Button>
-                        </View>
-                    </Dialog.Content>
-                </Dialog.Portal>
-            </Dialog>
-        );
-
         if (useReanimated) {
             return (
-                <>
-                    <ReanimatedTrueSheet dimmed={false} {...sharedProps}>
-                        {sheetContent}
-                    </ReanimatedTrueSheet>
-                    {deleteDialog}
-                </>
+                <ReanimatedTrueSheet dimmed={false} {...sharedProps}>
+                    {sheetContent}
+                </ReanimatedTrueSheet>
             );
         }
 
         return (
-            <>
-                <TrueSheet {...sharedProps}>
-                    {sheetContent}
-                </TrueSheet>
-                {deleteDialog}
-            </>
+            <TrueSheet {...sharedProps}>
+                {sheetContent}
+            </TrueSheet>
         );
     }
 ));
@@ -645,7 +634,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 16,
+        borderRadius: 999,
         gap: 6,
     },
     previewContainer: {

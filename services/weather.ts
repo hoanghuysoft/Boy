@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
-import { weatherStorage as storage } from "./storage";
-import { weatherClient } from "./client";
 import { fetch as nitroFetch } from "react-native-nitro-fetch";
+import { weatherClient } from "./client";
+import { weatherStorage as storage } from "./storage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -93,26 +93,56 @@ type Coords = { latitude: number; longitude: number };
 
 const getDeviceLocation = async (): Promise<Coords | null> => {
   try {
+    // 1. Check if the app itself has permission
     const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
+
     if (status === "granted") {
+      // 2. Check if the user turned off global device location to save battery
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+
+      if (!servicesEnabled) {
+        // SILENT FALLBACK: GPS is off. 
+        // Grab Expo's silent last known location instead of waking up the GPS.
+        const lastKnown = await Location.getLastKnownPositionAsync();
+        if (lastKnown) {
+          return { latitude: lastKnown.coords.latitude, longitude: lastKnown.coords.longitude };
+        }
+        // If even that fails, return null so your getSmartWeather function falls back 
+        // to your custom storage cache or IP location.
+        return null;
+      }
+
+      // 3. GPS is ON. Safe to get a fresh location without triggering a prompt.
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
       return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
     }
-    // Only prompt if the permission is undetermined (never asked before).
-    // If the user explicitly denied location access, respect that silently —
-    // never re-prompt on every auto-refresh.
+
+    // --- Permission Prompting Logic ---
+    const alreadyPrompted = storage.getBoolean("weather:location_prompted");
+    if (alreadyPrompted) {
+      return null;
+    }
+
     if (canAskAgain) {
+      storage.set("weather:location_prompted", true);
       const { status: asked } = await Location.requestForegroundPermissionsAsync();
-      if (asked !== "granted") return null;
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+
+      if (asked === "granted") {
+        // Only get fresh location if they just granted it and services are on
+        const servicesEnabled = await Location.hasServicesEnabledAsync();
+        if (servicesEnabled) {
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+        }
+      }
     }
     return null;
-  } catch {
+  } catch (e) {
+    console.warn("Location error:", e);
     return null;
   }
 };
@@ -136,7 +166,7 @@ const getIPLocation = async (): Promise<Coords | null> => {
         longitude: parseFloat(data.longitude),
       };
     }
-  } catch {}
+  } catch { }
   return null;
 };
 
@@ -207,7 +237,7 @@ export const getSmartWeather = async (hometown?: string): Promise<WeatherSummary
       const geo = await geocodeCity(hometown.trim());
       coords = { latitude: geo.latitude, longitude: geo.longitude };
       placeName = geo.admin1 ? `${geo.name}, ${geo.admin1}` : geo.name;
-    } catch {}
+    } catch { }
   }
 
   // 5. IP fallback (last resort)

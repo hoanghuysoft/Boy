@@ -272,7 +272,8 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
                 height: 5,
                 width: 40,
             }}
-            detents={['auto']}
+            cornerRadius={32}
+            detents={[0.7, 1]}
             onDidPresent={backHandler.onDidPresent}
             onDidDismiss={backHandler.onDidDismiss}
         >

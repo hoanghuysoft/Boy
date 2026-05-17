@@ -186,8 +186,8 @@ const SettingsScreen = () => {
             {/* ─── Experimental Features ──────────────────────────────── */}
             <FlexText style={[styles.title, { marginTop: 24 }]}>Experimental Features</FlexText>
             <Select
-                value={{ value: profileDesign, label: profileDesign === 'new' ? 'Experimental' : 'Classic' }}
-                onValueChange={(opt: any) => setProfileDesign(opt.value as 'classic' | 'new')}
+                value={{ value: profileDesign, label: profileDesign === 'v3' ? 'Version 3' : profileDesign === 'new' ? 'Experimental' : 'Classic' }}
+                onValueChange={(opt: any) => setProfileDesign(opt.value as 'classic' | 'new' | 'v3')}
                 presentation="bottom-sheet"
             >
                 <Select.Trigger asChild>
@@ -195,7 +195,7 @@ const SettingsScreen = () => {
                         <View>
                             <FlexText style={[common.body]}>Profile UIAB Test</FlexText>
                             <FlexText style={[common.bodySmall, { color: colors.muted }]}>
-                                {profileDesign === 'new' ? 'Experimental' : 'Classic'}
+                                {profileDesign === 'v3' ? 'Version 3' : profileDesign === 'new' ? 'Experimental' : 'Classic'}
                             </FlexText>
                         </View>
                         <Ionicons name="chevron-forward" size={24} color={colors.text} />
@@ -206,6 +206,7 @@ const SettingsScreen = () => {
                     <Select.Content presentation="bottom-sheet" snapPoints={['35%']}>
                         <Select.Item value="classic" label="Classic" />
                         <Select.Item value="new" label="Experimental (New)" />
+                        <Select.Item value="v3" label="Version 3" />
                     </Select.Content>
                 </Select.Portal>
             </Select>

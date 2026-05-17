@@ -33,6 +33,8 @@ interface VideoGridItemProps {
     onPress: () => void;
     onLongPress: () => void;
     onPressOut: () => void;
+    isFirst: boolean;
+    isTopRight: boolean;
 }
 
 const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
@@ -43,6 +45,8 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
     onPress,
     onLongPress,
     onPressOut,
+    isFirst,
+    isTopRight,
 }) => {
     const fallbackUrls = useMemo(() => buildFallbackUrls(mediaItem, placeholderImageVideo), [mediaItem, placeholderImageVideo]);
     const [urlIndex, setUrlIndex] = useState(0);
@@ -62,18 +66,32 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
             onPress={onPress}
             style={[
                 videoStyle,
-                { marginRight, justifyContent: 'center', alignItems: 'center' }
+                { marginRight, justifyContent: 'center', alignItems: 'center' },
+                isFirst && { borderTopLeftRadius: 16 },
+                isTopRight && { borderTopRightRadius: 16 }
             ]}
         >
             <Image
                 source={{ uri: fallbackUrls[urlIndex] }}
                 onError={handleImageError}
-                style={StyleSheet.absoluteFill}
+                style={[
+                    StyleSheet.absoluteFill,
+                    {
+                        borderTopLeftRadius: isFirst ? 16 : 0,
+                        borderTopRightRadius: isTopRight ? 16 : 0
+                    }
+                ]}
                 contentFit="cover"
                 transition={150}
                 placeholder={{ blurhash: placeholderBlurhash }}
             />
-            <View style={styles.overlay}>
+            <View style={[
+                styles.overlay,
+                {
+                    borderTopLeftRadius: isFirst ? 16 : 0,
+                    borderTopRightRadius: isTopRight ? 16 : 0
+                }
+            ]}>
                 <Ionicons name="play" size={24} color="white" />
             </View>
         </TouchableOpacity>
@@ -91,6 +109,8 @@ interface ImageGridItemProps {
     onImagePress?: (visible: boolean, index: number) => void;
     onLongPress: () => void;
     onPressOut: () => void;
+    isFirst: boolean;
+    isTopRight: boolean;
 }
 
 const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
@@ -101,6 +121,8 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
     onImagePress,
     onLongPress,
     onPressOut,
+    isFirst,
+    isTopRight,
 }) => {
     const fallbackUrls = useMemo(() => buildFallbackUrls(mediaItem, placeholderImage), [mediaItem, placeholderImage]);
     const [urlIndex, setUrlIndex] = useState(0);
@@ -127,7 +149,12 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
                 fadeDuration={150}
                 onFailure={handleImageError}
             /> */}
-            <View style={[imageStyle, { overflow: "hidden" }]}>
+            <View style={[
+                imageStyle,
+                { overflow: "hidden" },
+                isFirst && { borderTopLeftRadius: 16 },
+                isTopRight && { borderTopRightRadius: 16 }
+            ]}>
                 <NitroImage
                     image={{ url: fallbackUrls[urlIndex] }}
                     recyclingKey={fallbackUrls[urlIndex]}
@@ -147,16 +174,30 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
     const vm = useImageGridViewModel(options);
 
     // Render items
-    const renderItem: ListRenderItem<GridItemType> = useCallback(({ item }) => {
+    const renderItem: ListRenderItem<GridItemType> = useCallback(({ item, index }) => {
+        const isFirst = index === 0;
+        const isTopRight = index === vm.numColumns - 1 || (index === vm.gridData.length - 1 && index < vm.numColumns);
+
         if (item.type === 'shimmer') {
             const isVideoGrid = vm.onVideoPress !== undefined;
             const style = isVideoGrid ? vm.videoStyle : vm.imageStyle;
 
             return (
-                <View style={[style, { backgroundColor: vm.colors.card }]}>
+                <View style={[
+                    style,
+                    { backgroundColor: vm.colors.card },
+                    isFirst && { borderTopLeftRadius: 16 },
+                    isTopRight && { borderTopRightRadius: 16 }
+                ]}>
                     <ShimmerEffect
                         isLoading={true}
-                        style={StyleSheet.absoluteFill}
+                        style={[
+                            StyleSheet.absoluteFill,
+                            {
+                                borderTopLeftRadius: isFirst ? 16 : 0,
+                                borderTopRightRadius: isTopRight ? 16 : 0
+                            }
+                        ]}
                     />
                 </View>
             );
@@ -177,6 +218,8 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
                     onPress={() => vm.onVideoPress?.(mediaItem)}
                     onLongPress={() => vm.handleLongPress(mediaItem.thumbnail_url || mediaItem.url, mediaItem.blurhash)}
                     onPressOut={vm.handlePressOut}
+                    isFirst={isFirst}
+                    isTopRight={isTopRight}
                 />
             );
         }
@@ -191,6 +234,8 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
                 onImagePress={vm.onImagePress}
                 onLongPress={() => vm.handleLongPress(mediaPath, mediaItem.blurhash)}
                 onPressOut={vm.handlePressOut}
+                isFirst={isFirst}
+                isTopRight={isTopRight}
             />
         );
     }, [vm.imageStyle, vm.videoStyle, vm.onVideoPress, vm.onImagePress, vm.handleLongPress, vm.handlePressOut, vm.colors.card, vm.placeholderImage, vm.placeholderImageVideo]);
