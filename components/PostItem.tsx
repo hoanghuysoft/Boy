@@ -34,15 +34,14 @@ interface PostItemProps {
     isBookmarked?: boolean;
 }
 
-export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPress, isBookmarked = false }: PostItemProps) => {
+export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, isBookmarked = false }: PostItemProps) => {
     const vm = usePostItemViewModel({ post, onOptionsPress, onLikeCountPress, onCommentPress });
     const { t } = useTranslation();
 
-    // Feed video state
-    const activeVideoPostId = useFeedVideoStore(s => s.activePostId);
+    // Feed video state - optimally select ONLY boolean to prevent mass re-renders
+    const isActiveVideoPost = useFeedVideoStore(s => s.activePostId === post.id);
     const isVideoMuted = useFeedVideoStore(s => s.isMuted);
     const toggleVideoMute = useFeedVideoStore(s => s.toggleMute);
-    const isActiveVideoPost = activeVideoPostId === post.id;
     const hasVideo = post.media?.some(m => m.type === 'video');
 
     // Caption without any YouTube URLs — those are rendered by YouTubePostPlayer.
@@ -296,4 +295,14 @@ export const PostItem = ({ post, onOptionsPress, onLikeCountPress, onCommentPres
             )}
         </View>
     );
-};
+}, (prev, next) => {
+    return (
+        prev.post.id === next.post.id &&
+        prev.post.is_liked === next.post.is_liked &&
+        prev.post.like_count === next.post.like_count &&
+        prev.post.comment_count === next.post.comment_count &&
+        prev.post.is_bookmarked === next.post.is_bookmarked &&
+        prev.isBookmarked === next.isBookmarked
+    );
+});
+PostItem.displayName = "PostItem";

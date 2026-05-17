@@ -5,15 +5,15 @@ import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Post } from "@/types/post";
 import { choosenMediaPath } from "@/utils/imageurl";
 import { Image } from "expo-image";
+import { SkeletonGroup } from "heroui-native";
 import { uniqBy } from "lodash";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Dimensions, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Dimensions, NativeScrollEvent, NativeSyntheticEvent, RefreshControl, ScrollView, StyleSheet, View, ViewToken } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
 import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DataProvider, LayoutProvider, RecyclerListView } from "recyclerlistview";
 import { PostItem } from "../../../components/PostItem";
-import { SkeletonGroup } from "heroui-native";
 import { useThemeContext } from "../../../context/ThemeContext";
 import { useAudioStore } from "../../../stores/audio";
 import { useScrollStore } from "../../../stores/scroll";
@@ -25,13 +25,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 // How many posts ahead to prefetch images for
 const PREFETCH_AHEAD = 3;
 
-// View types for RecyclerListView
-const ViewTypes = {
-    POST: 0,
-    LOADING: 1,
-};
-
-// Estimated post height (will be adjusted with forceNonDeterministicRendering)
+// Estimated post height for FlashList
 const ESTIMATED_POST_HEIGHT = 500;
 
 interface FeedTabProps {
@@ -76,12 +70,12 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const extraPadding = 20;
     const bottomPadding = bottomNavHeight + bottomNavMargin + insets.bottom + extraPadding;
 
-    const listRef = useRef<RecyclerListView<any, any> | null>(null);
+    const listRef = useRef<FlatList<Post> | null>(null);
     const trigger = useScrollStore((state) => state.triggers['index']);
 
     useEffect(() => {
         if (trigger > 0 && listRef.current) {
-            listRef.current.scrollToTop(true);
+            listRef.current.scrollToOffset({ offset: 0, animated: true });
         }
     }, [trigger]);
 
@@ -151,17 +145,19 @@ const FeedTab: React.FC<FeedTabProps> = ({
         }
     }, [autoplayVideos, findTopmostVideoPost, setActiveVideo, clearActiveVideo, stopAudioPlayback]);
 
-    // Handle visible indices change from RecyclerListView
-    const handleVisibleIndicesChanged = useCallback((all: number[]) => {
+    // Handle viewable items change from FlashList
+    const handleViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+        const visibleIndices = viewableItems.map(v => v.index).filter((i): i is number => i !== null);
+
         // Always keep a reference to the latest visible indices
-        lastVisibleIndicesRef.current = all;
+        lastVisibleIndicesRef.current = visibleIndices;
 
         // Prefetch images for posts just beyond the visible window.
         // Route each URL to the cache of the component that will render it:
-        // avatars + photo media → TurboImage.prefetch
-        // video thumbnails      → FastImage.preload
-        if (all.length > 0) {
-            const maxVisible = Math.max(...all);
+        // avatars → NitroImage.preload
+        // photo media + video thumbnails → ExpoImage.prefetch
+        if (visibleIndices.length > 0) {
+            const maxVisible = Math.max(...visibleIndices);
             const aheadPosts = posts.slice(maxVisible + 1, maxVisible + 1 + PREFETCH_AHEAD);
             const nitroUrls: { url: string }[] = [];
             const expoUrls: { uri: string }[] = [];
@@ -169,7 +165,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 if (p.profile_avatar) nitroUrls.push({ url: p.profile_avatar });
                 for (const m of p.media ?? []) {
                     if (m.type === 'video' && m.thumbnail_url) expoUrls.push({ uri: m.thumbnail_url });
-                    else if (m.type === 'photo' && m.url) nitroUrls.push({ url: m.url });
+                    else if (m.type === 'photo' && m.url) expoUrls.push({ uri: m.url });
                 }
             }
             if (expoUrls.length > 0) for (const url of expoUrls) Image.prefetch(url.uri);
@@ -190,7 +186,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
         // Debounce: wait for indices to settle before activating video.
         // onMomentumScrollEnd provides a faster path when the list fully stops.
         videoDebounceRef.current = setTimeout(() => {
-            activateVideoFromIndices(all);
+            activateVideoFromIndices(visibleIndices);
         }, 400);
     }, [posts, autoplayVideos, activateVideoFromIndices, clearActiveVideo]);
 
@@ -210,41 +206,16 @@ const FeedTab: React.FC<FeedTabProps> = ({
         refetch();
     }, [feedType, refetch]);
 
-    // Create DataProvider with rowHasChanged comparison
-    const [dataProvider, setDataProvider] = useState<DataProvider>(
-        new DataProvider((r1, r2) => {
-            // Compare by id AND mutable fields so recycled cells get fresh data
-            return r1.id !== r2.id
-                || r1.is_liked !== r2.is_liked
-                || r1.like_count !== r2.like_count
-                || r1.comment_count !== r2.comment_count
-                || r1.is_bookmarked !== r2.is_bookmarked;
-        })
-    );
+    const viewabilityConfig = useMemo(() => ({
+        itemVisiblePercentThreshold: 50,
+        minimumViewTime: 100,
+    }), []);
 
-    // Update dataProvider when posts change
-    useEffect(() => {
-        if (posts.length > 0) {
-            setDataProvider(prevProvider => prevProvider.cloneWithRows(posts));
-        }
-    }, [posts]);
-
-    // Create LayoutProvider
-    const layoutProvider = useMemo(() => {
-        return new LayoutProvider(
-            (index) => ViewTypes.POST,
-            (type, dim) => {
-                dim.width = SCREEN_WIDTH;
-                dim.height = ESTIMATED_POST_HEIGHT;
-            }
-        );
-    }, []);
-
-    // Row renderer for RecyclerListView
-    const rowRenderer = useCallback((type: string | number, data: Post, index: number) => {
+    // Row renderer for FlashList
+    const renderItem = useCallback(({ item }: { item: Post }) => {
         return (
             <View style={{ marginBottom: 30 }}>
-                <PostItem post={data} onOptionsPress={onOptionsPress} onLikeCountPress={onLikeCountPress} onCommentPress={onCommentPress} />
+                <PostItem post={item} onOptionsPress={onOptionsPress} onLikeCountPress={onLikeCountPress} onCommentPress={onCommentPress} />
             </View>
         );
     }, [onOptionsPress, onLikeCountPress, onCommentPress]);
@@ -289,7 +260,10 @@ const FeedTab: React.FC<FeedTabProps> = ({
     };
 
     // Handle scroll events
-    const handleScroll = useCallback((rawEvent: any, offsetX: number, offsetY: number) => {
+    const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const offsetY = event.nativeEvent.contentOffset.y;
+        const offsetX = event.nativeEvent.contentOffset.x;
+
         // Track scroll velocity for fast-scroll detection
         const now = Date.now();
         const dt = now - lastScrollTimeRef.current;
@@ -308,11 +282,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
         // Forward scroll event to parent in the expected format
         if (onScroll) {
-            onScroll({
-                nativeEvent: {
-                    contentOffset: { x: offsetX, y: offsetY }
-                }
-            });
+            onScroll(event);
         }
     }, [onScroll, clearActiveVideo]);
 
@@ -368,42 +338,36 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
     return (
         <View style={{ flex: 1 }}>
-            <RecyclerListView
+            <FlatList
                 ref={listRef}
-                layoutProvider={layoutProvider}
-                dataProvider={dataProvider}
-                rowRenderer={rowRenderer}
+                data={posts}
+                renderItem={renderItem}
                 onScroll={handleScroll}
-                onVisibleIndicesChanged={handleVisibleIndicesChanged}
-                scrollViewProps={{
-                    showsVerticalScrollIndicator: false,
-                    contentContainerStyle: {
-                        paddingTop: headerHeight + 10,
-                    },
-                    onMomentumScrollEnd: handleMomentumScrollEnd,
-                    refreshControl: (
-                        <RefreshControl
-                            refreshing={isRefetching}
-                            onRefresh={handleRefresh}
-                            tintColor={colors.text}
-                            colors={[colors.text]}
-                            progressBackgroundColor={colors.card}
-                            progressViewOffset={insets.top}
-                        />
-                    ),
+                onViewableItemsChanged={handleViewableItemsChanged}
+                viewabilityConfig={viewabilityConfig}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                    paddingTop: headerHeight + 10,
                 }}
-                // Enable non-deterministic rendering for variable height items
-                forceNonDeterministicRendering={true}
-                // Render items ahead for smoother scrolling
-                renderAheadOffset={300}
-                // Handle infinite scroll
+                onMomentumScrollEnd={handleMomentumScrollEnd}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefetching}
+                        onRefresh={handleRefresh}
+                        tintColor={colors.text}
+                        colors={[colors.text]}
+                        progressBackgroundColor={colors.card}
+                        progressViewOffset={insets.top}
+                    />
+                }
                 onEndReached={handleEndReached}
                 onEndReachedThreshold={0.5}
-                // Render footer
-                renderFooter={renderFooter}
-                // Enable stable ids for better recycling
-                // Note: extendedState can be used for external state dependencies
-                canChangeSize={true}
+                ListFooterComponent={renderFooter}
+                initialNumToRender={2}
+                maxToRenderPerBatch={2}
+                windowSize={5}
+                removeClippedSubviews={false} // Avoid Android display list crash
             />
         </View>
     );

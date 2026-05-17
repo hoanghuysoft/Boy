@@ -32,6 +32,9 @@ interface SettingsStore {
     // Profile Design
     profileDesign: 'classic' | 'new' | 'v3';
     setProfileDesign: (design: 'classic' | 'new' | 'v3') => void;
+    // Feed Carousel Style
+    feedCarouselStyle: 'classic' | 'experimental';
+    setFeedCarouselStyle: (style: 'classic' | 'experimental') => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -56,6 +59,9 @@ export const useSettingsStore = create<SettingsStore>()(
             // Profile Design
             profileDesign: 'classic',
             setProfileDesign: (design) => set({ profileDesign: design }),
+            // Feed Carousel Style
+            feedCarouselStyle: 'classic',
+            setFeedCarouselStyle: (style) => set({ feedCarouselStyle: style }),
         }),
         {
             name: 'settings-storage',

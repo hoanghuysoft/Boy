@@ -32,7 +32,8 @@ const SettingsScreen = () => {
         showCarousel, toggleCarousel,
         autoplayVideos, toggleAutoplayVideos,
         videoCacheSizeLimit, setVideoCacheSizeLimit,
-        profileDesign, setProfileDesign
+        profileDesign, setProfileDesign,
+        feedCarouselStyle, setFeedCarouselStyle
     } = useSettingsStore();
     const { trackerSource } = useMovieTrackerStore();
     const trackerSourceLabel = trackerSource === 'shows'
@@ -207,6 +208,30 @@ const SettingsScreen = () => {
                         <Select.Item value="classic" label="Classic" />
                         <Select.Item value="new" label="Experimental (New)" />
                         <Select.Item value="v3" label="Version 3" />
+                    </Select.Content>
+                </Select.Portal>
+            </Select>
+            <Select
+                value={{ value: feedCarouselStyle, label: feedCarouselStyle === 'experimental' ? 'Experimental' : 'Classic' }}
+                onValueChange={(opt: any) => setFeedCarouselStyle(opt.value as 'classic' | 'experimental')}
+                presentation="bottom-sheet"
+            >
+                <Select.Trigger asChild>
+                    <TouchableOpacity style={[styles.option]}>
+                        <View>
+                            <FlexText style={[common.body]}>Feed Carousel UI</FlexText>
+                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>
+                                {feedCarouselStyle === 'experimental' ? 'Experimental' : 'Classic'}
+                            </FlexText>
+                        </View>
+                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                </Select.Trigger>
+                <Select.Portal>
+                    <Select.Overlay />
+                    <Select.Content presentation="bottom-sheet" snapPoints={['30%']}>
+                        <Select.Item value="classic" label="Classic" />
+                        <Select.Item value="experimental" label="Experimental" />
                     </Select.Content>
                 </Select.Portal>
             </Select>
