@@ -12,13 +12,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Dimensions, Linking, ScrollView, TouchableOpacity, View } from "react-native";
+import { Dimensions, TouchableOpacity, View } from "react-native";
 import { Pressable } from 'react-native-gesture-handler';
 import { NitroImage } from "react-native-nitro-image";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
 import { PostAudioWaveform } from "./PostAudioWaveform";
+import { PostLinkPreview } from "./PostLinkPreview";
 import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 import { YouTubePostPlayer } from "./YouTubePostPlayer";
@@ -184,39 +185,17 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 </View>
             )}
 
-            {/* Links */}
+            {/* Links — rich OG preview cards */}
             {post.links && post.links.length > 0 && (
-                <View style={{ marginBottom: 12 }}>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 16 }}
-                    >
-                        {post.links.map((item: Link, index: number) => (
-                            <Pressable
-                                key={item.url || index}
-                                onPress={() => Linking.openURL(item.url)}
-                                style={{
-                                    backgroundColor: vm.colors.card,
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 8,
-                                    borderRadius: 8,
-                                    marginRight: 8,
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    gap: 6,
-                                    borderWidth: 1,
-                                    borderColor: vm.colors.divider
-                                }}
-                            >
-                                <Ionicons name="link-outline" size={16} color={vm.colors.muted} />
-                                <FlexText style={[vm.common.label, { color: vm.colors.text, fontSize: 13, fontWeight: '500' }]}>
-                                    {item.label}
-                                </FlexText>
-                                <Ionicons name="open-outline" size={14} color={vm.colors.muted} style={{ marginLeft: 4 }} />
-                            </Pressable>
-                        ))}
-                    </ScrollView>
+                <View style={{ paddingHorizontal: 16, marginBottom: 12, gap: 0 }}>
+                    {post.links.map((item: Link, index: number) => (
+                        <PostLinkPreview
+                            key={item.url || index}
+                            url={item.url}
+                            label={item.label}
+                            colors={vm.colors}
+                        />
+                    ))}
                 </View>
             )}
 
