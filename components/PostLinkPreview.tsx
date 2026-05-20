@@ -65,7 +65,9 @@ async function fetchOGData(url: string, timeout = 6000): Promise<PreviewData | n
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 32;
+// Slightly narrower than screen so the next card peeks through in horizontal scroll.
+// Exposed so PostItem can pass it to snapToOffsets if desired.
+export const LINK_CARD_WIDTH = Math.min(SCREEN_WIDTH - 56, 340);
 const CARD_RADIUS = 14;
 const IMAGE_HEIGHT = 180;
 
@@ -73,10 +75,12 @@ interface PostLinkPreviewProps {
     url: string;
     label: string;
     colors: ThemeColors;
+    /** Override card width. Defaults to LINK_CARD_WIDTH. */
+    cardWidth?: number;
 }
 
 export const PostLinkPreview = React.memo(
-    ({ url, label, colors }: PostLinkPreviewProps) => {
+    ({ url, label, colors, cardWidth = LINK_CARD_WIDTH }: PostLinkPreviewProps) => {
         // 'idle' → 'loading' → 'done'
         const [status, setStatus] = useState<'idle' | 'loading' | 'done'>(() =>
             ogCache.has(url) ? 'done' : 'idle',
@@ -141,6 +145,7 @@ export const PostLinkPreview = React.memo(
                 <Pressable
                     onPress={handleOpen}
                     style={[styles.card, {
+                        width: cardWidth,
                         backgroundColor: colors.containerContent,
                         borderColor: colors.divider,
                     }]}
@@ -162,6 +167,7 @@ export const PostLinkPreview = React.memo(
                 style={({ pressed }) => [
                     styles.card,
                     {
+                        width: cardWidth,
                         backgroundColor: colors.containerContent,
                         borderColor: colors.divider,
                         opacity: pressed ? 0.85 : 1,
@@ -238,6 +244,7 @@ export const PostLinkPreview = React.memo(
     (prev, next) =>
         prev.url === next.url &&
         prev.label === next.label &&
+        prev.cardWidth === next.cardWidth &&
         prev.colors === next.colors,
 );
 
@@ -245,7 +252,7 @@ PostLinkPreview.displayName = 'PostLinkPreview';
 
 const styles = StyleSheet.create({
     card: {
-        width: CARD_WIDTH,
+        width: LINK_CARD_WIDTH, // overridden inline via style prop
         borderRadius: CARD_RADIUS,
         borderWidth: StyleSheet.hairlineWidth,
         overflow: 'hidden',

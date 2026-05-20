@@ -13,13 +13,13 @@ import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } fr
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Dimensions, TouchableOpacity, View } from "react-native";
-import { Pressable } from 'react-native-gesture-handler';
+import { Pressable, ScrollView } from 'react-native-gesture-handler';
 import { NitroImage } from "react-native-nitro-image";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
 import { PostAudioWaveform } from "./PostAudioWaveform";
-import { PostLinkPreview } from "./PostLinkPreview";
+import { LINK_CARD_WIDTH, PostLinkPreview } from "./PostLinkPreview";
 import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 import { YouTubePostPlayer } from "./YouTubePostPlayer";
@@ -185,18 +185,44 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 </View>
             )}
 
-            {/* Links — rich OG preview cards */}
+            {/* Links — single link: full-width symmetric view; multiple: horizontal peek scroll */}
             {post.links && post.links.length > 0 && (
-                <View style={{ paddingHorizontal: 16, marginBottom: 12, gap: 0 }}>
-                    {post.links.map((item: Link, index: number) => (
+                post.links.length === 1 ? (
+                    // Single link — equal 16px padding both sides, card fills the gap
+                    <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
                         <PostLinkPreview
-                            key={item.url || index}
-                            url={item.url}
-                            label={item.label}
+                            key={post.links[0].url || 0}
+                            url={post.links[0].url}
+                            label={post.links[0].label}
                             colors={vm.colors}
+                            cardWidth={Dimensions.get('window').width - 32}
                         />
-                    ))}
-                </View>
+                    </View>
+                ) : (
+                    // Multiple links — peek-through horizontal scroll
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        decelerationRate="fast"
+                        snapToOffsets={post.links.map((_, i) => i * (LINK_CARD_WIDTH + 10))}
+                        snapToAlignment="start"
+                        contentContainerStyle={{
+                            paddingHorizontal: 16,
+                            paddingBottom: 12,
+                            gap: 10,
+                        }}
+                        style={{ marginBottom: 4 }}
+                    >
+                        {post.links.map((item: Link, index: number) => (
+                            <PostLinkPreview
+                                key={item.url || index}
+                                url={item.url}
+                                label={item.label}
+                                colors={vm.colors}
+                            />
+                        ))}
+                    </ScrollView>
+                )
             )}
 
             {post.device && (

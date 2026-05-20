@@ -371,11 +371,16 @@ const CreateScreen = () => {
     }, [values.links, setFieldValue]);
 
     const updateLink = useCallback((index: number, field: keyof Link, value: string) => {
-        const updatedLinks = values.links.map((link: Link, i: number) =>
-            i === index ? { ...link, [field]: value } : link
-        );
-        setFieldValue('links', updatedLinks);
-    }, [values.links, setFieldValue]);
+        // Use functional updater to avoid closing over stale `values`.
+        // Without this, an async label-suggest completing after a URL update
+        // would rebuild the links array from a stale snapshot, reverting the URL.
+        formik.setValues((prev) => ({
+            ...prev,
+            links: prev.links.map((link: Link, i: number) =>
+                i === index ? { ...link, [field]: value } : link
+            ),
+        }));
+    }, [formik.setValues]);
 
     const removeLink = useCallback((index: number) => {
         const updatedLinks = values.links.filter((_: Link, i: number) => i !== index);
