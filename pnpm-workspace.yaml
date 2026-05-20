@@ -1,5 +1,0 @@
-allowBuilds:
-  '@sentry/cli': true
-  '@shopify/react-native-skia': true
-  react-native-nitro-player: true
-  unrs-resolver: true
