@@ -10,7 +10,7 @@ import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router/react-navigation";
 import { ClapperboardBold, TvBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";

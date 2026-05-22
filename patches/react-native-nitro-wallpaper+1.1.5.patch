@@ -1,10 +1,3 @@
-diff --git a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/.gitattributes b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/.gitattributes
-new file mode 100644
-index 0000000..fb7a0d5
---- /dev/null
-+++ b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/.gitattributes
-@@ -0,0 +1 @@
-+** linguist-generated=true
 diff --git a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp
 index 09003a7..7d77337 100644
 --- a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp
@@ -143,7 +136,7 @@ index 364d894..d6a1ae4 100644
  
  } // namespace margelo::nitro::reactnativenitrowallpaper
 diff --git a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
-index 9a0a13d..7f47d55 100644
+index 9a0a13d..f1570fc 100644
 --- a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
 +++ b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
 @@ -25,32 +25,29 @@ import com.margelo.nitro.core.HybridObject
@@ -153,7 +146,7 @@ index 9a0a13d..7f47d55 100644
 -  @DoNotStrip
 -  private var mHybridData: HybridData = initHybrid()
 +  // Properties
-   
+ 
 -  init {
 -    super.updateNative(mHybridData)
 -  }

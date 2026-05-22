@@ -7,8 +7,8 @@ import {
     ReanimatedTrueSheetProvider,
     useReanimatedTrueSheet,
 } from "@lodev09/react-native-true-sheet/reanimated";
-import { createMaterialTopTabNavigator, MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
-import { useIsFocused } from "@react-navigation/native";
+import { createMaterialTopTabNavigator, MaterialTopTabBarProps } from "expo-router/js-top-tabs";
+import { useIsFocused } from "expo-router/react-navigation";
 import { FlashList } from "@shopify/flash-list";
 import {
     ChatRoundLikeBold,

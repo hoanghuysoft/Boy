@@ -1,5 +1,5 @@
 import { FlexText } from "@/components/FlexText";
-import { MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
+import { MaterialTopTabBarProps } from "expo-router/js-top-tabs";
 import React, { useEffect, useRef } from "react";
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useThemeContext } from "../../../context/ThemeContext";
