@@ -1,6 +1,6 @@
 import { FlexText } from "@/components/FlexText";
+import { LegendList } from "@legendapp/list";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { FlashList } from "@shopify/flash-list";
 import React, { forwardRef, memo } from "react";
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, View } from "react-native";
@@ -77,9 +77,10 @@ export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetPro
                 </View>
 
                 {/* List */}
-                <FlashList
+                <LegendList
                     nestedScrollEnabled
                     data={data}
+                    recycleItems
                     keyExtractor={(item, index) => `${item.name}-${index}`}
                     renderItem={({ item }) => (
                         <RelationshipItem item={item} colors={colors} common={common} />

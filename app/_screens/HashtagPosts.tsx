@@ -4,12 +4,12 @@ import { LikersSheet } from '@/components/post/LikersSheet';
 import { PostItem } from '@/components/PostItem';
 import { useThemeContext } from '@/context/ThemeContext';
 import { createCommonStyles } from '@/styles/common';
-import type { LikersSheetHandle } from '@/types/sheetHandles';
 import { Post } from '@/types/post';
+import type { LikersSheetHandle } from '@/types/sheetHandles';
 import { useHashtagPostsViewModel } from '@/viewmodels/HashtagPostsViewModel';
 import { Ionicons } from '@expo/vector-icons';
+import { LegendList, LegendListRenderItemProps } from '@legendapp/list';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
-import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { SkeletonGroup } from 'heroui-native';
 import React, { useCallback, useRef, useState } from 'react';
@@ -49,7 +49,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
     }, []);
 
     const renderItem = useCallback(
-        ({ item }: { item: Post }) => (
+        ({ item }: LegendListRenderItemProps<Post>) => (
             <View style={{ marginBottom: 30 }}>
                 <PostItem
                     post={item}
@@ -188,10 +188,11 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                 </TouchableOpacity>
             </View>
 
-            <FlashList
+            <LegendList
                 data={vm.posts}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
+                recycleItems
                 onEndReached={vm.handleEndReached}
                 onEndReachedThreshold={0.5}
                 ListHeaderComponent={ListHeaderComponent}

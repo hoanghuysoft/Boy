@@ -8,6 +8,7 @@ import { usePersonDetails } from "@/hooks/useMovies";
 import { useGalleryStore } from "@/stores/gallery";
 import { enrichProfileData } from "@/utils/zodiacCalculation";
 import { Ionicons } from "@expo/vector-icons";
+import { LegendList } from "@legendapp/list";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
@@ -22,10 +23,10 @@ import {
     useWindowDimensions,
     View,
 } from "react-native";
-import { FlatList as GestureFlatList, Pressable as GesturePressable } from "react-native-gesture-handler";
+import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
-import { personDetailStorage as storage } from "../../services/storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { personDetailStorage as storage } from "../../services/storage";
 
 // ─── MMKV cache ────────────────────────────────────────────
 
@@ -364,13 +365,14 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                             <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
                                 Movies
                             </Text>
-                            <GestureFlatList
+                            <LegendList
                                 horizontal
                                 data={movieCredits}
                                 keyExtractor={(item, index) => `${item.id}-${index}`}
                                 renderItem={renderMovieCreditItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+                                recycleItems
                             />
                         </View>
                     )}
@@ -381,13 +383,14 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                             <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
                                 TV Shows
                             </Text>
-                            <GestureFlatList
+                            <LegendList
                                 horizontal
                                 data={tvCredits}
                                 keyExtractor={(item, index) => `${item.id}-${index}`}
                                 renderItem={renderTvCreditItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+                                recycleItems
                             />
                         </View>
                     )}
@@ -398,13 +401,14 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                             <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
                                 Photos
                             </Text>
-                            <GestureFlatList
+                            <LegendList
                                 horizontal
                                 data={profiles.slice(0, 20)}
                                 keyExtractor={(item: any, i) => `${item.file_path}-${i}`}
                                 renderItem={renderGalleryItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+                                recycleItems
                             />
                         </View>
                     )}

@@ -4,7 +4,7 @@ import { useCategoryInfiniteQuery } from "@/services/shows/category";
 import { useTagInfiniteQuery } from "@/services/shows/tag";
 import type { VideoCard } from "@/types/shows";
 import { Ionicons } from "@expo/vector-icons";
-import { FlashList } from "@shopify/flash-list";
+import { LegendList } from "@legendapp/list";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import {
@@ -177,11 +177,12 @@ const ShowListScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <FlashList
+      <LegendList
         data={items}
         keyExtractor={(item) => item.video_url}
         ListHeaderComponent={ListHeaderComponent}
         ListFooterComponent={ListFooterComponent}
+        recycleItems
         contentContainerStyle={{
           paddingHorizontal: 8,
           paddingBottom: inset.bottom + 24,

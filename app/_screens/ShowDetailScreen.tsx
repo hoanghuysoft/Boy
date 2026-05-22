@@ -7,6 +7,7 @@ import { useGalleryStore } from "@/stores/gallery";
 import { useShowWatchlistStore } from "@/stores/showWatchlist";
 import type { VideoCard } from "@/types/shows";
 import { Ionicons } from "@expo/vector-icons";
+import { LegendList } from "@legendapp/list";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { BookmarkBold, BookmarkOutline, CloudDownloadBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
@@ -14,13 +15,12 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { FlatList as GestureFlatList } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
-import { showDetailStorage as storage } from "../../services/storage";
 import { NitroImage } from "react-native-nitro-image";
 import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
+import { showDetailStorage as storage } from "../../services/storage";
 import { createCommonStyles } from "../../styles/common";
 
 
@@ -437,13 +437,14 @@ const ChatScreen = () => {
                     <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 24, paddingHorizontal: 16 }]}>
                       Gallery
                     </Text>
-                    <GestureFlatList
+                    <LegendList
                       horizontal
                       data={detail?.extra_images ?? []}
                       keyExtractor={galleryKeyExtractor}
                       renderItem={renderGalleryItem}
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+                      recycleItems
                     />
                   </View>
                 )}
@@ -463,26 +464,28 @@ const ChatScreen = () => {
                     <Text style={[styles.textStyle, { color: "white", paddingHorizontal: 16 }]}>
                       Tags
                     </Text>
-                    <GestureFlatList
+                    <LegendList
                       horizontal
                       data={detail?.tags ?? []}
                       keyExtractor={tagKeyExtractor}
                       renderItem={renderTag}
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={{ gap: 8, marginTop: 8, paddingHorizontal: 16 }}
+                      recycleItems
                     />
                   </View>
                 </View>
                 <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 20, paddingHorizontal: 16 }]}>
                   Related Videos
                 </Text>
-                <GestureFlatList
+                <LegendList
                   horizontal
                   data={relatedVideos ?? []}
                   keyExtractor={relatedVideoKeyExtractor}
                   renderItem={renderRelatedVideo}
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 16 }}
+                  recycleItems
                 />
               </View>
               <View style={{ height: inset.bottom }} />

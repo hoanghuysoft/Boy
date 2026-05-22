@@ -3,9 +3,9 @@ import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { SearchType, useTypedSearchInfinite } from "@/hooks/useMovies";
 import { Ionicons } from "@expo/vector-icons";
+import { LegendList } from "@legendapp/list";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import LineiconsIcon from "@lineiconshq/react-native-lineicons";
-import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -290,10 +290,11 @@ const SearchMoviesScreen = () => {
         ))}
       </View>
 
-      <FlashList
+      <LegendList
         data={items}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
+        recycleItems
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={() => {
           if (isLoading && submittedQuery) {

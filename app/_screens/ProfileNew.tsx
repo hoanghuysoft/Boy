@@ -715,6 +715,8 @@ const ProfileNew = () => {
             <MusicSheet
                 ref={musicSheetRef}
                 data={music}
+                profileId={profileId}
+                isOwner={isMe}
             />
             <RelationshipSheet
                 ref={familySheetRef}

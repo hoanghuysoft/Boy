@@ -1,10 +1,21 @@
 import { FlexText } from '@/components/FlexText';
+import { useDeezerSearch, type DeezerTrack } from '@/services/deezer';
+import { useAddMusic, useDeleteMusic } from '@/services/music';
 import { Ionicons } from '@expo/vector-icons';
+import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { FlashList } from '@shopify/flash-list';
-import React, { forwardRef, memo, useCallback } from "react";
+import { Spinner } from 'heroui-native';
+import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { Linking, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+    Alert,
+    Keyboard,
+    Linking,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View
+} from "react-native";
 import { NitroImage } from 'react-native-nitro-image';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { useAudioStore } from '../../../stores/audio';
@@ -12,19 +23,322 @@ import { createCommonStyles } from "../../../styles/common";
 import { ProfileMusic } from '../../../types/profilemusic';
 import { useSheetBackHandler } from "./useSheetBackHandler";
 
+// ============================================================================
+// Props
+// ============================================================================
+
 interface MusicSheetProps {
     data: ProfileMusic[];
+    profileId?: string;       // Required for add/delete mutations
+    isOwner?: boolean;        // Show edit controls only for profile owner
     onEndReached?: () => void;
 }
+
+// ============================================================================
+// Deezer Search Sheet (stacked on top of MusicSheet)
+// ============================================================================
+
+interface AddMusicSheetProps {
+    profileId: string;
+    onAdded: () => void;
+}
+
+const AddMusicSheet = memo(
+    forwardRef<TrueSheet, AddMusicSheetProps>(({ profileId, onAdded }, ref) => {
+        const { colors, typography, theme } = useThemeContext();
+        const common = createCommonStyles(colors, typography);
+        const { t } = useTranslation();
+        const { stopPlayback } = useAudioStore();
+
+        const sheetRef = useRef<TrueSheet>(null);
+        const isPresented = useRef(false);
+        const backHandler = useSheetBackHandler(sheetRef);
+
+        useImperativeHandle(ref, () => ({
+            present: (index?: number, animated?: boolean) => {
+                if (isPresented.current) return Promise.resolve();
+                isPresented.current = true;
+                return sheetRef.current?.present(index, animated) || Promise.resolve();
+            },
+            dismiss: (animated?: boolean) => {
+                if (!isPresented.current) return Promise.resolve();
+                isPresented.current = false;
+                return sheetRef.current?.dismiss(animated) || Promise.resolve();
+            },
+            resize: (index: number) => {
+                return sheetRef.current?.resize(index) || Promise.resolve();
+            },
+            dismissStack: (animated?: boolean) => {
+                return sheetRef.current?.dismissStack(animated) || Promise.resolve();
+            },
+        } as any), []);
+
+        const [query, setQuery] = useState('');
+        const [debouncedQuery, setDebouncedQuery] = useState('');
+        const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+        const { data: searchResult, isFetching } = useDeezerSearch(debouncedQuery, 20);
+        const tracks = searchResult?.data ?? [];
+
+        const { mutate: addMusic, isPending: isAdding } = useAddMusic(profileId);
+
+        const handleQueryChange = useCallback((text: string) => {
+            setQuery(text);
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(() => setDebouncedQuery(text), 400);
+        }, []);
+
+        const handleAdd = useCallback((track: DeezerTrack) => {
+            Keyboard.dismiss();
+            addMusic(track.deezer_id, {
+                onSuccess: () => {
+                    setQuery('');
+                    setDebouncedQuery('');
+                    onAdded();
+                    (ref as any)?.current?.dismiss();
+                },
+                onError: () => {
+                    Alert.alert(t('profile.sheets.music.errorTitle'), t('profile.sheets.music.addError'));
+                },
+            });
+        }, [addMusic, onAdded, ref, t]);
+
+        const listHeader = (
+            <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
+                {/* Header */}
+                <View style={addStyles.headerRow}>
+                    <View>
+                        <FlexText style={[common.heading, { fontSize: 22 }]}>
+                            {t('profile.sheets.music.addTitle')}
+                        </FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                            {t('profile.sheets.music.addSubtitle')}
+                        </FlexText>
+                    </View>
+                </View>
+
+                {/* Search Bar — Custom Styled TextInput */}
+                <View
+                    style={[
+                        addStyles.searchBar,
+                        {
+                            backgroundColor:
+                                theme === "dark"
+                                    ? "rgba(255,255,255,0.06)"
+                                    : "rgba(0,0,0,0.04)",
+                        },
+                    ]}
+                >
+                    <Ionicons name="search" size={18} color={colors.muted} />
+                    <TextInput
+                        value={query}
+                        onChangeText={handleQueryChange}
+                        placeholder={t('profile.sheets.music.searchPlaceholder')}
+                        placeholderTextColor={colors.muted}
+                        style={[addStyles.searchInput, { color: colors.text }]}
+                        autoCorrect={false}
+                        returnKeyType="search"
+                    />
+                    {query.length > 0 && (
+                        <TouchableOpacity onPress={() => handleQueryChange("")}>
+                            <Ionicons name="close-circle" size={18} color={colors.muted} />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Loading Indicator */}
+                {isFetching && (
+                    <View style={addStyles.loadingRow}>
+                        <Spinner color={colors.text} size="lg" />
+                    </View>
+                )}
+
+                {/* No results */}
+                {!isFetching && debouncedQuery.length > 0 && tracks.length === 0 && (
+                    <View style={addStyles.emptyState}>
+                        <Ionicons name="musical-notes-outline" size={48} color={colors.muted} />
+                        <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
+                            {t('profile.sheets.music.noResults')}
+                        </FlexText>
+                    </View>
+                )}
+
+                {/* Idle — nothing typed yet */}
+                {debouncedQuery.length === 0 && (
+                    <View style={addStyles.emptyState}>
+                        <Ionicons name="search-outline" size={48} color={colors.muted} />
+                        <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
+                            {t('profile.sheets.music.searchHint')}
+                        </FlexText>
+                    </View>
+                )}
+            </View>
+        );
+
+        const renderItem = useCallback(({ item }: { item: DeezerTrack }) => (
+            <View style={{ paddingHorizontal: 24 }}>
+                <DeezerTrackItem
+                    track={item}
+                    colors={colors}
+                    common={common}
+                    onAdd={handleAdd}
+                    isAdding={isAdding}
+                />
+            </View>
+        ), [colors, common, handleAdd, isAdding]);
+
+        return (
+            <TrueSheet
+                ref={sheetRef}
+                scrollable
+                detents={[0.92]}
+                cornerRadius={32}
+                backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
+                grabberOptions={{ color: colors.muted || '#C4C4C4', height: 5, width: 40 }}
+                onDidPresent={() => {
+                    isPresented.current = true;
+                    backHandler.onDidPresent();
+                }}
+                onDidDismiss={() => {
+                    isPresented.current = false;
+                    backHandler.onDidDismiss();
+                    stopPlayback();
+                    setQuery('');
+                    setDebouncedQuery('');
+                }}
+            >
+                <LegendList
+                    nestedScrollEnabled
+                    data={tracks}
+                    keyExtractor={(item) => item.deezer_id}
+                    recycleItems
+                    ListHeaderComponent={listHeader}
+                    contentContainerStyle={{ paddingBottom: 40 }}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
+                    showsVerticalScrollIndicator={false}
+                    renderItem={renderItem}
+                />
+            </TrueSheet>
+        );
+    })
+);
+
+AddMusicSheet.displayName = 'AddMusicSheet';
+
+// ============================================================================
+// Deezer Track Item (search result) — with preview playback
+// ============================================================================
+
+const DeezerTrackItem = memo(function DeezerTrackItem({
+    track,
+    colors,
+    common,
+    onAdd,
+    isAdding,
+}: {
+    track: DeezerTrack;
+    colors: any;
+    common: any;
+    onAdd: (track: DeezerTrack) => void;
+    isAdding: boolean;
+}) {
+    const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
+    const previewId = `deezer-preview-${track.deezer_id}`;
+    const isPlaying = currentlyPlayingId === previewId;
+
+    const handlePreview = useCallback(() => {
+        if (!track.preview) return;
+        if (isPlaying) {
+            stopPlayback();
+        } else {
+            playTrack(previewId, track.preview, {
+                title: track.title,
+                artist: track.artist,
+                coverUrl: track.cover_url,
+            });
+        }
+    }, [isPlaying, playTrack, stopPlayback, previewId, track]);
+
+    const handleAdd = useCallback(() => onAdd(track), [onAdd, track]);
+
+    return (
+        <View style={styles.card}>
+            {/* Album art — tap to preview */}
+            <TouchableOpacity
+                onPress={handlePreview}
+                activeOpacity={0.85}
+                disabled={!track.preview}
+                style={styles.artworkContainer}
+            >
+                <NitroImage
+                    image={{ url: track.cover_url }}
+                    style={styles.artwork}
+                    resizeMode="cover"
+                />
+                {/* Play/pause overlay */}
+                <View style={[StyleSheet.absoluteFill, styles.artworkOverlay]}>
+                    <View style={[
+                        styles.playIconWrapper,
+                        { backgroundColor: isPlaying ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.45)' },
+                    ]}>
+                        <Ionicons
+                            name={isPlaying ? 'pause' : 'play'}
+                            size={14}
+                            color="#ffffff"
+                            style={{ marginLeft: isPlaying ? 0 : 1 }}
+                        />
+                    </View>
+                </View>
+            </TouchableOpacity>
+
+            {/* Track info */}
+            <View style={styles.textContainer}>
+                <FlexText style={[common.heading, { fontSize: 15, marginBottom: 2 }]} numberOfLines={1}>
+                    {track.title}
+                </FlexText>
+                <FlexText style={[common.bodySmall, { color: colors.muted }]} numberOfLines={1}>
+                    {track.artist}
+                </FlexText>
+                {isPlaying && (
+                    <FlexText style={[common.bodySmall, { color: colors.verify || colors.muted, fontSize: 11, marginTop: 2 }]}>
+                        ♪ Previewing...
+                    </FlexText>
+                )}
+            </View>
+
+            {/* Add button */}
+            <TouchableOpacity
+                onPress={handleAdd}
+                disabled={isAdding}
+                activeOpacity={0.75}
+                style={[addStyles.addButton, { backgroundColor: colors.card, opacity: isAdding ? 0.5 : 1 }]}
+            >
+                <Ionicons name="add" size={20} color={colors.text} />
+            </TouchableOpacity>
+        </View>
+    );
+});
+
+DeezerTrackItem.displayName = 'DeezerTrackItem';
+
+
+// ============================================================================
+// Music Item (in main list)
+// ============================================================================
 
 const MusicItem = memo(({
     item,
     colors,
     common,
+    isOwner,
+    onDelete,
 }: {
-    item: ProfileMusic,
-    colors: any,
-    common: any,
+    item: ProfileMusic;
+    colors: any;
+    common: any;
+    isOwner: boolean;
+    onDelete?: (id: string) => void;
 }) => {
     const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
 
@@ -33,7 +347,6 @@ const MusicItem = memo(({
 
     const toggleMusic = useCallback(() => {
         if (!item.preview_url) return;
-
         if (isPlaying) {
             stopPlayback();
         } else {
@@ -49,13 +362,15 @@ const MusicItem = memo(({
         if (item.url) Linking.openURL(item.url);
     }, [item.url]);
 
+    const handleDelete = useCallback(() => {
+        onDelete?.(item.id);
+    }, [item.id, onDelete]);
+
     return (
         <TouchableOpacity
             onPress={toggleMusic}
             activeOpacity={0.9}
-            style={[
-                styles.card
-            ]}
+            style={styles.card}
         >
             {/* Album Art & Play Overlay */}
             <View style={styles.artworkContainer}>
@@ -64,14 +379,13 @@ const MusicItem = memo(({
                     style={styles.artwork}
                     resizeMode="cover"
                 />
-                {/* Overlay */}
                 <View style={[StyleSheet.absoluteFill, styles.artworkOverlay]}>
                     <View style={[styles.playIconWrapper, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
                         <Ionicons
                             name={isPlaying ? 'pause' : 'play'}
                             size={16}
                             color="#ffffff"
-                            style={{ marginLeft: isPlaying ? 0 : 2 }} // Optical adjustment for play triangle
+                            style={{ marginLeft: isPlaying ? 0 : 2 }}
                         />
                     </View>
                 </View>
@@ -87,80 +401,224 @@ const MusicItem = memo(({
                 </FlexText>
             </View>
 
-            {/* External Link Button */}
-            {item.url && (
-                <TouchableOpacity
-                    onPress={handleOpenLink}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    style={styles.linkButton}
-                >
-                    <Ionicons name="open-outline" size={20} color={colors.muted} />
-                </TouchableOpacity>
-            )}
+            {/* Action Buttons */}
+            <View style={styles.actionButtons}>
+                {item.url && (
+                    <TouchableOpacity
+                        onPress={handleOpenLink}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={styles.linkButton}
+                    >
+                        <Ionicons name="open-outline" size={20} color={colors.muted} />
+                    </TouchableOpacity>
+                )}
+                {isOwner && onDelete && (
+                    <TouchableOpacity
+                        onPress={handleDelete}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={styles.deleteButton}
+                    >
+                        <Ionicons name="trash-outline" size={20} color="#ff4444" />
+                    </TouchableOpacity>
+                )}
+            </View>
         </TouchableOpacity>
     );
 });
 
 MusicItem.displayName = 'MusicItem';
 
-export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(({ data, onEndReached }, ref) => {
-    const { colors, typography, theme } = useThemeContext();
-    const common = createCommonStyles(colors, typography);
-    const { t } = useTranslation();
-    const { stopPlayback } = useAudioStore();
-    const backHandler = useSheetBackHandler(ref);
+// ============================================================================
+// Main MusicSheet
+// ============================================================================
 
-    // Safety check
-    if (!data || data.length === 0) return null;
+export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(
+    ({ data, profileId, isOwner = false, onEndReached }, ref) => {
+        const { colors, typography, theme } = useThemeContext();
+        const common = createCommonStyles(colors, typography);
+        const { t } = useTranslation();
+        const { stopPlayback } = useAudioStore();
 
-    return (
-        <TrueSheet
-            ref={ref}
-            scrollable={true}
-            backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
-            grabberOptions={{
-                color: colors.muted || "#C4C4C4",
-                height: 5,
-                width: 40,
-            }}
-            cornerRadius={32}
-            detents={[0.7, 1]}
-            onDidPresent={backHandler.onDidPresent}
-            onDidDismiss={() => { backHandler.onDidDismiss(); stopPlayback(); }}
-        >
-            <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
+        const sheetRef = useRef<TrueSheet>(null);
+        const isPresented = useRef(false);
+        const backHandler = useSheetBackHandler(sheetRef);
 
-                {/* Header */}
-                <View style={{ marginBottom: 24 }}>
-                    <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.sheets.music.title')}</FlexText>
+        useImperativeHandle(ref, () => ({
+            present: (index?: number, animated?: boolean) => {
+                if (isPresented.current) return Promise.resolve();
+                isPresented.current = true;
+                return sheetRef.current?.present(index, animated) || Promise.resolve();
+            },
+            dismiss: (animated?: boolean) => {
+                if (!isPresented.current) return Promise.resolve();
+                isPresented.current = false;
+                return sheetRef.current?.dismiss(animated) || Promise.resolve();
+            },
+            resize: (index: number) => {
+                return sheetRef.current?.resize(index) || Promise.resolve();
+            },
+            dismissStack: (animated?: boolean) => {
+                return sheetRef.current?.dismissStack(animated) || Promise.resolve();
+            },
+        } as any), []);
+
+        // Ref for the stacked "Add Music" sheet
+        const addSheetRef = useRef<TrueSheet>(null);
+
+        const { mutate: deleteMusic } = useDeleteMusic(profileId ?? '');
+
+        const handleDelete = useCallback((musicId: string) => {
+            Alert.alert(
+                t('profile.sheets.music.deleteTitle'),
+                t('profile.sheets.music.deleteMessage'),
+                [
+                    { text: t('profile.sheets.music.cancel'), style: 'cancel' },
+                    {
+                        text: t('profile.sheets.music.delete'),
+                        style: 'destructive',
+                        onPress: () => {
+                            stopPlayback();
+                            deleteMusic(musicId);
+                        },
+                    },
+                ]
+            );
+        }, [deleteMusic, stopPlayback, t]);
+
+        const lastAddPresentTime = useRef(0);
+        const handleOpenAddSheet = useCallback(() => {
+            const now = Date.now();
+            if (now - lastAddPresentTime.current < 500) return;
+            lastAddPresentTime.current = now;
+            addSheetRef.current?.present();
+        }, []);
+
+        const handleAdded = useCallback(() => {
+            // Sheet dismisses itself; nothing extra needed
+        }, []);
+
+        // Safety check
+        if ((!data || data.length === 0) && !isOwner) return null;
+
+        const listHeader = (
+            <View style={styles.header}>
+                <View>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>
+                        {t('profile.sheets.music.title')}
+                    </FlexText>
                     <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
                         {t('profile.sheets.music.subtitle')}
                     </FlexText>
                 </View>
+                {isOwner && profileId && (
+                    <TouchableOpacity
+                        onPress={handleOpenAddSheet}
+                        style={[styles.addTrackButton, { backgroundColor: colors.card }]}
+                    >
+                        <Ionicons name="add" size={20} color={colors.text} />
+                        <FlexText style={[common.bodySmall, { color: colors.text, marginLeft: 4, fontWeight: '600' }]}>
+                            {t('profile.sheets.music.addMusic')}
+                        </FlexText>
+                    </TouchableOpacity>
+                )}
+            </View>
+        );
 
-                {/* List */}
-                <FlashList
-                    nestedScrollEnabled={true}
-                    onEndReached={onEndReached}
-                    onEndReachedThreshold={0.5}
-                    data={data}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <MusicItem
-                            key={item.id}
-                            item={item}
-                            colors={colors}
-                            common={common}
-                        />
-                    )}
-                    contentContainerStyle={{ paddingBottom: 20 }}
+        const renderItem = useCallback(({ item }: { item: ProfileMusic }) => (
+            <View style={{ paddingHorizontal: 24 }}>
+                <MusicItem
+                    item={item}
+                    colors={colors}
+                    common={common}
+                    isOwner={isOwner}
+                    onDelete={isOwner ? handleDelete : undefined}
                 />
             </View>
-        </TrueSheet>
-    );
-}));
+        ), [colors, common, isOwner, handleDelete]);
+
+        return (
+            <>
+                <TrueSheet
+                    ref={sheetRef}
+                    scrollable
+                    backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
+                    grabberOptions={{
+                        color: colors.muted || '#C4C4C4',
+                        height: 5,
+                        width: 40,
+                    }}
+                    cornerRadius={32}
+                    detents={[0.7, 1]}
+                    onDidPresent={() => {
+                        isPresented.current = true;
+                        backHandler.onDidPresent();
+                    }}
+                    onDidDismiss={() => {
+                        isPresented.current = false;
+                        backHandler.onDidDismiss();
+                        stopPlayback();
+                    }}
+                >
+                    <LegendList
+                        nestedScrollEnabled
+                        showsVerticalScrollIndicator={false}
+                        onEndReached={onEndReached}
+                        onEndReachedThreshold={0.5}
+                        data={data}
+                        recycleItems
+                        keyExtractor={(item) => item.id}
+                        ListHeaderComponent={listHeader}
+                        ListEmptyComponent={
+                            <View style={addStyles.emptyState}>
+                                <Ionicons name="musical-notes-outline" size={48} color={colors.muted} />
+                                <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
+                                    {t('profile.sheets.music.emptyList', 'No tracks added yet')}
+                                </FlexText>
+                            </View>
+                        }
+                        renderItem={renderItem}
+                        contentContainerStyle={{ paddingBottom: 40 }}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode="on-drag"
+                    />
+                </TrueSheet>
+
+                {/* Stacked: Add Music Sheet */}
+                {isOwner && profileId && (
+                    <AddMusicSheet
+                        ref={addSheetRef}
+                        profileId={profileId}
+                        onAdded={handleAdded}
+                    />
+                )}
+            </>
+        );
+    }
+));
+
+MusicSheet.displayName = 'MusicSheet';
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 24,
+        paddingTop: 24,
+        paddingBottom: 16,
+    },
+    addTrackButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
+        gap: 4,
+    },
     card: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -181,7 +639,7 @@ const styles = StyleSheet.create({
     artworkOverlay: {
         backgroundColor: 'rgba(0,0,0,0.1)',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     playIconWrapper: {
         width: 32,
@@ -189,14 +647,68 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        backdropFilter: 'blur(10px)', // IOS only property, ignored on android but nice to have
     },
     textContainer: {
         marginLeft: 16,
         flex: 1,
         justifyContent: 'center',
     },
+    actionButtons: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
     linkButton: {
         padding: 8,
-    }
+    },
+    deleteButton: {
+        padding: 8,
+    },
+});
+
+const addStyles = StyleSheet.create({
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    closeButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingRow: {
+        alignItems: 'center',
+        paddingVertical: 20,
+    },
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 48,
+    },
+    addButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 8,
+    },
+    searchBar: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        paddingHorizontal: 14,
+        height: 44,
+        borderRadius: 999,
+        marginBottom: 16,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 14,
+        padding: 0,
+    },
 });

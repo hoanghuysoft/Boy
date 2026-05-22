@@ -55,7 +55,8 @@ export const TrendingHashtagsSection = () => {
                             style={styles.tagPillWrapper}
                         >
                             <SquircleView
-                                cornerSmoothing={60}
+                                cornerSmoothing={100}
+                                preserveSmoothing
                                 style={[
                                     styles.tagPill,
                                     { backgroundColor: colors.containerContent },

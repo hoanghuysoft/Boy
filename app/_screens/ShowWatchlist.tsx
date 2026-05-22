@@ -1,7 +1,7 @@
 import { FlexText } from '@/components/FlexText';
 import { WatchlistShow, useShowWatchlistStore } from '@/stores/showWatchlist';
 import { Ionicons } from '@expo/vector-icons';
-import { FlashList } from '@shopify/flash-list';
+import { LegendList } from '@legendapp/list';
 import { RoundedMagnifierOutline, TrashBinTrashBold } from '@solar-icons/react-native';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
@@ -173,10 +173,11 @@ const ShowWatchlistScreen = () => {
                 </View>
             )}
 
-            <FlashList
+            <LegendList
                 data={filtered}
                 keyExtractor={keyExtractor}
                 renderItem={renderItem}
+                recycleItems
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={[

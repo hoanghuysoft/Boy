@@ -482,7 +482,9 @@ const ProfileContent = () => {
         <MusicSheet
           ref={vm.musicSheetRef}
           data={vm.music}
+          profileId={vm.profile?.id}
           onEndReached={vm.handleMusicEndReached}
+          isOwner={vm.isMe}
         />
         <SocialSheet
           ref={vm.socialSheetRef}

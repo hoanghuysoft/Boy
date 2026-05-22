@@ -18,6 +18,7 @@ import {
     VolumeLoudBold
 } from "@solar-icons/react-native";
 import { router } from "expo-router";
+import { Spinner } from "heroui-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -443,7 +444,7 @@ const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                 ListFooterComponent={
                     vm.isFetchingNextPage ? (
                         <View style={{ paddingVertical: 24 }}>
-                            <ActivityIndicator size="small" color="rgba(255,255,255,0.8)" />
+                            <Spinner size="lg" color="rgba(255,255,255,0.8)" />
                         </View>
                     ) : null
                 }
@@ -526,7 +527,6 @@ const ShotsInner = () => {
             tabBar={(props: any) => <TopTabBar {...props} insets={insets} t={t} />}
             screenOptions={{
                 sceneStyle: { backgroundColor: '#000' },
-                swipeEnabled: false, // disable horizontal swipe between tabs
             }}
         >
             <Tab.Screen name="on_this_day" component={OnThisDayFeedScreen} />

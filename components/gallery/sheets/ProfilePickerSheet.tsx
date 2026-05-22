@@ -198,12 +198,13 @@ export const ProfilePickerSheet = memo(
             <TrueSheet
                 ref={ref}
                 scrollable={true}
-                backgroundColor={theme === "dark" ? colors.containerContent : "#ffffff"}
+                backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
                 grabberOptions={{
-                    color: colors.muted || "#C4C4C4",
+                    color: colors.muted || '#C4C4C4',
                     height: 5,
                     width: 40,
                 }}
+                cornerRadius={32}
                 onDidPresent={backHandler.onDidPresent}
                 onDidDismiss={backHandler.onDidDismiss}
             >

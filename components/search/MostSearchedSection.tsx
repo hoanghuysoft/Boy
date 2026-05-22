@@ -29,7 +29,8 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
         activeOpacity={0.7}
     >
         <SquircleView
-            cornerSmoothing={60}
+            cornerSmoothing={100}
+            preserveSmoothing
             style={[styles.card, { backgroundColor: colors.containerContent }]}
 
         >
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
         gap: 10,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        borderRadius: 12,
+        borderRadius: 24,
     },
     avatar: {
         width: AVATAR_SIZE,

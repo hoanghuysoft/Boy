@@ -42,6 +42,7 @@ interface ProfileHeaderV3Props {
     workplaceSheetRef?: React.RefObject<TrueSheet | null>;
     familySheetRef?: React.RefObject<TrueSheet | null>;
     briefSheetRef?: React.RefObject<TrueSheet | null>;
+    onPresentSheet?: (ref: React.RefObject<any>) => void;
     workplaces?: Workplace[];
     music?: ProfileMusic[];
     socialLinks?: ProfileLink[];
@@ -61,6 +62,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
     workplaceSheetRef,
     familySheetRef,
     briefSheetRef,
+    onPresentSheet,
     workplaces = [],
     socialLinks = [],
     addresses = [],
@@ -114,7 +116,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                     <Avatar.Fallback>{profile?.name?.[0] || 'U'}</Avatar.Fallback>
                 </Avatar>
                 <View className="flex-row gap-2">
-                    <Button variant="secondary" isIconOnly onPress={() => briefSheetRef?.current?.present()}>
+                    <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
                         <NotesBold color={vm.colors.text} size={34} />
                     </Button>
                     <SquircleView borderRadius={999} cornerSmoothing={100} preserveSmoothing style={styles.editButton}>
@@ -140,7 +142,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 <FamilyStackSection
                     vm={vm}
                     profile={profile}
-                    onPress={() => familySheetRef?.current?.present()}
+                    onPress={() => onPresentSheet?.(familySheetRef as React.RefObject<any>)}
                 />
             )}
 
@@ -171,7 +173,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
 
                     {socialLinks.length > 0 && (
                         <HeaderInfoCard
-                            onPress={() => socialSheetRef?.current?.present()}
+                            onPress={() => onPresentSheet?.(socialSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
                             backgroundImageUri={SOCIAL_BG_URL}
                             showDimOverlay
@@ -185,7 +187,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
 
                     {addresses.length > 0 && (
                         <HeaderInfoCard
-                            onPress={() => addressSheetRef?.current?.present()}
+                            onPress={() => onPresentSheet?.(addressSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
                             showTintOverlay={vm.colors.text}
                             labelStyle={vm.common.label}
@@ -201,7 +203,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
 
                     {workplaces.length > 0 && (
                         <HeaderInfoCard
-                            onPress={() => workplaceSheetRef?.current?.present()}
+                            onPress={() => onPresentSheet?.(workplaceSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
                             showTintOverlay={vm.colors.text}
                             labelStyle={vm.common.label}

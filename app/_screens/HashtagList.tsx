@@ -1,7 +1,7 @@
 import { FlexText } from '@/components/FlexText';
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
 import { Ionicons } from '@expo/vector-icons';
-import { FlashList } from '@shopify/flash-list';
+import { LegendList, LegendListRenderItemProps } from '@legendapp/list';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import { SkeletonGroup } from 'heroui-native';
@@ -27,7 +27,7 @@ const HashtagListScreen = () => {
     const { t } = useTranslation();
 
     const renderItem = useCallback(
-        ({ item }: { item: Hashtag }) => (
+        ({ item }: LegendListRenderItemProps<Hashtag>) => (
             <TouchableOpacity
                 onPress={() => vm.navigateToTag(item.tag)}
                 activeOpacity={0.7}
@@ -163,13 +163,14 @@ const HashtagListScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <FlashList
+            <LegendList
                 data={vm.allTags}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
                 ListHeaderComponent={ListHeaderComponent}
                 ListEmptyComponent={renderEmpty}
                 showsVerticalScrollIndicator={false}
+                recycleItems
                 contentContainerStyle={[
                     { paddingHorizontal: 16, gap: 10, paddingBottom: 40 },
                     vm.allTags.length === 0 && styles.emptyContainer,

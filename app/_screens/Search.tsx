@@ -8,6 +8,7 @@ import { renderProfileSkeleton } from "@/components/search/SearchProfileSkeleton
 import { TrendingHashtagsSection } from "@/components/search/TrendingHashtagsSection";
 import { Profile } from "@/types/profile";
 import { Ionicons } from "@expo/vector-icons";
+import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import LineiconsIcon from "@lineiconshq/react-native-lineicons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
@@ -43,7 +44,7 @@ const SearchScreen = () => {
   const vm = useSearchViewModel();
 
   const renderItem = useCallback(
-    ({ item }: { item: Profile }) => (
+    ({ item }: LegendListRenderItemProps<Profile>) => (
       <SearchProfileItem
         item={item}
         colors={colors}
@@ -149,9 +150,10 @@ const SearchScreen = () => {
           ItemSeparatorComponent={ITEM_SEPARATOR}
         />
       ) : (
-        <FlashList
+        <LegendList
           ref={vm.listRef}
           data={vm.profiles}
+          recycleItems
           renderItem={renderItem}
           keyExtractor={(item: Profile) => item.id}
           contentContainerStyle={[
@@ -164,7 +166,7 @@ const SearchScreen = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           estimatedItemSize={80}
-          ItemSeparatorComponent={ITEM_SEPARATOR}
+          // ItemSeparatorComponent={ITEM_SEPARATOR}
           refreshControl={
             <RefreshControl
               refreshing={vm.isRefetching}

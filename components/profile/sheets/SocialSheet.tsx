@@ -1,8 +1,8 @@
 import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
+import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { FlashList } from '@shopify/flash-list';
 import { EarthBold } from '@solar-icons/react-native';
 import React, { forwardRef, memo, useCallback } from "react";
 import { useTranslation } from 'react-i18next';
@@ -266,51 +266,34 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(({ data,
             detents={[0.7, 1]}
             onDidPresent={backHandler.onDidPresent}
             onDidDismiss={backHandler.onDidDismiss}
-        >
-            <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
-
-                {/* Header */}
-                <View style={{ marginBottom: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View>
-                        <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.sheets.social.title')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-                            {t('profile.sheets.social.subtitle')}
-                        </FlexText>
-                    </View>
+            header={
+                <View style={{ paddingHorizontal: 24, paddingTop: 24, marginBottom: 8 }}>
+                    <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.sheets.social.title')}</FlexText>
+                    <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                        {t('profile.sheets.social.subtitle')}
+                    </FlexText>
                 </View>
-
-                {/* List */}
-                <FlashList
-                    nestedScrollEnabled
-                    onEndReached={onEndReached}
-                    onEndReachedThreshold={0.5}
-                    data={data}
-                    keyExtractor={(item, index) => item.id || index.toString()}
-                    renderItem={({ item }) => (
-                        <SocialLinkItem
-                            key={item.id}
-                            item={item}
-                            colors={colors}
-                            common={common}
-                            theme={theme}
-                        />
-                    )}
-                    contentContainerStyle={{ paddingBottom: 20 }}
-                />
-
-                {/* Optional Close Button (Good UX for tall sheets) */}
-                <TouchableOpacity
-                    onPress={() => (ref as any)?.current?.dismiss()}
-                    style={{
-                        paddingVertical: 16,
-                        alignItems: 'center',
-                        marginTop: 8,
-                        marginBottom: inset.bottom > 0 ? 0 : 16
-                    }}
-                >
-                </TouchableOpacity>
-
-            </View>
+            }
+        >
+            <LegendList
+                nestedScrollEnabled
+                recycleItems
+                showsVerticalScrollIndicator={false}
+                onEndReached={onEndReached}
+                onEndReachedThreshold={0.5}
+                data={data}
+                keyExtractor={(item, index) => item.id || index.toString()}
+                renderItem={({ item }) => (
+                    <SocialLinkItem
+                        key={item.id}
+                        item={item}
+                        colors={colors}
+                        common={common}
+                        theme={theme}
+                    />
+                )}
+                contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 20 + inset.bottom }}
+            />
         </TrueSheet>
     );
 }));

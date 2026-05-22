@@ -4,6 +4,7 @@ import { useFeed } from "@/services/feed";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Post } from "@/types/post";
 import { choosenMediaPath } from "@/utils/imageurl";
+import { LegendList, LegendListRef } from "@legendapp/list";
 import { Image } from "expo-image";
 import { SkeletonGroup } from "heroui-native";
 import { uniqBy } from "lodash";
@@ -11,7 +12,6 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Dimensions,
-    FlatList,
     NativeScrollEvent,
     NativeSyntheticEvent,
     RefreshControl,
@@ -19,7 +19,7 @@ import {
     StyleSheet,
     View,
     ViewabilityConfig,
-    ViewToken,
+    ViewToken
 } from "react-native";
 import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -83,7 +83,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const extraPadding = 20;
     const bottomPadding = bottomNavHeight + bottomNavMargin + insets.bottom + extraPadding;
 
-    const listRef = useRef<FlatList<Post> | null>(null);
+    const listRef = useRef<LegendListRef | null>(null);
     const trigger = useScrollStore((state) => state.triggers['index']);
 
     useEffect(() => {
@@ -438,7 +438,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
     return (
         <View style={{ flex: 1 }}>
-            <FlatList
+            <LegendList
                 ref={listRef}
                 data={posts}
                 renderItem={renderItem}
@@ -466,10 +466,6 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 onEndReached={handleEndReached}
                 onEndReachedThreshold={0.5}
                 ListFooterComponent={renderFooter}
-                initialNumToRender={2}
-                maxToRenderPerBatch={2}
-                windowSize={5}
-                removeClippedSubviews={false} // Avoid Android display list crash
             />
         </View>
     );

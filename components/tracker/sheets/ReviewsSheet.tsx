@@ -1,8 +1,8 @@
 import { FlexText } from '@/components/FlexText';
 import { TMDBReview } from '@/types/moviedb/movie-entities';
 import { Ionicons } from '@expo/vector-icons';
+import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { FlashList } from '@shopify/flash-list';
 import { Image } from "expo-image";
 import React, { forwardRef, memo, useCallback } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -33,15 +33,15 @@ const ReviewItem = memo(({ item, colors, common }: { item: TMDBReview; colors: a
     const handleOpenReview = async () => {
         if (item.url) {
             try {
-            await NitroInAppBrowser.open(item.url, {
-              barColor: 'red',
-              controlColor: '#000000',
-              dismissButtonLabel: 'close',
-              presentationStyle: 'fullScreen',
-            });
-          } catch (error) {
-            console.error(error);
-          }
+                await NitroInAppBrowser.open(item.url, {
+                    barColor: 'red',
+                    controlColor: '#000000',
+                    dismissButtonLabel: 'close',
+                    presentationStyle: 'fullScreen',
+                });
+            } catch (error) {
+                console.error(error);
+            }
         }
     };
 
@@ -124,7 +124,7 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
                 </View>
 
                 {/* List */}
-                <FlashList
+                <LegendList
                     nestedScrollEnabled
                     onEndReached={onEndReached}
                     onEndReachedThreshold={0.5}
@@ -133,6 +133,7 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
                     renderItem={({ item }) => (
                         <ReviewItem key={item.id} item={item} colors={colors} common={common} />
                     )}
+                    recycleItems
                     ListFooterComponent={renderFooter}
                     ListEmptyComponent={
                         !isLoadingItems ? (

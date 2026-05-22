@@ -26,7 +26,11 @@ export const useProfileViewModel = () => {
     const router = useRouter();
     const params = useLocalSearchParams();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    const isMe = params.isMe === 'true';
+    
+    // Fetch current user's profile to robustly check if viewing own profile
+    const { data: myProfile } = useProfile('me', true);
+    const isMe = params.isMe === 'true' || id === 'me' || !id || (!!myProfile?.id && id === myProfile.id);
+
     const blurTargetRef = useRef<View | null>(null);
 
     const { colors, typography, theme } = useThemeContext();
@@ -147,7 +151,6 @@ export const useProfileViewModel = () => {
     // ─── Post Options Sheet ────────────────────────────────────────
     const optionsSheetRef = useRef<PostOptionsSheetHandle>(null);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-    const { data: myProfile } = useProfile('me', true);
 
     // ─── Likers Sheet ──────────────────────────────────────────────
     const likersSheetRef = useRef<LikersSheetHandle>(null);
@@ -323,20 +326,30 @@ export const useProfileViewModel = () => {
         setSelectedPost(null);
     }, []);
 
+    const lastPresentTime = useRef(0);
+    const safePresent = useCallback((sheetRef: React.RefObject<any>) => {
+        const now = Date.now();
+        if (now - lastPresentTime.current < 500) {
+            return;
+        }
+        lastPresentTime.current = now;
+        sheetRef.current?.present();
+    }, []);
+
     const handlePostOptionsPress = useCallback((post: Post) => {
         setSelectedPost(post);
-        optionsSheetRef.current?.present();
-    }, []);
+        safePresent(optionsSheetRef);
+    }, [safePresent]);
 
     const handleLikeCountPress = useCallback((post: Post) => {
         setSelectedLikePostId(post.id);
-        likersSheetRef.current?.present();
-    }, []);
+        safePresent(likersSheetRef);
+    }, [safePresent]);
 
     const handleCommentPress = useCallback((post: Post) => {
         setSelectedCommentPostId(post.id);
-        commentsSheetRef.current?.present();
-    }, []);
+        safePresent(commentsSheetRef);
+    }, [safePresent]);
 
     const scrollToTop = useCallback(() => {
         scrollPositions.current[activeTab] = 0;
@@ -449,5 +462,8 @@ export const useProfileViewModel = () => {
 
         // Music playback
         isMusicPlaying,
+
+        // Safe present to avoid spamming
+        safePresent,
     };
 };

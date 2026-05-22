@@ -97,6 +97,18 @@ const profile = {
         music: {
             title: 'Music',
             subtitle: 'Listen to my favorite tracks',
+            addMusic: 'Add Music',
+            addTitle: 'Add a Track',
+            addSubtitle: 'Search and add music from Deezer',
+            searchPlaceholder: 'Search songs, artists…',
+            searchHint: 'Type a song or artist name to search',
+            noResults: 'No tracks found. Try a different search.',
+            addError: 'Could not add track. Please try again.',
+            errorTitle: 'Error',
+            deleteTitle: 'Remove Track',
+            deleteMessage: 'Remove this track from your music list?',
+            cancel: 'Cancel',
+            delete: 'Remove',
         },
         relationship: {
             title: 'Family & Relationships',

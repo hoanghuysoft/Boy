@@ -1,14 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinkPreview } from '@flyerhq/react-native-link-preview';
-import { FlashList } from "@shopify/flash-list";
+import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
+import { PostLinkPreview } from "@/components/PostLinkPreview";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { Button, Dialog, SkeletonGroup } from "heroui-native";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
+    Dimensions,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -20,7 +22,6 @@ import { useThemeContext } from "../../context/ThemeContext";
 import { useDeleteNote, useNotes } from "../../services/note";
 import { createCommonStyles } from "../../styles/common";
 import { Note } from "../../types/note";
-import { Dialog, Button } from "heroui-native";
 
 dayjs.extend(relativeTime);
 
@@ -85,7 +86,7 @@ const NotesScreen = () => {
         setIsDeleteDialogOpen(true);
     }, [deleteNoteMutation, deletingId]);
 
-    const renderItem = useCallback(({ item }: { item: Note }) => {
+    const renderItem = useCallback(({ item }: LegendListRenderItemProps<Note>) => {
         const { title, text, imageUrl, linkUrls } = parseNoteContent(item.content);
         const isDeleting = deletingId === item.id;
 
@@ -117,12 +118,11 @@ const NotesScreen = () => {
                     </View>
                 ) : linkUrls.length > 0 ? (
                     <View style={{ marginTop: text.length > 0 ? 12 : 0 }} pointerEvents="none">
-                        <LinkPreview
-                            text={linkUrls[0]}
-                            renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>{t("notes.list.openNoteToVisitLink")}</FlexText>}
-                            renderTitle={(title) => <FlexText style={{ color: colors.text, fontWeight: 'bold', fontSize: 15 }} numberOfLines={2}>{title}</FlexText>}
-                            renderDescription={(desc) => <FlexText style={{ color: colors.muted, fontSize: 13, marginTop: 4 }} numberOfLines={3}>{desc}</FlexText>}
-                            containerStyle={{ borderRadius: 12, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', overflow: 'hidden' }}
+                        <PostLinkPreview
+                            url={linkUrls[0]}
+                            label=""
+                            colors={colors}
+                            cardWidth={Dimensions.get('window').width - 64}
                         />
                     </View>
                 ) : null}
@@ -162,7 +162,7 @@ const NotesScreen = () => {
                 </View>
             </TouchableOpacity>
         );
-    }, [theme, common.body, common.row, common.bodySmall, colors.muted, deletingId, handleDeleteNote, t]);
+    }, [theme, common.body, common.row, common.bodySmall, colors, deletingId, handleDeleteNote, t]);
 
     const renderFooter = useCallback(() => {
         if (isFetchingNextPage) {
@@ -178,8 +178,39 @@ const NotesScreen = () => {
     const renderEmpty = useCallback(() => {
         if (isLoading) {
             return (
-                <View style={styles.emptyState}>
-                    <ActivityIndicator size="small" color={colors.text} />
+                <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <View
+                            key={i}
+                            style={[
+                                styles.noteItem,
+                                {
+                                    backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'
+                                }
+                            ]}
+                        >
+                            <SkeletonGroup isLoading variant="pulse">
+                                {/* Title placeholder */}
+                                <SkeletonGroup.Item className="h-5 w-1/3 rounded-md" style={{ marginBottom: 10 }} />
+                                
+                                {/* Body placeholders */}
+                                <View style={{ gap: 8, marginBottom: 14 }}>
+                                    <SkeletonGroup.Item className="h-4 w-full rounded-md" />
+                                    <SkeletonGroup.Item className="h-4 w-5/6 rounded-md" />
+                                    <SkeletonGroup.Item className="h-4 w-2/3 rounded-md" />
+                                </View>
+                                
+                                {/* Bottom row: date and actions */}
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <SkeletonGroup.Item className="h-3.5 w-16 rounded-md" />
+                                    <View style={{ flexDirection: 'row', gap: 16 }}>
+                                        <SkeletonGroup.Item className="h-3.5 w-10 rounded-md" />
+                                        <SkeletonGroup.Item className="h-3.5 w-12 rounded-md" />
+                                    </View>
+                                </View>
+                            </SkeletonGroup>
+                        </View>
+                    ))}
                 </View>
             );
         }
@@ -235,7 +266,8 @@ const NotesScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <FlashList
+            <LegendList
+                recycleItems
                 data={notes}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderItem}

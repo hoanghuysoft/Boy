@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
+import { SkeletonGroup } from 'heroui-native';
 import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,9 +12,9 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Snackbar } from 'react-native-paper';
 import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PostItem } from '../../components/PostItem';
 import ProfileHeaderV3, { COVER_HEIGHT } from '../../components/profile/ProfileHeaderV3';
 import { AddressSheet } from "../../components/profile/sheets/AddressSheet";
@@ -21,7 +22,6 @@ import { MusicSheet } from "../../components/profile/sheets/MusicSheet";
 import { SocialSheet } from "../../components/profile/sheets/SocialSheet";
 import { WorkplaceSheet } from "../../components/profile/sheets/WorkplaceSheet";
 import { useImageGrid } from '../../components/profile/useImageGrid';
-import { SkeletonGroup } from 'heroui-native';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from '../../types/post';
@@ -44,61 +44,61 @@ const AnimatedFlashList = Animated.createAnimatedComponent(FlashList as any) as 
 const ProfileSkeletonInner = ({ insets }: { insets: any }) => {
   const { colors } = useThemeContext();
   return (
-      <View style={{ paddingHorizontal: 12, flex: 1 }}>
-        <SkeletonGroup isLoading variant="pulse" isSkeletonOnly>
-            {/* Top Space */}
-            <View style={{ height: insets.top + 12 }} />
-            
-            {/* Cover */}
-            <SkeletonGroup.Item className="rounded-2xl" style={{ width: '100%', height: COVER_HEIGHT, marginBottom: 32 }} />
-            
-            {/* Avatar & Actions Row */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                {/* Avatar */}
-                <SkeletonGroup.Item className="rounded-full" style={{ width: 64, height: 64 }} />
-                {/* Actions */}
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <SkeletonGroup.Item className="rounded-xl" style={{ width: 44, height: 44 }} />
-                    <SkeletonGroup.Item className="rounded-full" style={{ width: 120, height: 44 }} />
-                </View>
-            </View>
+    <View style={{ paddingHorizontal: 12, flex: 1 }}>
+      <SkeletonGroup isLoading variant="pulse" isSkeletonOnly>
+        {/* Top Space */}
+        <View style={{ height: insets.top + 12 }} />
 
-            {/* Name, Username, Bio */}
-            <View style={{ gap: 8, marginBottom: 16 }}>
-                <SkeletonGroup.Item className="rounded-lg" style={{ width: 150, height: 24 }} />
-                <SkeletonGroup.Item className="rounded-lg" style={{ width: 100, height: 16 }} />
-                <SkeletonGroup.Item className="rounded-lg" style={{ width: '80%', height: 16 }} />
-            </View>
+        {/* Cover */}
+        <SkeletonGroup.Item className="rounded-2xl" style={{ width: '100%', height: COVER_HEIGHT, marginBottom: 32 }} />
 
-            {/* Cards Scroll */}
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16, overflow: 'hidden' }}>
-                <SkeletonGroup.Item className="rounded-full" style={{ width: 150, height: 50 }} />
-                <SkeletonGroup.Item className="rounded-full" style={{ width: 150, height: 50 }} />
-                <SkeletonGroup.Item className="rounded-full" style={{ width: 150, height: 50 }} />
-            </View>
+        {/* Avatar & Actions Row */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          {/* Avatar */}
+          <SkeletonGroup.Item className="rounded-full" style={{ width: 64, height: 64 }} />
+          {/* Actions */}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <SkeletonGroup.Item className="rounded-xl" style={{ width: 44, height: 44 }} />
+            <SkeletonGroup.Item className="rounded-full" style={{ width: 120, height: 44 }} />
+          </View>
+        </View>
 
-            {/* Counts */}
-            <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
-                <SkeletonGroup.Item className="rounded-md" style={{ width: 60, height: 16 }} />
-                <SkeletonGroup.Item className="rounded-md" style={{ width: 60, height: 16 }} />
-                <SkeletonGroup.Item className="rounded-md" style={{ width: 60, height: 16 }} />
-            </View>
+        {/* Name, Username, Bio */}
+        <View style={{ gap: 8, marginBottom: 16 }}>
+          <SkeletonGroup.Item className="rounded-lg" style={{ width: 150, height: 24 }} />
+          <SkeletonGroup.Item className="rounded-lg" style={{ width: 100, height: 16 }} />
+          <SkeletonGroup.Item className="rounded-lg" style={{ width: '80%', height: 16 }} />
+        </View>
 
-            {/* Tabs */}
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16, alignSelf: 'center', backgroundColor: colors.card, padding: 4, borderRadius: 16 }}>
-                <SkeletonGroup.Item className="rounded-lg" style={{ width: 80, height: 32 }} />
-                <SkeletonGroup.Item className="rounded-lg" style={{ width: 80, height: 32 }} />
-                <SkeletonGroup.Item className="rounded-lg" style={{ width: 80, height: 32 }} />
-            </View>
+        {/* Cards Scroll */}
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16, overflow: 'hidden' }}>
+          <SkeletonGroup.Item className="rounded-full" style={{ width: 150, height: 50 }} />
+          <SkeletonGroup.Item className="rounded-full" style={{ width: 150, height: 50 }} />
+          <SkeletonGroup.Item className="rounded-full" style={{ width: 150, height: 50 }} />
+        </View>
 
-            {/* Grid */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                {Array.from({ length: 9 }).map((_, i) => (
-                    <SkeletonGroup.Item key={i} className="rounded-lg" style={{ width: '31%', aspectRatio: 1 }} />
-                ))}
-            </View>
-        </SkeletonGroup>
-      </View>
+        {/* Counts */}
+        <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
+          <SkeletonGroup.Item className="rounded-md" style={{ width: 60, height: 16 }} />
+          <SkeletonGroup.Item className="rounded-md" style={{ width: 60, height: 16 }} />
+          <SkeletonGroup.Item className="rounded-md" style={{ width: 60, height: 16 }} />
+        </View>
+
+        {/* Tabs */}
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16, alignSelf: 'center', backgroundColor: colors.card, padding: 4, borderRadius: 16 }}>
+          <SkeletonGroup.Item className="rounded-lg" style={{ width: 80, height: 32 }} />
+          <SkeletonGroup.Item className="rounded-lg" style={{ width: 80, height: 32 }} />
+          <SkeletonGroup.Item className="rounded-lg" style={{ width: 80, height: 32 }} />
+        </View>
+
+        {/* Grid */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <SkeletonGroup.Item key={i} className="rounded-lg" style={{ width: '31%', aspectRatio: 1 }} />
+          ))}
+        </View>
+      </SkeletonGroup>
+    </View>
   );
 };
 
@@ -198,8 +198,9 @@ const ProfileContent = () => {
       postCount={vm.postCount}
       familySheetRef={vm.familySheetRef}
       briefSheetRef={vm.briefSheetRef}
+      onPresentSheet={vm.safePresent}
     />
-  ), [vm.scrollY, vm.selectedTab, vm.stableTabChange, vm.profile, vm.isMe, vm.musicSheetRef, vm.socialSheetRef, vm.addressSheetRef, vm.workplaceSheetRef, vm.workplaces, vm.music, vm.socialLinks, vm.addresses, vm.imageCount, vm.videoCount, vm.postCount, vm.familySheetRef, vm.briefSheetRef]);
+  ), [vm.scrollY, vm.selectedTab, vm.stableTabChange, vm.profile, vm.isMe, vm.musicSheetRef, vm.socialSheetRef, vm.addressSheetRef, vm.workplaceSheetRef, vm.workplaces, vm.music, vm.socialLinks, vm.addresses, vm.imageCount, vm.videoCount, vm.postCount, vm.familySheetRef, vm.briefSheetRef, vm.safePresent]);
 
   // List data: image/video tabs use pre-chunked rows from useImageGrid; Feed stays flat posts.
   const data = useMemo(() => {
@@ -351,117 +352,113 @@ const ProfileContent = () => {
             onEndReachedThreshold={0.5}
           />
         </BlurTargetView>
+        <View style={{ position: 'absolute', top: vm.inset.top + 8, left: 16, zIndex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
 
-        {!vm.isMe && (
-          <View style={{ position: 'absolute', top: vm.inset.top + 8, left: 16, zIndex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-
-              {/* Back Button */}
-              <BlurView
-                tint={vm.theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
-                intensity={80}
-                blurTarget={vm.blurTargetRef}
-                blurMethod="dimezisBlurViewSdk31Plus"
+            {/* Back Button */}
+            <BlurView
+              tint={vm.theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
+              intensity={80}
+              blurTarget={vm.blurTargetRef}
+              blurMethod="dimezisBlurViewSdk31Plus"
+              style={{
+                borderRadius: 999,
+                overflow: 'hidden',
+                marginRight: 8,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => vm.router.back()}
                 style={{
                   borderRadius: 999,
-                  overflow: 'hidden',
-                  marginRight: 8,
+                  width: 40,
+                  height: 40,
+                  justifyContent: 'center',
+                  alignItems: 'center'
                 }}
               >
-                <TouchableOpacity
-                  onPress={() => vm.router.back()}
-                  style={{
-                    borderRadius: 999,
-                    width: 40,
-                    height: 40,
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
+                <Ionicons name='chevron-back' size={24} color={vm.colors.text} />
+              </TouchableOpacity>
+            </BlurView>
+
+            {/* Header Avatar — springs in when scrolled past profile avatar */}
+            <Reanimated.View
+              style={[
+                {
+                  height: 40,
+                  overflow: 'hidden',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+                headerAvatarContainerStyle,
+              ]}
+            >
+              <TouchableOpacity activeOpacity={0.8} onPress={vm.scrollToTop}>
+                <Reanimated.View
+                  style={[
+                    {
+                      width: 40,
+                      height: 40,
+                      borderRadius: 999,
+                      overflow: 'hidden',
+                    },
+                    headerAvatarImageStyle,
+                  ]}
                 >
-                  <Ionicons name='chevron-back' size={24} color={vm.colors.text} />
-                </TouchableOpacity>
-              </BlurView>
+                  <Image
+                    source={
+                      vm.profile?.avatar_url
+                        ? { uri: vm.profile.avatar_url }
+                        : vm.profile?.gender === 'male'
+                          ? require('../../assets/images/AV17.png')
+                          : require('../../assets/images/AV86.png')
+                    }
+                    style={{ width: '100%', height: '100%' }}
+                    contentFit="cover"
+                  />
+                </Reanimated.View>
+              </TouchableOpacity>
+            </Reanimated.View>
 
-              {/* Header Avatar — springs in when scrolled past profile avatar */}
-              <Reanimated.View
-                style={[
-                  {
-                    height: 40,
-                    overflow: 'hidden',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  },
-                  headerAvatarContainerStyle,
-                ]}
-              >
-                <TouchableOpacity activeOpacity={0.8} onPress={vm.scrollToTop}>
-                  <Reanimated.View
-                    style={[
-                      {
-                        width: 40,
-                        height: 40,
-                        borderRadius: 999,
-                        overflow: 'hidden',
-                      },
-                      headerAvatarImageStyle,
-                    ]}
-                  >
-                    <Image
-                      source={
-                        vm.profile?.avatar_url
-                          ? { uri: vm.profile.avatar_url }
-                          : vm.profile?.gender === 'male'
-                            ? require('../../assets/images/AV17.png')
-                            : require('../../assets/images/AV86.png')
-                      }
-                      style={{ width: '100%', height: '100%' }}
-                      contentFit="cover"
-                    />
-                  </Reanimated.View>
-                </TouchableOpacity>
-              </Reanimated.View>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => vm.safePresent(vm.musicSheetRef)}
+              style={{ height: 40, width: 150 }}
+            >
+              <BlurView tint={vm.theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"} intensity={80} blurTarget={vm.blurTargetRef} blurMethod="dimezisBlurView" style={styles.blurWrapper}>
+                <View
+                  style={[StyleSheet.absoluteFill, {}]}
+                />
 
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => vm.musicSheetRef.current?.present()}
-                style={{ height: 40, width: 150 }}
-              >
-                <BlurView tint={vm.theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"} intensity={80} blurTarget={vm.blurTargetRef} blurMethod="dimezisBlurView" style={styles.blurWrapper}>
-                  <View
-                    style={[StyleSheet.absoluteFill, {}]}
+                <View style={styles.blurContent}>
+                  <SpinningArtwork
+                    isMusicPlaying={vm.isMusicPlaying}
+                    hasMusic={vm.hasMusic}
+                    coverUrl={vm.currentTrack?.cover_url}
+                    onPress={vm.handleMusicPress}
+                    colors={vm.colors}
                   />
 
-                  <View style={styles.blurContent}>
-                    <SpinningArtwork
-                      isMusicPlaying={vm.isMusicPlaying}
-                      hasMusic={vm.hasMusic}
-                      coverUrl={vm.currentTrack?.cover_url}
-                      onPress={vm.handleMusicPress}
-                      colors={vm.colors}
-                    />
-
-                    <View style={styles.textContainer}>
-                      <FlexText
-                        style={[styles.titleText, { color: vm.colors.text }]}
-                        numberOfLines={1}
-                      >
-                        {vm.hasMusic ? vm.currentTrack?.title : t("profile.music.addMusic")}
-                      </FlexText>
-                      <FlexText
-                        style={[styles.artistText, { color: vm.colors.text }]}
-                        numberOfLines={1}
-                      >
-                        {vm.hasMusic ? vm.currentTrack?.artist : t("profile.music.selectTrack")}
-                      </FlexText>
-                    </View>
+                  <View style={styles.textContainer}>
+                    <FlexText
+                      style={[styles.titleText, { color: vm.colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {vm.hasMusic ? vm.currentTrack?.title : t("profile.music.addMusic")}
+                    </FlexText>
+                    <FlexText
+                      style={[styles.artistText, { color: vm.colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {vm.hasMusic ? vm.currentTrack?.artist : t("profile.music.selectTrack")}
+                    </FlexText>
                   </View>
-                </BlurView>
-              </TouchableOpacity>
+                </View>
+              </BlurView>
+            </TouchableOpacity>
 
-            </View>
           </View>
-        )}
-
+        </View>
 
         <Snackbar
           visible={vm.snackbarVisible}
@@ -476,7 +473,9 @@ const ProfileContent = () => {
         <MusicSheet
           ref={vm.musicSheetRef}
           data={vm.music}
+          profileId={vm.profile?.id}
           onEndReached={vm.handleMusicEndReached}
+          isOwner={vm.isMe}
         />
         <SocialSheet
           ref={vm.socialSheetRef}

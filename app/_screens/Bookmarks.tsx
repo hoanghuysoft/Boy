@@ -2,8 +2,8 @@ import BookmarkIcon from "@/icons/bookmark";
 import { useBookmarks } from "@/services/bookmark";
 import { BookmarkedPost } from "@/types/bookmarkedpost";
 import { Ionicons } from "@expo/vector-icons";
+import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { SkeletonGroup } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -69,7 +69,7 @@ const BookmarksScreen = () => {
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     const renderItem = useCallback(
-        ({ item }: { item: BookmarkedPost }) => (
+        ({ item }: LegendListRenderItemProps<BookmarkedPost>) => (
             <View style={{ marginBottom: 30 }}>
                 <PostItem
                     post={item}
@@ -179,7 +179,7 @@ const BookmarksScreen = () => {
             </View>
 
             {/* Bookmarks list */}
-            <FlashList
+            <LegendList
                 data={posts}
                 keyExtractor={(item) => item.bookmark_id ?? item.id}
                 renderItem={renderItem}
@@ -191,6 +191,8 @@ const BookmarksScreen = () => {
                 showsVerticalScrollIndicator={false}
                 onRefresh={refetch}
                 refreshing={isRefetching}
+                recycleItems={true}
+                maintainVisibleContentPosition={true}
                 contentContainerStyle={
                     posts.length === 0 ? styles.emptyContainer : undefined
                 }

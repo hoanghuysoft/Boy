@@ -53,7 +53,7 @@
       "source": "expo/skills",
       "sourceType": "github",
       "skillPath": "plugins/expo/skills/expo-module/SKILL.md",
-      "computedHash": "1ceba87ce33e5954ad37770d268f5937fd7ed6ecd707f7968f0f78d4eef711da"
+      "computedHash": "93c5b6c62910769c4455889fd27e074592f5986db40f1d3239ccd9dee174ed3b"
     },
     "expo-tailwind-setup": {
       "source": "expo/skills",
@@ -78,6 +78,12 @@
       "sourceType": "github",
       "skillPath": "skills/react-native-best-practices/SKILL.md",
       "computedHash": "f113938fa59e811e434aa48d4eb459fd492ae8e5babe46e881a16d683b42c8fe"
+    },
+    "truesheet-usage": {
+      "source": "lodev09/react-native-true-sheet",
+      "sourceType": "github",
+      "skillPath": "skills/truesheet-usage/SKILL.md",
+      "computedHash": "9f4759f7beacb9b86e43565f2187111dde9598351996100bdd865e942bbc0131"
     },
     "upgrading-expo": {
       "source": "expo/skills",

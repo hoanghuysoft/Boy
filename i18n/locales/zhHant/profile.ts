@@ -97,6 +97,18 @@ const profile = {
         music: {
             title: '音樂',
             subtitle: '聽聽我喜歡的歌',
+            addMusic: '新增音樂',
+            addTitle: '新增歌曲',
+            addSubtitle: '在 Deezer 搜尋並新增音樂',
+            searchPlaceholder: '搜尋歌曲、歌手…',
+            searchHint: '輸入歌曲或歌手名稱進行搜尋',
+            noResults: '未找到歌曲，請嘗試其他關鍵字。',
+            addError: '新增失敗，請重試。',
+            errorTitle: '錯誤',
+            deleteTitle: '移除歌曲',
+            deleteMessage: '從音樂清單中移除此歌曲？',
+            cancel: '取消',
+            delete: '移除',
         },
         relationship: {
             title: '家人與關係',

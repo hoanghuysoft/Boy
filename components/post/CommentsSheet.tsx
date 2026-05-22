@@ -1,10 +1,10 @@
 import VerifiedIcon from "@/icons/verified";
 import { MaterialIcons } from "@expo/vector-icons";
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
+import { LegendList } from "@legendapp/list";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import { Galeria } from "@nandorojo/galeria";
-import { FlashList } from "@shopify/flash-list";
 import { GalleryAddBold, PenNewRoundBold, Plain2Bold } from "@solar-icons/react-native";
 import { Image } from "expo-image";
 import { Button, SkeletonGroup, Spinner } from "heroui-native";
@@ -368,7 +368,6 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         onChangeText={vm.setCommentText}
                         multiline
                         maxLength={500}
-                        selectionColor={vm.colors.text}
                         autoFocus={vm.isEditing}
                     />
                     {/* Note: since text and image are separated, allow submit if either exists */}
@@ -455,9 +454,10 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 </View>
 
                 {/* Comments List */}
-                <FlashList
+                <LegendList
                     nestedScrollEnabled
                     data={vm.comments}
+                    recycleItems
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     onEndReached={vm.handleEndReached}

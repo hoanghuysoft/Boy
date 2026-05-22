@@ -1,7 +1,7 @@
 import { FlexText } from '@/components/FlexText';
 import { Ionicons } from '@expo/vector-icons';
+import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { FlashList } from '@shopify/flash-list';
 import React, { forwardRef, memo } from "react";
 import { useTranslation } from 'react-i18next';
 import { Linking, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -100,10 +100,11 @@ export const AddressSheet = memo(forwardRef<TrueSheet, AddressSheetProps>(({ dat
                 </View>
 
                 {/* List */}
-                <FlashList
+                <LegendList
                     nestedScrollEnabled
                     onEndReached={onEndReached}
                     onEndReachedThreshold={0.5}
+                    recycleItems
                     data={data}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (

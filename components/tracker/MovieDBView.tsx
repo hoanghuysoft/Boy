@@ -13,6 +13,7 @@ import {
 } from "@/hooks/useMovies";
 import { Movie } from "@/types/moviedb";
 import { Ionicons } from "@expo/vector-icons";
+import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -26,7 +27,7 @@ import {
     useWindowDimensions,
     View,
 } from "react-native";
-import { FlatList as GestureFlatList, Pressable as GesturePressable } from "react-native-gesture-handler";
+import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CARD_WIDTH = 140;
@@ -122,7 +123,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
         isPopPeopleLoading || isAirTodayLoading || isOnAirLoading || isPopTvLoading || isTopTvLoading;
 
     const renderMovieItem = useCallback(
-        ({ item }: { item: Movie }) => (
+        ({ item }: LegendListRenderItemProps<Movie>) => (
             <GesturePressable
                 onPress={() => router.navigate({ pathname: "/movie_detail", params: { id: item.id } })}
                 style={{ width: CARD_WIDTH, marginRight: 12, overflow: "hidden", position: "relative" }}
@@ -356,14 +357,14 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                     <Ionicons name="chevron-forward" size={20} color="white" />
                                 </View>
                             </Pressable>
-                            <GestureFlatList
+                            <LegendList
                                 horizontal
                                 data={nowPlaying}
                                 keyExtractor={movieKeyExtractor}
                                 renderItem={renderMovieItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ paddingHorizontal: 16 }}
-                                initialNumToRender={5}
+                                recycleItems
                             />
                         </View>
                     )}
@@ -383,14 +384,14 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                     <Ionicons name="chevron-forward" size={20} color="white" />
                                 </View>
                             </Pressable>
-                            <GestureFlatList
+                            <LegendList
                                 horizontal
                                 data={tvAiringToday}
                                 keyExtractor={(item: any, index) => `${item.id}-${index}`}
                                 renderItem={renderTvItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ paddingHorizontal: 16 }}
-                                initialNumToRender={5}
+                                recycleItems
                             />
                         </View>
                     )}
@@ -412,14 +413,14 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <GestureFlatList
+                                    <LegendList
                                         horizontal
                                         data={upcoming}
                                         keyExtractor={movieKeyExtractor}
                                         renderItem={renderMovieItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        initialNumToRender={5}
+                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -439,14 +440,14 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <GestureFlatList
+                                    <LegendList
                                         horizontal
                                         data={tvOnTheAir}
                                         keyExtractor={(item: any, index) => `${item.id}-${index}`}
                                         renderItem={renderTvItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        initialNumToRender={5}
+                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -466,14 +467,14 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <GestureFlatList
+                                    <LegendList
                                         horizontal
                                         data={popular}
                                         keyExtractor={movieKeyExtractor}
                                         renderItem={renderMovieItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        initialNumToRender={5}
+                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -493,14 +494,14 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <GestureFlatList
+                                    <LegendList
                                         horizontal
                                         data={tvPopular}
                                         keyExtractor={(item: any, index) => `${item.id}-${index}`}
                                         renderItem={renderTvItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        initialNumToRender={5}
+                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -520,14 +521,14 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <GestureFlatList
+                                    <LegendList
                                         horizontal
                                         data={popularPeople}
                                         keyExtractor={(item) => item.id.toString()}
                                         renderItem={renderPersonItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        initialNumToRender={5}
+                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -547,14 +548,13 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <GestureFlatList
+                                    <LegendList
                                         horizontal
                                         data={topRated}
                                         keyExtractor={movieKeyExtractor}
                                         renderItem={renderMovieItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        initialNumToRender={5}
                                     />
                                 </View>
                             )}
@@ -574,14 +574,14 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <GestureFlatList
+                                    <LegendList
                                         horizontal
                                         data={tvTopRated}
                                         keyExtractor={(item: any, index) => `${item.id}-${index}`}
                                         renderItem={renderTvItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        initialNumToRender={5}
+                                        recycleItems
                                     />
                                 </View>
                             )}

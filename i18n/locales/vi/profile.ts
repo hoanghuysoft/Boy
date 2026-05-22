@@ -97,6 +97,18 @@ const profile = {
         music: {
             title: 'Âm nhạc',
             subtitle: 'Nghe những bài hát yêu thích của tôi',
+            addMusic: 'Thêm nhạc',
+            addTitle: 'Thêm bài hát',
+            addSubtitle: 'Tìm kiếm và thêm nhạc từ Deezer',
+            searchPlaceholder: 'Tìm bài hát, nghệ sĩ…',
+            searchHint: 'Nhập tên bài hát hoặc nghệ sĩ để tìm kiếm',
+            noResults: 'Không tìm thấy bài hát. Thử tìm kiếm khác.',
+            addError: 'Không thể thêm bài hát. Vui lòng thử lại.',
+            errorTitle: 'Lỗi',
+            deleteTitle: 'Xoá bài hát',
+            deleteMessage: 'Xoá bài hát này khỏi danh sách nhạc của bạn?',
+            cancel: 'Huỷ',
+            delete: 'Xoá',
         },
         relationship: {
             title: 'Gia đình & Mối quan hệ',

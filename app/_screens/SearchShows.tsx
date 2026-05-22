@@ -4,9 +4,9 @@ import { useCategoriesQuery } from "@/services/shows";
 import { useSearchInfiniteQuery } from "@/services/shows/search";
 import type { Category, VideoCard } from "@/types/shows";
 import { Ionicons } from "@expo/vector-icons";
+import { LegendList } from "@legendapp/list";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import LineiconsIcon from "@lineiconshq/react-native-lineicons";
-import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -294,10 +294,11 @@ const SearchShowsScreen = () => {
         </FlexText>
       </View>
 
-      <FlashList
+      <LegendList
         data={items}
         keyExtractor={(item) => item.video_url}
         renderItem={renderItem}
+        recycleItems
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={() => {
           if (isLoading && submittedQuery) {
