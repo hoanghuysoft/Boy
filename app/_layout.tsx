@@ -274,6 +274,10 @@ const RootContent = () => {
             name="movie-tracker-settings"
             options={{ headerShown: false, animation: "slide_from_right" }}
           />
+          <Stack.Screen
+            name="bulletinboard"
+            options={{ headerShown: false, animation: "slide_from_right" }}
+          />
         </Stack>
         <GlobalAudioPlayer />
       </View>

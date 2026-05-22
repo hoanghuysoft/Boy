@@ -1,7 +1,7 @@
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { Title } from "@/components/blur mask/Title";
 import { useStatusBar } from "@/context/StatusBarContext";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Canvas, ImageShader, LinearGradient, useAnimatedImageValue, useImage, vec } from "@shopify/react-native-skia";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { useLocalSearchParams, useRouter } from "expo-router";

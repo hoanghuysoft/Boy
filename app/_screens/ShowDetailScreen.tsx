@@ -6,7 +6,7 @@ import { useVideoDetailQuery } from "@/services/shows";
 import { useGalleryStore } from "@/stores/gallery";
 import { useShowWatchlistStore } from "@/stores/showWatchlist";
 import type { VideoCard } from "@/types/shows";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList } from "@legendapp/list";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { BookmarkBold, BookmarkOutline, CloudDownloadBold } from "@solar-icons/react-native";

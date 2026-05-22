@@ -1,6 +1,6 @@
 import { FlexText } from '@/components/FlexText';
 import { WatchlistShow, useShowWatchlistStore } from '@/stores/showWatchlist';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList } from '@legendapp/list';
 import { RoundedMagnifierOutline, TrashBinTrashBold } from '@solar-icons/react-native';
 import dayjs from 'dayjs';

@@ -1,6 +1,6 @@
 import { FlexText } from '@/components/FlexText';
 import { TMDBReview } from '@/types/moviedb/movie-entities';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Image } from "expo-image";

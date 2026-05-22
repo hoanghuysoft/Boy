@@ -7,7 +7,7 @@ import { useThemeContext } from "@/context/ThemeContext";
 import { usePersonDetails } from "@/hooks/useMovies";
 import { useGalleryStore } from "@/stores/gallery";
 import { enrichProfileData } from "@/utils/zodiacCalculation";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList } from "@legendapp/list";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { BlurTargetView, BlurView } from "expo-blur";

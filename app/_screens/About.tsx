@@ -1,7 +1,7 @@
 import { FlexText } from "@/components/FlexText";
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import * as Application from 'expo-application';
 import { router } from "expo-router";
 import * as Updates from 'expo-updates';

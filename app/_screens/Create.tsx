@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import * as Device from 'expo-device';
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";

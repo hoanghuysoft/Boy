@@ -1,6 +1,7 @@
 import { FlexText } from "@/components/FlexText";
 import { calculateBMI, enrichProfileData, getBMIStatus } from "@/utils/zodiacCalculation";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import {
     CalculatorBold,

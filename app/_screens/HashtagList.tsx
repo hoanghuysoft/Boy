@@ -1,6 +1,6 @@
 import { FlexText } from '@/components/FlexText';
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList, LegendListRenderItemProps } from '@legendapp/list';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';

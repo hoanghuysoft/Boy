@@ -1,5 +1,6 @@
 import { Bank } from '@/types/bank';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { CalendarBold, LetterBold, MenBold, NotebookBookmarkBold, PhoneBold, PointOnMapBold, SquareAcademicCapBold, WeigherBold, WheelBold, WomenBold } from '@solar-icons/react-native';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

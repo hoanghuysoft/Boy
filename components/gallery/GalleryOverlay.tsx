@@ -1,6 +1,6 @@
 import { useThemeContext } from '@/context/ThemeContext';
 import VerifiedIcon from '@/icons/verified';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { GalleryDownloadBold, ShareBold, WallpaperBold } from '@solar-icons/react-native';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';

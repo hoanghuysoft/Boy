@@ -1,21 +1,4 @@
-/**
- * PostLinkPreview
- *
- * Performance design:
- *  - Module-level Map cache: fetch each URL once per app session. FlatList
- *    windowing can remount items at any time; without this every remount
- *    fires a new network request that blocks the JS thread.
- *  - InteractionManager.runAfterInteractions: the OG fetch only starts
- *    after the current interaction (scroll / animation) has settled, so the
- *    list never blocks while the user is actively flinging.
- *  - Uses getPreviewData directly (no <LinkPreview> wrapper component):
- *    avoids the unstable renderLinkPreview / onPreviewDataFetched
- *    references that would re-trigger the library's own useEffect fetch.
- *  - All render content is memoised; the outer component is React.memo
- *    with a custom comparator that only re-renders on prop identity change.
- */
-
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { getPreviewData, PreviewData } from '@flyerhq/react-native-link-preview';
 import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';

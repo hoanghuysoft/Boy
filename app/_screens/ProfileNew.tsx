@@ -20,7 +20,7 @@ import { useInfiniteWorkplaces } from "@/services/workplace";
 import { useAudioStore } from "@/stores/audio";
 import { createCommonStyles } from "@/styles/common";
 import { choosenMediaPath } from "@/utils/imageurl";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 
 import { CaseMinimalisticBold, NotesBold, PointOnMapBold } from "@solar-icons/react-native";

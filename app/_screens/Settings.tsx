@@ -8,7 +8,7 @@ import { useMovieTrackerStore } from "@/stores/movieTracker";
 import { useSearchHistoryStore } from "@/stores/searchHistory";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Logout3Bold } from '@solar-icons/react-native';
 import { Href, router } from "expo-router";
 import { Button, ControlField, Description, Dialog, Label, Select, Surface } from "heroui-native";

@@ -1,5 +1,5 @@
 import VerifiedIcon from "@/icons/verified";
-import { MaterialIcons } from "@expo/vector-icons";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { LegendList } from "@legendapp/list";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";

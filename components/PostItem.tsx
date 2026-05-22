@@ -8,7 +8,7 @@ import VerifiedIcon from "@/icons/verified";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -81,19 +81,16 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </Pressable>
                 )}
             </View>
-
             {/* Caption — YouTube URLs are stripped since they're rendered by YouTubePostPlayer below */}
             {captionWithoutYouTube ? (
                 <View style={{ paddingHorizontal: 16 }}>
                     <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />
                 </View>
             ) : null}
-
             {/* YouTube links detected in the caption — single player or carousel */}
             {post.content ? (
                 <YouTubePostPlayer postId={post.id} caption={post.content} />
             ) : null}
-
             {/* Media & Audio Overlay */}
             <View>
                 <PostMediaCarousel
@@ -144,7 +141,6 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </Pressable>
                 )}
             </View>
-
             {/* Audio Waveform — shown when post has a direct audio_url */}
             {!!post.audio_url && (
                 <PostAudioWaveform
@@ -154,12 +150,10 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     label={post.profile_name}
                 />
             )}
-
             {/* Invisible Spacer for No-Media Posts */}
             {!vm.hasMedia && (
                 <View style={{ width: Dimensions.get("window").width, height: 1 }} />
             )}
-
             {/* Audio Button for No-Media Posts */}
             {!vm.hasMedia && vm.hasMusic && (
                 <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, marginBottom: 12 }}>
@@ -184,12 +178,11 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </Pressable>
                 </View>
             )}
-
             {/* Links — single link: full-width symmetric view; multiple: horizontal peek scroll */}
             {post.links && post.links.length > 0 && (
                 post.links.length === 1 ? (
                     // Single link — equal 16px padding both sides, card fills the gap
-                    <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+                    (<View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
                         <PostLinkPreview
                             key={post.links[0].url || 0}
                             url={post.links[0].url}
@@ -197,10 +190,10 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             colors={vm.colors}
                             cardWidth={Dimensions.get('window').width - 32}
                         />
-                    </View>
+                    </View>)
                 ) : (
                     // Multiple links — peek-through horizontal scroll
-                    <ScrollView
+                    (<ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         decelerationRate="fast"
@@ -221,10 +214,9 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                 colors={vm.colors}
                             />
                         ))}
-                    </ScrollView>
+                    </ScrollView>)
                 )
             )}
-
             {post.device && (
                 <FlexText
                     style={[
@@ -235,11 +227,10 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     {t('post.createdOnDevice', { device: post.device })}
                 </FlexText>
             )}
-
             {/* Action Bar */}
             {isBookmarked ? (
                 // Bookmarks screen: read-only stats, no bookmark button
-                <View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 20 }]}>
+                (<View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 20 }]}>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <Pressable hitSlop={10} onPress={vm.handleLikePress}>
                             {vm.isLiked ? (
@@ -263,10 +254,10 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             <BookmarkIcon size={24} color={vm.colors.text} />
                         )}
                     </Pressable>
-                </View>
+                </View>)
             ) : (
                 // Feed: full interactive action bar with bookmark toggle
-                <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
+                (<View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
                     <View style={[vm.common.row, { gap: 20 }]}>
                         <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                             <Pressable hitSlop={10} onPress={vm.handleLikePress}>
@@ -296,7 +287,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             <BookmarkIcon size={24} color={vm.colors.text} />
                         )}
                     </Pressable>
-                </View>
+                </View>)
             )}
         </View>
     );

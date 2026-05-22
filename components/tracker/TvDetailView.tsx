@@ -2,7 +2,7 @@ import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { DialogBold, WallpaperBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { router } from "expo-router";

@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { XmarkSolid } from "@lineiconshq/free-icons";
 import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import { FlashList } from "@shopify/flash-list";

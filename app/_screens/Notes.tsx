@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
 import { PostLinkPreview } from "@/components/PostLinkPreview";
 import dayjs from "dayjs";

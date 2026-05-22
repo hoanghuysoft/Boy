@@ -1,5 +1,5 @@
 import { FBPost } from '@/types/localfb';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LinkRoundBold, PinBold } from '@solar-icons/react-native';
 import { MediaViewer, type MediaViewerItem } from 'expo-media-viewer';
 import React, { memo, useState } from 'react';

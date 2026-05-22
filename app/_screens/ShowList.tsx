@@ -3,7 +3,7 @@ import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { useCategoryInfiniteQuery } from "@/services/shows/category";
 import { useTagInfiniteQuery } from "@/services/shows/tag";
 import type { VideoCard } from "@/types/shows";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList } from "@legendapp/list";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";

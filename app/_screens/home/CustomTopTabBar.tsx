@@ -1,5 +1,5 @@
 import { FlexText } from "@/components/FlexText";
-import { MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
+import { MaterialTopTabBarProps } from "expo-router/build/react-navigation/material-top-tabs";
 import React, { useEffect, useRef } from "react";
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -24,12 +24,12 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
 
     // Create animated values for each tab indicator
     const indicatorAnims = useRef(
-        state.routes.map((_, index) => new Animated.Value(state.index === index ? 1 : 0))
+        state.routes.map((_: {}, index: number) => new Animated.Value(state.index === index ? 1 : 0))
     ).current;
 
     useEffect(() => {
         // Animate all indicators
-        const animations = state.routes.map((_, index) =>
+        const animations = state.routes.map((_: {}, index: number) =>
             Animated.spring(indicatorAnims[index], {
                 toValue: state.index === index ? 1 : 0,
                 useNativeDriver: true,
@@ -55,7 +55,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
             >
                 <Animated.View
                     style={{
-                        ...StyleSheet.absoluteFillObject,
+                        ...StyleSheet.absoluteFill,
                         backgroundColor: colors.tabBar + "E6",
                         opacity: tabBgOpacity,
                     }}
@@ -66,7 +66,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                     style={{ flexGrow: 0 }}
                     contentContainerStyle={{ padding: 12 }}
                 >
-                    {state.routes.map((route, index) => {
+                    {state.routes.map((route : any, index : number) => {
                         const { options } = descriptors[route.key];
                         const label = options.tabBarLabel !== undefined
                             ? options.tabBarLabel

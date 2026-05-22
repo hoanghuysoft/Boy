@@ -2,13 +2,11 @@ import { FlexText } from "@/components/FlexText";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { getCachedUri } from "@/services/videoCache";
 import { VideoFeedType, VideoItem } from "@/types/video";
-import { Ionicons } from "@expo/vector-icons";
 import {
     ReanimatedTrueSheetProvider,
     useReanimatedTrueSheet,
 } from "@lodev09/react-native-true-sheet/reanimated";
-import { createMaterialTopTabNavigator, MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
-import { useIsFocused } from "@react-navigation/native";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList } from "@shopify/flash-list";
 import {
     ChatRoundLikeBold,
@@ -18,6 +16,8 @@ import {
     VolumeLoudBold
 } from "@solar-icons/react-native";
 import { router } from "expo-router";
+import { createMaterialTopTabNavigator, MaterialTopTabBarProps } from "expo-router/build/react-navigation/material-top-tabs";
+import { useIsFocused } from "expo-router/react-navigation";
 import { Spinner } from "heroui-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -478,7 +478,7 @@ const TopTabBar = ({ state, navigation, insets, t }: MaterialTopTabBarProps & { 
 
     return (
         <Reanimated.View style={[styles.topHeader, { paddingTop: insets.top + 8 }, tabBarStyle]}>
-            {state.routes.map((route, index) => {
+            {state.routes.map((route : any, index : number) => {
                 const isFocused = state.index === index;
                 const title = route.name === 'random' ? t('shots.tabs.following') : t('shots.tabs.thisDay');
 

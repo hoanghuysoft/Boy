@@ -3,7 +3,7 @@ import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { useCategoriesQuery } from "@/services/shows";
 import { useSearchInfiniteQuery } from "@/services/shows/search";
 import type { Category, VideoCard } from "@/types/shows";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList } from "@legendapp/list";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import LineiconsIcon from "@lineiconshq/react-native-lineicons";

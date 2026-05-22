@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "26.9.1",
+    "version": "26.56.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -25,7 +25,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false,
+      "predictiveBackGestureEnabled": true,
       "package": "com.techfox.boy",
       "permissions": [
         "android.permission.RECORD_AUDIO",
@@ -169,7 +169,8 @@
           "android": {
             "buildArchs": [
               "arm64-v8a"
-            ]
+            ],
+            "usePrecompiledHeaders": true
           }
         }
       ],
@@ -195,7 +196,6 @@
         }
       ],
       "expo-sharing",
-      "@react-native-community/datetimepicker",
       "expo-image",
       "react-native-nitro-wallpaper",
       [
@@ -207,7 +207,11 @@
         }
       ],
       "@sentry/react-native",
-      "expo-video"
+      "expo-video",
+      "expo-status-bar",
+      "@react-native-vector-icons/ionicons",
+      "@react-native-vector-icons/material-icons",
+      "@react-native-vector-icons/fontawesome"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -6,8 +6,7 @@
     "incremental": true,
     "jsx": "react-native",
     "moduleResolution": "bundler",
-    "lib": ["ES2015", "DOM"],
-    "baseUrl": ".",
+    "lib": ["ES2015", "DOM", "ES2025", "dom.iterable"],
     "paths": {
       "@/*": [
         "./*"
