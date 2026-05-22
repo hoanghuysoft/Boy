@@ -1,4 +1,4 @@
-import { FontAwesome } from "@expo/vector-icons";
+import FontAwesome from "@react-native-vector-icons/fontawesome/static";
 import React, { memo } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";

@@ -1,5 +1,5 @@
 import { Profile } from '@/types/profile';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { ChatRoundLikeBold, PointOnMapBold, UserPlusRoundedBold } from '@solar-icons/react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SquircleView } from 'expo-squircle-view';

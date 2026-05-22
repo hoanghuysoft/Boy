@@ -1,7 +1,7 @@
 import { FlexText } from "@/components/FlexText";
 import { ThemeColors, ThemePreference, useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { CheckCircleBold, ClockCircleBold, MoonBold, SmartphoneBold, Sun2Bold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";

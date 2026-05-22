@@ -11,7 +11,7 @@ import { CastMember } from "@/types/moviedb";
 import { Movie } from "@/types/moviedb/movie";
 import { TMDBVideoResult } from "@/types/moviedb/movie-entities";
 import { TMDBMovieImage } from "@/types/moviedb/movie-images";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";

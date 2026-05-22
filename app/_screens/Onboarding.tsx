@@ -1,7 +1,7 @@
 import { FlexText } from '@/components/FlexText';
 import { useThemeContext } from '@/context/ThemeContext';
 import { createCommonStyles } from '@/styles/common';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

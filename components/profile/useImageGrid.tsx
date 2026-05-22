@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";

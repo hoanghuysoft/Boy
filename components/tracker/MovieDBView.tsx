@@ -12,7 +12,7 @@ import {
     useTrendingAll, useUpcomingMoviesInfinite
 } from "@/hooks/useMovies";
 import { Movie } from "@/types/moviedb";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
 import { Image } from "expo-image";
 import { router } from "expo-router";

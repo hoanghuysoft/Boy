@@ -1,4 +1,3 @@
-import { BottomTabBarProps } from "expo-router/js-tabs";
 import {
     ClapperboardBold,
     ClapperboardOutline,
@@ -12,6 +11,7 @@ import {
     VideoLibraryOutline
 } from "@solar-icons/react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs";
 import { SquircleView } from "expo-squircle-view";
 import React, { RefObject, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";

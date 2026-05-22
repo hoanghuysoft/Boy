@@ -8,7 +8,7 @@ import { useAdminCheck, useProfile } from "@/services/userprofile";
 import { useWeather } from "@/services/weather";
 import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { ClapperboardBold, TvBold } from "@solar-icons/react-native";

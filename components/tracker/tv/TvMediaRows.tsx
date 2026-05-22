@@ -2,7 +2,7 @@ import { FlexText } from "@/components/FlexText";
 import { CastMember } from "@/types/moviedb";
 import { TMDBVideoResult } from "@/types/moviedb/movie-entities";
 import { TMDBMovieImage } from "@/types/moviedb/movie-images";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";

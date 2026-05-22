@@ -2,7 +2,7 @@ import { FlexText } from "@/components/FlexText";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useBulletinboard } from "@/services/bulletinboard";
 import { createCommonStyles } from "@/styles/common";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from "dayjs";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { MediaViewer } from 'expo-media-viewer';

@@ -2,7 +2,7 @@ import { FlexText } from "@/components/FlexText";
 import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { SearchType, useTypedSearchInfinite } from "@/hooks/useMovies";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList } from "@legendapp/list";
 import { XmarkOutlined } from "@lineiconshq/free-icons";
 import LineiconsIcon from "@lineiconshq/react-native-lineicons";

@@ -10,7 +10,7 @@ import { createCommonStyles } from "@/styles/common";
 import { Media } from "@/types/media";
 import { Profile } from "@/types/profile";
 import { choosenMediaPath } from "@/utils/imageurl";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";

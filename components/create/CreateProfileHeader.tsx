@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 
 // ============================================================================
 // PostOptionBadge Component

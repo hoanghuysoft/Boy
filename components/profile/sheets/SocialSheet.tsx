@@ -1,5 +1,5 @@
 import { FlexText } from '@/components/FlexText';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";

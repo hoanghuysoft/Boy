@@ -1,4 +1,5 @@
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { Image } from "expo-image";

@@ -4,7 +4,7 @@ import { MovieDBView } from "@/components/tracker/MovieDBView";
 import { useMovieTrackerStore } from "@/stores/movieTracker";
 import type { VideoCard } from "@/types/shows";
 import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FolderFavouriteBookmarkBold, RoundedMagnifierBold } from "@solar-icons/react-native";
 import { BlurTargetView } from "expo-blur";
 import { router } from "expo-router";

@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { SquircleView } from 'expo-squircle-view';
 import React, { useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';

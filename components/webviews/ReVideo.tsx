@@ -1,5 +1,5 @@
 import { useThemeContext } from "@/context/ThemeContext";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState } from "react";

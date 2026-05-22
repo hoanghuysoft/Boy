@@ -2,7 +2,7 @@ import { FlexText } from "@/components/FlexText";
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { TrackerSource, useMovieTrackerStore } from "@/stores/movieTracker";
 import { createCommonStyles } from "@/styles/common";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { CheckCircleBold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";

@@ -3,7 +3,7 @@ import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, SupportedLanguage } from "@/i18n";
 import { LanguageMode, useLanguageStore } from "@/stores/language";
 import { createCommonStyles } from "@/styles/common";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { CheckCircleBold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";

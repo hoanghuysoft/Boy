@@ -1,4 +1,4 @@
-import { createMaterialTopTabNavigator } from "expo-router/js-top-tabs";
+import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";

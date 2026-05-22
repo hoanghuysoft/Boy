@@ -211,8 +211,7 @@
       "expo-status-bar",
       "@react-native-vector-icons/ionicons",
       "@react-native-vector-icons/material-icons",
-      "@react-native-vector-icons/fontawesome",
-      "@react-native-community/datetimepicker"
+      "@react-native-vector-icons/fontawesome"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,7 +1,7 @@
 import { FlexText } from '@/components/FlexText';
 import { useDeezerSearch, type DeezerTrack } from '@/services/deezer';
 import { useAddMusic, useDeleteMusic } from '@/services/music';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Spinner } from 'heroui-native';

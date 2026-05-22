@@ -11,7 +11,7 @@ import CachedImage from '@/components/fprofile/CachedImage';
 import { FBPhotoList } from '@/types/localfb';
 import { Profile } from '@/types/profile';
 import { useFProfileViewModel } from '@/viewmodels/FProfileViewModel';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
