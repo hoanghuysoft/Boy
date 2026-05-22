@@ -50,7 +50,7 @@ const HomeTabs = ({ vm }: HomeTabsProps) => {
 
     return (
         <Tab.Navigator
-            tabBar={(props) => (
+            tabBar={(props : any) => (
                 <View style={{ position: 'absolute', top: vm.insets.top + vm.headerHeight, left: 0, right: 0, zIndex: 99 }}>
                     <CustomTopTabBar
                         {...props}

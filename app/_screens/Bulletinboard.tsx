@@ -6,7 +6,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from "dayjs";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { MediaViewer } from 'expo-media-viewer';
-import { Stack, router } from "expo-router";
+import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { memo, useCallback, useRef, useState } from "react";
 import { Dimensions, FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
@@ -240,8 +240,6 @@ const Bulletinboard = () => {
 
     return (
         <View style={[common.screen, { backgroundColor: colors.background }]}>
-            <Stack.Screen options={{ headerShown: false }} />
-
             <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
                 <FlatList
                     data={bulletinData?.item_list || []}

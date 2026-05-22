@@ -66,7 +66,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                     style={{ flexGrow: 0 }}
                     contentContainerStyle={{ padding: 12 }}
                 >
-                    {state.routes.map((route, index) => {
+                    {state.routes.map((route : any, index : number) => {
                         const { options } = descriptors[route.key];
                         const label = options.tabBarLabel !== undefined
                             ? options.tabBarLabel
