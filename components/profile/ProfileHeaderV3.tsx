@@ -101,7 +101,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
     return (
         <View style={styles.headerContainer}>
             {/* We omitted the top row containing back button and music pill since classic layout handles it */}
-            <View style={{ height: vm.insets.top + 12 }} />
+            <View style={{ height: vm.insets.top + 75 }} />
 
             <SquircleView borderRadius={16} cornerSmoothing={100} preserveSmoothing style={styles.coverContainer}>
                 <NitroImage

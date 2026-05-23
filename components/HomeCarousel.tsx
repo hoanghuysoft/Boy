@@ -150,12 +150,14 @@ const ColorGradientOverlay = memo(({ carouselHeight }: { carouselHeight: number 
     const { theme } = useThemeContext();
     const { width: screenWidth } = useWindowDimensions();
     const overlayHeight = carouselHeight * 0.5;
-    // Solid target colour that matches the app background (light or dark)
-    const bgColor = theme === "light" ? "rgba(255, 255, 255, 1)" : "rgba(0,0,0,1)";
+
+    // Explicitly define the 0-opacity starting colors to prevent muddy gray banding
+    const transparentColor = theme === "light" ? "rgba(246, 246, 246, 0)" : "rgba(0, 0, 0, 0)";
+    const midColor1 = theme === "light" ? "rgba(246, 246, 246, 0.2)" : "rgba(0, 0, 0, 0.2)";
+    const midColor2 = theme === "light" ? "rgba(246, 246, 246, 0.7)" : "rgba(0, 0, 0, 0.7)";
+    const solidColor = theme === "light" ? "rgba(246, 246, 246, 1)" : "rgba(0, 0, 0, 1)";
 
     return (
-        // Skia Canvas renders the gradient entirely on the GPU — no JS bridge
-        // involvement after the first paint, unlike expo-linear-gradient.
         <Canvas
             pointerEvents="none"
             style={{
@@ -170,7 +172,9 @@ const ColorGradientOverlay = memo(({ carouselHeight }: { carouselHeight: number 
                 <SkiaLinearGradient
                     start={vec(0, 0)}
                     end={vec(0, overlayHeight)}
-                    colors={["transparent", bgColor]}
+                    colors={[transparentColor, midColor1, midColor2, solidColor]}
+
+                    positions={[0, 0.6, 0.85, 1]}
                 />
             </Rect>
         </Canvas>

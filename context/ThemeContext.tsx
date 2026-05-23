@@ -40,13 +40,13 @@ type ThemeContextValue = {
 };
 
 const lightColors: ThemeColors = {
-  background: "#ffffff",
+  background: "#f6f6f6",
   text: "#0F172A",
   card: "#e0e0e2",
   tabBar: "#f1f1f3",
   tabActive: "#111827",
   tabInactive: "#000000",
-  containerContent: "#f8f9fa",
+  containerContent: "#ffffff",
   divider: "#e0e0e2",
   muted: "#888888",
   verify: "#1c94e6",

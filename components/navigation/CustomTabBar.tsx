@@ -53,7 +53,7 @@ const tabs: TabConfig[] = [
     {
         name: "profile",
         IconOutlined: GalleryWideOutline,
-        IconSolid: GalleryWideBold ,
+        IconSolid: GalleryWideBold,
     },
 ];
 
@@ -229,7 +229,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                 ]}
             >
                 <View
-                    style={[styles.tabBarContent, { backgroundColor: colors.background + "" }]}
+                    style={[styles.tabBarContent, { backgroundColor: theme == 'dark' ? colors.background + "" : colors.containerContent + "" }]}
                     onLayout={(e) => setLayout(e.nativeEvent.layout)}
                 >
                     {/* Animated Pill */}
@@ -322,14 +322,14 @@ const styles = StyleSheet.create({
         position: "absolute",
         marginHorizontal: 20,
         borderTopWidth: 0,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.12,
-        shadowRadius: 16,
-        elevation: 10,
+        // shadowColor: "#000",
+        // shadowOffset: {
+        //     width: 0,
+        //     height: 4,
+        // },
+        // shadowOpacity: 0.12,
+        // shadowRadius: 16,
+        // elevation: 10,
         bottom: 0,
         left: 0,
         right: 0,

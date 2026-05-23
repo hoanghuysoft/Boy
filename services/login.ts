@@ -48,8 +48,8 @@ export async function signInWithGoogle() {
             return getCurrentSession();
         }
     } catch (error) {
-        console.error('Sign-in error:', error);
-        return null;
+        console.warn('Sign-in error:', error);
+        throw error;
     }
 }
 

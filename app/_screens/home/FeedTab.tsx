@@ -460,7 +460,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                         tintColor={colors.text}
                         colors={[colors.text]}
                         progressBackgroundColor={colors.card}
-                        progressViewOffset={insets.top}
+                        progressViewOffset={-200}
                     />
                 }
                 onEndReached={handleEndReached}

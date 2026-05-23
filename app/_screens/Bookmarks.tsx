@@ -10,6 +10,7 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
+    FlatList,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -69,7 +70,7 @@ const BookmarksScreen = () => {
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     const renderItem = useCallback(
-        ({ item }: LegendListRenderItemProps<BookmarkedPost>) => (
+        ({ item }: { item: BookmarkedPost }) => (
             <View style={{ marginBottom: 30 }}>
                 <PostItem
                     post={item}
@@ -179,7 +180,7 @@ const BookmarksScreen = () => {
             </View>
 
             {/* Bookmarks list */}
-            <LegendList
+            <FlatList
                 data={posts}
                 keyExtractor={(item) => item.bookmark_id ?? item.id}
                 renderItem={renderItem}
@@ -191,8 +192,6 @@ const BookmarksScreen = () => {
                 showsVerticalScrollIndicator={false}
                 onRefresh={refetch}
                 refreshing={isRefetching}
-                recycleItems={true}
-                maintainVisibleContentPosition={true}
                 contentContainerStyle={
                     posts.length === 0 ? styles.emptyContainer : undefined
                 }

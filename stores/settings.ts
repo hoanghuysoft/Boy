@@ -30,8 +30,8 @@ interface SettingsStore {
     videoCacheSizeLimit: number; // in bytes
     setVideoCacheSizeLimit: (sizeBytes: number) => void;
     // Profile Design
-    profileDesign: 'classic' | 'new' | 'v3';
-    setProfileDesign: (design: 'classic' | 'new' | 'v3') => void;
+    profileDesign: 'v3' | 'classic';
+    setProfileDesign: (design: 'v3' | 'classic') => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -54,7 +54,7 @@ export const useSettingsStore = create<SettingsStore>()(
             videoCacheSizeLimit: 500 * 1024 * 1024, // Default 500 MB
             setVideoCacheSizeLimit: (sizeBytes) => set({ videoCacheSizeLimit: sizeBytes }),
             // Profile Design
-            profileDesign: 'classic',
+            profileDesign: 'v3',
             setProfileDesign: (design) => set({ profileDesign: design }),
         }),
         {

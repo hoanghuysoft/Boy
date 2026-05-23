@@ -6,7 +6,7 @@ import type { PostOptionsSheetHandle } from "@/components/post/PostOptionsSheet"
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated } from "react-native";
+import { Animated, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../context/ThemeContext";
 import { useProfile } from "../services/userprofile";
@@ -21,6 +21,7 @@ export const useHomeViewModel = () => {
   const { colors, typography, theme } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const insets = useSafeAreaInsets();
+  const blurTargetRef = useRef<View | null>(null);
 
   // ─── Current User Profile ──────────────────────────────────────
   const { data: myProfile } = useProfile("me", true);
@@ -210,6 +211,7 @@ export const useHomeViewModel = () => {
     headerHeight: HEADER_HEIGHT,
     tabsHeight: TABS_HEIGHT,
     totalHeaderHeight,
+    blurTargetRef,
 
     // Profile
     myProfile,
