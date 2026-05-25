@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "./client";
 
 import { Profile } from "@/types/profile";
@@ -65,5 +65,21 @@ export const useAdminCheck = () => {
         queryKey: ['admin-check'],
         queryFn: checkAdmin,
         retry: false,
+    });
+};
+
+export const updateProfile = async (id: string, data: any) => {
+    const response = await client.put(`/api/profiles/${id}`, data);
+    return response.data;
+};
+
+export const useUpdateProfile = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) => updateProfile(id, data),
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['profile', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
+        }
     });
 };

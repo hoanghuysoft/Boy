@@ -36,6 +36,7 @@ interface ProfileHeaderV3Props {
     onTabChange: (tab: TabType) => void;
     profile?: ProfileDetail | null;
     isMe?: boolean;
+    isOwner?: boolean;
     musicSheetRef?: React.RefObject<TrueSheet | null>;
     socialSheetRef?: React.RefObject<TrueSheet | null>;
     addressSheetRef?: React.RefObject<TrueSheet | null>;
@@ -70,6 +71,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
     videoCount = 0,
     postCount = 0,
     isMe = false,
+    isOwner = false,
     music = [], // Need this for VM to not crash if accessed
 }) => {
     const { t } = useTranslation();
@@ -120,8 +122,19 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                         <NotesBold color={vm.colors.text} size={34} />
                     </Button>
                     <SquircleView borderRadius={999} cornerSmoothing={100} preserveSmoothing style={styles.editButton}>
-                        <TouchableOpacity>
-                            <FlexText style={{ color: '#fff', fontWeight: "bold", fontSize: 16 }}>{t("profile.header.actions.addLove")}</FlexText>
+                        <TouchableOpacity onPress={() => {
+                            if (isOwner) {
+                                router.push({
+                                    pathname: '/profile/edit-profile',
+                                    params: { id: profile?.id || 'me' }
+                                });
+                            } else {
+                                // Add love action
+                            }
+                        }}>
+                            <FlexText style={{ color: '#fff', fontWeight: "bold", fontSize: 16 }}>
+                                {isOwner ? t('profile.header.actions.editProfile', 'Edit Profile') : t("profile.header.actions.addLove")}
+                            </FlexText>
                         </TouchableOpacity>
                     </SquircleView>
                 </View>

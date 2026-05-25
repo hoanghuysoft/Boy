@@ -34,6 +34,7 @@ interface ProfileHeaderProps {
   tabContent?: React.ReactNode;
   profile?: ProfileDetail | null;
   isMe?: boolean;
+  isOwner?: boolean;
   musicSheetRef?: React.RefObject<TrueSheet | null>;
   socialSheetRef?: React.RefObject<TrueSheet | null>;
   addressSheetRef?: React.RefObject<TrueSheet | null>;
@@ -73,6 +74,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
   videoCount = 0,
   postCount = 0,
   isMe = false,
+  isOwner = false,
 }) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -125,7 +127,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
               <FlexText style={[vm.common.bodySmall, headerStyles.bioText]}>{profile.bio}</FlexText>
             )}
 
-            <ActionButtonsSection vm={vm} onKnowMe={() => briefSheetRef?.current?.present()} />
+            <ActionButtonsSection vm={vm} isOwner={isOwner} onKnowMe={() => briefSheetRef?.current?.present()} />
 
             {profile && (
               <FamilyStackSection

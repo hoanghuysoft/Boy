@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { Animated, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
 import { NitroImage } from 'react-native-nitro-image';
+import { useRouter } from 'expo-router';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 
 import { ProfileDetail } from '../../../types/profiledetail';
 import { getFamilyAvatarSource } from '../../../utils/familyAvatar';
@@ -141,15 +143,32 @@ export const IdentitySection = ({
   );
 };
 
-export const ActionButtonsSection = ({ vm, onKnowMe }: { vm: any; onKnowMe?: () => void }) => {
+export const ActionButtonsSection = ({ vm, isOwner, onKnowMe }: { vm: any; isOwner?: boolean; onKnowMe?: () => void }) => {
   const { t } = useTranslation();
+  const router = useRouter();
+
+  const handleBlueButtonPress = () => {
+    if (isOwner) {
+      router.push({
+        pathname: '/profile/edit-profile',
+        params: { id: vm.profile?.id || 'me' }
+      });
+    } else {
+      // Show add love action
+    }
+  };
+
   return (
     <View style={headerStyles.actionRow}>
       <SquircleView cornerSmoothing={60} preserveSmoothing borderRadius={10} style={[headerStyles.actionCard, { backgroundColor: FACEBOOK_BLUE }]}>
-        <TouchableOpacity style={headerStyles.actionButton}>
-          <HeartAngleBold size={22} color="#fff" />
+        <TouchableOpacity onPress={handleBlueButtonPress} style={headerStyles.actionButton}>
+          {isOwner ? (
+            <Ionicons name="pencil-outline" size={20} color="#fff" style={{ marginRight: 6 }} />
+          ) : (
+            <HeartAngleBold size={22} color="#fff" />
+          )}
           <FlexText style={[headerStyles.actionLabel, { color: '#fff' }]}>
-            {t('profile.header.actions.addLove')}
+            {isOwner ? t('profile.header.actions.editProfile', 'Edit Profile') : t('profile.header.actions.addLove')}
           </FlexText>
         </TouchableOpacity>
       </SquircleView>

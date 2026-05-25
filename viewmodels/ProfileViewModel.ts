@@ -1,6 +1,6 @@
-import { choosenMediaPath } from "@/utils/imageurl";
 import type { PostOptionsSheetHandle } from "@/components/post/PostOptionsSheet";
 import type { LikersSheetHandle } from "@/types/sheetHandles";
+import { choosenMediaPath } from "@/utils/imageurl";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,10 +26,11 @@ export const useProfileViewModel = () => {
     const router = useRouter();
     const params = useLocalSearchParams();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    
+
     // Fetch current user's profile to robustly check if viewing own profile
     const { data: myProfile } = useProfile('me', true);
     const isMe = params.isMe === 'true' || id === 'me' || !id || (!!myProfile?.id && id === myProfile.id);
+    const isOwner = isMe || !!myProfile?.is_admin;
 
     const blurTargetRef = useRef<View | null>(null);
 
@@ -51,7 +52,7 @@ export const useProfileViewModel = () => {
     // ─── State ─────────────────────────────────────────────────────
     const profileDesign = useSettingsStore(s => s.profileDesign);
     const defaultTab: TabType = profileDesign === 'v3' ? 'Feed' : 'Images';
-    
+
     const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab);
     const [activeTab, setActiveTab] = useState<TabType>(defaultTab);
     const [showScrollTop, setShowScrollTop] = useState(false);
@@ -232,7 +233,7 @@ export const useProfileViewModel = () => {
     const handleTabChange = useCallback((tab: TabType) => {
         if (tab === selectedTab) return;
         scrollPositions.current[selectedTab] = currentScrollY.current;
-        
+
         // Update UI immediately (makes the button press feel instant)
         setSelectedTab(tab);
 
@@ -377,6 +378,7 @@ export const useProfileViewModel = () => {
         // Navigation
         router,
         isMe,
+        isOwner,
 
         // Refs
         listRef,

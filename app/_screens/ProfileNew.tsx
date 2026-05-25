@@ -84,6 +84,7 @@ type ProfileHeaderProps = {
     socialSheetRef: React.RefObject<TrueSheet | null>;
     addressSheetRef: React.RefObject<TrueSheet | null>;
     workplaceSheetRef: React.RefObject<TrueSheet | null>;
+    isOwner: boolean;
 };
 
 const ProfileHeader = React.memo(({
@@ -110,6 +111,7 @@ const ProfileHeader = React.memo(({
     socialSheetRef,
     addressSheetRef,
     workplaceSheetRef,
+    isOwner,
 }: ProfileHeaderProps) => {
 
     return (
@@ -150,8 +152,19 @@ const ProfileHeader = React.memo(({
                         <NotesBold color={colors.text} size={34} />
                     </Button>
                     <SquircleView borderRadius={999} cornerSmoothing={100} preserveSmoothing style={styles.editButton}>
-                        <TouchableOpacity>
-                            <FlexText style={{ color: '#fff', fontWeight: "bold", fontSize: 16 }}>{t("profile.header.actions.addLove")}</FlexText>
+                        <TouchableOpacity onPress={() => {
+                            if (isOwner) {
+                                router.push({
+                                    pathname: '/profile/edit-profile',
+                                    params: { id: profile?.id || 'me' }
+                                });
+                            } else {
+                                // Add love action
+                            }
+                        }}>
+                            <FlexText style={{ color: '#fff', fontWeight: "bold", fontSize: 16 }}>
+                                {isOwner ? t('profile.header.actions.editProfile', 'Edit Profile') : t("profile.header.actions.addLove")}
+                            </FlexText>
                         </TouchableOpacity>
                     </SquircleView>
                 </View>
@@ -294,7 +307,11 @@ const ProfileNew = () => {
     }, []);
     const params = useLocalSearchParams();
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    const isMe = params.isMe === 'true';
+    
+    // Fetch current user's profile to robustly check if viewing own profile
+    const { data: myProfile } = useProfile('me', true);
+    const isMe = params.isMe === 'true' || id === 'me' || !id || (!!myProfile?.id && id === myProfile.id);
+    const isOwner = isMe || !!myProfile?.is_admin;
 
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -438,9 +455,10 @@ const ProfileNew = () => {
                 socialSheetRef={socialSheetRef}
                 addressSheetRef={addressSheetRef}
                 workplaceSheetRef={workplaceSheetRef}
+                isOwner={isOwner}
             />
         );
-    }, [profile, colors, common, insets, postCount, imageCount, videoCount, isMusicPlaying, hasMusic, currentTrack, handleMusicPress, flagCode, t, router, socialLinks, addresses, workplaces]);
+    }, [profile, colors, common, insets, postCount, imageCount, videoCount, isMusicPlaying, hasMusic, currentTrack, handleMusicPress, flagCode, t, router, socialLinks, addresses, workplaces, isOwner]);
 
     const renderPostItem = useCallback(({ item }: { item: any }) => (
         <PostItem
@@ -716,7 +734,7 @@ const ProfileNew = () => {
                 ref={musicSheetRef}
                 data={music}
                 profileId={profileId}
-                isOwner={isMe}
+                isOwner={isOwner}
             />
             <RelationshipSheet
                 ref={familySheetRef}
@@ -725,14 +743,20 @@ const ProfileNew = () => {
             <SocialSheet
                 ref={socialSheetRef}
                 data={socialLinks}
+                profileId={profileId}
+                isOwner={isOwner}
             />
             <AddressSheet
                 ref={addressSheetRef}
                 data={addresses}
+                profileId={profileId}
+                isOwner={isOwner}
             />
             <WorkplaceSheet
                 ref={workplaceSheetRef}
                 data={workplaces}
+                profileId={profileId}
+                isOwner={isOwner}
             />
         </View>
     );

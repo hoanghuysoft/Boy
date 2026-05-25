@@ -185,6 +185,7 @@ const ProfileContent = () => {
       onTabChange={vm.stableTabChange}
       profile={vm.profile}
       isMe={vm.isMe}
+      isOwner={vm.isOwner}
       musicSheetRef={vm.musicSheetRef}
       socialSheetRef={vm.socialSheetRef}
       addressSheetRef={vm.addressSheetRef}
@@ -470,26 +471,33 @@ const ProfileContent = () => {
           {t("profile.errors.failedToLoadProfile")}
         </Snackbar>
 
+
         <MusicSheet
           ref={vm.musicSheetRef}
           data={vm.music}
           profileId={vm.profile?.id}
           onEndReached={vm.handleMusicEndReached}
-          isOwner={vm.isMe}
+          isOwner={vm.isOwner}
         />
         <SocialSheet
           ref={vm.socialSheetRef}
           data={vm.socialLinks}
+          profileId={vm.profile?.id}
+          isOwner={vm.isOwner}
           onEndReached={vm.handleSocialEndReached}
         />
         <AddressSheet
           ref={vm.addressSheetRef}
           data={vm.addresses}
+          profileId={vm.profile?.id}
+          isOwner={vm.isOwner}
           onEndReached={vm.handleAddressesEndReached}
         />
         <WorkplaceSheet
           ref={vm.workplaceSheetRef}
           data={vm.workplaces}
+          profileId={vm.profile?.id}
+          isOwner={vm.isOwner}
           onEndReached={vm.handleWorkplacesEndReached}
         />
         <RelationshipSheet
