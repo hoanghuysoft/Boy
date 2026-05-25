@@ -14,6 +14,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { client } from "./client";
+import { socialLinkKeys } from "./queryKeys";
 
 // ============================================================================
 // Types
@@ -120,15 +121,36 @@ export const deleteSocialLink = async ({
 };
 
 // ============================================================================
+// Infinite query helper — pages updater
+// ============================================================================
+
+type InfiniteData = { pages: SocialLinkResponse[]; pageParams: any[] };
+
+const patchPages = (
+    old: InfiniteData | undefined,
+    updater: (items: ProfileLink[]) => ProfileLink[]
+): InfiniteData | undefined => {
+    if (!old) return old;
+    return {
+        ...old,
+        pages: old.pages.map((page) => ({
+            ...page,
+            data: updater(page.data),
+        })),
+    };
+};
+
+// ============================================================================
 // React Query Hooks
 // ============================================================================
 
 /**
  * Hook for fetching profile social links (infinite scroll)
+ * staleTime: 2 min — social links rarely change mid-session.
  */
 export const useInfiniteSocialLinks = (profileId: string) => {
     return useInfiniteQuery({
-        queryKey: ["social-links", profileId],
+        queryKey: socialLinkKeys.all(profileId),
         queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
             getSocialLinks({ profileId, pageParam }),
         initialPageParam: undefined as string | undefined,
@@ -137,62 +159,120 @@ export const useInfiniteSocialLinks = (profileId: string) => {
                 ? lastPage.pagination.nextCursor ?? undefined
                 : undefined,
         enabled: !!profileId,
+        staleTime: 2 * 60 * 1000,
     });
 };
 
 /**
- * Hook to add a social link to a profile's list
+ * Hook to add a social link — optimistically inserts a placeholder item
+ * and replaces it with the real item on success.
  */
 export const useAddSocialLink = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = socialLinkKeys.all(profileId);
 
     return useMutation({
         mutationFn: ({ platform, url, label }: Omit<AddSocialLinkPayload, 'profileId'>) =>
             addSocialLink({ profileId, platform, url, label }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["social-links", profileId] });
+
+        onMutate: async ({ platform, url, label }) => {
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteData>(qk);
+
+            // Optimistic placeholder — server will replace with real item
+            const optimistic: ProfileLink = {
+                id: `temp-${Date.now()}`,
+                profile_id: profileId,
+                platform,
+                url,
+                label: label ?? null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            } as ProfileLink;
+
+            queryClient.setQueryData<InfiniteData>(qk, (old) =>
+                patchPages(old, (items) => [...items, optimistic])
+            );
+
+            return { previous, optimisticId: optimistic.id };
+        },
+
+        onError: (_err, _vars, context) => {
+            if (context?.previous) queryClient.setQueryData(qk, context.previous);
+        },
+
+        onSuccess: (result, _vars, context) => {
+            // Replace temp placeholder with real server item
+            queryClient.setQueryData<InfiniteData>(qk, (old) =>
+                patchPages(old, (items) =>
+                    items.map((item) =>
+                        item.id === context?.optimisticId ? result.data : item
+                    )
+                )
+            );
+        },
+
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };
 
 /**
- * Hook to update a social link on a profile's list
+ * Hook to update a social link — optimistically patches in-place
  */
 export const useUpdateSocialLink = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = socialLinkKeys.all(profileId);
 
     return useMutation({
         mutationFn: ({ linkId, platform, url, label }: Omit<UpdateSocialLinkPayload, 'profileId'>) =>
             updateSocialLink({ profileId, linkId, platform, url, label }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["social-links", profileId] });
+
+        onMutate: async ({ linkId, platform, url, label }) => {
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteData>(qk);
+
+            queryClient.setQueryData<InfiniteData>(qk, (old) =>
+                patchPages(old, (items) =>
+                    items.map((item) =>
+                        item.id === linkId ? { ...item, platform, url, label: label ?? null } : item
+                    )
+                )
+            );
+
+            return { previous };
+        },
+
+        onError: (_err, _vars, context) => {
+            if (context?.previous) queryClient.setQueryData(qk, context.previous);
+        },
+
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };
 
 /**
- * Hook to delete a social link from a profile's list
- * Performs optimistic removal so the UI updates instantly
+ * Hook to delete a social link — optimistically removes from all pages
  */
 export const useDeleteSocialLink = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = socialLinkKeys.all(profileId);
 
     return useMutation({
-        mutationFn: (linkId: string) =>
-            deleteSocialLink({ profileId, linkId }),
+        mutationFn: (linkId: string) => deleteSocialLink({ profileId, linkId }),
+
         onMutate: async (linkId: string) => {
-            // Cancel in-flight queries
-            await queryClient.cancelQueries({ queryKey: ["social-links", profileId] });
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteData>(qk);
 
-            // Snapshot current data for rollback
-            const previous = queryClient.getQueryData(["social-links", profileId]);
-
-            // Optimistically remove the link from all pages
-            queryClient.setQueryData(["social-links", profileId], (old: any) => {
+            queryClient.setQueryData<InfiniteData>(qk, (old) => {
                 if (!old) return old;
                 return {
                     ...old,
-                    pages: old.pages.map((page: SocialLinkResponse) => ({
+                    pages: old.pages.map((page) => ({
                         ...page,
                         data: page.data.filter((item) => item.id !== linkId),
                         pagination: {
@@ -205,14 +285,13 @@ export const useDeleteSocialLink = (profileId: string) => {
 
             return { previous };
         },
+
         onError: (_err, _linkId, context) => {
-            // Roll back on error
-            if (context?.previous) {
-                queryClient.setQueryData(["social-links", profileId], context.previous);
-            }
+            if (context?.previous) queryClient.setQueryData(qk, context.previous);
         },
+
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["social-links", profileId] });
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };

@@ -7,6 +7,7 @@ import {
 } from '@/types/note';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
+import { noteKeys } from './queryKeys';
 
 // ============================================================================
 // API Functions
@@ -65,10 +66,12 @@ export const deleteNote = async (id: number): Promise<DeleteNoteResponse> => {
  */
 export const useNotes = (limit: number = 20) => {
     return useInfiniteQuery({
-        queryKey: ['notes'],
+        // limit is included in the key so different limits get separate caches
+        queryKey: noteKeys.list(limit),
         queryFn: ({ pageParam }) => getNotes(limit, pageParam),
         getNextPageParam: (lastPage) => lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor : undefined,
         initialPageParam: undefined as string | undefined,
+        staleTime: 60 * 1000, // 1 min
     });
 };
 
@@ -77,8 +80,9 @@ export const useNotes = (limit: number = 20) => {
  */
 export const useNote = (id: number) => {
     return useQuery({
-        queryKey: ['note', id],
+        queryKey: noteKeys.detail(id),
         queryFn: () => getNote(id),
+        staleTime: 2 * 60 * 1000,
     });
 };
 
@@ -91,7 +95,7 @@ export const useCreateNote = () => {
     return useMutation({
         mutationFn: (data: CreateNoteInput) => createNote(data),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['notes'] });
+            queryClient.invalidateQueries({ queryKey: noteKeys.all });
         },
     });
 };
@@ -104,9 +108,10 @@ export const useUpdateNote = () => {
 
     return useMutation({
         mutationFn: ({ id, data }: { id: number; data: UpdateNoteInput }) => updateNote(id, data),
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['notes'] });
-            queryClient.invalidateQueries({ queryKey: ['note', variables.id] });
+        onSuccess: (result, variables) => {
+            // Update the detail cache immediately with server result
+            queryClient.setQueryData(noteKeys.detail(variables.id), result);
+            queryClient.invalidateQueries({ queryKey: noteKeys.all });
         },
     });
 };
@@ -119,9 +124,28 @@ export const useDeleteNote = () => {
 
     return useMutation({
         mutationFn: (id: number) => deleteNote(id),
-        onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: ['notes'] });
-            queryClient.invalidateQueries({ queryKey: ['note', id] });
+        onMutate: async (id: number) => {
+            await queryClient.cancelQueries({ queryKey: noteKeys.all });
+            const previous = queryClient.getQueryData(noteKeys.all);
+            // Optimistically remove the note from all pages
+            queryClient.setQueryData(noteKeys.all, (old: any) => {
+                if (!old?.pages) return old;
+                return {
+                    ...old,
+                    pages: old.pages.map((page: any) => ({
+                        ...page,
+                        data: page.data.filter((n: any) => n.id !== id),
+                    })),
+                };
+            });
+            return { previous };
+        },
+        onError: (_err, _id, context) => {
+            if (context?.previous) queryClient.setQueryData(noteKeys.all, context.previous);
+        },
+        onSettled: (_, _err, id) => {
+            queryClient.invalidateQueries({ queryKey: noteKeys.all });
+            queryClient.removeQueries({ queryKey: noteKeys.detail(id) });
         },
     });
 };

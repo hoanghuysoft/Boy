@@ -79,6 +79,18 @@
       "skillPath": "skills/react-native-best-practices/SKILL.md",
       "computedHash": "f113938fa59e811e434aa48d4eb459fd492ae8e5babe46e881a16d683b42c8fe"
     },
+    "tanstack-integration-best-practices": {
+      "source": "DeckardGer/tanstack-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tanstack-integration/SKILL.md",
+      "computedHash": "0f11ea063af78a5d15eaff234ec45c2e73f1dcc172fc8186ecc9d8c3f501f1f5"
+    },
+    "tanstack-query-best-practices": {
+      "source": "DeckardGer/tanstack-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tanstack-query/SKILL.md",
+      "computedHash": "addf4358803d7746f7fe0475a3370d835775217e00dd5fc7bbd8a7d6c53d81e5"
+    },
     "truesheet-usage": {
       "source": "lodev09/react-native-true-sheet",
       "sourceType": "github",

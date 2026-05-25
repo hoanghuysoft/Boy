@@ -2,8 +2,8 @@
  * Workplace service
  * Endpoints:
  *   GET  /api/profiles/[id]/workplaces                 - List profile workplaces (paginated)
- *   POST /api/profiles/[id]/workplaces                 - Add a workplace (company_name, position, location, start_date, end_date, description)
- *   PUT  /api/profiles/[id]/workplaces/[workplaceId]   - Update a workplace (company_name, position, location, start_date, end_date, description)
+ *   POST /api/profiles/[id]/workplaces                 - Add a workplace
+ *   PUT  /api/profiles/[id]/workplaces/[workplaceId]   - Update a workplace
  *   DELETE /api/profiles/[id]/workplaces/[workplaceId] - Remove a workplace
  */
 
@@ -14,6 +14,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { client } from "./client";
+import { workplaceKeys } from "./queryKeys";
 
 // ============================================================================
 // Types
@@ -59,9 +60,6 @@ export interface DeleteWorkplacePayload {
 // API Functions
 // ============================================================================
 
-/**
- * Fetch paginated workplaces for a profile
- */
 export const getWorkplaces = async ({
     profileId,
     pageParam,
@@ -71,7 +69,6 @@ export const getWorkplaces = async ({
 }): Promise<WorkplaceResponse> => {
     const params: Record<string, any> = { limit: 50 };
     if (pageParam) params.cursor = pageParam;
-
     const response = await client.get<WorkplaceResponse>(
         `/api/profiles/${profileId}/workplaces`,
         { params }
@@ -79,56 +76,35 @@ export const getWorkplaces = async ({
     return response.data;
 };
 
-/**
- * Legacy function for backward compatibility
- */
+/** Legacy function for backward compatibility */
 export const getWorkplace = async (id: string) => {
     const response = await client.get(`/api/profiles/${id}/workplaces`);
     return response.data.data;
 };
 
-/**
- * Add a new workplace to a profile
- */
 export const addWorkplace = async ({
     profileId,
-    company_name,
-    position,
-    location,
-    start_date,
-    end_date,
-    description,
+    ...rest
 }: AddWorkplacePayload): Promise<{ data: Workplace }> => {
     const response = await client.post<{ data: Workplace }>(
         `/api/profiles/${profileId}/workplaces`,
-        { company_name, position, location, start_date, end_date, description }
+        rest
     );
     return response.data;
 };
 
-/**
- * Update a workplace on a profile
- */
 export const updateWorkplace = async ({
     profileId,
     workplaceId,
-    company_name,
-    position,
-    location,
-    start_date,
-    end_date,
-    description,
+    ...rest
 }: UpdateWorkplacePayload): Promise<{ data: Workplace }> => {
     const response = await client.put<{ data: Workplace }>(
         `/api/profiles/${profileId}/workplaces/${workplaceId}`,
-        { company_name, position, location, start_date, end_date, description }
+        rest
     );
     return response.data;
 };
 
-/**
- * Remove a workplace from a profile
- */
 export const deleteWorkplace = async ({
     profileId,
     workplaceId,
@@ -140,15 +116,32 @@ export const deleteWorkplace = async ({
 };
 
 // ============================================================================
+// Infinite query helper
+// ============================================================================
+
+type InfiniteData = { pages: WorkplaceResponse[]; pageParams: any[] };
+
+const patchPages = (
+    old: InfiniteData | undefined,
+    updater: (items: Workplace[]) => Workplace[]
+): InfiniteData | undefined => {
+    if (!old) return old;
+    return {
+        ...old,
+        pages: old.pages.map((page) => ({ ...page, data: updater(page.data) })),
+    };
+};
+
+// ============================================================================
 // React Query Hooks
 // ============================================================================
 
 /**
- * Hook for fetching profile workplaces (infinite scroll)
+ * staleTime: 2 min — workplaces rarely change mid-session.
  */
 export const useInfiniteWorkplaces = (profileId: string) => {
     return useInfiniteQuery({
-        queryKey: ["workplaces", profileId],
+        queryKey: workplaceKeys.all(profileId),
         queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
             getWorkplaces({ profileId, pageParam }),
         initialPageParam: undefined as string | undefined,
@@ -157,62 +150,115 @@ export const useInfiniteWorkplaces = (profileId: string) => {
                 ? lastPage.pagination.nextCursor ?? undefined
                 : undefined,
         enabled: !!profileId,
+        staleTime: 2 * 60 * 1000,
     });
 };
 
 /**
- * Hook to add a workplace to a profile's list
+ * Optimistically inserts a placeholder, replaces with real item on success.
  */
 export const useAddWorkplace = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = workplaceKeys.all(profileId);
 
     return useMutation({
         mutationFn: (payload: Omit<AddWorkplacePayload, 'profileId'>) =>
             addWorkplace({ profileId, ...payload }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["workplaces", profileId] });
+
+        onMutate: async (payload) => {
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteData>(qk);
+
+            const optimistic: Workplace = {
+                id: `temp-${Date.now()}`,
+                profile_id: profileId,
+                ...payload,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            } as Workplace;
+
+            queryClient.setQueryData<InfiniteData>(qk, (old) =>
+                patchPages(old, (items) => [...items, optimistic])
+            );
+
+            return { previous, optimisticId: optimistic.id };
+        },
+
+        onError: (_err, _vars, context) => {
+            if (context?.previous) queryClient.setQueryData(qk, context.previous);
+        },
+
+        onSuccess: (result, _vars, context) => {
+            queryClient.setQueryData<InfiniteData>(qk, (old) =>
+                patchPages(old, (items) =>
+                    items.map((item) =>
+                        item.id === context?.optimisticId ? result.data : item
+                    )
+                )
+            );
+        },
+
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };
 
 /**
- * Hook to update a workplace on a profile's list
+ * Optimistically patches the workplace in-place.
  */
 export const useUpdateWorkplace = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = workplaceKeys.all(profileId);
 
     return useMutation({
         mutationFn: ({ workplaceId, ...payload }: Omit<UpdateWorkplacePayload, 'profileId'>) =>
             updateWorkplace({ profileId, workplaceId, ...payload }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["workplaces", profileId] });
+
+        onMutate: async ({ workplaceId, ...payload }) => {
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteData>(qk);
+
+            queryClient.setQueryData<InfiniteData>(qk, (old) =>
+                patchPages(old, (items) =>
+                    items.map((item) =>
+                        item.id === workplaceId ? { ...item, ...payload } : item
+                    )
+                )
+            );
+
+            return { previous };
+        },
+
+        onError: (_err, _vars, context) => {
+            if (context?.previous) queryClient.setQueryData(qk, context.previous);
+        },
+
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };
 
 /**
- * Hook to delete a workplace from a profile's list
- * Performs optimistic removal so the UI updates instantly
+ * Optimistically removes the workplace from all pages.
  */
 export const useDeleteWorkplace = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = workplaceKeys.all(profileId);
 
     return useMutation({
-        mutationFn: (workplaceId: string) =>
-            deleteWorkplace({ profileId, workplaceId }),
+        mutationFn: (workplaceId: string) => deleteWorkplace({ profileId, workplaceId }),
+
         onMutate: async (workplaceId: string) => {
-            // Cancel in-flight queries
-            await queryClient.cancelQueries({ queryKey: ["workplaces", profileId] });
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteData>(qk);
 
-            // Snapshot current data for rollback
-            const previous = queryClient.getQueryData(["workplaces", profileId]);
-
-            // Optimistically remove the workplace from all pages
-            queryClient.setQueryData(["workplaces", profileId], (old: any) => {
+            queryClient.setQueryData<InfiniteData>(qk, (old) => {
                 if (!old) return old;
                 return {
                     ...old,
-                    pages: old.pages.map((page: WorkplaceResponse) => ({
+                    pages: old.pages.map((page) => ({
                         ...page,
                         data: page.data.filter((item) => item.id !== workplaceId),
                         pagination: {
@@ -225,14 +271,13 @@ export const useDeleteWorkplace = (profileId: string) => {
 
             return { previous };
         },
+
         onError: (_err, _workplaceId, context) => {
-            // Roll back on error
-            if (context?.previous) {
-                queryClient.setQueryData(["workplaces", profileId], context.previous);
-            }
+            if (context?.previous) queryClient.setQueryData(qk, context.previous);
         },
+
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["workplaces", profileId] });
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };

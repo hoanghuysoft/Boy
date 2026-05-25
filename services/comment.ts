@@ -8,6 +8,7 @@
 import { Comment, CommentResponse, CreateCommentInput, UpdateCommentInput } from '@/types/comment';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
+import { commentKeys } from './queryKeys';
 
 // ============================================================================
 // API Functions
@@ -131,12 +132,13 @@ const patchCommentCountInFeedCaches = (
  */
 export const useComments = (postId: string | undefined) => {
     return useInfiniteQuery({
-        queryKey: ['comments', postId],
+        queryKey: commentKeys.list(postId!),
         queryFn: ({ pageParam }) => getComments({ postId: postId!, pageParam }),
         getNextPageParam: (lastPage) =>
             lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor ?? undefined : undefined,
         initialPageParam: undefined as string | undefined,
         enabled: !!postId,
+        staleTime: 30 * 1000, // 30s — comments change frequently
     });
 };
 
@@ -149,12 +151,13 @@ export const useCreateComment = (postId: string) => {
     return useMutation({
         mutationFn: (data: CreateCommentInput) => createComment(postId, data),
         onMutate: async () => {
+            // Cancel in-flight refetches so they don't overwrite the optimistic update
+            await queryClient.cancelQueries({ queryKey: commentKeys.list(postId) });
             // Optimistically increment comment count in feed caches
             patchCommentCountInFeedCaches(queryClient, postId, +1);
         },
         onSuccess: () => {
-            // Refetch the comments list to show the new comment
-            queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+            queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
         },
         onError: () => {
             // Roll back the optimistic increment
@@ -172,8 +175,29 @@ export const useUpdateComment = (postId: string) => {
     return useMutation({
         mutationFn: ({ commentId, data }: { commentId: string; data: UpdateCommentInput }) =>
             updateComment(postId, commentId, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+        onMutate: async ({ commentId, data }) => {
+            await queryClient.cancelQueries({ queryKey: commentKeys.list(postId) });
+            const previous = queryClient.getQueryData(commentKeys.list(postId));
+            // Optimistically patch the comment text in the list cache
+            queryClient.setQueryData(commentKeys.list(postId), (old: any) => {
+                if (!old?.pages) return old;
+                return {
+                    ...old,
+                    pages: old.pages.map((page: any) => ({
+                        ...page,
+                        data: page.data.map((c: Comment) =>
+                            c.id === commentId ? { ...c, ...data } : c
+                        ),
+                    })),
+                };
+            });
+            return { previous };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previous) queryClient.setQueryData(commentKeys.list(postId), context.previous);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
         },
     });
 };
@@ -186,15 +210,29 @@ export const useDeleteComment = (postId: string) => {
 
     return useMutation({
         mutationFn: (commentId: string) => deleteComment(postId, commentId),
-        onMutate: async () => {
+        onMutate: async (commentId: string) => {
+            await queryClient.cancelQueries({ queryKey: commentKeys.list(postId) });
+            const previousList = queryClient.getQueryData(commentKeys.list(postId));
+            // Optimistically remove from list
+            queryClient.setQueryData(commentKeys.list(postId), (old: any) => {
+                if (!old?.pages) return old;
+                return {
+                    ...old,
+                    pages: old.pages.map((page: any) => ({
+                        ...page,
+                        data: page.data.filter((c: Comment) => c.id !== commentId),
+                    })),
+                };
+            });
             // Optimistically decrement comment count in feed caches
             patchCommentCountInFeedCaches(queryClient, postId, -1);
+            return { previousList };
         },
         onSuccess: () => {
-            // Refetch the comments list to reflect the deletion
-            queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+            queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
         },
-        onError: () => {
+        onError: (_err, _commentId, context) => {
+            if (context?.previousList) queryClient.setQueryData(commentKeys.list(postId), context.previousList);
             // Roll back the optimistic decrement
             patchCommentCountInFeedCaches(queryClient, postId, +1);
         },

@@ -2,8 +2,8 @@
  * Address service
  * Endpoints:
  *   GET  /api/profiles/[id]/addresses                  - List profile addresses (paginated)
- *   POST /api/profiles/[id]/addresses                  - Add an address (label, street, city, state, postal_code, country, is_primary)
- *   PUT  /api/profiles/[id]/addresses/[addressId]      - Update an address (label, street, city, state, postal_code, country, is_primary)
+ *   POST /api/profiles/[id]/addresses                  - Add an address
+ *   PUT  /api/profiles/[id]/addresses/[addressId]      - Update an address
  *   DELETE /api/profiles/[id]/addresses/[addressId]    - Remove an address
  */
 
@@ -14,6 +14,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { client } from "./client";
+import { addressKeys } from "./queryKeys";
 
 // ============================================================================
 // Types
@@ -61,9 +62,6 @@ export interface DeleteAddressPayload {
 // API Functions
 // ============================================================================
 
-/**
- * Fetch paginated addresses for a profile
- */
 export const getAddresses = async ({
     profileId,
     pageParam,
@@ -73,7 +71,6 @@ export const getAddresses = async ({
 }): Promise<AddressResponse> => {
     const params: Record<string, any> = { limit: 50 };
     if (pageParam) params.cursor = pageParam;
-
     const response = await client.get<AddressResponse>(
         `/api/profiles/${profileId}/addresses`,
         { params }
@@ -81,50 +78,29 @@ export const getAddresses = async ({
     return response.data;
 };
 
-/**
- * Add a new address to a profile
- */
 export const addAddress = async ({
     profileId,
-    label,
-    street,
-    city,
-    state,
-    postal_code,
-    country,
-    is_primary,
+    ...rest
 }: AddAddressPayload): Promise<{ data: ProfileAddress }> => {
     const response = await client.post<{ data: ProfileAddress }>(
         `/api/profiles/${profileId}/addresses`,
-        { label, street, city, state, postal_code, country, is_primary }
+        rest
     );
     return response.data;
 };
 
-/**
- * Update an address on a profile
- */
 export const updateAddress = async ({
     profileId,
     addressId,
-    label,
-    street,
-    city,
-    state,
-    postal_code,
-    country,
-    is_primary,
+    ...rest
 }: UpdateAddressPayload): Promise<{ data: ProfileAddress }> => {
     const response = await client.put<{ data: ProfileAddress }>(
         `/api/profiles/${profileId}/addresses/${addressId}`,
-        { label, street, city, state, postal_code, country, is_primary }
+        rest
     );
     return response.data;
 };
 
-/**
- * Remove an address from a profile
- */
 export const deleteAddress = async ({
     profileId,
     addressId,
@@ -136,15 +112,32 @@ export const deleteAddress = async ({
 };
 
 // ============================================================================
+// Infinite query helper
+// ============================================================================
+
+type InfiniteData = { pages: AddressResponse[]; pageParams: any[] };
+
+const patchPages = (
+    old: InfiniteData | undefined,
+    updater: (items: ProfileAddress[]) => ProfileAddress[]
+): InfiniteData | undefined => {
+    if (!old) return old;
+    return {
+        ...old,
+        pages: old.pages.map((page) => ({ ...page, data: updater(page.data) })),
+    };
+};
+
+// ============================================================================
 // React Query Hooks
 // ============================================================================
 
 /**
- * Hook for fetching profile addresses (infinite scroll)
+ * staleTime: 2 min — addresses rarely change mid-session.
  */
 export const useInfiniteAddresses = (profileId: string) => {
     return useInfiniteQuery({
-        queryKey: ["addresses", profileId],
+        queryKey: addressKeys.all(profileId),
         queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
             getAddresses({ profileId, pageParam }),
         initialPageParam: undefined as string | undefined,
@@ -153,62 +146,115 @@ export const useInfiniteAddresses = (profileId: string) => {
                 ? lastPage.pagination.nextCursor ?? undefined
                 : undefined,
         enabled: !!profileId,
+        staleTime: 2 * 60 * 1000,
     });
 };
 
 /**
- * Hook to add an address to a profile's list
+ * Optimistically inserts a placeholder, replaces with real item on success.
  */
 export const useAddAddress = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = addressKeys.all(profileId);
 
     return useMutation({
         mutationFn: (payload: Omit<AddAddressPayload, 'profileId'>) =>
             addAddress({ profileId, ...payload }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["addresses", profileId] });
+
+        onMutate: async (payload) => {
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteData>(qk);
+
+            const optimistic: ProfileAddress = {
+                id: `temp-${Date.now()}`,
+                profile_id: profileId,
+                ...payload,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            } as ProfileAddress;
+
+            queryClient.setQueryData<InfiniteData>(qk, (old) =>
+                patchPages(old, (items) => [...items, optimistic])
+            );
+
+            return { previous, optimisticId: optimistic.id };
+        },
+
+        onError: (_err, _vars, context) => {
+            if (context?.previous) queryClient.setQueryData(qk, context.previous);
+        },
+
+        onSuccess: (result, _vars, context) => {
+            queryClient.setQueryData<InfiniteData>(qk, (old) =>
+                patchPages(old, (items) =>
+                    items.map((item) =>
+                        item.id === context?.optimisticId ? result.data : item
+                    )
+                )
+            );
+        },
+
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };
 
 /**
- * Hook to update an address on a profile's list
+ * Optimistically patches the address in-place.
  */
 export const useUpdateAddress = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = addressKeys.all(profileId);
 
     return useMutation({
         mutationFn: ({ addressId, ...payload }: Omit<UpdateAddressPayload, 'profileId'>) =>
             updateAddress({ profileId, addressId, ...payload }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["addresses", profileId] });
+
+        onMutate: async ({ addressId, ...payload }) => {
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteData>(qk);
+
+            queryClient.setQueryData<InfiniteData>(qk, (old) =>
+                patchPages(old, (items) =>
+                    items.map((item) =>
+                        item.id === addressId ? { ...item, ...payload } : item
+                    )
+                )
+            );
+
+            return { previous };
+        },
+
+        onError: (_err, _vars, context) => {
+            if (context?.previous) queryClient.setQueryData(qk, context.previous);
+        },
+
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };
 
 /**
- * Hook to delete an address from a profile's list
- * Performs optimistic removal so the UI updates instantly
+ * Optimistically removes the address from all pages.
  */
 export const useDeleteAddress = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = addressKeys.all(profileId);
 
     return useMutation({
-        mutationFn: (addressId: string) =>
-            deleteAddress({ profileId, addressId }),
+        mutationFn: (addressId: string) => deleteAddress({ profileId, addressId }),
+
         onMutate: async (addressId: string) => {
-            // Cancel in-flight queries
-            await queryClient.cancelQueries({ queryKey: ["addresses", profileId] });
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteData>(qk);
 
-            // Snapshot current data for rollback
-            const previous = queryClient.getQueryData(["addresses", profileId]);
-
-            // Optimistically remove the address from all pages
-            queryClient.setQueryData(["addresses", profileId], (old: any) => {
+            queryClient.setQueryData<InfiniteData>(qk, (old) => {
                 if (!old) return old;
                 return {
                     ...old,
-                    pages: old.pages.map((page: AddressResponse) => ({
+                    pages: old.pages.map((page) => ({
                         ...page,
                         data: page.data.filter((item) => item.id !== addressId),
                         pagination: {
@@ -221,14 +267,13 @@ export const useDeleteAddress = (profileId: string) => {
 
             return { previous };
         },
+
         onError: (_err, _addressId, context) => {
-            // Roll back on error
-            if (context?.previous) {
-                queryClient.setQueryData(["addresses", profileId], context.previous);
-            }
+            if (context?.previous) queryClient.setQueryData(qk, context.previous);
         },
+
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["addresses", profileId] });
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };

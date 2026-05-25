@@ -8,6 +8,7 @@
 import { BookmarksResponse, BookmarkStatusResponse, CreateBookmarkResponse } from '@/types/bookmarkedpost';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
+import { bookmarkKeys } from './queryKeys';
 
 // ============================================================================
 // API Functions
@@ -63,11 +64,12 @@ export const removeBookmark = async (postId: string): Promise<{ success: boolean
  */
 export const useBookmarks = () => {
     return useInfiniteQuery({
-        queryKey: ['bookmarks'],
+        queryKey: bookmarkKeys.all,
         queryFn: ({ pageParam }) => getBookmarks({ pageParam }),
         getNextPageParam: (lastPage) =>
             lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor ?? undefined : undefined,
         initialPageParam: undefined as string | undefined,
+        staleTime: 60 * 1000, // 1 min
     });
 };
 
@@ -76,9 +78,10 @@ export const useBookmarks = () => {
  */
 export const useBookmarkStatus = (postId: string | undefined) => {
     return useQuery({
-        queryKey: ['bookmark', postId],
+        queryKey: bookmarkKeys.status(postId!),
         queryFn: () => getBookmarkStatus(postId!),
         enabled: !!postId,
+        staleTime: 2 * 60 * 1000, // 2 min — status rarely changes spontaneously
     });
 };
 
@@ -91,8 +94,8 @@ export const useBookmarkPost = () => {
     return useMutation({
         mutationFn: (postId: string) => bookmarkPost(postId),
         onSuccess: (_, postId) => {
-            queryClient.setQueryData(['bookmark', postId], { bookmarked: true });
-            queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+            queryClient.setQueryData(bookmarkKeys.status(postId), { bookmarked: true });
+            queryClient.invalidateQueries({ queryKey: bookmarkKeys.all });
         },
     });
 };
@@ -106,8 +109,8 @@ export const useRemoveBookmark = () => {
     return useMutation({
         mutationFn: (postId: string) => removeBookmark(postId),
         onSuccess: (_, postId) => {
-            queryClient.setQueryData(['bookmark', postId], { bookmarked: false, bookmark_id: null });
-            queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+            queryClient.setQueryData(bookmarkKeys.status(postId), { bookmarked: false, bookmark_id: null });
+            queryClient.invalidateQueries({ queryKey: bookmarkKeys.all });
         },
     });
 };
@@ -127,21 +130,61 @@ export const useToggleBookmark = () => {
             }
         },
         onMutate: async ({ postId, isBookmarked }) => {
-            // Optimistic update
-            await queryClient.cancelQueries({ queryKey: ['bookmark', postId] });
-            const previous = queryClient.getQueryData(['bookmark', postId]);
-            queryClient.setQueryData(['bookmark', postId], { bookmarked: !isBookmarked, bookmark_id: null });
-            return { previous, postId };
+            // Cancel in-flight queries for this post's bookmark status
+            await queryClient.cancelQueries({ queryKey: bookmarkKeys.status(postId) });
+            const previousStatus = queryClient.getQueryData(bookmarkKeys.status(postId));
+
+            // Optimistically update bookmark status
+            queryClient.setQueryData(bookmarkKeys.status(postId), {
+                bookmarked: !isBookmarked,
+                bookmark_id: null,
+            });
+
+            // Optimistically patch is_bookmarked in ALL feed caches
+            const feedUpdater = (oldData: any) => {
+                if (!oldData?.pages) return oldData;
+                return {
+                    ...oldData,
+                    pages: oldData.pages.map((page: any) => ({
+                        ...page,
+                        data: page.data.map((post: any) =>
+                            post.id === postId
+                                ? { ...post, is_bookmarked: !isBookmarked }
+                                : post
+                        ),
+                    })),
+                };
+            };
+            queryClient.setQueriesData({ queryKey: ['feed'], exact: false }, feedUpdater);
+            queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, feedUpdater);
+
+            return { previousStatus, postId, wasBookmarked: isBookmarked };
         },
         onError: (_, __, context) => {
-            // Rollback on error
             if (context) {
-                queryClient.setQueryData(['bookmark', context.postId], context.previous);
+                queryClient.setQueryData(bookmarkKeys.status(context.postId), context.previousStatus);
+                // Rollback feed caches
+                const rollbackUpdater = (oldData: any) => {
+                    if (!oldData?.pages) return oldData;
+                    return {
+                        ...oldData,
+                        pages: oldData.pages.map((page: any) => ({
+                            ...page,
+                            data: page.data.map((post: any) =>
+                                post.id === context.postId
+                                    ? { ...post, is_bookmarked: context.wasBookmarked }
+                                    : post
+                            ),
+                        })),
+                    };
+                };
+                queryClient.setQueriesData({ queryKey: ['feed'], exact: false }, rollbackUpdater);
+                queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, rollbackUpdater);
             }
         },
         onSettled: (_, __, { postId }) => {
-            queryClient.invalidateQueries({ queryKey: ['bookmark', postId] });
-            queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+            queryClient.invalidateQueries({ queryKey: bookmarkKeys.status(postId) });
+            queryClient.invalidateQueries({ queryKey: bookmarkKeys.all });
         },
     });
 };

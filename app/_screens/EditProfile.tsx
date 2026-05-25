@@ -7,20 +7,18 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from 'dayjs';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
-import { Button, Chip, Spinner, Switch } from 'heroui-native';
+import { Button, Chip, Spinner, Switch, Tabs } from 'heroui-native';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Keyboard,
     Platform,
-    ScrollView,
     StyleSheet,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { NitroImage } from 'react-native-nitro-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -165,6 +163,7 @@ const FormDatePicker = ({
                         backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                         borderColor: error ? '#ff4444' : 'transparent',
                         borderWidth: error ? 1 : 0,
+                        borderRadius: 999, padding: 16
                     }
                 ]}
             >
@@ -267,7 +266,7 @@ const FormChipSelector = ({
 const BasicTab = () => {
     const { formData, setField, errors, colors } = useForm();
     return (
-        <ScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
+        <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             <FormInput
                 label="Full Name"
                 icon="person-outline"
@@ -326,7 +325,7 @@ const BasicTab = () => {
                 onChangeText={(v) => setField('pronouns', v)}
                 placeholder="e.g. he/him, she/her"
             />
-        </ScrollView>
+        </KeyboardAwareScrollView>
     );
 };
 
@@ -336,7 +335,7 @@ const MediaTab = () => {
     const coverUrl = formData.cover_url;
 
     return (
-        <ScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
+        <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             {/* Real-time Previews */}
             <View style={{ marginBottom: 24, gap: 16 }}>
                 <FlexText style={{ fontWeight: '600', fontSize: 16, color: colors.text }}>Live Visual Preview</FlexText>
@@ -406,14 +405,14 @@ const MediaTab = () => {
                 placeholder="https://domain.com/emoji.png"
                 keyboardType="url"
             />
-        </ScrollView>
+        </KeyboardAwareScrollView>
     );
 };
 
 const AboutTab = () => {
     const { formData, setField, colors } = useForm();
     return (
-        <ScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
+        <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             <FormInput
                 label="Bio"
                 icon="document-text-outline"
@@ -452,14 +451,14 @@ const AboutTab = () => {
                 placeholder="https://yourwebsite.com"
                 keyboardType="url"
             />
-        </ScrollView>
+        </KeyboardAwareScrollView>
     );
 };
 
 const DetailsTab = () => {
     const { formData, setField, colors } = useForm();
     return (
-        <ScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
+        <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1 }}>
                     <FormInput
@@ -510,14 +509,14 @@ const DetailsTab = () => {
                 onChangeText={(v) => setField('license_plate', v)}
                 placeholder="e.g. ABC-1234"
             />
-        </ScrollView>
+        </KeyboardAwareScrollView>
     );
 };
 
 const FacebookAdminTab = () => {
     const { formData, setField, isAdmin, colors } = useForm();
     return (
-        <ScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
+        <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             <FlexText style={{ fontWeight: '600', fontSize: 16, marginBottom: 12, color: colors.text }}>Facebook Profile Urls</FlexText>
             <FormInput
                 label="Highlight Reel URL"
@@ -599,7 +598,7 @@ const FacebookAdminTab = () => {
                     </View>
                 </View>
             )}
-        </ScrollView>
+        </KeyboardAwareScrollView>
     );
 };
 
@@ -778,67 +777,91 @@ const EditProfileScreen = () => {
     if (isProfileLoading || !formData) {
         return (
             <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color={colors.secondary} />
+                <Spinner size="lg" color={colors.secondary} />
             </View>
         );
     }
 
     return (
         <FormContext.Provider value={contextValue}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1, backgroundColor: colors.background }}
-            >
-                <Stack.Screen
-                    options={{
-                        headerShown: true,
-                        title: 'Edit Profile Info',
-                        headerTitleAlign: 'center',
-                        headerShadowVisible: false,
-                        headerStyle: {
-                            backgroundColor: colors.background,
-                        },
-                        headerTitleStyle: {
-                            fontSize: 18,
-                            fontWeight: 'bold',
-                            color: colors.text,
-                        },
-                        headerLeft: () => (
-                            <TouchableOpacity onPress={() => router.back()} style={{ padding: 8 }}>
-                                <Ionicons name="close" size={24} color={colors.text} />
-                            </TouchableOpacity>
-                        ),
-                        headerRight: () => (
-                            hasChanges ? (
-                                <Button
-                                    variant="primary"
-                                    onPress={handleSave}
-                                    isDisabled={isSaving}
-                                    style={{ height: 32, paddingHorizontal: 16, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }}
-                                >
-                                    {isSaving ? (
-                                        <Spinner color="#ffffff" size="sm" />
-                                    ) : (
-                                        <Button.Label style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>Save</Button.Label>
-                                    )}
-                                </Button>
-                            ) : null
-                        )
-                    }}
-                />
+            <View style={{ flex: 1, backgroundColor: colors.background }}>
+                <Stack.Screen options={{ headerShown: false }} />
+
+                <View style={{
+                    paddingTop: insets.top + 12,
+                    paddingBottom: 8,
+                    paddingHorizontal: 16,
+                    backgroundColor: colors.background,
+                    flexDirection: 'row',
+                    alignItems: 'flex-end',
+                    justifyContent: 'space-between',
+                }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            style={{
+                                backgroundColor: colors.containerContent,
+                                borderRadius: 999,
+                                width: 40,
+                                height: 40,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Ionicons name="arrow-back" size={22} color={colors.text} />
+                        </TouchableOpacity>
+                        <View>
+                            <FlexText style={[common.heading, { fontSize: 24 }]}>Edit Profile</FlexText>
+                            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 1 }]}>Update your personal info</FlexText>
+                        </View>
+                    </View>
+
+                    {/* Right: Save button */}
+                    {hasChanges && (
+                        <Button
+                            variant="primary"
+                            onPress={handleSave}
+                            isDisabled={isSaving}
+                            style={{ height: 36, paddingHorizontal: 18, borderRadius: 18, justifyContent: 'center', alignItems: 'center' }}
+                        >
+                            {isSaving ? (
+                                <Spinner color="#ffffff" size="sm" />
+                            ) : (
+                                <Button.Label style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>Save</Button.Label>
+                            )}
+                        </Button>
+                    )}
+                </View>
 
                 <Tab.Navigator
                     sceneContainerStyle={{ backgroundColor: colors.background }}
                     style={{ backgroundColor: colors.background }}
-                    screenOptions={{
-                        tabBarActiveTintColor: colors.secondary,
-                        tabBarInactiveTintColor: colors.muted,
-                        tabBarLabelStyle: { fontSize: 11, fontWeight: 'bold', textTransform: 'none' },
-                        tabBarIndicatorStyle: { backgroundColor: colors.secondary, height: 3, borderRadius: 2 },
-                        tabBarStyle: { backgroundColor: colors.background, borderBottomWidth: 1, borderBottomColor: colors.divider },
-                        tabBarScrollEnabled: true,
-                        tabBarItemStyle: { width: 100 },
-                        sceneStyle: { backgroundColor: colors.background }
+                    tabBar={(props: any) => {
+                        const { state, navigation, descriptors } = props;
+                        const { routes, index } = state;
+                        return (
+                            <Tabs
+                                value={routes[index].key}
+                                onValueChange={(val: string) => {
+                                    navigation.navigate(routes.find((r: any) => r.key === val)?.name);
+                                }}
+                                style={{ paddingHorizontal: 8 }}
+                            >
+                                <Tabs.List>
+                                    <Tabs.ScrollView scrollAlign="center">
+                                        <Tabs.Indicator />
+                                        {routes.map((route: any) => {
+                                            const label = descriptors[route.key]?.options?.tabBarLabel ?? route.name;
+                                            return (
+                                                <Tabs.Trigger key={route.key} value={route.key}>
+                                                    <Tabs.Label>{label}</Tabs.Label>
+                                                </Tabs.Trigger>
+                                            );
+                                        })}
+                                    </Tabs.ScrollView>
+                                </Tabs.List>
+                            </Tabs>
+                        );
                     }}
                 >
                     <Tab.Screen name="General" component={BasicTab} />
@@ -847,7 +870,7 @@ const EditProfileScreen = () => {
                     <Tab.Screen name="Physical" component={DetailsTab} options={{ tabBarLabel: 'Physical' }} />
                     <Tab.Screen name="Facebook" component={FacebookAdminTab} options={{ tabBarLabel: isAdmin ? 'System / FB' : 'Facebook' }} />
                 </Tab.Navigator>
-            </KeyboardAvoidingView>
+            </View>
         </FormContext.Provider>
     );
 };

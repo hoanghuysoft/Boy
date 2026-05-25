@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "./client";
-
 import { Profile } from "@/types/profile";
+import { profileKeys } from "./queryKeys";
 
 export interface ProfilesResponse {
     data: Profile[];
@@ -29,11 +29,12 @@ export const getProfiles = async ({ pageParam, search }: { pageParam?: string; s
 
 export const useInfiniteProfiles = (search: string = "", enabled: boolean = true) => {
     return useInfiniteQuery({
-        queryKey: ["profiles", search],
+        queryKey: profileKeys.list(search),
         queryFn: ({ pageParam }: { pageParam: string | undefined }) => getProfiles({ pageParam, search }),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage: ProfilesResponse) => lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor : undefined,
         enabled,
+        staleTime: 60 * 1000, // 1 min
     });
 };
 
@@ -49,9 +50,10 @@ export const getMyProfileDetail = async () => {
 
 export const useProfile = (id: string, isMe: boolean) => {
     return useQuery({
-        queryKey: isMe ? ['profile', 'me'] : ['profile', id],
+        queryKey: isMe ? profileKeys.detail('me') : profileKeys.detail(id),
         queryFn: () => (isMe ? getMyProfileDetail() : getProfileDetail(id)),
         enabled: isMe || !!id,
+        staleTime: 5 * 60 * 1000, // 5 min — profile rarely changes mid-session
     });
 };
 
@@ -62,9 +64,10 @@ export const checkAdmin = async () => {
 
 export const useAdminCheck = () => {
     return useQuery({
-        queryKey: ['admin-check'],
+        queryKey: profileKeys.adminCheck,
         queryFn: checkAdmin,
         retry: false,
+        staleTime: 10 * 60 * 1000, // 10 min — admin status very stable
     });
 };
 
@@ -77,9 +80,32 @@ export const useUpdateProfile = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: any }) => updateProfile(id, data),
-        onSuccess: (data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['profile', variables.id] });
-            queryClient.invalidateQueries({ queryKey: ['profile', 'me'] });
-        }
+        onMutate: async ({ id, data }) => {
+            // Cancel in-flight refetches so they don't overwrite our optimistic update
+            const meKey = profileKeys.detail('me');
+            const idKey = profileKeys.detail(id);
+            await queryClient.cancelQueries({ queryKey: meKey });
+            await queryClient.cancelQueries({ queryKey: idKey });
+
+            const previousMe = queryClient.getQueryData<Profile>(meKey);
+            const previousById = queryClient.getQueryData<Profile>(idKey);
+
+            // Optimistically apply the update to both caches
+            const apply = (old: Profile | undefined) => old ? { ...old, ...data } : old;
+            queryClient.setQueryData(meKey, apply);
+            if (id !== 'me') queryClient.setQueryData(idKey, apply);
+
+            return { previousMe, previousById, id };
+        },
+        onError: (_err, _vars, context) => {
+            if (context) {
+                queryClient.setQueryData(profileKeys.detail('me'), context.previousMe);
+                if (context.id !== 'me') queryClient.setQueryData(profileKeys.detail(context.id), context.previousById);
+            }
+        },
+        onSettled: (_data, _err, variables) => {
+            queryClient.invalidateQueries({ queryKey: profileKeys.detail('me') });
+            if (variables.id !== 'me') queryClient.invalidateQueries({ queryKey: profileKeys.detail(variables.id) });
+        },
     });
 };
