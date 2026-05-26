@@ -7,11 +7,6 @@ module.exports = function withAndroidBuildFixes(config) {
   return withAppBuildGradle(config, (config) => {
     if (config.modResults.language === 'groovy') {
       config.modResults.contents += `
-// Fix for duplicate androidsvg class
-configurations.all {
-    exclude group: 'com.caverock', module: 'androidsvg-aar'
-}
-
 // Fix AbstractMethodError: react-native-nitro-player pulls Media3 1.9.0 but expo-video
 // was compiled against 1.8.0. Force 1.8.0 so the runtime interface matches.
 configurations.all {

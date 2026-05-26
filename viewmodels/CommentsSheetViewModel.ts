@@ -60,11 +60,16 @@ export const useCommentsSheetViewModel = (
 
     const totalComments = data?.pages?.[0]?.pagination?.total ?? 0;
 
-    // Refetch when postId changes
+    // When postId changes, reset all local input state so the sheet
+    // opens cleanly for the new post (no stale edit/image from the last one).
     useEffect(() => {
         if (postId) {
+            setCommentText("");
+            setSelectedImageUrl(null);
+            setEditingComment(null);
             refetch();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [postId]);
 
     const handleEndReached = useCallback(() => {

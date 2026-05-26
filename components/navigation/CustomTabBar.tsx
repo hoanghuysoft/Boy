@@ -29,6 +29,9 @@ interface TabConfig {
     IconSolid: any;
 }
 
+// TEMP: add tab names here to hide them from the bar without deleting routes.
+const DISABLED_TABS: TabName[] = ['shots'];
+
 const tabs: TabConfig[] = [
     {
         name: "index",
@@ -261,6 +264,9 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                         // Map route names to tab config
                         const tabConfig = tabs.find((tab) => tab.name === route.name);
                         if (!tabConfig) return null;
+
+                        // TEMP: skip tabs that are temporarily disabled
+                        if (DISABLED_TABS.includes(route.name as TabName)) return null;
 
                         const label =
                             route.name === "index"

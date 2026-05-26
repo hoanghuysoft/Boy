@@ -2,6 +2,7 @@ import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
 import * as Sentry from '@sentry/react-native';
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -12,7 +13,6 @@ import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
-import { Image as ExpoImage } from 'expo-image';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -32,6 +32,9 @@ import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
 
 Sentry.init({
   dsn: 'https://1ef88f34edcb93fd745ae50c49114de5@o4511278698397696.ingest.de.sentry.io/4511278700494928',
+
+  // Disabled in development — no events sent during local/dev builds
+  enabled: !__DEV__,
 
   // Adds more context data to events (IP address, cookies, user, etc.)
   // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
@@ -286,7 +289,9 @@ const RootContent = () => {
   );
 };
 
-export default Sentry.wrap(function RootLayout() {
+// In dev, skip Sentry.wrap to avoid error-boundary overhead and noise
+const withSentry = __DEV__ ? (fn: () => React.ReactElement) => fn : Sentry.wrap;
+export default withSentry(function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <HeroUINativeProvider>

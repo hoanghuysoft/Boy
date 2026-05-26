@@ -41,6 +41,13 @@ export const useHomeViewModel = () => {
   const [selectedCommentPostId, setSelectedCommentPostId] = useState<
     string | null
   >(null);
+  /**
+   * pendingCommentOpen — set to true when the user taps the comment button.
+   * A useEffect watches this flag and calls present() only after React has
+   * committed the new selectedCommentPostId to the tree, avoiding the
+   * "TrueSheetView with tag X not found" race on low-end devices.
+   */
+  const pendingCommentOpen = useRef(false);
 
   // ─── Carousel Color Store ──────────────────────────────────────
   const { overlayColor, isUsingCarouselColor } = useCarouselColorStore();
@@ -172,9 +179,23 @@ export const useHomeViewModel = () => {
     likersSheetRef.current?.present();
   }, []);
 
+  // Fire present() after React commits the new selectedCommentPostId.
+  // On low-end devices, calling present() synchronously with setState causes
+  // the native TrueSheetView to be destroyed mid-animation when the component
+  // re-renders with the new postId, resulting in "TrueSheetView with tag X not found".
+  useEffect(() => {
+    if (pendingCommentOpen.current && selectedCommentPostId) {
+      pendingCommentOpen.current = false;
+      commentsSheetRef.current?.present();
+    }
+  }, [selectedCommentPostId]);
+
   const handleCommentPress = useCallback((post: Post) => {
+    pendingCommentOpen.current = true;
     setSelectedCommentPostId(post.id);
-    commentsSheetRef.current?.present();
+    // NOTE: present() is NOT called here — the useEffect above fires it
+    // after React has committed the new postId, preventing the native
+    // TrueSheetView tag mismatch crash on low-end devices.
   }, []);
 
   const handleTabStateChange = useCallback(() => {
