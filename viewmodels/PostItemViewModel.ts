@@ -127,6 +127,25 @@ export const usePostItemViewModel = ({
     const sharePostMutation = useSharePost();
     const createPostMutation = useCreatePost(myProfile?.id || "");
 
+    interface DialogButton {
+        text: string;
+        onPress: () => void;
+        variant?: "primary" | "secondary" | "tertiary" | "danger" | "danger-soft" | "ghost" | "outline";
+    }
+
+    interface DialogConfig {
+        title: string;
+        text: string;
+        confirmText?: string;
+        dismissText?: string;
+        onConfirm?: () => void;
+        isDestructive?: boolean;
+        buttons?: DialogButton[];
+    }
+
+    const [dialog, setDialog] = useState<DialogConfig | null>(null);
+    const closeDialog = useCallback(() => setDialog(null), []);
+
     const handleCopyLink = useCallback(() => {
         const serverUrl = process.env.EXPO_PUBLIC_SERVER_URL || "https://welove.com";
         Clipboard.setString(`${serverUrl}/posts/${post.id}`);
@@ -188,16 +207,34 @@ export const usePostItemViewModel = ({
     }, [post.id, post.profile_name, post.content, post.deezer_id, post.links, router]);
 
     const handleSharePress = useCallback(() => {
-        Alert.alert(
-            t('post.dialogs.shareTitle'),
-            t('post.optionsSheet.subtitle'),
-            [
-                { text: t('post.dialogs.repostInstant'), onPress: handleDirectRepost },
-                { text: t('post.dialogs.repostQuote'), onPress: handleQuoteRepost },
-                { text: t('post.dialogs.cancel'), style: 'cancel' }
+        setDialog({
+            title: t('post.dialogs.shareTitle'),
+            text: t('post.optionsSheet.subtitle'),
+            buttons: [
+                {
+                    text: t('post.dialogs.repostInstant'),
+                    onPress: () => {
+                        closeDialog();
+                        handleDirectRepost();
+                    },
+                    variant: "primary"
+                },
+                {
+                    text: t('post.dialogs.repostQuote'),
+                    onPress: () => {
+                        closeDialog();
+                        handleQuoteRepost();
+                    },
+                    variant: "outline"
+                },
+                {
+                    text: t('post.dialogs.cancel'),
+                    onPress: closeDialog,
+                    variant: "ghost"
+                }
             ]
-        );
-    }, [t, handleDirectRepost, handleQuoteRepost]);
+        });
+    }, [t, handleDirectRepost, handleQuoteRepost, closeDialog]);
 
     // ─── Derived ────────────────────────────────────────────────
     const hasMedia = post.media && post.media.length > 0;
@@ -232,6 +269,8 @@ export const usePostItemViewModel = ({
         // Share / Repost
         handleSharePress,
         handleCopyLink,
+        dialog,
+        closeDialog,
 
         // Derived
         hasMedia,

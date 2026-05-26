@@ -11,6 +11,7 @@ import { stripYouTubeUrls } from "@/utils/youtube";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import React from "react";
+import { Dialog, Button } from "heroui-native";
 import { useTranslation } from "react-i18next";
 import { Dimensions, TouchableOpacity, View } from "react-native";
 import { Pressable, ScrollView } from 'react-native-gesture-handler';
@@ -385,6 +386,46 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </Pressable>
                 </View>)
             )}
+
+            <Dialog isOpen={vm.dialog !== null} onOpenChange={(open) => !open && vm.closeDialog()}>
+                <Dialog.Portal>
+                    <Dialog.Overlay />
+                    <Dialog.Content>
+                        <Dialog.Close />
+                        <View style={{ marginBottom: 20, gap: 6 }}>
+                            <Dialog.Title>{vm.dialog?.title}</Dialog.Title>
+                            <Dialog.Description>{vm.dialog?.text}</Dialog.Description>
+                        </View>
+                        {vm.dialog?.buttons ? (
+                            <View style={{ gap: 8 }}>
+                                {vm.dialog.buttons.map((btn, idx) => (
+                                    <Button
+                                        key={idx}
+                                        variant={btn.variant ?? "primary"}
+                                        onPress={btn.onPress}
+                                    >
+                                        {btn.text}
+                                    </Button>
+                                ))}
+                            </View>
+                        ) : (
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                                {vm.dialog?.dismissText && (
+                                    <Button variant="ghost" onPress={vm.closeDialog}>
+                                        {vm.dialog.dismissText}
+                                    </Button>
+                                )}
+                                <Button
+                                    variant={vm.dialog?.isDestructive || vm.dialog?.onConfirm ? "danger" : "primary"}
+                                    onPress={() => vm.dialog?.onConfirm ? vm.dialog.onConfirm() : vm.closeDialog()}
+                                >
+                                    {vm.dialog?.confirmText ?? t('post.dialogs.ok')}
+                                </Button>
+                            </View>
+                        )}
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
         </View>
     );
 }, (prev, next) => {
