@@ -10,7 +10,6 @@ import { Keyboard, TextInput } from "react-native";
 import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import { useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import TurboImage from "react-native-turbo-image";
 
 // Bottom navigation layout constants
 const SEARCH_BAR_HEIGHT = 56;
@@ -146,10 +145,10 @@ export const useSearchViewModel = () => {
                 .filter(
                     (p): p is Profile & { avatar_url: string } => !!p.avatar_url
                 )
-                .map((p) => ({ uri: p.avatar_url }));
+                .map((p) => p.avatar_url);
 
             if (avatarsToPreload.length > 0) {
-                TurboImage.prefetch(avatarsToPreload);
+                // If expo-image preload is available, you can use Image.prefetch(avatarsToPreload) here.
             }
         }
     }, [profiles]);

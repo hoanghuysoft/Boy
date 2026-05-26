@@ -1,7 +1,6 @@
-import { Haptics } from "react-native-nitro-haptics";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWindowDimensions } from "react-native";
-import TurboImage from "react-native-turbo-image";
+import { Haptics } from "react-native-nitro-haptics";
 import { useThemeContext } from "../context/ThemeContext";
 import { createCommonStyles } from "../styles/common";
 import { Media } from "../types/media";
@@ -135,7 +134,7 @@ export const useImageGridViewModel = (options: UseImageGridViewModelOptions = {}
             // Prefetch images for faster grid loading
             if (result.sortedUrls.length > 0) {
                 const urlsToPreload = result.sortedUrls.slice(0, 12);
-                TurboImage.prefetch(urlsToPreload.map(uri => ({ uri })));
+                // If using expo-image prefetch, prefetch here.
             }
         } catch (error) {
             console.error("Error processing media:", error);

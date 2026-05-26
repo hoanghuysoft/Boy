@@ -10,12 +10,12 @@ import { Link, Media, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
+import { router } from "expo-router";
+import { Button, Dialog } from "heroui-native";
 import React from "react";
-import { Dialog, Button } from "heroui-native";
 import { useTranslation } from "react-i18next";
 import { Dimensions, TouchableOpacity, View } from "react-native";
 import { Pressable, ScrollView } from 'react-native-gesture-handler';
-import { router } from "expo-router";
 import { NitroImage } from "react-native-nitro-image";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
@@ -28,6 +28,7 @@ import { YouTubePostPlayer } from "./YouTubePostPlayer";
 
 // TurboImage cache policy - use dataCache for aggressive local caching
 const IMAGE_CACHE_POLICY = "dataCache" as const;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export interface PostItemProps {
     post: Post;
@@ -243,7 +244,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
 
             {/* Invisible Spacer for No-Media Posts */}
             {!vm.hasMedia && (
-                <View style={{ width: Dimensions.get("window").width, height: 1 }} />
+                <View style={{ width: SCREEN_WIDTH, height: 1 }} />
             )}
 
             {/* Audio Button for No-Media Posts */}
@@ -281,7 +282,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             url={displayPost.links[0].url}
                             label={displayPost.links[0].label}
                             colors={vm.colors}
-                            cardWidth={Dimensions.get('window').width - 32}
+                            cardWidth={SCREEN_WIDTH - 32}
                         />
                     </View>)
                 ) : (

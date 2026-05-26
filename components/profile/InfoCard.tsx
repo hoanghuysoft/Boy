@@ -5,7 +5,7 @@ import { CalendarBold, LetterBold, MenBold, NotebookBookmarkBold, PhoneBold, Poi
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from "react-native";
-import TurboImage from 'react-native-turbo-image';
+import { Image } from 'expo-image';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { ProfileDetail } from "../../types/profiledetail";
@@ -101,7 +101,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                                 {bankinfo.recipient} - {bankinfo.banknumber}
                             </FlexText>
                             <View style={{ width: 32, height: 32, justifyContent: 'center', alignItems: 'center', borderRadius: 999, overflow: 'hidden', backgroundColor: colors.card }}>
-                                <TurboImage source={{ uri: bankinfo.logo || '' }} style={{ width: 24, height: 24 }} />
+                                <Image source={{ uri: bankinfo.logo || '' }} style={{ width: 24, height: 24 }} />
                             </View>
                         </View>
                     </TouchableOpacity>

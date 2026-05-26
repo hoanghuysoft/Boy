@@ -1,5 +1,4 @@
-import { XmarkSolid } from "@lineiconshq/free-icons";
-import { Lineicons } from "@lineiconshq/react-native-lineicons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { MutedBold, Pip2Bold, VolumeLoudBold } from "@solar-icons/react-native";
 import React from "react";
 import {
@@ -48,7 +47,7 @@ export const VideoTopBar: React.FC<VideoTopBarProps> = ({
     >
       <View style={[commonRowStyle, { gap: 12 }]} pointerEvents="box-none">
         <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} onPress={onClose} style={styles.smallButton}>
-          <Lineicons icon={XmarkSolid} size={24} color={"white"} strokeWidth={3} />
+          <Ionicons name="close" size={24} color={"white"} />
         </TouchableOpacity>
         <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onPipMode}>
           <Pip2Bold size={20} color={"white"} />

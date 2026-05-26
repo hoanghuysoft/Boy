@@ -1,6 +1,4 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { XmarkSolid } from "@lineiconshq/free-icons";
-import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import { FlashList } from "@shopify/flash-list";
 import { CheckCircleBold, VinylRecordBold } from "@solar-icons/react-native";
 import { SquircleView } from "expo-squircle-view";
@@ -104,7 +102,7 @@ const SelectedMusicCard = memo(({
             style={[createStyles.removeSelectedMusic, { backgroundColor: COLORS.error }]}
             onPress={onRemove}
         >
-            <Lineicons icon={XmarkSolid} size={12} color="#fff" />
+            <Ionicons name="close" size={14} color="#fff" />
         </TouchableOpacity>
     </View>
 ));

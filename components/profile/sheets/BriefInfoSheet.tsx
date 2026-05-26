@@ -24,9 +24,9 @@ import {
 } from '@solar-icons/react-native';
 import React, { forwardRef, memo, useEffect, useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, View } from "react-native";
+import { Image } from "expo-image";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import TurboImage from "react-native-turbo-image";
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileDetail } from "../../../types/profiledetail";
@@ -67,7 +67,7 @@ const InfoRow = memo(({ item, colors }: { item: InfoItem; colors: any }) => {
                 return <Image source={item.source} style={styles.rowImage} resizeMode="cover" />;
             case 'bank':
                 return item.logo
-                    ? <TurboImage source={{ uri: item.logo }} style={{ width: 28, height: 28 }} resizeMode="contain" />
+                    ? <Image source={{ uri: item.logo }} style={{ width: 28, height: 28 }} contentFit="contain" />
                     : <Ionicons name="card-outline" size={22} color={colors.primary || colors.text} />;
         }
     };

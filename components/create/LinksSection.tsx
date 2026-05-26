@@ -1,5 +1,4 @@
-import { XmarkSolid } from "@lineiconshq/free-icons";
-import { Lineicons } from "@lineiconshq/react-native-lineicons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { getPreviewData } from "@flyerhq/react-native-link-preview";
 import React, { memo, useCallback, useRef, useState } from "react";
 import {
@@ -258,7 +257,7 @@ const LinkItem = memo(({
                 onPress={onRemove}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-                <Lineicons icon={XmarkSolid} size={12} color="#fff" />
+                <Ionicons name="close" size={14} color="#fff" />
             </TouchableOpacity>
         </View>
     );

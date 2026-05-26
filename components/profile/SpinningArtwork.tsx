@@ -9,7 +9,7 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 import { HeadphonesRoundSoundBold } from '@solar-icons/react-native';
-import TurboImage from 'react-native-turbo-image';
+import { Image } from 'expo-image';
 
 interface SpinningArtworkProps {
   isMusicPlaying: boolean;
@@ -66,10 +66,10 @@ export const SpinningArtwork: React.FC<SpinningArtworkProps> = ({
             <HeadphonesRoundSoundBold size={18} color={colors.text} />
           </View>
         ) : (
-          <TurboImage
+          <Image
             source={{ uri: coverUrl || '' }}
             style={styles.artworkImage}
-            resizeMode="cover"
+            contentFit="cover"
           />
         )}
       </Animated.View>

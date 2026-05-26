@@ -15,6 +15,8 @@ interface MovieTrackerSettingsState {
     /** The active tracker source */
     trackerSource: TrackerSource;
     setTrackerSource: (source: TrackerSource) => void;
+    /** Resets in-memory + persisted state — call on logout */
+    reset: () => void;
 }
 
 // ─── MMKV Storage ─────────────────────────────────────────────────────────────
@@ -34,6 +36,7 @@ export const useMovieTrackerStore = create<MovieTrackerSettingsState>()(
         (set) => ({
             trackerSource: 'moviedb',
             setTrackerSource: (source) => set({ trackerSource: source }),
+            reset: () => set({ trackerSource: 'moviedb' }),
         }),
         {
             name: 'movie-tracker-settings',

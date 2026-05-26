@@ -9,8 +9,6 @@ import { TrendingHashtagsSection } from "@/components/search/TrendingHashtagsSec
 import { Profile } from "@/types/profile";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
-import { XmarkOutlined } from "@lineiconshq/free-icons";
-import LineiconsIcon from "@lineiconshq/react-native-lineicons";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
@@ -220,11 +218,10 @@ const SearchScreen = () => {
                     { backgroundColor: colors.card },
                   ]}
                 >
-                  <LineiconsIcon
-                    icon={XmarkOutlined}
-                    size={14}
+                  <Ionicons
+                    name="close"
+                    size={16}
                     color={colors.text}
-                    strokeWidth={3}
                   />
                 </View>
               </TouchableOpacity>

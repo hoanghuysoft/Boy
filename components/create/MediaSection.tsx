@@ -1,6 +1,4 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { XmarkSolid } from "@lineiconshq/free-icons";
-import { Lineicons } from "@lineiconshq/react-native-lineicons";
 import { FlashList } from "@shopify/flash-list";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
@@ -42,7 +40,7 @@ const MediaThumbnail = memo(({
             style={[createStyles.removeButton, { backgroundColor: COLORS.error }]}
             onPress={onRemove}
         >
-            <Lineicons icon={XmarkSolid} size={10} color="#fff" />
+            <Ionicons name="close" size={12} color="#fff" />
         </TouchableOpacity>
     </View>
 ));

@@ -5,8 +5,6 @@ import { useSearchInfiniteQuery } from "@/services/shows/search";
 import type { Category, VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LegendList } from "@legendapp/list";
-import { XmarkOutlined } from "@lineiconshq/free-icons";
-import LineiconsIcon from "@lineiconshq/react-native-lineicons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -368,11 +366,10 @@ const SearchShowsScreen = () => {
                   { backgroundColor: colors.card },
                 ]}
               >
-                <LineiconsIcon
-                  icon={XmarkOutlined}
-                  size={14}
+                <Ionicons
+                  name="close"
+                  size={16}
                   color={colors.text}
-                  strokeWidth={3}
                 />
               </View>
             </TouchableOpacity>

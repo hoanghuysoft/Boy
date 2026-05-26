@@ -291,7 +291,11 @@ export default Sentry.wrap(function RootLayout() {
       <HeroUINativeProvider>
         <PersistQueryClientProvider
           client={queryClient}
-          persistOptions={{ persister: clientPersister }}
+          persistOptions={{
+            persister: clientPersister,
+            maxAge: 1000 * 60 * 60, // 1 hour max cache age allowed on boot
+            buster: "v1.1", // cache buster to invalidate stale layouts
+          }}
         >
           <SafeAreaProvider>
             <KeyboardProvider>

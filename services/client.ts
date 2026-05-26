@@ -19,7 +19,12 @@ export const clientPersister: Persister = {
   },
   restoreClient: async () => {
     const client = storage.getString("REACT_QUERY_OFFLINE_CACHE");
-    return client ? JSON.parse(client) : undefined;
+    if (!client || client.length > 2 * 1024 * 1024) return undefined; // 2MB cap to prevent RAM spike
+    try {
+      return JSON.parse(client);
+    } catch {
+      return undefined;
+    }
   },
   removeClient: async () => {
     storage.remove("REACT_QUERY_OFFLINE_CACHE");
@@ -29,7 +34,7 @@ export const clientPersister: Persister = {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+      gcTime: 1000 * 60 * 5, // lowered to 5 minutes to release heap memory quickly
       staleTime: 1000 * 60 * 5, // 5 minutes
       networkMode: "offlineFirst",
     },

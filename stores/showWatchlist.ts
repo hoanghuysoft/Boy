@@ -22,6 +22,8 @@ interface ShowWatchlistState {
     remove: (video_url: string) => void;
     isInWatchlist: (video_url: string) => boolean;
     clear: () => void;
+    /** Resets in-memory + persisted state — call on logout */
+    reset: () => void;
 }
 
 // ─── MMKV Storage ─────────────────────────────────────────────────────────────
@@ -59,6 +61,8 @@ export const useShowWatchlistStore = create<ShowWatchlistState>()(
                 get().watchlist.some((s) => s.video_url === video_url),
 
             clear: () => set({ watchlist: [] }),
+
+            reset: () => set({ watchlist: [] }),
         }),
         {
             name: 'show-watchlist',

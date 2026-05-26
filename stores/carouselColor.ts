@@ -1,6 +1,6 @@
 import ImageColors from 'react-native-image-colors';
-import { carouselColorStorage as storage } from '../services/storage';
 import { create } from 'zustand';
+import { carouselColorStorage as storage } from '../services/storage';
 
 
 
@@ -82,6 +82,16 @@ export const useCarouselColorStore = create<CarouselColorStore>((set, get) => ({
                 isUsingCarouselColor: true
             });
             return;
+        }
+
+        try {
+            const allKeys = storage.getAllKeys();
+            const luminanceKeys = allKeys.filter(k => k.startsWith(LUMINANCE_CACHE_PREFIX));
+            if (luminanceKeys.length > 100) {
+                luminanceKeys.slice(0, 30).forEach(key => storage.remove(key));
+            }
+        } catch (e) {
+            console.warn('Failed to prune luminance cache keys:', e);
         }
 
         try {

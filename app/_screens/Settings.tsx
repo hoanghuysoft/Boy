@@ -308,7 +308,6 @@ const SettingsScreen = () => {
                         setIsLoggingOut(true);
                         const { signOut } = await import("@/services/login");
                         await signOut();
-                        useSearchHistoryStore.getState().clearHistory();
                         router.dismissAll();
                         router.replace("/");
                     } catch (e) {
