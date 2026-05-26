@@ -194,6 +194,7 @@ export const usePostItemViewModel = ({
     }, [myProfile?.id, post.id, post.profile_name, post.content, post.deezer_id, post.links, createPostMutation, sharePostMutation, t, toast]);
 
     const handleQuoteRepost = useCallback(() => {
+        const firstImageMedia = post.media?.find((m: any) => m.type === 'image' || m.type === 'video');
         router.push({
             pathname: '/create',
             params: {
@@ -201,10 +202,11 @@ export const usePostItemViewModel = ({
                 repost_content: post.content || '',
                 repost_deezer_id: post.deezer_id || '',
                 repost_links: JSON.stringify(post.links || []),
-                repost_id: post.id
+                repost_id: post.id,
+                repost_media_url: firstImageMedia?.url || ''
             }
         });
-    }, [post.id, post.profile_name, post.content, post.deezer_id, post.links, router]);
+    }, [post.id, post.profile_name, post.content, post.deezer_id, post.links, post.media, router]);
 
     const handleSharePress = useCallback(() => {
         setDialog({
