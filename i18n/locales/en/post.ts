@@ -8,6 +8,7 @@ const post = {
         share: 'Share',
         copyLink: 'Copy Link',
         report: 'Report',
+        editPost: 'Edit Post',
         deletePost: 'Delete Post',
     },
 

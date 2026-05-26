@@ -8,6 +8,7 @@ const post = {
         share: '分享',
         copyLink: '复制链接',
         report: '举报',
+        editPost: '编辑动态',
         deletePost: '删除动态',
     },
 

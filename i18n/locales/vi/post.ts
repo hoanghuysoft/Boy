@@ -8,6 +8,7 @@ const post = {
         share: 'Chia sẻ',
         copyLink: 'Sao chép liên kết',
         report: 'Báo cáo',
+        editPost: 'Sửa bài viết',
         deletePost: 'Xóa bài viết',
     },
 

@@ -307,7 +307,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                                     {isOwner && !post?.reposted_post && (
                                         <OptionItem
                                             icon={PenNewRoundBold}
-                                            label={t('post.optionsSheet.editPost' as any) || 'Edit Post'}
+                                            label={t('post.optionsSheet.editPost')}
                                             onPress={handleEdit}
                                             colors={colors}
                                             common={common}

@@ -8,6 +8,7 @@ const post = {
         share: '分享',
         copyLink: '複製連結',
         report: '檢舉',
+        editPost: '編輯動態',
         deletePost: '刪除動態',
     },
 
