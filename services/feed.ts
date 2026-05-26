@@ -1,6 +1,7 @@
 import { FeedMode, PostResponse } from "@/types/post";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { client } from "./client";
+import { feedKeys } from "./queryKeys";
 
 export const getFeed = async ({
   mode = 'latest',
@@ -41,7 +42,7 @@ export const getProfileFeed = async ({
 
 export const useFeed = (mode: FeedMode = 'latest') => {
   return useInfiniteQuery({
-    queryKey: ["feed", mode],
+    queryKey: feedKeys.feedMode(mode),
     queryFn: ({ pageParam }) => getFeed({ mode, limit: 20, cursor: pageParam as string }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {
@@ -53,7 +54,7 @@ export const useFeed = (mode: FeedMode = 'latest') => {
 
 export const useProfileFeed = (profileId: string) => {
   return useInfiniteQuery({
-    queryKey: ["profileFeed", profileId],
+    queryKey: feedKeys.profile(profileId),
     queryFn: ({ pageParam }) => getProfileFeed({ profileId, limit: 20, cursor: pageParam as string }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => {

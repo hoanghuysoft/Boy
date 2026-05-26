@@ -6,6 +6,7 @@
 import { LikeResponse, LikeStatusResponse } from '@/types/like';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
+import { feedKeys, likeKeys } from './queryKeys';
 // ============================================================================
 // API Functions
 // ============================================================================
@@ -76,7 +77,7 @@ const patchPostInFeedCaches = (
     };
 
     // Update ALL feed variants (latest, lucky, this_day)
-    queryClient.setQueriesData({ queryKey: ['feed'], exact: false }, updater);
+    queryClient.setQueriesData({ queryKey: feedKeys.home, exact: false }, updater);
     // Update ALL profile feed variants
     queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, updater);
 };
@@ -104,7 +105,7 @@ const patchVideoFeedCaches = (
             })),
         };
     };
-    queryClient.setQueriesData({ queryKey: ['videoFeed'], exact: false }, updater);
+    queryClient.setQueriesData({ queryKey: feedKeys.video, exact: false }, updater);
 };
 
 // ============================================================================
@@ -116,7 +117,7 @@ const patchVideoFeedCaches = (
  */
 export const useLikeStatus = (postId: string | undefined) => {
     return useQuery({
-        queryKey: ['like', postId],
+        queryKey: likeKeys.status(postId!),
         queryFn: () => getLikeStatus(postId!),
         enabled: !!postId,
     });
@@ -127,7 +128,7 @@ export const useLikeStatus = (postId: string | undefined) => {
  */
 export const useLikers = (postId: string | undefined) => {
     return useInfiniteQuery({
-        queryKey: ['likers', postId],
+        queryKey: likeKeys.likers(postId!),
         queryFn: ({ pageParam }) => getLikeStatus(postId!, pageParam),
         getNextPageParam: (lastPage) =>
             lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor ?? undefined : undefined,
@@ -145,8 +146,8 @@ export const useLikePost = () => {
     return useMutation({
         mutationFn: (postId: string) => likePost(postId),
         onSuccess: (_, postId) => {
-            queryClient.setQueryData(['like', postId], { liked: true });
-            queryClient.invalidateQueries({ queryKey: ['likers', postId] });
+            queryClient.setQueryData(likeKeys.status(postId), { liked: true });
+            queryClient.invalidateQueries({ queryKey: likeKeys.likers(postId) });
         },
     });
 };
@@ -160,8 +161,8 @@ export const useUnlikePost = () => {
     return useMutation({
         mutationFn: (postId: string) => unlikePost(postId),
         onSuccess: (_, postId) => {
-            queryClient.setQueryData(['like', postId], { liked: false });
-            queryClient.invalidateQueries({ queryKey: ['likers', postId] });
+            queryClient.setQueryData(likeKeys.status(postId), { liked: false });
+            queryClient.invalidateQueries({ queryKey: likeKeys.likers(postId) });
         },
     });
 };
@@ -184,11 +185,11 @@ export const useToggleLike = () => {
         },
         onMutate: async ({ postId, isLiked }) => {
             // Cancel any in-flight queries for this post's like status
-            await queryClient.cancelQueries({ queryKey: ['like', postId] });
-            const previous = queryClient.getQueryData(['like', postId]);
+            await queryClient.cancelQueries({ queryKey: likeKeys.status(postId) });
+            const previous = queryClient.getQueryData(likeKeys.status(postId));
 
             // Update the like status query
-            queryClient.setQueryData(['like', postId], { liked: !isLiked });
+            queryClient.setQueryData(likeKeys.status(postId), { liked: !isLiked });
 
             // Directly patch the post in ALL feed caches (home + profile)
             patchPostInFeedCaches(queryClient, postId, {
@@ -206,7 +207,7 @@ export const useToggleLike = () => {
         onError: (_, __, context) => {
             if (context) {
                 // Rollback like status
-                queryClient.setQueryData(['like', context.postId], context.previous);
+                queryClient.setQueryData(likeKeys.status(context.postId), context.previous);
 
                 // Rollback feed caches
                 patchPostInFeedCaches(queryClient, context.postId, {
@@ -221,8 +222,8 @@ export const useToggleLike = () => {
             }
         },
         onSettled: (_, __, { postId }) => {
-            queryClient.invalidateQueries({ queryKey: ['like', postId] });
-            queryClient.invalidateQueries({ queryKey: ['likers', postId] });
+            queryClient.invalidateQueries({ queryKey: likeKeys.status(postId) });
+            queryClient.invalidateQueries({ queryKey: likeKeys.likers(postId) });
         },
     });
 };

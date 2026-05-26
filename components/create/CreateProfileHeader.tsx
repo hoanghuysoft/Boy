@@ -77,8 +77,8 @@ interface CreateProfileHeaderProps {
     common: any;
     isGhost: boolean;
     isAdult: boolean;
-    onToggleGhost: () => void;
-    onToggleAdult: () => void;
+    onToggleGhost?: () => void;
+    onToggleAdult?: () => void;
     isAdmin?: boolean;
     onSwitchProfile?: () => void;
 }
@@ -132,28 +132,34 @@ export const CreateProfileHeader = memo(({
                     </FlexText>
                     {profile.is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
                 </View>
-                <View style={createStyles.postOptionsRow}>
-                    <PostOptionBadge
-                        icon="ghost-smile-outline"
-                        iconActive="ghost-smile-bold"
-                        label={t('create.form.ghost')}
-                        isActive={isGhost}
-                        onPress={onToggleGhost}
-                        colors={colors}
-                        common={common}
-                        activeColor={COLORS.primary}
-                    />
-                    <PostOptionBadge
-                        icon="heart-unlock-outline"
-                        iconActive="heart-unlock"
-                        label={t('create.form.sensitive')}
-                        isActive={isAdult}
-                        onPress={onToggleAdult}
-                        colors={colors}
-                        common={common}
-                        activeColor={COLORS.error}
-                    />
-                </View>
+                {(onToggleGhost || onToggleAdult) && (
+                    <View style={createStyles.postOptionsRow}>
+                        {onToggleGhost && (
+                            <PostOptionBadge
+                                icon="ghost-smile-outline"
+                                iconActive="ghost-smile-bold"
+                                label={t('create.form.ghost')}
+                                isActive={isGhost}
+                                onPress={onToggleGhost}
+                                colors={colors}
+                                common={common}
+                                activeColor={COLORS.primary}
+                            />
+                        )}
+                        {onToggleAdult && (
+                            <PostOptionBadge
+                                icon="heart-unlock-outline"
+                                iconActive="heart-unlock"
+                                label={t('create.form.sensitive')}
+                                isActive={isAdult}
+                                onPress={onToggleAdult}
+                                colors={colors}
+                                common={common}
+                                activeColor={COLORS.error}
+                            />
+                        )}
+                    </View>
+                )}
             </View>
         </View>
     );

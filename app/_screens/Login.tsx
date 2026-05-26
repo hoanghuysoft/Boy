@@ -16,7 +16,7 @@ const LoginScreen = () => {
 
     return (
         <SafeAreaView style={[style.container, { backgroundColor: colors.background }]}>
-            <NitroImage image={require("../../assets/images/bg.png")} style={[StyleSheet.absoluteFill, { opacity: 0.8 }]} resizeMode="cover" />
+            <NitroImage image={require("../../assets/images/bg.jpg")} style={[StyleSheet.absoluteFill, { opacity: 0.8 }]} resizeMode="cover" />
             <View style={{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
                 <View style={{ alignItems: "center" }}>
                     <NitroImage image={require("../../assets/images/logo_head.png")} resizeMode="contain" style={{ width: 85, height: 85 }} />

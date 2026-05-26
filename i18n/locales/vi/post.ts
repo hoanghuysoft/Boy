@@ -23,10 +23,14 @@ const post = {
         ok: 'OK',
         reportTitle: 'Báo cáo',
         reportComingSoon: 'Tính năng báo cáo sắp ra mắt!',
-        shareTitle: 'Chia sẻ',
-        shareComingSoon: 'Tính năng chia sẻ sắp ra mắt!',
+        shareTitle: 'Chia sẻ lại',
+        repostInstant: 'Đăng lại ngay',
+        repostQuote: 'Trích dẫn',
+        repostSuccess: 'Đã chia sẻ lại thành công!',
+        repostFailed: 'Không thể chia sẻ lại bài viết.',
         copyLinkTitle: 'Sao chép liên kết',
         linkCopied: 'Đã sao chép liên kết!',
+
     },
 
     commentsSheet: {

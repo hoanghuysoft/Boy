@@ -57,6 +57,7 @@ interface CreateActionBarProps {
     // Media
     selectedMediaCount: number;
     onPickMedia: () => void;
+    hideMediaOption?: boolean;
     // Location
     showLocationInput: boolean;
     hasLocation: boolean;
@@ -76,6 +77,7 @@ export const CreateActionBar = memo(({
     visible = true,
     selectedMediaCount,
     onPickMedia,
+    hideMediaOption = false,
     showLocationInput,
     hasLocation,
     onToggleLocation,
@@ -129,13 +131,15 @@ export const CreateActionBar = memo(({
                         },
                     ]}
                 >
-                    <ActionButton
-                        icon={GalleryBold}
-                        isActive={selectedMediaCount > 0}
-                        onPress={onPickMedia}
-                        disabled={selectedMediaCount >= 10}
-                        colors={colors}
-                    />
+                    {!hideMediaOption && (
+                        <ActionButton
+                            icon={GalleryBold}
+                            isActive={selectedMediaCount > 0}
+                            onPress={onPickMedia}
+                            disabled={selectedMediaCount >= 10}
+                            colors={colors}
+                        />
+                    )}
                     <ActionButton
                         icon={MapPointBold}
                         isActive={showLocationInput || hasLocation}

@@ -108,9 +108,25 @@ export const useUpdateNote = () => {
 
     return useMutation({
         mutationFn: ({ id, data }: { id: number; data: UpdateNoteInput }) => updateNote(id, data),
-        onSuccess: (result, variables) => {
-            // Update the detail cache immediately with server result
-            queryClient.setQueryData(noteKeys.detail(variables.id), result);
+        onMutate: async ({ id, data }) => {
+            // Cancel in-flight queries for this note
+            await queryClient.cancelQueries({ queryKey: noteKeys.detail(id) });
+            const previousDetail = queryClient.getQueryData(noteKeys.detail(id));
+
+            // Optimistically apply the change to the detail cache
+            queryClient.setQueryData(noteKeys.detail(id), (old: any) =>
+                old ? { ...old, data: { ...old.data, ...data } } : old
+            );
+
+            return { previousDetail, id };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previousDetail) {
+                queryClient.setQueryData(noteKeys.detail(context.id), context.previousDetail);
+            }
+        },
+        onSettled: (_data, _err, variables) => {
+            queryClient.invalidateQueries({ queryKey: noteKeys.detail(variables.id) });
             queryClient.invalidateQueries({ queryKey: noteKeys.all });
         },
     });

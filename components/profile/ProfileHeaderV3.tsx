@@ -159,7 +159,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 />
             )}
 
-            {(!!profile?.birthday || !!(profile as any)?.has_facebook || socialLinks.length > 0 || addresses.length > 0 || workplaces.length > 0) && (
+            {(isOwner || !!profile?.birthday || !!(profile as any)?.has_facebook || socialLinks.length > 0 || addresses.length > 0 || workplaces.length > 0) && (
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -184,7 +184,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                         </HeaderInfoCard>
                     )}
 
-                    {socialLinks.length > 0 && (
+                    {(isOwner || socialLinks.length > 0) && (
                         <HeaderInfoCard
                             onPress={() => onPresentSheet?.(socialSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
@@ -194,11 +194,13 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                             centerText
                             labelStyle={vm.common.label}
                         >
-                            {socialLinks.length} {t('profile.header.countSocialLinks', { count: socialLinks.length })}
+                            {socialLinks.length > 0
+                                ? `${socialLinks.length} ${t('profile.header.countSocialLinks', { count: socialLinks.length })}`
+                                : t('profile.header.cards.addSocialLinks', 'Social Links')}
                         </HeaderInfoCard>
                     )}
 
-                    {addresses.length > 0 && (
+                    {(isOwner || addresses.length > 0) && (
                         <HeaderInfoCard
                             onPress={() => onPresentSheet?.(addressSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
@@ -210,11 +212,13 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                                 </View>
                             )}
                         >
-                            {addresses.length} {t('profile.header.countAddresses', { count: addresses.length })}
+                            {addresses.length > 0
+                                ? `${addresses.length} ${t('profile.header.countAddresses', { count: addresses.length })}`
+                                : t('profile.header.cards.addAddresses', 'Addresses')}
                         </HeaderInfoCard>
                     )}
 
-                    {workplaces.length > 0 && (
+                    {(isOwner || workplaces.length > 0) && (
                         <HeaderInfoCard
                             onPress={() => onPresentSheet?.(workplaceSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
@@ -226,7 +230,9 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                                 </View>
                             )}
                         >
-                            {workplaces.length} {t('profile.header.countWorkplaces', { count: workplaces.length })}
+                            {workplaces.length > 0
+                                ? `${workplaces.length} ${t('profile.header.countWorkplaces', { count: workplaces.length })}`
+                                : t('profile.header.cards.addWorkplaces', 'Workplaces')}
                         </HeaderInfoCard>
                     )}
                 </ScrollView>

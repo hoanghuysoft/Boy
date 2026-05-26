@@ -8,7 +8,7 @@
 import { BookmarksResponse, BookmarkStatusResponse, CreateBookmarkResponse } from '@/types/bookmarkedpost';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
-import { bookmarkKeys } from './queryKeys';
+import { bookmarkKeys, feedKeys } from './queryKeys';
 
 // ============================================================================
 // API Functions
@@ -155,7 +155,7 @@ export const useToggleBookmark = () => {
                     })),
                 };
             };
-            queryClient.setQueriesData({ queryKey: ['feed'], exact: false }, feedUpdater);
+            queryClient.setQueriesData({ queryKey: feedKeys.home, exact: false }, feedUpdater);
             queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, feedUpdater);
 
             return { previousStatus, postId, wasBookmarked: isBookmarked };
@@ -178,7 +178,7 @@ export const useToggleBookmark = () => {
                         })),
                     };
                 };
-                queryClient.setQueriesData({ queryKey: ['feed'], exact: false }, rollbackUpdater);
+                queryClient.setQueriesData({ queryKey: feedKeys.home, exact: false }, rollbackUpdater);
                 queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, rollbackUpdater);
             }
         },

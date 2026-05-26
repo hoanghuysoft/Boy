@@ -90,7 +90,7 @@ const AddMusicSheet = memo(
 
         const handleAdd = useCallback((track: DeezerTrack) => {
             Keyboard.dismiss();
-            addMusic(track.deezer_id, {
+            addMusic({ deezer_id: track.deezer_id, trackData: track }, {
                 onSuccess: () => {
                     setQuery('');
                     setDebouncedQuery('');

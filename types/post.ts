@@ -28,6 +28,7 @@ export interface Post {
     view_count: number
     share_count: number
     music: Music
+    reposted_post?: any
 }
 
 export interface Link {

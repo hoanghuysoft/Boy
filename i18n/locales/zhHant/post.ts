@@ -23,10 +23,14 @@ const post = {
         ok: '確定',
         reportTitle: '檢舉',
         reportComingSoon: '檢舉功能即將上線！',
-        shareTitle: '分享',
-        shareComingSoon: '分享功能即將上線！',
+        shareTitle: '轉發',
+        repostInstant: '立即轉發',
+        repostQuote: '引用轉發',
+        repostSuccess: '轉發成功！',
+        repostFailed: '轉發失敗。',
         copyLinkTitle: '複製連結',
         linkCopied: '連結已複製到剪貼簿！',
+
     },
 
     commentsSheet: {

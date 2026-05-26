@@ -23,10 +23,14 @@ const post = {
         ok: 'OK',
         reportTitle: 'Report',
         reportComingSoon: 'Report feature coming soon!',
-        shareTitle: 'Share',
-        shareComingSoon: 'Share feature coming soon!',
+        shareTitle: 'Repost',
+        repostInstant: 'Repost Now',
+        repostQuote: 'Quote Repost',
+        repostSuccess: 'Reposted successfully!',
+        repostFailed: 'Failed to repost.',
         copyLinkTitle: 'Copy Link',
         linkCopied: 'Link copied to clipboard!',
+
     },
 
     commentsSheet: {

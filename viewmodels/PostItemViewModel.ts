@@ -1,11 +1,16 @@
 import { Post } from "@/types/post";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
+import { Alert, Clipboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
 import { useToggleBookmark } from "../services/bookmark";
 import { useToggleLike } from "../services/like";
+import { useCreatePost, useSharePost } from "../services/post";
+import { useProfile } from "../services/userprofile";
 import { useAudioStore } from "../stores/audio";
 import { createCommonStyles } from "../styles/common";
+import { useTranslation } from "react-i18next";
+import { useToast } from "heroui-native";
 
 interface UsePostItemViewModelProps {
     post: Post;
@@ -114,6 +119,86 @@ export const usePostItemViewModel = ({
         );
     }, [isBookmarked, post.id, toggleBookmarkMutation]);
 
+    // ─── Share / Repost ─────────────────────────────────────────
+    const { t } = useTranslation();
+    const { toast } = useToast();
+    const { data: myProfile } = useProfile('me', true);
+    
+    const sharePostMutation = useSharePost();
+    const createPostMutation = useCreatePost(myProfile?.id || "");
+
+    const handleCopyLink = useCallback(() => {
+        const serverUrl = process.env.EXPO_PUBLIC_SERVER_URL || "https://welove.com";
+        Clipboard.setString(`${serverUrl}/posts/${post.id}`);
+        toast.show({
+            label: t('post.dialogs.copyLinkTitle'),
+            description: t('post.dialogs.linkCopied'),
+            variant: "success"
+        });
+    }, [post.id, t, toast]);
+
+    const handleDirectRepost = useCallback(async () => {
+        if (!myProfile?.id) {
+            toast.show({
+                label: t('post.dialogs.errorTitle'),
+                description: t('create.dialog.profileNotLoaded'),
+                variant: "danger"
+            });
+            return;
+        }
+
+        try {
+            // Build direct repost content
+            const repostContent = `<post id="${post.id}" />`;
+            
+            await createPostMutation.mutateAsync({
+                content: repostContent,
+                device: "Mobile Repost",
+            });
+
+            // Increment original post's share count on backend
+            sharePostMutation.mutate(post.id);
+
+            toast.show({
+                label: t('post.dialogs.shareTitle'),
+                description: t('post.dialogs.repostSuccess'),
+                variant: "success"
+            });
+        } catch (error: any) {
+            console.error("Repost failed", error);
+            toast.show({
+                label: t('post.dialogs.errorTitle'),
+                description: error.message || t('post.dialogs.repostFailed'),
+                variant: "danger"
+            });
+        }
+    }, [myProfile?.id, post.id, post.profile_name, post.content, post.deezer_id, post.links, createPostMutation, sharePostMutation, t, toast]);
+
+    const handleQuoteRepost = useCallback(() => {
+        router.push({
+            pathname: '/create',
+            params: {
+                repost_author: post.profile_name,
+                repost_content: post.content || '',
+                repost_deezer_id: post.deezer_id || '',
+                repost_links: JSON.stringify(post.links || []),
+                repost_id: post.id
+            }
+        });
+    }, [post.id, post.profile_name, post.content, post.deezer_id, post.links, router]);
+
+    const handleSharePress = useCallback(() => {
+        Alert.alert(
+            t('post.dialogs.shareTitle'),
+            t('post.optionsSheet.subtitle'),
+            [
+                { text: t('post.dialogs.repostInstant'), onPress: handleDirectRepost },
+                { text: t('post.dialogs.repostQuote'), onPress: handleQuoteRepost },
+                { text: t('post.dialogs.cancel'), style: 'cancel' }
+            ]
+        );
+    }, [t, handleDirectRepost, handleQuoteRepost]);
+
     // ─── Derived ────────────────────────────────────────────────
     const hasMedia = post.media && post.media.length > 0;
     const hasMusic = !!post.music?.preview_url;
@@ -143,6 +228,10 @@ export const usePostItemViewModel = ({
         // Bookmark
         isBookmarked,
         handleBookmarkPress,
+
+        // Share / Repost
+        handleSharePress,
+        handleCopyLink,
 
         // Derived
         hasMedia,

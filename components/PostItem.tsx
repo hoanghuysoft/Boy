@@ -6,7 +6,7 @@ import LikeSolidIcon from "@/icons/likedsolid";
 import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
 import { useFeedVideoStore } from "@/stores/feedVideo";
-import { Link, Post } from "@/types/post";
+import { Link, Media, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
@@ -14,6 +14,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Dimensions, TouchableOpacity, View } from "react-native";
 import { Pressable, ScrollView } from 'react-native-gesture-handler';
+import { router } from "expo-router";
 import { NitroImage } from "react-native-nitro-image";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
@@ -27,7 +28,7 @@ import { YouTubePostPlayer } from "./YouTubePostPlayer";
 // TurboImage cache policy - use dataCache for aggressive local caching
 const IMAGE_CACHE_POLICY = "dataCache" as const;
 
-interface PostItemProps {
+export interface PostItemProps {
     post: Post;
     onOptionsPress?: (post: Post) => void;
     onLikeCountPress?: (post: Post) => void;
@@ -36,14 +37,34 @@ interface PostItemProps {
 }
 
 export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, isBookmarked = false }: PostItemProps) => {
-    const vm = usePostItemViewModel({ post, onOptionsPress, onLikeCountPress, onCommentPress });
     const { t } = useTranslation();
+
+    const isRepost = !!post.reposted_post;
+    const originalPost = post.reposted_post;
+    const isRepostDeleted = isRepost && originalPost.deleted;
+
+    // Merge original post's assets (media, music, links, audio, device) into a displayPost object
+    const displayPost = React.useMemo(() => {
+        if (isRepost && !isRepostDeleted) {
+            return {
+                ...post,
+                media: originalPost.media,
+                music: originalPost.music,
+                links: originalPost.links,
+                audio_url: originalPost.audio_url,
+                device: originalPost.device,
+            };
+        }
+        return post;
+    }, [post, isRepost, isRepostDeleted, originalPost]);
+
+    const vm = usePostItemViewModel({ post: displayPost, onOptionsPress, onLikeCountPress, onCommentPress });
 
     // Feed video state - optimally select ONLY boolean to prevent mass re-renders
     const isActiveVideoPost = useFeedVideoStore(s => s.activePostId === post.id);
     const isVideoMuted = useFeedVideoStore(s => s.isMuted);
     const toggleVideoMute = useFeedVideoStore(s => s.toggleMute);
-    const hasVideo = post.media?.some(m => m.type === 'video');
+    const hasVideo = displayPost.media?.some((m: Media) => m.type === 'video');
 
     // Caption without any YouTube URLs — those are rendered by YouTubePostPlayer.
     const captionWithoutYouTube = React.useMemo(
@@ -81,28 +102,95 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </Pressable>
                 )}
             </View>
-            {/* Caption — YouTube URLs are stripped since they're rendered by YouTubePostPlayer below */}
-            {captionWithoutYouTube ? (
-                <View style={{ paddingHorizontal: 16 }}>
-                    <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />
-                </View>
-            ) : null}
+
+            {/* Captions Block (Supports standard caption and embedded quote repost layout) */}
+            <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+                {isRepost ? (
+                    isRepostDeleted ? (
+                        <View style={{ gap: 8 }}>
+                            {!!captionWithoutYouTube && <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />}
+                            <View style={[vm.common.row, {
+                                borderLeftWidth: 3,
+                                borderLeftColor: '#EF4444',
+                                paddingLeft: 12,
+                                paddingVertical: 4,
+                                gap: 8,
+                                alignItems: 'center'
+                            }]}>
+                                <Ionicons name="alert-circle-outline" size={16} color={vm.colors.muted} />
+                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted, fontStyle: 'italic' }]}>
+                                    {originalPost.text || t('post.dialogs.repostFailed')}
+                                </FlexText>
+                            </View>
+                        </View>
+                    ) : (
+                        <View style={{ gap: 8 }}>
+                            {/* Reposter's quote caption (if it exists) */}
+                            {!!captionWithoutYouTube && (
+                                <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />
+                            )}
+
+                            {/* Quoted Original Post with author info right under it */}
+                            <View style={{
+                                borderLeftWidth: 3,
+                                borderLeftColor: vm.colors.verify,
+                                paddingLeft: 12,
+                                paddingVertical: 2,
+                            }}>
+                                {!!originalPost.content && (
+                                    <FlexText style={[vm.common.body, { fontStyle: 'italic', fontSize: 14, color: vm.colors.text }]} numberOfLines={4}>
+                                        {originalPost.content}
+                                    </FlexText>
+                                )}
+                                <Pressable
+                                    onPress={() => {
+                                        router.push({
+                                            pathname: '/profile/[id]',
+                                            params: { id: originalPost.profile_id },
+                                        });
+                                    }}
+                                    style={[vm.common.row, { gap: 6, alignItems: 'center', marginTop: 4 }]}
+                                >
+                                    <View style={{ borderRadius: 9999, overflow: "hidden", width: 18, height: 18 }}>
+                                        <NitroImage
+                                            image={{ url: originalPost.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                                            style={{ width: 18, height: 18 }}
+                                            resizeMode="cover"
+                                        />
+                                    </View>
+                                    <FlexText style={[vm.common.label, { color: vm.colors.muted, fontSize: 11, fontWeight: '600' }]}>
+                                        Reposted from {originalPost.profile_name}
+                                    </FlexText>
+                                </Pressable>
+                            </View>
+                        </View>
+                    )
+                ) : (
+                    captionWithoutYouTube ? (
+                        <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />
+                    ) : null
+                )}
+            </View>
+
             {/* YouTube links detected in the caption — single player or carousel */}
-            {post.content ? (
+            {isRepost && !isRepostDeleted && originalPost.content ? (
+                <YouTubePostPlayer postId={originalPost.id} caption={originalPost.content} />
+            ) : (post.content ? (
                 <YouTubePostPlayer postId={post.id} caption={post.content} />
-            ) : null}
+            ) : null)}
+
             {/* Media & Audio Overlay */}
             <View>
                 <PostMediaCarousel
-                    media={post.media}
+                    media={displayPost.media}
                     postId={post.id}
-                    profileName={post.profile_name}
-                    content={post.content}
+                    profileName={displayPost.profile_name}
+                    content={displayPost.content}
                     colors={vm.colors}
-                    isAdult={post.is_adult}
-                    isVerified={post.profile_is_verified}
-                    musicUrl={post.music?.preview_url}
-                    musicTitle={post.music ? `${post.music.artist} - ${post.music.title}` : undefined}
+                    isAdult={displayPost.is_adult}
+                    isVerified={displayPost.profile_is_verified}
+                    musicUrl={displayPost.music?.preview_url}
+                    musicTitle={displayPost.music ? `${displayPost.music.artist} - ${displayPost.music.title}` : undefined}
                 />
 
                 {/* Video mute/unmute icon — shown when this post is actively playing a video */}
@@ -141,19 +229,22 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </Pressable>
                 )}
             </View>
+
             {/* Audio Waveform — shown when post has a direct audio_url */}
-            {!!post.audio_url && (
+            {!!displayPost.audio_url && (
                 <PostAudioWaveform
                     postId={post.id}
-                    audioUrl={post.audio_url}
+                    audioUrl={displayPost.audio_url}
                     colors={vm.colors}
-                    label={post.profile_name}
+                    label={displayPost.profile_name}
                 />
             )}
+
             {/* Invisible Spacer for No-Media Posts */}
             {!vm.hasMedia && (
                 <View style={{ width: Dimensions.get("window").width, height: 1 }} />
             )}
+
             {/* Audio Button for No-Media Posts */}
             {!vm.hasMedia && vm.hasMusic && (
                 <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, marginBottom: 12 }}>
@@ -178,15 +269,16 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </Pressable>
                 </View>
             )}
+
             {/* Links — single link: full-width symmetric view; multiple: horizontal peek scroll */}
-            {post.links && post.links.length > 0 && (
-                post.links.length === 1 ? (
+            {displayPost.links && displayPost.links.length > 0 && (
+                displayPost.links.length === 1 ? (
                     // Single link — equal 16px padding both sides, card fills the gap
                     (<View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
                         <PostLinkPreview
-                            key={post.links[0].url || 0}
-                            url={post.links[0].url}
-                            label={post.links[0].label}
+                            key={displayPost.links[0].url || 0}
+                            url={displayPost.links[0].url}
+                            label={displayPost.links[0].label}
                             colors={vm.colors}
                             cardWidth={Dimensions.get('window').width - 32}
                         />
@@ -197,7 +289,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         decelerationRate="fast"
-                        snapToOffsets={post.links.map((_, i) => i * (LINK_CARD_WIDTH + 10))}
+                        snapToOffsets={displayPost.links.map((_: Link, i: number) => i * (LINK_CARD_WIDTH + 10))}
                         snapToAlignment="start"
                         contentContainerStyle={{
                             paddingHorizontal: 16,
@@ -206,7 +298,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         }}
                         style={{ marginBottom: 4 }}
                     >
-                        {post.links.map((item: Link, index: number) => (
+                        {displayPost.links.map((item: Link, index: number) => (
                             <PostLinkPreview
                                 key={item.url || index}
                                 url={item.url}
@@ -217,16 +309,18 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </ScrollView>)
                 )
             )}
-            {post.device && (
+
+            {displayPost.device && (
                 <FlexText
                     style={[
                         vm.common.label,
                         { color: vm.colors.muted, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 },
                     ]}
                 >
-                    {t('post.createdOnDevice', { device: post.device })}
+                    {t('post.createdOnDevice', { device: displayPost.device })}
                 </FlexText>
             )}
+
             {/* Action Bar */}
             {isBookmarked ? (
                 // Bookmarks screen: read-only stats, no bookmark button
@@ -275,10 +369,12 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             <CommentIcon size={24} color={vm.colors.text} />
                             <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</FlexText>
                         </Pressable>
-                        <Pressable hitSlop={10} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                            <ShareIcon size={24} color={vm.colors.text} />
-                            <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.share_count}</FlexText>
-                        </Pressable>
+                        {!isRepost && (
+                            <Pressable hitSlop={10} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                                <ShareIcon size={24} color={vm.colors.text} />
+                                <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.share_count}</FlexText>
+                            </Pressable>
+                        )}
                     </View>
                     <Pressable hitSlop={10} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
@@ -297,8 +393,10 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         prev.post.is_liked === next.post.is_liked &&
         prev.post.like_count === next.post.like_count &&
         prev.post.comment_count === next.post.comment_count &&
+        prev.post.share_count === next.post.share_count &&
         prev.post.is_bookmarked === next.post.is_bookmarked &&
-        prev.isBookmarked === next.isBookmarked
+        prev.isBookmarked === next.isBookmarked &&
+        JSON.stringify(prev.post.reposted_post) === JSON.stringify(next.post.reposted_post)
     );
 });
 PostItem.displayName = "PostItem";

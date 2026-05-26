@@ -8,7 +8,7 @@
 import { Comment, CommentResponse, CreateCommentInput, UpdateCommentInput } from '@/types/comment';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
-import { commentKeys } from './queryKeys';
+import { commentKeys, feedKeys } from './queryKeys';
 
 // ============================================================================
 // API Functions
@@ -106,7 +106,7 @@ const patchCommentCountInFeedCaches = (
         };
     };
 
-    queryClient.setQueriesData({ queryKey: ['feed'], exact: false }, updater);
+    queryClient.setQueriesData({ queryKey: feedKeys.home, exact: false }, updater);
     queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, updater);
 
     // Also patch the video (Shots) feed — videos link to posts via post_id
@@ -124,7 +124,7 @@ const patchCommentCountInFeedCaches = (
             })),
         };
     };
-    queryClient.setQueriesData({ queryKey: ['videoFeed'], exact: false }, videoUpdater);
+    queryClient.setQueriesData({ queryKey: feedKeys.video, exact: false }, videoUpdater);
 };
 
 /**
@@ -229,12 +229,16 @@ export const useDeleteComment = (postId: string) => {
             return { previousList };
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
+            // onSettled handles invalidation — this is kept intentionally blank
         },
         onError: (_err, _commentId, context) => {
             if (context?.previousList) queryClient.setQueryData(commentKeys.list(postId), context.previousList);
             // Roll back the optimistic decrement
             patchCommentCountInFeedCaches(queryClient, postId, +1);
+        },
+        onSettled: () => {
+            // Always re-sync the comment list and counts from server
+            queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
         },
     });
 };

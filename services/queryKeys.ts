@@ -19,6 +19,7 @@ export const profileKeys = {
 // ─── Feed ─────────────────────────────────────────────────────────────────────
 export const feedKeys = {
     home: ['feed'] as const,
+    feedMode: (mode: string) => ['feed', mode] as const,
     profile: (profileId: string) => ['profileFeed', profileId] as const,
     video: ['videoFeed'] as const,
 };
@@ -33,6 +34,16 @@ export const likeKeys = {
 export const bookmarkKeys = {
     all: ['bookmarks'] as const,
     status: (postId: string) => ['bookmark', postId] as const,
+};
+
+// ─── Post ──────────────────────────────────────────────────────────────────────
+export const postKeys = {
+    /** Single post detail */
+    detail: (profileId: string, postId: string) =>
+        ['posts', profileId, postId] as const,
+
+    /** Media associated with a profile */
+    media: (profileId: string) => ['media', profileId] as const,
 };
 
 // ─── Comment ──────────────────────────────────────────────────────────────────
@@ -55,6 +66,11 @@ export const socialLinkKeys = {
 // ─── Address ──────────────────────────────────────────────────────────────────
 export const addressKeys = {
     all: (profileId: string) => ['addresses', profileId] as const,
+};
+
+// ─── Music ────────────────────────────────────────────────────────────────────
+export const musicKeys = {
+    all: (profileId: string) => ['music', profileId] as const,
 };
 
 // ─── Workplace ────────────────────────────────────────────────────────────────

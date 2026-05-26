@@ -129,7 +129,7 @@ const StatusBarFade = () => {
 const FakeSplashScreen = () => {
   return (
     <NitroImage
-      image={require("../assets/images/bg.png")}
+      image={require("../assets/images/bg.jpg")}
       style={StyleSheet.absoluteFill}
       resizeMode="cover"
     >

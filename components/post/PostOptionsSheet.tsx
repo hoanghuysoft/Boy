@@ -1,14 +1,16 @@
-import { CopyBold, DangerBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
+import { CopyBold, DangerBold, ShareBold, TrashBinTrashBold, PenNewRoundBold } from "@solar-icons/react-native";
 import { BottomSheet, Button, Dialog, useToast } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, Clipboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
-import { useDeletePost } from "../../services/post";
+import { useDeletePost, useCreatePost, useSharePost } from "../../services/post";
+import { useProfile } from "../../services/userprofile";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from "../../types/post";
 import { FlexText } from "../FlexText";
+import { router } from "expo-router";
 
 // ============================================================================
 // Types
@@ -84,8 +86,17 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 
         const isOwner = post?.profile_id === currentProfileId;
         const deletePostMutation = useDeletePost(currentProfileId || "");
+        const { data: myProfile } = useProfile('me', true);
+        const sharePostMutation = useSharePost();
+        const createPostMutation = useCreatePost(myProfile?.id || "");
         const [isOpen, setIsOpen] = useState(false);
         const insets = useSafeAreaInsets();
+
+        type DialogButton = {
+            text: string;
+            onPress: () => void;
+            variant?: "primary" | "secondary" | "tertiary" | "danger" | "danger-soft" | "ghost" | "outline";
+        };
 
         type DialogConfig = {
             title: string;
@@ -93,6 +104,8 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
             confirmText?: string;
             dismissText?: string;
             onConfirm?: () => void;
+            isDestructive?: boolean;
+            buttons?: DialogButton[];
         };
 
         const [dialog, setDialog] = useState<DialogConfig | null>(null);
@@ -128,20 +141,122 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
             });
         }, [post, deletePostMutation, dismissSheet, closeDialog, onDeleted, t, toast]);
 
+        const handleDirectRepost = useCallback(async () => {
+            if (!post || !myProfile?.id) {
+                toast.show({
+                    label: t('post.dialogs.errorTitle'),
+                    description: t('create.dialog.profileNotLoaded'),
+                    variant: "danger"
+                });
+                return;
+            }
+
+            try {
+                const repostContent = `<post id="${post.id}" />`;
+                
+                await createPostMutation.mutateAsync({
+                    content: repostContent,
+                    device: "Mobile Repost",
+                });
+
+                sharePostMutation.mutate(post.id);
+
+                toast.show({
+                    label: t('post.dialogs.shareTitle'),
+                    description: t('post.dialogs.repostSuccess'),
+                    variant: "success"
+                });
+            } catch (error: any) {
+                console.error("Repost failed", error);
+                toast.show({
+                    label: t('post.dialogs.errorTitle'),
+                    description: error.message || t('post.dialogs.repostFailed'),
+                    variant: "danger"
+                });
+            }
+        }, [post, myProfile?.id, createPostMutation, sharePostMutation, t, toast]);
+
+        const handleQuoteRepost = useCallback(() => {
+            if (!post) return;
+            const firstImageMedia = post.media?.find((m: any) => m.type === 'image' || m.type === 'video');
+            router.push({
+                pathname: '/create',
+                params: {
+                    repost_author: post.profile_name,
+                    repost_content: post.content || '',
+                    repost_deezer_id: post.deezer_id || '',
+                    repost_links: JSON.stringify(post.links || []),
+                    repost_id: post.id,
+                    repost_media_url: firstImageMedia?.url || ''
+                }
+            });
+        }, [post]);
+
+        const handleShare = useCallback(() => {
+            dismissSheet();
+            if (!post) return;
+            
+            setDialog({
+                title: t('post.dialogs.shareTitle'),
+                text: t('post.optionsSheet.subtitle'),
+                buttons: [
+                    {
+                        text: t('post.dialogs.repostInstant'),
+                        onPress: () => {
+                            closeDialog();
+                            handleDirectRepost();
+                        },
+                        variant: "primary"
+                    },
+                    {
+                        text: t('post.dialogs.repostQuote'),
+                        onPress: () => {
+                            closeDialog();
+                            handleQuoteRepost();
+                        },
+                        variant: "outline"
+                    },
+                    {
+                        text: t('post.dialogs.cancel'),
+                        onPress: closeDialog,
+                        variant: "ghost"
+                    }
+                ]
+            });
+        }, [dismissSheet, post, t, handleDirectRepost, handleQuoteRepost, closeDialog]);
+
+        const handleCopyLink = useCallback(() => {
+            dismissSheet();
+            if (post) {
+                const serverUrl = process.env.EXPO_PUBLIC_SERVER_URL || "https://welove.com";
+                Clipboard.setString(`${serverUrl}/posts/${post.id}`);
+                toast.show({ label: t('post.dialogs.copyLinkTitle'), description: t('post.dialogs.linkCopied'), variant: "success" });
+            }
+        }, [dismissSheet, post, t, toast]);
+
         const handleReport = useCallback(() => {
             dismissSheet();
             toast.show({ label: t('post.dialogs.reportTitle'), description: t('post.dialogs.reportComingSoon'), variant: "default" });
         }, [dismissSheet, t, toast]);
 
-        const handleShare = useCallback(() => {
+        const handleEdit = useCallback(() => {
             dismissSheet();
-            toast.show({ label: t('post.dialogs.shareTitle'), description: t('post.dialogs.shareComingSoon'), variant: "default" });
-        }, [dismissSheet, t, toast]);
+            if (!post) return;
+            router.push({
+                pathname: '/create',
+                params: {
+                    edit_post_id: post.id,
+                    edit_content: post.content || '',
+                    edit_location: post.location || '',
+                    edit_deezer_id: post.deezer_id || '',
+                    edit_links: JSON.stringify(post.links || []),
+                    edit_is_ghost: String(post.is_ghost || false),
+                    edit_is_adult: String(post.is_adult || false),
+                    edit_music: post.music ? JSON.stringify(post.music) : '',
+                }
+            });
+        }, [post, dismissSheet]);
 
-        const handleCopyLink = useCallback(() => {
-            dismissSheet();
-            toast.show({ label: t('post.dialogs.copyLinkTitle'), description: t('post.dialogs.linkCopied'), variant: "success" });
-        }, [dismissSheet, t, toast]);
 
         return (
             <>
@@ -161,13 +276,15 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 
                                 {/* Options List */}
                                 <View>
-                                    <OptionItem
-                                        icon={ShareBold}
-                                        label={t('post.optionsSheet.share')}
-                                        onPress={handleShare}
-                                        colors={colors}
-                                        common={common}
-                                    />
+                                    {!post?.reposted_post && (
+                                        <OptionItem
+                                            icon={ShareBold}
+                                            label={t('post.optionsSheet.share')}
+                                            onPress={handleShare}
+                                            colors={colors}
+                                            common={common}
+                                        />
+                                    )}
 
                                     <OptionItem
                                         icon={CopyBold}
@@ -182,6 +299,16 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                                             icon={DangerBold}
                                             label={t('post.optionsSheet.report')}
                                             onPress={handleReport}
+                                            colors={colors}
+                                            common={common}
+                                        />
+                                    )}
+
+                                    {isOwner && !post?.reposted_post && (
+                                        <OptionItem
+                                            icon={PenNewRoundBold}
+                                            label={t('post.optionsSheet.editPost' as any) || 'Edit Post'}
+                                            onPress={handleEdit}
                                             colors={colors}
                                             common={common}
                                         />
@@ -212,19 +339,33 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                                 <Dialog.Title>{dialog?.title}</Dialog.Title>
                                 <Dialog.Description>{dialog?.text}</Dialog.Description>
                             </View>
-                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-                                {dialog?.dismissText && (
-                                    <Button variant="ghost" onPress={closeDialog}>
-                                        {dialog.dismissText}
+                            {dialog?.buttons ? (
+                                <View style={{ gap: 8 }}>
+                                    {dialog.buttons.map((btn, idx) => (
+                                        <Button
+                                            key={idx}
+                                            variant={btn.variant ?? "primary"}
+                                            onPress={btn.onPress}
+                                        >
+                                            {btn.text}
+                                        </Button>
+                                    ))}
+                                </View>
+                            ) : (
+                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                                    {dialog?.dismissText && (
+                                        <Button variant="ghost" onPress={closeDialog}>
+                                            {dialog.dismissText}
+                                        </Button>
+                                    )}
+                                    <Button
+                                        variant={dialog?.isDestructive || dialog?.onConfirm ? "danger" : "primary"}
+                                        onPress={() => dialog?.onConfirm ? dialog.onConfirm() : closeDialog()}
+                                    >
+                                        {dialog?.confirmText ?? t('post.dialogs.ok')}
                                     </Button>
-                                )}
-                                <Button
-                                    variant={dialog?.onConfirm ? "danger" : "primary"}
-                                    onPress={() => dialog?.onConfirm ? dialog.onConfirm() : closeDialog()}
-                                >
-                                    {dialog?.confirmText ?? t('post.dialogs.ok')}
-                                </Button>
-                            </View>
+                                </View>
+                            )}
                         </Dialog.Content>
                     </Dialog.Portal>
                 </Dialog>

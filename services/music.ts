@@ -14,6 +14,8 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { client } from "./client";
+import { type DeezerTrack } from "./deezer";
+import { musicKeys } from "./queryKeys";
 
 // ============================================================================
 // Types
@@ -32,6 +34,8 @@ export interface MusicResponse {
 export interface AddMusicPayload {
     profileId: string;
     deezer_id: string;
+    /** Full track from Deezer search — used for instant optimistic updates */
+    trackData?: DeezerTrack;
 }
 
 export interface UpdateMusicPayload {
@@ -112,6 +116,26 @@ export const deleteMusic = async ({
 };
 
 // ============================================================================
+// Infinite query helper — pages updater
+// ============================================================================
+
+type InfiniteMusicData = { pages: MusicResponse[]; pageParams: any[] };
+
+const patchMusicPages = (
+    old: InfiniteMusicData | undefined,
+    updater: (items: ProfileMusic[]) => ProfileMusic[]
+): InfiniteMusicData | undefined => {
+    if (!old) return old;
+    return {
+        ...old,
+        pages: old.pages.map((page) => ({
+            ...page,
+            data: updater(page.data),
+        })),
+    };
+};
+
+// ============================================================================
 // React Query Hooks
 // ============================================================================
 
@@ -120,7 +144,7 @@ export const deleteMusic = async ({
  */
 export const useInfiniteMusic = (profileId: string) => {
     return useInfiniteQuery({
-        queryKey: ["music", profileId],
+        queryKey: musicKeys.all(profileId),
         queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
             getMusic({ profileId, pageParam }),
         initialPageParam: undefined as string | undefined,
@@ -129,35 +153,137 @@ export const useInfiniteMusic = (profileId: string) => {
                 ? lastPage.pagination.nextCursor ?? undefined
                 : undefined,
         enabled: !!profileId,
+        staleTime: 2 * 60 * 1000, // 2 min — music lists rarely change mid-session
     });
 };
 
 /**
- * Hook to add a track to a profile's music list
+ * Hook to add a track to a profile's music list.
+ * Pass `trackData` (from Deezer search) for an instant fully-populated optimistic insert.
  */
 export const useAddMusic = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = musicKeys.all(profileId);
 
     return useMutation({
-        mutationFn: (deezer_id: string) =>
+        mutationFn: ({ deezer_id }: { deezer_id: string; trackData?: DeezerTrack }) =>
             addMusic({ profileId, deezer_id }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["music", profileId] });
+        onMutate: async ({ deezer_id, trackData }) => {
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteMusicData>(qk);
+
+            // If we have full track data from search, use it directly — instant & complete.
+            // Otherwise fall back to a minimal placeholder.
+            const optimistic: ProfileMusic = trackData
+                ? {
+                    id: `temp-${Date.now()}`,
+                    profile_id: profileId,
+                    deezer_id: trackData.deezer_id,
+                    title: trackData.title,
+                    artist: trackData.artist,
+                    album: trackData.album,
+                    url: trackData.url,
+                    cover_url: trackData.cover_url,
+                    duration: trackData.duration,
+                    preview_url: trackData.preview,
+                    preview_expires_at: null as any,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                }
+                : {
+                    id: `temp-${Date.now()}`,
+                    profile_id: profileId,
+                    deezer_id,
+                    title: "Loading...",
+                    artist: "",
+                    album: "",
+                    url: null as any,
+                    cover_url: null as any,
+                    duration: 0,
+                    preview_url: null as any,
+                    preview_expires_at: null as any,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                };
+
+            queryClient.setQueryData<InfiniteMusicData>(qk, (old) =>
+                patchMusicPages(old, (items) => [optimistic, ...items])
+            );
+
+            return { previous, optimisticId: optimistic.id };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(qk, context.previous);
+            }
+        },
+        onSuccess: (result, _vars, context) => {
+            // Server only returns { id, deezer_id, profile_id, created_at }.
+            // Patch just the id — all Deezer metadata is already correct from the optimistic insert.
+            queryClient.setQueryData<InfiniteMusicData>(qk, (old) =>
+                patchMusicPages(old, (items) =>
+                    items.map((item) =>
+                        item.id === context?.optimisticId
+                            ? { ...item, id: result.data.id }
+                            : item
+                    )
+                )
+            );
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };
 
 /**
  * Hook to update a track on a profile's music list
+ * Performs optimistic update on the matching track
  */
 export const useUpdateMusic = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = musicKeys.all(profileId);
 
     return useMutation({
         mutationFn: ({ musicId, deezer_id }: { musicId: string; deezer_id: string }) =>
             updateMusic({ profileId, musicId, deezer_id }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["music", profileId] });
+        onMutate: async ({ musicId, deezer_id }) => {
+            await queryClient.cancelQueries({ queryKey: qk });
+            const previous = queryClient.getQueryData<InfiniteMusicData>(qk);
+
+            queryClient.setQueryData<InfiniteMusicData>(qk, (old) =>
+                patchMusicPages(old, (items) =>
+                    items.map((item) =>
+                        item.id === musicId
+                            ? {
+                                ...item,
+                                deezer_id,
+                                title: "Updating track...",
+                            }
+                            : item
+                    )
+                )
+            );
+
+            return { previous };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(qk, context.previous);
+            }
+        },
+        onSuccess: (result) => {
+            // Replace the updated track with the fresh server data immediately
+            queryClient.setQueryData<InfiniteMusicData>(qk, (old) =>
+                patchMusicPages(old, (items) =>
+                    items.map((item) =>
+                        item.id === result.data.id ? result.data : item
+                    )
+                )
+            );
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };
@@ -168,19 +294,20 @@ export const useUpdateMusic = (profileId: string) => {
  */
 export const useDeleteMusic = (profileId: string) => {
     const queryClient = useQueryClient();
+    const qk = musicKeys.all(profileId);
 
     return useMutation({
         mutationFn: (musicId: string) =>
             deleteMusic({ profileId, musicId }),
         onMutate: async (musicId: string) => {
             // Cancel in-flight queries
-            await queryClient.cancelQueries({ queryKey: ["music", profileId] });
+            await queryClient.cancelQueries({ queryKey: qk });
 
             // Snapshot current data for rollback
-            const previous = queryClient.getQueryData(["music", profileId]);
+            const previous = queryClient.getQueryData(qk);
 
             // Optimistically remove the track from all pages
-            queryClient.setQueryData(["music", profileId], (old: any) => {
+            queryClient.setQueryData(qk, (old: any) => {
                 if (!old) return old;
                 return {
                     ...old,
@@ -200,11 +327,11 @@ export const useDeleteMusic = (profileId: string) => {
         onError: (_err, _musicId, context) => {
             // Roll back on error
             if (context?.previous) {
-                queryClient.setQueryData(["music", profileId], context.previous);
+                queryClient.setQueryData(qk, context.previous);
             }
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["music", profileId] });
+            queryClient.invalidateQueries({ queryKey: qk });
         },
     });
 };
