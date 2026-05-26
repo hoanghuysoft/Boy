@@ -1,5 +1,5 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
+import { FlatList, ListRenderItemInfo } from "react-native";
 import { PostLinkPreview } from "@/components/PostLinkPreview";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -86,7 +86,7 @@ const NotesScreen = () => {
         setIsDeleteDialogOpen(true);
     }, [deleteNoteMutation, deletingId]);
 
-    const renderItem = useCallback(({ item }: LegendListRenderItemProps<Note>) => {
+    const renderItem = useCallback(({ item }: ListRenderItemInfo<Note>) => {
         const { title, text, imageUrl, linkUrls } = parseNoteContent(item.content);
         const isDeleting = deletingId === item.id;
 
@@ -266,8 +266,7 @@ const NotesScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <LegendList
-                recycleItems
+            <FlatList
                 data={notes}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderItem}

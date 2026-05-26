@@ -3,11 +3,11 @@ import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { SearchType, useTypedSearchInfinite } from "@/hooks/useMovies";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList } from "@legendapp/list";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Keyboard,
   Platform,
   Pressable,
@@ -288,11 +288,10 @@ const SearchMoviesScreen = () => {
         ))}
       </View>
 
-      <LegendList
+      <FlatList
         data={items}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
-        recycleItems
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={() => {
           if (isLoading && submittedQuery) {

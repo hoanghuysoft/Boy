@@ -8,13 +8,13 @@ import { usePersonDetails } from "@/hooks/useMovies";
 import { useGalleryStore } from "@/stores/gallery";
 import { enrichProfileData } from "@/utils/zodiacCalculation";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList } from "@legendapp/list";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+    FlatList,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -365,14 +365,13 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                             <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
                                 Movies
                             </Text>
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={movieCredits}
                                 keyExtractor={(item, index) => `${item.id}-${index}`}
                                 renderItem={renderMovieCreditItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}
@@ -383,14 +382,13 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                             <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
                                 TV Shows
                             </Text>
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={tvCredits}
                                 keyExtractor={(item, index) => `${item.id}-${index}`}
                                 renderItem={renderTvCreditItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}
@@ -401,14 +399,13 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                             <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
                                 Photos
                             </Text>
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={profiles.slice(0, 20)}
                                 keyExtractor={(item: any, i) => `${item.file_path}-${i}`}
                                 renderItem={renderGalleryItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}

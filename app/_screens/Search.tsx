@@ -8,13 +8,14 @@ import { renderProfileSkeleton } from "@/components/search/SearchProfileSkeleton
 import { TrendingHashtagsSection } from "@/components/search/TrendingHashtagsSection";
 import { Profile } from "@/types/profile";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  FlatList,
   KeyboardAvoidingView,
+  ListRenderItemInfo,
   Platform,
   RefreshControl,
   StyleSheet,
@@ -42,7 +43,7 @@ const SearchScreen = () => {
   const vm = useSearchViewModel();
 
   const renderItem = useCallback(
-    ({ item }: LegendListRenderItemProps<Profile>) => (
+    ({ item }: ListRenderItemInfo<Profile>) => (
       <SearchProfileItem
         item={item}
         colors={colors}
@@ -148,10 +149,9 @@ const SearchScreen = () => {
           ItemSeparatorComponent={ITEM_SEPARATOR}
         />
       ) : (
-        <LegendList
-          ref={vm.listRef}
+        <FlatList
+          ref={vm.listRef as any}
           data={vm.profiles}
-          recycleItems
           renderItem={renderItem}
           keyExtractor={(item: Profile) => item.id}
           contentContainerStyle={[
@@ -163,7 +163,6 @@ const SearchScreen = () => {
           ListEmptyComponent={ListEmptyComponent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          estimatedItemSize={80}
           // ItemSeparatorComponent={ITEM_SEPARATOR}
           refreshControl={
             <RefreshControl

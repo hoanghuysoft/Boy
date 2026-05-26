@@ -2,13 +2,13 @@ import { FlexText } from '@/components/FlexText';
 import { useDeezerSearch, type DeezerTrack } from '@/services/deezer';
 import { useAddMusic, useDeleteMusic } from '@/services/music';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Spinner } from 'heroui-native';
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import {
     Alert,
+    FlatList,
     Keyboard,
     Linking,
     StyleSheet,
@@ -207,11 +207,10 @@ const AddMusicSheet = memo(
                     setDebouncedQuery('');
                 }}
             >
-                <LegendList
+                <FlatList
                     nestedScrollEnabled
                     data={tracks}
                     keyExtractor={(item) => item.deezer_id}
-                    recycleItems
                     ListHeaderComponent={listHeader}
                     contentContainerStyle={{ paddingBottom: 40 }}
                     keyboardShouldPersistTaps="handled"
@@ -559,13 +558,12 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(
                         stopPlayback();
                     }}
                 >
-                    <LegendList
+                    <FlatList
                         nestedScrollEnabled
                         showsVerticalScrollIndicator={false}
                         onEndReached={onEndReached}
                         onEndReachedThreshold={0.5}
                         data={data}
-                        recycleItems
                         keyExtractor={(item) => item.id}
                         ListHeaderComponent={listHeader}
                         ListEmptyComponent={

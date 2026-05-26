@@ -8,19 +8,12 @@ import { Post } from '@/types/post';
 import type { LikersSheetHandle } from '@/types/sheetHandles';
 import { useHashtagPostsViewModel } from '@/viewmodels/HashtagPostsViewModel';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList, LegendListRenderItemProps } from '@legendapp/list';
+import { FlatList, ListRenderItemInfo, ActivityIndicator, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { useRouter } from 'expo-router';
 import { SkeletonGroup } from 'heroui-native';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-    ActivityIndicator,
-    RefreshControl,
-    StyleSheet,
-    TouchableOpacity,
-    View
-} from 'react-native';
 
 interface HashtagPostsScreenProps {
     tag: string;
@@ -49,7 +42,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
     }, []);
 
     const renderItem = useCallback(
-        ({ item }: LegendListRenderItemProps<Post>) => (
+        ({ item }: ListRenderItemInfo<Post>) => (
             <View style={{ marginBottom: 30 }}>
                 <PostItem
                     post={item}
@@ -188,11 +181,10 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                 </TouchableOpacity>
             </View>
 
-            <LegendList
+            <FlatList
                 data={vm.posts}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
-                recycleItems
                 onEndReached={vm.handleEndReached}
                 onEndReachedThreshold={0.5}
                 ListHeaderComponent={ListHeaderComponent}

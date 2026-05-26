@@ -1,13 +1,14 @@
 import { FlexText } from '@/components/FlexText';
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList, LegendListRenderItemProps } from '@legendapp/list';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import { SkeletonGroup } from 'heroui-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+    FlatList,
+    ListRenderItemInfo,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -27,7 +28,7 @@ const HashtagListScreen = () => {
     const { t } = useTranslation();
 
     const renderItem = useCallback(
-        ({ item }: LegendListRenderItemProps<Hashtag>) => (
+        ({ item }: ListRenderItemInfo<Hashtag>) => (
             <TouchableOpacity
                 onPress={() => vm.navigateToTag(item.tag)}
                 activeOpacity={0.7}
@@ -163,14 +164,13 @@ const HashtagListScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            <LegendList
+            <FlatList
                 data={vm.allTags}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
                 ListHeaderComponent={ListHeaderComponent}
                 ListEmptyComponent={renderEmpty}
                 showsVerticalScrollIndicator={false}
-                recycleItems
                 contentContainerStyle={[
                     { paddingHorizontal: 16, gap: 10, paddingBottom: 40 },
                     vm.allTags.length === 0 && styles.emptyContainer,

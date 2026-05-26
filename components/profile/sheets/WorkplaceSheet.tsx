@@ -1,11 +1,10 @@
 import { FlexText } from '@/components/FlexText';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { LegendList } from '@legendapp/list';
 import dayjs from 'dayjs';
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Platform } from "react-native";
+import { Alert, FlatList, Keyboard, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Platform } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -711,9 +710,8 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(
                         backHandler.onDidDismiss();
                     }}
                 >
-                    <LegendList
+                    <FlatList
                         nestedScrollEnabled
-                        recycleItems
                         showsVerticalScrollIndicator={false}
                         onEndReached={onEndReached}
                         onEndReachedThreshold={0.5}

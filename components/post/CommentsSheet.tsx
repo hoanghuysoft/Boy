@@ -1,7 +1,6 @@
 import VerifiedIcon from "@/icons/verified";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
-import { LegendList } from "@legendapp/list";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import { Galeria } from "@nandorojo/galeria";
@@ -12,6 +11,7 @@ import React, { forwardRef, memo, useCallback, useEffect, useState } from "react
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
+    FlatList,
     Keyboard,
     StyleSheet,
     TextInput,
@@ -454,10 +454,9 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 </View>
 
                 {/* Comments List */}
-                <LegendList
+                <FlatList
                     nestedScrollEnabled
                     data={vm.comments}
-                    recycleItems
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     onEndReached={vm.handleEndReached}

@@ -1,13 +1,13 @@
 import { FlexText } from '@/components/FlexText';
 import { WatchlistShow, useShowWatchlistStore } from '@/stores/showWatchlist';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList } from '@legendapp/list';
 import { RoundedMagnifierOutline, TrashBinTrashBold } from '@solar-icons/react-native';
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
 import { Button, Dialog } from "heroui-native";
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+    FlatList,
     Keyboard,
     Platform,
     Pressable,
@@ -173,11 +173,10 @@ const ShowWatchlistScreen = () => {
                 </View>
             )}
 
-            <LegendList
+            <FlatList
                 data={filtered}
                 keyExtractor={keyExtractor}
                 renderItem={renderItem}
-                recycleItems
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={[

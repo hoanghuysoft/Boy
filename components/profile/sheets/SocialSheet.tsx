@@ -1,14 +1,13 @@
 import { FlexText } from '@/components/FlexText';
 import { useAddSocialLink, useDeleteSocialLink, useUpdateSocialLink } from '@/services/sociallink';
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
-import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { EarthBold } from '@solar-icons/react-native';
 import { Button, Chip, Spinner } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, Keyboard, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { NitroImage } from 'react-native-nitro-image';
 import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -753,9 +752,8 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
                         backHandler.onDidDismiss();
                     }}
                 >
-                    <LegendList
+                    <FlatList
                         nestedScrollEnabled
-                        recycleItems
                         showsVerticalScrollIndicator={false}
                         onEndReached={onEndReached}
                         onEndReachedThreshold={0.5}

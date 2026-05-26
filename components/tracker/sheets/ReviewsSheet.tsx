@@ -1,11 +1,10 @@
 import { FlexText } from '@/components/FlexText';
 import { TMDBReview } from '@/types/moviedb/movie-entities';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList } from '@legendapp/list';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Image } from "expo-image";
 import React, { forwardRef, memo, useCallback } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
 import { ActivityIndicator } from 'react-native-paper';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -124,7 +123,7 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
                 </View>
 
                 {/* List */}
-                <LegendList
+                <FlatList
                     nestedScrollEnabled
                     onEndReached={onEndReached}
                     onEndReachedThreshold={0.5}
@@ -133,7 +132,6 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
                     renderItem={({ item }) => (
                         <ReviewItem key={item.id} item={item} colors={colors} common={common} />
                     )}
-                    recycleItems
                     ListFooterComponent={renderFooter}
                     ListEmptyComponent={
                         !isLoadingItems ? (

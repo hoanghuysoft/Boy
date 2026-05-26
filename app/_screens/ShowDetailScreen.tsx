@@ -7,14 +7,13 @@ import { useGalleryStore } from "@/stores/gallery";
 import { useShowWatchlistStore } from "@/stores/showWatchlist";
 import type { VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList } from "@legendapp/list";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { BookmarkBold, BookmarkOutline, CloudDownloadBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { getColors } from "react-native-image-colors";
 import { NitroImage } from "react-native-nitro-image";
 import { WebImages } from "react-native-nitro-web-image";
@@ -437,14 +436,13 @@ const ChatScreen = () => {
                     <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 24, paddingHorizontal: 16 }]}>
                       Gallery
                     </Text>
-                    <LegendList
+                    <FlatList
                       horizontal
                       data={detail?.extra_images ?? []}
                       keyExtractor={galleryKeyExtractor}
                       renderItem={renderGalleryItem}
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
-                      recycleItems
                     />
                   </View>
                 )}
@@ -464,28 +462,26 @@ const ChatScreen = () => {
                     <Text style={[styles.textStyle, { color: "white", paddingHorizontal: 16 }]}>
                       Tags
                     </Text>
-                    <LegendList
+                    <FlatList
                       horizontal
                       data={detail?.tags ?? []}
                       keyExtractor={tagKeyExtractor}
                       renderItem={renderTag}
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={{ gap: 8, marginTop: 8, paddingHorizontal: 16 }}
-                      recycleItems
                     />
                   </View>
                 </View>
                 <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, marginTop: 20, paddingHorizontal: 16 }]}>
                   Related Videos
                 </Text>
-                <LegendList
+                <FlatList
                   horizontal
                   data={relatedVideos ?? []}
                   keyExtractor={relatedVideoKeyExtractor}
                   renderItem={renderRelatedVideo}
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 16 }}
-                  recycleItems
                 />
               </View>
               <View style={{ height: inset.bottom }} />

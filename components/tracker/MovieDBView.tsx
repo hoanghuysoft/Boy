@@ -13,12 +13,13 @@ import {
 } from "@/hooks/useMovies";
 import { Movie } from "@/types/moviedb";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
     Animated,
+    FlatList,
+    ListRenderItemInfo,
     Pressable,
     RefreshControl,
     ScrollView,
@@ -123,7 +124,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
         isPopPeopleLoading || isAirTodayLoading || isOnAirLoading || isPopTvLoading || isTopTvLoading;
 
     const renderMovieItem = useCallback(
-        ({ item }: LegendListRenderItemProps<Movie>) => (
+        ({ item }: ListRenderItemInfo<Movie>) => (
             <GesturePressable
                 onPress={() => router.navigate({ pathname: "/movie_detail", params: { id: item.id } })}
                 style={{ width: CARD_WIDTH, marginRight: 12, overflow: "hidden", position: "relative" }}
@@ -357,14 +358,13 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                     <Ionicons name="chevron-forward" size={20} color="white" />
                                 </View>
                             </Pressable>
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={nowPlaying}
                                 keyExtractor={movieKeyExtractor}
                                 renderItem={renderMovieItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}
@@ -384,14 +384,13 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                     <Ionicons name="chevron-forward" size={20} color="white" />
                                 </View>
                             </Pressable>
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={tvAiringToday}
                                 keyExtractor={(item: any, index) => `${item.id}-${index}`}
                                 renderItem={renderTvItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}
@@ -413,14 +412,13 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <LegendList
+                                    <FlatList
                                         horizontal
                                         data={upcoming}
                                         keyExtractor={movieKeyExtractor}
                                         renderItem={renderMovieItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -440,14 +438,13 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <LegendList
+                                    <FlatList
                                         horizontal
                                         data={tvOnTheAir}
                                         keyExtractor={(item: any, index) => `${item.id}-${index}`}
                                         renderItem={renderTvItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -467,14 +464,13 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <LegendList
+                                    <FlatList
                                         horizontal
                                         data={popular}
                                         keyExtractor={movieKeyExtractor}
                                         renderItem={renderMovieItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -494,14 +490,13 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <LegendList
+                                    <FlatList
                                         horizontal
                                         data={tvPopular}
                                         keyExtractor={(item: any, index) => `${item.id}-${index}`}
                                         renderItem={renderTvItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -521,14 +516,13 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <LegendList
+                                    <FlatList
                                         horizontal
                                         data={popularPeople}
                                         keyExtractor={(item) => item.id.toString()}
                                         renderItem={renderPersonItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        recycleItems
                                     />
                                 </View>
                             )}
@@ -548,7 +542,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <LegendList
+                                    <FlatList
                                         horizontal
                                         data={topRated}
                                         keyExtractor={movieKeyExtractor}
@@ -574,14 +568,13 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             <Ionicons name="chevron-forward" size={20} color="white" />
                                         </View>
                                     </Pressable>
-                                    <LegendList
+                                    <FlatList
                                         horizontal
                                         data={tvTopRated}
                                         keyExtractor={(item: any, index) => `${item.id}-${index}`}
                                         renderItem={renderTvItem}
                                         showsHorizontalScrollIndicator={false}
                                         contentContainerStyle={{ paddingHorizontal: 16 }}
-                                        recycleItems
                                     />
                                 </View>
                             )}

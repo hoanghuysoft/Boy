@@ -4,11 +4,11 @@ import { useCategoriesQuery } from "@/services/shows";
 import { useSearchInfiniteQuery } from "@/services/shows/search";
 import type { Category, VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList } from "@legendapp/list";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Keyboard,
   Platform,
   Pressable,
@@ -292,11 +292,10 @@ const SearchShowsScreen = () => {
         </FlexText>
       </View>
 
-      <LegendList
+      <FlatList
         data={items}
         keyExtractor={(item) => item.video_url}
         renderItem={renderItem}
-        recycleItems
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={() => {
           if (isLoading && submittedQuery) {
@@ -306,8 +305,8 @@ const SearchShowsScreen = () => {
                   <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
                     <ShimmerEffect style={styles.thumbnail} />
                     <View style={{ flex: 1, gap: 8 }}>
-                      <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 4 }} />
-                      <ShimmerEffect style={{ height: 12, width: '60%', borderRadius: 4 }} />
+                       <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 4 }} />
+                       <ShimmerEffect style={{ height: 12, width: '60%', borderRadius: 4 }} />
                     </View>
                   </View>
                 ))}

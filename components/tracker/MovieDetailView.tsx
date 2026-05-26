@@ -12,7 +12,6 @@ import { Movie } from "@/types/moviedb/movie";
 import { TMDBVideoResult } from "@/types/moviedb/movie-entities";
 import { TMDBMovieImage } from "@/types/moviedb/movie-images";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList, LegendListRenderItemProps } from "@legendapp/list";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { DialogBold, WallpaperBold } from "@solar-icons/react-native";
@@ -22,6 +21,8 @@ import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+    FlatList,
+    ListRenderItemInfo,
     ScrollView,
     StyleSheet,
     Text,
@@ -205,7 +206,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     // ─── Render helpers ──────────────────────────────────────────────────────
 
     const renderGalleryItem = useCallback(
-        ({ item, index }: LegendListRenderItemProps<TMDBMovieImage>) => (
+        ({ item, index }: ListRenderItemInfo<TMDBMovieImage>) => (
             <Pressable
                 onPress={() => openGallery(galleryImages, index)}
                 style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, borderRadius: 12, overflow: 'hidden' })}
@@ -223,7 +224,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     const galleryKeyExtractor = useCallback((item: TMDBMovieImage, index: number) => `${item.file_path}-${index}`, []);
 
     const renderCastItem = useCallback(
-        ({ item }: LegendListRenderItemProps<CastMember>) => {
+        ({ item }: ListRenderItemInfo<CastMember>) => {
             const getCastAvatarSource = () => {
                 if (item.profile_path) return { uri: getImageUrl(item.profile_path, 185) };
                 // Pseudo-random based on name length to give variety
@@ -255,7 +256,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     );
 
     const renderVideoItem = useCallback(
-        ({ item }: LegendListRenderItemProps<TMDBVideoResult>) => {
+        ({ item }: ListRenderItemInfo<TMDBVideoResult>) => {
             const isYouTube = item.site.toLowerCase() === "youtube";
             const thumbnailUrl = isYouTube ? `https://img.youtube.com/vi/${item.key}/hqdefault.jpg` : null;
 
@@ -294,7 +295,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     );
 
     const renderMovieCard = useCallback(
-        ({ item }: LegendListRenderItemProps<Movie>) => (
+        ({ item }: ListRenderItemInfo<Movie>) => (
             <GesturePressable
                 onPress={() => router.push({ pathname: "/movie_detail", params: { id: item.id } })}
                 style={{ width: 120, marginRight: 12, overflow: "hidden" }}
@@ -462,14 +463,13 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                             <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
                                 Gallery
                             </Text>
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={backdrops.slice(0, 20)}
                                 keyExtractor={galleryKeyExtractor}
                                 renderItem={renderGalleryItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}
@@ -480,14 +480,13 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                             <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
                                 Videos
                             </Text>
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={videos}
                                 keyExtractor={videoKeyExtractor}
                                 renderItem={renderVideoItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}
@@ -498,14 +497,13 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                             <Text style={[styles.sectionTitle, { color: "white", marginBottom: 12, paddingHorizontal: 16 }]}>
                                 Cast & Crew
                             </Text>
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={cast}
                                 keyExtractor={castKeyExtractor}
                                 renderItem={renderCastItem}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ gap: 16, paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}
@@ -520,14 +518,13 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                                     params: { mode: "similar", movieId: movie.id, title: movie.title },
                                 })}
                             />
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={similarItems}
                                 keyExtractor={movieKeyExtractor}
                                 renderItem={renderMovieCard}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}
@@ -542,14 +539,13 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                                     params: { mode: "recommendations", movieId: movie.id, title: movie.title },
                                 })}
                             />
-                            <LegendList
+                            <FlatList
                                 horizontal
                                 data={recItems}
                                 keyExtractor={movieKeyExtractor}
                                 renderItem={renderMovieCard}
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={{ paddingHorizontal: 16 }}
-                                recycleItems
                             />
                         </View>
                     )}

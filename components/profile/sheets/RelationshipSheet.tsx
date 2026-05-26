@@ -1,9 +1,8 @@
 import { FlexText } from "@/components/FlexText";
-import { LegendList } from "@legendapp/list";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import React, { forwardRef, memo } from "react";
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, View } from "react-native";
+import { FlatList, Image, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -76,11 +75,9 @@ export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetPro
                     </FlexText>
                 </View>
 
-                {/* List */}
-                <LegendList
+                <FlatList
                     nestedScrollEnabled
                     data={data}
-                    recycleItems
                     keyExtractor={(item, index) => `${item.name}-${index}`}
                     renderItem={({ item }) => (
                         <RelationshipItem item={item} colors={colors} common={common} />
