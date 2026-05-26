@@ -11,7 +11,7 @@ import { router } from "expo-router";
 import React, { useCallback, useRef } from "react";
 import { Animated, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { FlatList as GestureFlatList, Pressable as GesturePressable } from "react-native-gesture-handler";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -39,13 +39,13 @@ const ChatScreen = () => {
         style={{ width: 200, marginRight: 12, overflow: "hidden", position: "relative" }}
       >
         <View style={{ width: 200, borderRadius: 16, overflow: "hidden", position: "relative" }}>
-          <NitroImage
-            image={{ url: item.thumb_url }}
+          <ExpoImage
+            source={{ uri: item.thumb_url }}
             style={{
               width: 200,
               aspectRatio: 16 / 9
             }}
-            resizeMode="cover"
+            contentFit="cover"
           />
           <View
             style={{
@@ -193,10 +193,10 @@ const ChatScreen = () => {
                             transform: [{ translateX }, { scale }],
                           }}
                         >
-                          <NitroImage
-                            image={{ url: slider.background_image }}
+                          <ExpoImage
+                            source={{ uri: slider.background_image }}
                             style={{ width: "100%", height: "100%" }}
-                            resizeMode="cover"
+                            contentFit="cover"
                           />
                         </Animated.View>
                         <Animated.View
@@ -209,8 +209,8 @@ const ChatScreen = () => {
                           <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
                             <FlexText style={[styles.textStyle, { color: "white" }]}>{slider.category}</FlexText>
                             <View style={{ height: 3, width: 3, backgroundColor: "white", opacity: 0.5, borderRadius: 9999 }} />
-                            <NitroImage image={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} resizeMode="contain" />
-                            <NitroImage image={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} resizeMode="contain" />
+                            <ExpoImage source={require("../../assets/images/vision.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
+                            <ExpoImage source={require("../../assets/images/atmos.png")} style={{ width: 32, height: 32, opacity: 0.8 }} contentFit="contain" />
                           </View>
                         </Animated.View>
                       </Pressable>
@@ -256,7 +256,7 @@ const ChatScreen = () => {
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <NitroImage image={require("../../assets/images/logo_head.png")} style={{ width: 50, height: 50 }} resizeMode="contain" />
+          <ExpoImage source={require("../../assets/images/logo_head.png")} style={{ width: 50, height: 50 }} contentFit="contain" />
           <Text style={[styles.textStyle, { color: "white", fontSize: 42, fontWeight: "700" }]}>tv</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>

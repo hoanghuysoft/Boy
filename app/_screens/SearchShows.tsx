@@ -20,7 +20,7 @@ import {
   View
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -138,13 +138,11 @@ const SearchShowsScreen = () => {
           },
         ]}
       >
-        <View style={{ borderRadius: 12, overflow: "hidden", width: 150, height: 80 }}>
-          <NitroImage
-            image={{ url: item.thumb_url }}
-            style={styles.thumbnail}
-            resizeMode="cover"
-          />
-        </View>
+        <ExpoImage
+          source={{ uri: item.thumb_url }}
+          style={styles.thumbnail}
+          contentFit="cover"
+        />
         <View style={{ flex: 1, gap: 4 }}>
           <FlexText
             numberOfLines={1}

@@ -30,7 +30,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -160,10 +160,10 @@ const MovieListScreen = () => {
                         { backgroundColor: colors.background, opacity: pressed ? 0.9 : 1 },
                     ]}
                 >
-                    <NitroImage
-                        image={{ url: getImageUrl(thumbnailPath) }}
+                    <ExpoImage
+                        source={{ uri: getImageUrl(thumbnailPath) }}
                         style={isPerson ? [styles.thumbnail, { height: 90, width: 90, borderRadius: 9999 }] : styles.thumbnail}
-                        resizeMode="cover"
+                        contentFit="cover"
                     />
                     <View style={{ flex: 1, gap: 4 }}>
                         <FlexText numberOfLines={2} style={[styles.title, { color: colors.text }]}>
@@ -212,10 +212,10 @@ const MovieListScreen = () => {
                     flexShrink: 0,
                 }}>
                     {item.still_path ? (
-                        <NitroImage
-                            image={{ url: `https://image.tmdb.org/t/p/w300${item.still_path}` }}
+                        <ExpoImage
+                            source={{ uri: `https://image.tmdb.org/t/p/w300${item.still_path}` }}
                             style={{ width: "100%", height: "100%" }}
-                            resizeMode="cover"
+                            contentFit="cover"
                         />
                     ) : (
                         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

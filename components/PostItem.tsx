@@ -16,7 +16,8 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Dimensions, TouchableOpacity, View } from "react-native";
 import { Pressable, ScrollView } from 'react-native-gesture-handler';
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
@@ -74,18 +75,27 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         [post.content]
     );
 
+    const avatarPlaceholder = React.useMemo(
+        () => resolveBlurhash(undefined, post.profile_id),
+        [post.profile_id]
+    );
+
+    const originalAvatarPlaceholder = React.useMemo(
+        () => resolveBlurhash(undefined, originalPost?.profile_id),
+        [originalPost?.profile_id]
+    );
+
     return (
         <View style={{}}>
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
                 <Pressable onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
-                    <View style={{ borderRadius: 9999, overflow: "hidden", width: 40, height: 40 }}>
-                        <NitroImage
-                            image={{ url: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                            style={{ width: 40, height: 40 }}
-                            resizeMode="cover"
-                        />
-                    </View>
+                    <ExpoImage
+                        source={{ uri: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                        style={{ width: 40, height: 40, borderRadius: 9999 }}
+                        contentFit="cover"
+                        placeholder={{ blurhash: avatarPlaceholder }}
+                    />
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>
                             <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
@@ -153,13 +163,12 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                     }}
                                     style={[vm.common.row, { gap: 6, alignItems: 'center', marginTop: 4 }]}
                                 >
-                                    <View style={{ borderRadius: 9999, overflow: "hidden", width: 18, height: 18 }}>
-                                        <NitroImage
-                                            image={{ url: originalPost.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                                            style={{ width: 18, height: 18 }}
-                                            resizeMode="cover"
-                                        />
-                                    </View>
+                                    <ExpoImage
+                                        source={{ uri: originalPost.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                                        style={{ width: 18, height: 18, borderRadius: 9999 }}
+                                        contentFit="cover"
+                                        placeholder={{ blurhash: originalAvatarPlaceholder }}
+                                    />
                                     <FlexText style={[vm.common.label, { color: vm.colors.muted, fontSize: 11, fontWeight: '600' }]}>
                                         Reposted from {originalPost.profile_name}
                                     </FlexText>

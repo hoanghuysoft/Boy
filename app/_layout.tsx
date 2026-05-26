@@ -12,7 +12,7 @@ import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
-import { NitroImage } from 'react-native-nitro-image';
+import { Image as ExpoImage } from 'expo-image';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -128,18 +128,19 @@ const StatusBarFade = () => {
 
 const FakeSplashScreen = () => {
   return (
-    <NitroImage
-      image={require("../assets/images/bg.jpg")}
-      style={StyleSheet.absoluteFill}
-      resizeMode="cover"
-    >
+    <View style={{ flex: 1 }}>
+      <ExpoImage
+        source={require("../assets/images/bg.jpg")}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+      />
       <StatusBar
         translucent
         backgroundColor="transparent"
         barStyle="light-content"
         animated
       />
-    </NitroImage>
+    </View>
   );
 };
 

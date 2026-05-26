@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { NitroImage } from 'react-native-nitro-image';
+import { Image as ExpoImage } from 'expo-image';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
 import { FlexText } from '../FlexText';
@@ -35,27 +35,23 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
 
         >
             {profile.avatar_url ? (
-                <View style={[styles.avatar, { overflow: 'hidden' }]}>
-                    <NitroImage
-                        image={{ url: profile.avatar_url }}
-                        style={styles.avatar}
-                        resizeMode="cover"
-                    />
-                </View>
+                <ExpoImage
+                    source={{ uri: profile.avatar_url }}
+                    style={styles.avatar}
+                    contentFit="cover"
+                />
             ) : (
-                <View style={[styles.avatar, { overflow: 'hidden' }]}>
-                    <NitroImage
-                        image={
-                            profile.gender === 'male'
-                                ? require('../../assets/images/AV17.png')
-                                : profile.gender
-                                    ? require('../../assets/images/AV86.png')
-                                    : { uri: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }
-                        }
-                        style={styles.avatar}
-                        resizeMode="cover"
-                    />
-                </View>
+                <ExpoImage
+                    source={
+                        profile.gender === 'male'
+                            ? require('../../assets/images/AV17.png')
+                            : profile.gender
+                                ? require('../../assets/images/AV86.png')
+                                : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+                    }
+                    style={styles.avatar}
+                    contentFit="cover"
+                />
             )}
             <View style={styles.textBlock}>
                 <View style={styles.nameRow}>

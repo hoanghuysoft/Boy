@@ -12,9 +12,6 @@ configurations.all {
     exclude group: 'com.caverock', module: 'androidsvg-aar'
 }
 
-// Fix duplicate Glide GeneratedAppGlideModuleImpl from @d11/react-native-fast-image
-rootProject.ext.excludeAppGlideModule = true
-
 // Fix AbstractMethodError: react-native-nitro-player pulls Media3 1.9.0 but expo-video
 // was compiled against 1.8.0. Force 1.8.0 so the runtime interface matches.
 configurations.all {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
-import { NativeNitroImage, useImage } from 'react-native-nitro-image';
+import { Image as ExpoImage } from 'expo-image';
 import { fitContainer } from 'react-native-zoom-toolkit';
 import { getCachedImageDimension, setCachedImageDimension } from './imageDimensionCache';
 
@@ -19,31 +19,23 @@ const GalleryImage: React.FC<GalleryImageProps> = ({ uri }) => {
         cachedResolution ?? { width: 1, height: 1 }
     );
 
-    // useImage fully loads the image into memory and exposes .width / .height
-    // directly on the returned Image object — no onSuccess event needed.
-    const { image } = useImage({ url: uri });
-
-    useEffect(() => {
-        if (image && image.width > 0 && image.height > 0) {
-            setCachedImageDimension(uri, image.width, image.height);
-            setResolution({ width: image.width, height: image.height });
-        }
-    }, [image, uri]);
-
     const size = fitContainer(resolution.width / resolution.height, { width, height });
 
     return (
         <View style={[size, { justifyContent: 'center', alignItems: 'center' }]}>
-            {/* NitroImage is a HybridView — it must be clipped by a View with
-                overflow: 'hidden', not by borderRadius on the NitroImage itself. */}
-            <View style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
-                <NativeNitroImage
-                    image={image}
-                    recyclingKey={uri}
-                    resizeMode="contain"
-                    style={{ width: '100%', height: '100%' }}
-                />
-            </View>
+            <ExpoImage
+                source={{ uri }}
+                recyclingKey={uri}
+                contentFit="contain"
+                style={{ width: '100%', height: '100%' }}
+                onLoad={(event) => {
+                    const { width: imgWidth, height: imgHeight } = event.source;
+                    if (imgWidth > 0 && imgHeight > 0) {
+                        setCachedImageDimension(uri, imgWidth, imgHeight);
+                        setResolution({ width: imgWidth, height: imgHeight });
+                    }
+                }}
+            />
         </View>
     );
 };

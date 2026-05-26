@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Modal, StyleSheet, View, useWindowDimensions } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { getCachedImageDimension } from "@/components/gallery/imageDimensionCache";
 
 interface QuickPreviewModalProps {
@@ -48,15 +48,16 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
         >
             <View style={styles.container}>
                 {!!imageUrl && (
-                    <NitroImage
-                        image={{ url: imageUrl }}
+                    <ExpoImage
+                        source={{ uri: imageUrl }}
                         recyclingKey={imageUrl}
                         style={[
                             hasCachedDimensions
                                 ? { width: resolvedWidth, height: resolvedHeight }
                                 : styles.fallbackContain,
                         ]}
-                        resizeMode="contain"
+                        contentFit="contain"
+                        placeholder={_blurhash ? { blurhash: _blurhash } : undefined}
                     />
                 )}
 

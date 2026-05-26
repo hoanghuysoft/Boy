@@ -3,7 +3,6 @@ import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import { Image } from "expo-image";
 import { ActivityIndicator, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLoginViewModel } from "../../viewmodels/LoginViewModel";
 
@@ -16,10 +15,10 @@ const LoginScreen = () => {
 
     return (
         <SafeAreaView style={[style.container, { backgroundColor: colors.background }]}>
-            <NitroImage image={require("../../assets/images/bg.jpg")} style={[StyleSheet.absoluteFill, { opacity: 0.8 }]} resizeMode="cover" />
+            <Image source={require("../../assets/images/bg.jpg")} style={[StyleSheet.absoluteFill, { opacity: 0.8 }]} contentFit="cover" />
             <View style={{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
                 <View style={{ alignItems: "center" }}>
-                    <NitroImage image={require("../../assets/images/logo_head.png")} resizeMode="contain" style={{ width: 85, height: 85 }} />
+                    <Image source={require("../../assets/images/logo_head.png")} contentFit="contain" style={{ width: 85, height: 85 }} />
                     <FlexText style={[common.headline, { color: 'white', fontWeight: "bold" }]}>WeLove</FlexText>
                 </View>
             </View>

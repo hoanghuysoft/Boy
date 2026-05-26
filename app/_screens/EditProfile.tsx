@@ -19,7 +19,7 @@ import {
     View
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { NitroImage } from 'react-native-nitro-image';
+import { Image as ExpoImage } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createMaterialTopTabNavigator();
@@ -352,7 +352,7 @@ const MediaTab = () => {
                     position: 'relative',
                 }}>
                     {coverUrl ? (
-                        <NitroImage image={{ url: coverUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                        <ExpoImage source={{ uri: coverUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
                     ) : (
                         <View style={[StyleSheet.absoluteFill, { backgroundColor: '#3b5998', opacity: 0.1 }]} />
                     )}
@@ -367,7 +367,7 @@ const MediaTab = () => {
                             overflow: 'hidden'
                         }}>
                             {avatarUrl ? (
-                                <NitroImage image={{ url: avatarUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                                <ExpoImage source={{ uri: avatarUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                             ) : (
                                 <View style={{ width: '100%', height: '100%', backgroundColor: colors.muted, justifyContent: 'center', alignItems: 'center' }}>
                                     <Ionicons name="person" size={24} color="#fff" />

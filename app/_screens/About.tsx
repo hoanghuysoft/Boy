@@ -8,7 +8,7 @@ import * as Updates from 'expo-updates';
 import { Surface } from "heroui-native";
 import { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 
@@ -47,7 +47,7 @@ const AboutScreen = () => {
                     <Ionicons name="chevron-back" size={24} color={colors.text} />
                 </TouchableOpacity>
             </View>
-            <NitroImage image={require('../../assets/images/logo_head.png')} style={{ width: 100, height: 100, marginBottom: 16 }} />
+            <ExpoImage source={require('../../assets/images/logo_head.png')} style={{ width: 100, height: 100, marginBottom: 16 }} contentFit="contain" />
             <FlexText style={[common.headline, { marginBottom: 48 }]}>Welcome to WeLove!</FlexText>
             <Surface variant="default" style={{ width: '100%', padding: 16 }}>
                 <TouchableOpacity>

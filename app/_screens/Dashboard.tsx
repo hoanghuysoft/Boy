@@ -19,7 +19,6 @@ import { SquircleView } from "expo-squircle-view";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // const DashboardScreenV1 = () => {
@@ -286,14 +285,14 @@ const DashboardScreen = () => {
                                 <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>ReClip</FlexText>
                             </TouchableOpacity>
 
-                            {isAdmin && (
-                                <TouchableOpacity onPress={() => router.push("/webview?url=https://boy-server.vercel.app/&isUseSafeArea=true&safeAreaColor=white&isShowBackButton=true")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
-                                    <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
-                                        <NitroImage image={require("../../assets/images/logo_head.png")} style={{ width: 34, height: 34 }} resizeMode="contain" />
-                                    </SquircleView>
-                                    <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>WeLove Admin</FlexText>
-                                </TouchableOpacity>
-                            )}
+                                    {isAdmin && (
+                                        <TouchableOpacity onPress={() => router.push("/webview?url=https://boy-server.vercel.app/&isUseSafeArea=true&safeAreaColor=white&isShowBackButton=true")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                            <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                                <Image source={require("../../assets/images/logo_head.png")} style={{ width: 34, height: 34 }} contentFit="contain" />
+                                            </SquircleView>
+                                            <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>WeLove Admin</FlexText>
+                                        </TouchableOpacity>
+                                    )}
 
                             <TouchableOpacity onPress={() => router.push("/_screens/Bulletinboard")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
                                 <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>

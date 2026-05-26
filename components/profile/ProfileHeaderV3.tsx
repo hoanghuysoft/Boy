@@ -10,7 +10,7 @@ import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
-import { NitroImage } from 'react-native-nitro-image';
+import { Image as ExpoImage } from 'expo-image';
 
 import VerifiedIcon from '@/icons/verified';
 import { ProfileAddress } from '../../types/profileaddress';
@@ -106,10 +106,10 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
             <View style={{ height: vm.insets.top + 75 }} />
 
             <SquircleView borderRadius={16} cornerSmoothing={100} preserveSmoothing style={styles.coverContainer}>
-                <NitroImage
-                    image={{ url: profile?.cover_url || "https://picsum.photos/1000" }}
+                <ExpoImage
+                    source={{ uri: profile?.cover_url || "https://picsum.photos/1000" }}
                     style={styles.coverImage}
-                    resizeMode="cover"
+                    contentFit="cover"
                 />
             </SquircleView>
             <View style={styles.avatarRow}>
@@ -244,7 +244,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 <FlexText style={{ color: vm.colors.text }}>{videoCount} <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>{t("profile.header.countVideos", { count: videoCount })}</FlexText></FlexText>
             </View>
 
-            {/* Tabs UI from ProfileNew */}
+            {/* Tabs UI */}
             <Tabs
                 value={activeTab}
                 onValueChange={(val: any) => onTabChange(val)}

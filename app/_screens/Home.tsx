@@ -9,7 +9,7 @@ import {
 } from "@solar-icons/react-native";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { CommentsSheet } from "../../components/post/CommentsSheet";
 import { LikersSheet } from "../../components/post/LikersSheet";
@@ -100,9 +100,9 @@ const HomeScreen = () => {
                 }}
               />
               <View style={{ width: 40, height: 30, borderRadius: 100, overflow: 'hidden' }}>
-                <NitroImage
-                  resizeMode="contain"
-                  image={require("../../assets/images/logo_head.png")}
+                <ExpoImage
+                  contentFit="contain"
+                  source={require("../../assets/images/logo_head.png")}
                   style={{ width: 40, height: 30}}
                 />
               </View>

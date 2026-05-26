@@ -10,7 +10,7 @@ import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { memo, useCallback, useRef, useState } from "react";
 import { Dimensions, FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get('window');
@@ -164,9 +164,10 @@ const BulletinItem = memo(({
             {/* Avatar and Content */}
             <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 24, alignItems: 'flex-start' }}>
                 <SquircleView preserveSmoothing cornerSmoothing={100} borderRadius={2} style={{ width: 36, height: 36, overflow: "hidden" }}>
-                    <NitroImage
-                        image={{ url: item.publish_user?.avatar_thumb?.url_list?.[0] }}
+                    <ExpoImage
+                        source={{ uri: item.publish_user?.avatar_thumb?.url_list?.[0] }}
                         style={{ width: 36, height: 36, borderRadius: 18 }}
+                        contentFit="cover"
                     />
                 </SquircleView>
                 <View style={{ flex: 1, marginLeft: 8, alignItems: 'flex-start' }}>

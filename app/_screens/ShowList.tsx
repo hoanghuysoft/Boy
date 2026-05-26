@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -74,10 +74,10 @@ const ShowListScreen = () => {
           { backgroundColor: colors.background, opacity: pressed ? 0.9 : 1 },
         ]}
       >
-        <NitroImage
-          image={{ url: item.thumb_url }}
+        <ExpoImage
+          source={{ uri: item.thumb_url }}
           style={styles.thumbnail}
-          resizeMode="cover"
+          contentFit="cover"
         />
         <View style={{ flex: 1, gap: 4 }}>
           <FlexText numberOfLines={1} style={[styles.title, { color: colors.text }]}>

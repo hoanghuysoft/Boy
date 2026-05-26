@@ -8,7 +8,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
-import { NitroImage } from 'react-native-nitro-image';
 import { useRouter } from 'expo-router';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 
@@ -94,7 +93,7 @@ export const AvatarSection = ({ vm }: { vm: any }) => {
       ) : (
         <Image source={{ uri: FALLBACK_AVATAR_URL }} contentFit="cover" style={avatarStyle} />
       )}
-      <NitroImage image={{ url: AVATAR_FRAME_URL }} style={headerStyles.avatarFrame} resizeMode="cover" />
+      <Image source={{ uri: AVATAR_FRAME_URL }} style={headerStyles.avatarFrame} contentFit="cover" />
       <View style={[headerStyles.avatarBackplate, { backgroundColor: vm.colors.background }]} />
     </View>
   );
@@ -248,7 +247,7 @@ export const HeaderInfoCard = ({
   <SquircleView cornerSmoothing={60} preserveSmoothing borderRadius={9999} style={headerStyles.infoCardOuter}>
     <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={[headerStyles.infoCardInner, backgroundColor ? { backgroundColor } : null]}>
       {backgroundImageUri && (
-        <NitroImage image={{ url: backgroundImageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <Image source={{ uri: backgroundImageUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
       )}
       {showDimOverlay && <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />}
       {showTintOverlay && <View style={[StyleSheet.absoluteFill, { backgroundColor: showTintOverlay, opacity: 0.1 }]} />}

@@ -5,7 +5,7 @@ import { SquircleView } from "expo-squircle-view";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { FlexText } from "../FlexText";
 
 interface SearchProfileItemProps {
@@ -50,28 +50,22 @@ export const SearchProfileItem = React.memo(({
                 onPress={handlePress}
             >
                 {item.avatar_url ?
-                    <View style={[styles.avatar, { overflow: "hidden" }]}>
-                        <NitroImage
-                            image={{ url: item.avatar_url }}
-                            style={styles.avatar}
-                            resizeMode={"cover"}
-                        />
-                    </View> :
-                    <View style={[styles.avatar, { overflow: "hidden" }]}>
-                        <NitroImage
-                            image={
-                                item.gender === "male"
-                                    ? require("../../assets/images/AV17.png")
-                                    : item.gender
-                                        ? require("../../assets/images/AV86.png")
-                                        : {
-                                            url: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-                                        }
-                            }
-                            style={styles.avatar}
-                            resizeMode={"cover"}
-                        />
-                    </View>
+                    <ExpoImage
+                        source={{ uri: item.avatar_url }}
+                        style={styles.avatar}
+                        contentFit="cover"
+                    /> :
+                    <ExpoImage
+                        source={
+                            item.gender === "male"
+                                ? require("../../assets/images/AV17.png")
+                                : item.gender
+                                    ? require("../../assets/images/AV86.png")
+                                    : "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                        }
+                        style={styles.avatar}
+                        contentFit="cover"
+                    />
                 }
                 <View style={styles.profileInfo}>
                     <View style={[common.row, { gap: 4 }]}>

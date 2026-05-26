@@ -13,7 +13,7 @@ import {
     View,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { NitroImage } from 'react-native-nitro-image';
+import { Image as ExpoImage } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useOnboardingViewModel } from '../../viewmodels/OnboardingViewModel';
 
@@ -50,12 +50,11 @@ const OnboardingScreen = () => {
                 {/* Avatar picker */}
                 <TouchableOpacity style={style.avatarWrapper} onPress={pickAvatar} activeOpacity={0.8}>
                     {form.avatarUri ? (
-                        <View style={[style.avatar, { overflow: 'hidden' }]}>
-                            <NitroImage
-                                image={{ url: form.avatarUri }}
-                                style={style.avatar}
-                            />
-                        </View>
+                        <ExpoImage
+                            source={{ uri: form.avatarUri }}
+                            style={style.avatar}
+                            contentFit="cover"
+                        />
                     ) : (
                         <View style={[style.avatar, style.avatarPlaceholder, { backgroundColor: colors.containerContent }]}>
                             <FlexText style={[common.body, { color: colors.muted }]}>

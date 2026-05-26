@@ -18,7 +18,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 
 interface ProfilePickerSheetProps {
     selectedProfileId?: string | null;
@@ -47,27 +47,21 @@ const ProfileRow = memo(
             >
                 <View style={styles.avatarContainer}>
                     {item.avatar_url ? (
-                        <View style={[styles.avatar, { overflow: 'hidden' }]}>
-                            <NitroImage
-                                image={{
-                                    url: item.avatar_url
-                                }}
-                                style={styles.avatar}
-                                resizeMode="cover"
-                            />
-                        </View>
+                        <ExpoImage
+                            source={{ uri: item.avatar_url }}
+                            style={styles.avatar}
+                            contentFit="cover"
+                        />
                     ) : (
-                        <View style={[styles.avatar, { overflow: 'hidden' }]}>
-                            <NitroImage
-                                image={
-                                    item.gender === "male"
-                                        ? require("../../../assets/images/AV17.png")
-                                        : require("../../../assets/images/AV86.png")
-                                }
-                                style={styles.avatar}
-                                resizeMode="cover"
-                            />
-                        </View>
+                        <ExpoImage
+                            source={
+                                item.gender === "male"
+                                    ? require("../../../assets/images/AV17.png")
+                                    : require("../../../assets/images/AV86.png")
+                            }
+                            style={styles.avatar}
+                            contentFit="cover"
+                        />
                     )}
                 </View>
 

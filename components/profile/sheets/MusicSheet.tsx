@@ -16,7 +16,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { NitroImage } from 'react-native-nitro-image';
+import { Image as ExpoImage } from 'expo-image';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { useAudioStore } from '../../../stores/audio';
 import { createCommonStyles } from "../../../styles/common";
@@ -270,10 +270,10 @@ const DeezerTrackItem = memo(function DeezerTrackItem({
                 disabled={!track.preview}
                 style={styles.artworkContainer}
             >
-                <NitroImage
-                    image={{ url: track.cover_url }}
+                <ExpoImage
+                    source={{ uri: track.cover_url }}
                     style={styles.artwork}
-                    resizeMode="cover"
+                    contentFit="cover"
                 />
                 {/* Play/pause overlay */}
                 <View style={[StyleSheet.absoluteFill, styles.artworkOverlay]}>
@@ -373,10 +373,10 @@ const MusicItem = memo(({
         >
             {/* Album Art & Play Overlay */}
             <View style={styles.artworkContainer}>
-                <NitroImage
-                    image={{ url: item.cover_url }}
+                <ExpoImage
+                    source={{ uri: item.cover_url }}
                     style={styles.artwork}
-                    resizeMode="cover"
+                    contentFit="cover"
                 />
                 <View style={[StyleSheet.absoluteFill, styles.artworkOverlay]}>
                     <View style={[styles.playIconWrapper, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>

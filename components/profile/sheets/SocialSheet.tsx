@@ -8,7 +8,7 @@ import { Button, Chip, Spinner } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, Keyboard, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import { NitroImage } from 'react-native-nitro-image';
+import { Image as ExpoImage } from 'expo-image';
 import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -259,13 +259,11 @@ const SocialLinkItem = memo(({
                     const imageUrl = previewData?.image?.url;
 
                     const IconNode = imageUrl ? (
-                        <View style={{ width: 48, height: 48, borderRadius: 999, overflow: 'hidden' }}>
-                            <NitroImage
-                                image={{ url: imageUrl }}
-                                style={{ width: 48, height: 48 }}
-                                resizeMode="cover"
-                            />
-                        </View>
+                        <ExpoImage
+                            source={{ uri: imageUrl }}
+                            style={{ width: 48, height: 48, borderRadius: 999 }}
+                            contentFit="cover"
+                        />
                     ) : (
                         <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
                             <EarthBold size={24} color={colors.text} />

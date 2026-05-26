@@ -30,7 +30,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import Reanimated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Video, { VideoRef } from "react-native-video";
@@ -204,10 +204,10 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
                 {/* Fixed full-screen inner view, centered by parent → symmetric clip */}
                 <View style={styles.videoContent}>
                     {item.thumbnail_url && (
-                        <NitroImage
-                            image={{ url: item.thumbnail_url }}
+                        <ExpoImage
+                            source={{ uri: item.thumbnail_url }}
                             style={StyleSheet.absoluteFill}
-                            resizeMode="contain"
+                            contentFit="contain"
                         />
                     )}
 
@@ -267,12 +267,11 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
             <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 100 }]} pointerEvents="none">
                 <TouchableOpacity onPress={() => router.push(`/profile/${item.profile_id}`)} style={styles.profileRow}>
                     {item.profile_avatar && (
-                        <View style={[styles.avatar, { overflow: 'hidden' }]}>
-                            <NitroImage
-                                image={{ url: item.profile_avatar }}
-                                style={styles.avatar}
-                            />
-                        </View>
+                        <ExpoImage
+                            source={{ uri: item.profile_avatar }}
+                            style={styles.avatar}
+                            contentFit="cover"
+                        />
                     )}
                     <FlexText style={styles.profileName}>{item.profile_name}</FlexText>
                 </TouchableOpacity>

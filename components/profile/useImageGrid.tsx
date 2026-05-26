@@ -14,7 +14,6 @@ import {
     ViewStyle,
 } from "react-native";
 import { Pressable } from "react-native-gesture-handler";
-import { NitroImage, useImage } from "react-native-nitro-image";
 import { Media } from "../../types/media";
 import {
     GridItemType,
@@ -126,12 +125,14 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
 }) => {
     const fallbackUrls = useMemo(() => buildFallbackUrls(mediaItem, placeholderImage), [mediaItem, placeholderImage]);
     const [urlIndex, setUrlIndex] = useState(0);
-    const { error } = useImage({ url: fallbackUrls[urlIndex] });
+    const placeholderBlurhash = useMemo(
+        () => resolveBlurhash(mediaItem.blurhash, mediaItem.id),
+        [mediaItem.blurhash, mediaItem.id],
+    );
 
-    useEffect(() => {
-        if (!error) return;
+    const handleImageError = useCallback(() => {
         setUrlIndex(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
-    }, [error, fallbackUrls.length]);
+    }, [fallbackUrls.length]);
 
     return (
         <Pressable
@@ -141,27 +142,20 @@ const ImageGridItem: React.FC<ImageGridItemProps> = React.memo(({
             onPressOut={onPressOut}
             delayLongPress={300}
         >
-            {/* <TurboImage
+            <Image
                 source={{ uri: fallbackUrls[urlIndex] }}
-                style={imageStyle}
-                resizeMode="cover"
-                cachePolicy={IMAGE_CACHE_POLICY}
-                fadeDuration={150}
-                onFailure={handleImageError}
-            /> */}
-            <View style={[
-                imageStyle,
-                { overflow: "hidden" },
-                isFirst && { borderTopLeftRadius: 16 },
-                isTopRight && { borderTopRightRadius: 16 }
-            ]}>
-                <NitroImage
-                    image={{ url: fallbackUrls[urlIndex] }}
-                    recyclingKey={fallbackUrls[urlIndex]}
-                    style={StyleSheet.absoluteFill}
-                    resizeMode="cover"
-                />
-            </View>
+                onError={handleImageError}
+                style={[
+                    imageStyle,
+                    {
+                        borderTopLeftRadius: isFirst ? 16 : 0,
+                        borderTopRightRadius: isTopRight ? 16 : 0
+                    }
+                ]}
+                contentFit="cover"
+                transition={150}
+                placeholder={{ blurhash: placeholderBlurhash }}
+            />
         </Pressable>
     );
 });

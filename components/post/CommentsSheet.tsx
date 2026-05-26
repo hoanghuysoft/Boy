@@ -18,7 +18,6 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Comment } from "../../types/comment";
 import { parseCommentContent, useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
@@ -64,13 +63,11 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
         <View style={styles.commentItem}>
             {/* Avatar */}
             <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
-                <View style={[styles.avatar, { overflow: 'hidden' }]}>
-                    <NitroImage
-                        image={{ url: comment.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                        style={[styles.avatar, { backgroundColor: colors.divider }]}
-                        resizeMode="cover"
-                    />
-                </View>
+                <Image
+                    source={{ uri: comment.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                    style={[styles.avatar, { backgroundColor: colors.divider }]}
+                    contentFit="cover"
+                />
             </TouchableOpacity>
 
             {/* Content Bubble */}

@@ -28,9 +28,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { NitroImage } from "react-native-nitro-image";
-
-import { WebImages } from "react-native-nitro-web-image";
+import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -58,7 +56,7 @@ const prefetchPhotoDimensions = async (items: any[]) => {
         .filter(Boolean);
 
     if (allPhotoUrls.length > 0) {
-        for (const url of allPhotoUrls) WebImages.preload(url);
+        for (const url of allPhotoUrls) ExpoImage.prefetch(url);
     }
 
     // 3) For items still missing dimensions (no server value AND no cache),
@@ -322,26 +320,22 @@ const MansoryListScreen = () => {
                         ]}
                     >
                         {activeProfile?.avatar_url ? (
-                            <View style={styles.headerAvatar}>
-                                <NitroImage
-                                    image={{ url: activeProfile.avatar_url }}
-                                    style={styles.headerAvatar}
-                                    resizeMode="cover"
-                                    recyclingKey={activeProfile.avatar_url}
-                                />
-                            </View>
+                            <ExpoImage
+                                source={{ uri: activeProfile.avatar_url }}
+                                style={styles.headerAvatar}
+                                contentFit="cover"
+                                recyclingKey={activeProfile.avatar_url}
+                            />
                         ) : (
-                            <View style={styles.headerAvatar}>
-                                <NitroImage
-                                    image={
-                                        activeProfile?.gender === "male"
-                                            ? require("../../assets/images/AV17.png")
-                                            : require("../../assets/images/AV86.png")
-                                    }
-                                    style={styles.headerAvatar}
-                                    resizeMode="cover"
-                                />
-                            </View>
+                            <ExpoImage
+                                source={
+                                    activeProfile?.gender === "male"
+                                        ? require("../../assets/images/AV17.png")
+                                        : require("../../assets/images/AV86.png")
+                                }
+                                style={styles.headerAvatar}
+                                contentFit="cover"
+                            />
                         )}
                         <View
                             style={[

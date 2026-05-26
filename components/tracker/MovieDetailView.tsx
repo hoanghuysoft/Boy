@@ -32,7 +32,6 @@ import {
 } from "react-native";
 import { Pressable as GesturePressable, Pressable } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
-import { NitroImage } from "react-native-nitro-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { movieDetailStorage as storage } from "../../services/storage";
 import WallpaperOverlay from "../WallpaperOverlay";
@@ -209,12 +208,12 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
         ({ item, index }: ListRenderItemInfo<TMDBMovieImage>) => (
             <Pressable
                 onPress={() => openGallery(galleryImages, index)}
-                style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, borderRadius: 12, overflow: 'hidden' })}
+                style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
-                <NitroImage
-                    image={{ url: getImageUrl(item.file_path, 780) }}
-                    style={{ width: 250, aspectRatio: item.aspect_ratio || 16 / 9 }}
-                    resizeMode="cover"
+                <Image
+                    source={{ uri: getImageUrl(item.file_path, 780) }}
+                    style={{ width: 250, aspectRatio: item.aspect_ratio || 16 / 9, borderRadius: 12 }}
+                    contentFit="cover"
                 />
             </Pressable>
         ),

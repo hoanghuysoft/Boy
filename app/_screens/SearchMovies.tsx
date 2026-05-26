@@ -19,7 +19,7 @@ import {
   View
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { NitroImage } from "react-native-nitro-image";
+import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -151,13 +151,11 @@ const SearchMoviesScreen = () => {
             },
           ]}
         >
-          <View style={{ borderRadius: 9999, overflow: 'hidden', width: 90, height: 90 }}>
-            <NitroImage
-              image={{ url: getImageUrl(thumbnailPath) }}
-              style={isPerson ? [styles.thumbnail, { height: 90, width: 90 }] : styles.thumbnail}
-              resizeMode="cover"
-            />
-          </View>
+          <ExpoImage
+            source={{ uri: getImageUrl(thumbnailPath) }}
+            style={{ width: 90, height: 90, borderRadius: 45 }}
+            contentFit="cover"
+          />
           <View style={{ flex: 1, gap: 4 }}>
             <FlexText numberOfLines={2} style={[styles.title, { color: colors.text }]}>
               {title}

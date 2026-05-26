@@ -21,7 +21,6 @@ import {
     ViewabilityConfig,
     ViewToken
 } from "react-native";
-import { WebImages } from "react-native-nitro-web-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PostItem } from "../../../components/PostItem";
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -205,17 +204,15 @@ const FeedTab: React.FC<FeedTabProps> = ({
             if (visibleIndices.length > 0) {
                 const maxVisible = Math.max(...visibleIndices);
                 const aheadPosts = posts.slice(maxVisible + 1, maxVisible + 1 + PREFETCH_AHEAD);
-                const nitroUrls: { url: string }[] = [];
                 const expoUrls: { uri: string }[] = [];
                 for (const p of aheadPosts) {
-                    if (p.profile_avatar) nitroUrls.push({ url: p.profile_avatar });
+                    if (p.profile_avatar) expoUrls.push({ uri: p.profile_avatar });
                     for (const m of p.media ?? []) {
                         if (m.type === 'video' && m.thumbnail_url) expoUrls.push({ uri: m.thumbnail_url });
                         else if (m.type === 'photo' && m.url) expoUrls.push({ uri: m.url });
                     }
                 }
                 if (expoUrls.length > 0) for (const url of expoUrls) Image.prefetch(url.uri);
-                if (nitroUrls.length > 0) for (const url of nitroUrls) WebImages.preload(url.url);
             }
 
             // Skip video autoplay if disabled
