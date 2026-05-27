@@ -1,6 +1,6 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
-import { SkeletonGroup, Spinner } from 'heroui-native';
+import { SkeletonGroup, Spinner, Surface } from 'heroui-native';
 import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -286,7 +286,7 @@ const ProfileContent = () => {
         break;
     }
     return (
-      <View style={[vm.common.card, styles.emptyCard]}>
+      <View style={{ justifyContent: 'center', alignItems: 'center' }}>
         <FlexText style={vm.common.subheading}>{title}</FlexText>
         <FlexText style={[vm.common.body, styles.emptyMessage]}>{message}</FlexText>
       </View>
@@ -310,6 +310,7 @@ const ProfileContent = () => {
         )}
         keyExtractor={(item: Post) => item.id || String(Math.random())}
         headerOffset={headerHeight}
+        progressBackgroundColor={vm.colors.card}
         initialNumToRender={6}
         windowSize={5}
         maxToRenderPerBatch={5}
@@ -343,6 +344,7 @@ const ProfileContent = () => {
         initialNumToRender={6}
         windowSize={5}
         maxToRenderPerBatch={5}
+        progressBackgroundColor={vm.colors.card}
         removeClippedSubviews={Platform.OS === 'android'}
         refreshing={vm.isProfileRefetching}
         onRefresh={vm.onRefresh}
@@ -377,6 +379,7 @@ const ProfileContent = () => {
         refreshing={vm.isProfileRefetching}
         onRefresh={vm.onRefresh}
         refreshTintColor={vm.colors.text}
+        progressBackgroundColor={vm.colors.card}
         progressViewOffset={vm.inset.top + 30}
         onEndReached={() => {
           if (vm.activeTab === "Videos") vm.handleEndReached();

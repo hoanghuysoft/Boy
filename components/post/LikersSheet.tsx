@@ -80,9 +80,19 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
             handleUserPress,
         } = vm;
 
+        const isPresentedRef = useRef(false);
+
         useImperativeHandle(ref, () => ({
-            present: () => sheetRef.current?.present(),
-            dismiss: () => sheetRef.current?.dismiss(),
+            present: () => {
+                if (isPresentedRef.current) return;
+                isPresentedRef.current = true;
+                sheetRef.current?.present();
+            },
+            dismiss: () => {
+                if (!isPresentedRef.current) return;
+                isPresentedRef.current = false;
+                sheetRef.current?.dismiss();
+            },
         }), []);
 
         const renderItem = useCallback(({ item }: { item: LikeUser }) => (
@@ -154,7 +164,11 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
             },
             cornerRadius: 32,
             detents: [0.85],
+            onDidPresent: () => {
+                isPresentedRef.current = true;
+            },
             onDidDismiss: () => {
+                isPresentedRef.current = false;
                 onDismiss?.();
             },
         };

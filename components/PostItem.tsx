@@ -423,12 +423,13 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             <Dialog.Description>{vm.dialog?.text}</Dialog.Description>
                         </View>
                         {vm.dialog?.buttons ? (
-                            <View style={{ gap: 8 }}>
+                            <View style={{ flexDirection: 'row', gap: 8 }}>
                                 {vm.dialog.buttons.map((btn, idx) => (
                                     <Button
                                         key={idx}
                                         variant={btn.variant ?? "primary"}
                                         onPress={btn.onPress}
+                                        style={{ flex: 1 }}
                                     >
                                         {btn.text}
                                     </Button>

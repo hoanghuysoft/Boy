@@ -112,17 +112,30 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
         const [dialog, setDialog] = useState<DialogConfig | null>(null);
         const closeDialog = useCallback(() => setDialog(null), []);
 
+        const isPresentedRef = useRef(false);
+
         useImperativeHandle(ref, () => ({
-            present: () => sheetRef.current?.present(),
-            dismiss: () => sheetRef.current?.dismiss(),
+            present: () => {
+                if (isPresentedRef.current) return;
+                isPresentedRef.current = true;
+                sheetRef.current?.present();
+            },
+            dismiss: () => {
+                if (!isPresentedRef.current) return;
+                isPresentedRef.current = false;
+                sheetRef.current?.dismiss();
+            },
         }), []);
 
         const dismissSheet = useCallback(() => {
+            if (!isPresentedRef.current) return;
+            isPresentedRef.current = false;
             sheetRef.current?.dismiss();
         }, []);
 
         const handleDelete = useCallback(() => {
             if (!post) return;
+            dismissSheet();
             setDialog({
                 title: t('post.dialogs.deletePostTitle'),
                 text: t('post.dialogs.deletePostBody'),
@@ -132,7 +145,6 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                     closeDialog();
                     try {
                         await deletePostMutation.mutateAsync({ postId: post.id, deleteMedia: false });
-                        dismissSheet();
                         onDeleted?.();
                         toast.show({ label: t('post.dialogs.successTitle'), description: t('post.dialogs.postDeleted'), variant: "success" });
                     } catch (error: any) {
@@ -179,7 +191,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 
         const handleQuoteRepost = useCallback(() => {
             if (!post) return;
-            const firstImageMedia = post.media?.find((m: any) => m.type === 'image' || m.type === 'video');
+            const firstImageMedia = post.media?.find((m: any) => m.type === 'image' || m.type === 'photo' || m.type === 'video');
             router.push({
                 pathname: '/create',
                 params: {
@@ -216,11 +228,6 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                             handleQuoteRepost();
                         },
                         variant: "outline"
-                    },
-                    {
-                        text: t('post.dialogs.cancel'),
-                        onPress: closeDialog,
-                        variant: "ghost"
                     }
                 ]
             });
@@ -269,6 +276,12 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
             },
             cornerRadius: 32,
             detents: ['auto' as any],
+            onDidPresent: () => {
+                isPresentedRef.current = true;
+            },
+            onDidDismiss: () => {
+                isPresentedRef.current = false;
+            },
         };
 
         return (
@@ -345,12 +358,13 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                                 <Dialog.Description>{dialog?.text}</Dialog.Description>
                             </View>
                             {dialog?.buttons ? (
-                                <View style={{ gap: 8 }}>
+                                <View style={{ flexDirection: 'row', gap: 8 }}>
                                     {dialog.buttons.map((btn, idx) => (
                                         <Button
                                             key={idx}
                                             variant={btn.variant ?? "primary"}
                                             onPress={btn.onPress}
+                                            style={{ flex: 1 }}
                                         >
                                             {btn.text}
                                         </Button>

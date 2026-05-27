@@ -16,10 +16,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Yup from "yup";
 
 // Components
-import { AlertDialog, Host, TextButton, Text as UIText } from '@expo/ui/jetpack-compose';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Image } from "expo-image";
-import { Card } from "heroui-native";
+import { Card, Dialog, Button } from "heroui-native";
 import {
     ContentInput,
     CreateActionBar,
@@ -253,7 +252,11 @@ const CreateScreen = () => {
                     onConfirm: () => {
                         formikResetForm();
                         resetUIState();
-                        router.replace("/");
+                        if (router.canGoBack()) {
+                            router.back();
+                        } else {
+                            router.replace("/");
+                        }
                     },
                 });
             } catch (error: any) {
@@ -472,26 +475,29 @@ const CreateScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                {dialog.visible && (
-                    <Host matchContents>
-                        <AlertDialog onDismissRequest={() => setDialog((prev) => ({ ...prev, visible: false }))}>
-                            <AlertDialog.Title>
-                                <UIText style={{ typography: 'titleLarge' }}>{dialog.title}</UIText>
-                            </AlertDialog.Title>
-                            <AlertDialog.Text>
-                                <UIText>{dialog.message}</UIText>
-                            </AlertDialog.Text>
-                            <AlertDialog.ConfirmButton>
-                                <TextButton onClick={() => {
-                                    dialog.onConfirm?.();
-                                    setDialog((prev) => ({ ...prev, visible: false }));
-                                }}>
-                                    <UIText>{t("create.dialog.ok")}</UIText>
-                                </TextButton>
-                            </AlertDialog.ConfirmButton>
-                        </AlertDialog>
-                    </Host>
-                )}
+                <Dialog isOpen={dialog.visible} onOpenChange={(open) => !open && setDialog((prev) => ({ ...prev, visible: false }))}>
+                    <Dialog.Portal>
+                        <Dialog.Overlay />
+                        <Dialog.Content style={{ backgroundColor: colors.background }}>
+                            <Dialog.Close />
+                            <View style={{ marginBottom: 20, gap: 6 }}>
+                                <Dialog.Title>{dialog.title}</Dialog.Title>
+                                <Dialog.Description>{dialog.message}</Dialog.Description>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                                <Button
+                                    variant="primary"
+                                    onPress={() => {
+                                        dialog.onConfirm?.();
+                                        setDialog((prev) => ({ ...prev, visible: false }));
+                                    }}
+                                >
+                                    {t("create.dialog.ok")}
+                                </Button>
+                            </View>
+                        </Dialog.Content>
+                    </Dialog.Portal>
+                </Dialog>
                 <CreateScreenHeader
                     colors={colors}
                     common={common}

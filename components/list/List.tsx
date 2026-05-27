@@ -124,6 +124,11 @@ export type ListProps<ItemT = any> = Omit<
   progressViewOffset?: number
 
   /**
+   * progressBackgroundColor for pull-to-refresh on Android.
+   */
+  progressBackgroundColor?: string
+
+  /**
    * Disable `scrollsToTop` (iOS only).
    * Set to true when a modal/lightbox is open so the status-bar tap doesn't
    * scroll the background list.
@@ -162,6 +167,7 @@ let List = forwardRef<ListMethods, ListProps>(
       headerOffset,
       style,
       refreshTintColor = '#ffffff',
+      progressBackgroundColor,
       progressViewOffset,
       disableScrollsToTop = false,
       automaticallyAdjustsScrollIndicatorInsets = false,
@@ -286,6 +292,7 @@ let List = forwardRef<ListMethods, ListProps>(
           onRefresh={onRefresh}
           tintColor={refreshTintColor}
           colors={[refreshTintColor]}
+          progressBackgroundColor={progressBackgroundColor}
           progressViewOffset={progressViewOffset ?? headerOffset}
         />
       )

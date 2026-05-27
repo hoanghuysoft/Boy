@@ -32,6 +32,7 @@ const AboutScreen = () => {
 
     return (
         <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1, backgroundColor: colors.background, padding: 16 }}>
+            <ExpoImage style={[StyleSheet.absoluteFill, { opacity: 1 }]} source={require('../../assets/images/gradient.png')} contentFit="cover" />
             <View style={{ position: 'absolute', top: inset.top + 16, left: 16, zIndex: 1000 }}>
                 <TouchableOpacity
                     onPress={() => router.back()}

@@ -194,7 +194,7 @@ export const usePostItemViewModel = ({
     }, [myProfile?.id, post.id, post.profile_name, post.content, post.deezer_id, post.links, createPostMutation, sharePostMutation, t, toast]);
 
     const handleQuoteRepost = useCallback(() => {
-        const firstImageMedia = post.media?.find((m: any) => m.type === 'image' || m.type === 'video');
+        const firstImageMedia = post.media?.find((m: any) => m.type === 'image' || m.type === 'photo' || m.type === 'video');
         router.push({
             pathname: '/create',
             params: {
@@ -228,11 +228,6 @@ export const usePostItemViewModel = ({
                         handleQuoteRepost();
                     },
                     variant: "outline"
-                },
-                {
-                    text: t('post.dialogs.cancel'),
-                    onPress: closeDialog,
-                    variant: "ghost"
                 }
             ]
         });

@@ -362,6 +362,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 refreshing={isRefetching}
                 onRefresh={handleRefresh}
                 refreshTintColor={colors.text}
+                progressBackgroundColor={colors.card}
                 // ─── Infinite scroll ────────────────────────────────────
                 onEndReached={handleEndReached}
                 onEndReachedThreshold={0.5}

@@ -7,7 +7,7 @@ import { Galeria } from "@nandorojo/galeria";
 import { GalleryAddBold, PenNewRoundBold, Plain2Bold } from "@solar-icons/react-native";
 import { Image } from "expo-image";
 import { Button, SkeletonGroup, Spinner } from "heroui-native";
-import React, { forwardRef, memo, useCallback, useEffect, useState } from "react";
+import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     ActivityIndicator,
@@ -165,9 +165,25 @@ CommentItem.displayName = "CommentItem";
 export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
     ({ postId, onDismiss, useReanimated = false, detents = [0.7] }, ref) => {
         const insets = useSafeAreaInsets();
-        const vm = useCommentsSheetViewModel(postId, ref as React.RefObject<TrueSheet | null>);
+        const sheetRef = useRef<TrueSheet>(null);
+        const isPresentedRef = useRef(false);
+
+        useImperativeHandle(ref, () => ({
+            present: () => {
+                if (isPresentedRef.current) return;
+                isPresentedRef.current = true;
+                sheetRef.current?.present();
+            },
+            dismiss: () => {
+                if (!isPresentedRef.current) return;
+                isPresentedRef.current = false;
+                sheetRef.current?.dismiss();
+            },
+        } as any), []);
+
+        const vm = useCommentsSheetViewModel(postId, sheetRef);
         const { t } = useTranslation();
-        const backHandler = useSheetBackHandler(ref);
+        const backHandler = useSheetBackHandler(sheetRef);
 
         const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -425,7 +441,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         );
 
         const sharedProps = {
-            ref,
+            ref: sheetRef,
             scrollable: true,
             backgroundColor: vm.theme === "dark" ? vm.colors.containerContent : "#ffffff",
             grabberOptions: {
@@ -436,8 +452,12 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             cornerRadius: 32,
             detents,
             footer: commentInputFooter,
-            onDidPresent: backHandler.onDidPresent,
+            onDidPresent: () => {
+                isPresentedRef.current = true;
+                backHandler.onDidPresent();
+            },
             onDidDismiss: () => {
+                isPresentedRef.current = false;
                 backHandler.onDidDismiss();
                 onDismiss?.();
             },
