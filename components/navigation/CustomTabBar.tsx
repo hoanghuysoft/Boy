@@ -30,7 +30,7 @@ interface TabConfig {
 }
 
 // TEMP: add tab names here to hide them from the bar without deleting routes.
-const DISABLED_TABS: TabName[] = ['shots'];
+const DISABLED_TABS: TabName[] = [];
 
 const tabs: TabConfig[] = [
     {

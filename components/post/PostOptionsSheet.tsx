@@ -1,16 +1,17 @@
-import { CopyBold, DangerBold, ShareBold, TrashBinTrashBold, PenNewRoundBold } from "@solar-icons/react-native";
-import { BottomSheet, Button, Dialog, useToast } from "heroui-native";
-import React, { forwardRef, memo, useCallback, useImperativeHandle, useState } from "react";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { CopyBold, DangerBold, PenNewRoundBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
+import { router } from "expo-router";
+import { Button, Dialog, useToast } from "heroui-native";
+import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TouchableOpacity, View, Clipboard } from "react-native";
+import { Clipboard, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
-import { useDeletePost, useCreatePost, useSharePost } from "../../services/post";
+import { useCreatePost, useDeletePost, useSharePost } from "../../services/post";
 import { useProfile } from "../../services/userprofile";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from "../../types/post";
 import { FlexText } from "../FlexText";
-import { router } from "expo-router";
 
 // ============================================================================
 // Types
@@ -79,7 +80,7 @@ OptionItem.displayName = "OptionItem";
 
 export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOptionsSheetProps>(
     ({ post, currentProfileId, onDeleted }, ref) => {
-        const { colors, typography } = useThemeContext();
+        const { colors, typography, theme } = useThemeContext();
         const common = createCommonStyles(colors, typography);
         const { t } = useTranslation();
         const { toast } = useToast();
@@ -89,8 +90,8 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
         const { data: myProfile } = useProfile('me', true);
         const sharePostMutation = useSharePost();
         const createPostMutation = useCreatePost(myProfile?.id || "");
-        const [isOpen, setIsOpen] = useState(false);
         const insets = useSafeAreaInsets();
+        const sheetRef = useRef<TrueSheet>(null);
 
         type DialogButton = {
             text: string;
@@ -112,12 +113,12 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
         const closeDialog = useCallback(() => setDialog(null), []);
 
         useImperativeHandle(ref, () => ({
-            present: () => setIsOpen(true),
-            dismiss: () => setIsOpen(false),
+            present: () => sheetRef.current?.present(),
+            dismiss: () => sheetRef.current?.dismiss(),
         }), []);
 
         const dismissSheet = useCallback(() => {
-            setIsOpen(false);
+            sheetRef.current?.dismiss();
         }, []);
 
         const handleDelete = useCallback(() => {
@@ -153,7 +154,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 
             try {
                 const repostContent = `<post id="${post.id}" />`;
-                
+
                 await createPostMutation.mutateAsync({
                     content: repostContent,
                     device: "Mobile Repost",
@@ -195,7 +196,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
         const handleShare = useCallback(() => {
             dismissSheet();
             if (!post) return;
-            
+
             setDialog({
                 title: t('post.dialogs.shareTitle'),
                 text: t('post.optionsSheet.subtitle'),
@@ -257,78 +258,82 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
             });
         }, [post, dismissSheet]);
 
+        const sharedProps = {
+            ref: sheetRef,
+            scrollable: false,
+            backgroundColor: theme === "dark" ? colors.containerContent : "#ffffff",
+            grabberOptions: {
+                color: colors.muted || "#C4C4C4",
+                height: 5,
+                width: 40,
+            },
+            cornerRadius: 32,
+            detents: ['auto' as any],
+        };
 
         return (
             <>
-                <BottomSheet isOpen={isOpen} onOpenChange={setIsOpen}>
-                    <BottomSheet.Portal>
-                        <BottomSheet.Overlay />
-                        <BottomSheet.Content detached={true}
-                            bottomInset={insets.bottom + 12}
-                            className="mx-1"
-                            backgroundClassName="rounded-[32px]">
-                            <View>
-                                {/* Header */}
-                                <View className="mb-5">
-                                    <FlexText style={[common.heading]}>{t('post.optionsSheet.title')}</FlexText>
-                                    <FlexText style={common.bodySmall}>{t('post.optionsSheet.subtitle')}</FlexText>
-                                </View>
+                <TrueSheet {...sharedProps}>
+                    <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 20 }}>
+                        {/* Header */}
+                        <View className="mb-4">
+                            <FlexText style={[common.heading]}>{t('post.optionsSheet.title')}</FlexText>
+                            <FlexText style={common.bodySmall}>{t('post.optionsSheet.subtitle')}</FlexText>
+                        </View>
 
-                                {/* Options List */}
-                                <View>
-                                    {!post?.reposted_post && (
-                                        <OptionItem
-                                            icon={ShareBold}
-                                            label={t('post.optionsSheet.share')}
-                                            onPress={handleShare}
-                                            colors={colors}
-                                            common={common}
-                                        />
-                                    )}
+                        {/* Options List */}
+                        <View>
+                            {!post?.reposted_post && (
+                                <OptionItem
+                                    icon={ShareBold}
+                                    label={t('post.optionsSheet.share')}
+                                    onPress={handleShare}
+                                    colors={colors}
+                                    common={common}
+                                />
+                            )}
 
-                                    <OptionItem
-                                        icon={CopyBold}
-                                        label={t('post.optionsSheet.copyLink')}
-                                        onPress={handleCopyLink}
-                                        colors={colors}
-                                        common={common}
-                                    />
+                            <OptionItem
+                                icon={CopyBold}
+                                label={t('post.optionsSheet.copyLink')}
+                                onPress={handleCopyLink}
+                                colors={colors}
+                                common={common}
+                            />
 
-                                    {!isOwner && (
-                                        <OptionItem
-                                            icon={DangerBold}
-                                            label={t('post.optionsSheet.report')}
-                                            onPress={handleReport}
-                                            colors={colors}
-                                            common={common}
-                                        />
-                                    )}
+                            {!isOwner && (
+                                <OptionItem
+                                    icon={DangerBold}
+                                    label={t('post.optionsSheet.report')}
+                                    onPress={handleReport}
+                                    colors={colors}
+                                    common={common}
+                                />
+                            )}
 
-                                    {isOwner && !post?.reposted_post && (
-                                        <OptionItem
-                                            icon={PenNewRoundBold}
-                                            label={t('post.optionsSheet.editPost')}
-                                            onPress={handleEdit}
-                                            colors={colors}
-                                            common={common}
-                                        />
-                                    )}
+                            {isOwner && !post?.reposted_post && (
+                                <OptionItem
+                                    icon={PenNewRoundBold}
+                                    label={t('post.optionsSheet.editPost')}
+                                    onPress={handleEdit}
+                                    colors={colors}
+                                    common={common}
+                                />
+                            )}
 
-                                    {isOwner && (
-                                        <OptionItem
-                                            icon={TrashBinTrashBold}
-                                            label={t('post.optionsSheet.deletePost')}
-                                            onPress={handleDelete}
-                                            destructive
-                                            colors={colors}
-                                            common={common}
-                                        />
-                                    )}
-                                </View>
-                            </View>
-                        </BottomSheet.Content>
-                    </BottomSheet.Portal>
-                </BottomSheet>
+                            {isOwner && (
+                                <OptionItem
+                                    icon={TrashBinTrashBold}
+                                    label={t('post.optionsSheet.deletePost')}
+                                    onPress={handleDelete}
+                                    destructive
+                                    colors={colors}
+                                    common={common}
+                                />
+                            )}
+                        </View>
+                    </View>
+                </TrueSheet>
 
                 <Dialog isOpen={dialog !== null} onOpenChange={(open) => !open && closeDialog()}>
                     <Dialog.Portal>

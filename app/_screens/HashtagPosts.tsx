@@ -30,6 +30,14 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
     const commentsSheetRef = useRef<TrueSheet>(null);
     const [selectedLikePostId, setSelectedLikePostId] = useState<string | null>(null);
     const [selectedCommentPostId, setSelectedCommentPostId] = useState<string | null>(null);
+    const pendingCommentOpen = useRef(false);
+
+    React.useEffect(() => {
+        if (pendingCommentOpen.current && selectedCommentPostId) {
+            pendingCommentOpen.current = false;
+            commentsSheetRef.current?.present();
+        }
+    }, [selectedCommentPostId]);
 
     const handleLikeCountPress = useCallback((post: Post) => {
         setSelectedLikePostId(post.id);
@@ -37,8 +45,16 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
     }, []);
 
     const handleCommentPress = useCallback((post: Post) => {
+        pendingCommentOpen.current = true;
         setSelectedCommentPostId(post.id);
-        commentsSheetRef.current?.present();
+    }, []);
+
+    const handleCommentSheetDismiss = useCallback(() => {
+        setSelectedCommentPostId(null);
+    }, []);
+
+    const handleLikersSheetDismiss = useCallback(() => {
+        setSelectedLikePostId(null);
     }, []);
 
     const renderItem = useCallback(
@@ -208,10 +224,11 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                 }
             />
 
-            <LikersSheet ref={likersSheetRef} postId={selectedLikePostId} />
+            <LikersSheet ref={likersSheetRef} postId={selectedLikePostId} onDismiss={handleLikersSheetDismiss} />
             <CommentsSheet
                 ref={commentsSheetRef}
                 postId={selectedCommentPostId}
+                onDismiss={handleCommentSheetDismiss}
             />
         </View>
     );

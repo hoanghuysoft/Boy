@@ -1,4 +1,6 @@
 import { FlexText } from "@/components/FlexText";
+import { List } from "@/components/list";
+import type { FlatList } from "react-native";
 import { queryClient } from "@/services/client";
 import { useFeed } from "@/services/feed";
 import { useFeedVideoStore } from "@/stores/feedVideo";
@@ -10,16 +12,10 @@ import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    Dimensions,
-    FlatList,
-    NativeScrollEvent,
-    NativeSyntheticEvent,
     RefreshControl,
     ScrollView,
     StyleSheet,
     View,
-    ViewabilityConfig,
-    ViewToken
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PostItem } from "../../../components/PostItem";
@@ -29,16 +25,8 @@ import { useScrollStore } from "../../../stores/scroll";
 import { useSettingsStore } from "../../../stores/settings";
 import { createCommonStyles } from "../../../styles/common";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
 // How many posts ahead to prefetch images for
 const PREFETCH_AHEAD = 3;
-
-// Fast-scroll velocity threshold (px/s) — above this, pause video activation
-const FAST_SCROLL_PX_PER_SEC = 3000;
-
-// Debounce duration when viewable items change during active scrolling
-const VIEWABLE_DEBOUNCE_MS = 300;
 
 interface FeedTabProps {
     feedType: "latest" | "lucky" | "this_day";
@@ -95,20 +83,12 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const setActiveVideo = useFeedVideoStore(s => s.setActiveVideo);
     const clearActiveVideo = useFeedVideoStore(s => s.clearActiveVideo);
     const stopAudioPlayback = useAudioStore(s => s.stopPlayback);
-
-    // Debounce timer ref for video activation
-    const videoDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    // Track last scroll state for velocity and drag detection
-    const lastScrollOffsetRef = useRef(0);
-    const lastScrollTimeRef = useRef(Date.now());
-    const isScrollingFastRef = useRef(false);
+    const autoplayVideos = useSettingsStore(s => s.autoplayVideos);
 
     /**
      * lastVisibleIndicesRef — always reflects the most recent set of visible
-     * item indices reported by onViewableItemsChanged.  Used by the "scroll
-     * ended" handlers (momentum + drag-end) so they can activate the correct
-     * video even when the viewability callback hasn't fired yet in that frame.
+     * item indices reported by onViewableItemsChanged. Used by onScrollSettled
+     * so it activates the correct video when the list truly stops.
      */
     const lastVisibleIndicesRef = useRef<number[]>([]);
 
@@ -116,29 +96,18 @@ const FeedTab: React.FC<FeedTabProps> = ({
     useEffect(() => {
         return () => {
             clearActiveVideo();
-            if (videoDebounceRef.current) {
-                clearTimeout(videoDebounceRef.current);
-            }
         };
     }, [clearActiveVideo]);
-
-    // Autoplay setting
-    const autoplayVideos = useSettingsStore(s => s.autoplayVideos);
 
     // Find the topmost visible post that has a video
     const findTopmostVideoPost = useCallback((visibleIndices: number[]) => {
         if (!posts.length || visibleIndices.length === 0) return null;
 
-        // Sort indices to find the topmost (smallest index = closest to top)
         const sorted = [...visibleIndices].sort((a, b) => a - b);
 
         for (const idx of sorted) {
             const post = posts[idx];
             if (post?.media?.some((m: any) => m.type === 'video')) {
-                // Only immediately activate the video if the carousel's first slot is a video.
-                // If the first slot is an image (mixed-media carousel), activate the post
-                // without a specific mediaId — the carousel's own viewability handler will
-                // set the correct media once it knows which slot is visible.
                 const firstMedia = post.media[0];
                 if (firstMedia?.type === 'video') {
                     return {
@@ -158,7 +127,14 @@ const FeedTab: React.FC<FeedTabProps> = ({
         return null;
     }, [posts]);
 
-    // Shared helper: activate the best video post from a set of visible indices
+    /**
+     * activateVideoFromIndices — the single function responsible for deciding
+     * which video plays. Called by onScrollSettled (the settled trigger) and
+     * by onViewableItemsChanged when NOT fast-scrolling.
+     *
+     * Mirrors Bluesky's updateActiveVideoViewAsync — that does the same thing
+     * natively; we do it in JS via this callback.
+     */
     const activateVideoFromIndices = useCallback((indices: number[]) => {
         if (!autoplayVideos) {
             clearActiveVideo();
@@ -173,26 +149,49 @@ const FeedTab: React.FC<FeedTabProps> = ({
         }
     }, [autoplayVideos, findTopmostVideoPost, setActiveVideo, clearActiveVideo, stopAudioPlayback]);
 
-    const cancelDebounce = useCallback(() => {
-        if (videoDebounceRef.current) {
-            clearTimeout(videoDebounceRef.current);
-            videoDebounceRef.current = null;
-        }
-    }, []);
+    /**
+     * onScrollSettled — fired by the List component when scrolling has fully
+     * stopped (either momentum end or drag end without momentum).
+     *
+     * This is the direct equivalent of Bluesky's:
+     *   runOnJS(updateActiveVideoViewAsync)()
+     * called from onMomentumEnd / onEndDrag in their List.tsx.
+     *
+     * It replaces our previous:
+     *   - handleMomentumScrollEnd
+     *   - handleScrollEndDrag
+     *   - videoDebounceRef timer
+     *   - isScrollingFastRef velocity gate
+     */
+    const handleScrollSettled = useCallback(() => {
+        activateVideoFromIndices(lastVisibleIndicesRef.current);
+    }, [activateVideoFromIndices]);
 
     /**
-     * Called when FlatList reports that the set of "viewable" items changed.
+     * onScrollY — fires on every scroll frame with the raw Y offset.
+     * Used to bridge the List's Reanimated scroll handler back to the
+     * HomeViewModel's Animated.Value-based header animation system.
      *
-     * Strategy:
-     *  - Always update lastVisibleIndicesRef so scroll-end handlers have fresh data.
-     *  - Run prefetch for upcoming posts.
-     *  - If scrolling fast, skip activation (the scroll-end handler will pick it up).
-     *  - Otherwise start a short debounce so rapid viewport changes (slow drag) don't
-     *    thrash the video decoder.  The debounce is cancelled and superseded by the
-     *    scroll-end handlers which fire immediately when the list truly stops.
+     * Note: The List calls this via runOnJS so it already runs on the JS thread.
+     */
+    const handleScrollY = useCallback((y: number) => {
+        if (onScroll) {
+            // Synthesise a minimal scroll event compatible with vm.onScroll
+            onScroll({ nativeEvent: { contentOffset: { y, x: 0 } } });
+        }
+    }, [onScroll]);
+
+    /**
+     * viewabilityConfigCallbackPairs — tracks visible items for:
+     *   1. Prefetching upcoming posts' images
+     *   2. Passing indices to activateVideoFromIndices on settle
+     *
+     * The List's built-in onItemSeen uses 40%/500ms for impression tracking.
+     * This separate pair uses 60%/200ms for video activation — kept distinct
+     * so video logic doesn't interfere with impression analytics.
      */
     const handleViewableItemsChanged = useCallback(
-        ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+        ({ viewableItems }: { viewableItems: { index: number | null; item: Post; isViewable: boolean }[] }) => {
             const visibleIndices = viewableItems
                 .map(v => v.index)
                 .filter((i): i is number => i !== null);
@@ -200,114 +199,55 @@ const FeedTab: React.FC<FeedTabProps> = ({
             // Always keep a reference to the latest visible indices
             lastVisibleIndicesRef.current = visibleIndices;
 
-            // Prefetch images for posts just beyond the visible window.
+            // Prefetch images for posts just beyond the visible window
             if (visibleIndices.length > 0) {
                 const maxVisible = Math.max(...visibleIndices);
                 const aheadPosts = posts.slice(maxVisible + 1, maxVisible + 1 + PREFETCH_AHEAD);
-                const expoUrls: { uri: string }[] = [];
+                const urls: string[] = [];
                 for (const p of aheadPosts) {
-                    if (p.profile_avatar) expoUrls.push({ uri: p.profile_avatar });
+                    if (p.profile_avatar) urls.push(p.profile_avatar);
                     for (const m of p.media ?? []) {
-                        if (m.type === 'video' && m.thumbnail_url) expoUrls.push({ uri: m.thumbnail_url });
-                        else if (m.type === 'photo' && m.url) expoUrls.push({ uri: m.url });
+                        if (m.type === 'video' && m.thumbnail_url) urls.push(m.thumbnail_url);
+                        else if (m.type === 'photo' && m.url) urls.push(m.url);
                     }
                 }
-                if (expoUrls.length > 0) for (const url of expoUrls) Image.prefetch(url.uri);
+                if (urls.length > 0) for (const url of urls) Image.prefetch(url);
             }
-
-            // Skip video autoplay if disabled
-            if (!autoplayVideos) {
-                clearActiveVideo();
-                return;
-            }
-
-            // If scrolling fast, bail — momentumScrollEnd / scrollEndDrag will handle it
-            if (isScrollingFastRef.current) return;
-
-            // Cancel any existing debounce and start a fresh one.
-            // This is the "slow drag" path; momentum/drag-end handlers cancel it early.
-            cancelDebounce();
-            videoDebounceRef.current = setTimeout(() => {
-                activateVideoFromIndices(lastVisibleIndicesRef.current);
-            }, VIEWABLE_DEBOUNCE_MS);
         },
-        [posts, autoplayVideos, activateVideoFromIndices, clearActiveVideo, cancelDebounce]
+        [posts],
     );
 
-    /**
-     * Called when a flick/momentum scroll fully stops.
-     * This is the primary fast-path: cancel the debounce and activate immediately.
-     */
-    const handleMomentumScrollEnd = useCallback(() => {
-        isScrollingFastRef.current = false;
-        cancelDebounce();
-        activateVideoFromIndices(lastVisibleIndicesRef.current);
-    }, [activateVideoFromIndices, cancelDebounce]);
+    // Keep a ref so the stable viewabilityConfigCallbackPairs always calls the
+    // latest closure without needing to recreate the array
+    const handleViewableItemsChangedRef = useRef(handleViewableItemsChanged);
+    useEffect(() => {
+        handleViewableItemsChangedRef.current = handleViewableItemsChanged;
+    }, [handleViewableItemsChanged]);
 
-    /**
-     * Called when a touch-drag scroll ends (user lifts finger, no momentum).
-     * Without this, a slow drag that releases without flicking would wait the
-     * full debounce delay because onMomentumScrollEnd never fires for non-flicks.
-     */
-    const handleScrollEndDrag = useCallback(
-        (_event: NativeSyntheticEvent<NativeScrollEvent>) => {
-            // Only act immediately if the scroll won't produce momentum.
-            // We can't know for certain, so we use a short extra delay to let
-            // onMomentumScrollBegin fire first — if it does, that path takes over.
-            // If momentum begins, it will call cancelDebounce again; no double-fire.
-            const DRAG_END_DELAY = 80; // ms — enough for momentum to start
-            videoDebounceRef.current = setTimeout(() => {
-                isScrollingFastRef.current = false;
-                activateVideoFromIndices(lastVisibleIndicesRef.current);
-            }, DRAG_END_DELAY);
+    const viewabilityConfigCallbackPairs = useRef([
+        {
+            viewabilityConfig: {
+                itemVisiblePercentThreshold: 60,
+                minimumViewTime: 200,
+            },
+            onViewableItemsChanged: ({ viewableItems }: any) => {
+                handleViewableItemsChangedRef.current({ viewableItems });
+            },
         },
-        [activateVideoFromIndices]
-    );
-
-    /**
-     * When a momentum scroll begins, any drag-end timer becomes irrelevant.
-     * Cancel it so handleMomentumScrollEnd takes exclusive responsibility.
-     */
-    const handleMomentumScrollBegin = useCallback(() => {
-        cancelDebounce();
-    }, [cancelDebounce]);
+    ]);
 
     const handleRefresh = useCallback(async () => {
         queryClient.removeQueries({ queryKey: ['feed', feedType] });
         refetch();
     }, [feedType, refetch]);
 
-    /**
-     * viewabilityConfigCallbackPairs — React Native's recommended API when
-     * you need viewability callbacks.  Using this ref-based approach avoids
-     * the "changing onViewableItemsChanged on the fly is not supported" warning
-     * that can occur when the callback prop reference changes across renders.
-     */
-    const viewabilityConfigCallbackPairs = useRef([
-        {
-            viewabilityConfig: {
-                // An item is "viewable" when at least 60 % of its height is visible
-                // and it has been in that state for at least 200 ms at the native level.
-                // 60 % (vs 50 %) avoids triggering on the item that is just peeking
-                // at the top/bottom edge of the viewport.
-                itemVisiblePercentThreshold: 60,
-                minimumViewTime: 200,
-            } as ViewabilityConfig,
-            onViewableItemsChanged: ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-                // Forward to the memoised handler (read via ref to stay stable)
-                handleViewableItemsChangedRef.current({ viewableItems });
-            },
-        },
-    ]);
+    const handleEndReached = useCallback(() => {
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    // Keep a ref to handleViewableItemsChanged so the stable pair callback above
-    // always calls the latest version without needing to recreate the pairs array.
-    const handleViewableItemsChangedRef = useRef(handleViewableItemsChanged);
-    useEffect(() => {
-        handleViewableItemsChangedRef.current = handleViewableItemsChanged;
-    }, [handleViewableItemsChanged]);
-
-    // Row renderer for FlatList
+    // Row renderer
     const renderItem = useCallback(({ item }: { item: Post }) => {
         return (
             <View style={{ marginBottom: 30 }}>
@@ -355,42 +295,6 @@ const FeedTab: React.FC<FeedTabProps> = ({
         );
     };
 
-    // Handle scroll events — detect fast scrolling for velocity gate
-    const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const offsetY = event.nativeEvent.contentOffset.y;
-
-        const now = Date.now();
-        const dt = now - lastScrollTimeRef.current;
-        const dy = Math.abs(offsetY - lastScrollOffsetRef.current);
-        lastScrollOffsetRef.current = offsetY;
-        lastScrollTimeRef.current = now;
-
-        const isFast = dt > 0 && (dy / dt) * 1000 > FAST_SCROLL_PX_PER_SEC;
-
-        if (isFast) {
-            isScrollingFastRef.current = true;
-            clearActiveVideo();
-            cancelDebounce();
-        } else {
-            // Once we drop below the fast threshold, mark as no longer fast
-            // (scroll-end handlers will do the final reset, but this keeps
-            //  the flag accurate during deceleration)
-            isScrollingFastRef.current = false;
-        }
-
-        if (onScroll) {
-            onScroll(event);
-        }
-    }, [onScroll, clearActiveVideo, cancelDebounce]);
-
-    // Handle end reached for infinite scroll
-    const handleEndReached = useCallback(() => {
-        if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-        }
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-    // Render footer for loading state
     const renderFooter = useCallback(() => {
         if (isFetchingNextPage) {
             return renderPostSkeleton();
@@ -403,6 +307,8 @@ const FeedTab: React.FC<FeedTabProps> = ({
             <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={{ paddingBottom: bottomPadding, paddingTop: headerHeight + 10 }}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
             >
                 {renderPostSkeleton()}
                 <View style={{ height: 12 }} />
@@ -435,33 +341,39 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
     return (
         <View style={{ flex: 1 }}>
-            <FlatList
+            <List
                 ref={listRef}
                 data={posts}
                 renderItem={renderItem}
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs.current}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{
                     paddingTop: headerHeight + 10,
                 }}
-                onMomentumScrollBegin={handleMomentumScrollBegin}
-                onMomentumScrollEnd={handleMomentumScrollEnd}
-                onScrollEndDrag={handleScrollEndDrag}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={isRefetching}
-                        onRefresh={handleRefresh}
-                        tintColor={colors.text}
-                        colors={[colors.text]}
-                        progressBackgroundColor={colors.card}
-                    />
-                }
+                // ─── Scroll events ──────────────────────────────────────
+                // onScrollY bridges the Reanimated handler to the ViewModel's
+                // Animated.Value header animation (runs on JS thread via runOnJS)
+                onScrollY={handleScrollY}
+                // onScrollSettled replaces our previous 4-handler system:
+                // (handleMomentumScrollEnd + handleScrollEndDrag + debounce +
+                //  velocity gate). Fires once when scrolling truly stops.
+                onScrollSettled={handleScrollSettled}
+                // ─── Pull-to-refresh ────────────────────────────────────
+                refreshing={isRefetching}
+                onRefresh={handleRefresh}
+                refreshTintColor={colors.text}
+                // ─── Infinite scroll ────────────────────────────────────
                 onEndReached={handleEndReached}
                 onEndReachedThreshold={0.5}
                 ListFooterComponent={renderFooter}
+                // ─── Viewability (image prefetch + video index tracking) ─
+                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs.current}
+                // ─── Performance (matching Bluesky's config) ────────────
+                removeClippedSubviews={true}
+                windowSize={9}
+                maxToRenderPerBatch={5}
+                updateCellsBatchingPeriod={40}
+                initialNumToRender={4}
             />
         </View>
     );

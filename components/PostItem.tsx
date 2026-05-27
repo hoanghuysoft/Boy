@@ -12,13 +12,14 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { Button, Dialog } from "heroui-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Dimensions, TouchableOpacity, View } from "react-native";
 import { Pressable, ScrollView } from 'react-native-gesture-handler';
 import { Image as ExpoImage } from "expo-image";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
+import { usePrecacheProfileFromPost } from "@/services/profileCache";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
 import { PostAudioWaveform } from "./PostAudioWaveform";
@@ -84,6 +85,21 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         () => resolveBlurhash(undefined, originalPost?.profile_id),
         [originalPost?.profile_id]
     );
+
+    // ─── Pre-cache author profile for instant navigation ──────────────────────
+    // Mirrors Bluesky's precacheProfile call. Runs after paint (useEffect) so
+    // it never blocks render. Writes a partial Profile stub into TanStack Query's
+    // cache — when the user taps this post's author, the profile screen renders
+    // its header immediately using this cached data (0ms wait).
+    const precacheProfile = usePrecacheProfileFromPost();
+    useEffect(() => {
+        precacheProfile(post);
+        // Also cache the original author for reposts
+        if (post.reposted_post && !post.reposted_post.deleted) {
+            precacheProfile(post.reposted_post);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [post.profile_id]);
 
     return (
         <View style={{}}>

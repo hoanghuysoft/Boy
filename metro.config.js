@@ -15,8 +15,7 @@ module.exports = withUniwindConfig((() => {
     config.resolver = {
         ...resolver,
         assetExts: resolver.assetExts.filter((ext) => ext !== "svg"),
-        sourceExts: [...resolver.sourceExts, "svg"],
-        useWatchman: true
+        sourceExts: [...resolver.sourceExts, "svg"]
     };
 
     return config;

@@ -11,8 +11,6 @@ interface FeedVideoStore {
     isMuted: boolean;
     /** Whether the current video has finished playing */
     isEnded: boolean;
-    /** Whether the feed is currently scrolling fast (skip video activation) */
-    isScrollingFast: boolean;
 
     // Actions
     setActiveVideo: (postId: string | null, mediaId: string | null, videoUrl: string | null) => void;
@@ -21,7 +19,6 @@ interface FeedVideoStore {
     toggleMute: () => void;
     setMuted: (muted: boolean) => void;
     setEnded: (ended: boolean) => void;
-    setScrollingFast: (fast: boolean) => void;
     clearActiveVideo: () => void;
 }
 
@@ -31,7 +28,6 @@ export const useFeedVideoStore = create<FeedVideoStore>((set) => ({
     activeVideoUrl: null,
     isMuted: true, // Muted by default
     isEnded: false,
-    isScrollingFast: false,
 
     setActiveVideo: (postId, mediaId, videoUrl) => set({
         activePostId: postId,
@@ -49,7 +45,6 @@ export const useFeedVideoStore = create<FeedVideoStore>((set) => ({
     toggleMute: () => set((state) => ({ isMuted: !state.isMuted })),
     setMuted: (muted) => set({ isMuted: muted }),
     setEnded: (ended) => set({ isEnded: ended }),
-    setScrollingFast: (fast) => set({ isScrollingFast: fast }),
 
     clearActiveVideo: () => set({
         activePostId: null,

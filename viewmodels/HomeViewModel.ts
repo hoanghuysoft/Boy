@@ -198,6 +198,14 @@ export const useHomeViewModel = () => {
     // TrueSheetView tag mismatch crash on low-end devices.
   }, []);
 
+  const handleCommentSheetDismiss = useCallback(() => {
+    setSelectedCommentPostId(null);
+  }, []);
+
+  const handleLikersSheetDismiss = useCallback(() => {
+    setSelectedLikePostId(null);
+  }, []);
+
   const handleTabStateChange = useCallback(() => {
     if (!isTabVisible.current) {
       isTabVisible.current = true;
@@ -275,6 +283,8 @@ export const useHomeViewModel = () => {
     handlePostDeleted,
     handleLikeCountPress,
     handleCommentPress,
+    handleCommentSheetDismiss,
+    handleLikersSheetDismiss,
     handleTabStateChange,
     navigateToSearch,
     navigateToBookmarks,

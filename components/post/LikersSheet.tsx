@@ -1,9 +1,10 @@
-import { BottomSheet, SkeletonGroup } from "heroui-native";
-import React, { forwardRef, memo, useCallback, useImperativeHandle, useState } from "react";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { Image as ExpoImage } from "expo-image";
+import { SkeletonGroup } from "heroui-native";
+import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
-import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import VerifiedIcon from "../../icons/verified";
 import { LikeUser } from "../../types/like";
@@ -17,6 +18,7 @@ import { FlexText } from "../FlexText";
 
 interface LikersSheetProps {
     postId: string | null;
+    onDismiss?: () => void;
 }
 
 interface LikerItemProps {
@@ -61,14 +63,15 @@ LikerItem.displayName = "LikerItem";
 // ============================================================================
 
 export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
-    ({ postId }, ref) => {
+    ({ postId, onDismiss }, ref) => {
         const insets = useSafeAreaInsets();
-        const vm = useLikersSheetViewModel(postId, ref as React.RefObject<LikersSheetHandle | null>);
+        const sheetRef = useRef<TrueSheet>(null);
+        const vm = useLikersSheetViewModel(postId, sheetRef as React.RefObject<any>);
         const { t } = useTranslation();
-        const [isOpen, setIsOpen] = useState(false);
         const {
             colors,
             common,
+            theme,
             likers,
             totalLikes,
             isLoading,
@@ -78,8 +81,8 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
         } = vm;
 
         useImperativeHandle(ref, () => ({
-            present: () => setIsOpen(true),
-            dismiss: () => setIsOpen(false),
+            present: () => sheetRef.current?.present(),
+            dismiss: () => sheetRef.current?.dismiss(),
         }), []);
 
         const renderItem = useCallback(({ item }: { item: LikeUser }) => (
@@ -140,35 +143,40 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
             </View>
         ), [common, t, totalLikes]);
 
+        const sharedProps = {
+            ref: sheetRef,
+            scrollable: true,
+            backgroundColor: theme === "dark" ? colors.containerContent : "#ffffff",
+            grabberOptions: {
+                color: colors.muted || "#C4C4C4",
+                height: 5,
+                width: 40,
+            },
+            cornerRadius: 32,
+            detents: [0.85],
+            onDidDismiss: () => {
+                onDismiss?.();
+            },
+        };
+
         return (
-            <BottomSheet isOpen={isOpen} onOpenChange={setIsOpen}>
-                <BottomSheet.Trigger ></BottomSheet.Trigger>
-                <BottomSheet.Portal>
-                    <BottomSheet.Overlay />
-                    <BottomSheet.Content
-                        detached={true}
-                        bottomInset={insets.bottom + 12}
-                        className="mx-1"
-                        backgroundClassName="rounded-[32px]"
-                        enableDynamicSizing={false}
-                        snapPoints={['85%']}
-                        disableContentView={true}
-                    >
-                        <FlatList
-                            data={likers}
-                            keyExtractor={(item) => item.id}
-                            renderItem={renderItem}
-                            onEndReached={handleEndReached}
-                            onEndReachedThreshold={0.5}
-                            ListHeaderComponent={renderHeader}
-                            ListFooterComponent={renderFooter}
-                            ListEmptyComponent={renderEmpty}
-                            contentContainerStyle={styles.listContent}
-                            showsVerticalScrollIndicator={true}
-                        />
-                    </BottomSheet.Content>
-                </BottomSheet.Portal>
-            </BottomSheet>
+            <TrueSheet {...sharedProps}>
+                <View style={[styles.container, { paddingBottom: insets.bottom + 12 }]}>
+                    <FlatList
+                        nestedScrollEnabled
+                        data={likers}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderItem}
+                        onEndReached={handleEndReached}
+                        onEndReachedThreshold={0.5}
+                        ListHeaderComponent={renderHeader}
+                        ListFooterComponent={renderFooter}
+                        ListEmptyComponent={renderEmpty}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={true}
+                    />
+                </View>
+            </TrueSheet>
         );
     }
 ));
@@ -176,6 +184,10 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
 LikersSheet.displayName = "LikersSheet";
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        paddingTop: 8,
+    },
     header: {
         marginBottom: 12,
     },
@@ -184,12 +196,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingVertical: 8,
         gap: 16,
-    },
-    avatarContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        overflow: "hidden",
     },
     avatar: {
         width: 48,

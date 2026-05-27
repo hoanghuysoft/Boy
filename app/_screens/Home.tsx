@@ -7,9 +7,9 @@ import {
   BookmarkOpenedLineDuotone,
   MagnifierLineDuotone
 } from "@solar-icons/react-native";
+import { Image as ExpoImage } from "expo-image";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Image as ExpoImage } from "expo-image";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { CommentsSheet } from "../../components/post/CommentsSheet";
 import { LikersSheet } from "../../components/post/LikersSheet";
@@ -99,13 +99,11 @@ const HomeScreen = () => {
                   opacity: vm.pillBgOpacity,
                 }}
               />
-              <View style={{ width: 40, height: 30, borderRadius: 100, overflow: 'hidden' }}>
-                <ExpoImage
-                  contentFit="contain"
-                  source={require("../../assets/images/logo_head.png")}
-                  style={{ width: 40, height: 30}}
-                />
-              </View>
+              <ExpoImage
+                contentFit="cover"
+                source={require("../../assets/images/logo_head.png")}
+                style={{ width: 30, height: 30 }}
+              />
             </Animated.View>
 
             <Animated.View
@@ -161,10 +159,11 @@ const HomeScreen = () => {
         currentProfileId={vm.myProfile?.id || null}
         onDeleted={vm.handlePostDeleted}
       />
-      <LikersSheet ref={vm.likersSheetRef} postId={vm.selectedLikePostId} />
+      <LikersSheet ref={vm.likersSheetRef} postId={vm.selectedLikePostId} onDismiss={vm.handleLikersSheetDismiss} />
       <CommentsSheet
         ref={vm.commentsSheetRef}
         postId={vm.selectedCommentPostId}
+        onDismiss={vm.handleCommentSheetDismiss}
       />
     </>
   );

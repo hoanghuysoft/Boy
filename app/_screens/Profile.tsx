@@ -241,7 +241,10 @@ const ProfileContent = () => {
   }, [vm.activeTab, vm.common, t]);
 
   // Loading / Error state
-  if (!vm.profile) {
+  // ─ Show full skeleton only when there is ZERO cached data (true cold load).
+  // ─ When isProfilePlaceholder=true the profile is populated from the post-author
+  // ─ cache (name, avatar, is_verified) — enough to render the header immediately.
+  if (!vm.profile && !vm.isProfilePlaceholder) {
     return (
       <View style={vm.common.screen}>
         <ScrollView
@@ -527,10 +530,12 @@ const ProfileContent = () => {
         <LikersSheet
           ref={vm.likersSheetRef}
           postId={vm.selectedLikePostId}
+          onDismiss={vm.handleLikersSheetDismiss}
         />
         <CommentsSheet
           ref={vm.commentsSheetRef}
           postId={vm.selectedCommentPostId}
+          onDismiss={vm.handleCommentSheetDismiss}
         />
 
       </View>
@@ -612,7 +617,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// ─── ProfileScreen shell ──────────────────────────────────────────────────────
+// ─── ProfileScreen shell ──────────────────────────────────────────────────
 const ProfileScreen = () => {
   const [isReady, setIsReady] = React.useState(false);
 
@@ -624,6 +629,10 @@ const ProfileScreen = () => {
   }, []);
 
   if (!isReady) {
+    // Show the static skeleton only on the very first frame.
+    // Once ProfileContent mounts it handles its own placeholder logic:
+    // if the profile was pre-cached from the feed, the header renders
+    // immediately with the cached data — no skeleton needed.
     return <ProfileSkeleton />;
   }
 

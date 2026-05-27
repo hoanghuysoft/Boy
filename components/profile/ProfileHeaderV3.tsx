@@ -1,16 +1,18 @@
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { CaseMinimalisticBold, NotesBold, PointOnMapBold } from '@solar-icons/react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
-import { Avatar, Button, Tabs } from 'heroui-native';
+import { Avatar, Button } from 'heroui-native';
 import countries from "i18n-iso-countries";
 import en from "i18n-iso-countries/langs/en.json";
 import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
-import { Image as ExpoImage } from 'expo-image';
+import Reanimated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
+import { usePagerHeaderContext } from '../pager/PagerHeaderContext';
 
 import VerifiedIcon from '@/icons/verified';
 import { ProfileAddress } from '../../types/profileaddress';
@@ -94,16 +96,28 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         return countries.getAlpha2Code(potentialCountry, "en");
     }, [profile?.hometown]);
 
-    const routes = useMemo(() => [
-        { key: "Feed", title: t("profile.tabs.feed") },
-        { key: "Images", title: t("profile.tabs.images") },
-        { key: "Videos", title: t("profile.tabs.videos") },
-    ], [t]);
+
+
+    const headerCtx = usePagerHeaderContext();
+    const animatedContentStyle = useAnimatedStyle(() => {
+        if (!headerCtx) return { opacity: 1 };
+        const { scrollY, headerHeight } = headerCtx;
+        const collapseDistance = Math.max(headerHeight - (vm.insets.top + 56), 50);
+        const opacity = interpolate(
+            scrollY.get(),
+            [0, collapseDistance * 0.6],
+            [1, 0],
+            'clamp'
+        );
+        return {
+            opacity,
+        };
+    });
 
     return (
-        <View style={styles.headerContainer}>
+        <Reanimated.View style={[styles.headerContainer, animatedContentStyle]}>
             {/* We omitted the top row containing back button and music pill since classic layout handles it */}
-            <View style={{ height: vm.insets.top + 75 }} />
+            <View style={{ height: vm.insets.top + 70 }} />
 
             <SquircleView borderRadius={16} cornerSmoothing={100} preserveSmoothing style={styles.coverContainer}>
                 <ExpoImage
@@ -243,25 +257,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 <FlexText style={{ color: vm.colors.text }}>{imageCount} <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>{t("profile.header.countImages", { count: imageCount })}</FlexText></FlexText>
                 <FlexText style={{ color: vm.colors.text }}>{videoCount} <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>{t("profile.header.countVideos", { count: videoCount })}</FlexText></FlexText>
             </View>
-
-            {/* Tabs UI */}
-            <Tabs
-                value={activeTab}
-                onValueChange={(val: any) => onTabChange(val)}
-                style={{ paddingHorizontal: 0, marginBottom: 16 }}
-            >
-                <Tabs.List>
-                    <Tabs.ScrollView scrollAlign="center">
-                        <Tabs.Indicator />
-                        {routes.map((route) => (
-                            <Tabs.Trigger key={route.key} value={route.key}>
-                                <Tabs.Label>{route.title}</Tabs.Label>
-                            </Tabs.Trigger>
-                        ))}
-                    </Tabs.ScrollView>
-                </Tabs.List>
-            </Tabs>
-        </View>
+        </Reanimated.View>
     );
 });
 

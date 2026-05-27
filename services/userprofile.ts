@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tansta
 import { client } from "./client";
 import { Profile } from "@/types/profile";
 import { profileKeys } from "./queryKeys";
+import { getProfileStub } from "./profileCache";
 
 export interface ProfilesResponse {
     data: Profile[];
@@ -49,11 +50,29 @@ export const getMyProfileDetail = async () => {
 }
 
 export const useProfile = (id: string, isMe: boolean) => {
+    const queryClient = useQueryClient();
     return useQuery({
         queryKey: isMe ? profileKeys.detail('me') : profileKeys.detail(id),
         queryFn: () => (isMe ? getMyProfileDetail() : getProfileDetail(id)),
         enabled: isMe || !!id,
         staleTime: 5 * 60 * 1000, // 5 min — profile rarely changes mid-session
+        /**
+         * placeholderData reads the stub from the SEPARATE stub cache
+         * (written by precacheProfileFromPost in PostItem).
+         *
+         * Crucially, the stub lives under 'profileStub' key, NOT 'profile' key.
+         * This means the real ['profile', id] query always fires its API fetch
+         * immediately — the stub never blocks or delays the real data load.
+         *
+         * Flow:
+         *   1. placeholderData() finds stub → data = stub, isPlaceholderData = true
+         *   2. queryFn fires (real profile key is always empty/stale)
+         *   3. API resolves → data = full profile, isPlaceholderData = false
+         */
+        placeholderData: () => {
+            if (isMe) return undefined;
+            return getProfileStub(queryClient, id) as Profile | undefined;
+        },
     });
 };
 

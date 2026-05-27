@@ -61,13 +61,25 @@ export const useProfileViewModel = () => {
     const [galleryIndex, setGalleryIndex] = useState(0);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
 
+    // ─── Lazy Loading Tab Queries ───────────────────────────────────
+    const [feedEnabled, setFeedEnabled] = useState(defaultTab === "Feed");
+    const [imagesEnabled, setImagesEnabled] = useState(defaultTab === "Images");
+    const [videosEnabled, setVideosEnabled] = useState(false);
+
+    useEffect(() => {
+        if (activeTab === "Feed") setFeedEnabled(true);
+        else if (activeTab === "Images") setImagesEnabled(true);
+        else if (activeTab === "Videos") setVideosEnabled(true);
+    }, [activeTab]);
+
     // ─── Data Fetching ─────────────────────────────────────────────
     const {
         data: profile,
         isLoading: isProfileLoading,
         isRefetching: isProfileRefetching,
         refetch: refetchProfile,
-        isError: isProfileError
+        isError: isProfileError,
+        isPlaceholderData: isProfilePlaceholder,
     } = useProfile(id as string, isMe);
 
     const profileId = profile?.id ?? "";
@@ -115,7 +127,7 @@ export const useProfileViewModel = () => {
         hasNextPage: hasNextPhotos,
         isFetchingNextPage: isFetchingNextPhotos,
         isLoading: isPhotosLoading
-    } = useInfiniteMedia(profileId, 'photo');
+    } = useInfiniteMedia(profileId, 'photo', imagesEnabled);
     const photos = useMemo(() => photosPaging?.pages.flatMap(p => p.data) || [], [photosPaging]);
 
     const {
@@ -125,7 +137,7 @@ export const useProfileViewModel = () => {
         hasNextPage: hasNextVideos,
         isFetchingNextPage: isFetchingNextVideos,
         isLoading: isVideosLoading
-    } = useInfiniteMedia(profileId, 'video');
+    } = useInfiniteMedia(profileId, 'video', videosEnabled);
     const videos = useMemo(() => videosPaging?.pages.flatMap(p => p.data) || [], [videosPaging]);
 
     const {
@@ -135,7 +147,7 @@ export const useProfileViewModel = () => {
         hasNextPage: hasNextFeed,
         isFetchingNextPage: isFetchingNextFeed,
         isLoading: isFeedLoading
-    } = useProfileFeed(profileId);
+    } = useProfileFeed(profileId, feedEnabled);
     const feedPosts = useMemo(() => feedPaging?.pages.flatMap(p => p.data) || [], [feedPaging]);
 
     // ─── Derived Data ──────────────────────────────────────────────
@@ -160,6 +172,14 @@ export const useProfileViewModel = () => {
     // ─── Comments Sheet ────────────────────────────────────────────
     const commentsSheetRef = useRef<TrueSheet>(null);
     const [selectedCommentPostId, setSelectedCommentPostId] = useState<string | null>(null);
+    const pendingCommentOpen = useRef(false);
+
+    useEffect(() => {
+        if (pendingCommentOpen.current && selectedCommentPostId) {
+            pendingCommentOpen.current = false;
+            commentsSheetRef.current?.present();
+        }
+    }, [selectedCommentPostId]);
 
     // ─── Bottom Sheet Refs ─────────────────────────────────────────
     const musicSheetRef = useRef<TrueSheet>(null);
@@ -227,6 +247,34 @@ export const useProfileViewModel = () => {
             }
         ),
         [scrollY, showScrollTop, showHeaderAvatar]);
+
+    // ─── PagerWithHeader Scroll Handler ─────────────────────────────
+    // When using PagerWithHeader, the List component calls onScrollY instead
+    // of Animated.event. This lightweight callback updates showHeaderAvatar
+    // and showScrollTop from the raw Y offset.
+    const showHeaderAvatarRef = useRef(showHeaderAvatar);
+    showHeaderAvatarRef.current = showHeaderAvatar;
+    const showScrollTopRef = useRef(showScrollTop);
+    showScrollTopRef.current = showScrollTop;
+
+    const onScrollYChange = useCallback((y: number) => {
+        currentScrollY.current = y;
+
+        const shouldShowAvatar = y > 160;
+        if (shouldShowAvatar !== showHeaderAvatarRef.current) {
+            setShowHeaderAvatar(shouldShowAvatar);
+        }
+
+        const shouldShow = y > 300;
+        if (shouldShow !== showScrollTopRef.current) {
+            setShowScrollTop(shouldShow);
+            Animated.timing(scrollTopButtonOpacity, {
+                toValue: shouldShow ? 1 : 0,
+                duration: 200,
+                useNativeDriver: true,
+            }).start();
+        }
+    }, [scrollTopButtonOpacity]);
 
     // ─── Tab Change ────────────────────────────────────────────────
     const handleTabChangeRef = useRef<((tab: TabType) => void) | undefined>(undefined);
@@ -348,9 +396,17 @@ export const useProfileViewModel = () => {
     }, [safePresent]);
 
     const handleCommentPress = useCallback((post: Post) => {
+        pendingCommentOpen.current = true;
         setSelectedCommentPostId(post.id);
-        safePresent(commentsSheetRef);
-    }, [safePresent]);
+    }, []);
+
+    const handleCommentSheetDismiss = useCallback(() => {
+        setSelectedCommentPostId(null);
+    }, []);
+
+    const handleLikersSheetDismiss = useCallback(() => {
+        setSelectedLikePostId(null);
+    }, []);
 
     const scrollToTop = useCallback(() => {
         scrollPositions.current[activeTab] = 0;
@@ -397,6 +453,7 @@ export const useProfileViewModel = () => {
         profile,
         isProfileLoading,
         isProfileRefetching,
+        isProfilePlaceholder,
         myProfile,
 
         // Tab
@@ -442,6 +499,7 @@ export const useProfileViewModel = () => {
         showHeaderAvatar,
         scrollTopButtonOpacity,
         onScroll,
+        onScrollYChange,
 
         // Handlers
         stableTabChange,
@@ -458,6 +516,8 @@ export const useProfileViewModel = () => {
         handlePostOptionsPress,
         handleLikeCountPress,
         handleCommentPress,
+        handleCommentSheetDismiss,
+        handleLikersSheetDismiss,
         scrollToTop,
         dismissSnackbar,
         closeGallery,

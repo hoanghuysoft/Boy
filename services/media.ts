@@ -32,7 +32,7 @@ export const getMedia = async ({
     return response.data;
 };
 
-export const useInfiniteMedia = (profileId: string, type?: MediaType) => {
+export const useInfiniteMedia = (profileId: string, type?: MediaType, enabled = true) => {
     return useInfiniteQuery({
         queryKey: type ? ["media", profileId, type] : ["media", profileId],
         queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
@@ -40,6 +40,6 @@ export const useInfiniteMedia = (profileId: string, type?: MediaType) => {
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage: MediaResponse) =>
             lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor : undefined,
-        enabled: !!profileId,
+        enabled: enabled && !!profileId,
     });
 };

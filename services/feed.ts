@@ -52,7 +52,7 @@ export const useFeed = (mode: FeedMode = 'latest') => {
   });
 };
 
-export const useProfileFeed = (profileId: string) => {
+export const useProfileFeed = (profileId: string, enabled = true) => {
   return useInfiniteQuery({
     queryKey: feedKeys.profile(profileId),
     queryFn: ({ pageParam }) => getProfileFeed({ profileId, limit: 20, cursor: pageParam as string }),
@@ -60,5 +60,6 @@ export const useProfileFeed = (profileId: string) => {
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasNextPage ? lastPage.pagination.nextCursor : undefined;
     },
+    enabled: enabled && !!profileId,
   });
 };
