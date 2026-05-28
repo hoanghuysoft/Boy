@@ -80,7 +80,7 @@ const EpisodeVideoItem = memo(({ item }: { item: TMDBVideoResult }) => {
                     style={{ width: "100%", height: "100%" }}
                     contentFit="cover"
                 />
-                <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.25)" }}>
+                <View style={{ ...StyleSheet.absoluteFill, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.25)" }}>
                     <Ionicons name="play-circle" size={40} color="white" style={{ opacity: 0.9 }} />
                 </View>
             </View>

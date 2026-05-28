@@ -91,7 +91,7 @@ export const headerStyles = StyleSheet.create({
     position: 'relative',
   },
   avatarFrame: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 10,
   },
   avatarBackplate: {

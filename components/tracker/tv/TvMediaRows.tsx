@@ -81,7 +81,7 @@ export const TvVideosRow = ({ videos }: TvVideosRowProps) => {
                         style={{ width: "100%", height: "100%" }}
                         contentFit="cover"
                     />
-                    <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.2)" }}>
+                    <View style={{ ...StyleSheet.absoluteFill, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.2)" }}>
                         <Ionicons name="play-circle" size={48} color="white" style={{ opacity: 0.9 }} />
                     </View>
                 </View>

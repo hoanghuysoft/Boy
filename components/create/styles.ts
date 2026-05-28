@@ -28,7 +28,7 @@ export const createStyles = StyleSheet.create({
         padding: 4,
     },
     uploadOverlay: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         justifyContent: "center",
         alignItems: "center",
     },

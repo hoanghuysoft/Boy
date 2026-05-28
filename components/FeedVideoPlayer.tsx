@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     bufferingOverlay: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         justifyContent: 'center',
         alignItems: 'center',
     },

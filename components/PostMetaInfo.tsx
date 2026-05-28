@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
         opacity: 0,
     },
     carouselWindow: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         justifyContent: 'flex-start', // Align to top so translateY works from 0 down
         width: '100%', // Ensures it takes the width reserved by Sizer
     }

@@ -98,14 +98,14 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         if (post.reposted_post && !post.reposted_post.deleted) {
             precacheProfile(post.reposted_post);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [post.profile_id]);
 
     return (
         <View style={{}}>
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <Pressable onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
+                <TouchableOpacity onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
                     <ExpoImage
                         source={{ uri: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
                         style={{ width: 40, height: 40, borderRadius: 9999 }}
@@ -119,15 +119,15 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         </View>
                         <PostMetaInfo post={post} />
                     </View>
-                </Pressable>
+                </TouchableOpacity>
                 {!isBookmarked && (
-                    <Pressable
+                    <TouchableOpacity
                         hitSlop={10}
                         style={{ backgroundColor: vm.colors.card, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
                         onPress={vm.handleOptionsPress}
                     >
                         <Ionicons name="ellipsis-horizontal" size={20} color={vm.colors.text} />
-                    </Pressable>
+                    </TouchableOpacity>
                 )}
             </View>
 
@@ -170,7 +170,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                         {originalPost.content}
                                     </FlexText>
                                 )}
-                                <Pressable
+                                <TouchableOpacity
                                     onPress={() => {
                                         router.push({
                                             pathname: '/profile/[id]',
@@ -188,7 +188,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                     <FlexText style={[vm.common.label, { color: vm.colors.muted, fontSize: 11, fontWeight: '600' }]}>
                                         Reposted from {originalPost.profile_name}
                                     </FlexText>
-                                </Pressable>
+                                </TouchableOpacity>
                             </View>
                         </View>
                     )
@@ -381,35 +381,35 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 (<View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
                     <View style={[vm.common.row, { gap: 20 }]}>
                         <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                            <Pressable hitSlop={10} onPress={vm.handleLikePress}>
+                            <TouchableOpacity hitSlop={10} onPress={vm.handleLikePress}>
                                 {vm.isLiked ? (
                                     <LikeSolidIcon size={24} color={vm.colors.text} />
                                 ) : (
                                     <LikeIcon size={24} color={vm.colors.text} />
                                 )}
-                            </Pressable>
-                            <Pressable hitSlop={10} onPress={vm.handleLikeCountPress}>
+                            </TouchableOpacity>
+                            <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
                                 <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
-                            </Pressable>
+                            </TouchableOpacity>
                         </View>
-                        <Pressable hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                        <TouchableOpacity hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                             <CommentIcon size={24} color={vm.colors.text} />
                             <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</FlexText>
-                        </Pressable>
+                        </TouchableOpacity>
                         {!isRepost && (
-                            <Pressable hitSlop={10} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                            <TouchableOpacity hitSlop={10} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                                 <ShareIcon size={24} color={vm.colors.text} />
                                 <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.share_count}</FlexText>
-                            </Pressable>
+                            </TouchableOpacity>
                         )}
                     </View>
-                    <Pressable hitSlop={10} onPress={vm.handleBookmarkPress}>
+                    <TouchableOpacity hitSlop={10} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
                             <BookmarkSolidIcon size={24} color={vm.colors.text} />
                         ) : (
                             <BookmarkIcon size={24} color={vm.colors.text} />
                         )}
-                    </Pressable>
+                    </TouchableOpacity>
                 </View>)
             )}
 

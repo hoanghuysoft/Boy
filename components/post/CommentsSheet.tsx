@@ -100,16 +100,6 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                                     />
                                 </Galeria.Image>
                             </Galeria>
-                            {imageUrl.includes('giphy.com') && (
-                                <View style={{ position: 'absolute', bottom: 8, left: 8, pointerEvents: 'none' }}>
-                                    <Image
-                                        source={theme === 'dark'
-                                            ? require('@/assets/images/giphy/Light Backgrounds/PoweredBy_200px-White_HorizLogo.png')
-                                            : require('@/assets/images/giphy/Dark Backgrounds/PoweredBy_200px-Black_HorizLogo.png')}
-                                        style={{ width: 100, height: 14 }}
-                                    />
-                                </View>
-                            )}
                         </View>
                     )}
                 </View>
@@ -352,17 +342,6 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 {vm.selectedImageUrl && (
                     <View style={styles.previewContainer}>
                         <Image source={{ uri: vm.selectedImageUrl }} style={styles.previewImage} contentFit="cover" />
-                        {vm.selectedImageUrl.includes('giphy.com') && (
-                            <View style={{ position: 'absolute', bottom: 4, left: 4, pointerEvents: 'none' }}>
-                                <Image
-                                    source={vm.theme === 'dark'
-                                        ? require('@/assets/images/giphy/Light Backgrounds/PoweredBy_200px-White_HorizLogo.png')
-                                        : require('@/assets/images/giphy/Dark Backgrounds/PoweredBy_200px-Black_HorizLogo.png')}
-                                    style={{ width: 60, height: 10 }}
-                                    contentFit="contain"
-                                />
-                            </View>
-                        )}
                         <TouchableOpacity style={styles.previewRemoveButton} onPress={() => vm.setSelectedImageUrl(null)}>
                             <MaterialIcons name="close" size={16} color="#fff" />
                         </TouchableOpacity>

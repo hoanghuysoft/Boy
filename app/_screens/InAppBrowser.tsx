@@ -51,7 +51,7 @@ const InAppBrowser = () => {
       <WebView
         source={{ uri: initialUrl }}
         incognito
-        style={{marginTop: insets.top}}
+        style={{ marginTop: insets.top }}
         sharedCookiesEnabled={false}
         thirdPartyCookiesEnabled={false}
         javaScriptCanOpenWindowsAutomatically={false}
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.2)",
