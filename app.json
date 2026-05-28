@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "26.56.2.1",
+    "version": "26.56.3.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -59,7 +59,7 @@
         {
           "backgroundColor": "#191919",
           "android": {
-            "image": "./assets/images/logo-head.png",
+            "image": "./assets/images/logo_head.png",
             "imageWidth": 180
           }
         }

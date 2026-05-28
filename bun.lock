@@ -6,11 +6,11 @@
       "name": "welove",
       "dependencies": {
         "@bam.tech/react-native-app-security": "1.0.0",
+        "@bsky.app/video": "^0.3.6",
         "@expo/ui": "~56.0.14",
         "@flixsrota/player": "^0.3.0",
         "@flyerhq/react-native-link-preview": "1.6.0",
         "@giphy/react-native-sdk": "^6.0.1",
-        "@gorhom/bottom-sheet": "^5.2.9",
         "@kuss/react-native-mesh-gradient": "0.2.0",
         "@lodev09/react-native-true-sheet": "^3.10.1",
         "@nandorojo/galeria": "3.0.2",
@@ -279,6 +279,8 @@
     "@babel/types": ["@babel/types@7.29.0", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.28.5" } }, "sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A=="],
 
     "@bam.tech/react-native-app-security": ["@bam.tech/react-native-app-security@1.0.0", "", { "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "sha512-frN4Wjjbf2C0TIosZtokbN0ncPcoEAi/Pik3fADJUKHU4d1MbRHPEEQY+SI3Il2TO7zw5FrR7SSXIPRuj5EmIw=="],
+
+    "@bsky.app/video": ["@bsky.app/video@0.3.6", "", { "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "sha512-Ny7vz9v1lQOw5Llw4xejtJo/Dp/lmdRw1XdUJucOXlq6puXO93tv3mNXUIIyOEVWEwDPg8j/kSQxG/mGy+/hdQ=="],
 
     "@callstack/react-theme-provider": ["@callstack/react-theme-provider@3.0.9", "", { "dependencies": { "deepmerge": "^3.2.0", "hoist-non-react-statics": "^3.3.0" }, "peerDependencies": { "react": ">=16.3.0" } }, "sha512-tTQ0uDSCL0ypeMa8T/E9wAZRGKWj8kXP7+6RYgPTfOPs9N07C9xM8P02GJ3feETap4Ux5S69D9nteq9mEj86NA=="],
 

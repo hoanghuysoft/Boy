@@ -13,11 +13,11 @@
   },
   "dependencies": {
     "@bam.tech/react-native-app-security": "1.0.0",
+    "@bsky.app/video": "^0.3.6",
     "@expo/ui": "~56.0.14",
     "@flixsrota/player": "^0.3.0",
     "@flyerhq/react-native-link-preview": "1.6.0",
     "@giphy/react-native-sdk": "^6.0.1",
-    "@gorhom/bottom-sheet": "^5.2.9",
     "@kuss/react-native-mesh-gradient": "0.2.0",
     "@lodev09/react-native-true-sheet": "^3.10.1",
     "@nandorojo/galeria": "3.0.2",
