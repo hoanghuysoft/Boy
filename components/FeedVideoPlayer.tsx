@@ -1,8 +1,8 @@
 import { useCachedVideoUri } from '@/hooks/useCachedVideoUri';
 import { useFeedVideoStore } from '@/stores/feedVideo';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
-import Video, { OnLoadData, VideoRef } from 'react-native-video';
+import { useVideoPlayer, useEvent, VideoView } from 'react-native-video';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ASPECT_RATIO = 3 / 4;
@@ -20,7 +20,6 @@ const VIDEO_HEIGHT = SCREEN_WIDTH / ASPECT_RATIO;
  * - The store's activePostId won't match, so the old cell gets a thumbnail instead
  */
 export const FeedVideoPlayer: React.FC = React.memo(() => {
-    const videoRef = useRef<VideoRef>(null);
     const activeVideoUrl = useFeedVideoStore(s => s.activeVideoUrl);
     const isMuted = useFeedVideoStore(s => s.isMuted);
     const isEnded = useFeedVideoStore(s => s.isEnded);
@@ -31,19 +30,41 @@ export const FeedVideoPlayer: React.FC = React.memo(() => {
     // play from local storage for instant start.
     const resolvedVideoUrl = useCachedVideoUri(activeVideoUrl);
 
-    // When the video ends, mark it as ended (show replay button, don't loop)
-    const handleEnd = useCallback(() => {
+    // Create the player instance with v7 hooks
+    const player = useVideoPlayer(resolvedVideoUrl ? {
+        uri: resolvedVideoUrl,
+        bufferConfig: {
+            minBufferMs: 2000,
+            maxBufferMs: 10000,
+            bufferForPlaybackMs: 500,
+            bufferForPlaybackAfterRebufferMs: 1000,
+        }
+    } : {
+        uri: ''
+    }, (playerInstance) => {
+        playerInstance.muted = isMuted;
+        playerInstance.loop = false;
+        playerInstance.play();
+    });
+
+    // Synchronize mute state
+    useEffect(() => {
+        player.muted = isMuted;
+    }, [isMuted, player]);
+
+    // Handle end, load, and buffer events via useEvent
+    useEvent(player, 'onEnd', () => {
         setEnded(true);
-        videoRef.current?.seek(0);
-    }, [setEnded]);
+        player.seekTo(0);
+    });
 
-    const handleLoad = useCallback((_data: OnLoadData) => {
+    useEvent(player, 'onLoad', () => {
         setIsBuffering(false);
-    }, []);
+    });
 
-    const handleBuffer = useCallback(({ isBuffering: buffering }: { isBuffering: boolean }) => {
+    useEvent(player, 'onBuffer', (buffering) => {
         setIsBuffering(buffering);
-    }, []);
+    });
 
     // Reset buffering state when video URL changes
     useEffect(() => {
@@ -58,24 +79,11 @@ export const FeedVideoPlayer: React.FC = React.memo(() => {
 
     return (
         <View style={styles.container} pointerEvents="none">
-            <Video
-                ref={videoRef}
-                source={{ uri: resolvedVideoUrl }}
+            <VideoView
+                player={player}
                 style={styles.video}
                 resizeMode="cover"
                 controls={false}
-                muted={isMuted}
-                paused={false}
-                repeat={false}
-                onEnd={handleEnd}
-                onLoad={handleLoad}
-                onBuffer={handleBuffer}
-                bufferConfig={{
-                    minBufferMs: 2000,
-                    maxBufferMs: 10000,
-                    bufferForPlaybackMs: 500,
-                    bufferForPlaybackAfterRebufferMs: 1000,
-                }}
             />
             {isBuffering && (
                 <View style={styles.bufferingOverlay}>

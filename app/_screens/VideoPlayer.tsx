@@ -28,7 +28,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import SystemNavigationBar from "react-native-system-navigation-bar";
-import Video, { VideoRef } from "react-native-video";
+import { useVideoPlayer, useEvent, VideoView, VideoViewRef } from "react-native-video";
 
 interface VideoProgress {
   currentTime: number;
@@ -71,7 +71,7 @@ const VideoPlayer = () => {
   const { getResumePosition, savePosition, clearPosition } = useVideoResume(videoUrl);
 
   // Refs
-  const ref = useRef<VideoRef>(null);
+  const ref = useRef<VideoViewRef>(null);
   const wasPlayingRef = useRef(false);
   const isSeekingRef = useRef(false);
   // Track latest progress so handleClose always reads the current position
@@ -84,6 +84,80 @@ const VideoPlayer = () => {
   const topBarTranslateY = useRef(new Animated.Value(-50)).current;
   const bottomBarTranslateY = useRef(new Animated.Value(50)).current;
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Initialize the player with v7 useVideoPlayer hook
+  const player = useVideoPlayer(resolvedVideoUrl || videoUrl || '', (playerInstance) => {
+    playerInstance.loop = isLooping;
+    playerInstance.muted = isMute;
+    playerInstance.rate = playbackRate;
+    playerInstance.playInBackground = true;
+    playerInstance.playWhenInactive = true;
+    if (!isPaused) {
+      playerInstance.play();
+    }
+  });
+
+  // Synchronize player properties when state changes
+  useEffect(() => {
+    player.muted = isMute;
+  }, [isMute, player]);
+
+  useEffect(() => {
+    player.loop = isLooping;
+  }, [isLooping, player]);
+
+  useEffect(() => {
+    player.rate = playbackRate;
+  }, [playbackRate, player]);
+
+  // Event subscriptions via useEvent
+  useEvent(player, 'onLoadStart', () => {
+    setIsLoading(true);
+  });
+
+  useEvent(player, 'onLoad', (data) => {
+    setIsLoading(false);
+    if (data.width && data.height) {
+      setVideoAspectRatio(data.width / data.height);
+    }
+    durationRef.current = data.duration ?? 0;
+    if (!hasResumedRef.current && data.duration >= VIDEO_RESUME_MIN_DURATION) {
+      hasResumedRef.current = true;
+      const savedPos = getResumePosition();
+      if (savedPos && savedPos > 0) {
+        player.seekTo(savedPos);
+      }
+    }
+  });
+
+  useEvent(player, 'onBuffer', (buffering) => {
+    setIsLoading(buffering);
+  });
+
+  useEvent(player, 'onProgress', (data) => {
+    setProgress({
+      currentTime: data.currentTime,
+      seekableDuration: durationRef.current || player.duration || 0,
+    });
+    progressRef.current = {
+      currentTime: data.currentTime,
+      seekableDuration: durationRef.current || player.duration || 0,
+    };
+  });
+
+  useEvent(player, 'onEnd', () => {
+    clearPosition();
+    if (!player.loop) {
+      player.seekTo(0);
+      player.pause();
+      setIsPaused(true);
+    }
+  });
+
+  useEvent(player, 'onPlaybackStateChange', (state) => {
+    if (isSeekingRef.current) return;
+    setIsPaused(!state.isPlaying);
+  });
   // Handlers
   const handleVideoPress = useCallback(() => {
     setVideoPressed((prev) => !prev);
@@ -92,7 +166,7 @@ const VideoPlayer = () => {
   const moveBackward = () => {
     try {
       isSeekingRef.current = true;
-      ref.current?.seek(progress.currentTime - 5);
+      player.seekTo(progress.currentTime - 5);
       setTimeout(() => {
         isSeekingRef.current = false;
       }, 300);
@@ -103,17 +177,24 @@ const VideoPlayer = () => {
 
   const togglePlayPause = () => {
     if (isPaused && progress.currentTime === progress.seekableDuration) {
-      ref.current?.seek(0);
+      player.seekTo(0);
+      player.play();
       setIsPaused(false);
     } else {
-      setIsPaused(!isPaused);
+      const nextPaused = !isPaused;
+      setIsPaused(nextPaused);
+      if (nextPaused) {
+        player.pause();
+      } else {
+        player.play();
+      }
     }
   };
 
   const moveForward = () => {
     try {
       isSeekingRef.current = true;
-      ref.current?.seek(progress.currentTime + 5);
+      player.seekTo(progress.currentTime + 5);
       setTimeout(() => {
         isSeekingRef.current = false;
       }, 300);
@@ -183,9 +264,10 @@ const VideoPlayer = () => {
   };
 
   const handleSlidingComplete = (prog: number) => {
-    ref.current?.seek(prog);
+    player.seekTo(prog);
     setSeekPosition(null);
     if (wasPlayingRef.current) {
+      player.play();
       setIsPaused(false);
     }
     // Delay resetting seek flag to prevent playback state callback interference
@@ -291,57 +373,16 @@ const VideoPlayer = () => {
           { justifyContent: "center", alignItems: "center" },
         ]}
       >
-        <Video
-          source={{ uri: resolvedVideoUrl || videoUrl }}
+        <VideoView
+          player={player}
           style={{
             width: "100%",
             height: "100%",
           }}
           resizeMode="contain"
-          enterPictureInPictureOnLeave
+          autoEnterPictureInPicture
           controls={false}
-          playInBackground
-          muted={isMute}
-          paused={isPaused}
           ref={ref}
-          repeat={isLooping}
-          rate={playbackRate}
-          onLoadStart={() => setIsLoading(true)}
-          onLoad={(data) => {
-            setIsLoading(false);
-            if (data.naturalSize) {
-              const { width, height } = data.naturalSize;
-              if (width && height) {
-                setVideoAspectRatio(width / height);
-              }
-            }
-            durationRef.current = data.duration ?? 0;
-            if (!hasResumedRef.current && data.duration >= VIDEO_RESUME_MIN_DURATION) {
-              hasResumedRef.current = true;
-              const savedPos = getResumePosition();
-              if (savedPos && savedPos > 0) {
-                ref.current?.seek(savedPos);
-              }
-            }
-          }}
-          onBuffer={({ isBuffering }) => setIsLoading(isBuffering)}
-          onProgress={(prog) => {
-            setProgress(prog);
-            progressRef.current = prog;
-          }}
-          onEnd={() => {
-            clearPosition();
-            if (!isLooping) {
-              ref.current?.seek(0);
-              setIsPaused(true);
-            }
-          }}
-          onPlaybackStateChanged={(state) => {
-            if (isSeekingRef.current) return;
-            if (state.isPlaying !== undefined) {
-              setIsPaused(!state.isPlaying);
-            }
-          }}
         />
       </View>
 

@@ -33,7 +33,7 @@ import {
 import { Image as ExpoImage } from "expo-image";
 import Reanimated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Video, { VideoRef } from "react-native-video";
+import { useVideoPlayer, useEvent, VideoView } from "react-native-video";
 import { scheduleOnRN } from "react-native-worklets";
 import { useShotsViewModel } from "../../viewmodels/ShotsViewModel";
 
@@ -128,8 +128,6 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
     colors,
     insets,
 }) => {
-    const videoRef = useRef<VideoRef>(null);
-
     // ─── Per-item URI resolution ────────────────────────────────
     const [resolvedUri, setResolvedUri] = useState(item.media_url);
 
@@ -142,9 +140,6 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
     }, [item.media_url]);
 
     // ─── Shrink via animatedPosition (UI-thread) ─────────────────────
-    // Container height follows the sheet's top edge. Content is centered
-    // vertically inside with overflow:hidden, so as the container shrinks
-    // equal amounts of top and bottom are clipped — no distortion, no black bars.
     const { animatedPosition } = useReanimatedTrueSheet();
     const videoAreaStyle = useAnimatedStyle(() => {
         const minHeight = SCREEN_HEIGHT * 0.4;
@@ -153,11 +148,60 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
         };
     });
 
-    const handleLoad = useCallback(() => {
-        if (isActive) onVideoLoad();
-    }, [isActive, onVideoLoad]);
-
     const shouldRenderVideo = isFocused ? (isActive || shouldPreload) : isActive;
+
+    // Create the player instance reactively with useVideoPlayer
+    const player = useVideoPlayer(shouldRenderVideo && resolvedUri ? {
+        uri: resolvedUri,
+        bufferConfig: {
+            minBufferMs: 3000,
+            maxBufferMs: 15000,
+            bufferForPlaybackMs: 500,
+            bufferForPlaybackAfterRebufferMs: 1500,
+        }
+    } : {
+        uri: ''
+    }, (playerInstance) => {
+        playerInstance.muted = isMuted;
+        playerInstance.loop = true;
+        if (isActive && !isPaused && isFocused) {
+            playerInstance.play();
+        } else {
+            playerInstance.pause();
+        }
+    });
+
+    // Synchronize play/pause state
+    const shouldPlay = isActive && !isPaused && isFocused;
+    useEffect(() => {
+        if (shouldPlay) {
+            player.play();
+        } else {
+            player.pause();
+        }
+    }, [shouldPlay, player]);
+
+    // Synchronize mute state
+    useEffect(() => {
+        player.muted = isMuted;
+    }, [isMuted, player]);
+
+    // Setup event listeners via useEvent
+    useEvent(player, 'onLoad', () => {
+        if (isActive) onVideoLoad();
+    });
+
+    useEvent(player, 'onProgress', () => {
+        if (isActive) onVideoProgress();
+    });
+
+    useEvent(player, 'onBuffer', (buffering) => {
+        if (isActive) onVideoBuffer({ isBuffering: buffering });
+    });
+
+    useEvent(player, 'onEnd', () => {
+        if (isActive) onVideoEnd();
+    });
 
     const [hearts, setHearts] = useState<{ id: number, x: number, y: number }[]>([]);
     const lastTapTime = useRef(0);
@@ -212,28 +256,11 @@ const ShotItem: React.FC<ShotItemProps> = React.memo(({
                     )}
 
                     {shouldRenderVideo && (
-                        <Video
-                            ref={videoRef}
-                            source={{
-                                uri: resolvedUri,
-                                bufferConfig: {
-                                    minBufferMs: 3000,
-                                    maxBufferMs: 15000,
-                                    bufferForPlaybackMs: 500,
-                                    bufferForPlaybackAfterRebufferMs: 1500,
-                                }
-                            }}
+                        <VideoView
+                            player={player}
                             style={StyleSheet.absoluteFill}
                             resizeMode="contain"
                             controls={false}
-                            muted={isMuted}
-                            paused={!isActive || isPaused || !isFocused}
-                            repeat={true}
-                            onLoad={handleLoad}
-                            onProgress={isActive ? onVideoProgress : undefined}
-                            onBuffer={isActive ? onVideoBuffer : undefined}
-                            onEnd={isActive ? onVideoEnd : undefined}
-                            pointerEvents="none"
                         />
                     )}
                 </View>
