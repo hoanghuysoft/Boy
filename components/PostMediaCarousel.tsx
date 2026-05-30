@@ -4,11 +4,11 @@ import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
-import { BlueskyVideoView } from "@bsky.app/video";
+import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
 import { PauseBold, PlayBold, VolumeCrossBold, VolumeLoudBold } from "@solar-icons/react-native";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Dimensions, Pressable as RNPressable, View, ViewabilityConfig, ViewToken } from "react-native";
+import { ActivityIndicator, Dimensions, Platform, Pressable as RNPressable, View, ViewabilityConfig, ViewToken } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
@@ -63,6 +63,7 @@ const VideoCarouselItem = React.memo(({
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isActive, setIsActive] = useState(false);
+    const [status, setStatus] = useState<'playing' | 'paused' | 'pending'>('pending');
 
     const videoUrl = choosenMediaPath(item);
 
@@ -81,8 +82,16 @@ const VideoCarouselItem = React.memo(({
         videoRef.current?.enterFullscreen(true);
     }, []);
 
+    if (!isActive && status !== 'pending') {
+        setStatus('pending');
+    }
+
     // Whether to show the thumbnail overlay (same logic as Bluesky's InnerWrapper)
-    const showOverlay = !isActive || isLoading;
+    const showOverlay =
+        !isActive ||
+        isLoading ||
+        (status === 'paused' && !isActive) ||
+        status === 'pending';
 
     return (
         <View style={{ width: SCREEN_WIDTH }}>
@@ -107,6 +116,7 @@ const VideoCarouselItem = React.memo(({
                             useFeedVideoStore.getState().setMuted(e.nativeEvent.isMuted);
                         }}
                         onStatusChange={e => {
+                            setStatus(e.nativeEvent.status);
                             setIsPlaying(e.nativeEvent.status === 'playing');
                         }}
                         onError={e => {
@@ -119,42 +129,45 @@ const VideoCarouselItem = React.memo(({
 
                 {/* Thumbnail overlay: visible when video is not active or loading.
                     Uses display/zIndex pattern from Bluesky to avoid flicker. */}
-                {showOverlay && (
-                    <View style={{
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                    }}>
-                        <ExpoImage
-                            source={{ uri: fallbackUrls[prev] }}
-                            recyclingKey={fallbackUrls[prev]}
-                            style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
-                            contentFit="cover"
-                            onError={handleThumbnailError}
-                            placeholder={{ blurhash: placeholderBlurhash }}
-                            cachePolicy="memory-disk"
-                        />
-                        {/* Play button on thumbnail */}
-                        <RNPressable
-                            onPress={() => videoRef.current?.togglePlayback()}
-                            style={{
-                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                                alignItems: 'center', justifyContent: 'center',
-                                backgroundColor: 'rgba(0,0,0,0.1)',
-                            }}
-                        >
-                            {isActive && isLoading ? (
-                                <ActivityIndicator size="large" color="white" />
-                            ) : (
-                                <View style={{
-                                    width: 56, height: 56, borderRadius: 28,
-                                    backgroundColor: 'rgba(0,0,0,0.4)',
-                                    justifyContent: 'center', alignItems: 'center',
-                                }}>
-                                    <PlayBold size={28} color="#ffffff" />
-                                </View>
-                            )}
-                        </RNPressable>
-                    </View>
-                )}
+                <View style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'transparent',
+                    ...Platform.select({
+                        android: { display: showOverlay ? 'flex' : 'none' },
+                        ios: { zIndex: showOverlay ? 1 : -1 },
+                    })
+                }}>
+                    <ExpoImage
+                        source={{ uri: fallbackUrls[prev] }}
+                        recyclingKey={fallbackUrls[prev]}
+                        style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
+                        contentFit="cover"
+                        onError={handleThumbnailError}
+                        placeholder={{ blurhash: placeholderBlurhash }}
+                        cachePolicy="memory-disk"
+                    />
+                    {/* Play button on thumbnail */}
+                    <RNPressable
+                        onPress={() => videoRef.current?.togglePlayback()}
+                        style={{
+                            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                            alignItems: 'center', justifyContent: 'center',
+                            backgroundColor: 'rgba(0,0,0,0.1)',
+                        }}
+                    >
+                        {isActive && isLoading ? (
+                            <ActivityIndicator size="large" color="white" />
+                        ) : (
+                            <View style={{
+                                width: 56, height: 56, borderRadius: 28,
+                                backgroundColor: 'rgba(0,0,0,0.4)',
+                                justifyContent: 'center', alignItems: 'center',
+                            }}>
+                                <PlayBold size={28} color="#ffffff" />
+                            </View>
+                        )}
+                    </RNPressable>
+                </View>
 
                 {/* Fullscreen tap zone when video is playing */}
                 {/* Controls overlay: visible when video is active and not loading. */}
@@ -398,6 +411,8 @@ const ClassicMediaCarousel = React.memo(({
             const idx = viewableItems[0].index ?? 0;
             setActiveIndex(idx);
             currentIndexRef.current = idx;
+            // Native autoplay: scan for active video when horizontal slide changes
+            updateActiveVideoViewAsync();
         }
     }, []);
 
