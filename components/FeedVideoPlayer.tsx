@@ -2,7 +2,7 @@ import { useFeedVideoStore } from '@/stores/feedVideo';
 import { PauseBold, PlayBold, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import { BlueskyVideoView } from '@bsky.app/video';
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Dimensions, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ASPECT_RATIO = 3 / 4;
@@ -43,6 +43,13 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
     const handleEnterFullscreen = useCallback(() => {
         videoRef.current?.enterFullscreen(true);
     }, []);
+
+    const formattedTime = React.useMemo(() => {
+        if (isNaN(timeRemaining) || timeRemaining < 0) return '0:00';
+        const mins = Math.floor(timeRemaining / 60);
+        const secs = Math.floor(timeRemaining % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }, [timeRemaining]);
 
     if (!videoUrl) {
         return null;
@@ -111,6 +118,32 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
                             <PlayBold size={16} color="#ffffff" />
                         )}
                     </Pressable>
+                    {/* Time remaining badge */}
+                    <View
+                        style={{
+                            position: 'absolute',
+                            left: 56,
+                            bottom: 12,
+                            height: 36,
+                            paddingHorizontal: 12,
+                            borderRadius: 18,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 10,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: '#ffffff',
+                                fontSize: 12,
+                                fontWeight: '600',
+                                fontVariant: ['tabular-nums'],
+                            }}
+                        >
+                            {formattedTime}
+                        </Text>
+                    </View>
                     {/* Mute/Unmute Button */}
                     <Pressable
                         onPress={() => videoRef.current?.toggleMuted()}

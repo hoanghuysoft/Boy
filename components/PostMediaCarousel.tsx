@@ -8,7 +8,7 @@ import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
 import { PauseBold, PlayBold, VolumeCrossBold, VolumeLoudBold } from "@solar-icons/react-native";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Dimensions, Platform, Pressable as RNPressable, View, ViewabilityConfig, ViewToken } from "react-native";
+import { ActivityIndicator, Dimensions, Platform, Pressable as RNPressable, Text, View, ViewabilityConfig, ViewToken } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
@@ -64,6 +64,7 @@ const VideoCarouselItem = React.memo(({
     const [isLoading, setIsLoading] = useState(false);
     const [isActive, setIsActive] = useState(false);
     const [status, setStatus] = useState<'playing' | 'paused' | 'pending'>('pending');
+    const [timeRemaining, setTimeRemaining] = useState(0);
 
     const videoUrl = choosenMediaPath(item);
 
@@ -81,6 +82,13 @@ const VideoCarouselItem = React.memo(({
     const handleFullScreenPress = useCallback(() => {
         videoRef.current?.enterFullscreen(true);
     }, []);
+
+    const formattedTime = useMemo(() => {
+        if (isNaN(timeRemaining) || timeRemaining < 0) return '0:00';
+        const mins = Math.floor(timeRemaining / 60);
+        const secs = Math.floor(timeRemaining % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }, [timeRemaining]);
 
     if (!isActive && status !== 'pending') {
         setStatus('pending');
@@ -118,6 +126,9 @@ const VideoCarouselItem = React.memo(({
                         onStatusChange={e => {
                             setStatus(e.nativeEvent.status);
                             setIsPlaying(e.nativeEvent.status === 'playing');
+                        }}
+                        onTimeRemainingChange={e => {
+                            setTimeRemaining(e.nativeEvent.timeRemaining);
                         }}
                         onError={e => {
                             console.warn('[VideoCarousel] Error:', e.nativeEvent.error);
@@ -202,6 +213,32 @@ const VideoCarouselItem = React.memo(({
                                 <PlayBold size={16} color="#ffffff" />
                             )}
                         </RNPressable>
+                        {/* Time remaining badge */}
+                        <View
+                            style={{
+                                position: 'absolute',
+                                left: 56,
+                                bottom: 12,
+                                height: 36,
+                                paddingHorizontal: 12,
+                                borderRadius: 18,
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                zIndex: 10,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: '#ffffff',
+                                    fontSize: 12,
+                                    fontWeight: '600',
+                                    fontVariant: ['tabular-nums'],
+                                }}
+                            >
+                                {formattedTime}
+                            </Text>
+                        </View>
                         {/* Mute/Unmute Button */}
                         <RNPressable
                             onPress={() => videoRef.current?.toggleMuted()}
