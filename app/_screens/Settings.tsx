@@ -11,7 +11,7 @@ import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Logout3Bold } from '@solar-icons/react-native';
 import { Href, router } from "expo-router";
-import { Button, ControlField, Description, Dialog, Label, Select, Surface } from "heroui-native";
+import { Button, ControlField, Description, Dialog, Label, Select, Spinner, Surface } from "heroui-native";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
@@ -286,7 +286,7 @@ const SettingsScreen = () => {
                     <FlexText style={[common.body, { color: cacheSize === 0 ? colors.muted : '#ff4444' }]}>
                         {isClearing ? t('settings.clearCacheClearing') : t('settings.clearCacheIdle')}
                     </FlexText>
-                    {isClearing && <ActivityIndicator size="small" color={colors.muted} />}
+                    {isClearing && <Spinner size="md" color={colors.muted} />}
                 </TouchableOpacity>
             </Surface>
 
@@ -330,7 +330,7 @@ const SettingsScreen = () => {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <ActivityIndicator size="large" color={colors.text} />
+                        <Spinner size="lg" color={colors.text} />
                         <FlexText style={[common.body, { color: colors.text, marginTop: 12 }]}>{t('settings.loggingOut')}</FlexText>
                     </View>
                 </View>

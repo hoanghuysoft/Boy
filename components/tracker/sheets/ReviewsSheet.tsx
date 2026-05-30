@@ -10,6 +10,7 @@ import { ActivityIndicator } from 'react-native-paper';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { useSheetBackHandler } from "../../profile/sheets/useSheetBackHandler";
+import { Spinner } from 'heroui-native';
 
 interface ReviewsSheetProps {
     data: TMDBReview[];
@@ -94,7 +95,7 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
         if (!isLoadingItems) return null;
         return (
             <View style={{ paddingVertical: 20 }}>
-                <ActivityIndicator color={colors.text} />
+                <Spinner size="md" color={colors.text} />
             </View>
         );
     }, [isLoadingItems, colors.text]);

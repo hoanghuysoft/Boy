@@ -24,6 +24,7 @@ import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
+import { Spinner } from "heroui-native";
 
 const SEARCH_BAR_HEIGHT = 58;
 
@@ -236,7 +237,7 @@ const SearchShowsScreen = () => {
           ]}
         >
           {isFetchingNextPage ? (
-            <ActivityIndicator />
+            <Spinner size="md" />
           ) : (
             <FlexText style={{ color: colors.text, fontWeight: "700" }}>
               Load more
@@ -303,8 +304,8 @@ const SearchShowsScreen = () => {
                   <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
                     <ShimmerEffect style={styles.thumbnail} />
                     <View style={{ flex: 1, gap: 8 }}>
-                       <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 4 }} />
-                       <ShimmerEffect style={{ height: 12, width: '60%', borderRadius: 4 }} />
+                      <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 4 }} />
+                      <ShimmerEffect style={{ height: 12, width: '60%', borderRadius: 4 }} />
                     </View>
                   </View>
                 ))}

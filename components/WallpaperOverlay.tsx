@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Image as ExpoImage } from "expo-image";
-import { useToast } from "heroui-native";
+import { Spinner, useToast } from "heroui-native";
 import { WallpaperSet } from 'react-native-nitro-wallpaper';
 import { FlexText } from "./FlexText";
 
@@ -74,7 +74,7 @@ const WallpaperOverlay = ({ isVisible, url, onClose }: WallpaperOverlayProps) =>
 
                         {isLoading ? (
                             <View style={styles.loadingContainer}>
-                                <ActivityIndicator size="large" color={colors.secondary} />
+                                <Spinner size="lg" color={colors.secondary} />
                                 <Text style={[styles.loadingText, { color: colors.text }]}>
                                     {t('wallpaperOverlay.applying')}
                                 </Text>

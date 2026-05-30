@@ -16,6 +16,7 @@ import { DeezerTrack } from "../../services/deezer";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
+import { Spinner } from "heroui-native";
 
 // ============================================================================
 // MusicSearchResult Component
@@ -177,7 +178,7 @@ export const MusicSection = memo(({
             </View>
 
             {isLoading && (
-                <ActivityIndicator size="small" color={COLORS.primary} style={createStyles.musicLoading} />
+                <Spinner size="md" color={COLORS.primary} style={createStyles.musicLoading} />
             )}
 
             {musicResults.length > 0 && (

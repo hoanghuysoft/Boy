@@ -417,7 +417,7 @@ const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
         return (
             <View style={[styles.container, { backgroundColor: '#000' }]}>
                 <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-                <ActivityIndicator size="large" color="white" style={{ flex: 1 }} />
+                <Spinner size="lg" color="white" style={{ flex: 1 }} />
             </View>
         );
     }
@@ -504,7 +504,7 @@ const TopTabBar = ({ state, navigation, insets, t }: MaterialTopTabBarProps & { 
 
     return (
         <Reanimated.View style={[styles.topHeader, { paddingTop: insets.top + 8 }, tabBarStyle]}>
-            {state.routes.map((route : any, index : number) => {
+            {state.routes.map((route: any, index: number) => {
                 const isFocused = state.index === index;
                 const title = route.name === 'random' ? t('shots.tabs.following') : t('shots.tabs.thisDay');
 

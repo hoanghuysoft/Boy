@@ -6,6 +6,7 @@ import { Snackbar } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { useThemeContext } from "../../context/ThemeContext";
+import { Spinner } from "heroui-native";
 
 const InAppBrowser = () => {
   const { colors } = useThemeContext();
@@ -73,7 +74,7 @@ const InAppBrowser = () => {
       />
       {isLoading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.text} />
+          <Spinner size="lg" color={colors.text} />
         </View>
       )}
       <Snackbar

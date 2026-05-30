@@ -19,6 +19,7 @@ import {
     View
 } from "react-native";
 import { Image as ExpoImage } from "expo-image";
+import { Spinner } from "heroui-native";
 
 interface ProfilePickerSheetProps {
     selectedProfileId?: string | null;
@@ -175,7 +176,7 @@ export const ProfilePickerSheet = memo(
             if (isLoading) {
                 return (
                     <View style={styles.emptyContainer}>
-                        <ActivityIndicator size="small" color={colors.text} />
+                        <Spinner size="md" color={colors.text} />
                     </View>
                 );
             }
@@ -252,7 +253,7 @@ export const ProfilePickerSheet = memo(
                         ListFooterComponent={
                             isFetchingNextPage ? (
                                 <View style={styles.footer}>
-                                    <ActivityIndicator size="small" color={colors.text} />
+                                    <Spinner size="md" color={colors.text} />
                                 </View>
                             ) : null
                         }

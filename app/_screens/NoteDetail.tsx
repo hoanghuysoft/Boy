@@ -17,6 +17,7 @@ import { createCommonStyles } from "../../styles/common";
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
+import { Spinner } from "heroui-native";
 
 
 const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>\]/i;
@@ -73,7 +74,7 @@ const NoteDetailScreen = () => {
     if (isLoading) {
         return (
             <View style={[common.screen, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={colors.text} />
+                <Spinner size="lg" color={colors.text} />
             </View>
         );
     }
@@ -97,48 +98,48 @@ const NoteDetailScreen = () => {
             <View style={{ position: 'absolute', top: insets.top + 8, left: 16, right: 16, zIndex: 100, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <SquircleView
-                    cornerSmoothing={100}
-                    preserveSmoothing
-                    style={{
-                        backgroundColor: colors.containerContent,
-                        borderRadius: 20,
-                        width: 40,
-                        height: 40,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginRight: 8,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 12,
-                        elevation: 8,
-                    }}
-                >
-                    <TouchableOpacity onPress={() => router.back()} style={{ width: 40, height: 40, justifyContent: 'center', alignItems: 'center' }}>
-                        <Ionicons name="chevron-back" size={24} color={colors.text} />
-                    </TouchableOpacity>
-                </SquircleView>
+                        cornerSmoothing={100}
+                        preserveSmoothing
+                        style={{
+                            backgroundColor: colors.containerContent,
+                            borderRadius: 20,
+                            width: 40,
+                            height: 40,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            marginRight: 8,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 12,
+                            elevation: 8,
+                        }}
+                    >
+                        <TouchableOpacity onPress={() => router.back()} style={{ width: 40, height: 40, justifyContent: 'center', alignItems: 'center' }}>
+                            <Ionicons name="chevron-back" size={24} color={colors.text} />
+                        </TouchableOpacity>
+                    </SquircleView>
 
-                <SquircleView
-                    cornerSmoothing={100}
-                    preserveSmoothing
-                    style={{
-                        backgroundColor: colors.containerContent,
-                        borderRadius: 20,
-                        paddingHorizontal: 16,
-                        height: 40,
-                        justifyContent: 'center',
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 12,
-                        elevation: 8,
-                    }}
-                >
-                    <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>
-                        {title || t("notes.detail.fallbackTitle")}
-                    </FlexText>
-                </SquircleView>
+                    <SquircleView
+                        cornerSmoothing={100}
+                        preserveSmoothing
+                        style={{
+                            backgroundColor: colors.containerContent,
+                            borderRadius: 20,
+                            paddingHorizontal: 16,
+                            height: 40,
+                            justifyContent: 'center',
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 12,
+                            elevation: 8,
+                        }}
+                    >
+                        <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>
+                            {title || t("notes.detail.fallbackTitle")}
+                        </FlexText>
+                    </SquircleView>
                 </View>
 
                 <SquircleView

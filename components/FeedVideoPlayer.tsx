@@ -1,5 +1,6 @@
 import { useCachedVideoUri } from '@/hooks/useCachedVideoUri';
 import { useFeedVideoStore } from '@/stores/feedVideo';
+import { Spinner } from 'heroui-native';
 import React, { useCallback, useEffect } from 'react';
 import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
 import { useVideoPlayer, useEvent, VideoView } from 'react-native-video';
@@ -87,7 +88,7 @@ export const FeedVideoPlayer: React.FC = React.memo(() => {
             />
             {isBuffering && (
                 <View style={styles.bufferingOverlay}>
-                    <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />
+                    <Spinner size="md" color="rgba(255,255,255,0.7)" />
                 </View>
             )}
         </View>
