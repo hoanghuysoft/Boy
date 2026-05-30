@@ -80,17 +80,11 @@ const FeedTab: React.FC<FeedTabProps> = ({
     }, [trigger]);
 
     // ─── Feed Video Autoplay ────────────────────────────────────
-    const setActiveVideo = useFeedVideoStore(s => s.setActiveVideo);
+    // With @bsky.app/video, video autoplay is handled natively via
+    // updateActiveVideoViewAsync (called from List.tsx scroll handler).
+    // We only keep the mute state for the store, and clear on unmount.
     const clearActiveVideo = useFeedVideoStore(s => s.clearActiveVideo);
     const stopAudioPlayback = useAudioStore(s => s.stopPlayback);
-    const autoplayVideos = useSettingsStore(s => s.autoplayVideos);
-
-    /**
-     * lastVisibleIndicesRef — always reflects the most recent set of visible
-     * item indices reported by onViewableItemsChanged. Used by onScrollSettled
-     * so it activates the correct video when the list truly stops.
-     */
-    const lastVisibleIndicesRef = useRef<number[]>([]);
 
     // Clear active video when component unmounts (tab switch)
     useEffect(() => {
@@ -98,74 +92,6 @@ const FeedTab: React.FC<FeedTabProps> = ({
             clearActiveVideo();
         };
     }, [clearActiveVideo]);
-
-    // Find the topmost visible post that has a video
-    const findTopmostVideoPost = useCallback((visibleIndices: number[]) => {
-        if (!posts.length || visibleIndices.length === 0) return null;
-
-        const sorted = [...visibleIndices].sort((a, b) => a - b);
-
-        for (const idx of sorted) {
-            const post = posts[idx];
-            if (post?.media?.some((m: any) => m.type === 'video')) {
-                const firstMedia = post.media[0];
-                if (firstMedia?.type === 'video') {
-                    return {
-                        postId: post.id,
-                        mediaId: firstMedia.id as string | null,
-                        videoUrl: choosenMediaPath(firstMedia) as string | null,
-                    };
-                } else {
-                    return {
-                        postId: post.id,
-                        mediaId: null as string | null,
-                        videoUrl: null as string | null,
-                    };
-                }
-            }
-        }
-        return null;
-    }, [posts]);
-
-    /**
-     * activateVideoFromIndices — the single function responsible for deciding
-     * which video plays. Called by onScrollSettled (the settled trigger) and
-     * by onViewableItemsChanged when NOT fast-scrolling.
-     *
-     * Mirrors Bluesky's updateActiveVideoViewAsync — that does the same thing
-     * natively; we do it in JS via this callback.
-     */
-    const activateVideoFromIndices = useCallback((indices: number[]) => {
-        if (!autoplayVideos) {
-            clearActiveVideo();
-            return;
-        }
-        const result = findTopmostVideoPost(indices);
-        if (result) {
-            setActiveVideo(result.postId, result.mediaId, result.videoUrl);
-            stopAudioPlayback();
-        } else {
-            clearActiveVideo();
-        }
-    }, [autoplayVideos, findTopmostVideoPost, setActiveVideo, clearActiveVideo, stopAudioPlayback]);
-
-    /**
-     * onScrollSettled — fired by the List component when scrolling has fully
-     * stopped (either momentum end or drag end without momentum).
-     *
-     * This is the direct equivalent of Bluesky's:
-     *   runOnJS(updateActiveVideoViewAsync)()
-     * called from onMomentumEnd / onEndDrag in their List.tsx.
-     *
-     * It replaces our previous:
-     *   - handleMomentumScrollEnd
-     *   - handleScrollEndDrag
-     *   - videoDebounceRef timer
-     *   - isScrollingFastRef velocity gate
-     */
-    const handleScrollSettled = useCallback(() => {
-        activateVideoFromIndices(lastVisibleIndicesRef.current);
-    }, [activateVideoFromIndices]);
 
     /**
      * onScrollY — fires on every scroll frame with the raw Y offset.
@@ -195,10 +121,6 @@ const FeedTab: React.FC<FeedTabProps> = ({
             const visibleIndices = viewableItems
                 .map(v => v.index)
                 .filter((i): i is number => i !== null);
-
-            // Always keep a reference to the latest visible indices
-            lastVisibleIndicesRef.current = visibleIndices;
-
             // Prefetch images for posts just beyond the visible window
             if (visibleIndices.length > 0) {
                 const maxVisible = Math.max(...visibleIndices);
@@ -354,10 +276,6 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 // onScrollY bridges the Reanimated handler to the ViewModel's
                 // Animated.Value header animation (runs on JS thread via runOnJS)
                 onScrollY={handleScrollY}
-                // onScrollSettled replaces our previous 4-handler system:
-                // (handleMomentumScrollEnd + handleScrollEndDrag + debounce +
-                //  velocity gate). Fires once when scrolling truly stops.
-                onScrollSettled={handleScrollSettled}
                 // ─── Pull-to-refresh ────────────────────────────────────
                 refreshing={isRefetching}
                 onRefresh={handleRefresh}

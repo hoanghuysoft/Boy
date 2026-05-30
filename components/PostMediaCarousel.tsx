@@ -1,15 +1,14 @@
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
-import { useCachedVideoUri } from "@/hooks/useCachedVideoUri";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
-import { PlayBold, RestartCircleBold } from "@solar-icons/react-native";
+import { BlueskyVideoView } from "@bsky.app/video";
+import { PlayBold } from "@solar-icons/react-native";
 import { Image as ExpoImage } from "expo-image";
-import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions, Pressable as RNPressable, View, ViewabilityConfig, ViewToken } from "react-native";
+import { ActivityIndicator, Dimensions, Pressable as RNPressable, View, ViewabilityConfig, ViewToken } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
@@ -20,7 +19,6 @@ import Animated, {
     withTiming
 } from "react-native-reanimated";
 
-import { FeedVideoPlayer } from "./FeedVideoPlayer";
 
 interface PostMediaCarouselProps {
     media: Media[];
@@ -59,18 +57,14 @@ const VideoCarouselItem = React.memo(({
     colors,
     placeholderImageVideo,
 }: VideoCarouselItemProps) => {
-    const router = useRouter();
+    const videoRef = useRef<BlueskyVideoView>(null);
+    const isMuted = useFeedVideoStore(s => s.isMuted);
 
-    // Select ONLY the boolean — avoids re-render when an unrelated media changes
-    const isActive = useFeedVideoStore(s => s.activeMediaId === item.id);
-    const isEnded = useFeedVideoStore(s => s.isEnded);
-    const setEnded = useFeedVideoStore(s => s.setEnded);
-
-    const showReplay = isActive && isEnded;
-    const showPlayer = isActive && !isEnded;
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isActive, setIsActive] = useState(false);
 
     const videoUrl = choosenMediaPath(item);
-    const resolvedVideoUrl = useCachedVideoUri(videoUrl, item.backup1 || null);
 
     const fallbackUrls = useMemo(() => buildFallbackUrls(item, placeholderImageVideo), [item, placeholderImageVideo]);
     const [prev, setPrev] = useState(0);
@@ -83,79 +77,95 @@ const VideoCarouselItem = React.memo(({
         setPrev(p => (p < fallbackUrls.length - 1 ? p + 1 : p));
     }, [fallbackUrls.length]);
 
-    const handleReplay = useCallback(() => {
-        setEnded(false);
-    }, [setEnded]);
-
     const handleFullScreenPress = useCallback(() => {
-        router.push({
-            pathname: '/video_player',
-            params: {
-                videoUrl: resolvedVideoUrl || videoUrl,
-                name: profileName,
-                caption: content,
-                portrait: 'true',
-            },
-        });
-    }, [router, resolvedVideoUrl, videoUrl, profileName, content]);
+        videoRef.current?.enterFullscreen(true);
+    }, []);
+
+    // Whether to show the thumbnail overlay (same logic as Bluesky's InnerWrapper)
+    const showOverlay = !isActive || isLoading;
 
     return (
         <View style={{ width: SCREEN_WIDTH }}>
-            <RNPressable onPress={handleFullScreenPress} style={{ width: '100%', aspectRatio: ASPECT_RATIO }}>
-                {/* Base layer: thumbnail always present */}
-                <ExpoImage
-                    source={{ uri: fallbackUrls[prev] }}
-                    recyclingKey={fallbackUrls[prev]}
-                    style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
-                    contentFit="cover"
-                    onError={handleThumbnailError}
-                    placeholder={{ blurhash: placeholderBlurhash }}
-                />
-
-                {/* Video layer: overlays on top when active */}
-                {showPlayer && (
-                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                        <FeedVideoPlayer />
-                    </View>
-                )}
-
-                {/* Replay overlay */}
-                {showReplay && (
-                    <RNPressable
-                        onPress={handleReplay}
-                        style={{
-                            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                            alignItems: 'center', justifyContent: 'center',
-                            backgroundColor: 'rgba(0,0,0,0.35)',
+            <View style={{ width: '100%', aspectRatio: ASPECT_RATIO }}>
+                {/* BlueskyVideoView: the native module handles autoplay via
+                    updateActiveVideoViewAsync. Each mounted instance registers
+                    itself, and the native side activates only the most visible one. */}
+                {videoUrl ? (
+                    <BlueskyVideoView
+                        ref={videoRef}
+                        url={videoUrl}
+                        autoplay={true}
+                        beginMuted={isMuted}
+                        style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT, borderRadius: 0 }}
+                        onActiveChange={e => {
+                            setIsActive(e.nativeEvent.isActive);
                         }}
-                    >
-                        <View style={{
-                            width: 56, height: 56, borderRadius: 28,
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            justifyContent: 'center', alignItems: 'center',
-                        }}>
-                            <RestartCircleBold size={46} color="#ffffff" />
-                        </View>
-                    </RNPressable>
-                )}
+                        onLoadingChange={e => {
+                            setIsLoading(e.nativeEvent.isLoading);
+                        }}
+                        onMutedChange={e => {
+                            useFeedVideoStore.getState().setMuted(e.nativeEvent.isMuted);
+                        }}
+                        onStatusChange={e => {
+                            setIsPlaying(e.nativeEvent.status === 'playing');
+                        }}
+                        onError={e => {
+                            console.warn('[VideoCarousel] Error:', e.nativeEvent.error);
+                        }}
+                        accessibilityLabel="Video"
+                        accessibilityHint=""
+                    />
+                ) : null}
 
-                {/* Play icon overlay (not active, not replaying) */}
-                {!isActive && (
+                {/* Thumbnail overlay: visible when video is not active or loading.
+                    Uses display/zIndex pattern from Bluesky to avoid flicker. */}
+                {showOverlay && (
                     <View style={{
                         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        alignItems: 'center', justifyContent: 'center',
-                        backgroundColor: 'rgba(0,0,0,0.1)',
                     }}>
-                        <View style={{
-                            width: 56, height: 56, borderRadius: 28,
-                            backgroundColor: 'rgba(0,0,0,0.4)',
-                            justifyContent: 'center', alignItems: 'center',
-                        }}>
-                            <PlayBold size={28} color="#ffffff" />
-                        </View>
+                        <ExpoImage
+                            source={{ uri: fallbackUrls[prev] }}
+                            recyclingKey={fallbackUrls[prev]}
+                            style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
+                            contentFit="cover"
+                            onError={handleThumbnailError}
+                            placeholder={{ blurhash: placeholderBlurhash }}
+                            cachePolicy="memory-disk"
+                        />
+                        {/* Play button on thumbnail */}
+                        <RNPressable
+                            onPress={() => videoRef.current?.togglePlayback()}
+                            style={{
+                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                                alignItems: 'center', justifyContent: 'center',
+                                backgroundColor: 'rgba(0,0,0,0.1)',
+                            }}
+                        >
+                            {isActive && isLoading ? (
+                                <ActivityIndicator size="large" color="white" />
+                            ) : (
+                                <View style={{
+                                    width: 56, height: 56, borderRadius: 28,
+                                    backgroundColor: 'rgba(0,0,0,0.4)',
+                                    justifyContent: 'center', alignItems: 'center',
+                                }}>
+                                    <PlayBold size={28} color="#ffffff" />
+                                </View>
+                            )}
+                        </RNPressable>
                     </View>
                 )}
-            </RNPressable>
+
+                {/* Fullscreen tap zone when video is playing */}
+                {isActive && !isLoading && (
+                    <RNPressable
+                        onPress={handleFullScreenPress}
+                        style={{
+                            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        }}
+                    />
+                )}
+            </View>
         </View>
     );
 }, (prev, next) =>
@@ -332,35 +342,16 @@ const ClassicMediaCarousel = React.memo(({
         openGallery(galleryImages, photoIndex);
     }, [openGallery, galleryImages]);
 
-    // Select only the boolean — no unnecessary re-render when an unrelated post's
-    // activePostId changes (Zustand equality check handles this)
-    const isActiveVideoPost = useFeedVideoStore(s => s.activePostId === postId);
-    const setActiveMedia = useFeedVideoStore(s => s.setActiveMedia);
-
-    // Keep a ref so the viewability callback always reads the current value
-    // without needing to be recreated when isActiveVideoPost changes
-    const isActiveRef = useRef(isActiveVideoPost);
-    isActiveRef.current = isActiveVideoPost;
-
     // ── Viewability (stable pair — never recreated) ──────────────────────────
-    // The onViewableItemsChanged callback itself is kept in a ref so the stable
-    // pair always calls the latest closure (same pattern as FeedTab).
+    // With @bsky.app/video, the native module handles video activation.
+    // This callback now only tracks the carousel active index for dot indicators.
     const handleViewableItemsChangedImpl = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
         if (viewableItems.length > 0) {
             const idx = viewableItems[0].index ?? 0;
             setActiveIndex(idx);
             currentIndexRef.current = idx;
-
-            if (isActiveRef.current) {
-                const visibleItem = media[idx];
-                if (visibleItem?.type === 'video') {
-                    setActiveMedia(visibleItem.id, choosenMediaPath(visibleItem));
-                } else {
-                    setActiveMedia(null, null);
-                }
-            }
         }
-    }, [media, setActiveMedia]);
+    }, []);
 
     const handleViewableItemsChangedRef = useRef(handleViewableItemsChangedImpl);
     useEffect(() => {
@@ -378,19 +369,6 @@ const ClassicMediaCarousel = React.memo(({
             },
         },
     ]);
-
-    // Sync active media when this post becomes/stops being the active video post
-    useEffect(() => {
-        if (isActiveVideoPost) {
-            const currentItem = media[currentIndexRef.current];
-            if (currentItem?.type === 'video') {
-                setActiveMedia(currentItem.id, choosenMediaPath(currentItem));
-            } else {
-                setActiveMedia(null, null);
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isActiveVideoPost, postId]);
 
     // Prefetch all media for this post on first mount
     useEffect(() => {

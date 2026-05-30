@@ -40,6 +40,7 @@ import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
 } from 'react-native-reanimated'
+import { updateActiveVideoViewAsync } from '@bsky.app/video'
 
 import { useDedupe } from './useDedupe'
 import { useNonReactiveCallback } from './useNonReactiveCallback'
@@ -228,14 +229,23 @@ let List = forwardRef<ListMethods, ListProps>(
           }
         }
 
-        // On iOS, dedupe-throttle the video settle call during scroll
-        // (the definitive call happens at momentum/drag end below)
+        // On iOS, also update video during scroll (throttled) for
+        // smoother activation — matches Bluesky's iOS behavior exactly.
+        // The definitive call happens at momentum/drag end below.
+        if (IS_IOS) {
+          runOnJS(dedupe)(updateActiveVideoViewAsync)
+        }
+
+        // Legacy settle callback for JS-side video logic
         if (IS_IOS && onScrollSettled) {
           runOnJS(dedupe)(handleScrollSettled)
         }
       },
 
       onEndDrag(e, ctx) {
+        // Native video autoplay: tell @bsky.app/video to activate
+        // the most visible BlueskyVideoView (same as Bluesky's List.tsx)
+        runOnJS(updateActiveVideoViewAsync)()
         onEndDragFromContext?.(e, ctx)
         // Drag released without momentum (slow drag) — settle immediately
         if (onScrollSettled) {
@@ -244,6 +254,8 @@ let List = forwardRef<ListMethods, ListProps>(
       },
 
       onMomentumEnd(e, ctx) {
+        // Native video autoplay: activate most visible video after flick
+        runOnJS(updateActiveVideoViewAsync)()
         onMomentumEndFromContext?.(e, ctx)
         // Flick finished — this is the primary fast-path for video autoplay
         if (onScrollSettled) {
