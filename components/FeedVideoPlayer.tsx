@@ -1,5 +1,5 @@
 import { useFeedVideoStore } from '@/stores/feedVideo';
-import { PlayBold } from '@solar-icons/react-native';
+import { PauseBold, PlayBold, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
 import { BlueskyVideoView } from '@bsky.app/video';
 import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Dimensions, Pressable, StyleSheet, View } from 'react-native';
@@ -81,11 +81,60 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
                 accessibilityHint=""
             />
 
-            {/* Fullscreen tap area */}
-            <Pressable
-                onPress={handleEnterFullscreen}
-                style={StyleSheet.absoluteFill}
-            />
+            {/* Controls overlay: visible when video is active and not loading. */}
+            {isActive && !isLoading && (
+                <>
+                    {/* Fullscreen tap area */}
+                    <Pressable
+                        onPress={handleEnterFullscreen}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    {/* Play/Pause Button */}
+                    <Pressable
+                        onPress={handleTogglePlayback}
+                        style={{
+                            position: 'absolute',
+                            left: 12,
+                            bottom: 12,
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 10,
+                        }}
+                    >
+                        {isPlaying ? (
+                            <PauseBold size={16} color="#ffffff" />
+                        ) : (
+                            <PlayBold size={16} color="#ffffff" />
+                        )}
+                    </Pressable>
+                    {/* Mute/Unmute Button */}
+                    <Pressable
+                        onPress={() => videoRef.current?.toggleMuted()}
+                        style={{
+                            position: 'absolute',
+                            right: 12,
+                            bottom: 12,
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 10,
+                        }}
+                    >
+                        {isMuted ? (
+                            <VolumeCrossBold size={16} color="#ffffff" />
+                        ) : (
+                            <VolumeLoudBold size={16} color="#ffffff" />
+                        )}
+                    </Pressable>
+                </>
+            )}
 
             {/* Loading spinner overlay — matches Bluesky's pattern */}
             {isActive && isLoading && (
