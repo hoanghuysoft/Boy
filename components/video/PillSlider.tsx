@@ -50,7 +50,7 @@ const PillSlider: React.FC<PillSliderProps> = ({
     // Normalizing ranges exactly to 0 - 1 for Jetpack Compose Slider
     const range = Math.max(0.001, maximumValue - minimumValue);
     const progress = Math.max(0, Math.min(1, (displayValue - minimumValue) / range));
-    
+
     const lastValueRef = useRef(displayValue);
     const isDraggingRef = useRef(false);
 
@@ -81,9 +81,9 @@ const PillSlider: React.FC<PillSliderProps> = ({
     return (
         <View style={{ width: '100%', justifyContent: 'center', minHeight: 30, marginVertical: 5 }}>
             <Host matchContents={{ vertical: true }}>
-                <Slider 
+                <Slider
                     modifiers={[fillMaxWidth()]}
-                    value={progress} 
+                    value={progress}
                     onValueChange={handleValueChange}
                     onValueChangeFinished={() => {
                         isDraggingRef.current = false;
@@ -94,7 +94,6 @@ const PillSlider: React.FC<PillSliderProps> = ({
                     colors={{
                         thumbColor: safeProgressColor,
                         activeTrackColor: safeProgressColor,
-                        inactiveTrackColor: safeTrackColor,
                     }}
                 />
             </Host>
