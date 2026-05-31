@@ -19,7 +19,8 @@ import {
 } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import Reanimated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
-import { useVideoPlayer, useEvent, VideoView } from "react-native-video";
+import { useEvent, useEventListener } from "expo";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from "./constants";
 import { FloatingHeart } from "./FloatingHeart";
 import { ShotSeekBar } from "./ShotSeekBar";
@@ -107,10 +108,11 @@ export const ShotItem = React.memo(function ShotItem({
 
 
 
-    // ─── Player setup — mirrors reference VideoViewComponent exactly ──────
-    const player = useVideoPlayer(resolvedUri || '', (p) => {
+    // ─── Player setup ──────
+    const player = useVideoPlayer(resolvedUri || null, (p) => {
         p.loop = true;
         p.muted = true; // Always start muted; mute state applied via effect
+        p.timeUpdateEventInterval = 0.05;
     });
 
     const playerRef = useRef(player);
@@ -125,14 +127,16 @@ export const ShotItem = React.memo(function ShotItem({
             if (player) {
                 try {
                     if (player.muted !== true) player.muted = true;
-                    if (player.isPlaying) player.pause();
+                    if (player.playing) player.pause();
                 } catch (e) { }
             }
         };
     }, [player]);
 
+    // ─── Track currently loaded URI ──────────────────────────────────────
+    const loadedUriRef = useRef<string | null>(null);
 
-    // ─── Source management & preloading (reference pattern) ──────────────
+    // ─── Source management & preloading ──────────────────────────────────
     useEffect(() => {
         if (!player) return;
 
@@ -141,21 +145,19 @@ export const ShotItem = React.memo(function ShotItem({
             sourceTimeoutRef.current = null;
         }
 
-        const currentUri = player.source?.uri;
+        const currentUri = loadedUriRef.current;
 
         if (shouldPreload || isActive) {
             if (!currentUri || currentUri !== resolvedUri) {
                 // Debounce source replacement by 100ms
                 sourceTimeoutRef.current = setTimeout(() => {
                     player
-                        .replaceSourceAsync({ uri: resolvedUri })
+                        .replaceAsync(resolvedUri)
                         .then(() => {
-                            try { player.preload(); } catch { }
+                            loadedUriRef.current = resolvedUri;
                         })
                         .catch(() => { });
                 }, 100);
-            } else if (player.status === "idle") {
-                try { player.preload(); } catch { }
             }
         }
 
@@ -168,7 +170,6 @@ export const ShotItem = React.memo(function ShotItem({
     }, [shouldPreload, isActive, player, resolvedUri]);
 
     // ─── Active-state management ──────────────────────────────────────────
-    //     Key: wasActiveRef tracks previous isActive to detect transitions cleanly.
     const wasActiveRef = useRef(isActive);
     const videoIdRef = useRef(item.id);
 
@@ -212,12 +213,12 @@ export const ShotItem = React.memo(function ShotItem({
             const startPlayback = () => {
                 if (player.status === "readyToPlay") {
                     if (player.muted !== false) player.muted = false;
-                    if (!player.isPlaying) {
+                    if (!player.playing) {
                         player.play();
                     }
                 } else {
                     // Not yet ready — seek to start so it plays from 0 when buffer arrives
-                    if (!player.isPlaying && player.currentTime < 0.1) {
+                    if (!player.playing && player.currentTime < 0.1) {
                         player.currentTime = 0;
                     }
                 }
@@ -234,7 +235,7 @@ export const ShotItem = React.memo(function ShotItem({
         } else {
             // Immediately mute and pause
             if (player.muted !== true) player.muted = true;
-            if (player.isPlaying) {
+            if (player.playing) {
                 player.pause();
             }
             if (shouldPreload && !isActive && !userPaused) {
@@ -250,7 +251,7 @@ export const ShotItem = React.memo(function ShotItem({
         };
     }, [isActive, userPaused, externalPaused, player, shouldPreload, item.id, isFocused, isCommentsOpen]);
 
-    // ─── AppState listener (reference pattern) ────────────────────────────
+    // ─── AppState listener ────────────────────────────────────────────────
     useEffect(() => {
         const subscription = AppState.addEventListener("change", (state) => {
             if (!player) return;
@@ -270,7 +271,7 @@ export const ShotItem = React.memo(function ShotItem({
         return () => subscription.remove();
     }, [player]);
 
-    // ─── Auto-play when readyToPlay fires (reference pattern) ────────────
+    // ─── Auto-play when readyToPlay fires ────────────────────────────────
     const handleStatusChange = useCallback(() => {
         const currentIsActive = isActiveRef.current;
         const currentUserPaused = userPausedRef.current;
@@ -279,24 +280,23 @@ export const ShotItem = React.memo(function ShotItem({
 
         const shouldPlay = currentIsActive && !currentUserPaused && !currentExternalPaused && AppState.currentState === "active" && currentIsFocused;
 
-        // console.log(`[ShotItem ${item.id}] onStatusChange fired: status = ${player.status}, shouldPlay = ${shouldPlay}, isPlaying = ${player.isPlaying}`);
-
         if (shouldPlay && player.status === "readyToPlay") {
             if (player.muted !== false) player.muted = false;
-            if (!player.isPlaying) {
+            if (!player.playing) {
                 player.play();
             }
         }
-    }, [player, item.id]);
+    }, [player]);
 
-    useEvent(player, "onStatusChange", handleStatusChange);
-
-    useEvent(player, "onReadyToDisplay", () => {
-        setReadyToDisplay(true);
+    useEventListener(player, "statusChange", ({ status }) => {
+        if (status === "readyToPlay") {
+            setReadyToDisplay(true);
+        }
+        handleStatusChange();
     });
 
-    useEvent(player, "onVolumeChange", () => {
-        // console.log(`[ShotItem ${item.id}] Volume/Mute changed: player.muted = ${player.muted}, isActive = ${isActiveRef.current}`);
+    useEventListener(player, "volumeChange", () => {
+        // console.log(`[Volume/Mute changed: player.muted = ${player.muted}`);
     });
 
     // ─── Progress tracking ────────────────────────────────────────────────
@@ -311,7 +311,7 @@ export const ShotItem = React.memo(function ShotItem({
         }
     }, [player]);
 
-    useEvent(player, "onProgress", handleProgress);
+    useEventListener(player, "timeUpdate", handleProgress);
 
     const handleSeek = useCallback(
         (p: number) => {
@@ -319,9 +319,7 @@ export const ShotItem = React.memo(function ShotItem({
             const dur = player.duration;
             if (dur > 0 && Number.isFinite(dur)) {
                 const t = Math.max(0, Math.min(1, p)) * dur;
-                player.seekTo(t);
-                // Don't call setProgress here — onProgress event will update it,
-                // and ShotSeekBar drives its own UI-thread fill during drag.
+                player.currentTime = t;
             }
         },
         [isActive, player],
@@ -375,8 +373,11 @@ export const ShotItem = React.memo(function ShotItem({
                 <VideoView
                     player={player}
                     style={StyleSheet.absoluteFill}
-                    resizeMode="contain"
-                    controls={false}
+                    contentFit="contain"
+                    nativeControls={false}
+                    onFirstFrameRender={() => {
+                        setReadyToDisplay(true);
+                    }}
                 />
 
                 {/* Gray Placeholder: displayed until first video frame is ready to render */}

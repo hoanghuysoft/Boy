@@ -32,17 +32,15 @@ const PillSlider: React.FC<PillSliderProps> = ({
 }) => {
     const [optimisticValue, setOptimisticValue] = React.useState<number | null>(null);
 
-    // If optimistic value is heavily matched by the real incoming value prop, drop the optimistic override
-    React.useEffect(() => {
-        if (optimisticValue !== null) {
-            const diff = Math.abs(value - optimisticValue);
-            const dataRange = maximumValue - minimumValue;
-            const threshold = dataRange > 0 ? dataRange * 0.05 : 1; // within 5%
-            if (diff < threshold) {
-                setOptimisticValue(null);
-            }
+    // If optimistic value is heavily matched by the real incoming value prop, drop the optimistic override during render
+    if (optimisticValue !== null) {
+        const diff = Math.abs(value - optimisticValue);
+        const dataRange = maximumValue - minimumValue;
+        const threshold = dataRange > 0 ? dataRange * 0.05 : 1; // within 5%
+        if (diff < threshold) {
+            setOptimisticValue(null);
         }
-    }, [value, minimumValue, maximumValue, optimisticValue]);
+    }
 
     // Use optimistic value if it exists, otherwise fall back to pure external prop
     const displayValue = optimisticValue !== null ? optimisticValue : value;

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 import { FlexText } from "@/components/FlexText";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { VideoFeedType, VideoItem } from "@/types/video";
@@ -195,14 +196,18 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
     const handleVideoChangeRef = useRef(handleVideoChange);
     handleVideoChangeRef.current = handleVideoChange;
 
-    const viewabilityConfigCallbackPairs = useRef([
-        {
-            viewabilityConfig,
-            onViewableItemsChanged: (info: any) => {
-                handleVideoChangeRef.current(info);
+    const viewabilityConfigCallbackPairsRef = useRef<any>(null);
+    if (!viewabilityConfigCallbackPairsRef.current) {
+        viewabilityConfigCallbackPairsRef.current = [
+            {
+                viewabilityConfig,
+                onViewableItemsChanged: (info: any) => {
+                    handleVideoChangeRef.current(info);
+                },
             },
-        },
-    ]).current;
+        ];
+    }
+    const viewabilityConfigCallbackPairs = viewabilityConfigCallbackPairsRef.current;
 
     const getItemType = useCallback(() => "video", []);
 

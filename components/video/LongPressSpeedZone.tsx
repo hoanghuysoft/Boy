@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React, { useRef } from "react";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
@@ -134,6 +135,7 @@ export const LongPressSpeedZone: React.FC<LongPressSpeedZoneProps> = ({
     setPlaybackRate,
     onDoubleTap,
 }) => {
+    'use no memo';
     // ── Gesture state machine ──
     const gestureStateRef = useRef<GestureState>('idle');
 

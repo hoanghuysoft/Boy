@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/preserve-manual-memoization */
 import { useThemeContext } from "@/context/ThemeContext";
 import {
     useTvDetails,
@@ -21,6 +22,7 @@ import {
 } from "./shared/tvDetailUtils";
 
 export function useTvDetailViewModel(tvId: number, isReady: boolean) {
+    'use no memo';
     const { colors } = useThemeContext();
 
     // ─── Remote data ─────────────────────────────────────────────────────────
