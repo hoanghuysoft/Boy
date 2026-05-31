@@ -135,6 +135,7 @@ const VideoPlayer = () => {
   });
 
   useEvent(player, 'onProgress', (data) => {
+    if (isSeekingRef.current) return;
     setProgress({
       currentTime: data.currentTime,
       seekableDuration: durationRef.current || player.duration || 0,
@@ -256,19 +257,35 @@ const VideoPlayer = () => {
     isSeekingRef.current = true;
     wasPlayingRef.current = !isPaused;
     setIsPaused(true);
+    player.pause();
     setSeekPosition(progress.currentTime);
   };
 
   const handleSeek = (value: number) => {
     setSeekPosition(value);
+    player.seekTo(value);
   };
 
   const handleSlidingComplete = (prog: number) => {
     player.seekTo(prog);
+    
+    // Instantly sync local progress to prevent split-second rubber-banding
+    setProgress((prev) => ({
+      ...prev,
+      currentTime: prog,
+    }));
+    progressRef.current = {
+      ...progressRef.current,
+      currentTime: prog,
+    };
+
     setSeekPosition(null);
     if (wasPlayingRef.current) {
       player.play();
       setIsPaused(false);
+    } else {
+      player.pause();
+      setIsPaused(true);
     }
     // Delay resetting seek flag to prevent playback state callback interference
     setTimeout(() => {

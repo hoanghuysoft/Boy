@@ -19,6 +19,7 @@
     "@flyerhq/react-native-link-preview": "1.6.0",
     "@giphy/react-native-sdk": "^6.0.1",
     "@kuss/react-native-mesh-gradient": "0.2.0",
+    "@legendapp/list": "^3.0.0",
     "@lodev09/react-native-true-sheet": "^3.10.1",
     "@nandorojo/galeria": "3.0.3",
     "@novastera-oss/rn-google-signin": "^1.1.1",
