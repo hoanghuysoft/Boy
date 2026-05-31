@@ -2,7 +2,7 @@ import { FlexText } from "@/components/FlexText";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { VideoFeedType, VideoItem } from "@/types/video";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList, LegendListRef, ViewToken } from "@legendapp/list";
+import { LegendList, LegendListRef, ViewToken } from "@legendapp/list/react-native";
 import { useIsFocused } from "expo-router/react-navigation";
 import { Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
