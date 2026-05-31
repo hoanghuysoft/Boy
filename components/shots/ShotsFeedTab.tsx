@@ -2,7 +2,6 @@ import { FlexText } from "@/components/FlexText";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { VideoFeedType, VideoItem } from "@/types/video";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LegendList, LegendListRef, ViewToken } from "@legendapp/list/react-native";
 import { useIsFocused } from "expo-router/react-navigation";
 import { Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -14,7 +13,8 @@ import {
     StatusBar,
     StyleSheet,
     TouchableOpacity,
-    View
+    View,
+    ViewToken
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useShotsViewModel } from "@/viewmodels/ShotsViewModel";
@@ -31,6 +31,7 @@ import {
     USE_PLACEHOLDER_OUTSIDE_PRELOAD,
 } from "./constants";
 import { ShotItem } from "./ShotItem";
+import { FlatList } from "react-native-gesture-handler";
 
 // ─── Feed Tab (adopting reference VideoFeedList pattern with LegendList) ─
 export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
@@ -39,18 +40,21 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
     const isFocused = useIsFocused();
     const { t } = useTranslation();
 
-    // ─── Ref-based active index tracking (from reference) ──────────
+    // ─── Ref-based active index + direction tracking (reference pattern) ──
     const currentIndexRef = useRef(0);
     const directionRef = useRef<Direction>("down");
+
+    // renderTrigger: bumped on index change OR pause change so LegendList
+    // re-evaluates renderItem with the latest closure values for ALL visible items.
     const [renderTrigger, setRenderTrigger] = useState(0);
 
-    // ─── Seeking state (disables scroll during seek bar drag, like reference SeekContext) ──
+    // ─── Seeking state (disables scroll during seek-bar drag) ────────────
     const [seeking, setSeeking] = useState(false);
     const handleSeekingChange = useCallback((value: boolean) => {
         setSeeking(value);
     }, []);
 
-    // ─── Measured container height for precise snapping (from reference) ──
+    // ─── Measured container height for precise snapping (reference pattern) ─
     const [measuredHeight, setMeasuredHeight] = useState<number | null>(
         Platform.OS === "ios" ? FALLBACK_ITEM_HEIGHT : null,
     );
@@ -64,17 +68,16 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
         [measuredHeight],
     );
     const listReady = useMemo(() => measuredHeight !== null, [measuredHeight]);
-    const listRef = useRef<LegendListRef | null>(null);
+    const listRef = useRef<FlatList | null>(null);
 
-    // ─── Viewability config (from reference) ───────────────────────
+    // ─── Viewability config (reference pattern) ───────────────────────────
     const viewabilityConfig = useRef({
         itemVisiblePercentThreshold: 50,
         waitForInteraction: false,
         minimumViewTime: 0,
-        viewAreaCoveragePercentThreshold: 50,
     }).current;
 
-    // ─── Viewable items changed handler (from reference) ───────────
+    // ─── Viewable items changed handler (reference pattern) ──────────────
     const handleVideoChange = useCallback(
         ({ viewableItems }: { viewableItems: ViewToken[] }) => {
             const nextIndex = viewableItems[0]?.index ?? -1;
@@ -94,15 +97,23 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
 
             // Sync with ViewModel's activeIndex for like state, comments, etc.
             vm.onViewableItemsChanged({
-                viewableItems: [{ index: clampedIndex, item: vm.videos[clampedIndex], isViewable: true, key: vm.videos[clampedIndex]?.id }],
+                viewableItems: [{
+                    index: clampedIndex,
+                    item: vm.videos[clampedIndex],
+                    isViewable: true,
+                    key: vm.videos[clampedIndex]?.id,
+                }],
             });
 
-            setRenderTrigger((t) => t + 1);
+            setRenderTrigger(t => t + 1);
         },
         [vm.videos.length, vm.onViewableItemsChanged],
     );
 
-    // ─── renderItem with direction-aware preloading (from reference) ──
+    // ─── renderItem — direction-aware preloading matching reference exactly ─
+    const vmRef = useRef(vm);
+    vmRef.current = vm;
+
     const renderItem = useCallback(
         ({ item, index }: { item: VideoItem; index: number }) => {
             const currentIndex = currentIndexRef.current;
@@ -130,12 +141,8 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                 shouldPreloadAhead ||
                 shouldPreloadBehind;
 
-            // Render placeholder for items outside preload window (from reference)
-            if (
-                USE_PLACEHOLDER_OUTSIDE_PRELOAD &&
-                !shouldPreload &&
-                !isActive
-            ) {
+            // Placeholder for items outside the preload window (reference pattern)
+            if (USE_PLACEHOLDER_OUTSIDE_PRELOAD && !shouldPreload && !isActive) {
                 return (
                     <View
                         style={[
@@ -146,7 +153,9 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                 );
             }
 
-            const { isLiked, likeCount } = vm.getLikeState(item);
+            // Read live vm values via ref — avoids stale closure while still
+            // letting the memo comparator in ShotItem decide whether to re-render.
+            const { isLiked, likeCount } = vmRef.current.getLikeState(item);
 
             return (
                 <ShotItem
@@ -155,36 +164,45 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                     shouldPreload={shouldPreload}
                     isFocused={isFocused}
                     itemHeight={itemHeight}
-                    isMuted={vm.isMuted}
-                    isPaused={vm.isPaused}
+                    isPaused={vmRef.current.isPaused}
                     isLiked={isLiked}
                     likeCount={likeCount}
-                    onToggleMute={vm.toggleMute}
-                    onLikePress={() => vm.handleLikePress(item)}
-                    onCommentPress={() => vm.handleCommentPress(item)}
+                    onLikePress={() => vmRef.current.handleLikePress(item)}
+                    onCommentPress={() => vmRef.current.handleCommentPress(item)}
                     onSeekingChange={handleSeekingChange}
-                    colors={vm.colors}
+                    colors={vmRef.current.colors}
                     insets={insets}
+                    isCommentsOpen={vmRef.current.isCommentsOpen}
                 />
             );
         },
-        [renderTrigger, itemHeight, vm.isMuted, vm.isPaused, vm.getLikeState, isFocused, vm.colors, insets],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [renderTrigger, itemHeight, isFocused, insets, handleSeekingChange],
     );
 
     const keyExtractor = useCallback((item: VideoItem) => item.id, []);
 
-    // ─── LegendList performance helpers (from reference) ────────────
-    const getFixedItemSize = useCallback(() => itemHeight, [itemHeight]);
-
-    const viewabilityConfigCallbackPairs = useMemo(
-        () => [
-            {
-                viewabilityConfig,
-                onViewableItemsChanged: handleVideoChange,
-            },
-        ],
-        [handleVideoChange],
+    // ─── FlatList performance helpers ────────────────────────────────────
+    const getItemLayout = useCallback(
+        (data: any, index: number) => ({
+            length: itemHeight,
+            offset: itemHeight * index,
+            index,
+        }),
+        [itemHeight],
     );
+
+    const handleVideoChangeRef = useRef(handleVideoChange);
+    handleVideoChangeRef.current = handleVideoChange;
+
+    const viewabilityConfigCallbackPairs = useRef([
+        {
+            viewabilityConfig,
+            onViewableItemsChanged: (info: any) => {
+                handleVideoChangeRef.current(info);
+            },
+        },
+    ]).current;
 
     const getItemType = useCallback(() => "video", []);
 
@@ -192,6 +210,21 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
         () => itemHeight * DRAW_DISTANCE_MULTIPLIER,
         [itemHeight],
     );
+
+    // ─── Bump renderTrigger when isPaused, isCommentsOpen, or isFocused changes ───
+    const prevIsPaused = useRef(vm.isPaused);
+    const prevIsCommentsOpen = useRef(vm.isCommentsOpen);
+    const prevIsFocused = useRef(isFocused);
+    if (
+        prevIsPaused.current !== vm.isPaused ||
+        prevIsCommentsOpen.current !== vm.isCommentsOpen ||
+        prevIsFocused.current !== isFocused
+    ) {
+        prevIsPaused.current = vm.isPaused;
+        prevIsCommentsOpen.current = vm.isCommentsOpen;
+        prevIsFocused.current = isFocused;
+        setRenderTrigger(t => t + 1);
+    }
 
     if (vm.isLoading) {
         return (
@@ -225,8 +258,8 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
             {listReady ? (
-                <LegendList
-                    ref={listRef}
+                <FlatList
+                    ref={listRef as any}
                     data={vm.videos}
                     renderItem={renderItem}
                     keyExtractor={keyExtractor}
@@ -242,14 +275,15 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                     viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
                     onEndReached={() => vm.loadMore()}
                     onEndReachedThreshold={0.8}
-                    estimatedItemSize={itemHeight}
-                    getFixedItemSize={getFixedItemSize}
-                    drawDistance={drawDistance}
-                    getItemType={getItemType}
                     bounces={false}
                     overScrollMode="never"
                     style={styles.list}
                     contentContainerStyle={styles.listContent}
+                    getItemLayout={getItemLayout}
+                    initialNumToRender={2}
+                    maxToRenderPerBatch={2}
+                    windowSize={5}
+                    removeClippedSubviews={false}
                     refreshControl={
                         <RefreshControl
                             refreshing={vm.isRefetching}
@@ -279,6 +313,8 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     list: {
         flex: 1,

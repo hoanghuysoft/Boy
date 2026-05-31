@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import {
     Animated,
     PanResponder,
@@ -6,8 +6,12 @@ import {
     Text,
     View,
 } from "react-native";
+import Reanimated, {
+    useSharedValue,
+    useAnimatedStyle,
+} from "react-native-reanimated";
 
-// ─── Constants (from reference VideoOverlay) ────────────────────────
+// ─── Constants (mirroring reference VideoOverlay exactly) ───────────
 const SEEK_BAR_HEIGHT = 3;
 const SEEK_BAR_HIT_SLOP = 14;
 const SEEK_BAR_AREA_HEIGHT = SEEK_BAR_HEIGHT + 2 * SEEK_BAR_HIT_SLOP;
@@ -43,21 +47,39 @@ export const ShotSeekBar = React.memo(({
     onSeekingChange,
     bottom,
 }: ShotSeekBarProps) => {
-    const [seekingProgress, setSeekingProgress] = useState<number | null>(null);
+    // ─── Reanimated shared value drives fill width on UI thread (zero lag) ──
+    const fillWidthPct = useSharedValue(progress * 100);
+
+    // ─── Seek timer display state — updated only on grant/move ──────────────
+    const seekTimerTextRef = useRef({ current: progress, duration });
+    const [seekTimerDisplay, setSeekTimerDisplay] = React.useState<{
+        current: number;
+        duration: number;
+    } | null>(null);
+
+    // Sync Reanimated value when progress updates from player (not during drag)
+    const isDraggingRef = useRef(false);
+    useEffect(() => {
+        if (!isDraggingRef.current) {
+            fillWidthPct.value = Math.min(100, Math.max(0, progress * 100));
+        }
+    }, [progress]);
+
     const trackLayoutRef = useRef({ x: 0, width: 1 });
     const seekTrackRef = useRef<View>(null);
     const onSeekRef = useRef(onSeek);
     const progressRef = useRef(progress);
     const onSeekingChangeRef = useRef(onSeekingChange);
-    const trackScaleY = useRef(new Animated.Value(1)).current;
-    const seekTimerOpacity = useRef(new Animated.Value(0)).current;
-    const isDraggingRef = useRef(false);
+    const durationRef = useRef(duration);
 
     onSeekRef.current = onSeek;
     progressRef.current = progress;
     onSeekingChangeRef.current = onSeekingChange;
+    durationRef.current = duration;
 
-    const displayProgress = seekingProgress !== null ? seekingProgress : progress;
+    // ─── Animated (JS-thread) values for track scale and timer opacity ──────
+    const trackScaleY = useRef(new Animated.Value(1)).current;
+    const seekTimerOpacity = useRef(new Animated.Value(0)).current;
 
     const hideSeekState = useRef(() => {
         onSeekingChangeRef.current?.(false);
@@ -73,7 +95,9 @@ export const ShotSeekBar = React.memo(({
                 duration: SEEK_TIMER_ANIM_DURATION,
                 useNativeDriver: true,
             }),
-        ]).start();
+        ]).start(() => {
+            setSeekTimerDisplay(null);
+        });
     }).current;
 
     const panResponder = useRef(
@@ -91,10 +115,13 @@ export const ShotSeekBar = React.memo(({
                     trackW > 0
                         ? Math.max(0, Math.min(1, locationX / trackW))
                         : progressRef.current;
-                setSeekingProgress(p);
+
+                // Update fill on UI thread immediately
+                fillWidthPct.value = p * 100;
                 seek(p);
                 onSeekingChangeRef.current?.(true);
                 seekTimerOpacity.setValue(1);
+                setSeekTimerDisplay({ current: p * durationRef.current, duration: durationRef.current });
             },
             onPanResponderMove: (evt) => {
                 const seek = onSeekRef.current;
@@ -113,19 +140,25 @@ export const ShotSeekBar = React.memo(({
                     trackW > 0
                         ? Math.max(0, Math.min(1, (moveX - trackX) / trackW))
                         : progressRef.current;
-                setSeekingProgress(p);
+
+                // Update fill on UI thread — NO JS setState, zero lag
+                fillWidthPct.value = p * 100;
                 seek(p);
+                setSeekTimerDisplay({ current: p * durationRef.current, duration: durationRef.current });
             },
             onPanResponderRelease: () => {
-                setSeekingProgress(null);
                 hideSeekState();
             },
             onPanResponderTerminate: () => {
-                setSeekingProgress(null);
                 hideSeekState();
             },
         }),
     ).current;
+
+    // ─── Animated style for fill — Reanimated drives width on UI thread ──────
+    const fillStyle = useAnimatedStyle(() => ({
+        width: `${fillWidthPct.value}%` as any,
+    }));
 
     return (
         <>
@@ -158,17 +191,8 @@ export const ShotSeekBar = React.memo(({
                         },
                     ]}
                 >
-                    <View
-                        style={[
-                            styles.seekBarFill,
-                            {
-                                width: `${
-                                    Math.min(1, Math.max(0, displayProgress)) *
-                                    100
-                                }%`,
-                            },
-                        ]}
-                    />
+                    {/* Reanimated fill — updates on UI thread, no JS re-render lag */}
+                    <Reanimated.View style={[styles.seekBarFill, fillStyle]} />
                 </Animated.View>
             </View>
 
@@ -187,11 +211,9 @@ export const ShotSeekBar = React.memo(({
                 ]}
             >
                 <Text style={styles.seekTimerText}>
-                    {formatSeekTime(
-                        displayProgress * (duration > 0 ? duration : 0),
-                    )}
+                    {formatSeekTime(seekTimerDisplay?.current ?? 0)}
                     {" / "}
-                    {formatSeekTime(duration > 0 ? duration : 0)}
+                    {formatSeekTime(seekTimerDisplay?.duration ?? duration)}
                 </Text>
             </Animated.View>
         </>

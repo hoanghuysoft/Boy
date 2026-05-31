@@ -1,30 +1,29 @@
 import { FlexText } from "@/components/FlexText";
 import { getCachedUri } from "@/services/videoCache";
 import { VideoItem } from "@/types/video";
-import { useReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import {
     ChatRoundLikeBold,
     HeartBold,
-    MutedBold,
     SquareShareLineBold,
-    VolumeLoudBold
 } from "@solar-icons/react-native";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     AppState,
+    Platform,
     StyleSheet,
     TouchableOpacity,
     TouchableWithoutFeedback,
     View
 } from "react-native";
 import { Image as ExpoImage } from "expo-image";
-import Reanimated, { useAnimatedStyle } from "react-native-reanimated";
+import Reanimated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useVideoPlayer, useEvent, VideoView } from "react-native-video";
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from "./constants";
 import { FloatingHeart } from "./FloatingHeart";
 import { ShotSeekBar } from "./ShotSeekBar";
+import { Avatar } from "heroui-native";
 
 // ─── Props ──────────────────────────────────────────────────────────
 export interface ShotItemProps {
@@ -33,16 +32,15 @@ export interface ShotItemProps {
     shouldPreload: boolean;
     isFocused: boolean;
     itemHeight: number;
-    isMuted: boolean;
     isPaused: boolean;
     isLiked: boolean;
     likeCount: number;
-    onToggleMute: () => void;
     onLikePress: () => void;
     onCommentPress: () => void;
     onSeekingChange?: (seeking: boolean) => void;
     colors: any;
     insets: any;
+    isCommentsOpen: boolean;
 }
 
 // ─── Component ──────────────────────────────────────────────────────
@@ -52,18 +50,17 @@ export const ShotItem = React.memo(function ShotItem({
     shouldPreload,
     isFocused,
     itemHeight,
-    isMuted,
     isPaused: externalPaused,
     isLiked,
     likeCount,
-    onToggleMute,
     onLikePress,
     onCommentPress,
     onSeekingChange,
     colors,
     insets,
+    isCommentsOpen,
 }: ShotItemProps) {
-    // ─── Per-item URI resolution ────────────────────────────────
+    // ─── Per-item URI resolution ─────────────────────────────────
     const [resolvedUri, setResolvedUri] = useState(item.media_url);
 
     useEffect(() => {
@@ -76,107 +73,167 @@ export const ShotItem = React.memo(function ShotItem({
 
     // ─── Local user-paused state (reference pattern: per-item toggle) ──
     const [userPaused, setUserPaused] = useState(false);
-    const isActiveRef = useRef(isActive);
-    const userPausedRef = useRef(userPaused);
-    const wasActiveRef = useRef(isActive);
-    const videoIdRef = useRef(item.id);
 
-    useEffect(() => {
-        isActiveRef.current = isActive;
-    }, [isActive]);
+    // ─── Thumbnail placeholder visibility state ───────────────────
+    const [readyToDisplay, setReadyToDisplay] = useState(false);
 
-    useEffect(() => {
-        userPausedRef.current = userPaused;
-    }, [userPaused]);
-
-    // ─── Shrink via animatedPosition (UI-thread) ─────────────────────
-    const { animatedPosition } = useReanimatedTrueSheet();
-    const videoAreaStyle = useAnimatedStyle(() => {
-        const minHeight = SCREEN_HEIGHT * 0.4;
+    const placeholderOpacity = useSharedValue(1);
+    const placeholderStyle = useAnimatedStyle(() => {
         return {
-            height: Math.max(animatedPosition.value, minHeight),
+            opacity: placeholderOpacity.value,
         };
     });
 
-    // ─── Player setup (reference pattern: replaceSourceAsync + preload) ──
+    useEffect(() => {
+        placeholderOpacity.value = withTiming(readyToDisplay ? 0 : 1, { duration: 250 });
+    }, [readyToDisplay, placeholderOpacity]);
+
+    const isActiveRef = useRef(isActive);
+    isActiveRef.current = isActive;
+
+    const userPausedRef = useRef(userPaused);
+    userPausedRef.current = userPaused;
+
+    const externalPausedRef = useRef(externalPaused);
+    externalPausedRef.current = externalPaused;
+
+    const isFocusedRef = useRef(isFocused);
+    isFocusedRef.current = isFocused;
+
+    const playTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const sourceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+
+
+
+
+    // ─── Player setup — mirrors reference VideoViewComponent exactly ──────
     const player = useVideoPlayer(resolvedUri || '', (p) => {
         p.loop = true;
-        p.muted = true;
+        p.muted = true; // Always start muted; mute state applied via effect
     });
 
-    // ─── Source management & preloading (from reference VideoViewComponent) ──
+    const playerRef = useRef(player);
+
+    useEffect(() => {
+        setReadyToDisplay(false);
+    }, [resolvedUri, player]);
+
+    // Ensure player is muted and paused when the component unmounts or player changes
+    useEffect(() => {
+        return () => {
+            if (player) {
+                try {
+                    if (player.muted !== true) player.muted = true;
+                    if (player.isPlaying) player.pause();
+                } catch (e) { }
+            }
+        };
+    }, [player]);
+
+
+    // ─── Source management & preloading (reference pattern) ──────────────
     useEffect(() => {
         if (!player) return;
+
+        if (sourceTimeoutRef.current) {
+            clearTimeout(sourceTimeoutRef.current);
+            sourceTimeoutRef.current = null;
+        }
 
         const currentUri = player.source?.uri;
 
         if (shouldPreload || isActive) {
             if (!currentUri || currentUri !== resolvedUri) {
-                player
-                    .replaceSourceAsync({ uri: resolvedUri })
-                    .then(() => {
-                        try {
-                            player.preload();
-                        } catch { }
-                    })
-                    .catch(() => { });
+                // Debounce source replacement by 100ms
+                sourceTimeoutRef.current = setTimeout(() => {
+                    player
+                        .replaceSourceAsync({ uri: resolvedUri })
+                        .then(() => {
+                            try { player.preload(); } catch { }
+                        })
+                        .catch(() => { });
+                }, 100);
             } else if (player.status === "idle") {
-                try {
-                    player.preload();
-                } catch { }
+                try { player.preload(); } catch { }
             }
         }
+
+        return () => {
+            if (sourceTimeoutRef.current) {
+                clearTimeout(sourceTimeoutRef.current);
+                sourceTimeoutRef.current = null;
+            }
+        };
     }, [shouldPreload, isActive, player, resolvedUri]);
 
-    // ─── Active state management (from reference VideoViewComponent) ──
+    // ─── Active-state management ──────────────────────────────────────────
+    //     Key: wasActiveRef tracks previous isActive to detect transitions cleanly.
+    const wasActiveRef = useRef(isActive);
+    const videoIdRef = useRef(item.id);
+
     useEffect(() => {
         if (!player) return;
 
-        if (item.id !== videoIdRef.current) {
+        const wasActive = wasActiveRef.current;
+        wasActiveRef.current = isActive;
+
+        const playerChanged = player !== playerRef.current;
+        if (playerChanged) {
+            playerRef.current = player;
+        }
+
+        const videoChanged = item.id !== videoIdRef.current;
+        if (videoChanged) {
             videoIdRef.current = item.id;
         }
 
-        const wasActive = wasActiveRef.current;
-        wasActiveRef.current = isActive;
-        const becameActive = isActive && !wasActive;
-        const becameInactive = !isActive && wasActive;
-
-        if (becameActive) {
-            setUserPaused(false);
-
-            if (player.status === "readyToPlay") {
-                if (AppState.currentState === "active" && isFocused) {
-                    if (!player.isPlaying) {
-                        if (player.currentTime < 0.1) {
-                            player.currentTime = 0;
-                        }
-                        player.muted = isMuted;
-                        player.play();
-                    } else {
-                        player.muted = isMuted;
-                    }
-                }
-            } else {
-                if (!player.isPlaying && player.currentTime < 0.1) {
-                    player.currentTime = 0;
-                }
-            }
-        } else if (becameInactive) {
-            // No-op on deactivation, handled below
+        // Clear any existing play timeout
+        if (playTimeoutRef.current) {
+            clearTimeout(playTimeoutRef.current);
+            playTimeoutRef.current = null;
         }
 
+        const becameActive = (isActive && !wasActive) || playerChanged || videoChanged;
+
+        if (becameActive) {
+            // Clear user-pause when a new video becomes active
+            setUserPaused(false);
+        }
+
+        // Compute overall shouldPlay for this render
         const appState = AppState.currentState;
         const shouldPlay = isActive && !userPaused && !externalPaused && appState === "active" && isFocused;
 
-        if (shouldPlay && player.status === "readyToPlay") {
-            if (!player.isPlaying) {
-                player.muted = isMuted;
-                player.play();
+        if (shouldPlay) {
+            // Delay play/unmute by 150ms during active transitions to prevent lag during fast swiping
+            const delay = (isActive && !wasActive) ? 150 : 0;
+
+            const startPlayback = () => {
+                if (player.status === "readyToPlay") {
+                    if (player.muted !== false) player.muted = false;
+                    if (!player.isPlaying) {
+                        player.play();
+                    }
+                } else {
+                    // Not yet ready — seek to start so it plays from 0 when buffer arrives
+                    if (!player.isPlaying && player.currentTime < 0.1) {
+                        player.currentTime = 0;
+                    }
+                }
+            };
+
+            if (delay > 0) {
+                playTimeoutRef.current = setTimeout(() => {
+                    startPlayback();
+                    playTimeoutRef.current = null;
+                }, delay);
             } else {
-                player.muted = isMuted;
+                startPlayback();
             }
-        } else if (!shouldPlay) {
-            player.muted = true;
+        } else {
+            // Immediately mute and pause
+            if (player.muted !== true) player.muted = true;
             if (player.isPlaying) {
                 player.pause();
             }
@@ -184,65 +241,77 @@ export const ShotItem = React.memo(function ShotItem({
                 player.currentTime = 0;
             }
         }
-    }, [isActive, userPaused, externalPaused, player, shouldPreload, item.id, isFocused, isMuted]);
 
-    // ─── AppState listener (from reference VideoViewComponent) ──
+        return () => {
+            if (playTimeoutRef.current) {
+                clearTimeout(playTimeoutRef.current);
+                playTimeoutRef.current = null;
+            }
+        };
+    }, [isActive, userPaused, externalPaused, player, shouldPreload, item.id, isFocused, isCommentsOpen]);
+
+    // ─── AppState listener (reference pattern) ────────────────────────────
     useEffect(() => {
-        const subscription = AppState.addEventListener(
-            "change",
-            (state) => {
-                if (!player) return;
-                const currentIsActive = isActiveRef.current;
-                const currentUserPaused = userPausedRef.current;
-                if (currentIsActive && state === "active" && !currentUserPaused && isFocused) {
-                    player.muted = isMuted;
-                    player.play();
-                } else {
-                    player.muted = true;
-                    player.pause();
-                }
-            },
-        );
+        const subscription = AppState.addEventListener("change", (state) => {
+            if (!player) return;
+            const currentIsActive = isActiveRef.current;
+            const currentUserPaused = userPausedRef.current;
+            const currentExternalPaused = externalPausedRef.current;
+            const currentIsFocused = isFocusedRef.current;
+
+            if (currentIsActive && state === "active" && !currentUserPaused && !currentExternalPaused && currentIsFocused) {
+                if (player.muted !== false) player.muted = false;
+                player.play();
+            } else {
+                if (player.muted !== true) player.muted = true;
+                player.pause();
+            }
+        });
         return () => subscription.remove();
-    }, [player, isFocused, isMuted]);
+    }, [player]);
 
-    // Synchronize mute state
-    useEffect(() => {
-        if (isActive && player) {
-            player.muted = isMuted;
-        }
-    }, [isMuted, player, isActive]);
-
-    // ─── Status change handler (from reference: auto-play when ready) ──
-    useEvent(player, "onStatusChange", () => {
+    // ─── Auto-play when readyToPlay fires (reference pattern) ────────────
+    const handleStatusChange = useCallback(() => {
         const currentIsActive = isActiveRef.current;
         const currentUserPaused = userPausedRef.current;
+        const currentExternalPaused = externalPausedRef.current;
+        const currentIsFocused = isFocusedRef.current;
 
-        if (
-            currentIsActive &&
-            !currentUserPaused &&
-            !externalPaused &&
-            AppState.currentState === "active" &&
-            isFocused &&
-            player.status === "readyToPlay" &&
-            !player.isPlaying
-        ) {
-            player.muted = isMuted;
-            player.play();
+        const shouldPlay = currentIsActive && !currentUserPaused && !currentExternalPaused && AppState.currentState === "active" && currentIsFocused;
+
+        // console.log(`[ShotItem ${item.id}] onStatusChange fired: status = ${player.status}, shouldPlay = ${shouldPlay}, isPlaying = ${player.isPlaying}`);
+
+        if (shouldPlay && player.status === "readyToPlay") {
+            if (player.muted !== false) player.muted = false;
+            if (!player.isPlaying) {
+                player.play();
+            }
         }
+    }, [player, item.id]);
+
+    useEvent(player, "onStatusChange", handleStatusChange);
+
+    useEvent(player, "onReadyToDisplay", () => {
+        setReadyToDisplay(true);
     });
 
-    // ─── Progress tracking (from reference VideoViewComponent) ──────
+    useEvent(player, "onVolumeChange", () => {
+        // console.log(`[ShotItem ${item.id}] Volume/Mute changed: player.muted = ${player.muted}, isActive = ${isActiveRef.current}`);
+    });
+
+    // ─── Progress tracking ────────────────────────────────────────────────
     const [progress, setProgress] = useState(0);
 
-    useEvent(player, "onProgress", () => {
+    const handleProgress = useCallback(() => {
         if (!isActiveRef.current) return;
         const dur = player.duration;
         const cur = player.currentTime;
         if (dur > 0 && Number.isFinite(cur)) {
             setProgress(Math.min(1, Math.max(0, cur / dur)));
         }
-    });
+    }, [player]);
+
+    useEvent(player, "onProgress", handleProgress);
 
     const handleSeek = useCallback(
         (p: number) => {
@@ -251,7 +320,8 @@ export const ShotItem = React.memo(function ShotItem({
             if (dur > 0 && Number.isFinite(dur)) {
                 const t = Math.max(0, Math.min(1, p)) * dur;
                 player.seekTo(t);
-                setProgress(p);
+                // Don't call setProgress here — onProgress event will update it,
+                // and ShotSeekBar drives its own UI-thread fill during drag.
             }
         },
         [isActive, player],
@@ -259,11 +329,12 @@ export const ShotItem = React.memo(function ShotItem({
 
     const duration = useMemo(
         () => player?.duration ?? 0,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [player?.duration],
     );
 
-    // ─── Double tap to like / single tap to pause ──────────────────
-    const [hearts, setHearts] = useState<{ id: number, x: number, y: number }[]>([]);
+    // ─── Double-tap to like / single-tap to pause ─────────────────────────
+    const [hearts, setHearts] = useState<{ id: number; x: number; y: number }[]>([]);
     const lastTapTime = useRef(0);
     const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -277,6 +348,7 @@ export const ShotItem = React.memo(function ShotItem({
         }
 
         if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
+            // Double tap — like
             if (!isLiked) {
                 onLikePress();
             }
@@ -286,7 +358,7 @@ export const ShotItem = React.memo(function ShotItem({
         } else {
             lastTapTime.current = now;
             singleTapTimer.current = setTimeout(() => {
-                setUserPaused(prev => !prev); // Toggle local pause
+                setUserPaused(prev => !prev);
                 singleTapTimer.current = null;
             }, DOUBLE_TAP_DELAY);
         }
@@ -298,25 +370,32 @@ export const ShotItem = React.memo(function ShotItem({
 
     return (
         <View style={[styles.itemContainer, { height: itemHeight }]}>
-            {/* Video area — clips equally from top and bottom as sheet rises */}
-            <Reanimated.View style={[styles.videoArea, videoAreaStyle]}>
-                {/* Fixed full-screen inner view, centered by parent → symmetric clip */}
-                <View style={styles.videoContent}>
-                    <VideoView
-                        player={player}
-                        style={StyleSheet.absoluteFill}
-                        resizeMode="contain"
-                        controls={false}
-                    />
-                </View>
-            </Reanimated.View>
+            {/* Video area — covers full cell height (no shrink on comments open) */}
+            <View style={[styles.videoArea, { height: itemHeight }]}>
+                <VideoView
+                    player={player}
+                    style={StyleSheet.absoluteFill}
+                    resizeMode="contain"
+                    controls={false}
+                />
 
-            {/* Tap to pause/play / double tap to like — covers the full item */}
+                {/* Gray Placeholder: displayed until first video frame is ready to render */}
+                <Reanimated.View
+                    style={[
+                        StyleSheet.absoluteFill,
+                        { backgroundColor: '#1C1C1E' },
+                        placeholderStyle
+                    ]}
+                    pointerEvents="none"
+                />
+            </View>
+
+            {/* Tap layer — covers full item for pause/like */}
             <TouchableWithoutFeedback onPress={handleVideoPress}>
                 <View style={StyleSheet.absoluteFill} />
             </TouchableWithoutFeedback>
 
-            {/* Render Floating Hearts */}
+            {/* Floating hearts */}
             {hearts.map(heart => (
                 <FloatingHeart
                     key={heart.id}
@@ -333,7 +412,7 @@ export const ShotItem = React.memo(function ShotItem({
                 </View>
             )}
 
-            {/* Seek bar (from reference VideoOverlay — PanResponder-based) */}
+            {/* Seek bar — only rendered for active item (matches reference) */}
             {isActive && (
                 <ShotSeekBar
                     progress={progress}
@@ -344,44 +423,33 @@ export const ShotItem = React.memo(function ShotItem({
                 />
             )}
 
-            {/* Bottom info */}
-            <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 100 }]} pointerEvents="none">
-                <TouchableOpacity onPress={() => router.push(`/profile/${item.profile_id}`)} style={styles.profileRow}>
+            {/* Bottom info — username & caption */}
+            <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 130 }]} pointerEvents="box-none">
+                <TouchableOpacity
+                    onPress={() => router.push(`/profile/${item.profile_id}`)}
+                    style={styles.profileRow}
+                >
                     {item.profile_avatar && (
-                        <ExpoImage
-                            source={{ uri: item.profile_avatar }}
-                            style={styles.avatar}
-                            contentFit="cover"
-                        />
+                        <Avatar style={styles.avatar}>
+                            <Avatar.Image source={{ uri: item.profile_avatar }}></Avatar.Image>
+                        </Avatar>
                     )}
                     <FlexText style={styles.profileName}>{item.profile_name}</FlexText>
                 </TouchableOpacity>
-                {
-                    item.caption && (
-                        <FlexText style={styles.caption} numberOfLines={2}>
-                            {item.caption}
-                        </FlexText>
-                    )
-                }
+                {item.caption && (
+                    <FlexText style={styles.caption} numberOfLines={2}>
+                        {item.caption}
+                    </FlexText>
+                )}
             </View>
 
             {/* Right side actions */}
-            <View style={[styles.rightActions, { bottom: insets.bottom + 110 }]}>
-                {/* Mute/Unmute */}
-                <TouchableOpacity style={styles.actionButton} onPress={onToggleMute}>
-                    {
-                        isMuted
-                            ? <MutedBold size={26} color="white" />
-                            : <VolumeLoudBold size={26} color="white" />
-                    }
-                </TouchableOpacity>
-
+            <View style={[styles.rightActions, { bottom: insets.bottom + 140 }]}>
                 {/* Like */}
                 <TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10}>
-                    {
-                        isLiked
-                            ? <HeartBold size={28} color="#ff4d6d" />
-                            : <HeartBold size={28} color="white" />
+                    {isLiked
+                        ? <HeartBold size={36} color="#ff4d6d" />
+                        : <HeartBold size={36} color="white" />
                     }
                     <FlexText style={[styles.actionText, isLiked && { color: '#ff4d6d' }]}>
                         {likeCount > 0 ? likeCount : 0}
@@ -390,15 +458,15 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Comments */}
                 <TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10}>
-                    <ChatRoundLikeBold size={26} color="white" />
+                    <ChatRoundLikeBold size={36} color="white" />
                     <FlexText style={styles.actionText}>
                         {item.comment_count > 0 ? item.comment_count : 0}
                     </FlexText>
                 </TouchableOpacity>
 
-                {/* Share (placeholder) */}
+                {/* Share */}
                 <TouchableOpacity style={styles.actionButton}>
-                    <SquareShareLineBold size={26} color="white" />
+                    <SquareShareLineBold size={36} color="white" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -407,14 +475,14 @@ export const ShotItem = React.memo(function ShotItem({
     return (
         prevProps.isActive === nextProps.isActive &&
         prevProps.shouldPreload === nextProps.shouldPreload &&
-        prevProps.isMuted === nextProps.isMuted &&
         prevProps.isPaused === nextProps.isPaused &&
         prevProps.isFocused === nextProps.isFocused &&
         prevProps.itemHeight === nextProps.itemHeight &&
         prevProps.item.id === nextProps.item.id &&
         prevProps.item.comment_count === nextProps.item.comment_count &&
         prevProps.isLiked === nextProps.isLiked &&
-        prevProps.likeCount === nextProps.likeCount
+        prevProps.likeCount === nextProps.likeCount &&
+        prevProps.isCommentsOpen === nextProps.isCommentsOpen
     );
 });
 
@@ -435,7 +503,7 @@ const styles = StyleSheet.create({
     },
     videoContent: {
         width: SCREEN_WIDTH,
-        height: SCREEN_HEIGHT,
+        height: '100%',
     },
     pausedOverlay: {
         ...StyleSheet.absoluteFill,
@@ -456,21 +524,16 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     avatar: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
         marginRight: 10,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
     },
     profileName: {
         color: '#fff',
-        fontSize: 15,
+        fontSize: 18,
         fontWeight: '700',
     },
     caption: {
         color: 'rgba(255,255,255,0.9)',
-        fontSize: 13,
+        fontSize: 16,
         lineHeight: 18,
     },
     rightActions: {
@@ -485,7 +548,7 @@ const styles = StyleSheet.create({
     },
     actionText: {
         color: 'white',
-        fontSize: 12,
+        fontSize: 16,
         marginTop: 2,
         fontWeight: '600',
     },
