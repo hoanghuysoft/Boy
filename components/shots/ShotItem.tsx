@@ -3,8 +3,13 @@ import { getCachedUri } from "@/services/videoCache";
 import { VideoItem } from "@/types/video";
 import { useReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import { Image as ExpoImage } from "expo-image";
+import {
+    ChatRoundLikeBold,
+    HeartBold,
+    MutedBold,
+    SquareShareLineBold,
+    VolumeLoudBold
+} from "@solar-icons/react-native";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -14,8 +19,9 @@ import {
     TouchableWithoutFeedback,
     View
 } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import Reanimated, { useAnimatedStyle } from "react-native-reanimated";
-import { useEvent, useVideoPlayer, VideoView } from "react-native-video";
+import { useVideoPlayer, useEvent, VideoView } from "react-native-video";
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from "./constants";
 import { FloatingHeart } from "./FloatingHeart";
 import { ShotSeekBar } from "./ShotSeekBar";
@@ -339,40 +345,44 @@ export const ShotItem = React.memo(function ShotItem({
             )}
 
             {/* Bottom info */}
-            <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 100 }]} pointerEvents="box-none">
-                <View style={styles.captionArea}>
-                    <TouchableOpacity onPress={() => router.push(`/profile/${item.profile_id}`)}>
-                        <FlexText style={styles.captionUsername}>@{item.profile_name}</FlexText>
-                    </TouchableOpacity>
-                    {item.caption && (
-                        <FlexText style={styles.captionDesc} numberOfLines={2}>
+            <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 100 }]} pointerEvents="none">
+                <TouchableOpacity onPress={() => router.push(`/profile/${item.profile_id}`)} style={styles.profileRow}>
+                    {item.profile_avatar && (
+                        <ExpoImage
+                            source={{ uri: item.profile_avatar }}
+                            style={styles.avatar}
+                            contentFit="cover"
+                        />
+                    )}
+                    <FlexText style={styles.profileName}>{item.profile_name}</FlexText>
+                </TouchableOpacity>
+                {
+                    item.caption && (
+                        <FlexText style={styles.caption} numberOfLines={2}>
                             {item.caption}
                         </FlexText>
-                    )}
-                </View>
+                    )
+                }
             </View>
 
             {/* Right side actions */}
             <View style={[styles.rightActions, { bottom: insets.bottom + 110 }]}>
                 {/* Mute/Unmute */}
                 <TouchableOpacity style={styles.actionButton} onPress={onToggleMute}>
-                    <Ionicons
-                        name={isMuted ? "volume-mute" : "volume-high"}
-                        size={34}
-                        color="rgba(255,255,255,0.88)"
-                    />
-                    <FlexText style={styles.actionText}>
-                        {isMuted ? "Muted" : "Mute"}
-                    </FlexText>
+                    {
+                        isMuted
+                            ? <MutedBold size={26} color="white" />
+                            : <VolumeLoudBold size={26} color="white" />
+                    }
                 </TouchableOpacity>
 
                 {/* Like */}
                 <TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10}>
-                    <Ionicons
-                        name="heart"
-                        size={34}
-                        color={isLiked ? "#ff4d6d" : "rgba(255,255,255,0.88)"}
-                    />
+                    {
+                        isLiked
+                            ? <HeartBold size={28} color="#ff4d6d" />
+                            : <HeartBold size={28} color="white" />
+                    }
                     <FlexText style={[styles.actionText, isLiked && { color: '#ff4d6d' }]}>
                         {likeCount > 0 ? likeCount : 0}
                     </FlexText>
@@ -380,11 +390,7 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Comments */}
                 <TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10}>
-                    <Ionicons
-                        name="chatbubble"
-                        size={34}
-                        color="rgba(255,255,255,0.88)"
-                    />
+                    <ChatRoundLikeBold size={26} color="white" />
                     <FlexText style={styles.actionText}>
                         {item.comment_count > 0 ? item.comment_count : 0}
                     </FlexText>
@@ -392,32 +398,7 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Share (placeholder) */}
                 <TouchableOpacity style={styles.actionButton}>
-                    <MaterialIcons
-                        name="share"
-                        size={34}
-                        color="rgba(255,255,255,0.88)"
-                    />
-                    <FlexText style={styles.actionText}>Share</FlexText>
-                </TouchableOpacity>
-
-                {/* Profile Avatar */}
-                <TouchableOpacity
-                    onPress={() => router.push(`/profile/${item.profile_id}`)}
-                    style={styles.avatarContainer}
-                >
-                    {item.profile_avatar ? (
-                        <ExpoImage
-                            source={{ uri: item.profile_avatar }}
-                            style={styles.avatarImage}
-                            contentFit="cover"
-                        />
-                    ) : (
-                        <Ionicons
-                            name="person"
-                            size={20}
-                            color="rgba(255,255,255,0.6)"
-                        />
-                    )}
+                    <SquareShareLineBold size={26} color="white" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -465,63 +446,47 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         left: 0,
-        right: 0,
-        paddingHorizontal: 14,
+        right: 70,
+        paddingHorizontal: 16,
         zIndex: 1000,
     },
-    captionArea: {
-        paddingRight: 88,
+    profileRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
     },
-    captionUsername: {
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: "700",
-        marginBottom: 4,
-        textShadowColor: "rgba(0,0,0,0.8)",
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 2,
+    avatar: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        marginRight: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.3)',
     },
-    captionDesc: {
-        color: "rgba(255,255,255,0.92)",
+    profileName: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    caption: {
+        color: 'rgba(255,255,255,0.9)',
         fontSize: 13,
         lineHeight: 18,
-        textShadowColor: "rgba(0,0,0,0.8)",
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 2,
     },
     rightActions: {
         position: 'absolute',
-        right: 14,
+        right: 12,
         alignItems: 'center',
-        gap: 18,
+        gap: 15,
     },
     actionButton: {
         alignItems: 'center',
         justifyContent: 'center',
     },
     actionText: {
-        color: "rgba(255,255,255,0.88)",
+        color: 'white',
         fontSize: 12,
-        marginTop: 4,
-        fontWeight: "600",
-        textShadowColor: "rgba(0,0,0,0.8)",
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 2,
-    },
-    avatarContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "rgba(255,255,255,0.2)",
-        borderWidth: 2,
-        borderColor: "rgba(255,255,255,0.4)",
-        justifyContent: "center",
-        alignItems: "center",
-        overflow: "hidden",
-        marginTop: 4,
-    },
-    avatarImage: {
-        width: "100%",
-        height: "100%",
+        marginTop: 2,
+        fontWeight: '600',
     },
 });
