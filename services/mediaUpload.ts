@@ -120,6 +120,8 @@ export const uploadMedia = async (
     if (options.caption) formData.append('caption', options.caption);
     if (options.post_id) formData.append('post_id', options.post_id);
     if (options.type) formData.append('type', options.type);
+    if (file.width) formData.append('width', String(file.width));
+    if (file.height) formData.append('height', String(file.height));
 
     const response = await client.post<UploadMediaResponse>(
         `api/profiles/${profileId}/media/client`,
