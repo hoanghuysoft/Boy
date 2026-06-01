@@ -1,7 +1,6 @@
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
-import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";

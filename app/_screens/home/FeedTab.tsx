@@ -1,16 +1,17 @@
 import { FlexText } from "@/components/FlexText";
 import { List } from "@/components/list";
-import type { FlatList } from "react-native";
 import { queryClient } from "@/services/client";
 import { useFeed } from "@/services/feed";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Post } from "@/types/post";
-import { choosenMediaPath } from "@/utils/imageurl";
+import { updateActiveVideoViewAsync } from "@bsky.app/video";
 import { Image } from "expo-image";
+import { useFocusEffect } from "expo-router";
 import { SkeletonGroup } from "heroui-native";
 import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import type { FlatList } from "react-native";
 import {
     RefreshControl,
     ScrollView,
@@ -20,9 +21,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PostItem } from "../../../components/PostItem";
 import { useThemeContext } from "../../../context/ThemeContext";
-import { useAudioStore } from "../../../stores/audio";
 import { useScrollStore } from "../../../stores/scroll";
-import { useSettingsStore } from "../../../stores/settings";
 import { createCommonStyles } from "../../../styles/common";
 
 // How many posts ahead to prefetch images for
@@ -80,11 +79,8 @@ const FeedTab: React.FC<FeedTabProps> = ({
     }, [trigger]);
 
     // ─── Feed Video Autoplay ────────────────────────────────────
-    // With @bsky.app/video, video autoplay is handled natively via
-    // updateActiveVideoViewAsync (called from List.tsx scroll handler).
     // We only keep the mute state for the store, and clear on unmount.
     const clearActiveVideo = useFeedVideoStore(s => s.clearActiveVideo);
-    const stopAudioPlayback = useAudioStore(s => s.stopPlayback);
 
     // Clear active video when component unmounts (tab switch)
     useEffect(() => {
@@ -92,6 +88,18 @@ const FeedTab: React.FC<FeedTabProps> = ({
             clearActiveVideo();
         };
     }, [clearActiveVideo]);
+
+    // ─── Re-activate the correct video when navigating back to this screen ──
+    // BlueskyVideoView destroys its ExoPlayer (turns black) when it loses
+    // "active" status. updateActiveVideoViewAsync() is normally only triggered
+    // by scroll events in List.tsx, so the video stays black until the user
+    // scrolls. Calling it on focus-regain re-activates the most visible view
+    // immediately — no scroll required.
+    useFocusEffect(
+        useCallback(() => {
+            updateActiveVideoViewAsync();
+        }, [])
+    );
 
     /**
      * onScrollY — fires on every scroll frame with the raw Y offset.
@@ -146,7 +154,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
         handleViewableItemsChangedRef.current = handleViewableItemsChanged;
     }, [handleViewableItemsChanged]);
 
-    const viewabilityConfigCallbackPairs = useRef([
+    const viewabilityConfigCallbackPairs = useMemo(() => [
         {
             viewabilityConfig: {
                 itemVisiblePercentThreshold: 60,
@@ -156,7 +164,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 handleViewableItemsChangedRef.current({ viewableItems });
             },
         },
-    ]);
+    ], []);
 
     const handleRefresh = useCallback(async () => {
         queryClient.removeQueries({ queryKey: ['feed', feedType] });
@@ -286,7 +294,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 onEndReachedThreshold={0.5}
                 ListFooterComponent={renderFooter}
                 // ─── Viewability (image prefetch + video index tracking) ─
-                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs.current}
+                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
                 // ─── Performance (matching Bluesky's config) ────────────
                 removeClippedSubviews={true}
                 windowSize={9}

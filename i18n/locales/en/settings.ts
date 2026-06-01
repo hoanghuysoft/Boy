@@ -17,8 +17,7 @@ const settings = {
     adultFilterOff: 'Off',
     homeCarousel: 'Home carousel',
     homeCarouselDescription: 'The carousel may contain sensitive media.',
-    autoplayVideos: 'Autoplay videos',
-    autoplayVideosDescription: 'Automatically play videos in feed.',
+
     storageCache: 'Storage & Cache',
     videoCache: 'Video cache',
     videoCacheDescription_one: '{{count}} video cached',

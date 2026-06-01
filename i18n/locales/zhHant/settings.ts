@@ -17,8 +17,7 @@ const settings = {
     adultFilterOff: '關閉',
     homeCarousel: '首頁輪播',
     homeCarouselDescription: '輪播中可能包含敏感媒體內容。',
-    autoplayVideos: '自動播放影片',
-    autoplayVideosDescription: '在動態中自動播放影片。',
+
     storageCache: '儲存與快取',
     videoCache: '影片快取',
     videoCacheDescription_one: '已快取 {{count}} 個影片',
