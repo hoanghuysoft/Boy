@@ -31,6 +31,12 @@ interface SettingsStore {
     // Profile Design   
     profileDesign: 'v3' | 'classic';
     setProfileDesign: (design: 'v3' | 'classic') => void;
+
+    // Third-party upload keys and settings
+    imgbbApiKey: string;
+    setImgbbApiKey: (key: string) => void;
+    x02ApiKey: string;
+    setX02ApiKey: (key: string) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -53,6 +59,12 @@ export const useSettingsStore = create<SettingsStore>()(
             // Profile Design
             profileDesign: 'v3',
             setProfileDesign: (design) => set({ profileDesign: design }),
+
+            // Third-party upload settings
+            imgbbApiKey: '',
+            setImgbbApiKey: (key) => set({ imgbbApiKey: key }),
+            x02ApiKey: '',
+            setX02ApiKey: (key) => set({ x02ApiKey: key }),
         }),
         {
             name: 'settings-storage',

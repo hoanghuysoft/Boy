@@ -22,6 +22,8 @@ export interface SelectedMedia {
     type?: string;
     fileSize?: number;
     isVideo: boolean;
+    width?: number;
+    height?: number;
 }
 
 export interface CreateFormState {

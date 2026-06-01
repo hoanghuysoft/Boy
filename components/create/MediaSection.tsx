@@ -1,8 +1,7 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { FlashList } from "@shopify/flash-list";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { Image, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
@@ -75,7 +74,7 @@ export const MediaSection = memo(({
             <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
                 {t('create.form.media')} ({selectedMedia.length}/10)
             </FlexText>
-            <FlashList
+            <FlatList
                 data={selectedMedia}
                 horizontal
                 showsHorizontalScrollIndicator={false}

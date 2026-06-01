@@ -50,9 +50,21 @@ const PostOptionBadge = memo(({
         onPress={onPress}
     >
         {isActive ? (
-            iconActive === "ghost-smile-bold" ? <GhostSmileBold size={14} color={activeColor} /> : <HeartUnlockBold size={14} color={activeColor} />
+            iconActive === "ghost-smile-bold" ? (
+                <GhostSmileBold size={14} color={activeColor} />
+            ) : iconActive === "cloud-upload" ? (
+                <Ionicons name="cloud-upload" size={14} color={activeColor} />
+            ) : (
+                <HeartUnlockBold size={14} color={activeColor} />
+            )
         ) : (
-            icon === "ghost-smile-outline" ? <GhostSmileOutline size={14} color={colors.muted} /> : <HeartUnlockOutline size={14} color={colors.muted} />
+            icon === "ghost-smile-outline" ? (
+                <GhostSmileOutline size={14} color={colors.muted} />
+            ) : icon === "cloud-upload-outline" ? (
+                <Ionicons name="cloud-upload-outline" size={14} color={colors.muted} />
+            ) : (
+                <HeartUnlockOutline size={14} color={colors.muted} />
+            )
         )}
         <FlexText
             style={[
@@ -77,8 +89,10 @@ interface CreateProfileHeaderProps {
     common: any;
     isGhost: boolean;
     isAdult: boolean;
+    useThirdPartyUpload?: boolean;
     onToggleGhost?: () => void;
     onToggleAdult?: () => void;
+    onToggleThirdPartyUpload?: () => void;
     isAdmin?: boolean;
     onSwitchProfile?: () => void;
 }
@@ -89,8 +103,10 @@ export const CreateProfileHeader = memo(({
     common,
     isGhost,
     isAdult,
+    useThirdPartyUpload = false,
     onToggleGhost,
     onToggleAdult,
+    onToggleThirdPartyUpload,
     isAdmin,
     onSwitchProfile,
 }: CreateProfileHeaderProps) => {
@@ -132,7 +148,7 @@ export const CreateProfileHeader = memo(({
                     </FlexText>
                     {profile.is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
                 </View>
-                {(onToggleGhost || onToggleAdult) && (
+                {(onToggleGhost || onToggleAdult || onToggleThirdPartyUpload) && (
                     <View style={createStyles.postOptionsRow}>
                         {onToggleGhost && (
                             <PostOptionBadge
@@ -144,6 +160,18 @@ export const CreateProfileHeader = memo(({
                                 colors={colors}
                                 common={common}
                                 activeColor={COLORS.primary}
+                            />
+                        )}
+                        {onToggleThirdPartyUpload && (
+                            <PostOptionBadge
+                                icon="cloud-upload-outline"
+                                iconActive="cloud-upload"
+                                label={t('create.form.thirdPartyCloud', 'Cloud')}
+                                isActive={useThirdPartyUpload}
+                                onPress={onToggleThirdPartyUpload}
+                                colors={colors}
+                                common={common}
+                                activeColor={colors.verify || COLORS.success}
                             />
                         )}
                         {onToggleAdult && (

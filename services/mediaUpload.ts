@@ -7,6 +7,7 @@
 
 import { Media, MediaType } from '@/types/media';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { File as FSFile, UploadType } from 'expo-file-system';
 import { client } from './client';
 
 // ============================================================================
@@ -41,6 +42,8 @@ export interface FileAsset {
     name?: string;
     type?: string;
     fileSize?: number;
+    width?: number;
+    height?: number;
 }
 
 interface TinyVaultUploadResponse {
@@ -133,23 +136,19 @@ const VIDEO_UPLOAD_RETRY_DELAY_MS = 2000;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const uploadVideoToTinyVault = async (file: FileAsset): Promise<TinyVaultUploadResponse> => {
-    const formData = new FormData();
-    formData.append('file', {
-        uri: file.uri,
-        name: file.name || `upload.${getFileExtension(file)}`,
-        type: file.type || 'video/mp4',
-    } as any);
-
-    const response = await fetch(TINYVAULT_UPLOAD_URL, {
-        method: 'POST',
-        body: formData,
+    const fsFile = new FSFile(file.uri);
+    const result = await fsFile.upload(TINYVAULT_UPLOAD_URL, {
+        httpMethod: 'POST',
+        uploadType: UploadType.MULTIPART,
+        fieldName: 'file',
+        mimeType: file.type || 'video/mp4',
     });
 
-    if (!response.ok) {
-        throw new Error(`TinyVault upload failed (${response.status})`);
+    if (result.status < 200 || result.status >= 300) {
+        throw new Error(`TinyVault upload failed (${result.status})`);
     }
 
-    const data = (await response.json()) as Partial<TinyVaultUploadResponse>;
+    const data = JSON.parse(result.body) as Partial<TinyVaultUploadResponse>;
     if (!data.download_url || !data.token) {
         throw new Error('TinyVault response is missing token or download_url');
     }
@@ -211,16 +210,18 @@ export const uploadWithPresignedUrl = async (
     uploadUrl: string,
     file: FileAsset,
 ): Promise<void> => {
-    const fileResponse = await fetch(file.uri);
-    const blob = await fileResponse.blob();
-
-    await fetch(uploadUrl, {
-        method: 'PUT',
-        body: blob,
+    const fsFile = new FSFile(file.uri);
+    const result = await fsFile.upload(uploadUrl, {
+        httpMethod: 'PUT',
+        uploadType: UploadType.BINARY_CONTENT,
         headers: {
             'Content-Type': file.type || 'application/octet-stream',
         },
     });
+
+    if (result.status < 200 || result.status >= 300) {
+        throw new Error(`Upload failed with status ${result.status}: ${result.body}`);
+    }
 };
 
 /**
@@ -231,7 +232,7 @@ export const createMediaRecord = async (
     profileId: string,
     url: string,
     type: MediaType,
-    options: { caption?: string; post_id?: string } = {}
+    options: { caption?: string; post_id?: string; thumbnail_url?: string | null; width?: number | null; height?: number | null } = {}
 ): Promise<UploadMediaResponse> => {
     const response = await client.post<UploadMediaResponse>(
         `/api/profiles/${profileId}/media/client/create`,
@@ -240,6 +241,9 @@ export const createMediaRecord = async (
             type,
             caption: options.caption,
             post_id: options.post_id,
+            thumbnail_url: options.thumbnail_url,
+            width: options.width,
+            height: options.height,
         }
     );
     return response.data;
@@ -270,6 +274,8 @@ export const uploadLargeMedia = async (
     return createMediaRecord(profileId, uploadInfo.readUrl, type, {
         caption: options.caption,
         post_id: options.post_id,
+        width: file.width || null,
+        height: file.height || null,
     });
 };
 

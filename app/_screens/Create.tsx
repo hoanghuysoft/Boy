@@ -56,6 +56,7 @@ interface CreatePostFormValues {
     isGhost: boolean;
     isAdult: boolean;
     selectedTrack: DeezerTrack | null;
+    useThirdPartyUpload: boolean;
 }
 
 // ============================================================================
@@ -191,6 +192,7 @@ const CreateScreen = () => {
             isGhost: params.edit_is_ghost === "true",
             isAdult: params.edit_is_adult === "true",
             selectedTrack: initialTrack,
+            useThirdPartyUpload: false,
         },
         validationSchema: createPostValidationSchema,
         validateOnChange: false,
@@ -210,16 +212,44 @@ const CreateScreen = () => {
 
                 // Upload media first if any (only when not editing)
                 if (!params.edit_post_id && values.selectedMedia.length > 0) {
-                    const files: FileAsset[] = values.selectedMedia.map((media) => ({
-                        uri: media.uri,
-                        name: media.name,
-                        type: media.type,
-                        fileSize: media.fileSize,
-                    }));
+                    if (values.useThirdPartyUpload) {
+                        const { uploadToThirdParty } = await import("../../services/thirdPartyUpload");
+                        const { createMediaRecord } = await import("../../services/mediaUpload");
+                        
+                        mediaIds = [];
+                        for (const media of values.selectedMedia) {
+                            const files: FileAsset = {
+                                uri: media.uri,
+                                name: media.name,
+                                type: media.type,
+                                fileSize: media.fileSize,
+                                width: media.width,
+                                height: media.height,
+                            };
 
-                    const uploadedMedia = await uploadMediaMutation.mutateAsync({ files });
+                            const uploadResult = await uploadToThirdParty(files);
+                            const mediaType = media.isVideo ? 'video' : 'photo';
+                            const createdRecord = await createMediaRecord(profileId, uploadResult.url, mediaType, {
+                                thumbnail_url: uploadResult.thumbnailUrl,
+                                width: uploadResult.width,
+                                height: uploadResult.height,
+                            });
+                            mediaIds.push(createdRecord.data.id);
+                        }
+                    } else {
+                        const files: FileAsset[] = values.selectedMedia.map((media) => ({
+                            uri: media.uri,
+                            name: media.name,
+                            type: media.type,
+                            fileSize: media.fileSize,
+                            width: media.width,
+                            height: media.height,
+                        }));
 
-                    mediaIds = uploadedMedia.map((m) => m.id);
+                        const uploadedMedia = await uploadMediaMutation.mutateAsync({ files });
+
+                        mediaIds = uploadedMedia.map((m) => m.id);
+                    }
                 }
 
                 // Create/Edit post with validated links
@@ -270,7 +300,7 @@ const CreateScreen = () => {
         },
     });
 
-    const { values, errors, isSubmitting, handleSubmit, setFieldValue, resetForm: formikResetForm } = formik;
+    const { values, isSubmitting, handleSubmit, setFieldValue, resetForm: formikResetForm } = formik;
 
     // ============================================================================
     // Helper Functions
@@ -381,6 +411,8 @@ const CreateScreen = () => {
                     type: asset.mimeType || (asset.type === "video" ? "video/mp4" : "image/jpeg"),
                     fileSize: asset.fileSize,
                     isVideo: asset.type === "video",
+                    width: asset.width,
+                    height: asset.height,
                 }));
                 setFieldValue('selectedMedia', [...values.selectedMedia, ...newMedia].slice(0, 10));
             }
@@ -404,10 +436,12 @@ const CreateScreen = () => {
                             type: asset.mimeType || (asset.type === "video" ? "video/mp4" : "image/jpeg"),
                             fileSize: asset.fileSize,
                             isVideo: asset.type === "video",
+                            width: asset.width,
+                            height: asset.height,
                         }));
                         setFieldValue('selectedMedia', [...values.selectedMedia, ...newMedia].slice(0, 10));
                     }
-                } catch (retryError) {
+                } catch {
                     setDialog({
                         visible: true,
                         title: t("create.dialog.errorTitle"),
@@ -437,7 +471,7 @@ const CreateScreen = () => {
                 i === index ? { ...link, [field]: value } : link
             ),
         }));
-    }, [formik.setValues]);
+    }, [formik]);
 
     const removeLink = useCallback((index: number) => {
         const updatedLinks = values.links.filter((_: Link, i: number) => i !== index);
@@ -527,7 +561,9 @@ const CreateScreen = () => {
                             common={common}
                             isGhost={values.isGhost}
                             isAdult={values.isAdult}
+                            useThirdPartyUpload={values.useThirdPartyUpload}
                             onToggleGhost={!params.repost_id ? () => setFieldValue('isGhost', !values.isGhost) : undefined}
+                            onToggleThirdPartyUpload={!params.repost_id ? () => setFieldValue('useThirdPartyUpload', !values.useThirdPartyUpload) : undefined}
                             onToggleAdult={!params.repost_id ? () => setFieldValue('isAdult', !values.isAdult) : undefined}
                             isAdmin={isAdmin}
                             onSwitchProfile={isAdmin ? openProfilePicker : undefined}
@@ -591,7 +627,7 @@ const CreateScreen = () => {
                                                 }}
                                                 numberOfLines={6}
                                             >
-                                                "{params.repost_content}"
+                                                &quot;{params.repost_content}&quot;
                                             </Card.Description>
                                         )}
                                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 }}>

@@ -31,6 +31,8 @@ const SettingsScreen = () => {
         showSensitiveContent, toggleShowSensitiveContent,
         showCarousel, toggleCarousel,
         videoCacheSizeLimit, setVideoCacheSizeLimit,
+        imgbbApiKey, setImgbbApiKey,
+        x02ApiKey, setX02ApiKey,
     } = useSettingsStore();
     const { trackerSource } = useMovieTrackerStore();
     const trackerSourceLabel = trackerSource === 'shows'
@@ -170,6 +172,60 @@ const SettingsScreen = () => {
 
             </Surface>
 
+            {/* ─── Third-Party Storage ────────────────────────────────── */}
+            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.thirdPartyStorage', 'Third-Party Cloud')}</FlexText>
+            <Surface variant="default">
+                {/* ImgBB API Key Input */}
+                <View style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
+                    <FlexText style={[common.body, { marginBottom: 8 }]}>ImgBB API Key</FlexText>
+                    <TextInput
+                        value={imgbbApiKey}
+                        onChangeText={setImgbbApiKey}
+                        placeholder="Enter ImgBB API Key"
+                        placeholderTextColor={colors.muted}
+                        secureTextEntry
+                        style={{
+                            backgroundColor: colors.card,
+                            borderRadius: 8,
+                            paddingHorizontal: 12,
+                            paddingVertical: 10,
+                            color: colors.text,
+                            fontSize: 14,
+                            borderWidth: 1,
+                            borderColor: colors.divider,
+                        }}
+                    />
+                    <FlexText style={[common.caption, { color: colors.muted, marginTop: 6 }]}>
+                        Required for image uploads.
+                    </FlexText>
+                </View>
+                <View style={styles.divider}></View>
+
+                {/* x02.me API Key Input */}
+                <View style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
+                    <FlexText style={[common.body, { marginBottom: 8 }]}>x02.me API Key (Optional)</FlexText>
+                    <TextInput
+                        value={x02ApiKey}
+                        onChangeText={setX02ApiKey}
+                        placeholder="Enter x02.me API Key"
+                        placeholderTextColor={colors.muted}
+                        secureTextEntry
+                        style={{
+                            backgroundColor: colors.card,
+                            borderRadius: 8,
+                            paddingHorizontal: 12,
+                            paddingVertical: 10,
+                            color: colors.text,
+                            fontSize: 14,
+                            borderWidth: 1,
+                            borderColor: colors.divider,
+                        }}
+                    />
+                    <FlexText style={[common.caption, { color: colors.muted, marginTop: 6 }]}>
+                        Optional for video uploads. Used for file deletion hooks.
+                    </FlexText>
+                </View>
+            </Surface>
 
             {/* ─── Service ────────────────────────────────────────────── */}
             {isAdmin && <><FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.service')}</FlexText>
