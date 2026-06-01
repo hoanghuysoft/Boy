@@ -120,22 +120,22 @@ export const ShotItem = React.memo(function ShotItem({
         setReadyToDisplay(false);
     }, [resolvedUri, player]);
 
-    // Ensure player is muted, paused and released when the component unmounts or player changes.
-    // Calling release() frees the native decoder thread and GPU memory — without it the Android
-    // system keeps the player object alive, accumulating decoder instances across many reels.
+    // Pause & mute when the player instance changes or the component unmounts.
+    // NOTE: do NOT call player.release() here — useVideoPlayer already releases
+    // the previous player when the source changes or on unmount. Calling release()
+    // ourselves causes ERR_USING_RELEASED_SHARED_OBJECT when our cleanup effect
+    // runs after useVideoPlayer has already freed the native object.
     useEffect(() => {
         return () => {
             if (player) {
                 try {
                     if (player.muted !== true) player.muted = true;
                     if (player.playing) player.pause();
-                    player.release();
-                } catch (e) {
-                    console.log(e)
-                }
+                } catch { /* player already released by useVideoPlayer — ignore */ }
             }
         };
     }, [player]);
+
 
     // ─── Immediately pause & mute when screen loses focus ─────────────────
     // This fires as soon as the user navigates away (e.g. to VideoPlayer), ensuring
