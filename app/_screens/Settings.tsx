@@ -5,16 +5,16 @@ import { useAdminCheck } from "@/services/userprofile";
 import { clearVideoCache, formatBytes, getCacheCount, getCacheSize, setMaxCacheSize } from "@/services/videoCache";
 import { useLanguageStore } from "@/stores/language";
 import { useMovieTrackerStore } from "@/stores/movieTracker";
-import { useSearchHistoryStore } from "@/stores/searchHistory";
+
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Logout3Bold } from '@solar-icons/react-native';
 import { Href, router } from "expo-router";
-import { Button, ControlField, Description, Dialog, Label, Select, Surface } from "heroui-native";
+import { Button, ControlField, Description, Dialog, Label, Select, Spinner, Surface } from "heroui-native";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 
@@ -30,9 +30,7 @@ const SettingsScreen = () => {
     const {
         showSensitiveContent, toggleShowSensitiveContent,
         showCarousel, toggleCarousel,
-        autoplayVideos, toggleAutoplayVideos,
         videoCacheSizeLimit, setVideoCacheSizeLimit,
-        profileDesign, setProfileDesign,
     } = useSettingsStore();
     const { trackerSource } = useMovieTrackerStore();
     const trackerSourceLabel = trackerSource === 'shows'
@@ -169,46 +167,9 @@ const SettingsScreen = () => {
                     </View>
                     <ControlField.Indicator />
                 </ControlField>
-                <View style={styles.divider}></View>
-                <ControlField
-                    isSelected={autoplayVideos}
-                    onSelectedChange={toggleAutoplayVideos}
-                    style={styles.option}
-                >
-                    <View style={{ flex: 1 }}>
-                        <Label>{t('settings.autoplayVideos')}</Label>
-                        <Description>{t('settings.autoplayVideosDescription')}</Description>
-                    </View>
-                    <ControlField.Indicator />
-                </ControlField>
+
             </Surface>
 
-            {/* ─── Experimental Features ──────────────────────────────── */}
-            <FlexText style={[styles.title, { marginTop: 24 }]}>Experimental Features</FlexText>
-            <Select
-                value={{ value: profileDesign, label: profileDesign === 'v3' ? 'Modern' : 'Classic' }}
-                onValueChange={(opt: any) => setProfileDesign(opt.value as 'v3' | 'classic')}
-                presentation="bottom-sheet"
-            >
-                <Select.Trigger asChild>
-                    <TouchableOpacity style={[styles.option]}>
-                        <View>
-                            <FlexText style={[common.body]}>Profile UIAB Test</FlexText>
-                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>
-                                {profileDesign === 'v3' ? 'Modern' : 'Classic'}
-                            </FlexText>
-                        </View>
-                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
-                    </TouchableOpacity>
-                </Select.Trigger>
-                <Select.Portal>
-                    <Select.Overlay />
-                    <Select.Content presentation="bottom-sheet" snapPoints={['35%']}>
-                        <Select.Item value="v3" label="Modern" />
-                        <Select.Item value="classic" label="Classic" />
-                    </Select.Content>
-                </Select.Portal>
-            </Select>
 
             {/* ─── Service ────────────────────────────────────────────── */}
             {isAdmin && <><FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.service')}</FlexText>
@@ -286,7 +247,7 @@ const SettingsScreen = () => {
                     <FlexText style={[common.body, { color: cacheSize === 0 ? colors.muted : '#ff4444' }]}>
                         {isClearing ? t('settings.clearCacheClearing') : t('settings.clearCacheIdle')}
                     </FlexText>
-                    {isClearing && <ActivityIndicator size="small" color={colors.muted} />}
+                    {isClearing && <Spinner size="md" color={colors.muted} />}
                 </TouchableOpacity>
             </Surface>
 
@@ -330,7 +291,7 @@ const SettingsScreen = () => {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <ActivityIndicator size="large" color={colors.text} />
+                        <Spinner size="lg" color={colors.text} />
                         <FlexText style={[common.body, { color: colors.text, marginTop: 12 }]}>{t('settings.loggingOut')}</FlexText>
                     </View>
                 </View>

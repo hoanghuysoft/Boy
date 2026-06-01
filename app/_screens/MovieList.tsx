@@ -34,6 +34,7 @@ import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
+import { Spinner } from "heroui-native";
 
 type ListMode = "similar" | "recommendations" | "tv_similar" | "tv_recommendations" | "now_playing" | "upcoming" | "popular" | "top_rated" | "popular_people" | "tv_airing_today" | "tv_on_the_air" | "tv_popular" | "tv_top_rated" | "tv_season_episodes";
 
@@ -300,7 +301,7 @@ const MovieListScreen = () => {
                     ]}
                 >
                     {isFetchingNextPage ? (
-                        <ActivityIndicator color={colors.text} />
+                        <Spinner size="md" color={colors.text} />
                     ) : (
                         <FlexText style={{ color: colors.text, fontWeight: "700" }}>Load more</FlexText>
                     )}

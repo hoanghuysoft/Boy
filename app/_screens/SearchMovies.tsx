@@ -23,6 +23,7 @@ import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
+import { Spinner } from "heroui-native";
 
 const SEARCH_BAR_HEIGHT = 58;
 
@@ -222,7 +223,7 @@ const SearchMoviesScreen = () => {
           ]}
         >
           {isFetchingNextPage ? (
-            <ActivityIndicator />
+            <Spinner size="md" />
           ) : (
             <FlexText style={{ color: colors.text, fontWeight: "700" }}>
               Load more

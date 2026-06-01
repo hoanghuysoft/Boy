@@ -71,7 +71,7 @@ const BulletinItem = memo(({
     }
 
     if (showDateDivider) {
-        const today = dayjs(currentTimestamp ?? Date.now()).startOf('day');
+        const today = dayjs(currentTimestamp).startOf('day');
         const itemDay = dayjs(item.create_time).startOf('day');
         if (itemDay.isSame(today)) {
             dateString = 'Today';
@@ -213,6 +213,7 @@ const Bulletinboard = () => {
     const insets = useSafeAreaInsets();
     const blurTargetRef = useRef(null);
     const { data: bulletinData, isLoading, isFetching, refetch } = useBulletinboard();
+    const [mountTime] = useState(() => Date.now());
 
     // We assume the first item's author is the channel owner
     const ownerInfo = bulletinData?.item_list?.[0]?.publish_user;
@@ -224,11 +225,11 @@ const Bulletinboard = () => {
             <BulletinItem
                 item={item}
                 olderItem={olderItem}
-                currentTimestamp={bulletinData?.current_timestamp}
+                currentTimestamp={bulletinData?.current_timestamp ?? mountTime}
                 colors={colors}
             />
         );
-    }, [bulletinData?.item_list, bulletinData?.current_timestamp, colors]);
+    }, [bulletinData?.item_list, bulletinData?.current_timestamp, mountTime, colors]);
 
 
     if (isLoading) {

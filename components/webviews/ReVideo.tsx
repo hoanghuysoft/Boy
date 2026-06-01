@@ -7,6 +7,7 @@ import { ActivityIndicator, BackHandler, Linking, TouchableOpacity, View } from 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type WebViewType from "react-native-webview";
 import WebView from "react-native-webview";
+import { Spinner } from "heroui-native";
 
 interface ReVideoProps {
     isUseSafeArea?: boolean;
@@ -83,7 +84,7 @@ const ReVideo = ({ isUseSafeArea = false, safeAreaColor = "transparent", urlWebv
             >
                 {isLoading && (
                     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                        <ActivityIndicator size="large" color="white" />
+                        <Spinner size="lg" color="white" />
                     </View>
                 )}
             </WebView>

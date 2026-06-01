@@ -16,7 +16,6 @@ import { useProfile } from "../services/userprofile";
 import { useInfiniteWorkplaces } from "../services/workplace";
 import { useAudioStore } from "../stores/audio";
 import { useScrollStore } from "../stores/scroll";
-import { useSettingsStore } from "../stores/settings";
 import { createCommonStyles } from "../styles/common";
 import { Media } from "../types/media";
 import { Post } from "../types/post";
@@ -50,8 +49,7 @@ export const useProfileViewModel = () => {
     const currentScrollY = useRef(0);
 
     // ─── State ─────────────────────────────────────────────────────
-    const profileDesign = useSettingsStore(s => s.profileDesign);
-    const defaultTab: TabType = profileDesign === 'v3' ? 'Feed' : 'Images';
+    const defaultTab: TabType = 'Feed';
 
     const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab);
     const [activeTab, setActiveTab] = useState<TabType>(defaultTab);
@@ -62,8 +60,8 @@ export const useProfileViewModel = () => {
     const [snackbarVisible, setSnackbarVisible] = useState(false);
 
     // ─── Lazy Loading Tab Queries ───────────────────────────────────
-    const [feedEnabled, setFeedEnabled] = useState(defaultTab === "Feed");
-    const [imagesEnabled, setImagesEnabled] = useState(defaultTab === "Images");
+    const [feedEnabled, setFeedEnabled] = useState(true);
+    const [imagesEnabled, setImagesEnabled] = useState(false);
     const [videosEnabled, setVideosEnabled] = useState(false);
 
     useEffect(() => {

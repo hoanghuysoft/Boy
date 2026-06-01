@@ -4,6 +4,7 @@ import {
   Rewind5SecondsBackBold,
   Rewind5SecondsForwardBold,
 } from "@solar-icons/react-native";
+import { Spinner } from "heroui-native";
 import React from "react";
 import {
   ActivityIndicator,
@@ -54,7 +55,7 @@ export const VideoPlaybackControls: React.FC<VideoPlaybackControlsProps> = ({
         onPress={onTogglePlayPause}
         style={styles.extraLargeButton}
       >
-        {isLoading && <ActivityIndicator size="large" color="white" />}
+        {isLoading && <Spinner size="lg" color="white" />}
         {!isLoading &&
           (isPaused ? (
             <PlayBold size={50} color="white" />

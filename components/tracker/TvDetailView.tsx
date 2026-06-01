@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
@@ -21,6 +22,7 @@ interface TvDetailViewProps {
 }
 
 export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
+    'use no memo';
     const inset = useSafeAreaInsets();
     const blurTargetRef = useRef<View | null>(null);
     // Defer heavy rendering until after push animation

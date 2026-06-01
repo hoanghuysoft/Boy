@@ -17,8 +17,7 @@ const settings = {
     adultFilterOff: '关闭',
     homeCarousel: '首页轮播',
     homeCarouselDescription: '轮播中可能包含敏感媒体内容。',
-    autoplayVideos: '自动播放视频',
-    autoplayVideosDescription: '在动态中自动播放视频。',
+
     storageCache: '存储与缓存',
     videoCache: '视频缓存',
     videoCacheDescription_one: '已缓存 {{count}} 个视频',

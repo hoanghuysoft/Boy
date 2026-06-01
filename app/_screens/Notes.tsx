@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Button, Dialog, SkeletonGroup } from "heroui-native";
+import { Button, Dialog, SkeletonGroup, Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -151,7 +151,7 @@ const NotesScreen = () => {
                             style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
                         >
                             {isDeleting ? (
-                                <ActivityIndicator size="small" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
+                                <Spinner size="md" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
                             ) : (
                                 <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
                                     {t("notes.list.deleteAction")}
@@ -168,7 +168,7 @@ const NotesScreen = () => {
         if (isFetchingNextPage) {
             return (
                 <View style={styles.footerLoader}>
-                    <ActivityIndicator size="small" color={colors.text} />
+                    <Spinner size="md" color={colors.text} />
                 </View>
             );
         }
@@ -192,14 +192,14 @@ const NotesScreen = () => {
                             <SkeletonGroup isLoading variant="pulse">
                                 {/* Title placeholder */}
                                 <SkeletonGroup.Item className="h-5 w-1/3 rounded-md" style={{ marginBottom: 10 }} />
-                                
+
                                 {/* Body placeholders */}
                                 <View style={{ gap: 8, marginBottom: 14 }}>
                                     <SkeletonGroup.Item className="h-4 w-full rounded-md" />
                                     <SkeletonGroup.Item className="h-4 w-5/6 rounded-md" />
                                     <SkeletonGroup.Item className="h-4 w-2/3 rounded-md" />
                                 </View>
-                                
+
                                 {/* Bottom row: date and actions */}
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <SkeletonGroup.Item className="h-3.5 w-16 rounded-md" />

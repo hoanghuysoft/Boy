@@ -4,7 +4,7 @@ import { BookmarkedPost } from "@/types/bookmarkedpost";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useRouter } from "expo-router";
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup, Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -103,7 +103,7 @@ const BookmarksScreen = () => {
             return (
                 <View style={styles.footerLoader}>
                     <View style={[styles.refreshIndicator, { backgroundColor: colors.card }]}>
-                        <ActivityIndicator size="small" color={colors.text} />
+                        <Spinner size="md" color={colors.text} />
                     </View>
                 </View>
             );

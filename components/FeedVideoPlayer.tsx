@@ -1,86 +1,192 @@
-import { useCachedVideoUri } from '@/hooks/useCachedVideoUri';
 import { useFeedVideoStore } from '@/stores/feedVideo';
-import React, { useCallback, useEffect, useRef } from 'react';
-import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
-import Video, { OnLoadData, VideoRef } from 'react-native-video';
+import { PauseBold, PlayBold, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
+import { BlueskyVideoView } from '@bsky.app/video';
+import React, { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ASPECT_RATIO = 3 / 4;
 const VIDEO_HEIGHT = SCREEN_WIDTH / ASPECT_RATIO;
 
 /**
- * FeedVideoPlayer - A singleton video player for the feed.
- * 
- * This component is rendered INSIDE the VideoCarouselItem slot when it is the
- * active video. It does NOT float/overlay — it renders inline in the cell.
- * 
- * RecyclerListView recycling is safe because:
- * - The parent VideoCarouselItem conditionally renders this only when postId matches
- * - When the cell is recycled, PostMediaCarousel re-evaluates with new post data
- * - The store's activePostId won't match, so the old cell gets a thumbnail instead
+ * FeedVideoPlayer — Uses Bluesky's native video component (@bsky.app/video).
+ *
+ * Unlike the old react-native-video approach, BlueskyVideoView handles:
+ *   - Native-level autoplay tied to scroll position (via updateActiveVideoViewAsync)
+ *   - HLS streaming with automatic quality adaptation
+ *   - Efficient memory management (only one video active at a time, natively)
+ *   - Fullscreen transitions
+ *
+ * The `autoplay` prop + `updateActiveVideoViewAsync` (called from List.tsx on
+ * scroll settle) work together: the native module tracks all mounted
+ * BlueskyVideoView instances and activates the one most visible on screen.
  */
-export const FeedVideoPlayer: React.FC = React.memo(() => {
-    const videoRef = useRef<VideoRef>(null);
-    const activeVideoUrl = useFeedVideoStore(s => s.activeVideoUrl);
+
+interface FeedVideoPlayerProps {
+    videoUrl: string;
+}
+
+export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ videoUrl }) => {
     const isMuted = useFeedVideoStore(s => s.isMuted);
-    const isEnded = useFeedVideoStore(s => s.isEnded);
     const setEnded = useFeedVideoStore(s => s.setEnded);
-    const [isBuffering, setIsBuffering] = React.useState(true);
+    const videoRef = useRef<BlueskyVideoView>(null);
 
-    // Resolve against video cache — if Shots already downloaded this video,
-    // play from local storage for instant start.
-    const resolvedVideoUrl = useCachedVideoUri(activeVideoUrl);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isActive, setIsActive] = useState(false);
+    const [timeRemaining, setTimeRemaining] = useState(0);
 
-    // When the video ends, mark it as ended (show replay button, don't loop)
-    const handleEnd = useCallback(() => {
-        setEnded(true);
-        videoRef.current?.seek(0);
-    }, [setEnded]);
-
-    const handleLoad = useCallback((_data: OnLoadData) => {
-        setIsBuffering(false);
+    const handleTogglePlayback = useCallback(() => {
+        videoRef.current?.togglePlayback();
     }, []);
 
-    const handleBuffer = useCallback(({ isBuffering: buffering }: { isBuffering: boolean }) => {
-        setIsBuffering(buffering);
+    const handleEnterFullscreen = useCallback(() => {
+        videoRef.current?.enterFullscreen(true);
     }, []);
 
-    // Reset buffering state when video URL changes
-    useEffect(() => {
-        if (activeVideoUrl) {
-            setIsBuffering(true);
-        }
-    }, [activeVideoUrl]);
+    const formattedTime = React.useMemo(() => {
+        if (isNaN(timeRemaining) || timeRemaining < 0) return '0:00';
+        const mins = Math.floor(timeRemaining / 60);
+        const secs = Math.floor(timeRemaining % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }, [timeRemaining]);
 
-    if (!resolvedVideoUrl || isEnded) {
+    if (!videoUrl) {
         return null;
     }
 
     return (
-        <View style={styles.container} pointerEvents="none">
-            <Video
+        <View style={styles.container}>
+            <BlueskyVideoView
                 ref={videoRef}
-                source={{ uri: resolvedVideoUrl }}
+                url={videoUrl}
+                autoplay={true}
+                beginMuted={isMuted}
                 style={styles.video}
-                resizeMode="cover"
-                controls={false}
-                muted={isMuted}
-                paused={false}
-                repeat={false}
-                onEnd={handleEnd}
-                onLoad={handleLoad}
-                onBuffer={handleBuffer}
-                bufferConfig={{
-                    minBufferMs: 2000,
-                    maxBufferMs: 10000,
-                    bufferForPlaybackMs: 500,
-                    bufferForPlaybackAfterRebufferMs: 1000,
+                onActiveChange={e => {
+                    setIsActive(e.nativeEvent.isActive);
                 }}
+                onLoadingChange={e => {
+                    setIsLoading(e.nativeEvent.isLoading);
+                }}
+                onMutedChange={e => {
+                    useFeedVideoStore.getState().setMuted(e.nativeEvent.isMuted);
+                }}
+                onStatusChange={e => {
+                    setIsPlaying(e.nativeEvent.status === 'playing');
+                    if (e.nativeEvent.status === 'paused' && !isActive) {
+                        setEnded(true);
+                    }
+                }}
+                onTimeRemainingChange={e => {
+                    setTimeRemaining(e.nativeEvent.timeRemaining);
+                }}
+                onError={e => {
+                    console.warn('[FeedVideoPlayer] Error:', e.nativeEvent.error);
+                }}
+                accessibilityLabel="Video"
+                accessibilityHint=""
             />
-            {isBuffering && (
-                <View style={styles.bufferingOverlay}>
-                    <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />
+
+            {/* Controls overlay: visible when video is active and not loading. */}
+            {isActive && !isLoading && (
+                <>
+                    {/* Fullscreen tap area */}
+                    <Pressable
+                        onPress={handleEnterFullscreen}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    {/* Play/Pause Button */}
+                    <Pressable
+                        onPress={handleTogglePlayback}
+                        style={{
+                            position: 'absolute',
+                            left: 12,
+                            bottom: 12,
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 10,
+                        }}
+                    >
+                        {isPlaying ? (
+                            <PauseBold size={16} color="#ffffff" />
+                        ) : (
+                            <PlayBold size={16} color="#ffffff" />
+                        )}
+                    </Pressable>
+                    {/* Time remaining badge */}
+                    <View
+                        style={{
+                            position: 'absolute',
+                            left: 56,
+                            bottom: 12,
+                            height: 36,
+                            paddingHorizontal: 12,
+                            borderRadius: 18,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 10,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                color: '#ffffff',
+                                fontSize: 12,
+                                fontWeight: '600',
+                                fontVariant: ['tabular-nums'],
+                            }}
+                        >
+                            {formattedTime}
+                        </Text>
+                    </View>
+                    {/* Mute/Unmute Button */}
+                    <Pressable
+                        onPress={() => videoRef.current?.toggleMuted()}
+                        style={{
+                            position: 'absolute',
+                            right: 12,
+                            bottom: 12,
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 10,
+                        }}
+                    >
+                        {isMuted ? (
+                            <VolumeCrossBold size={16} color="#ffffff" />
+                        ) : (
+                            <VolumeLoudBold size={16} color="#ffffff" />
+                        )}
+                    </Pressable>
+                </>
+            )}
+
+            {/* Loading spinner overlay — matches Bluesky's pattern */}
+            {isActive && isLoading && (
+                <View style={styles.loadingOverlay} pointerEvents="none">
+                    <ActivityIndicator size="large" color="white" />
                 </View>
+            )}
+
+            {/* Thumbnail overlay when not active (native manages this, but we
+                add a play button hint for UX consistency) */}
+            {!isActive && (
+                <Pressable
+                    onPress={handleTogglePlayback}
+                    style={styles.inactiveOverlay}
+                >
+                    <View style={styles.playButton}>
+                        <PlayBold size={28} color="#ffffff" />
+                    </View>
+                </Pressable>
             )}
         </View>
     );
@@ -96,9 +202,32 @@ const styles = StyleSheet.create({
     video: {
         width: '100%',
         height: '100%',
+        borderRadius: 4,
     },
-    bufferingOverlay: {
-        ...StyleSheet.absoluteFill,
+    loadingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    inactiveOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0,0,0,0.1)',
+    },
+    playButton: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: 'rgba(0,0,0,0.4)',
         justifyContent: 'center',
         alignItems: 'center',
     },

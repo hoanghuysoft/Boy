@@ -129,7 +129,7 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                                 style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
                             >
                                 {isDeleting ? (
-                                    <ActivityIndicator size="small" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
+                                    <Spinner size="md" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
                                 ) : (
                                     <FlexText style={{ color: colors.muted, fontSize: 12, fontWeight: '600' }}>
                                         {deleteLabel}

@@ -52,7 +52,6 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
 
     // ─── Player State ───────────────────────────────────────────
     const [activeIndex, setActiveIndex] = useState(0);
-    const [isMuted, setIsMuted] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
 
@@ -164,10 +163,6 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
         }
     }, [feedType]);
 
-    const toggleMute = useCallback(() => {
-        setIsMuted(prev => !prev);
-    }, []);
-
     const togglePause = useCallback(() => {
         setIsPaused(prev => !prev);
     }, []);
@@ -270,7 +265,6 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
         // Player State
         activeIndex,
         activeVideo,
-        isMuted,
         isPaused,
         isBuffering,
         preloadIndices,
@@ -292,7 +286,6 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
 
         // Handlers
         switchFeedType,
-        toggleMute,
         togglePause,
         onViewableItemsChanged,
         viewabilityConfig,

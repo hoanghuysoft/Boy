@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
+import { Spinner } from "heroui-native";
 
 // ============================================================================
 // CreateScreenHeader Component
@@ -30,52 +31,53 @@ export const CreateScreenHeader = memo(({
     onSubmit,
 }: CreateScreenHeaderProps) => {
     const { t } = useTranslation();
-    
-    return (
-    <View
-        style={[
-            createStyles.header,
-            {
-                backgroundColor: colors.background,
-                paddingTop: topPadding,
-            },
-        ]}
-    >
-        <View style={{ flex: 1, flexShrink: 1, marginRight: 12 }}>
-            <FlexText style={[common.heading, { fontSize: 28 }]} numberOfLines={1}>
-                {t('create.header.title')}
-            </FlexText>
-            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
-                {t('create.header.subtitle')}
-            </FlexText>
-        </View>
 
-        <TouchableOpacity
+    return (
+        <View
             style={[
-                createStyles.submitButton,
+                createStyles.header,
                 {
-                    backgroundColor: canSubmit ? COLORS.primary : colors.divider,
-                    flexShrink: 0,
+                    backgroundColor: colors.background,
+                    paddingTop: topPadding,
                 },
             ]}
-            onPress={onSubmit}
-            disabled={!canSubmit}
         >
-            {isSubmitting ? (
-                <ActivityIndicator size="small" color="#fff" />
-            ) : (
-                <>
-                    <FontAwesome name="send" size={16} color="#fff" />
-                    <FlexText
-                        style={createStyles.submitButtonText}
-                        numberOfLines={1}
-                    >
-                        {t('create.action.post')}
-                    </FlexText>
-                </>
-            )}
-        </TouchableOpacity>
-    </View>
-);});
+            <View style={{ flex: 1, flexShrink: 1, marginRight: 12 }}>
+                <FlexText style={[common.heading, { fontSize: 28 }]} numberOfLines={1}>
+                    {t('create.header.title')}
+                </FlexText>
+                <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
+                    {t('create.header.subtitle')}
+                </FlexText>
+            </View>
+
+            <TouchableOpacity
+                style={[
+                    createStyles.submitButton,
+                    {
+                        backgroundColor: canSubmit ? COLORS.primary : colors.divider,
+                        flexShrink: 0,
+                    },
+                ]}
+                onPress={onSubmit}
+                disabled={!canSubmit}
+            >
+                {isSubmitting ? (
+                    <Spinner size="md" color="#fff" />
+                ) : (
+                    <>
+                        <FontAwesome name="send" size={16} color="#fff" />
+                        <FlexText
+                            style={createStyles.submitButtonText}
+                            numberOfLines={1}
+                        >
+                            {t('create.action.post')}
+                        </FlexText>
+                    </>
+                )}
+            </TouchableOpacity>
+        </View>
+    );
+});
 
 CreateScreenHeader.displayName = "CreateScreenHeader";

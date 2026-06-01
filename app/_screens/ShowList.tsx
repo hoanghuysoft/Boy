@@ -20,6 +20,7 @@ import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
+import { Spinner } from "heroui-native";
 
 type Mode = "category" | "tag";
 
@@ -149,7 +150,7 @@ const ShowListScreen = () => {
           ]}
         >
           {isFetchingNextPage ? (
-            <ActivityIndicator color={colors.text} />
+            <Spinner size="md" color={colors.text} />
           ) : (
             <FlexText style={{ color: colors.text, fontWeight: "700" }}>Load more</FlexText>
           )}

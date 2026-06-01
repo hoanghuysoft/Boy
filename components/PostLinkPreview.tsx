@@ -12,6 +12,7 @@ import {
     View,
 } from 'react-native';
 import { ThemeColors } from '../context/ThemeContext';
+import { Spinner } from "heroui-native";
 
 // ─── Module-level cache ───────────────────────────────────────────────────────
 // Keyed by URL. Stores the settled PreviewData (or null on error/no-data).
@@ -134,7 +135,7 @@ export const PostLinkPreview = React.memo(
                     }]}
                 >
                     <View style={styles.loadingRow}>
-                        <ActivityIndicator size="small" color={colors.muted} />
+                        <Spinner size="md" color={colors.muted} />
                         <Text style={[styles.loadingText, { color: colors.muted }]} numberOfLines={1}>
                             {domain}
                         </Text>

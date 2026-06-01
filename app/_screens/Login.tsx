@@ -5,6 +5,7 @@ import { Image } from "expo-image";
 import { ActivityIndicator, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLoginViewModel } from "../../viewmodels/LoginViewModel";
+import { Spinner } from "heroui-native";
 
 const LoginScreen = () => {
     const { colors, typography } = useThemeContext();
@@ -47,7 +48,7 @@ const LoginScreen = () => {
             >
                 <View style={style.modalOverlay}>
                     <View style={[style.modalContent, { backgroundColor: colors.containerContent || colors.card }]}>
-                        <ActivityIndicator size="large" color={colors.text} />
+                        <Spinner size="lg" color={colors.text} />
                         <FlexText style={[common.body, { color: colors.text, marginTop: 12, textAlign: "center" }]}>Signing in...</FlexText>
                     </View>
                 </View>

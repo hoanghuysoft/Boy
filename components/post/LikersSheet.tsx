@@ -1,6 +1,6 @@
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Image as ExpoImage } from "expo-image";
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup, Spinner } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -108,7 +108,7 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
             if (isFetchingNextPage) {
                 return (
                     <View style={styles.footerLoader}>
-                        <ActivityIndicator size="small" color={colors.text} />
+                        <Spinner size="md" color={colors.text} />
                     </View>
                 );
             }

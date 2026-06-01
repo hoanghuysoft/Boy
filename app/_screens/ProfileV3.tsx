@@ -1,6 +1,6 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
-import { SkeletonGroup, Spinner, Surface } from 'heroui-native';
+import { SkeletonGroup, Spinner, Tabs } from 'heroui-native';
 import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -37,7 +37,6 @@ import { LikersSheet } from "@/components/post/LikersSheet";
 import { BriefInfoSheet } from "@/components/profile/sheets/BriefInfoSheet";
 import { RelationshipSheet } from "@/components/profile/sheets/RelationshipSheet";
 import { BlurTargetView, BlurView } from "expo-blur";
-import { Tabs } from "heroui-native";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
 import { ProfileGalleryModal } from "../../components/gallery/ProfileGalleryModal";
 import { SpinningArtwork } from "../../components/profile/SpinningArtwork";
@@ -118,18 +117,95 @@ const ProfileSkeleton: React.FC = () => {
 // ─── ProfileContent — PagerWithHeader-based architecture ───────────────────────
 const ProfileContent = () => {
   const vm = useProfileViewModel();
+  const {
+    colors,
+    theme,
+    common,
+    inset,
+    router,
+    isMe,
+    isOwner,
+    listRef,
+    musicSheetRef,
+    socialSheetRef,
+    addressSheetRef,
+    workplaceSheetRef,
+    familySheetRef,
+    briefSheetRef,
+    optionsSheetRef,
+    likersSheetRef,
+    commentsSheetRef,
+    blurTargetRef,
+    profile,
+    isProfileLoading,
+    isProfileRefetching,
+    isProfilePlaceholder,
+    myProfile,
+    selectedTab,
+    activeTab,
+    music,
+    socialLinks,
+    addresses,
+    workplaces,
+    photos,
+    videos,
+    feedPosts,
+    hasMusic,
+    currentTrack,
+    imageCount,
+    videoCount,
+    postCount,
+    isPhotosLoading,
+    isVideosLoading,
+    isFeedLoading,
+    isFetchingNextPhotos,
+    isFetchingNextVideos,
+    galleryVisible,
+    galleryIndex,
+    snackbarVisible,
+    selectedPost,
+    selectedLikePostId,
+    selectedCommentPostId,
+    scrollY,
+    showScrollTop,
+    showHeaderAvatar,
+    scrollTopButtonOpacity,
+    onScroll,
+    onScrollYChange,
+    stableTabChange,
+    handleVideoPress,
+    handleImagePress,
+    handleMusicPress,
+    onRefresh,
+    handleEndReached,
+    handleMusicEndReached,
+    handleSocialEndReached,
+    handleAddressesEndReached,
+    handleWorkplacesEndReached,
+    handlePostDeleted,
+    handlePostOptionsPress,
+    handleLikeCountPress,
+    handleCommentPress,
+    handleCommentSheetDismiss,
+    handleLikersSheetDismiss,
+    scrollToTop,
+    dismissSnackbar,
+    closeGallery,
+    isMusicPlaying,
+    safePresent,
+  } = vm;
   const { t } = useTranslation();
 
   // ─── Header avatar spring animation (native thread via Reanimated) ───
   const headerAvatarProgress = useSharedValue(0);
 
   useEffect(() => {
-    headerAvatarProgress.value = withSpring(vm.showHeaderAvatar ? 1 : 0, {
+    headerAvatarProgress.value = withSpring(showHeaderAvatar ? 1 : 0, {
       damping: 14,
       stiffness: 180,
       mass: 0.8,
     });
-  }, [vm.showHeaderAvatar, headerAvatarProgress]);
+  }, [showHeaderAvatar, headerAvatarProgress]);
 
   const headerAvatarContainerStyle = useAnimatedStyle(() => {
     const layoutProgress = Math.min(1, Math.max(0, headerAvatarProgress.value));
@@ -155,10 +231,10 @@ const ProfileContent = () => {
     estimatedItemSize: imageEstimatedItemSize,
     renderQuickPreview: renderImageQuickPreview,
   } = useImageGrid({
-    photos: vm.photos,
-    onImagePress: vm.handleImagePress,
-    loading: vm.isPhotosLoading,
-    fetchingMore: vm.isFetchingNextPhotos
+    photos: photos,
+    onImagePress: handleImagePress,
+    loading: isPhotosLoading,
+    fetchingMore: isFetchingNextPhotos
   });
 
   const {
@@ -168,10 +244,10 @@ const ProfileContent = () => {
     estimatedItemSize: videoEstimatedItemSize,
     renderQuickPreview: renderVideoQuickPreview,
   } = useImageGrid({
-    photos: vm.videos,
-    onVideoPress: vm.handleVideoPress,
-    loading: vm.isVideosLoading,
-    fetchingMore: vm.isFetchingNextVideos
+    photos: videos,
+    onVideoPress: handleVideoPress,
+    loading: isVideosLoading,
+    fetchingMore: isFetchingNextVideos
   });
 
   // ─── Tab items for PagerWithHeader ────────────────────────────────
@@ -186,41 +262,41 @@ const ProfileContent = () => {
   // ─── Page selection tracking ──────────────────────────────────────
   const onPageSelected = useCallback((index: number) => {
     const tabKey = tabKeys[index] as "Feed" | "Images" | "Videos";
-    vm.stableTabChange(tabKey);
-  }, [tabKeys, vm.stableTabChange]);
+    stableTabChange(tabKey);
+  }, [tabKeys, stableTabChange]);
 
   // ─── Header renderer for PagerWithHeader ──────────────────────────
   const renderHeader = useCallback(({ setMinimumHeight }: { setMinimumHeight: (h: number) => void }) => {
     // Tell PagerWithHeader: when collapsed, keep this much header visible
     // so the tab bar sticks below the floating back button + music pill.
     // Floating overlay: top = inset.top + 8, height = 40, gap = 8 → total = inset.top + 56
-    setMinimumHeight(vm.inset.top + 56);
+    setMinimumHeight(inset.top + 56);
 
     return (
       <ProfileHeaderV3
-        scrollY={vm.scrollY}
-        activeTab={vm.selectedTab as any}
-        onTabChange={vm.stableTabChange}
-        profile={vm.profile}
-        isMe={vm.isMe}
-        isOwner={vm.isOwner}
-        musicSheetRef={vm.musicSheetRef}
-        socialSheetRef={vm.socialSheetRef}
-        addressSheetRef={vm.addressSheetRef}
-        workplaceSheetRef={vm.workplaceSheetRef}
-        workplaces={vm.workplaces}
-        music={vm.music}
-        socialLinks={vm.socialLinks}
-        addresses={vm.addresses}
-        imageCount={vm.imageCount}
-        videoCount={vm.videoCount}
-        postCount={vm.postCount}
-        familySheetRef={vm.familySheetRef}
-        briefSheetRef={vm.briefSheetRef}
-        onPresentSheet={vm.safePresent}
+        scrollY={scrollY}
+        activeTab={selectedTab as any}
+        onTabChange={stableTabChange}
+        profile={profile}
+        isMe={isMe}
+        isOwner={isOwner}
+        musicSheetRef={musicSheetRef}
+        socialSheetRef={socialSheetRef}
+        addressSheetRef={addressSheetRef}
+        workplaceSheetRef={workplaceSheetRef}
+        workplaces={workplaces}
+        music={music}
+        socialLinks={socialLinks}
+        addresses={addresses}
+        imageCount={imageCount}
+        videoCount={videoCount}
+        postCount={postCount}
+        familySheetRef={familySheetRef}
+        briefSheetRef={briefSheetRef}
+        onPresentSheet={safePresent}
       />
     );
-  }, [vm.scrollY, vm.selectedTab, vm.stableTabChange, vm.profile, vm.isMe, vm.isOwner, vm.musicSheetRef, vm.socialSheetRef, vm.addressSheetRef, vm.workplaceSheetRef, vm.workplaces, vm.music, vm.socialLinks, vm.addresses, vm.imageCount, vm.videoCount, vm.postCount, vm.familySheetRef, vm.briefSheetRef, vm.safePresent, vm.inset.top]);
+  }, [scrollY, selectedTab, stableTabChange, profile, isMe, isOwner, musicSheetRef, socialSheetRef, addressSheetRef, workplaceSheetRef, workplaces, music, socialLinks, addresses, imageCount, videoCount, postCount, familySheetRef, briefSheetRef, safePresent, inset.top]);
 
   // ─── Tab bar renderer for PagerWithHeader ──────────────────────────
   const renderTabBar = useCallback(({ items, currentPage, onSelect }: {
@@ -228,11 +304,11 @@ const ProfileContent = () => {
     currentPage: number
     onSelect?: (index: number) => void
   }) => {
-    const activeTab = tabKeys[currentPage];
+    const activeTabVal = tabKeys[currentPage];
     return (
       <View style={{ paddingHorizontal: 12 }}>
         <Tabs
-          value={activeTab}
+          value={activeTabVal}
           onValueChange={(val: any) => {
             const idx = tabKeys.indexOf(val);
             if (idx !== -1) onSelect?.(idx);
@@ -252,19 +328,19 @@ const ProfileContent = () => {
         </Tabs>
       </View>
     );
-  }, [tabKeys, vm.colors.background]);
+  }, [tabKeys]);
 
   // ─── Empty component factory ──────────────────────────────────────
   const makeEmptyComponent = useCallback((tabKey: string) => {
     const isLoading =
-      (tabKey === "Images" && vm.isPhotosLoading) ||
-      (tabKey === "Videos" && vm.isVideosLoading) ||
-      (tabKey === "Feed" && vm.isFeedLoading);
+      (tabKey === "Images" && isPhotosLoading) ||
+      (tabKey === "Videos" && isVideosLoading) ||
+      (tabKey === "Feed" && isFeedLoading);
 
     if (isLoading) {
       return (
         <View style={{ paddingVertical: 80, justifyContent: 'center', alignItems: 'center' }}>
-          <Spinner size="lg" color={vm.colors.secondary} />
+          <Spinner size="lg" color={colors.secondary} />
         </View>
       );
     }
@@ -287,50 +363,50 @@ const ProfileContent = () => {
     }
     return (
       <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-        <FlexText style={vm.common.subheading}>{title}</FlexText>
-        <FlexText style={[vm.common.body, styles.emptyMessage]}>{message}</FlexText>
+        <FlexText style={common.subheading}>{title}</FlexText>
+        <FlexText style={[common.body, styles.emptyMessage]}>{message}</FlexText>
       </View>
     );
-  }, [vm.common, t, vm.isPhotosLoading, vm.isVideosLoading, vm.isFeedLoading]);
+  }, [common, t, isPhotosLoading, isVideosLoading, isFeedLoading, colors.secondary]);
 
   // ─── Feed tab renderer ────────────────────────────────────────────
   const renderFeedTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
     return (
       <List
         ref={scrollElRef as React.RefObject<FlatList>}
-        data={vm.feedPosts}
+        data={feedPosts}
         renderItem={({ item }: { item: Post }) => (
           <PostItem
             post={item}
             key={item.id}
-            onOptionsPress={vm.handlePostOptionsPress}
-            onLikeCountPress={vm.handleLikeCountPress}
-            onCommentPress={vm.handleCommentPress}
+            onOptionsPress={handlePostOptionsPress}
+            onLikeCountPress={handleLikeCountPress}
+            onCommentPress={handleCommentPress}
           />
         )}
         keyExtractor={(item: Post) => item.id || String(Math.random())}
         headerOffset={headerHeight}
-        progressBackgroundColor={vm.colors.card}
+        progressBackgroundColor={colors.card}
         initialNumToRender={6}
         windowSize={5}
         maxToRenderPerBatch={5}
         removeClippedSubviews={Platform.OS === 'android'}
-        refreshing={vm.isProfileRefetching}
-        onRefresh={vm.onRefresh}
-        refreshTintColor={vm.colors.text}
-        progressViewOffset={vm.inset.top + 30}
+        refreshing={isProfileRefetching}
+        onRefresh={onRefresh}
+        refreshTintColor={colors.text}
+        progressViewOffset={inset.top + 30}
         onEndReached={() => {
-          if (vm.activeTab === "Feed") vm.handleEndReached();
+          if (activeTab === "Feed") handleEndReached();
         }}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={makeEmptyComponent("Feed")}
-        contentContainerStyle={{ paddingBottom: vm.isMe ? 100 + vm.inset.bottom : vm.inset.bottom + 10 }}
+        contentContainerStyle={{ paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
         showsVerticalScrollIndicator={false}
-        onScrollY={vm.onScrollYChange}
+        onScrollY={onScrollYChange}
         ListHeaderComponent={<View style={{ height: 12 }} />}
       />
     );
-  }, [vm.feedPosts, vm.handlePostOptionsPress, vm.handleLikeCountPress, vm.handleCommentPress, vm.isProfileRefetching, vm.onRefresh, vm.colors.text, vm.inset, vm.isMe, vm.handleEndReached, vm.activeTab, makeEmptyComponent, vm.onScrollYChange]);
+  }, [colors.card, feedPosts, handlePostOptionsPress, handleLikeCountPress, handleCommentPress, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange]);
 
   // ─── Images tab renderer ──────────────────────────────────────────
   const renderImagesTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
@@ -344,24 +420,24 @@ const ProfileContent = () => {
         initialNumToRender={6}
         windowSize={5}
         maxToRenderPerBatch={5}
-        progressBackgroundColor={vm.colors.card}
+        progressBackgroundColor={colors.card}
         removeClippedSubviews={Platform.OS === 'android'}
-        refreshing={vm.isProfileRefetching}
-        onRefresh={vm.onRefresh}
-        refreshTintColor={vm.colors.text}
-        progressViewOffset={vm.inset.top + 30}
+        refreshing={isProfileRefetching}
+        onRefresh={onRefresh}
+        refreshTintColor={colors.text}
+        progressViewOffset={inset.top + 30}
         onEndReached={() => {
-          if (vm.activeTab === "Images") vm.handleEndReached();
+          if (activeTab === "Images") handleEndReached();
         }}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={makeEmptyComponent("Images")}
-        contentContainerStyle={{ paddingBottom: vm.isMe ? 100 + vm.inset.bottom : vm.inset.bottom + 10 }}
+        contentContainerStyle={{ paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
         showsVerticalScrollIndicator={false}
-        onScrollY={vm.onScrollYChange}
+        onScrollY={onScrollYChange}
         ListHeaderComponent={<View style={{ height: 12 }} />}
       />
     );
-  }, [imageChunkedRows, renderImageChunkedRow, imageChunkedKeyExtractor, vm.isProfileRefetching, vm.onRefresh, vm.colors.text, vm.inset, vm.isMe, vm.handleEndReached, vm.activeTab, makeEmptyComponent, vm.onScrollYChange]);
+  }, [colors.card, imageChunkedRows, renderImageChunkedRow, imageChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange]);
 
   // ─── Videos tab renderer ──────────────────────────────────────────
   const renderVideosTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
@@ -376,50 +452,50 @@ const ProfileContent = () => {
         windowSize={5}
         maxToRenderPerBatch={5}
         removeClippedSubviews={Platform.OS === 'android'}
-        refreshing={vm.isProfileRefetching}
-        onRefresh={vm.onRefresh}
-        refreshTintColor={vm.colors.text}
-        progressBackgroundColor={vm.colors.card}
-        progressViewOffset={vm.inset.top + 30}
+        refreshing={isProfileRefetching}
+        onRefresh={onRefresh}
+        refreshTintColor={colors.text}
+        progressBackgroundColor={colors.card}
+        progressViewOffset={inset.top + 30}
         onEndReached={() => {
-          if (vm.activeTab === "Videos") vm.handleEndReached();
+          if (activeTab === "Videos") handleEndReached();
         }}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={makeEmptyComponent("Videos")}
-        contentContainerStyle={{ paddingBottom: vm.isMe ? 100 + vm.inset.bottom : vm.inset.bottom + 10 }}
+        contentContainerStyle={{ paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
         showsVerticalScrollIndicator={false}
-        onScrollY={vm.onScrollYChange}
+        onScrollY={onScrollYChange}
         ListHeaderComponent={<View style={{ height: 12 }} />}
       />
     );
-  }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, vm.isProfileRefetching, vm.onRefresh, vm.colors.text, vm.inset, vm.isMe, vm.handleEndReached, vm.activeTab, makeEmptyComponent, vm.onScrollYChange]);
+  }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange]);
 
   // Loading / Error state
-  if (!vm.profile) {
+  if (!profile) {
     return (
-      <View style={vm.common.screen}>
+      <View style={common.screen}>
         <ScrollView
-          style={vm.common.screen}
+          style={common.screen}
           contentContainerStyle={{ flexGrow: 1 }}
           refreshControl={
             <RefreshControl
-              refreshing={vm.isProfileRefetching}
-              onRefresh={vm.onRefresh}
-              tintColor={vm.colors.text}
-              colors={[vm.colors.text]}
+              refreshing={isProfileRefetching}
+              onRefresh={onRefresh}
+              tintColor={colors.text}
+              colors={[colors.text]}
               style={{ zIndex: 10 }}
-              progressViewOffset={vm.inset.top + 30}
+              progressViewOffset={inset.top + 30}
             />
           }
         >
-          <ProfileSkeletonInner insets={vm.inset} />
+          <ProfileSkeletonInner insets={inset} />
         </ScrollView>
         <Snackbar
-          visible={vm.snackbarVisible}
-          onDismiss={vm.dismissSnackbar}
+          visible={snackbarVisible}
+          onDismiss={dismissSnackbar}
           action={{
             label: t("profile.actions.retry"),
-            onPress: vm.onRefresh,
+            onPress: onRefresh,
           }}>
           {t("profile.errors.failedToLoadProfile")}
         </Snackbar>
@@ -429,28 +505,28 @@ const ProfileContent = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={vm.common.screen}>
-        <BlurTargetView ref={vm.blurTargetRef} style={{ flex: 1 }}>
+      <View style={common.screen}>
+        <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
           {renderImageQuickPreview()}
           {renderVideoQuickPreview()}
           <ProfileGalleryModal
-            visible={vm.galleryVisible}
-            photos={vm.photos}
-            music={vm.music}
-            initialIndex={vm.galleryIndex}
-            onClose={vm.closeGallery}
-            profileName={vm.profile?.name}
-            isVerified={vm.profile?.is_verified}
+            visible={galleryVisible}
+            photos={photos}
+            music={music}
+            initialIndex={galleryIndex}
+            onClose={closeGallery}
+            profileName={profile?.name}
+            isVerified={profile?.is_verified}
           />
           <GalleryModal />
 
           {/* ─── PagerWithHeader: the collapsible header + tab architecture ─── */}
           <PagerWithHeader
             items={tabItems}
-            isHeaderReady={!!vm.profile}
+            isHeaderReady={!!profile}
             renderHeader={renderHeader}
             renderTabBar={renderTabBar}
-            initialPage={tabKeys.indexOf(vm.selectedTab as string)}
+            initialPage={tabKeys.indexOf(selectedTab as string)}
             onPageSelected={onPageSelected}
             allowHeaderOverScroll>
             {renderFeedTab}
@@ -460,14 +536,14 @@ const ProfileContent = () => {
         </BlurTargetView>
 
         {/* Floating back button + avatar + music pill overlay */}
-        <View style={{ position: 'absolute', top: vm.inset.top + 8, left: 16, zIndex: 1 }}>
+        <View style={{ position: 'absolute', top: inset.top + 8, left: 16, zIndex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
 
             {/* Back Button */}
             <BlurView
-              tint={vm.theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
+              tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
               intensity={80}
-              blurTarget={vm.blurTargetRef}
+              blurTarget={blurTargetRef}
               blurMethod="dimezisBlurViewSdk31Plus"
               style={{
                 borderRadius: 999,
@@ -476,7 +552,7 @@ const ProfileContent = () => {
               }}
             >
               <TouchableOpacity
-                onPress={() => vm.router.back()}
+                onPress={() => router.back()}
                 style={{
                   borderRadius: 999,
                   width: 40,
@@ -485,7 +561,7 @@ const ProfileContent = () => {
                   alignItems: 'center'
                 }}
               >
-                <Ionicons name='chevron-back' size={24} color={vm.colors.text} />
+                <Ionicons name='chevron-back' size={24} color={colors.text} />
               </TouchableOpacity>
             </BlurView>
 
@@ -501,7 +577,7 @@ const ProfileContent = () => {
                 headerAvatarContainerStyle,
               ]}
             >
-              <TouchableOpacity activeOpacity={0.8} onPress={vm.scrollToTop}>
+              <TouchableOpacity activeOpacity={0.8} onPress={scrollToTop}>
                 <Reanimated.View
                   style={[
                     {
@@ -515,9 +591,9 @@ const ProfileContent = () => {
                 >
                   <Image
                     source={
-                      vm.profile?.avatar_url
-                        ? { uri: vm.profile.avatar_url }
-                        : vm.profile?.gender === 'male'
+                      profile?.avatar_url
+                        ? { uri: profile.avatar_url }
+                        : profile?.gender === 'male'
                           ? require('../../assets/images/AV17.png')
                           : require('../../assets/images/AV86.png')
                     }
@@ -530,35 +606,35 @@ const ProfileContent = () => {
 
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => vm.safePresent(vm.musicSheetRef)}
+              onPress={() => safePresent(musicSheetRef)}
               style={{ height: 40, width: 150 }}
             >
-              <BlurView tint={vm.theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"} intensity={80} blurTarget={vm.blurTargetRef} blurMethod="dimezisBlurView" style={styles.blurWrapper}>
+              <BlurView tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"} intensity={80} blurTarget={blurTargetRef} blurMethod="dimezisBlurView" style={styles.blurWrapper}>
                 <View
                   style={[StyleSheet.absoluteFill, {}]}
                 />
 
                 <View style={styles.blurContent}>
                   <SpinningArtwork
-                    isMusicPlaying={vm.isMusicPlaying}
-                    hasMusic={vm.hasMusic}
-                    coverUrl={vm.currentTrack?.cover_url}
-                    onPress={vm.handleMusicPress}
-                    colors={vm.colors}
+                    isMusicPlaying={isMusicPlaying}
+                    hasMusic={hasMusic}
+                    coverUrl={currentTrack?.cover_url}
+                    onPress={handleMusicPress}
+                    colors={colors}
                   />
 
                   <View style={styles.textContainer}>
                     <FlexText
-                      style={[styles.titleText, { color: vm.colors.text }]}
+                      style={[styles.titleText, { color: colors.text }]}
                       numberOfLines={1}
                     >
-                      {vm.hasMusic ? vm.currentTrack?.title : t("profile.music.addMusic")}
+                      {hasMusic ? currentTrack?.title : t("profile.music.addMusic")}
                     </FlexText>
                     <FlexText
-                      style={[styles.artistText, { color: vm.colors.text }]}
+                      style={[styles.artistText, { color: colors.text }]}
                       numberOfLines={1}
                     >
-                      {vm.hasMusic ? vm.currentTrack?.artist : t("profile.music.selectTrack")}
+                      {hasMusic ? currentTrack?.artist : t("profile.music.selectTrack")}
                     </FlexText>
                   </View>
                 </View>
@@ -569,69 +645,69 @@ const ProfileContent = () => {
         </View>
 
         <Snackbar
-          visible={vm.snackbarVisible}
-          onDismiss={vm.dismissSnackbar}
+          visible={snackbarVisible}
+          onDismiss={dismissSnackbar}
           action={{
             label: t("profile.actions.retry"),
-            onPress: vm.onRefresh,
+            onPress: onRefresh,
           }}>
           {t("profile.errors.failedToLoadProfile")}
         </Snackbar>
 
 
         <MusicSheet
-          ref={vm.musicSheetRef}
-          data={vm.music}
-          profileId={vm.profile?.id}
-          onEndReached={vm.handleMusicEndReached}
-          isOwner={vm.isOwner}
+          ref={musicSheetRef}
+          data={music}
+          profileId={profile?.id}
+          onEndReached={handleMusicEndReached}
+          isOwner={isOwner}
         />
         <SocialSheet
-          ref={vm.socialSheetRef}
-          data={vm.socialLinks}
-          profileId={vm.profile?.id}
-          isOwner={vm.isOwner}
-          onEndReached={vm.handleSocialEndReached}
+          ref={socialSheetRef}
+          data={socialLinks}
+          profileId={profile?.id}
+          isOwner={isOwner}
+          onEndReached={handleSocialEndReached}
         />
         <AddressSheet
-          ref={vm.addressSheetRef}
-          data={vm.addresses}
-          profileId={vm.profile?.id}
-          isOwner={vm.isOwner}
-          onEndReached={vm.handleAddressesEndReached}
+          ref={addressSheetRef}
+          data={addresses}
+          profileId={profile?.id}
+          isOwner={isOwner}
+          onEndReached={handleAddressesEndReached}
         />
         <WorkplaceSheet
-          ref={vm.workplaceSheetRef}
-          data={vm.workplaces}
-          profileId={vm.profile?.id}
-          isOwner={vm.isOwner}
-          onEndReached={vm.handleWorkplacesEndReached}
+          ref={workplaceSheetRef}
+          data={workplaces}
+          profileId={profile?.id}
+          isOwner={isOwner}
+          onEndReached={handleWorkplacesEndReached}
         />
         <RelationshipSheet
-          ref={vm.familySheetRef}
-          data={vm.profile?.loved_ones || []}
+          ref={familySheetRef}
+          data={profile?.loved_ones || []}
         />
         <BriefInfoSheet
-          ref={vm.briefSheetRef}
-          profile={vm.profile}
-          workplaces={vm.workplaces}
-          homeInfo={vm.profile?.hometown || null}
+          ref={briefSheetRef}
+          profile={profile}
+          workplaces={workplaces}
+          homeInfo={profile?.hometown || null}
         />
         <PostOptionsSheet
-          ref={vm.optionsSheetRef}
-          post={vm.selectedPost}
-          currentProfileId={vm.myProfile?.id || null}
-          onDeleted={vm.handlePostDeleted}
+          ref={optionsSheetRef}
+          post={selectedPost}
+          currentProfileId={myProfile?.id || null}
+          onDeleted={handlePostDeleted}
         />
         <LikersSheet
-          ref={vm.likersSheetRef}
-          postId={vm.selectedLikePostId}
-          onDismiss={vm.handleLikersSheetDismiss}
+          ref={likersSheetRef}
+          postId={selectedLikePostId}
+          onDismiss={handleLikersSheetDismiss}
         />
         <CommentsSheet
-          ref={vm.commentsSheetRef}
-          postId={vm.selectedCommentPostId}
-          onDismiss={vm.handleCommentSheetDismiss}
+          ref={commentsSheetRef}
+          postId={selectedCommentPostId}
+          onDismiss={handleCommentSheetDismiss}
         />
 
       </View>

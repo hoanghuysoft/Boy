@@ -23,12 +23,12 @@ import { FlexText } from "../../components/FlexText";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useCreateNote, useNote, useUpdateNote } from "../../services/note";
 import { createCommonStyles } from "../../styles/common";
-import { useToast } from "heroui-native";
+import { Spinner, useToast } from "heroui-native";
 
 type Block =
-  | { id: string; type: 'text'; text: string }
-  | { id: string; type: 'image'; url: string }
-  | { id: string; type: 'link'; url: string };
+    | { id: string; type: 'text'; text: string }
+    | { id: string; type: 'image'; url: string }
+    | { id: string; type: 'link'; url: string };
 
 const CreateNoteScreen = () => {
     const { colors, typography, theme } = useThemeContext();
@@ -58,7 +58,7 @@ const CreateNoteScreen = () => {
 
             const strippedContent = content.replace(/\[<title>.*?<\/title>\]/gi, '');
             const parts = strippedContent.split(/(\[<img\s+.*?\s*\/>\]|\[<link\s+.*?\s*\/>\])/gi);
-            
+
             const initialBlocks: Block[] = [];
 
             parts.forEach((part) => {
@@ -197,7 +197,7 @@ const CreateNoteScreen = () => {
     }, [title, blocks, createNoteMutation, updateNoteMutation, isEditMode, noteId]);
 
     const isSubmitting = createNoteMutation.isPending || updateNoteMutation.isPending;
-    
+
     // Check if there is any meaningful content
     const hasContent = blocks.some(b => (b.type === 'text' && b.text.trim().length > 0) || b.type !== 'text');
     const canSubmit = (title.trim().length > 0 || hasContent) && !isSubmitting && !isLoadingNote;
@@ -263,7 +263,7 @@ const CreateNoteScreen = () => {
                     }}
                 >
                     {isSubmitting ? (
-                        <ActivityIndicator size="small" color={colors.background} />
+                        <Spinner size="sm" color={colors.background} />
                     ) : (
                         <FlexText style={{ color: colors.background, fontWeight: 'bold' }}>{t("notes.editor.save")}</FlexText>
                     )}

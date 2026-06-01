@@ -1,15 +1,13 @@
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
-import { useCachedVideoUri } from "@/hooks/useCachedVideoUri";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
-import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
-import { PlayBold, RestartCircleBold } from "@solar-icons/react-native";
+import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
+import { PauseBold, PlayBold, VolumeCrossBold, VolumeLoudBold } from "@solar-icons/react-native";
 import { Image as ExpoImage } from "expo-image";
-import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions, Pressable as RNPressable, View, ViewabilityConfig, ViewToken } from "react-native";
+import { ActivityIndicator, Dimensions, Platform, Pressable as RNPressable, Text, View, ViewabilityConfig, ViewToken } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
@@ -20,7 +18,6 @@ import Animated, {
     withTiming
 } from "react-native-reanimated";
 
-import { FeedVideoPlayer } from "./FeedVideoPlayer";
 
 interface PostMediaCarouselProps {
     media: Media[];
@@ -59,18 +56,16 @@ const VideoCarouselItem = React.memo(({
     colors,
     placeholderImageVideo,
 }: VideoCarouselItemProps) => {
-    const router = useRouter();
+    const videoRef = useRef<BlueskyVideoView>(null);
+    const isMuted = useFeedVideoStore(s => s.isMuted);
 
-    // Select ONLY the boolean — avoids re-render when an unrelated media changes
-    const isActive = useFeedVideoStore(s => s.activeMediaId === item.id);
-    const isEnded = useFeedVideoStore(s => s.isEnded);
-    const setEnded = useFeedVideoStore(s => s.setEnded);
-
-    const showReplay = isActive && isEnded;
-    const showPlayer = isActive && !isEnded;
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isActive, setIsActive] = useState(false);
+    const [status, setStatus] = useState<'playing' | 'paused' | 'pending'>('pending');
+    const [timeRemaining, setTimeRemaining] = useState(0);
 
     const videoUrl = choosenMediaPath(item);
-    const resolvedVideoUrl = useCachedVideoUri(videoUrl, item.backup1 || null);
 
     const fallbackUrls = useMemo(() => buildFallbackUrls(item, placeholderImageVideo), [item, placeholderImageVideo]);
     const [prev, setPrev] = useState(0);
@@ -83,79 +78,191 @@ const VideoCarouselItem = React.memo(({
         setPrev(p => (p < fallbackUrls.length - 1 ? p + 1 : p));
     }, [fallbackUrls.length]);
 
-    const handleReplay = useCallback(() => {
-        setEnded(false);
-    }, [setEnded]);
-
     const handleFullScreenPress = useCallback(() => {
-        router.push({
-            pathname: '/video_player',
-            params: {
-                videoUrl: resolvedVideoUrl || videoUrl,
-                name: profileName,
-                caption: content,
-                portrait: 'true',
-            },
-        });
-    }, [router, resolvedVideoUrl, videoUrl, profileName, content]);
+        videoRef.current?.enterFullscreen(true);
+    }, []);
+
+    const formattedTime = useMemo(() => {
+        if (isNaN(timeRemaining) || timeRemaining < 0) return '0:00';
+        const mins = Math.floor(timeRemaining / 60);
+        const secs = Math.floor(timeRemaining % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }, [timeRemaining]);
+
+    if (!isActive && status !== 'pending') {
+        setStatus('pending');
+    }
+
+    // Whether to show the thumbnail overlay (same logic as Bluesky's InnerWrapper)
+    const showOverlay =
+        !isActive ||
+        isLoading ||
+        (status === 'paused' && !isActive) ||
+        status === 'pending';
 
     return (
         <View style={{ width: SCREEN_WIDTH }}>
-            <RNPressable onPress={handleFullScreenPress} style={{ width: '100%', aspectRatio: ASPECT_RATIO }}>
-                {/* Base layer: thumbnail always present */}
-                <ExpoImage
-                    source={{ uri: fallbackUrls[prev] }}
-                    recyclingKey={fallbackUrls[prev]}
-                    style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
-                    contentFit="cover"
-                    onError={handleThumbnailError}
-                    placeholder={{ blurhash: placeholderBlurhash }}
-                />
+            <View style={{ width: '100%', aspectRatio: ASPECT_RATIO }}>
+                {/* BlueskyVideoView: the native module handles autoplay via
+                    updateActiveVideoViewAsync. Each mounted instance registers
+                    itself, and the native side activates only the most visible one. */}
+                {videoUrl ? (
+                    <BlueskyVideoView
+                        ref={videoRef}
+                        url={videoUrl}
+                        autoplay={true}
+                        beginMuted={isMuted}
+                        style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT, borderRadius: 0 }}
+                        onActiveChange={e => {
+                            setIsActive(e.nativeEvent.isActive);
+                        }}
+                        onLoadingChange={e => {
+                            setIsLoading(e.nativeEvent.isLoading);
+                        }}
+                        onMutedChange={e => {
+                            useFeedVideoStore.getState().setMuted(e.nativeEvent.isMuted);
+                        }}
+                        onStatusChange={e => {
+                            setStatus(e.nativeEvent.status);
+                            setIsPlaying(e.nativeEvent.status === 'playing');
+                        }}
+                        onTimeRemainingChange={e => {
+                            setTimeRemaining(e.nativeEvent.timeRemaining);
+                        }}
+                        onError={e => {
+                            console.warn('[VideoCarousel] Error:', e.nativeEvent.error);
+                        }}
+                        accessibilityLabel="Video"
+                        accessibilityHint=""
+                    />
+                ) : null}
 
-                {/* Video layer: overlays on top when active */}
-                {showPlayer && (
-                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-                        <FeedVideoPlayer />
-                    </View>
-                )}
-
-                {/* Replay overlay */}
-                {showReplay && (
+                {/* Thumbnail overlay: visible when video is not active or loading.
+                    Uses display/zIndex pattern from Bluesky to avoid flicker. */}
+                <View style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'transparent',
+                    ...Platform.select({
+                        android: { display: showOverlay ? 'flex' : 'none' },
+                        ios: { zIndex: showOverlay ? 1 : -1 },
+                    })
+                }}>
+                    <ExpoImage
+                        source={{ uri: fallbackUrls[prev] }}
+                        recyclingKey={fallbackUrls[prev]}
+                        style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
+                        contentFit="cover"
+                        onError={handleThumbnailError}
+                        placeholder={{ blurhash: placeholderBlurhash }}
+                        cachePolicy="memory-disk"
+                    />
+                    {/* Play button on thumbnail */}
                     <RNPressable
-                        onPress={handleReplay}
+                        onPress={() => videoRef.current?.togglePlayback()}
                         style={{
                             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                             alignItems: 'center', justifyContent: 'center',
-                            backgroundColor: 'rgba(0,0,0,0.35)',
+                            backgroundColor: 'rgba(0,0,0,0.1)',
                         }}
                     >
-                        <View style={{
-                            width: 56, height: 56, borderRadius: 28,
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            justifyContent: 'center', alignItems: 'center',
-                        }}>
-                            <RestartCircleBold size={46} color="#ffffff" />
-                        </View>
+                        {isActive && isLoading ? (
+                            <ActivityIndicator size="large" color="white" />
+                        ) : (
+                            <View style={{
+                                width: 56, height: 56, borderRadius: 28,
+                                backgroundColor: 'rgba(0,0,0,0.4)',
+                                justifyContent: 'center', alignItems: 'center',
+                            }}>
+                                <PlayBold size={28} color="#ffffff" />
+                            </View>
+                        )}
                     </RNPressable>
-                )}
+                </View>
 
-                {/* Play icon overlay (not active, not replaying) */}
-                {!isActive && (
-                    <View style={{
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        alignItems: 'center', justifyContent: 'center',
-                        backgroundColor: 'rgba(0,0,0,0.1)',
-                    }}>
-                        <View style={{
-                            width: 56, height: 56, borderRadius: 28,
-                            backgroundColor: 'rgba(0,0,0,0.4)',
-                            justifyContent: 'center', alignItems: 'center',
-                        }}>
-                            <PlayBold size={28} color="#ffffff" />
+                {/* Fullscreen tap zone when video is playing */}
+                {/* Controls overlay: visible when video is active and not loading. */}
+                {isActive && !isLoading && (
+                    <>
+                        {/* Fullscreen tap zone */}
+                        <RNPressable
+                            onPress={handleFullScreenPress}
+                            style={{
+                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                            }}
+                        />
+                        {/* Play/Pause Button */}
+                        <RNPressable
+                            onPress={() => videoRef.current?.togglePlayback()}
+                            style={{
+                                position: 'absolute',
+                                left: 12,
+                                bottom: 12,
+                                width: 36,
+                                height: 36,
+                                borderRadius: 18,
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                zIndex: 10,
+                            }}
+                        >
+                            {isPlaying ? (
+                                <PauseBold size={16} color="#ffffff" />
+                            ) : (
+                                <PlayBold size={16} color="#ffffff" />
+                            )}
+                        </RNPressable>
+                        {/* Time remaining badge */}
+                        <View
+                            style={{
+                                position: 'absolute',
+                                left: 56,
+                                bottom: 12,
+                                height: 36,
+                                paddingHorizontal: 12,
+                                borderRadius: 18,
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                zIndex: 10,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: '#ffffff',
+                                    fontSize: 12,
+                                    fontWeight: '600',
+                                    fontVariant: ['tabular-nums'],
+                                }}
+                            >
+                                {formattedTime}
+                            </Text>
                         </View>
-                    </View>
+                        {/* Mute/Unmute Button */}
+                        <RNPressable
+                            onPress={() => videoRef.current?.toggleMuted()}
+                            style={{
+                                position: 'absolute',
+                                right: 12,
+                                bottom: 12,
+                                width: 36,
+                                height: 36,
+                                borderRadius: 18,
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                zIndex: 10,
+                            }}
+                        >
+                            {isMuted ? (
+                                <VolumeCrossBold size={16} color="#ffffff" />
+                            ) : (
+                                <VolumeLoudBold size={16} color="#ffffff" />
+                            )}
+                        </RNPressable>
+                    </>
                 )}
-            </RNPressable>
+            </View>
         </View>
     );
 }, (prev, next) =>
@@ -302,19 +409,11 @@ const ClassicMediaCarousel = React.memo(({
     isAdult = false, isVerified, musicUrl, musicTitle,
 }: PostMediaCarouselProps) => {
     const pressAnim = useSharedValue<number>(0);
+    const pressAnimRef = useRef(pressAnim);
     const isMomentumScrolling = useRef(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const currentIndexRef = useRef(0);
-    const { showSensitiveContent, setShowSensitiveContent } = useSettingsStore();
     const openGallery = useGalleryStore(state => state.openGallery);
-    const [isRevealed, setIsRevealed] = useState(false);
-
-    const shouldBlur = isAdult && !showSensitiveContent && !isRevealed;
-
-    const onReveal = useCallback(() => {
-        setIsRevealed(true);
-        setShowSensitiveContent(true);
-    }, [setShowSensitiveContent]);
 
     const galleryImages = useMemo(() =>
         media.filter(m => m.type === 'photo').map(m => ({
@@ -332,35 +431,18 @@ const ClassicMediaCarousel = React.memo(({
         openGallery(galleryImages, photoIndex);
     }, [openGallery, galleryImages]);
 
-    // Select only the boolean — no unnecessary re-render when an unrelated post's
-    // activePostId changes (Zustand equality check handles this)
-    const isActiveVideoPost = useFeedVideoStore(s => s.activePostId === postId);
-    const setActiveMedia = useFeedVideoStore(s => s.setActiveMedia);
-
-    // Keep a ref so the viewability callback always reads the current value
-    // without needing to be recreated when isActiveVideoPost changes
-    const isActiveRef = useRef(isActiveVideoPost);
-    isActiveRef.current = isActiveVideoPost;
-
     // ── Viewability (stable pair — never recreated) ──────────────────────────
-    // The onViewableItemsChanged callback itself is kept in a ref so the stable
-    // pair always calls the latest closure (same pattern as FeedTab).
+    // With @bsky.app/video, the native module handles video activation.
+    // This callback now only tracks the carousel active index for dot indicators.
     const handleViewableItemsChangedImpl = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
         if (viewableItems.length > 0) {
             const idx = viewableItems[0].index ?? 0;
             setActiveIndex(idx);
             currentIndexRef.current = idx;
-
-            if (isActiveRef.current) {
-                const visibleItem = media[idx];
-                if (visibleItem?.type === 'video') {
-                    setActiveMedia(visibleItem.id, choosenMediaPath(visibleItem));
-                } else {
-                    setActiveMedia(null, null);
-                }
-            }
+            // Native autoplay: scan for active video when horizontal slide changes
+            updateActiveVideoViewAsync();
         }
-    }, [media, setActiveMedia]);
+    }, []);
 
     const handleViewableItemsChangedRef = useRef(handleViewableItemsChangedImpl);
     useEffect(() => {
@@ -368,7 +450,7 @@ const ClassicMediaCarousel = React.memo(({
     }, [handleViewableItemsChangedImpl]);
 
     // Stable pair — created once, never causes the "changing on the fly" warning
-    const viewabilityConfigCallbackPairs = useRef([
+    const viewabilityConfigCallbackPairs = useMemo(() => [
         {
             viewabilityConfig: {
                 itemVisiblePercentThreshold: 50,
@@ -377,20 +459,7 @@ const ClassicMediaCarousel = React.memo(({
                 handleViewableItemsChangedRef.current({ viewableItems });
             },
         },
-    ]);
-
-    // Sync active media when this post becomes/stops being the active video post
-    useEffect(() => {
-        if (isActiveVideoPost) {
-            const currentItem = media[currentIndexRef.current];
-            if (currentItem?.type === 'video') {
-                setActiveMedia(currentItem.id, choosenMediaPath(currentItem));
-            } else {
-                setActiveMedia(null, null);
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isActiveVideoPost, postId]);
+    ], []);
 
     // Prefetch all media for this post on first mount
     useEffect(() => {
@@ -432,18 +501,18 @@ const ClassicMediaCarousel = React.memo(({
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 keyExtractor={keyExtractor}
-                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs.current}
+                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
                 renderItem={renderMediaItem}
                 initialNumToRender={1}
                 maxToRenderPerBatch={2}
                 windowSize={3}
                 onScrollBeginDrag={() => {
                     isMomentumScrolling.current = false;
-                    pressAnim.value = withTiming(1, { duration: 150 });
+                    pressAnimRef.current.value = withTiming(1, { duration: 150 });
                 }}
                 onScrollEndDrag={() => {
                     if (!isMomentumScrolling.current) {
-                        pressAnim.value = withDelay(1200, withTiming(0, { duration: 400 }));
+                        pressAnimRef.current.value = withDelay(1200, withTiming(0, { duration: 400 }));
                     }
                 }}
                 onMomentumScrollBegin={() => {
@@ -451,7 +520,7 @@ const ClassicMediaCarousel = React.memo(({
                 }}
                 onMomentumScrollEnd={() => {
                     isMomentumScrolling.current = false;
-                    pressAnim.value = withDelay(120, withTiming(0, { duration: 400 }));
+                    pressAnimRef.current.value = withDelay(120, withTiming(0, { duration: 400 }));
                 }}
                 getItemLayout={(_data, index) => ({
                     length: SCREEN_WIDTH,

@@ -273,6 +273,8 @@ export const uploadLargeMedia = async (
     });
 };
 
+const localUploadCache = new Map<string, Media>();
+
 /**
  * Smart upload — automatically chooses the best upload method based on file size
  */
@@ -281,14 +283,35 @@ export const smartUpload = async (
     file: FileAsset,
     options: UploadMediaOptions = {}
 ): Promise<UploadMediaResponse> => {
-    const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB
-    const fileSize = file.fileSize || 0;
-
-    if (fileSize > LARGE_FILE_THRESHOLD) {
-        return uploadLargeMedia(profileId, file, options);
-    } else {
-        return uploadMedia(profileId, file, options);
+    // Check in-memory cache first to avoid duplicate uploads in the same session
+    if (file.uri && localUploadCache.has(file.uri)) {
+        console.log('[smartUpload] Reusing cached upload for:', file.uri);
+        return { data: localUploadCache.get(file.uri)! };
     }
+
+    const type = options.type || getMediaType(file);
+    let response: UploadMediaResponse;
+
+    // Always use direct-to-storage (pre-signed URL) upload for photos to bypass hosted server
+    if (type === 'photo') {
+        response = await uploadLargeMedia(profileId, file, options);
+    } else {
+        const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB
+        const fileSize = file.fileSize || 0;
+
+        if (fileSize > LARGE_FILE_THRESHOLD) {
+            response = await uploadLargeMedia(profileId, file, options);
+        } else {
+            response = await uploadMedia(profileId, file, options);
+        }
+    }
+
+    // Cache successful uploads
+    if (file.uri && response.data) {
+        localUploadCache.set(file.uri, response.data);
+    }
+
+    return response;
 };
 
 /**

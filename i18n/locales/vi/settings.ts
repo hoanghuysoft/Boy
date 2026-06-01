@@ -17,8 +17,7 @@ const settings = {
     adultFilterOff: 'Tắt',
     homeCarousel: 'Carousel trang chủ',
     homeCarouselDescription: 'Carousel có thể chứa nội dung nhạy cảm.',
-    autoplayVideos: 'Tự động phát video',
-    autoplayVideosDescription: 'Tự động phát video trong feed.',
+
     storageCache: 'Quản lý dữ liệu tạm thời',
     videoCache: 'Dữ liệu video tạm thời',
     videoCacheDescription_one: '{{count}} video đã lưu',

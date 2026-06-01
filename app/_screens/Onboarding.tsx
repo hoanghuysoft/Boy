@@ -16,6 +16,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { Image as ExpoImage } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useOnboardingViewModel } from '../../viewmodels/OnboardingViewModel';
+import { Spinner } from 'heroui-native';
 
 const OnboardingScreen = () => {
     const { colors, typography } = useThemeContext();
@@ -181,7 +182,7 @@ const OnboardingScreen = () => {
                     activeOpacity={0.8}
                 >
                     {isSubmitting ? (
-                        <ActivityIndicator size="small" color="#fff" />
+                        <Spinner size="md" color="#fff" />
                     ) : (
                         <FlexText style={[common.buttonText, { color: '#fff', fontWeight: 'bold' }]}>
                             {t('onboarding.submit')}

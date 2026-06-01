@@ -15,6 +15,7 @@ import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
 import { StyleSheet } from "react-native";
+import { Spinner } from "heroui-native";
 
 // ─── Shared OG cache (mirrors PostLinkPreview – same module-level maps) ───────
 // Imported lazily so the two modules share one cache at runtime.
@@ -175,8 +176,8 @@ const LinkItem = memo(({
         urlValid === false
             ? COLORS.error
             : urlValid === true
-            ? COLORS.success
-            : colors.divider;
+                ? COLORS.success
+                : colors.divider;
 
     return (
         <View
@@ -239,8 +240,8 @@ const LinkItem = memo(({
                         returnKeyType="done"
                     />
                     {isFetchingLabel && (
-                        <ActivityIndicator
-                            size="small"
+                        <Spinner
+                            size="sm"
                             color={colors.muted}
                             style={linkStyles.labelSpinner}
                         />

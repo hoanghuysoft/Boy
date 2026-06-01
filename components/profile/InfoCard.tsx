@@ -44,7 +44,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
         } catch {
             return null;
         }
-    }, [profile?.metadata]);
+    }, [profile]);
 
     const height = parsedMetadata?.height;
     const weight = parsedMetadata?.weight;
