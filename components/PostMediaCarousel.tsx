@@ -410,19 +410,11 @@ const ClassicMediaCarousel = React.memo(({
     isAdult = false, isVerified, musicUrl, musicTitle,
 }: PostMediaCarouselProps) => {
     const pressAnim = useSharedValue<number>(0);
+    const pressAnimRef = useRef(pressAnim);
     const isMomentumScrolling = useRef(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const currentIndexRef = useRef(0);
-    const { showSensitiveContent, setShowSensitiveContent } = useSettingsStore();
     const openGallery = useGalleryStore(state => state.openGallery);
-    const [isRevealed, setIsRevealed] = useState(false);
-
-    const shouldBlur = isAdult && !showSensitiveContent && !isRevealed;
-
-    const onReveal = useCallback(() => {
-        setIsRevealed(true);
-        setShowSensitiveContent(true);
-    }, [setShowSensitiveContent]);
 
     const galleryImages = useMemo(() =>
         media.filter(m => m.type === 'photo').map(m => ({
@@ -459,7 +451,7 @@ const ClassicMediaCarousel = React.memo(({
     }, [handleViewableItemsChangedImpl]);
 
     // Stable pair — created once, never causes the "changing on the fly" warning
-    const viewabilityConfigCallbackPairs = useRef([
+    const viewabilityConfigCallbackPairs = useMemo(() => [
         {
             viewabilityConfig: {
                 itemVisiblePercentThreshold: 50,
@@ -468,7 +460,7 @@ const ClassicMediaCarousel = React.memo(({
                 handleViewableItemsChangedRef.current({ viewableItems });
             },
         },
-    ]);
+    ], []);
 
     // Prefetch all media for this post on first mount
     useEffect(() => {
@@ -510,18 +502,18 @@ const ClassicMediaCarousel = React.memo(({
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 keyExtractor={keyExtractor}
-                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs.current}
+                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
                 renderItem={renderMediaItem}
                 initialNumToRender={1}
                 maxToRenderPerBatch={2}
                 windowSize={3}
                 onScrollBeginDrag={() => {
                     isMomentumScrolling.current = false;
-                    pressAnim.value = withTiming(1, { duration: 150 });
+                    pressAnimRef.current.value = withTiming(1, { duration: 150 });
                 }}
                 onScrollEndDrag={() => {
                     if (!isMomentumScrolling.current) {
-                        pressAnim.value = withDelay(1200, withTiming(0, { duration: 400 }));
+                        pressAnimRef.current.value = withDelay(1200, withTiming(0, { duration: 400 }));
                     }
                 }}
                 onMomentumScrollBegin={() => {
@@ -529,7 +521,7 @@ const ClassicMediaCarousel = React.memo(({
                 }}
                 onMomentumScrollEnd={() => {
                     isMomentumScrolling.current = false;
-                    pressAnim.value = withDelay(120, withTiming(0, { duration: 400 }));
+                    pressAnimRef.current.value = withDelay(120, withTiming(0, { duration: 400 }));
                 }}
                 getItemLayout={(_data, index) => ({
                     length: SCREEN_WIDTH,
