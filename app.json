@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "WeLove",
-    "slug": "Boy",
-    "version": "26.56.3.0",
+    "slug": "boy",
+    "version": "26.56.4.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -64,20 +64,7 @@
           }
         }
       ],
-      [
-        "react-native-video",
-        {
-          "enableAndroidPictureInPicture": true,
-          "enableBackgroundAudio": true,
-          "enableNotificationControls": true,
-          "androidExtensions": {
-            "useExoplayerRtsp": true,
-            "useExoplayerSmoothStreaming": true,
-            "useExoplayerHls": true,
-            "useExoplayerDash": true
-          }
-        }
-      ],
+
       "@novastera-oss/rn-google-signin",
       "expo-audio",
       [
@@ -168,7 +155,8 @@
             "buildArchs": [
               "arm64-v8a"
             ],
-            "usePrecompiledHeaders": true
+            "usePrecompiledHeaders": true,
+            "extraProguardRules": "-keep class androidx.media3.** { *; }\n-keep class expo.modules.video.** { *; }"
           }
         }
       ],
@@ -205,7 +193,13 @@
         }
       ],
       "@sentry/react-native",
-      "expo-video",
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ],
       "expo-status-bar",
       "@react-native-vector-icons/ionicons",
       "@react-native-vector-icons/material-icons",
@@ -218,14 +212,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "ddac2295-af33-4e05-b689-6caa80c1d9d3"
+        "projectId": "f8070e10-b4c4-4be3-bebd-b45e072d7702"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/ddac2295-af33-4e05-b689-6caa80c1d9d3",
+      "url": "https://u.expo.dev/f8070e10-b4c4-4be3-bebd-b45e072d7702",
       "enableBsdiffPatchSupport": true
     }
   }

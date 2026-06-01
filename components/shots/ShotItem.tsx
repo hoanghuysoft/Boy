@@ -7,24 +7,22 @@ import {
     HeartBold,
     SquareShareLineBold,
 } from "@solar-icons/react-native";
+import { useEventListener } from "expo";
 import { router } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
+import { Avatar } from "heroui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     AppState,
-    Platform,
     StyleSheet,
     TouchableOpacity,
     TouchableWithoutFeedback,
     View
 } from "react-native";
-import { Image as ExpoImage } from "expo-image";
 import Reanimated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
-import { useEvent, useEventListener } from "expo";
-import { useVideoPlayer, VideoView } from "expo-video";
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from "./constants";
+import { SCREEN_WIDTH } from "./constants";
 import { FloatingHeart } from "./FloatingHeart";
 import { ShotSeekBar } from "./ShotSeekBar";
-import { Avatar } from "heroui-native";
 
 // ─── Props ──────────────────────────────────────────────────────────
 export interface ShotItemProps {
@@ -128,7 +126,9 @@ export const ShotItem = React.memo(function ShotItem({
                 try {
                     if (player.muted !== true) player.muted = true;
                     if (player.playing) player.pause();
-                } catch (e) { }
+                } catch (e) {
+                    console.log(e)
+                }
             }
         };
     }, [player]);
@@ -327,7 +327,6 @@ export const ShotItem = React.memo(function ShotItem({
 
     const duration = useMemo(
         () => player?.duration ?? 0,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         [player?.duration],
     );
 

@@ -18,16 +18,44 @@ import HomeTabs from "./home/HomeTabs";
 
 const HomeScreen = () => {
   const vm = useHomeViewModel();
+  const {
+    common,
+    carouselEnabled,
+    carouselVisibility,
+    modalVisible,
+    setModalVisible,
+    totalHeaderHeight,
+    insets,
+    headerBgOpacity,
+    headerPillVisibility,
+    pillBgColor,
+    pillBgOpacity,
+    navigateToSearch,
+    iconColor,
+    navigateToCreate,
+    navigateToBookmarks,
+    openSettingsPage,
+    optionsSheetRef,
+    selectedPost,
+    myProfile,
+    handlePostDeleted,
+    likersSheetRef,
+    selectedLikePostId,
+    handleLikersSheetDismiss,
+    commentsSheetRef,
+    selectedCommentPostId,
+    handleCommentSheetDismiss,
+  } = vm;
 
   return (
     <>
-      <View style={[vm.common.screen, { position: "relative" }]}>
-        {vm.carouselEnabled && (
-          <HomeCarousel animatedVisibility={vm.carouselVisibility} />
+      <View style={[common.screen, { position: "relative" }]}>
+        {carouselEnabled && (
+          <HomeCarousel animatedVisibility={carouselVisibility} />
         )}
         <OptionModal
-          modalVisible={vm.modalVisible}
-          setModalVisible={vm.setModalVisible}
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
         />
         <Animated.View
           style={{
@@ -35,23 +63,23 @@ const HomeScreen = () => {
             top: 0,
             left: 0,
             right: 0,
-            height: vm.totalHeaderHeight + vm.insets.top,
+            height: totalHeaderHeight + insets.top,
             zIndex: -10,
-            opacity: vm.headerBgOpacity,
+            opacity: headerBgOpacity,
           }}
         />
         <Animated.View
           pointerEvents="box-none"
           style={{
             position: "absolute",
-            top: vm.insets.top,
+            top: insets.top,
             left: 0,
             right: 0,
             zIndex: 100,
-            opacity: vm.headerPillVisibility,
+            opacity: headerPillVisibility,
             transform: [
               {
-                translateY: vm.headerPillVisibility.interpolate({
+                translateY: headerPillVisibility.interpolate({
                   inputRange: [0, 1],
                   outputRange: [-100, 0],
                 }),
@@ -61,7 +89,7 @@ const HomeScreen = () => {
         >
           <View
             style={[
-              vm.common.row,
+              common.row,
               {
                 paddingHorizontal: 16,
                 paddingTop: 16,
@@ -74,7 +102,7 @@ const HomeScreen = () => {
           >
             <Animated.View
               style={[
-                vm.common.row,
+                common.row,
                 {
                   gap: 10,
                   padding: 8,
@@ -82,7 +110,7 @@ const HomeScreen = () => {
                   overflow: "hidden",
                   transform: [
                     {
-                      scale: vm.headerPillVisibility.interpolate({
+                      scale: headerPillVisibility.interpolate({
                         inputRange: [0, 1],
                         outputRange: [0.9, 1],
                       }),
@@ -95,8 +123,8 @@ const HomeScreen = () => {
               <Animated.View
                 style={{
                   ...StyleSheet.absoluteFill,
-                  backgroundColor: vm.pillBgColor,
-                  opacity: vm.pillBgOpacity,
+                  backgroundColor: pillBgColor,
+                  opacity: pillBgOpacity,
                 }}
               />
               <ExpoImage
@@ -108,7 +136,7 @@ const HomeScreen = () => {
 
             <Animated.View
               style={[
-                vm.common.row,
+                common.row,
                 {
                   gap: 10,
                   padding: 8,
@@ -116,7 +144,7 @@ const HomeScreen = () => {
                   overflow: "hidden",
                   transform: [
                     {
-                      scale: vm.headerPillVisibility.interpolate({
+                      scale: headerPillVisibility.interpolate({
                         inputRange: [0, 1],
                         outputRange: [0.9, 1],
                       }),
@@ -129,21 +157,21 @@ const HomeScreen = () => {
               <Animated.View
                 style={{
                   ...StyleSheet.absoluteFill,
-                  backgroundColor: vm.pillBgColor,
-                  opacity: vm.pillBgOpacity,
+                  backgroundColor: pillBgColor,
+                  opacity: pillBgOpacity,
                 }}
               />
-              <TouchableOpacity onPress={vm.navigateToSearch}>
-                <MagnifierLineDuotone size={24} color={vm.iconColor} />
+              <TouchableOpacity onPress={navigateToSearch}>
+                <MagnifierLineDuotone size={24} color={iconColor} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={vm.navigateToCreate}>
-                <AddCircleLineDuotone size={26} color={vm.iconColor} />
+              <TouchableOpacity onPress={navigateToCreate}>
+                <AddCircleLineDuotone size={26} color={iconColor} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={vm.navigateToBookmarks}>
-                <BookmarkOpenedLineDuotone size={26} color={vm.iconColor} />
+              <TouchableOpacity onPress={navigateToBookmarks}>
+                <BookmarkOpenedLineDuotone size={26} color={iconColor} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={vm.openSettingsPage}>
-                <SettingsIcon size={24} color={vm.iconColor} />
+              <TouchableOpacity onPress={openSettingsPage}>
+                <SettingsIcon size={24} color={iconColor} />
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -154,16 +182,16 @@ const HomeScreen = () => {
       </View>
       <GalleryModal />
       <PostOptionsSheet
-        ref={vm.optionsSheetRef}
-        post={vm.selectedPost}
-        currentProfileId={vm.myProfile?.id || null}
-        onDeleted={vm.handlePostDeleted}
+        ref={optionsSheetRef}
+        post={selectedPost}
+        currentProfileId={myProfile?.id || null}
+        onDeleted={handlePostDeleted}
       />
-      <LikersSheet ref={vm.likersSheetRef} postId={vm.selectedLikePostId} onDismiss={vm.handleLikersSheetDismiss} />
+      <LikersSheet ref={likersSheetRef} postId={selectedLikePostId} onDismiss={handleLikersSheetDismiss} />
       <CommentsSheet
-        ref={vm.commentsSheetRef}
-        postId={vm.selectedCommentPostId}
-        onDismiss={vm.handleCommentSheetDismiss}
+        ref={commentsSheetRef}
+        postId={selectedCommentPostId}
+        onDismiss={handleCommentSheetDismiss}
       />
     </>
   );

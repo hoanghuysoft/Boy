@@ -1,9 +1,5 @@
-import { Host, Slider } from '@expo/ui/jetpack-compose';
-import {
-    fillMaxWidth,
-} from '@expo/ui/jetpack-compose/modifiers';
-import React, { useRef } from 'react';
-import { View } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Platform } from 'react-native';
 
 export interface PillSliderProps {
     value: number;
@@ -18,6 +14,32 @@ export interface PillSliderProps {
     thumbSize?: number;
 }
 
+let AndroidSlider: any = null;
+let AndroidHost: any = null;
+let fillMaxWidth: any = null;
+
+let IOSSlider: any = null;
+let IOSHost: any = null;
+let tintModifier: any = null;
+
+if (Platform.OS === 'android') {
+    try {
+        AndroidSlider = require('@expo/ui/jetpack-compose').Slider;
+        AndroidHost = require('@expo/ui/jetpack-compose').Host;
+        fillMaxWidth = require('@expo/ui/jetpack-compose/modifiers').fillMaxWidth;
+    } catch (e) {
+        console.error("Failed to load @expo/ui/jetpack-compose", e);
+    }
+} else if (Platform.OS === 'ios') {
+    try {
+        IOSSlider = require('@expo/ui/swift-ui').Slider;
+        IOSHost = require('@expo/ui/swift-ui').Host;
+        tintModifier = require('@expo/ui/swift-ui/modifiers').tint;
+    } catch (e) {
+        console.error("Failed to load @expo/ui/swift-ui", e);
+    }
+}
+
 const PillSlider: React.FC<PillSliderProps> = ({
     value,
     minimumValue,
@@ -25,79 +47,102 @@ const PillSlider: React.FC<PillSliderProps> = ({
     onValueChange,
     onSlidingStart,
     onSlidingComplete,
-    trackHeight = 8,
     trackColor = 'rgba(255, 255, 255, 0.3)',
     progressColor = '#FFFFFF',
-    thumbSize = 16,
 }) => {
-    const [optimisticValue, setOptimisticValue] = React.useState<number | null>(null);
+    const isDraggingRef = useRef(false);
+    const lastValueRef = useRef(value);
 
-    // If optimistic value is heavily matched by the real incoming value prop, drop the optimistic override during render
-    if (optimisticValue !== null) {
-        const diff = Math.abs(value - optimisticValue);
-        const dataRange = maximumValue - minimumValue;
-        const threshold = dataRange > 0 ? dataRange * 0.05 : 1; // within 5%
-        if (diff < threshold) {
-            setOptimisticValue(null);
+    // Keep track of the last value so callbacks have the latest value
+    useEffect(() => {
+        if (!isDraggingRef.current) {
+            lastValueRef.current = value;
         }
+    }, [value]);
+
+    const safeMin = minimumValue;
+    const safeMax = Math.max(minimumValue + 0.001, maximumValue);
+    const clampedValue = Math.max(safeMin, Math.min(safeMax, value));
+
+    const safeTrackColor = trackColor.startsWith('rgba') ? '#4DFFFFFF' : trackColor;
+    const safeProgressColor = progressColor.startsWith('rgba') ? '#FFFFFFFF' : progressColor;
+
+    if (Platform.OS === 'android' && AndroidSlider && AndroidHost) {
+        const handleValueChange = (newValue: number) => {
+            lastValueRef.current = newValue;
+            if (!isDraggingRef.current) {
+                isDraggingRef.current = true;
+                onSlidingStart?.();
+            }
+            onValueChange?.(newValue);
+        };
+
+        const handleValueChangeFinished = () => {
+            isDraggingRef.current = false;
+            onSlidingComplete?.(lastValueRef.current);
+        };
+
+        return (
+            <View style={{ width: '100%', justifyContent: 'center', minHeight: 30, marginVertical: 5 }}>
+                <AndroidHost matchContents={{ vertical: true }} style={{ width: '100%' }}>
+                    <AndroidSlider
+                        modifiers={fillMaxWidth ? [fillMaxWidth()] : undefined}
+                        value={clampedValue}
+                        min={safeMin}
+                        max={safeMax}
+                        onValueChange={handleValueChange}
+                        onValueChangeFinished={handleValueChangeFinished}
+                        colors={{
+                            thumbColor: safeProgressColor,
+                            activeTrackColor: safeProgressColor,
+                            inactiveTrackColor: safeTrackColor,
+                        }}
+                    />
+                </AndroidHost>
+            </View>
+        );
     }
 
-    // Use optimistic value if it exists, otherwise fall back to pure external prop
-    const displayValue = optimisticValue !== null ? optimisticValue : value;
+    if (Platform.OS === 'ios' && IOSSlider && IOSHost) {
+        const handleValueChange = (newValue: number) => {
+            lastValueRef.current = newValue;
+            onValueChange?.(newValue);
+        };
 
-    // Normalizing ranges exactly to 0 - 1 for Jetpack Compose Slider
-    const range = Math.max(0.001, maximumValue - minimumValue);
-    const progress = Math.max(0, Math.min(1, (displayValue - minimumValue) / range));
+        const handleEditingChanged = (isEditing: boolean) => {
+            if (isEditing) {
+                isDraggingRef.current = true;
+                onSlidingStart?.();
+            } else {
+                isDraggingRef.current = false;
+                onSlidingComplete?.(lastValueRef.current);
+            }
+        };
 
-    const lastValueRef = useRef(displayValue);
-    const isDraggingRef = useRef(false);
+        const modifiers = tintModifier ? [tintModifier(safeProgressColor)] : undefined;
 
-    const handleValueChange = (newProgress: number) => {
-        const newValue = minimumValue + newProgress * range;
-        lastValueRef.current = newValue;
+        return (
+            <View style={{ width: '100%', justifyContent: 'center', minHeight: 30, marginVertical: 5 }}>
+                <IOSHost matchContents={{ vertical: true }} style={{ width: '100%' }}>
+                    <IOSSlider
+                        value={clampedValue}
+                        min={safeMin}
+                        max={safeMax}
+                        onValueChange={handleValueChange}
+                        onEditingChanged={handleEditingChanged}
+                        modifiers={modifiers}
+                    />
+                </IOSHost>
+            </View>
+        );
+    }
 
-        // Simulate onSlidingStart on the very first drag tick
-        if (!isDraggingRef.current) {
-            isDraggingRef.current = true;
-            if (onSlidingStart) onSlidingStart();
-        }
-
-        // Set the optimistic tracker to instantly lock sliding interactions visually
-        setOptimisticValue(newValue);
-
-        if (onValueChange) {
-            onValueChange(newValue);
-        }
-    };
-
-    // Native Jetpack Compose requires Hexadecimal colors (#AARRGGBB or #RRGGBB).
-    // React Native's rgba(...) will crash Color.parseColor().
-    // We convert commonly used rgba(255,255,255,0.3) manually to hex, or default to semi-transparent white.
-    const safeTrackColor = trackColor.includes('rgba') ? '#4DFFFFFF' : trackColor;
-    const safeProgressColor = progressColor.includes('rgba') ? '#FFFFFFFF' : progressColor;
-
+    // Fallback/Web/Mock Slider
     return (
-        <View style={{ width: '100%', justifyContent: 'center', minHeight: 30, marginVertical: 5 }}>
-            <Host matchContents={{ vertical: true }}>
-                <Slider
-                    modifiers={[fillMaxWidth()]}
-                    value={progress}
-                    onValueChange={handleValueChange}
-                    onValueChangeFinished={() => {
-                        isDraggingRef.current = false;
-                        if (onSlidingComplete) {
-                            onSlidingComplete(lastValueRef.current);
-                        }
-                    }}
-                    colors={{
-                        thumbColor: safeProgressColor,
-                        activeTrackColor: safeProgressColor,
-                    }}
-                />
-            </Host>
+        <View style={{ width: '100%', height: 30, backgroundColor: trackColor, borderRadius: 15, justifyContent: 'center', marginVertical: 5 }}>
+            <View style={{ width: `${(clampedValue / safeMax) * 100}%`, height: '100%', backgroundColor: progressColor, borderRadius: 15 }} />
         </View>
     );
 };
 
 export default PillSlider;
-

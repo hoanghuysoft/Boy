@@ -261,6 +261,8 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
     );
 });
 
+ProfileHeaderV3.displayName = "ProfileHeaderV3";
+
 const styles = StyleSheet.create({
     headerContainer: {
         paddingHorizontal: 12,

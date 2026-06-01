@@ -25,32 +25,29 @@
  *  ⑧ memo + forwardRef — fully memoised; ref exposes the underlying FlatList.
  */
 
+import { updateActiveVideoViewAsync } from '@bsky.app/video'
 import { forwardRef, memo, useMemo, type ReactElement } from 'react'
 import {
   FlatList,
   Platform,
   RefreshControl,
   type FlatListProps,
-  type StyleProp,
-  type ViewStyle,
-  type ViewToken,
+  type ViewToken
 } from 'react-native'
 import Animated, {
   runOnJS,
   useAnimatedScrollHandler,
   useSharedValue,
 } from 'react-native-reanimated'
-import { updateActiveVideoViewAsync } from '@bsky.app/video'
 
+import { useScrollHandlers } from './ScrollContext'
 import { useDedupe } from './useDedupe'
 import { useNonReactiveCallback } from './useNonReactiveCallback'
-import { useScrollHandlers } from './ScrollContext'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type ListMethods = FlatList
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ListProps<ItemT = any> = Omit<
   FlatListProps<ItemT>,
   /**
@@ -271,8 +268,8 @@ let List = forwardRef<ListMethods, ListProps>(
       }
       return [
         (info: {
-          viewableItems: Array<ViewToken>
-          changed: Array<ViewToken>
+          viewableItems: ViewToken[]
+          changed: ViewToken[]
         }) => {
           for (const token of info.changed) {
             if (token.isViewable) {
@@ -343,7 +340,7 @@ let List = forwardRef<ListMethods, ListProps>(
         contentOffset={contentOffset}
         contentContainerStyle={adjustedContentContainerStyle}
         refreshControl={refreshControl}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         onScroll={scrollHandler as any}
         style={style}
         ref={ref}
@@ -356,3 +353,4 @@ List.displayName = 'List'
 List = memo(List) as typeof List
 
 export { List }
+
