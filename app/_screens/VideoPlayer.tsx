@@ -83,7 +83,7 @@ const VideoPlayer = () => {
     p.loop = false;
     p.muted = false;
     p.playbackRate = 1;
-    p.timeUpdateEventInterval = 0.05; // Emit timeUpdate every 50ms for ultra-smooth progress updates
+    p.timeUpdateEventInterval = 0.1; // 10/sec — smooth scrub bar, 5× less JS event pressure vs 0.05
   });
 
   const playerRef = useRef(player);

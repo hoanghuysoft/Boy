@@ -104,13 +104,14 @@ export const ShotItem = React.memo(function ShotItem({
 
 
 
-
-
     // ─── Player setup ──────
     const player = useVideoPlayer(resolvedUri || null, (p) => {
         p.loop = true;
         p.muted = true; // Always start muted; mute state applied via effect
-        p.timeUpdateEventInterval = 0.05;
+        // 4 updates/sec is more than enough for the seek bar — 0.05 (20/sec)
+        // was flooding the JS thread with events across multiple concurrent players,
+        // contributing to ANR when the user navigated to the VideoPlayer screen.
+        p.timeUpdateEventInterval = 0.25;
     });
 
     const playerRef = useRef(player);
@@ -119,19 +120,39 @@ export const ShotItem = React.memo(function ShotItem({
         setReadyToDisplay(false);
     }, [resolvedUri, player]);
 
-    // Ensure player is muted and paused when the component unmounts or player changes
+    // Ensure player is muted, paused and released when the component unmounts or player changes.
+    // Calling release() frees the native decoder thread and GPU memory — without it the Android
+    // system keeps the player object alive, accumulating decoder instances across many reels.
     useEffect(() => {
         return () => {
             if (player) {
                 try {
                     if (player.muted !== true) player.muted = true;
                     if (player.playing) player.pause();
+                    player.release();
                 } catch (e) {
                     console.log(e)
                 }
             }
         };
     }, [player]);
+
+    // ─── Immediately pause & mute when screen loses focus ─────────────────
+    // This fires as soon as the user navigates away (e.g. to VideoPlayer), ensuring
+    // no reel keeps playing or emitting timeUpdate events in the background.
+    useEffect(() => {
+        if (!isFocused && player) {
+            // Cancel any pending play-delay timeout
+            if (playTimeoutRef.current) {
+                clearTimeout(playTimeoutRef.current);
+                playTimeoutRef.current = null;
+            }
+            try {
+                if (player.muted !== true) player.muted = true;
+                if (player.playing) player.pause();
+            } catch { }
+        }
+    }, [isFocused, player]);
 
     // ─── Track currently loaded URI ──────────────────────────────────────
     const loadedUriRef = useRef<string | null>(null);
