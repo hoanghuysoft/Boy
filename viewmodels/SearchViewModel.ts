@@ -162,7 +162,7 @@ export const useSearchViewModel = () => {
                 profiles.map((p) => ({
                     id: p.id,
                     name: p.name,
-                    avatar_url: p.avatar_url,
+                    avatar_url: p.avatar_url ?? null,
                     username: p.username,
                     is_verified: p.is_verified,
                     gender: p.gender,
@@ -177,7 +177,7 @@ export const useSearchViewModel = () => {
             recordProfileClick({
                 id: profile.id,
                 name: profile.name,
-                avatar_url: profile.avatar_url,
+                avatar_url: profile.avatar_url ?? null,
                 username: profile.username,
                 is_verified: profile.is_verified,
                 gender: profile.gender,

@@ -2,13 +2,11 @@ import { FlexText } from '@/components/FlexText';
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useRouter } from 'expo-router';
-import { SquircleView } from 'expo-squircle-view';
 import { SkeletonGroup } from 'heroui-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     FlatList,
-    ListRenderItemInfo,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -18,68 +16,80 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
 import { Hashtag } from '../../types/hashtag';
+import { CustomSurface } from '@/components/CustomSurface';
 
 const HashtagListScreen = () => {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
-    const vm = useTrendingHashtagsViewModel();
+    const {
+        allTags,
+        isLoading,
+        isRefetching,
+        handleRefresh,
+        navigateToTag,
+    } = useTrendingHashtagsViewModel();
     const { t } = useTranslation();
 
     const renderItem = useCallback(
-        ({ item }: ListRenderItemInfo<Hashtag>) => (
-            <TouchableOpacity
-                onPress={() => vm.navigateToTag(item.tag)}
-                activeOpacity={0.7}
-                style={{
-                    marginBottom: 12,
-                }}
+        ({ item, index }: { item: Hashtag; index: number }) => (
+            <CustomSurface
+                isFirst={index === 0}
+                isLast={index === allTags.length - 1}
+                onPress={() => navigateToTag(item.tag)}
+                style={styles.tagRow}
             >
-                <SquircleView
-                    cornerSmoothing={60}
-                    style={[styles.tagRow, { backgroundColor: colors.containerContent }]}
-                >
-                    <View style={styles.tagRowLeft}>
-                        <FlexText
-                            style={[
-                                common.body,
-                                { color: colors.text, fontWeight: '600' },
-                            ]}
-                        >
-                            #{item.tag}
+                <View style={styles.tagRowLeft}>
+                    <FlexText
+                        style={[
+                            common.body,
+                            { color: colors.text, fontWeight: '600' },
+                        ]}
+                    >
+                        #{item.tag}
+                    </FlexText>
+                    {item.count != null && (
+                        <FlexText style={[common.caption, { color: colors.muted, marginTop: 2 }]}>
+                            {t('hashtag.posts.count', { count: item.count })}
                         </FlexText>
-                        {item.count != null && (
-                            <FlexText style={[common.caption, { color: colors.muted, marginTop: 2 }]}>
-                                {t('hashtag.posts.count', { count: item.count })}
-                            </FlexText>
-                        )}
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-                </SquircleView>
-            </TouchableOpacity>
+                    )}
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </CustomSurface>
         ),
-        [colors, common, vm.navigateToTag, t]
+        [colors, common, navigateToTag, allTags.length, t]
     );
 
     const renderEmpty = useCallback(() => {
-        if (vm.isLoading) {
+        if (isLoading) {
             return (
-                <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 10 }}>
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <SkeletonGroup
-                            key={i}
-                            isLoading
-                            variant="pulse"
-                            style={[styles.tagRow, { backgroundColor: colors.containerContent }]}
-                        >
-                            <View style={styles.tagRowLeft}>
-                                <SkeletonGroup.Item className="h-5 w-32 rounded-md mb-2" />
-                                <SkeletonGroup.Item className="h-4 w-16 rounded-md" />
-                            </View>
-                            <SkeletonGroup.Item className="h-4 w-4 rounded-full" />
-                        </SkeletonGroup>
-                    ))}
+                <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 3 }}>
+                    {Array.from({ length: 6 }).map((_, i) => {
+                        const isFirst = i === 0;
+                        const isLast = i === 5;
+                        const cardStyle = isFirst && isLast
+                            ? { borderRadius: 24 }
+                            : isFirst
+                                ? { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomLeftRadius: 5, borderBottomRightRadius: 5 }
+                                : isLast
+                                    ? { borderBottomLeftRadius: 24, borderBottomRightRadius: 24, borderTopLeftRadius: 5, borderTopRightRadius: 5 }
+                                    : { borderRadius: 5 };
+                        return (
+                            <SkeletonGroup
+                                key={i}
+                                isLoading
+                                variant="pulse"
+                                style={[styles.tagRow, cardStyle, { backgroundColor: colors.containerContent }]}
+                            >
+                                <View style={styles.tagRowLeft}>
+                                    <SkeletonGroup.Item className="h-5 w-32 rounded-md mb-2" />
+                                    <SkeletonGroup.Item className="h-4 w-16 rounded-md" />
+                                </View>
+                                <SkeletonGroup.Item className="h-4 w-4 rounded-full" />
+                            </SkeletonGroup>
+                        );
+                    })}
                 </View>
             );
         }
@@ -116,7 +126,7 @@ const HashtagListScreen = () => {
                 </FlexText>
             </View>
         );
-    }, [vm.isLoading, colors, common, theme, t]);
+    }, [isLoading, colors, common, theme, t]);
 
     const ListHeaderComponent = useCallback(
         () => (
@@ -129,13 +139,13 @@ const HashtagListScreen = () => {
             >
                 <FlexText style={[common.heading, { fontSize: 28 }]}>{t('hashtag.list.title')}</FlexText>
                 <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
-                    {vm.allTags.length > 0
-                        ? t('hashtag.list.tagsCount', { count: vm.allTags.length })
+                    {allTags.length > 0
+                        ? t('hashtag.list.tagsCount', { count: allTags.length })
                         : t('hashtag.list.subtitle')}
                 </FlexText>
             </View>
         ),
-        [insets.top, common, colors.muted, vm.allTags.length, t]
+        [insets.top, common, colors.muted, allTags.length, t]
     );
 
     return (
@@ -165,23 +175,21 @@ const HashtagListScreen = () => {
             </View>
 
             <FlatList
-                data={vm.allTags}
+                data={allTags}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
                 ListHeaderComponent={ListHeaderComponent}
                 ListEmptyComponent={renderEmpty}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={[
-                    { paddingHorizontal: 16, gap: 10, paddingBottom: 40 },
-                    vm.allTags.length === 0 && styles.emptyContainer,
+                    { paddingHorizontal: 16, gap: 3, paddingBottom: 40 },
+                    allTags.length === 0 && styles.emptyContainer,
                 ]}
                 refreshControl={
                     <RefreshControl
-                        refreshing={vm.isRefetching}
-                        onRefresh={vm.handleRefresh}
+                        refreshing={isRefetching}
+                        onRefresh={handleRefresh}
                         tintColor={colors.text}
-                        colors={[colors.text]}
-                        progressBackgroundColor={colors.card}
                         progressViewOffset={insets.top}
                     />
                 }
@@ -199,7 +207,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingVertical: 14,
-        borderRadius: 12,
     },
     tagRowLeft: {
         flex: 1,
@@ -217,12 +224,6 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    refreshIndicator: {
-        borderRadius: 999,
-        padding: 10,
         alignItems: 'center',
         justifyContent: 'center',
     },

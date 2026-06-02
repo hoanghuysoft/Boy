@@ -1,7 +1,7 @@
-diff --git a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp
-index 09003a7..7d77337 100644
---- a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp
-+++ b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp
+diff --git a/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp b/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp
+index 09003a733203b8ca373deabb6949bd8f26fbe246..7d77337c3f4883c56c97f78d4bc37f6f9f97366b 100644
+--- a/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp	
++++ b/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp
 @@ -16,37 +16,31 @@
  
  namespace margelo::nitro::reactnativenitrowallpaper {
@@ -67,10 +67,10 @@ index 09003a7..7d77337 100644
      auto __result = method(_javaPart, jni::make_jstring(image), location);
      return [&]() {
        auto __promise = Promise<void>::create();
-diff --git a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp
-index 364d894..d6a1ae4 100644
---- a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp
-+++ b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp
+diff --git a/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp b/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp
+index 364d894ade8b8fbba2ecb2e3c56d70126bad1779..d6a1ae4c208e7beefc4846cbd602836114fb31bb 100644
+--- a/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp	
++++ b/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp
 @@ -18,34 +18,33 @@ namespace margelo::nitro::reactnativenitrowallpaper {
  
    using namespace facebook;
@@ -135,10 +135,10 @@ index 364d894..d6a1ae4 100644
    };
  
  } // namespace margelo::nitro::reactnativenitrowallpaper
-diff --git a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
-index 9a0a13d..f1570fc 100644
---- a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
-+++ b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
+diff --git a/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt b/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
+index 9a0a13df112ea9e5ec1d4c1ea696859e812cb6b8..f1570fc08628a2e4f6d8956f9cbb50ed741c4263 100644
+--- a/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt	
++++ b/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
 @@ -25,32 +25,29 @@ import com.margelo.nitro.core.HybridObject
    "LocalVariableName", "PropertyName", "PrivatePropertyName", "FunctionName"
  )
@@ -185,10 +185,10 @@ index 9a0a13d..f1570fc 100644
  
    companion object {
      protected const val TAG = "HybridWallpaperSetSpec"
-diff --git a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp
-index 299dbfe..7d2d050 100644
---- a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp
-+++ b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp
+diff --git a/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp b/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp
+index 299dbfecc1ccecf1b581a54c64c55c6840ed3c23..7d2d0503d85e75dae5d8fc5c56eb71a3aec9b61c 100644
+--- a/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp	
++++ b/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp
 @@ -21,24 +21,34 @@
  namespace margelo::nitro::reactnativenitrowallpaper {
  
@@ -240,10 +240,10 @@ index 299dbfe..7d2d050 100644
  }
  
  } // namespace margelo::nitro::reactnativenitrowallpaper
-diff --git a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp
-index 5b6b12d..f67a2eb 100644
---- a/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp
-+++ b/node_modules/react-native-nitro-wallpaper/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp
+diff --git a/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp b/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp
+index 5b6b12dad5b59f25daf57d67fe61737579edde70..f67a2eb506d499697ad1ec2088f240ca7e2df6b0 100644
+--- a/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp	
++++ b/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp
 @@ -6,20 +6,29 @@
  ///
  

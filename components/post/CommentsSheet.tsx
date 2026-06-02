@@ -1,16 +1,14 @@
 import VerifiedIcon from "@/icons/verified";
-import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import { Galeria } from "@nandorojo/galeria";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { GalleryAddBold, PenNewRoundBold, Plain2Bold } from "@solar-icons/react-native";
 import { Image } from "expo-image";
-import { Button, SkeletonGroup, Spinner } from "heroui-native";
+import { Avatar, Button, SkeletonGroup, Spinner } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
     FlatList,
     Keyboard,
     StyleSheet,
@@ -63,11 +61,10 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
         <View style={styles.commentItem}>
             {/* Avatar */}
             <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
-                <Image
-                    source={{ uri: comment.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                    style={[styles.avatar, { backgroundColor: colors.divider }]}
-                    contentFit="cover"
-                />
+                <Avatar style={styles.avatar}>
+                    <Avatar.Image source={{ uri: comment.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }} />
+                    <Avatar.Fallback>{comment.profile_name?.[0] || 'U'}</Avatar.Fallback>
+                </Avatar>
             </TouchableOpacity>
 
             {/* Content Bubble */}
@@ -466,14 +463,6 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 />
             </>
         );
-
-        if (useReanimated) {
-            return (
-                <ReanimatedTrueSheet dimmed={false} {...sharedProps}>
-                    {sheetContent}
-                </ReanimatedTrueSheet>
-            );
-        }
 
         return (
             <TrueSheet {...sharedProps}>

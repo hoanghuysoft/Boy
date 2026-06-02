@@ -1,6 +1,7 @@
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
 import * as Sentry from '@sentry/react-native';
+import { BottomSheetProvider } from "@swmansion/react-native-bottom-sheet";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
@@ -295,24 +296,26 @@ export default withSentry(function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <HeroUINativeProvider>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{
-            persister: clientPersister,
-            maxAge: 1000 * 60 * 60, // 1 hour max cache age allowed on boot
-            buster: "v1.1", // cache buster to invalidate stale layouts
-          }}
-        >
-          <SafeAreaProvider>
-            <KeyboardProvider>
-              <ThemeProvider>
-                <StatusBarProvider>
-                  <RootContent />
-                </StatusBarProvider>
-              </ThemeProvider>
-            </KeyboardProvider>
-          </SafeAreaProvider>
-        </PersistQueryClientProvider>
+        <BottomSheetProvider>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{
+              persister: clientPersister,
+              maxAge: 1000 * 60 * 60, // 1 hour max cache age allowed on boot
+              buster: "v1.1", // cache buster to invalidate stale layouts
+            }}
+          >
+            <SafeAreaProvider>
+              <KeyboardProvider>
+                <ThemeProvider>
+                  <StatusBarProvider>
+                    <RootContent />
+                  </StatusBarProvider>
+                </ThemeProvider>
+              </KeyboardProvider>
+            </SafeAreaProvider>
+          </PersistQueryClientProvider>
+        </BottomSheetProvider>
       </HeroUINativeProvider>
     </GestureHandlerRootView>
   );

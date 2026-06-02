@@ -5,21 +5,19 @@ import VerifiedIcon from "@/icons/verified";
 import { ProfilesResponse, useInfiniteProfiles } from "@/services/userprofile";
 import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList } from "@shopify/flash-list";
+import { Avatar, Spinner } from "heroui-native";
 import { debounce, flatMap } from "lodash";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
     StyleSheet,
     TextInput,
     TouchableOpacity,
     View
 } from "react-native";
-import { Image as ExpoImage } from "expo-image";
-import { Spinner } from "heroui-native";
 
 interface ProfilePickerSheetProps {
     selectedProfileId?: string | null;
@@ -47,23 +45,12 @@ const ProfileRow = memo(
                 style={styles.row}
             >
                 <View style={styles.avatarContainer}>
-                    {item.avatar_url ? (
-                        <ExpoImage
+                    <Avatar style={styles.avatarContainer}>
+                        <Avatar.Image
                             source={{ uri: item.avatar_url }}
-                            style={styles.avatar}
-                            contentFit="cover"
                         />
-                    ) : (
-                        <ExpoImage
-                            source={
-                                item.gender === "male"
-                                    ? require("../../../assets/images/AV17.png")
-                                    : require("../../../assets/images/AV86.png")
-                            }
-                            style={styles.avatar}
-                            contentFit="cover"
-                        />
-                    )}
+                        <Avatar.Fallback>{item.name.charAt(0).toUpperCase()}</Avatar.Fallback>
+                    </Avatar>
                 </View>
 
                 <View style={styles.info}>
@@ -296,8 +283,6 @@ const styles = StyleSheet.create({
     avatarContainer: {
         width: 48,
         height: 48,
-        borderRadius: 999,
-        overflow: "hidden",
     },
     avatar: {
         width: "100%",

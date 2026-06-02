@@ -1,5 +1,5 @@
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { CaseMinimalisticBold, PlayCircleBold, PlayCircleOutline, PointOnMapBold } from '@solar-icons/react-native';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
@@ -40,7 +40,7 @@ interface ProfileHeaderProps {
   addressSheetRef?: React.RefObject<TrueSheet | null>;
   workplaceSheetRef?: React.RefObject<TrueSheet | null>;
   familySheetRef?: React.RefObject<TrueSheet | null>;
-  briefSheetRef?: React.RefObject<TrueSheet | null>;
+  briefSheetRef?: React.RefObject<any>;
   workplaces?: Workplace[];
   music?: ProfileMusic[];
   socialLinks?: ProfileLink[];
@@ -238,6 +238,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
     </>
   );
 });
+
+ProfileHeader.displayName = 'ProfileHeader';
 
 export { COVER_HEIGHT };
 export default ProfileHeader;

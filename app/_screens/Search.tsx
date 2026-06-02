@@ -40,20 +40,44 @@ const SearchScreen = () => {
   const { t } = useTranslation();
 
   // ─── ViewModel ─────────────────────────────────────────────────
-  const vm = useSearchViewModel();
+  const {
+    searchQuery,
+    isFocused,
+    isAdmin,
+    profiles,
+    totalResults,
+    isLoading,
+    isRefetching,
+    isFetchingNextPage,
+    inputRef,
+    listRef,
+    insets,
+    baseSearchBarBottom,
+    contentBottomPadding,
+    animatedSearchBarStyle,
+    handleSearchChange,
+    clearSearch,
+    handleFocus,
+    handleBlur,
+    handleRefresh,
+    handleEndReached,
+    handleProfilePress,
+  } = useSearchViewModel();
 
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<Profile>) => (
+    ({ item, index }: ListRenderItemInfo<Profile>) => (
       <SearchProfileItem
         item={item}
         colors={colors}
         styles={styles}
         common={common}
         navigation={navigation}
-        onPress={vm.handleProfilePress}
+        onPress={handleProfilePress}
+        isFirst={index === 0}
+        isLast={index === profiles.length - 1}
       />
     ),
-    [colors, common, navigation, vm.handleProfilePress],
+    [colors, common, navigation, handleProfilePress, profiles.length],
   );
 
   const ListEmptyComponent = useCallback(
@@ -62,33 +86,33 @@ const SearchScreen = () => {
         colors,
         styles,
         common,
-        searchQuery: vm.searchQuery,
-        isAdmin: vm.isAdmin,
+        searchQuery: searchQuery,
+        isAdmin: isAdmin,
         t,
       }),
-    [colors, common, vm.searchQuery, vm.isAdmin, t],
+    [colors, common, searchQuery, isAdmin, t],
   );
 
   const ListFooterComponent = useCallback(
     () =>
       renderFooter({
-        isFetchingNextPage: vm.isFetchingNextPage,
+        isFetchingNextPage: isFetchingNextPage,
         colors,
         styles,
         renderProfileSkeleton,
       }),
-    [vm.isFetchingNextPage, colors],
+    [isFetchingNextPage, colors],
   );
 
   const ListHeaderComponent = useCallback(
     () =>
-      !vm.searchQuery ? (
+      !searchQuery ? (
         <View style={{ paddingBottom: 8 }}>
           <MostSearchedSection />
           <TrendingHashtagsSection />
         </View>
       ) : null,
-    [vm.searchQuery],
+    [searchQuery],
   );
 
   return (
@@ -101,7 +125,7 @@ const SearchScreen = () => {
       <View
         style={{
           position: "absolute",
-          top: vm.insets.top + 16,
+          top: insets.top + 16,
           left: 16,
           zIndex: 1000,
         }}
@@ -121,26 +145,26 @@ const SearchScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.header, { marginTop: vm.insets.top + 66 }]}>
+      <View style={[styles.header, { marginTop: insets.top + 66 }]}>
         <FlexText style={[common.heading, { fontSize: 28 }]}>{t('search.header.title')}</FlexText>
         <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
-          {vm.searchQuery
-            ? t('search.header.resultsCount', { count: vm.totalResults })
-            : vm.isAdmin
-              ? t('search.header.peopleCount', { count: vm.totalResults })
+          {searchQuery
+            ? t('search.header.resultsCount', { count: totalResults })
+            : isAdmin
+              ? t('search.header.peopleCount', { count: totalResults })
               : t('search.header.exploreSubtitle')}
         </FlexText>
       </View>
 
       {/* Content */}
-      {vm.isLoading ? (
+      {isLoading ? (
         <FlashList
           data={[1, 2, 3, 4, 5, 6, 7, 8]}
           renderItem={() => renderProfileSkeleton({ colors, styles })}
           keyExtractor={(item: any) => item.toString()}
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: vm.contentBottomPadding },
+            { paddingBottom: contentBottomPadding },
           ]}
           ListHeaderComponent={ListHeaderComponent}
           showsVerticalScrollIndicator={false}
@@ -150,14 +174,15 @@ const SearchScreen = () => {
         />
       ) : (
         <FlatList
-          ref={vm.listRef as any}
-          data={vm.profiles}
+          ref={listRef as any}
+          data={profiles}
           renderItem={renderItem}
           keyExtractor={(item: Profile) => item.id}
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: vm.contentBottomPadding },
-            vm.profiles.length === 0 && styles.emptyListContent,
+            { gap: 3 },
+            { paddingBottom: contentBottomPadding },
+            profiles.length === 0 && styles.emptyListContent,
           ]}
           ListHeaderComponent={ListHeaderComponent}
           ListEmptyComponent={ListEmptyComponent}
@@ -166,14 +191,14 @@ const SearchScreen = () => {
           // ItemSeparatorComponent={ITEM_SEPARATOR}
           refreshControl={
             <RefreshControl
-              refreshing={vm.isRefetching}
-              onRefresh={vm.handleRefresh}
+              refreshing={isRefetching}
+              onRefresh={handleRefresh}
               tintColor={colors.text}
               colors={[colors.text]}
               progressBackgroundColor={colors.card}
             />
           }
-          onEndReached={vm.handleEndReached}
+          onEndReached={handleEndReached}
           onEndReachedThreshold={0.5}
           ListFooterComponent={ListFooterComponent}
         />
@@ -183,32 +208,32 @@ const SearchScreen = () => {
       <Animated.View
         style={[
           styles.searchBarContainer,
-          { bottom: vm.baseSearchBarBottom },
-          vm.animatedSearchBarStyle,
+          { bottom: baseSearchBarBottom },
+          animatedSearchBarStyle,
         ]}
       >
         <AnimatedGlow
           preset={appleIntelli}
-          activeState={vm.isFocused ? "press" : "default"}
+          activeState={isFocused ? "press" : "default"}
           style={{ borderRadius: 999 }}
         >
           <View style={[styles.searchBar]}>
             <TextInput
-              ref={vm.inputRef}
+              ref={inputRef}
               style={[styles.searchInput, { color: "white", marginLeft: 12 }]}
               placeholder={t('search.searchBar.placeholder')}
               placeholderTextColor={colors.muted}
-              value={vm.searchQuery}
-              onChangeText={vm.handleSearchChange}
-              onFocus={vm.handleFocus}
-              onBlur={vm.handleBlur}
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
               returnKeyType="search"
               autoCorrect={false}
               autoCapitalize="none"
             />
-            {vm.searchQuery.length > 0 && (
+            {searchQuery.length > 0 && (
               <TouchableOpacity
-                onPress={vm.clearSearch}
+                onPress={clearSearch}
                 style={styles.clearButton}
               >
                 <View
@@ -248,7 +273,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 14,
-    borderRadius: 9999,
     gap: 14,
   },
   avatar: {

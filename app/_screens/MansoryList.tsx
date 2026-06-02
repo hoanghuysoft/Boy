@@ -10,15 +10,16 @@ import { createCommonStyles } from "@/styles/common";
 import { Media } from "@/types/media";
 import { Profile } from "@/types/profile";
 import { choosenMediaPath } from "@/utils/imageurl";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 
 
+import { Image as ExpoImage } from "expo-image";
 import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
-import { SkeletonGroup } from "heroui-native";
+import { Avatar, SkeletonGroup } from "heroui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -28,7 +29,6 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -225,26 +225,37 @@ const MansoryListScreen = () => {
         if (isLoading) return;
 
         if (!effectiveProfileId || media.length === 0) {
-            setIsPrefetching(false);
-            return;
+            const timer = setTimeout(() => {
+                setIsPrefetching(false);
+            }, 0);
+            return () => clearTimeout(timer);
         }
 
         const profileChanged = lastPrefetchedProfileId.current !== effectiveProfileId;
+        let timerId: ReturnType<typeof setTimeout> | null = null;
         if (profileChanged) {
             didInitialPrefetchRef.current = false;
             lastPrefetchedProfileId.current = effectiveProfileId;
-            setIsPrefetching(true);
+            timerId = setTimeout(() => {
+                setIsPrefetching(true);
+            }, 0);
         }
 
         if (didInitialPrefetchRef.current) {
             prefetchPhotoDimensions(media);
-            return;
+            return () => {
+                if (timerId) clearTimeout(timerId);
+            };
         }
 
         didInitialPrefetchRef.current = true;
         prefetchPhotoDimensions(media).finally(() => {
             setIsPrefetching(false);
         });
+
+        return () => {
+            if (timerId) clearTimeout(timerId);
+        };
     }, [media, isLoading, effectiveProfileId]);
 
     const handlePickProfile = useCallback((profile: Profile | null) => {
@@ -319,24 +330,10 @@ const MansoryListScreen = () => {
                             },
                         ]}
                     >
-                        {activeProfile?.avatar_url ? (
-                            <ExpoImage
-                                source={{ uri: activeProfile.avatar_url }}
-                                style={styles.headerAvatar}
-                                contentFit="cover"
-                                recyclingKey={activeProfile.avatar_url}
-                            />
-                        ) : (
-                            <ExpoImage
-                                source={
-                                    activeProfile?.gender === "male"
-                                        ? require("../../assets/images/AV17.png")
-                                        : require("../../assets/images/AV86.png")
-                                }
-                                style={styles.headerAvatar}
-                                contentFit="cover"
-                            />
-                        )}
+                        <Avatar style={styles.headerAvatar}>
+                            <Avatar.Image source={{ uri: activeProfile.avatar_url }} />
+                            <Avatar.Fallback>{activeProfile?.name?.charAt(0).toUpperCase()}</Avatar.Fallback>
+                        </Avatar>
                         <View
                             style={[
                                 styles.headerAvatarBadge,
@@ -525,9 +522,7 @@ const styles = StyleSheet.create({
     },
     headerAvatar: {
         width: 46,
-        height: 46,
-        borderRadius: 23,
-        overflow: "hidden",
+        height: 46
     },
     headerAvatarBadge: {
         position: "absolute",

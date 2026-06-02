@@ -453,6 +453,7 @@ export const ShotItem = React.memo(function ShotItem({
                     {item.profile_avatar && (
                         <Avatar style={styles.avatar}>
                             <Avatar.Image source={{ uri: item.profile_avatar }}></Avatar.Image>
+                            <Avatar.Fallback>{item?.profile_name?.[0] || 'U'}</Avatar.Fallback>
                         </Avatar>
                     )}
                     <FlexText style={styles.profileName}>{item.profile_name}</FlexText>
