@@ -1,8 +1,11 @@
 diff --git a/node_modules/heroui-native/.bun-tag-59302fc07d3048b5 b/.bun-tag-59302fc07d3048b5
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/heroui-native/.bun-tag-b724376a2cf417f5 b/.bun-tag-b724376a2cf417f5
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/lib/module/components/avatar/avatar.js b/lib/module/components/avatar/avatar.js
-index df13832b2e29475bc3db540eb0bd2753fbd115e0..ff6d98ea7a3e3b6cf56c71dc5b61bfd90b7d4c0c 100644
+index df13832b2e29475bc3db540eb0bd2753fbd115e0..7480a4016464943b9efc2ec91d20cbfcc55c8a03 100644
 --- a/lib/module/components/avatar/avatar.js	
 +++ b/lib/module/components/avatar/avatar.js
 @@ -2,6 +2,8 @@
@@ -14,15 +17,27 @@ index df13832b2e29475bc3db540eb0bd2753fbd115e0..ff6d98ea7a3e3b6cf56c71dc5b61bfd9
  import { useThemeColor } from "../../helpers/external/hooks/index.js";
  import { HeroText } from "../../helpers/internal/components/index.js";
  import { AnimationSettingsProvider } from "../../helpers/internal/contexts/index.js";
-@@ -102,7 +104,7 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
-     ref: ref,
-     source: source,
-     asChild: true,
--    children: /*#__PURE__*/_jsx(Animated.Image, {
-+    children: /*#__PURE__*/_jsx(AnimatedExpoImage, {
-       style: imageStyle,
-       className: imageClassName,
+@@ -98,13 +100,14 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
        ...restProps
+     });
+   }
+-  return /*#__PURE__*/_jsx(AvatarPrimitives.Image, {
+-    ref: ref,
+-    source: source,
+-    asChild: true,
+-    children: /*#__PURE__*/_jsx(Animated.Image, {
+-      style: imageStyle,
++  return /*#__PURE__*/_jsx(Animated.View, {
++    style: imageStyle,
++    className: imageClassName,
++    children: /*#__PURE__*/_jsx(AvatarPrimitives.Image, {
++      ref: ref,
++      source: source,
+       className: imageClassName,
++      style: styleProp,
+       ...restProps
+     })
+   });
 diff --git a/lib/module/helpers/internal/components/bottom-sheet-content-container.js b/lib/module/helpers/internal/components/bottom-sheet-content-container.js
 index f9ea035e3b30eafe5eb281e8c0b9aae8149d9daf..d9b411008bf492531386cc1592636dd2ee210a7a 100644
 --- a/lib/module/helpers/internal/components/bottom-sheet-content-container.js	
@@ -90,6 +105,58 @@ index c58130caf472621dbbfbf85cdbbd7c36c5afe78b..e395831d54ebcb7b4f9f55c9ff1b34ac
    if (status === 'error') {
      return null;
    }
+diff --git a/lib/module/primitives/avatar/avatar.utils.js b/lib/module/primitives/avatar/avatar.utils.js
+index da78034a16fe68babf071af4279034b8a9511ee7..b287d8fb7fe2dda039d9f42110a539449033bca0 100644
+--- a/lib/module/primitives/avatar/avatar.utils.js	
++++ b/lib/module/primitives/avatar/avatar.utils.js
+@@ -24,12 +24,15 @@ export function isValidSource(source) {
+   if (!source) {
+     return false;
+   }
++  if (typeof source === 'string') {
++    return true;
++  }
+   // Using require() for the source returns a number
+   if (typeof source === 'number') {
+     return true;
+   }
+   if (Array.isArray(source)) {
+-    return source.some(s => !!s.uri);
++    return source.some(s => !!s || s && typeof s === 'object' && !!s.uri);
+   }
+   return !!source.uri;
+ }
+@@ -65,13 +68,18 @@ export function isSameSource(source1, source2) {
+     return false;
+   }
+ 
++  // Both are strings
++  if (typeof source1 === 'string' && typeof source2 === 'string') {
++    return source1 === source2;
++  }
++
+   // Both are numbers (require() statements)
+   if (typeof source1 === 'number' && typeof source2 === 'number') {
+     return source1 === source2;
+   }
+ 
+-  // One is a number, the other is not
+-  if (typeof source1 === 'number' || typeof source2 === 'number') {
++  // One is a number or string, the other is not
++  if (typeof source1 === 'number' || typeof source2 === 'number' || typeof source1 === 'string' || typeof source2 === 'string') {
+     return false;
+   }
+ 
+@@ -83,6 +91,9 @@ export function isSameSource(source1, source2) {
+     // Compare each element's URI
+     return source1.every((s1, index) => {
+       const s2 = source2[index];
++      if (typeof s1 === 'string' && typeof s2 === 'string') {
++        return s1 === s2;
++      }
+       return s1?.uri === s2?.uri;
+     });
+   }
 diff --git a/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts b/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts
 index f88f1777bccd8ea06a0b9c76401d558b49126894..475e26a437332dbc08fe89204f1943b7cc169305 100644
 --- a/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts	
@@ -108,7 +175,7 @@ index f88f1777bccd8ea06a0b9c76401d558b49126894..475e26a437332dbc08fe89204f1943b7
  //# sourceMappingURL=bottom-sheet.d.ts.map
 \ No newline at end of file
 diff --git a/src/components/avatar/avatar.tsx b/src/components/avatar/avatar.tsx
-index 3323c69b88ac94e20476db2456aabd8365e3d002..a1eb8e416b59a7ead45563ab9bf51719460d14fc 100644
+index 3323c69b88ac94e20476db2456aabd8365e3d002..24c8859168570f66b49665347695a8f2bbc4b08a 100644
 --- a/src/components/avatar/avatar.tsx	
 +++ b/src/components/avatar/avatar.tsx
 @@ -1,6 +1,9 @@
@@ -121,15 +188,30 @@ index 3323c69b88ac94e20476db2456aabd8365e3d002..a1eb8e416b59a7ead45563ab9bf51719
  import { useThemeColor } from '../../helpers/external/hooks';
  import { HeroText } from '../../helpers/internal/components';
  import { AnimationSettingsProvider } from '../../helpers/internal/contexts';
-@@ -152,7 +155,7 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
-         source={source as ImageSourcePropType}
-         asChild
-       >
+@@ -147,17 +150,15 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+     }
+ 
+     return (
+-      <AvatarPrimitives.Image
+-        ref={ref}
+-        source={source as ImageSourcePropType}
+-        asChild
+-      >
 -        <Animated.Image
-+        <AnimatedExpoImage
-           style={imageStyle}
+-          style={imageStyle}
++      <Animated.View style={imageStyle} className={imageClassName}>
++        <AvatarPrimitives.Image
++          ref={ref}
++          source={source as ImageSourcePropType}
            className={imageClassName}
++          style={styleProp}
            {...restProps}
+         />
+-      </AvatarPrimitives.Image>
++      </Animated.View>
+     );
+   }
+ );
 diff --git a/src/components/bottom-sheet/bottom-sheet.types.ts b/src/components/bottom-sheet/bottom-sheet.types.ts
 index f29b870186643e0411f9533b79d5158748fb9013..52adb788295da311f71ee6631d87fb0772eafdef 100644
 --- a/src/components/bottom-sheet/bottom-sheet.types.ts	
@@ -281,3 +363,77 @@ index fb373769aaa4eef4788aa29ca74edc9d02e9c3ba..bb0d1cbec7f6cb2c298ba03190f3588f
  import type {
    ComponentPropsWithAsChild,
    SlottableViewProps,
+diff --git a/src/primitives/avatar/avatar.utils.ts b/src/primitives/avatar/avatar.utils.ts
+index 01d3890e7aeb175a26da6b81af709e58b00f8abf..c8785d89ab99e79dd71232dbdde2c2b179046d0b 100644
+--- a/src/primitives/avatar/avatar.utils.ts	
++++ b/src/primitives/avatar/avatar.utils.ts
+@@ -20,17 +20,19 @@ import type { ImageSourcePropType } from 'react-native';
+  * isValidSource([{ uri: '' }, { uri: null }]); // false
+  * ```
+  */
+-export function isValidSource(source?: ImageSourcePropType) {
++export function isValidSource(source?: any) {
+   if (!source) {
+     return false;
+   }
+-  // Using require() for the source returns a number
++  if (typeof source === 'string') {
++    return true;
++  }
+   if (typeof source === 'number') {
+     return true;
+   }
+ 
+   if (Array.isArray(source)) {
+-    return source.some((s) => !!s.uri);
++    return source.some((s) => !!s || (s && typeof s === 'object' && !!s.uri));
+   }
+ 
+   return !!source.uri;
+@@ -57,8 +59,8 @@ export function isValidSource(source?: ImageSourcePropType) {
+  * ```
+  */
+ export function isSameSource(
+-  source1?: ImageSourcePropType,
+-  source2?: ImageSourcePropType
++  source1?: any,
++  source2?: any
+ ): boolean {
+   // Both undefined/null
+   if (!source1 && !source2) {
+@@ -70,13 +72,23 @@ export function isSameSource(
+     return false;
+   }
+ 
++  // Both are strings
++  if (typeof source1 === 'string' && typeof source2 === 'string') {
++    return source1 === source2;
++  }
++
+   // Both are numbers (require() statements)
+   if (typeof source1 === 'number' && typeof source2 === 'number') {
+     return source1 === source2;
+   }
+ 
+-  // One is a number, the other is not
+-  if (typeof source1 === 'number' || typeof source2 === 'number') {
++  // One is a number or string, the other is not
++  if (
++    typeof source1 === 'number' ||
++    typeof source2 === 'number' ||
++    typeof source1 === 'string' ||
++    typeof source2 === 'string'
++  ) {
+     return false;
+   }
+ 
+@@ -88,6 +100,9 @@ export function isSameSource(
+     // Compare each element's URI
+     return source1.every((s1, index) => {
+       const s2 = source2[index];
++      if (typeof s1 === 'string' && typeof s2 === 'string') {
++        return s1 === s2;
++      }
+       return s1?.uri === s2?.uri;
+     });
+   }
