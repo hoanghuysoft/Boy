@@ -5,7 +5,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { CheckCircleBold, ClockCircleBold, MoonBold, SmartphoneBold, Sun2Bold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { Surface } from "heroui-native";
+import { CustomSurface } from "@/components/CustomSurface";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -55,37 +55,37 @@ const ThemeSettingsScreen = () => {
                 {t('themeSettings.subtitle')}
             </FlexText>
 
-            <Surface variant="default">
+            <View style={{ gap: 3 }}>
                 {themeOptions.map((option, index) => (
-                    <View key={option.id}>
-                        {index > 0 && <View style={styles.divider} />}
-                        <TouchableOpacity
-                            style={[styles.option]}
-                            onPress={() => setThemePreference(option.id)}
-                        >
-                            <View style={styles.optionLeft}>
-                                <SquircleView cornerSmoothing={100} preserveSmoothing={true} style={[styles.iconContainer, themePreference === option.id && styles.iconContainerActive]}>
-                                    <option.icon
-                                        size={24}
-                                        color={themePreference === option.id ? "#fff" : colors.text}
-                                    />
-                                </SquircleView>
-                                <View style={styles.optionText}>
-                                    <FlexText style={[common.body]}>
-                                        {t(`themeSettings.options.${option.id}.label`)}
-                                    </FlexText>
-                                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>
-                                        {t(`themeSettings.options.${option.id}.description`)}
-                                    </FlexText>
-                                </View>
+                    <CustomSurface
+                        key={option.id}
+                        isFirst={index === 0}
+                        isLast={index === themeOptions.length - 1}
+                        onPress={() => setThemePreference(option.id)}
+                        style={styles.option}
+                    >
+                        <View style={styles.optionLeft}>
+                            <SquircleView cornerSmoothing={100} preserveSmoothing={true} style={[styles.iconContainer, themePreference === option.id && styles.iconContainerActive]}>
+                                <option.icon
+                                    size={24}
+                                    color={themePreference === option.id ? "#fff" : colors.text}
+                                />
+                            </SquircleView>
+                            <View style={styles.optionText}>
+                                <FlexText style={[common.body]}>
+                                    {t(`themeSettings.options.${option.id}.label`)}
+                                </FlexText>
+                                <FlexText style={[common.bodySmall, { color: colors.muted }]}>
+                                    {t(`themeSettings.options.${option.id}.description`)}
+                                </FlexText>
                             </View>
-                            {themePreference === option.id && (
-                                <CheckCircleBold size={24} color="#54d340" />
-                            )}
-                        </TouchableOpacity>
-                    </View>
+                        </View>
+                        {themePreference === option.id && (
+                            <CheckCircleBold size={24} color="#54d340" />
+                        )}
+                    </CustomSurface>
                 ))}
-            </Surface>
+            </View>
         </ScrollView>
     );
 };
@@ -105,7 +105,6 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingVertical: 8,
     },
     optionLeft: {
         flexDirection: "row",

@@ -1,25 +1,24 @@
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import BookmarkIcon from "@/icons/bookmark";
 import BookmarkSolidIcon from "@/icons/bookmarksolid";
 import CommentIcon from "@/icons/comment";
 import LikeIcon from "@/icons/like";
 import LikeSolidIcon from "@/icons/likedsolid";
 import ShareIcon from "@/icons/share";
-import VerifiedIcon from "@/icons/verified";
+import { usePrecacheProfileFromPost } from "@/services/profileCache";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Media, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
+import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
-import { Button, Dialog } from "heroui-native";
+import { Avatar, Button, Dialog } from "heroui-native";
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Dimensions, TouchableOpacity, View } from "react-native";
 import { Pressable, ScrollView } from 'react-native-gesture-handler';
-import { Image as ExpoImage } from "expo-image";
-import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
-import { usePrecacheProfileFromPost } from "@/services/profileCache";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
 import { PostAudioWaveform } from "./PostAudioWaveform";
@@ -106,16 +105,17 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
                 <TouchableOpacity onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
-                    <ExpoImage
-                        source={{ uri: post.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
-                        style={{ width: 40, height: 40, borderRadius: 9999 }}
-                        contentFit="cover"
-                        placeholder={{ blurhash: avatarPlaceholder }}
-                    />
+                    <Avatar style={{ width: 40, height: 40 }}>
+                        <Avatar.Image
+                            source={{ uri: post.profile_avatar }}
+                        />
+                        <Avatar.Fallback>
+                            {post.profile_name?.charAt(0).toUpperCase()}
+                        </Avatar.Fallback>
+                    </Avatar>
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>
                             <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
-                            {post.profile_is_verified && <VerifiedIcon size={14} backgroundColor={vm.colors.verify} />}
                         </View>
                         <PostMetaInfo post={post} />
                     </View>

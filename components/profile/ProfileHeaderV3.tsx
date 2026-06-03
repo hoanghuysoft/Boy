@@ -44,7 +44,7 @@ interface ProfileHeaderV3Props {
     addressSheetRef?: React.RefObject<TrueSheet | null>;
     workplaceSheetRef?: React.RefObject<TrueSheet | null>;
     familySheetRef?: React.RefObject<TrueSheet | null>;
-    briefSheetRef?: React.RefObject<TrueSheet | null>;
+    briefSheetRef?: React.RefObject<any>;
     onPresentSheet?: (ref: React.RefObject<any>) => void;
     workplaces?: Workplace[];
     music?: ProfileMusic[];

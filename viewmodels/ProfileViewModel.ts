@@ -1,5 +1,6 @@
 import type { PostOptionsSheetHandle } from "@/components/post/PostOptionsSheet";
 import type { LikersSheetHandle } from "@/types/sheetHandles";
+import type { BriefInfoSheetHandle } from "../components/profile/sheets/BriefInfoSheet";
 import { choosenMediaPath } from "@/utils/imageurl";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -63,12 +64,6 @@ export const useProfileViewModel = () => {
     const [feedEnabled, setFeedEnabled] = useState(true);
     const [imagesEnabled, setImagesEnabled] = useState(false);
     const [videosEnabled, setVideosEnabled] = useState(false);
-
-    useEffect(() => {
-        if (activeTab === "Feed") setFeedEnabled(true);
-        else if (activeTab === "Images") setImagesEnabled(true);
-        else if (activeTab === "Videos") setVideosEnabled(true);
-    }, [activeTab]);
 
     // ─── Data Fetching ─────────────────────────────────────────────
     const {
@@ -185,16 +180,19 @@ export const useProfileViewModel = () => {
     const addressSheetRef = useRef<TrueSheet>(null);
     const workplaceSheetRef = useRef<TrueSheet>(null);
     const familySheetRef = useRef<TrueSheet>(null);
-    const briefSheetRef = useRef<TrueSheet>(null);
+    const briefSheetRef = useRef<BriefInfoSheetHandle>(null);
 
     // ─── Scroll Animation ──────────────────────────────────────────
-    const scrollY = useRef(new Animated.Value(0)).current;
-    const scrollTopButtonOpacity = useRef(new Animated.Value(0)).current;
+    const scrollY = useMemo(() => new Animated.Value(0), []);
+    const scrollTopButtonOpacity = useMemo(() => new Animated.Value(0), []);
 
     // ─── Effects ───────────────────────────────────────────────────
     useEffect(() => {
         if (isProfileError) {
-            setSnackbarVisible(true);
+            const timer = setTimeout(() => {
+                setSnackbarVisible(true);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [isProfileError]);
 
@@ -205,7 +203,7 @@ export const useProfileViewModel = () => {
             scrollY.setValue(0);
             listRef.current.scrollToOffset({ offset: 0, animated: true });
         }
-    }, [trigger]);
+    }, [trigger, activeTab, scrollY]);
 
     // Restore saved scroll position whenever the active tab changes
     useEffect(() => {
@@ -219,41 +217,45 @@ export const useProfileViewModel = () => {
         return () => clearTimeout(timer);
     }, [activeTab, scrollY]);
 
-    // ─── Scroll Handler ────────────────────────────────────────────
+    const showHeaderAvatarRef = useRef<boolean>(false);
+    const showScrollTopRef = useRef<boolean>(false);
+
+    useEffect(() => {
+        showHeaderAvatarRef.current = showHeaderAvatar;
+    }, [showHeaderAvatar]);
+
+    useEffect(() => {
+        showScrollTopRef.current = showScrollTop;
+    }, [showScrollTop]);
+
     const onScroll = useMemo(() =>
         Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            {
-                useNativeDriver: true,
-                listener: (event: any) => {
-                    const offsetY = event.nativeEvent.contentOffset.y;
-                    currentScrollY.current = offsetY;
-                    const shouldShow = offsetY > 300;
-                    if (shouldShow !== showScrollTop) {
-                        setShowScrollTop(shouldShow);
-                        Animated.timing(scrollTopButtonOpacity, {
-                            toValue: shouldShow ? 1 : 0,
-                            duration: 200,
-                            useNativeDriver: true,
-                        }).start();
-                    }
-                    const shouldShowAvatar = offsetY > 160;
-                    if (shouldShowAvatar !== showHeaderAvatar) {
-                        setShowHeaderAvatar(shouldShowAvatar);
-                    }
-                }
-            }
+            { useNativeDriver: true }
         ),
-        [scrollY, showScrollTop, showHeaderAvatar]);
+        [scrollY]);
 
-    // ─── PagerWithHeader Scroll Handler ─────────────────────────────
-    // When using PagerWithHeader, the List component calls onScrollY instead
-    // of Animated.event. This lightweight callback updates showHeaderAvatar
-    // and showScrollTop from the raw Y offset.
-    const showHeaderAvatarRef = useRef(showHeaderAvatar);
-    showHeaderAvatarRef.current = showHeaderAvatar;
-    const showScrollTopRef = useRef(showScrollTop);
-    showScrollTopRef.current = showScrollTop;
+    useEffect(() => {
+        const listenerId = scrollY.addListener(({ value }) => {
+            currentScrollY.current = value;
+            const shouldShow = value > 300;
+            if (shouldShow !== showScrollTopRef.current) {
+                setShowScrollTop(shouldShow);
+                Animated.timing(scrollTopButtonOpacity, {
+                    toValue: shouldShow ? 1 : 0,
+                    duration: 200,
+                    useNativeDriver: true,
+                }).start();
+            }
+            const shouldShowAvatar = value > 160;
+            if (shouldShowAvatar !== showHeaderAvatarRef.current) {
+                setShowHeaderAvatar(shouldShowAvatar);
+            }
+        });
+        return () => {
+            scrollY.removeListener(listenerId);
+        };
+    }, [scrollY, scrollTopButtonOpacity]);
 
     const onScrollYChange = useCallback((y: number) => {
         currentScrollY.current = y;
@@ -287,10 +289,16 @@ export const useProfileViewModel = () => {
         requestAnimationFrame(() => {
             startTransition(() => {
                 setActiveTab(tab);
+                if (tab === 'Feed') setFeedEnabled(true);
+                else if (tab === 'Images') setImagesEnabled(true);
+                else if (tab === 'Videos') setVideosEnabled(true);
             });
         });
     }, [selectedTab]);
-    handleTabChangeRef.current = handleTabChange;
+
+    useEffect(() => {
+        handleTabChangeRef.current = handleTabChange;
+    }, [handleTabChange]);
 
     const stableTabChange = useCallback((tab: TabType) => {
         handleTabChangeRef.current?.(tab);

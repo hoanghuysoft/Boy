@@ -2,7 +2,6 @@ import { FlexText } from "@/components/FlexText";
 import { calculateBMI, enrichProfileData, getBMIStatus } from "@/utils/zodiacCalculation";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import {
     CalculatorBold,
     CalendarBold,
@@ -22,10 +21,11 @@ import {
     WheelBold,
     WomenBold,
 } from '@solar-icons/react-native';
-import React, { forwardRef, memo, useEffect, useMemo, useState } from "react";
-import { useTranslation } from 'react-i18next';
+import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { Image } from "expo-image";
-import { ScrollView, StyleSheet, View } from "react-native";
+import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
+import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -38,6 +38,11 @@ interface BriefInfoSheetProps {
     profile?: ProfileDetail | null;
     workplaces?: Workplace[];
     homeInfo?: string | null;
+}
+
+export interface BriefInfoSheetHandle {
+    present: () => void;
+    dismiss: () => void;
 }
 
 type InfoItem =
@@ -98,12 +103,50 @@ const InfoRow = memo(({ item, colors }: { item: InfoItem; colors: any }) => {
 
 InfoRow.displayName = 'InfoRow';
 
-export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({ profile, workplaces = [], homeInfo }, ref) => {
+export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoSheetProps>(({ profile, workplaces = [], homeInfo }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { t } = useTranslation();
     const inset = useSafeAreaInsets();
-    const backHandler = useSheetBackHandler(ref);
+
+    const [index, setIndex] = useState(0);
+    const wasOpenRef = useRef(false);
+
+    const controllerRef = useRef<BriefInfoSheetHandle>({
+        present: () => {
+            wasOpenRef.current = true;
+            setIndex(1);
+        },
+        dismiss: () => {
+            setIndex(0);
+        }
+    });
+
+    useImperativeHandle(ref, () => ({
+        present: () => controllerRef.current.present(),
+        dismiss: () => controllerRef.current.dismiss(),
+    }), []);
+
+    const backHandler = useSheetBackHandler(controllerRef as any);
+
+    const handleIndexChange = useCallback((newIndex: number) => {
+        if (newIndex > 0) {
+            wasOpenRef.current = true;
+            backHandler.onDidPresent();
+        } else {
+            backHandler.onDidDismiss();
+        }
+        setIndex(newIndex);
+    }, [backHandler]);
+
+    const handleSettle = useCallback((settledIndex: number) => {
+        if (settledIndex === 0 && wasOpenRef.current) {
+            wasOpenRef.current = false;
+            backHandler.onDidDismiss();
+        }
+    }, [backHandler]);
+
+    const screenHeight = useMemo(() => Dimensions.get('window').height, []);
 
     const parsedMetadata = useMemo(() => {
         if (!profile?.metadata) return null;
@@ -264,21 +307,29 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
     }, [profile, workplaces, homeInfo, height, weight, bankinfo, profileInfo, t, BMI, BMIStatus]);
 
     return (
-        <TrueSheet
-            ref={ref}
-            scrollable={true}
-            backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
-            grabberOptions={{
-                color: colors.muted || "#C4C4C4",
-                height: 5,
-                width: 40,
-            }}
-            cornerRadius={32}
-            detents={[0.7, 1]}
-            onDidPresent={backHandler.onDidPresent}
-            onDidDismiss={backHandler.onDidDismiss}
+        <ModalBottomSheet
+            index={index}
+            onIndexChange={handleIndexChange}
+            onSettle={handleSettle}
+            detents={[0, 0.7 * screenHeight, 'content']}
+            scrimColor="rgba(0, 0, 0, 1)"
+            scrimOpacities={[0, 0.5, 1]}
+            surface={
+                <View
+                    style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            backgroundColor: theme === 'dark' ? colors.containerContent : '#ffffff',
+                            borderTopLeftRadius: 32,
+                            borderTopRightRadius: 32,
+                            overflow: 'hidden',
+                        },
+                    ]}
+                />
+            }
         >
-            <ScrollView nestedScrollEnabled style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
+            <View style={[styles.grabber, { backgroundColor: colors.muted || "#C4C4C4" }]} />
+            <ScrollView nestedScrollEnabled style={{ flex: 1, paddingHorizontal: 12, paddingTop: 4 }}>
 
                 {/* Header */}
                 <View style={{ marginBottom: 24 }}>
@@ -312,7 +363,7 @@ export const BriefInfoSheet = memo(forwardRef<TrueSheet, BriefInfoSheetProps>(({
 
                 <View style={{ height: inset.bottom + 20 }} />
             </ScrollView>
-        </TrueSheet>
+        </ModalBottomSheet>
     );
 }));
 
@@ -349,5 +400,13 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
         letterSpacing: 0.5,
         fontSize: 11,
+    },
+    grabber: {
+        alignSelf: 'center',
+        width: 40,
+        height: 5,
+        borderRadius: 2.5,
+        marginTop: 10,
+        marginBottom: 8,
     },
 });

@@ -6,7 +6,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { CheckCircleBold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { Surface } from "heroui-native";
+import { CustomSurface } from "@/components/CustomSurface";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -82,46 +82,46 @@ const MovieTrackerSettingsScreen = () => {
                 {t('serviceSettings.subtitle')}
             </FlexText>
 
-            <Surface variant="default">
+            <View style={{ gap: 3 }}>
                 {SERVICE_OPTIONS.map((option, index) => {
                     const active = trackerSource === option.value;
                     return (
-                        <View key={option.value}>
-                            {index > 0 && <View style={styles.divider} />}
-                            <TouchableOpacity
-                                style={styles.option}
-                                onPress={() => setTrackerSource(option.value)}
-                            >
-                                <View style={styles.optionLeft}>
-                                    <SquircleView
-                                        cornerSmoothing={100}
-                                        preserveSmoothing
-                                        style={[
-                                            styles.iconContainer,
-                                            active && styles.iconContainerActive,
-                                        ]}
-                                    >
-                                        <Ionicons
-                                            name={option.icon}
-                                            size={22}
-                                            color={active ? '#fff' : colors.text}
-                                        />
-                                    </SquircleView>
-                                    <View style={styles.optionText}>
-                                        <FlexText style={common.body}>
-                                            {t(`serviceSettings.${option.labelKey}`)}
-                                        </FlexText>
-                                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>
-                                            {t(`serviceSettings.${option.descKey}`)}
-                                        </FlexText>
-                                    </View>
+                        <CustomSurface
+                            key={option.value}
+                            isFirst={index === 0}
+                            isLast={index === SERVICE_OPTIONS.length - 1}
+                            onPress={() => setTrackerSource(option.value)}
+                            style={styles.option}
+                        >
+                            <View style={styles.optionLeft}>
+                                <SquircleView
+                                    cornerSmoothing={100}
+                                    preserveSmoothing
+                                    style={[
+                                        styles.iconContainer,
+                                        active && styles.iconContainerActive,
+                                    ]}
+                                >
+                                    <Ionicons
+                                        name={option.icon}
+                                        size={22}
+                                        color={active ? '#fff' : colors.text}
+                                    />
+                                </SquircleView>
+                                <View style={styles.optionText}>
+                                    <FlexText style={common.body}>
+                                        {t(`serviceSettings.${option.labelKey}`)}
+                                    </FlexText>
+                                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>
+                                        {t(`serviceSettings.${option.descKey}`)}
+                                    </FlexText>
                                 </View>
-                                {active && <CheckCircleBold size={24} color="#54d340" />}
-                            </TouchableOpacity>
-                        </View>
+                            </View>
+                            {active && <CheckCircleBold size={24} color="#54d340" />}
+                        </CustomSurface>
                     );
                 })}
-            </Surface>
+            </View>
         </ScrollView>
     );
 };
@@ -142,7 +142,6 @@ const style = (colors: ThemeColors, common: any) =>
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            paddingVertical: 8,
         },
         optionLeft: {
             flexDirection: 'row',

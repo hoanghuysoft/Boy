@@ -1,0 +1,439 @@
+diff --git a/node_modules/heroui-native/.bun-tag-59302fc07d3048b5 b/.bun-tag-59302fc07d3048b5
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/heroui-native/.bun-tag-b724376a2cf417f5 b/.bun-tag-b724376a2cf417f5
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/lib/module/components/avatar/avatar.js b/lib/module/components/avatar/avatar.js
+index df13832b2e29475bc3db540eb0bd2753fbd115e0..7480a4016464943b9efc2ec91d20cbfcc55c8a03 100644
+--- a/lib/module/components/avatar/avatar.js	
++++ b/lib/module/components/avatar/avatar.js
+@@ -2,6 +2,8 @@
+ 
+ import { forwardRef, useMemo } from 'react';
+ import Animated from 'react-native-reanimated';
++import { Image as ExpoImage } from 'expo-image';
++const AnimatedExpoImage = Animated.createAnimatedComponent(ExpoImage);
+ import { useThemeColor } from "../../helpers/external/hooks/index.js";
+ import { HeroText } from "../../helpers/internal/components/index.js";
+ import { AnimationSettingsProvider } from "../../helpers/internal/contexts/index.js";
+@@ -98,13 +100,14 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
+       ...restProps
+     });
+   }
+-  return /*#__PURE__*/_jsx(AvatarPrimitives.Image, {
+-    ref: ref,
+-    source: source,
+-    asChild: true,
+-    children: /*#__PURE__*/_jsx(Animated.Image, {
+-      style: imageStyle,
++  return /*#__PURE__*/_jsx(Animated.View, {
++    style: imageStyle,
++    className: imageClassName,
++    children: /*#__PURE__*/_jsx(AvatarPrimitives.Image, {
++      ref: ref,
++      source: source,
+       className: imageClassName,
++      style: styleProp,
+       ...restProps
+     })
+   });
+diff --git a/lib/module/helpers/internal/components/bottom-sheet-content-container.js b/lib/module/helpers/internal/components/bottom-sheet-content-container.js
+index f9ea035e3b30eafe5eb281e8c0b9aae8149d9daf..d9b411008bf492531386cc1592636dd2ee210a7a 100644
+--- a/lib/module/helpers/internal/components/bottom-sheet-content-container.js	
++++ b/lib/module/helpers/internal/components/bottom-sheet-content-container.js
+@@ -28,7 +28,8 @@ export function BottomSheetContentContainer({
+   contentContainerClassName,
+   contentContainerProps,
+   onOpenChange,
+-  enablePanDownToClose
++  enablePanDownToClose,
++  disableContentView
+ }) {
+   const {
+     close,
+@@ -81,6 +82,9 @@ export function BottomSheetContentContainer({
+     // We only want to snap when isOpen or initialIndex changes.
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [isOpen, initialIndex]);
++  if (disableContentView) {
++    return children;
++  }
+   return /*#__PURE__*/_jsx(BottomSheetView, {
+     className: contentContainerClassName,
+     ...contentContainerProps,
+diff --git a/lib/module/helpers/internal/components/bottom-sheet-content.js b/lib/module/helpers/internal/components/bottom-sheet-content.js
+index b2d8656ceb243952f71efcf729c956caece243a8..b5a066385163aae80c3d19321068ce8d32f24028 100644
+--- a/lib/module/helpers/internal/components/bottom-sheet-content.js	
++++ b/lib/module/helpers/internal/components/bottom-sheet-content.js
+@@ -51,6 +51,7 @@ export const BottomSheetContent = /*#__PURE__*/forwardRef(({
+   progress,
+   isDragging,
+   onOpenChange,
++  disableContentView,
+   ...restProps
+ }, ref) => {
+   const {
+@@ -105,6 +106,7 @@ export const BottomSheetContent = /*#__PURE__*/forwardRef(({
+         contentContainerProps: contentContainerProps,
+         onOpenChange: onOpenChange,
+         enablePanDownToClose: restProps.enablePanDownToClose ?? true,
++        disableContentView: disableContentView,
+         children: children
+       })
+     })
+diff --git a/lib/module/primitives/avatar/avatar.js b/lib/module/primitives/avatar/avatar.js
+index c58130caf472621dbbfbf85cdbbd7c36c5afe78b..e395831d54ebcb7b4f9f55c9ff1b34ac1f3b9a49 100644
+--- a/lib/module/primitives/avatar/avatar.js	
++++ b/lib/module/primitives/avatar/avatar.js
+@@ -2,7 +2,8 @@
+ 
+ import * as React from 'react';
+ import { createContext, forwardRef, useEffect, useMemo, useState } from 'react';
+-import { Image as RNImage, View } from 'react-native';
++import { View } from 'react-native';
++import { Image as ExpoImage } from 'expo-image';
+ import * as Slot from "../slot/index.js";
+ import { isSameSource, isValidSource } from "./avatar.utils.js";
+ import { jsx as _jsx } from "react/jsx-runtime";
+@@ -90,7 +91,7 @@ const Image = /*#__PURE__*/forwardRef(({
+     onLoadingStatusChange?.('error');
+     onErrorProps?.(e);
+   }, [onErrorProps, setStatus, onLoadingStatusChange]);
+-  const Component = asChild ? Slot.Image : RNImage;
++  const Component = asChild ? Slot.Image : ExpoImage;
+   if (status === 'error') {
+     return null;
+   }
+diff --git a/lib/module/primitives/avatar/avatar.utils.js b/lib/module/primitives/avatar/avatar.utils.js
+index da78034a16fe68babf071af4279034b8a9511ee7..b287d8fb7fe2dda039d9f42110a539449033bca0 100644
+--- a/lib/module/primitives/avatar/avatar.utils.js	
++++ b/lib/module/primitives/avatar/avatar.utils.js
+@@ -24,12 +24,15 @@ export function isValidSource(source) {
+   if (!source) {
+     return false;
+   }
++  if (typeof source === 'string') {
++    return true;
++  }
+   // Using require() for the source returns a number
+   if (typeof source === 'number') {
+     return true;
+   }
+   if (Array.isArray(source)) {
+-    return source.some(s => !!s.uri);
++    return source.some(s => !!s || s && typeof s === 'object' && !!s.uri);
+   }
+   return !!source.uri;
+ }
+@@ -65,13 +68,18 @@ export function isSameSource(source1, source2) {
+     return false;
+   }
+ 
++  // Both are strings
++  if (typeof source1 === 'string' && typeof source2 === 'string') {
++    return source1 === source2;
++  }
++
+   // Both are numbers (require() statements)
+   if (typeof source1 === 'number' && typeof source2 === 'number') {
+     return source1 === source2;
+   }
+ 
+-  // One is a number, the other is not
+-  if (typeof source1 === 'number' || typeof source2 === 'number') {
++  // One is a number or string, the other is not
++  if (typeof source1 === 'number' || typeof source2 === 'number' || typeof source1 === 'string' || typeof source2 === 'string') {
+     return false;
+   }
+ 
+@@ -83,6 +91,9 @@ export function isSameSource(source1, source2) {
+     // Compare each element's URI
+     return source1.every((s1, index) => {
+       const s2 = source2[index];
++      if (typeof s1 === 'string' && typeof s2 === 'string') {
++        return s1 === s2;
++      }
+       return s1?.uri === s2?.uri;
+     });
+   }
+diff --git a/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts b/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts
+index f88f1777bccd8ea06a0b9c76401d558b49126894..475e26a437332dbc08fe89204f1943b7cc169305 100644
+--- a/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts	
++++ b/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts
+@@ -97,5 +97,11 @@ export interface BaseBottomSheetContentProps {
+      * - `false` or `"disabled"`: Disable all animations
+      */
+     animation?: AnimationDisabled;
++    /**
++     * When true, renders children directly without wrapping in BottomSheetView.
++     * Required when using BottomSheetFlatList/BottomSheetScrollView as direct children,
++     * since BottomSheetView conflicts with their internal gesture handling.
++     */
++    disableContentView?: boolean;
+ }
+ //# sourceMappingURL=bottom-sheet.d.ts.map
+\ No newline at end of file
+diff --git a/src/components/avatar/avatar.tsx b/src/components/avatar/avatar.tsx
+index 3323c69b88ac94e20476db2456aabd8365e3d002..24c8859168570f66b49665347695a8f2bbc4b08a 100644
+--- a/src/components/avatar/avatar.tsx	
++++ b/src/components/avatar/avatar.tsx
+@@ -1,6 +1,9 @@
+ import { forwardRef, useMemo } from 'react';
+ import type { ImageSourcePropType } from 'react-native';
+ import Animated from 'react-native-reanimated';
++import { Image as ExpoImage } from 'expo-image';
++
++const AnimatedExpoImage = Animated.createAnimatedComponent(ExpoImage);
+ import { useThemeColor } from '../../helpers/external/hooks';
+ import { HeroText } from '../../helpers/internal/components';
+ import { AnimationSettingsProvider } from '../../helpers/internal/contexts';
+@@ -147,17 +150,15 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+     }
+ 
+     return (
+-      <AvatarPrimitives.Image
+-        ref={ref}
+-        source={source as ImageSourcePropType}
+-        asChild
+-      >
+-        <Animated.Image
+-          style={imageStyle}
++      <Animated.View style={imageStyle} className={imageClassName}>
++        <AvatarPrimitives.Image
++          ref={ref}
++          source={source as ImageSourcePropType}
+           className={imageClassName}
++          style={styleProp}
+           {...restProps}
+         />
+-      </AvatarPrimitives.Image>
++      </Animated.View>
+     );
+   }
+ );
+diff --git a/src/components/bottom-sheet/bottom-sheet.types.ts b/src/components/bottom-sheet/bottom-sheet.types.ts
+index f29b870186643e0411f9533b79d5158748fb9013..52adb788295da311f71ee6631d87fb0772eafdef 100644
+--- a/src/components/bottom-sheet/bottom-sheet.types.ts	
++++ b/src/components/bottom-sheet/bottom-sheet.types.ts
+@@ -119,7 +119,14 @@ export interface BottomSheetOverlayProps
+  */
+ export interface BottomSheetContentProps
+   extends Partial<BottomSheetProps>,
+-    BaseBottomSheetContentProps {}
++    BaseBottomSheetContentProps {
++  /**
++   * When true, renders children directly without wrapping in BottomSheetView.
++   * Required when using BottomSheetFlatList/BottomSheetScrollView as direct children,
++   * since BottomSheetView conflicts with their internal gesture handling.
++   */
++  disableContentView?: boolean;
++}
+ 
+ /**
+  * BottomSheet Close component props
+diff --git a/src/helpers/internal/components/bottom-sheet-content-container.tsx b/src/helpers/internal/components/bottom-sheet-content-container.tsx
+index 23de843229d5420194ae3e9eef5a19b94c22fe02..22e5c9dd157806efedca9652739f932d1e6e1774 100644
+--- a/src/helpers/internal/components/bottom-sheet-content-container.tsx	
++++ b/src/helpers/internal/components/bottom-sheet-content-container.tsx
+@@ -28,6 +28,7 @@ export function BottomSheetContentContainer({
+   contentContainerProps,
+   onOpenChange,
+   enablePanDownToClose,
++  disableContentView,
+ }: BottomSheetContentContainerProps) {
+   const { close, snapToIndex } = useBottomSheet();
+   const prevIsOpenRef = useRef(isOpen);
+@@ -90,6 +91,10 @@ export function BottomSheetContentContainer({
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [isOpen, initialIndex]);
+ 
++  if (disableContentView) {
++    return <>{children}</>;
++  }
++
+   return (
+     <BottomSheetView
+       className={contentContainerClassName}
+diff --git a/src/helpers/internal/components/bottom-sheet-content.tsx b/src/helpers/internal/components/bottom-sheet-content.tsx
+index ecc5a7d381f81aea4cc91eb47dbd6549c6e78567..252e4d74c4c7afa8dbc736e5f2f4409f9fc98a19 100644
+--- a/src/helpers/internal/components/bottom-sheet-content.tsx	
++++ b/src/helpers/internal/components/bottom-sheet-content.tsx
+@@ -46,6 +46,11 @@ export interface BottomSheetContentProps
+    * Additional style for the background
+    */
+   backgroundStyle?: StyleProp<ViewStyle>;
++  /**
++   * When true, renders children directly without wrapping in BottomSheetView.
++   * Required when using BottomSheetFlatList/BottomSheetScrollView as children.
++   */
++  disableContentView?: boolean;
+ }
+ 
+ /**
+@@ -87,6 +92,7 @@ export const BottomSheetContent = forwardRef<
+       progress,
+       isDragging,
+       onOpenChange,
++      disableContentView,
+       ...restProps
+     },
+     ref
+@@ -149,6 +155,7 @@ export const BottomSheetContent = forwardRef<
+             contentContainerProps={contentContainerProps}
+             onOpenChange={onOpenChange}
+             enablePanDownToClose={restProps.enablePanDownToClose ?? true}
++            disableContentView={disableContentView}
+           >
+             {children}
+           </BottomSheetContentContainer>
+diff --git a/src/helpers/internal/types/bottom-sheet.ts b/src/helpers/internal/types/bottom-sheet.ts
+index e763b4164ff924f23fb59fbc1813043a4fbde147..a0731b8db251f703bdf59b8e01012f71ef7cbd73 100644
+--- a/src/helpers/internal/types/bottom-sheet.ts	
++++ b/src/helpers/internal/types/bottom-sheet.ts
+@@ -56,6 +56,12 @@ export interface BottomSheetContentContainerProps {
+    * Whether the bottom sheet can be closed by panning down
+    */
+   enablePanDownToClose: boolean;
++  /**
++   * When true, renders children directly without wrapping in BottomSheetView.
++   * Required when using BottomSheetFlatList/BottomSheetScrollView as children,
++   * since BottomSheetView conflicts with their gesture handling.
++   */
++  disableContentView?: boolean;
+ }
+ 
+ /**
+diff --git a/src/primitives/avatar/avatar.tsx b/src/primitives/avatar/avatar.tsx
+index f602d8d5047073e74a1deb707e48c06c8fbc1928..90a57de686d6bd033fdcdb64b35b79efe844f68e 100644
+--- a/src/primitives/avatar/avatar.tsx	
++++ b/src/primitives/avatar/avatar.tsx
+@@ -1,12 +1,9 @@
+ import * as React from 'react';
+ import { createContext, forwardRef, useEffect, useMemo, useState } from 'react';
+ import {
+-  type ImageErrorEventData,
+-  type ImageLoadEvent,
+-  type NativeSyntheticEvent,
+-  Image as RNImage,
+   View,
+ } from 'react-native';
++import { Image as ExpoImage, type ImageLoadEventData, type ImageErrorEventData } from 'expo-image';
+ import * as Slot from '../slot';
+ import type {
+   AvatarStatus,
+@@ -111,24 +108,24 @@ const Image = forwardRef<ImageRef, ImageProps>(
+     }, [props?.source, setStatus]);
+ 
+     const onLoad = React.useCallback(
+-      (e: ImageLoadEvent) => {
++      (e: ImageLoadEventData) => {
+         setStatus('loaded');
+         onLoadingStatusChange?.('loaded');
+-        onLoadProps?.(e);
++        onLoadProps?.(e as any);
+       },
+       [onLoadProps, setStatus, onLoadingStatusChange]
+     );
+ 
+     const onError = React.useCallback(
+-      (e: NativeSyntheticEvent<ImageErrorEventData>) => {
++      (e: ImageErrorEventData) => {
+         setStatus('error');
+         onLoadingStatusChange?.('error');
+-        onErrorProps?.(e);
++        onErrorProps?.(e as any);
+       },
+       [onErrorProps, setStatus, onLoadingStatusChange]
+     );
+ 
+-    const Component = asChild ? Slot.Image : RNImage;
++    const Component = asChild ? Slot.Image : ExpoImage;
+ 
+     if (status === 'error') {
+       return null;
+diff --git a/src/primitives/avatar/avatar.types.ts b/src/primitives/avatar/avatar.types.ts
+index fb373769aaa4eef4788aa29ca74edc9d02e9c3ba..bb0d1cbec7f6cb2c298ba03190f3588f66216dbe 100644
+--- a/src/primitives/avatar/avatar.types.ts	
++++ b/src/primitives/avatar/avatar.types.ts
+@@ -1,4 +1,5 @@
+-import type { Image, ImageProps as RNImageProps } from 'react-native';
++import type { ImageProps as RNImageProps } from 'react-native';
++import { Image } from 'expo-image';
+ import type {
+   ComponentPropsWithAsChild,
+   SlottableViewProps,
+diff --git a/src/primitives/avatar/avatar.utils.ts b/src/primitives/avatar/avatar.utils.ts
+index 01d3890e7aeb175a26da6b81af709e58b00f8abf..c8785d89ab99e79dd71232dbdde2c2b179046d0b 100644
+--- a/src/primitives/avatar/avatar.utils.ts	
++++ b/src/primitives/avatar/avatar.utils.ts
+@@ -20,17 +20,19 @@ import type { ImageSourcePropType } from 'react-native';
+  * isValidSource([{ uri: '' }, { uri: null }]); // false
+  * ```
+  */
+-export function isValidSource(source?: ImageSourcePropType) {
++export function isValidSource(source?: any) {
+   if (!source) {
+     return false;
+   }
+-  // Using require() for the source returns a number
++  if (typeof source === 'string') {
++    return true;
++  }
+   if (typeof source === 'number') {
+     return true;
+   }
+ 
+   if (Array.isArray(source)) {
+-    return source.some((s) => !!s.uri);
++    return source.some((s) => !!s || (s && typeof s === 'object' && !!s.uri));
+   }
+ 
+   return !!source.uri;
+@@ -57,8 +59,8 @@ export function isValidSource(source?: ImageSourcePropType) {
+  * ```
+  */
+ export function isSameSource(
+-  source1?: ImageSourcePropType,
+-  source2?: ImageSourcePropType
++  source1?: any,
++  source2?: any
+ ): boolean {
+   // Both undefined/null
+   if (!source1 && !source2) {
+@@ -70,13 +72,23 @@ export function isSameSource(
+     return false;
+   }
+ 
++  // Both are strings
++  if (typeof source1 === 'string' && typeof source2 === 'string') {
++    return source1 === source2;
++  }
++
+   // Both are numbers (require() statements)
+   if (typeof source1 === 'number' && typeof source2 === 'number') {
+     return source1 === source2;
+   }
+ 
+-  // One is a number, the other is not
+-  if (typeof source1 === 'number' || typeof source2 === 'number') {
++  // One is a number or string, the other is not
++  if (
++    typeof source1 === 'number' ||
++    typeof source2 === 'number' ||
++    typeof source1 === 'string' ||
++    typeof source2 === 'string'
++  ) {
+     return false;
+   }
+ 
+@@ -88,6 +100,9 @@ export function isSameSource(
+     // Compare each element's URI
+     return source1.every((s1, index) => {
+       const s2 = source2[index];
++      if (typeof s1 === 'string' && typeof s2 === 'string') {
++        return s1 === s2;
++      }
+       return s1?.uri === s2?.uri;
+     });
+   }

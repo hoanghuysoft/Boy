@@ -7,7 +7,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { CheckCircleBold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { Surface } from "heroui-native";
+import { CustomSurface } from "@/components/CustomSurface";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -89,7 +89,7 @@ const LanguageSettingsScreen = () => {
                 {t('languageSettings.subtitle')}
             </FlexText>
 
-            <Surface variant="default">
+            <View style={{ gap: 3 }}>
                 {options.map((option, index) => {
                     const active = isOptionActive(option, mode, language);
                     const label =
@@ -102,53 +102,53 @@ const LanguageSettingsScreen = () => {
                             : `${LANGUAGE_NATIVE_NAMES[option.lang]} (${option.lang.toUpperCase()})`;
 
                     return (
-                        <View key={option.kind === 'auto' ? 'auto' : option.lang}>
-                            {index > 0 && <View style={styles.divider} />}
-                            <TouchableOpacity
-                                style={styles.option}
-                                onPress={() => handleSelect(option)}
-                            >
-                                <View style={styles.optionLeft}>
-                                    <SquircleView
-                                        cornerSmoothing={100}
-                                        preserveSmoothing
-                                        style={[
-                                            styles.iconContainer,
-                                            active && styles.iconContainerActive,
-                                        ]}
-                                    >
-                                        {option.kind === 'auto' ? (
-                                            <Ionicons
-                                                name="phone-portrait-outline"
-                                                size={22}
-                                                color={active ? '#fff' : colors.text}
-                                            />
-                                        ) : (
-                                            <FlexText
-                                                style={[
-                                                    styles.langCode,
-                                                    { color: active ? '#fff' : colors.text },
-                                                ]}
-                                            >
-                                                {LANGUAGE_SHORT_CODES[option.lang]}
-                                            </FlexText>
-                                        )}
-                                    </SquircleView>
-                                    <View style={styles.optionText}>
-                                        <FlexText style={common.body}>{label}</FlexText>
+                        <CustomSurface
+                            key={option.kind === 'auto' ? 'auto' : option.lang}
+                            isFirst={index === 0}
+                            isLast={index === options.length - 1}
+                            onPress={() => handleSelect(option)}
+                            style={styles.option}
+                        >
+                            <View style={styles.optionLeft}>
+                                <SquircleView
+                                    cornerSmoothing={100}
+                                    preserveSmoothing
+                                    style={[
+                                        styles.iconContainer,
+                                        active && styles.iconContainerActive,
+                                    ]}
+                                >
+                                    {option.kind === 'auto' ? (
+                                        <Ionicons
+                                            name="phone-portrait-outline"
+                                            size={22}
+                                            color={active ? '#fff' : colors.text}
+                                        />
+                                    ) : (
                                         <FlexText
-                                            style={[common.bodySmall, { color: colors.muted }]}
+                                            style={[
+                                                styles.langCode,
+                                                { color: active ? '#fff' : colors.text },
+                                            ]}
                                         >
-                                            {description}
+                                            {LANGUAGE_SHORT_CODES[option.lang]}
                                         </FlexText>
-                                    </View>
+                                    )}
+                                </SquircleView>
+                                <View style={styles.optionText}>
+                                    <FlexText style={common.body}>{label}</FlexText>
+                                    <FlexText
+                                        style={[common.bodySmall, { color: colors.muted }]}
+                                    >
+                                        {description}
+                                    </FlexText>
                                 </View>
-                                {active && <CheckCircleBold size={24} color="#54d340" />}
-                            </TouchableOpacity>
-                        </View>
+                            </View>
+                            {active && <CheckCircleBold size={24} color="#54d340" />}
+                        </CustomSurface>
                     );
                 })}
-            </Surface>
+            </View>
         </ScrollView>
     );
 };
@@ -169,7 +169,6 @@ const style = (colors: ThemeColors, common: any) =>
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            paddingVertical: 8,
         },
         optionLeft: {
             flexDirection: 'row',

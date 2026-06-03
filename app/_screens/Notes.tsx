@@ -1,6 +1,5 @@
-import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { FlatList, ListRenderItemInfo } from "react-native";
 import { PostLinkPreview } from "@/components/PostLinkPreview";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Image } from "expo-image";
@@ -9,13 +8,14 @@ import { Button, Dialog, SkeletonGroup, Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
     Dimensions,
+    FlatList, ListRenderItemInfo,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
     View
 } from "react-native";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlexText } from "../../components/FlexText";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -178,7 +178,7 @@ const NotesScreen = () => {
     const renderEmpty = useCallback(() => {
         if (isLoading) {
             return (
-                <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+                <View style={{ paddingTop: 16 }}>
                     {Array.from({ length: 3 }).map((_, i) => (
                         <View
                             key={i}

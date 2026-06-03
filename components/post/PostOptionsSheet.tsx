@@ -1,11 +1,11 @@
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { CopyBold, DangerBold, PenNewRoundBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
 import { router } from "expo-router";
 import { Button, Dialog, useToast } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Clipboard, TouchableOpacity, View } from "react-native";
+import { Clipboard, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useCreatePost, useDeletePost, useSharePost } from "../../services/post";
 import { useProfile } from "../../services/userprofile";
@@ -91,7 +91,6 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
         const sharePostMutation = useSharePost();
         const createPostMutation = useCreatePost(myProfile?.id || "");
         const insets = useSafeAreaInsets();
-        const sheetRef = useRef<TrueSheet>(null);
 
         type DialogButton = {
             text: string;
@@ -112,25 +111,34 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
         const [dialog, setDialog] = useState<DialogConfig | null>(null);
         const closeDialog = useCallback(() => setDialog(null), []);
 
-        const isPresentedRef = useRef(false);
+        const [index, setIndex] = useState(0);
+        const wasOpenRef = useRef(false);
 
         useImperativeHandle(ref, () => ({
             present: () => {
-                if (isPresentedRef.current) return;
-                isPresentedRef.current = true;
-                sheetRef.current?.present();
+                wasOpenRef.current = true;
+                setIndex(1);
             },
             dismiss: () => {
-                if (!isPresentedRef.current) return;
-                isPresentedRef.current = false;
-                sheetRef.current?.dismiss();
+                setIndex(0);
             },
         }), []);
 
         const dismissSheet = useCallback(() => {
-            if (!isPresentedRef.current) return;
-            isPresentedRef.current = false;
-            sheetRef.current?.dismiss();
+            setIndex(0);
+        }, []);
+
+        const handleIndexChange = useCallback((newIndex: number) => {
+            if (newIndex > 0) {
+                wasOpenRef.current = true;
+            }
+            setIndex(newIndex);
+        }, []);
+
+        const handleSettle = useCallback((settledIndex: number) => {
+            if (settledIndex === 0 && wasOpenRef.current) {
+                wasOpenRef.current = false;
+            }
         }, []);
 
         const handleDelete = useCallback(() => {
@@ -265,28 +273,29 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
             });
         }, [post, dismissSheet]);
 
-        const sharedProps = {
-            ref: sheetRef,
-            scrollable: false,
-            backgroundColor: theme === "dark" ? colors.containerContent : "#ffffff",
-            grabberOptions: {
-                color: colors.muted || "#C4C4C4",
-                height: 5,
-                width: 40,
-            },
-            cornerRadius: 32,
-            detents: ['auto' as any],
-            onDidPresent: () => {
-                isPresentedRef.current = true;
-            },
-            onDidDismiss: () => {
-                isPresentedRef.current = false;
-            },
-        };
-
         return (
             <>
-                <TrueSheet {...sharedProps}>
+                <ModalBottomSheet
+                    index={index}
+                    onIndexChange={handleIndexChange}
+                    onSettle={handleSettle}
+                    detents={[0, 'content']}
+                    scrimColor="rgba(0, 0, 0, 0.5)"
+                    surface={
+                        <View
+                            style={[
+                                StyleSheet.absoluteFill,
+                                {
+                                    backgroundColor: theme === "dark" ? colors.containerContent : "#ffffff",
+                                    borderTopLeftRadius: 32,
+                                    borderTopRightRadius: 32,
+                                    overflow: "hidden",
+                                },
+                            ]}
+                        />
+                    }
+                >
+                    <View style={[styles.grabber, { backgroundColor: colors.muted || "#C4C4C4" }]} />
                     <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 20 }}>
                         {/* Header */}
                         <View className="mb-4">
@@ -346,7 +355,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                             )}
                         </View>
                     </View>
-                </TrueSheet>
+                </ModalBottomSheet>
 
                 <Dialog isOpen={dialog !== null} onOpenChange={(open) => !open && closeDialog()}>
                     <Dialog.Portal>
@@ -394,3 +403,14 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 ));
 
 PostOptionsSheet.displayName = "PostOptionsSheet";
+
+const styles = StyleSheet.create({
+    grabber: {
+        alignSelf: 'center',
+        width: 40,
+        height: 5,
+        borderRadius: 2.5,
+        marginTop: 10,
+        marginBottom: 8,
+    },
+});
