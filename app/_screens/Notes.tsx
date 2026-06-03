@@ -1,3 +1,4 @@
+
 import { PostLinkPreview } from "@/components/PostLinkPreview";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from "dayjs";
@@ -9,7 +10,8 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Dimensions,
-    FlatList, ListRenderItemInfo,
+    FlatList,
+    ListRenderItemInfo,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -65,8 +67,9 @@ const NotesScreen = () => {
     } = useNotes(20);
 
     const notes = useMemo(() => {
-        if (!data?.pages) return [];
-        return data.pages.flatMap((page) => page.data);
+        const pages = data?.pages;
+        if (!pages) return [];
+        return pages.flatMap((page) => page.data);
     }, [data?.pages]);
 
     const deleteNoteMutation = useDeleteNote();
@@ -162,7 +165,7 @@ const NotesScreen = () => {
                 </View>
             </TouchableOpacity>
         );
-    }, [theme, common.body, common.row, common.bodySmall, colors, deletingId, handleDeleteNote, t]);
+    }, [theme, common.body, common.row, common.bodySmall, common.heading, colors, deletingId, handleDeleteNote, t, router]);
 
     const renderFooter = useCallback(() => {
         if (isFetchingNextPage) {

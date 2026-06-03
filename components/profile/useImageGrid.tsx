@@ -3,13 +3,13 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import { Image } from "expo-image";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import {
     ImageStyle,
     ListRenderItem,
     ListRenderItemInfo,
     StyleSheet,
-    TouchableOpacity,
     View,
     ViewStyle,
 } from "react-native";
@@ -23,17 +23,17 @@ import {
 import { ShimmerEffect } from "../shimmer/Shimmer";
 import QuickPreviewModal from "./QuickPreviewModal";
 
+const MediaViewerContext = createContext<((index: number, options?: any) => React.ReactNode) | null>(null);
+
 // ─── Video Grid Item (View) ────────────────────────────────────────────────────
 interface VideoGridItemProps {
     mediaItem: Media;
     videoStyle: ViewStyle;
     marginRight: number;
     placeholderImageVideo: string;
-    onPress: () => void;
-    onLongPress: () => void;
-    onPressOut: () => void;
     isFirst: boolean;
     isTopRight: boolean;
+    flatIndex: number;
 }
 
 const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
@@ -41,59 +41,94 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
     videoStyle,
     marginRight,
     placeholderImageVideo,
-    onPress,
-    onLongPress,
-    onPressOut,
     isFirst,
     isTopRight,
+    flatIndex,
 }) => {
     const fallbackUrls = useMemo(() => buildFallbackUrls(mediaItem, placeholderImageVideo), [mediaItem, placeholderImageVideo]);
-    const [urlIndex, setUrlIndex] = useState(0);
     const placeholderBlurhash = useMemo(
         () => resolveBlurhash(mediaItem.blurhash, mediaItem.id),
         [mediaItem.blurhash, mediaItem.id],
     );
 
-    const handleImageError = useCallback(() => {
-        setUrlIndex(prev => (prev < fallbackUrls.length - 1 ? prev + 1 : prev));
-    }, [fallbackUrls.length]);
+    const mediaViewerItem: MediaViewerItem = useMemo(() => {
+        const sourceUrl = choosenMediaPath(mediaItem) || fallbackUrls[0];
+        const thumbnailUrl = mediaItem.thumbnail_url || fallbackUrls[0];
+        return {
+            id: mediaItem.id,
+            type: 'video',
+            source: sourceUrl,
+            chrome: {
+                title: "",
+                description: mediaItem.caption
+            },
+            thumbnail: {
+                source: thumbnailUrl,
+                ...(placeholderBlurhash ? { blurhash: placeholderBlurhash } : {}),
+            },
+        };
+    }, [mediaItem, fallbackUrls, placeholderBlurhash]);
+
+    const renderMediaItemContext = useContext(MediaViewerContext);
+
+    if (renderMediaItemContext) {
+        return (
+            <View
+                key={mediaItem.id}
+                style={[
+                    videoStyle,
+                    { marginRight, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+                    isFirst && { borderTopLeftRadius: 16 },
+                    isTopRight && { borderTopRightRadius: 16 }
+                ]}
+            >
+                <View style={StyleSheet.absoluteFill}>
+                    {renderMediaItemContext(flatIndex, {
+                        frame: {
+                            width: "100%" as any,
+                            height: "100%" as any,
+                            borderRadius: 0
+                        },
+                    })}
+                </View>
+            </View>
+        );
+    }
 
     return (
-        <TouchableOpacity
-            key={mediaItem.id}
-            activeOpacity={0.7}
-            onPress={onPress}
-            style={[
-                videoStyle,
-                { marginRight, justifyContent: 'center', alignItems: 'center' },
-                isFirst && { borderTopLeftRadius: 16 },
-                isTopRight && { borderTopRightRadius: 16 }
-            ]}
-        >
-            <Image
-                source={{ uri: fallbackUrls[urlIndex] }}
-                onError={handleImageError}
-                style={[
-                    StyleSheet.absoluteFill,
-                    {
-                        borderTopLeftRadius: isFirst ? 16 : 0,
-                        borderTopRightRadius: isTopRight ? 16 : 0
-                    }
-                ]}
-                contentFit="cover"
-                transition={150}
-                placeholder={{ blurhash: placeholderBlurhash }}
-            />
-            <View style={[
-                styles.overlay,
-                {
-                    borderTopLeftRadius: isFirst ? 16 : 0,
-                    borderTopRightRadius: isTopRight ? 16 : 0
-                }
-            ]}>
-                <Ionicons name="play" size={24} color="white" />
-            </View>
-        </TouchableOpacity>
+        <MediaViewer
+            items={[mediaViewerItem]}
+            config={{
+                theme: "dark",
+                thumbnail: { fit: "cover", videoMode: "static" },
+            }}
+            renderLayout={({ renderItem: renderMediaItem }) => (
+                <View
+                    key={mediaItem.id}
+                    style={[
+                        videoStyle,
+                        { marginRight, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+                        isFirst && { borderTopLeftRadius: 16 },
+                        isTopRight && { borderTopRightRadius: 16 }
+                    ]}
+                >
+                    <View style={StyleSheet.absoluteFill}>
+                        {renderMediaItem(0, {
+                            frame: { width: "100%" as any, height: "100%" as any, borderRadius: 0 },
+                        })}
+                    </View>
+                    <View style={[
+                        styles.overlay,
+                        {
+                            borderTopLeftRadius: isFirst ? 16 : 0,
+                            borderTopRightRadius: isTopRight ? 16 : 0
+                        }
+                    ]} pointerEvents="none">
+                        <Ionicons name="play" size={24} color="white" />
+                    </View>
+                </View>
+            )}
+        />
     );
 });
 
@@ -209,11 +244,9 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
                     videoStyle={vm.videoStyle}
                     marginRight={0}
                     placeholderImageVideo={vm.placeholderImageVideo}
-                    onPress={() => vm.onVideoPress?.(mediaItem)}
-                    onLongPress={() => vm.handleLongPress(mediaItem.thumbnail_url || mediaItem.url, mediaItem.blurhash)}
-                    onPressOut={vm.handlePressOut}
                     isFirst={isFirst}
                     isTopRight={isTopRight}
+                    flatIndex={item.flatIndex}
                 />
             );
         }
@@ -274,7 +307,38 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
         [vm.keyExtractor, vm.numColumns],
     );
 
+    const mediaViewerItems: MediaViewerItem[] = useMemo(() => {
+        return vm.gridData
+            .filter((item): item is Extract<GridItemType, { type: 'media' }> => item.type === 'media')
+            .map(item => {
+                const mediaItem = item.item;
+                const isVideo = mediaItem?.type?.toLowerCase().includes('video');
+                const fallbackUrls = buildFallbackUrls(mediaItem, isVideo ? vm.placeholderImageVideo : vm.placeholderImage);
+                const sourceUrl = choosenMediaPath(mediaItem) || fallbackUrls[0];
+                const thumbnailUrl = mediaItem.thumbnail_url || fallbackUrls[0];
+                const placeholderBlurhash = resolveBlurhash(mediaItem.blurhash, mediaItem.id);
+
+                if (isVideo) {
+                    return {
+                        type: 'video',
+                        source: sourceUrl,
+                        thumbnail: {
+                            source: thumbnailUrl,
+                            ...(placeholderBlurhash ? { blurhash: placeholderBlurhash } : {}),
+                        },
+                    } as MediaViewerItem;
+                } else {
+                    return {
+                        type: 'image',
+                        source: sourceUrl,
+                        ...(placeholderBlurhash ? { blurhash: placeholderBlurhash } : {}),
+                    } as MediaViewerItem;
+                }
+            });
+    }, [vm.gridData, vm.placeholderImageVideo, vm.placeholderImage]);
+
     return {
+        mediaViewerItems,
         gridData: vm.gridData,
         chunkedGridData,
         renderChunkedRow,
@@ -284,7 +348,7 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
         estimatedItemSize: vm.estimatedItemSize,
         renderItem,
         keyExtractor: vm.keyExtractor,
-        contentContainerStyle: styles.listContent,  
+        contentContainerStyle: styles.listContent,
         flatListProps: vm.flatListProps,
         renderQuickPreview: () => (
             <QuickPreviewModal
@@ -296,6 +360,25 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
         )
     };
 };
+
+export const MediaViewerWrapper = React.memo(({ items, children }: { items: MediaViewerItem[], children: React.ReactNode }) => {
+    if (!items || items.length === 0) {
+        return <>{children}</>;
+    }
+    return (
+        <MediaViewer
+            items={items}
+            config={{ theme: "dark", thumbnail: { fit: "cover", videoMode: "static" } }}
+            renderLayout={({ renderItem: renderMediaItem }) => (
+                <MediaViewerContext.Provider value={renderMediaItem}>
+                    {children}
+                </MediaViewerContext.Provider>
+            )}
+        />
+    );
+});
+
+MediaViewerWrapper.displayName = 'MediaViewerWrapper';
 
 const styles = StyleSheet.create({
     listContent: {

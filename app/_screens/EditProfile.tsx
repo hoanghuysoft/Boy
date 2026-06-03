@@ -2,13 +2,14 @@ import { FlexText } from '@/components/FlexText';
 import { useThemeContext } from '@/context/ThemeContext';
 import { useProfile, useUpdateProfile } from '@/services/userprofile';
 import { createCommonStyles } from '@/styles/common';
-import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from 'dayjs';
+import { Image as ExpoImage } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
 import { Button, Chip, Spinner, Switch, Tabs } from 'heroui-native';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import {
     Alert,
     Keyboard,
@@ -19,7 +20,6 @@ import {
     View
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { Image as ExpoImage } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createMaterialTopTabNavigator();
@@ -619,77 +619,66 @@ const isDeepEqual = (a: any, b: any): boolean => {
     return true;
 };
 
-const EditProfileScreen = () => {
+const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myProfile: any }) => {
     const router = useRouter();
-    const params = useLocalSearchParams();
-    const targetId = (params.id as string) || 'me';
-
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
 
-    const { data: myProfile } = useProfile('me', true);
-    const { data: targetProfile, isLoading: isProfileLoading } = useProfile(targetId, targetId === 'me');
     const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
 
-    const [formData, setFormData] = useState<any>(null);
-    const [initialFormData, setInitialFormData] = useState<any>(null);
+    const [formData, setFormData] = useState<any>(() => {
+        const defaultMetadata = {
+            height: '',
+            weight: '',
+            threed_emoji: '',
+            banking: {},
+            facebook: {
+                highlight: '',
+                posts: '',
+                photos: '',
+                videos: '',
+                joined_groups: ''
+            }
+        };
+        const mergedMetadata = {
+            ...defaultMetadata,
+            ...(targetProfile.metadata || {}),
+            facebook: {
+                ...defaultMetadata.facebook,
+                ...((targetProfile.metadata || {}).facebook || {})
+            }
+        };
+        return {
+            name: targetProfile.name || '',
+            username: targetProfile.username || '',
+            email: targetProfile.email || '',
+            phone: targetProfile.phone || '',
+            birthday: targetProfile.birthday ? dayjs(targetProfile.birthday).format('YYYY-MM-DD') : '',
+            gender: targetProfile.gender || '',
+            pronouns: targetProfile.pronouns || '',
+            avatar_url: targetProfile.avatar_url || '',
+            cover_url: targetProfile.cover_url || '',
+            bio: targetProfile.bio || '',
+            college: targetProfile.college || '',
+            highschool: targetProfile.highschool || '',
+            hometown: targetProfile.hometown || '',
+            website: targetProfile.website || '',
+            hobby: targetProfile.hobby || '',
+            talent: targetProfile.talent || '',
+            married_date: targetProfile.married_date ? dayjs(targetProfile.married_date).format('YYYY-MM-DD') : '',
+            license_plate: targetProfile.license_plate || '',
+            is_verified: targetProfile.is_verified || false,
+            is_admin: targetProfile.is_admin || false,
+            is_confidential: targetProfile.is_confidential || false,
+            metadata: mergedMetadata
+        };
+    });
+
+    const [initialFormData] = useState<any>(() => JSON.parse(JSON.stringify(formData)));
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const isAdmin = !!myProfile?.is_admin;
-
-    // Load original profile values into local form state
-    useEffect(() => {
-        if (targetProfile && !formData) {
-            const defaultMetadata = {
-                height: '',
-                weight: '',
-                threed_emoji: '',
-                banking: {},
-                facebook: {
-                    highlight: '',
-                    posts: '',
-                    photos: '',
-                    videos: '',
-                    joined_groups: ''
-                }
-            };
-            const mergedMetadata = {
-                ...defaultMetadata,
-                ...(targetProfile.metadata || {}),
-                facebook: {
-                    ...defaultMetadata.facebook,
-                    ...((targetProfile.metadata || {}).facebook || {})
-                }
-            };
-            const initialData = {
-                name: targetProfile.name || '',
-                username: targetProfile.username || '',
-                email: targetProfile.email || '',
-                phone: targetProfile.phone || '',
-                birthday: targetProfile.birthday ? dayjs(targetProfile.birthday).format('YYYY-MM-DD') : '',
-                gender: targetProfile.gender || '',
-                pronouns: targetProfile.pronouns || '',
-                avatar_url: targetProfile.avatar_url || '',
-                cover_url: targetProfile.cover_url || '',
-                bio: targetProfile.bio || '',
-                college: targetProfile.college || '',
-                highschool: targetProfile.highschool || '',
-                hometown: targetProfile.hometown || '',
-                website: targetProfile.website || '',
-                hobby: targetProfile.hobby || '',
-                talent: targetProfile.talent || '',
-                married_date: targetProfile.married_date ? dayjs(targetProfile.married_date).format('YYYY-MM-DD') : '',
-                license_plate: targetProfile.license_plate || '',
-                is_verified: targetProfile.is_verified || false,
-                is_admin: targetProfile.is_admin || false,
-                is_confidential: targetProfile.is_confidential || false,
-                metadata: mergedMetadata
-            };
-            setFormData(initialData);
-            setInitialFormData(JSON.parse(JSON.stringify(initialData)));
-        }
-    }, [targetProfile, formData]);
 
     const hasChanges = useMemo(() => {
         if (!formData || !initialFormData) return false;
@@ -773,14 +762,6 @@ const EditProfileScreen = () => {
         t: (key: string) => key,
         isAdmin,
     }), [formData, setField, errors, colors, common, theme, isAdmin]);
-
-    if (isProfileLoading || !formData) {
-        return (
-            <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
-                <Spinner size="lg" color={colors.secondary} />
-            </View>
-        );
-    }
 
     return (
         <FormContext.Provider value={contextValue}>
@@ -873,6 +854,24 @@ const EditProfileScreen = () => {
             </View>
         </FormContext.Provider>
     );
+};
+
+const EditProfileScreen = () => {
+    const params = useLocalSearchParams();
+    const targetId = (params.id as string) || 'me';
+    const { colors } = useThemeContext();
+    const { data: myProfile } = useProfile('me', true);
+    const { data: targetProfile, isLoading: isProfileLoading } = useProfile(targetId, targetId === 'me');
+
+    if (isProfileLoading || !targetProfile || !myProfile) {
+        return (
+            <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+                <Spinner size="lg" color={colors.secondary} />
+            </View>
+        );
+    }
+
+    return <EditProfileForm targetProfile={targetProfile} myProfile={myProfile} />;
 };
 
 // ============================================================================

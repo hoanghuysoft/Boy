@@ -1,3 +1,6 @@
+diff --git a/node_modules/heroui-native/.bun-tag-17f68cf8ddde61b6 b/.bun-tag-17f68cf8ddde61b6
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/node_modules/heroui-native/.bun-tag-59302fc07d3048b5 b/.bun-tag-59302fc07d3048b5
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
@@ -5,7 +8,7 @@ diff --git a/node_modules/heroui-native/.bun-tag-b724376a2cf417f5 b/.bun-tag-b72
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/lib/module/components/avatar/avatar.js b/lib/module/components/avatar/avatar.js
-index df13832b2e29475bc3db540eb0bd2753fbd115e0..7480a4016464943b9efc2ec91d20cbfcc55c8a03 100644
+index df13832b2e29475bc3db540eb0bd2753fbd115e0..1d3c208887a1c25e46f422d802667a7c38504bce 100644
 --- a/lib/module/components/avatar/avatar.js	
 +++ b/lib/module/components/avatar/avatar.js
 @@ -2,6 +2,8 @@
@@ -17,7 +20,21 @@ index df13832b2e29475bc3db540eb0bd2753fbd115e0..7480a4016464943b9efc2ec91d20cbfc
  import { useThemeColor } from "../../helpers/external/hooks/index.js";
  import { HeroText } from "../../helpers/internal/components/index.js";
  import { AnimationSettingsProvider } from "../../helpers/internal/contexts/index.js";
-@@ -98,13 +100,14 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
+@@ -77,6 +79,7 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
+     asChild,
+     ...restProps
+   } = props;
++  const { status } = useAvatar();
+   const animation = asChild ? undefined : 'animation' in props ? props.animation : undefined;
+   const isAnimatedStyleActive = asChild ? true : 'isAnimatedStyleActive' in props ? props.isAnimatedStyleActive ?? true : true;
+   const {
+@@ -93,18 +96,19 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
+       ref: ref,
+       source: source,
+       className: imageClassName,
+-      style: styleProp,
++      style: [styleProp, status === 'error' && { display: 'none' }],
+       asChild: true,
        ...restProps
      });
    }
@@ -28,13 +45,13 @@ index df13832b2e29475bc3db540eb0bd2753fbd115e0..7480a4016464943b9efc2ec91d20cbfc
 -    children: /*#__PURE__*/_jsx(Animated.Image, {
 -      style: imageStyle,
 +  return /*#__PURE__*/_jsx(Animated.View, {
-+    style: imageStyle,
++    style: [imageStyle, status === 'error' && { display: 'none' }],
 +    className: imageClassName,
 +    children: /*#__PURE__*/_jsx(AvatarPrimitives.Image, {
 +      ref: ref,
 +      source: source,
        className: imageClassName,
-+      style: styleProp,
++      style: [{ flex: 1, width: '100%', height: '100%' }, styleProp],
        ...restProps
      })
    });
@@ -175,7 +192,7 @@ index f88f1777bccd8ea06a0b9c76401d558b49126894..475e26a437332dbc08fe89204f1943b7
  //# sourceMappingURL=bottom-sheet.d.ts.map
 \ No newline at end of file
 diff --git a/src/components/avatar/avatar.tsx b/src/components/avatar/avatar.tsx
-index 3323c69b88ac94e20476db2456aabd8365e3d002..24c8859168570f66b49665347695a8f2bbc4b08a 100644
+index 3323c69b88ac94e20476db2456aabd8365e3d002..809ceade40ee545ab72edd1b50e169a247cbc75f 100644
 --- a/src/components/avatar/avatar.tsx	
 +++ b/src/components/avatar/avatar.tsx
 @@ -1,6 +1,9 @@
@@ -188,7 +205,25 @@ index 3323c69b88ac94e20476db2456aabd8365e3d002..24c8859168570f66b49665347695a8f2
  import { useThemeColor } from '../../helpers/external/hooks';
  import { HeroText } from '../../helpers/internal/components';
  import { AnimationSettingsProvider } from '../../helpers/internal/contexts';
-@@ -147,17 +150,15 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+@@ -109,6 +112,8 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+       ...restProps
+     } = props;
+ 
++    const { status } = useAvatar();
++
+     const animation = asChild
+       ? undefined
+       : 'animation' in props
+@@ -139,7 +144,7 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+           ref={ref}
+           source={source}
+           className={imageClassName}
+-          style={styleProp}
++          style={[styleProp, status === 'error' && { display: 'none' }]}
+           asChild
+           {...(restProps as Omit<ImageProps, 'source' | 'style' | 'asChild'>)}
+         />
+@@ -147,17 +152,15 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
      }
  
      return (
@@ -199,12 +234,12 @@ index 3323c69b88ac94e20476db2456aabd8365e3d002..24c8859168570f66b49665347695a8f2
 -      >
 -        <Animated.Image
 -          style={imageStyle}
-+      <Animated.View style={imageStyle} className={imageClassName}>
++      <Animated.View style={[imageStyle, status === 'error' && { display: 'none' }]} className={imageClassName}>
 +        <AvatarPrimitives.Image
 +          ref={ref}
 +          source={source as ImageSourcePropType}
            className={imageClassName}
-+          style={styleProp}
++          style={[{ flex: 1, width: '100%', height: '100%' }, styleProp]}
            {...restProps}
          />
 -      </AvatarPrimitives.Image>

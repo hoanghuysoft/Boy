@@ -16,13 +16,14 @@ import {
     useUpcomingMoviesInfinite,
 } from "@/hooks/useMovies";
 import { Movie } from "@/types/moviedb/movie";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList } from "@shopify/flash-list";
+import { Image as ExpoImage } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
+import { Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
     Pressable,
     RefreshControl,
     StyleSheet,
@@ -30,11 +31,9 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
-import { Spinner } from "heroui-native";
 
 type ListMode = "similar" | "recommendations" | "tv_similar" | "tv_recommendations" | "now_playing" | "upcoming" | "popular" | "top_rated" | "popular_people" | "tv_airing_today" | "tv_on_the_air" | "tv_popular" | "tv_top_rated" | "tv_season_episodes";
 
@@ -189,7 +188,7 @@ const MovieListScreen = () => {
                 </Pressable>
             );
         },
-        [colors, router, mode],
+        [colors, mode],
     );
 
     // ─── Episode render (tv_season_episodes mode) ─────────────────────────────

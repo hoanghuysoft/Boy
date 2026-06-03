@@ -627,7 +627,7 @@ const CreateScreen = () => {
                                                 }}
                                                 numberOfLines={6}
                                             >
-                                                &quot;{params.repost_content}&quot;
+                                                {`"${params.repost_content}"`}
                                             </Card.Description>
                                         )}
                                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 }}>

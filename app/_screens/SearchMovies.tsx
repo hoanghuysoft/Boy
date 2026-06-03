@@ -3,10 +3,11 @@ import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { SearchType, useTypedSearchInfinite } from "@/hooks/useMovies";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { Image as ExpoImage } from "expo-image";
 import { useRouter } from "expo-router";
+import { Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Keyboard,
   Platform,
@@ -19,11 +20,9 @@ import {
   View
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
-import { Spinner } from "heroui-native";
 
 const SEARCH_BAR_HEIGHT = 58;
 

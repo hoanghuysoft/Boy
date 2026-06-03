@@ -2,10 +2,10 @@ import { FlexText } from "@/components/FlexText";
 import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import { Image } from "expo-image";
-import { ActivityIndicator, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Spinner } from "heroui-native";
+import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLoginViewModel } from "../../viewmodels/LoginViewModel";
-import { Spinner } from "heroui-native";
 
 const LoginScreen = () => {
     const { colors, typography } = useThemeContext();

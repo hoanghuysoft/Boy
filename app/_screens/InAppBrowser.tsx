@@ -1,12 +1,12 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { router, useLocalSearchParams } from "expo-router";
+import { Spinner } from "heroui-native";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Snackbar } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { useThemeContext } from "../../context/ThemeContext";
-import { Spinner } from "heroui-native";
 
 const InAppBrowser = () => {
   const { colors } = useThemeContext();

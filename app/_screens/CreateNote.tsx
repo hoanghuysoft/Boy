@@ -1,14 +1,14 @@
-import Ionicons from "@react-native-vector-icons/ionicons/static";
-import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
+import { Spinner, useToast } from "heroui-native";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
     Keyboard,
     Platform,
     ScrollView,
@@ -23,7 +23,6 @@ import { FlexText } from "../../components/FlexText";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useCreateNote, useNote, useUpdateNote } from "../../services/note";
 import { createCommonStyles } from "../../styles/common";
-import { Spinner, useToast } from "heroui-native";
 
 type Block =
     | { id: string; type: 'text'; text: string }
@@ -37,11 +36,6 @@ const CreateNoteScreen = () => {
     const insets = useSafeAreaInsets();
     const { toast } = useToast();
 
-    const [title, setTitle] = useState("");
-    const [blocks, setBlocks] = useState<Block[]>([{ id: 'init', type: 'text', text: '' }]);
-    const [urlInput, setUrlInput] = useState("");
-    const [inputType, setInputType] = useState<'image' | 'link' | null>(null);
-
     const { id } = useLocalSearchParams();
     const noteId = id ? Number(id) : null;
     const isEditMode = noteId !== null;
@@ -50,12 +44,18 @@ const CreateNoteScreen = () => {
     const updateNoteMutation = useUpdateNote();
     const createNoteMutation = useCreateNote();
 
-    useEffect(() => {
+    const [title, setTitle] = useState(() => {
         if (isEditMode && noteData?.data) {
             const content = noteData.data.content;
             const titleMatch = content.match(/\[<title>(.*?)<\/title>\]/i);
-            const initialTitle = titleMatch ? titleMatch[1] : "";
+            return titleMatch ? titleMatch[1] : "";
+        }
+        return "";
+    });
 
+    const [blocks, setBlocks] = useState<Block[]>(() => {
+        if (isEditMode && noteData?.data) {
+            const content = noteData.data.content;
             const strippedContent = content.replace(/\[<title>.*?<\/title>\]/gi, '');
             const parts = strippedContent.split(/(\[<img\s+.*?\s*\/>\]|\[<link\s+.*?\s*\/>\])/gi);
 
@@ -84,11 +84,15 @@ const CreateNoteScreen = () => {
             if (initialBlocks.length === 0) {
                 initialBlocks.push({ id: 'init', type: 'text', text: '' });
             }
-
-            setTitle(initialTitle);
-            setBlocks(initialBlocks);
+            return initialBlocks;
         }
-    }, [isEditMode, noteData]);
+        return [{ id: 'init', type: 'text', text: '' }];
+    });
+
+    const [urlInput, setUrlInput] = useState("");
+    const [inputType, setInputType] = useState<'image' | 'link' | null>(null);
+
+
 
     useEffect(() => {
         GiphyDialog.configure({
@@ -135,7 +139,7 @@ const CreateNoteScreen = () => {
 
             try {
                 new URL(formattedUrl);
-            } catch (error) {
+            } catch {
                 toast.show({
                     variant: 'danger',
                     label: t("notes.editor.invalidUrlTitle"),
@@ -156,7 +160,7 @@ const CreateNoteScreen = () => {
             setUrlInput("");
             setInputType(null);
         }
-    }, [urlInput, inputType, t]);
+    }, [urlInput, inputType, t, toast]);
 
     const handleSave = useCallback(() => {
         const fullContent = [
@@ -206,6 +210,14 @@ const CreateNoteScreen = () => {
         setTitle("");
         setBlocks([{ id: 'init', type: 'text', text: '' }]);
     }, []);
+
+    if (isEditMode && isLoadingNote) {
+        return (
+            <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+                <Spinner size="lg" color={colors.secondary} />
+            </View>
+        );
+    }
 
     return (
         <KeyboardAvoidingView

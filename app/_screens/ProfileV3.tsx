@@ -22,7 +22,7 @@ import { AddressSheet } from "../../components/profile/sheets/AddressSheet";
 import { MusicSheet } from "../../components/profile/sheets/MusicSheet";
 import { SocialSheet } from "../../components/profile/sheets/SocialSheet";
 import { WorkplaceSheet } from "../../components/profile/sheets/WorkplaceSheet";
-import { useImageGrid } from '../../components/profile/useImageGrid';
+import { useImageGrid, MediaViewerWrapper } from '../../components/profile/useImageGrid';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from '../../types/post';
@@ -116,7 +116,6 @@ const ProfileSkeleton: React.FC = () => {
 
 // ─── ProfileContent — PagerWithHeader-based architecture ───────────────────────
 const ProfileContent = () => {
-  const vm = useProfileViewModel();
   const {
     colors,
     theme,
@@ -193,7 +192,7 @@ const ProfileContent = () => {
     closeGallery,
     isMusicPlaying,
     safePresent,
-  } = vm;
+  } = useProfileViewModel();
   const { t } = useTranslation();
 
   // ─── Header avatar spring animation (native thread via Reanimated) ───
@@ -243,6 +242,7 @@ const ProfileContent = () => {
     chunkedKeyExtractor: videoChunkedKeyExtractor,
     estimatedItemSize: videoEstimatedItemSize,
     renderQuickPreview: renderVideoQuickPreview,
+    mediaViewerItems: videoMediaViewerItems,
   } = useImageGrid({
     photos: videos,
     onVideoPress: handleVideoPress,
@@ -394,7 +394,7 @@ const ProfileContent = () => {
         refreshing={isProfileRefetching}
         onRefresh={onRefresh}
         refreshTintColor={colors.text}
-        progressViewOffset={inset.top + 30}
+        progressViewOffset={headerHeight}
         onEndReached={() => {
           if (activeTab === "Feed") handleEndReached();
         }}
@@ -425,7 +425,7 @@ const ProfileContent = () => {
         refreshing={isProfileRefetching}
         onRefresh={onRefresh}
         refreshTintColor={colors.text}
-        progressViewOffset={inset.top + 30}
+        progressViewOffset={headerHeight}
         onEndReached={() => {
           if (activeTab === "Images") handleEndReached();
         }}
@@ -442,33 +442,35 @@ const ProfileContent = () => {
   // ─── Videos tab renderer ──────────────────────────────────────────
   const renderVideosTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
     return (
-      <List
-        ref={scrollElRef as React.RefObject<FlatList>}
-        data={videoChunkedRows}
-        renderItem={({ item, index }: any) => renderVideoChunkedRow({ item, index, separators: {} as any })}
-        keyExtractor={(item: any, index: number) => videoChunkedKeyExtractor(item, index)}
-        headerOffset={headerHeight}
-        initialNumToRender={6}
-        windowSize={5}
-        maxToRenderPerBatch={5}
-        removeClippedSubviews={Platform.OS === 'android'}
-        refreshing={isProfileRefetching}
-        onRefresh={onRefresh}
-        refreshTintColor={colors.text}
-        progressBackgroundColor={colors.card}
-        progressViewOffset={inset.top + 30}
-        onEndReached={() => {
-          if (activeTab === "Videos") handleEndReached();
-        }}
-        onEndReachedThreshold={0.5}
-        ListEmptyComponent={makeEmptyComponent("Videos")}
-        contentContainerStyle={{ paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
-        showsVerticalScrollIndicator={false}
-        onScrollY={onScrollYChange}
-        ListHeaderComponent={<View style={{ height: 12 }} />}
-      />
+      <MediaViewerWrapper items={videoMediaViewerItems}>
+        <List
+          ref={scrollElRef as React.RefObject<FlatList>}
+          data={videoChunkedRows}
+          renderItem={({ item, index }: any) => renderVideoChunkedRow({ item, index, separators: {} as any })}
+          keyExtractor={(item: any, index: number) => videoChunkedKeyExtractor(item, index)}
+          headerOffset={headerHeight}
+          initialNumToRender={6}
+          windowSize={5}
+          maxToRenderPerBatch={5}
+          removeClippedSubviews={Platform.OS === 'android'}
+          refreshing={isProfileRefetching}
+          onRefresh={onRefresh}
+          refreshTintColor={colors.text}
+          progressBackgroundColor={colors.card}
+          progressViewOffset={headerHeight}
+          onEndReached={() => {
+            if (activeTab === "Videos") handleEndReached();
+          }}
+          onEndReachedThreshold={0.5}
+          ListEmptyComponent={makeEmptyComponent("Videos")}
+          contentContainerStyle={{ paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
+          showsVerticalScrollIndicator={false}
+          onScrollY={onScrollYChange}
+          ListHeaderComponent={<View style={{ height: 12 }} />}
+        />
+      </MediaViewerWrapper>
     );
-  }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange]);
+  }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, videoMediaViewerItems]);
 
   // Loading / Error state
   if (!profile) {
@@ -484,7 +486,7 @@ const ProfileContent = () => {
               tintColor={colors.text}
               colors={[colors.text]}
               style={{ zIndex: 10 }}
-              progressViewOffset={inset.top + 30}
+              progressViewOffset={inset.top + 56}
             />
           }
         >
@@ -536,8 +538,8 @@ const ProfileContent = () => {
         </BlurTargetView>
 
         {/* Floating back button + avatar + music pill overlay */}
-        <View style={{ position: 'absolute', top: inset.top + 8, left: 16, zIndex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View pointerEvents="box-none" style={{ position: 'absolute', top: inset.top + 8, left: 16, zIndex: 1, right: 16 }}>
+          <View pointerEvents="box-none" style={{ flexDirection: 'row', alignItems: 'center' }}>
 
             {/* Back Button */}
             <BlurView

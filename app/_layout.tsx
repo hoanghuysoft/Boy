@@ -47,7 +47,7 @@ Sentry.init({
   // uncomment the line below to enable Spotlight (https://spotlightjs.com)
   // spotlight: __DEV__,
 });
-global.fetch = nitroFetch;
+(globalThis as any).fetch = nitroFetch;
 
 GiphySDK.configure({ apiKey: process.env.EXPO_PUBLIC_GIPHY_API_KEY || '' });
 
@@ -59,10 +59,10 @@ configureReanimatedLogger({
 
 // Reanimated 4 performance feature flags — fixes FPS drops during scroll
 // See: https://docs.swmansion.com/react-native-reanimated/docs/guides/feature-flags
-(global as any)._REANIMATED_IS_REDUCED_MOTION = false;
-(global as any).USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS = true;
-(global as any).ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS = true;
-(global as any).IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS = true;
+(globalThis as any)._REANIMATED_IS_REDUCED_MOTION = false;
+(globalThis as any).USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS = true;
+(globalThis as any).ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS = true;
+(globalThis as any).IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS = true;
 // Prevent global font scaling
 interface TextWithDefaultProps extends Text {
   defaultProps?: { allowFontScaling?: boolean };

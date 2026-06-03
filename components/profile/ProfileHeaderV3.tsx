@@ -115,23 +115,23 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
     });
 
     return (
-        <Reanimated.View style={[styles.headerContainer, animatedContentStyle]}>
+        <Reanimated.View pointerEvents="box-none" style={[styles.headerContainer, animatedContentStyle]}>
             {/* We omitted the top row containing back button and music pill since classic layout handles it */}
-            <View style={{ height: vm.insets.top + 70 }} />
+            <View pointerEvents="none" style={{ height: vm.insets.top + 70 }} />
 
-            <SquircleView borderRadius={16} cornerSmoothing={100} preserveSmoothing style={styles.coverContainer}>
+            <SquircleView pointerEvents="none" borderRadius={36} cornerSmoothing={100} preserveSmoothing style={styles.coverContainer}>
                 <ExpoImage
                     source={{ uri: profile?.cover_url || "https://picsum.photos/1000" }}
                     style={styles.coverImage}
                     contentFit="cover"
                 />
             </SquircleView>
-            <View style={styles.avatarRow}>
+            <View pointerEvents="box-none" style={styles.avatarRow}>
                 <Avatar>
                     <Avatar.Image source={{ uri: profile?.avatar_url }} />
                     <Avatar.Fallback>{profile?.name?.[0] || 'U'}</Avatar.Fallback>
                 </Avatar>
-                <View className="flex-row gap-2">
+                <View pointerEvents="box-none" className="flex-row gap-2">
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
                         <NotesBold color={vm.colors.text} size={34} />
                     </Button>
@@ -153,16 +153,16 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                     </SquircleView>
                 </View>
             </View>
-            <View className="flex-row items-center gap-1 mb-1">
+            <View pointerEvents="none" className="flex-row items-center gap-1 mb-1">
                 <FlexText style={[vm.common.headline, { fontWeight: 'bold' }]}>{profile?.name}</FlexText>
                 {profile?.is_verified && <VerifiedIcon size={16} backgroundColor={vm.colors.verify} />}
                 {flagCode && <CountryFlag isoCode={flagCode} size={14} style={{ borderRadius: 2 }} />}
             </View>
             {!!profile?.username && (
-                <FlexText style={[vm.common.body, { color: vm.colors.muted, marginBottom: 8 }]}>@{profile.username}</FlexText>
+                <View pointerEvents="none"><FlexText style={[vm.common.body, { color: vm.colors.muted, marginBottom: 8 }]}>@{profile.username}</FlexText></View>
             )}
             {!!profile?.bio && (
-                <FlexText style={[vm.common.body, { marginBottom: 8 }]}>{profile.bio}</FlexText>
+                <View pointerEvents="none"><FlexText style={[vm.common.body, { marginBottom: 8 }]}>{profile.bio}</FlexText></View>
             )}
 
             {profile && (
@@ -252,7 +252,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 </ScrollView>
             )}
 
-            <View className="flex-row gap-2" style={{ marginBottom: 12 }}>
+            <View pointerEvents="none" className="flex-row gap-2" style={{ marginBottom: 12 }}>
                 <FlexText style={{ color: vm.colors.text }}>{postCount} <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>{t("profile.header.countPosts", { count: postCount })}</FlexText></FlexText>
                 <FlexText style={{ color: vm.colors.text }}>{imageCount} <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>{t("profile.header.countImages", { count: imageCount })}</FlexText></FlexText>
                 <FlexText style={{ color: vm.colors.text }}>{videoCount} <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>{t("profile.header.countVideos", { count: videoCount })}</FlexText></FlexText>

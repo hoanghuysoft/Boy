@@ -496,7 +496,19 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(
             // Sheet dismisses itself; nothing extra needed
         }, []);
 
-        // Safety check
+        const renderItem = useCallback(({ item }: { item: ProfileMusic }) => (
+            <View style={{ paddingHorizontal: 24 }}>
+                <MusicItem
+                    item={item}
+                    colors={colors}
+                    common={common}
+                    isOwner={isOwner}
+                    onDelete={isOwner ? handleDelete : undefined}
+                />
+            </View>
+        ), [colors, common, isOwner, handleDelete]);
+
+        // Safety check early return placed after all hooks!
         if ((!data || data.length === 0) && !isOwner) return null;
 
         const listHeader = (
@@ -522,18 +534,6 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(
                 )}
             </View>
         );
-
-        const renderItem = useCallback(({ item }: { item: ProfileMusic }) => (
-            <View style={{ paddingHorizontal: 24 }}>
-                <MusicItem
-                    item={item}
-                    colors={colors}
-                    common={common}
-                    isOwner={isOwner}
-                    onDelete={isOwner ? handleDelete : undefined}
-                />
-            </View>
-        ), [colors, common, isOwner, handleDelete]);
 
         return (
             <>

@@ -16,8 +16,7 @@ const AboutScreen = () => {
     const version = Application.nativeApplicationVersion;
     const buildVersion = Application.nativeBuildVersion;
     const inset = useSafeAreaInsets();
-
-    const id = __DEV__ ? 'dev_environment' : (Updates.updateId ?? 'unknown');
+    const runtimeVersion = __DEV__ ? 'dev_environment' : (Updates.updateId ?? 'unknown');
 
     return (
         <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1, backgroundColor: colors.background, padding: 16 }}>
@@ -55,7 +54,7 @@ const AboutScreen = () => {
                 >
                     <View>
                         <FlexText style={[common.body]}>Runtime version</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{id}</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{runtimeVersion}</FlexText>
                     </View>
                 </CustomSurface>
             </View>

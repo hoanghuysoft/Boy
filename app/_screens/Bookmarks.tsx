@@ -8,7 +8,6 @@ import { SkeletonGroup, Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
     FlatList,
     RefreshControl,
     StyleSheet,
@@ -43,8 +42,9 @@ const BookmarksScreen = () => {
     } = useBookmarks();
 
     const posts = useMemo(() => {
-        if (!data?.pages) return [];
-        return data.pages.flatMap((page) => page.data);
+        const pages = data?.pages;
+        if (!pages) return [];
+        return pages.flatMap((page) => page.data);
     }, [data?.pages]);
 
     const likersSheetRef = useRef<LikersSheetHandle>(null);

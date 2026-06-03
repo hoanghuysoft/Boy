@@ -4,11 +4,10 @@ import { useCategoryInfiniteQuery } from "@/services/shows/category";
 import { useTagInfiniteQuery } from "@/services/shows/tag";
 import type { VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { FlatList } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo } from "react";
 import {
-  ActivityIndicator,
+  FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -16,11 +15,12 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+
 import { Image as ExpoImage } from "expo-image";
+import { Spinner } from "heroui-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
-import { Spinner } from "heroui-native";
 
 type Mode = "category" | "tag";
 

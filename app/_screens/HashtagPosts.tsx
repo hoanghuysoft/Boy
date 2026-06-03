@@ -7,13 +7,13 @@ import { createCommonStyles } from '@/styles/common';
 import { Post } from '@/types/post';
 import type { LikersSheetHandle } from '@/types/sheetHandles';
 import { useHashtagPostsViewModel } from '@/viewmodels/HashtagPostsViewModel';
-import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { FlatList, ListRenderItemInfo, ActivityIndicator, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useRouter } from 'expo-router';
 import { SkeletonGroup, Spinner } from 'heroui-native';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FlatList, ListRenderItemInfo, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface HashtagPostsScreenProps {
     tag: string;

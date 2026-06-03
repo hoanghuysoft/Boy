@@ -3,7 +3,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
     ScrollView,
     TouchableOpacity,
     View,

@@ -285,7 +285,8 @@ const MansoryListScreen = () => {
         }
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    const isBusy = isLoading || isPrefetching;
+    const isPrefetchingActive = isPrefetching && media.length > 0;
+    const isBusy = isLoading || isPrefetchingActive;
 
     const headerTitle = isViewingOther && activeProfile?.name
         ? activeProfile.name
@@ -414,7 +415,7 @@ const MansoryListScreen = () => {
     }, [isBusy, colors, common, theme, t]);
 
     return (
-        <View style={common.screen}>
+        <View key={effectiveProfileId} style={common.screen}>
             <MediaViewer
                 items={mediaItems}
                 config={{

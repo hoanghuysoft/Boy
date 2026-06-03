@@ -86,8 +86,8 @@ const SearchScreen = () => {
         colors,
         styles,
         common,
-        searchQuery: searchQuery,
-        isAdmin: isAdmin,
+        searchQuery,
+        isAdmin,
         t,
       }),
     [colors, common, searchQuery, isAdmin, t],
@@ -96,7 +96,7 @@ const SearchScreen = () => {
   const ListFooterComponent = useCallback(
     () =>
       renderFooter({
-        isFetchingNextPage: isFetchingNextPage,
+        isFetchingNextPage,
         colors,
         styles,
         renderProfileSkeleton,

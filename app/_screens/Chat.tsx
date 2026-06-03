@@ -8,7 +8,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FolderFavouriteBookmarkBold, RoundedMagnifierBold } from "@solar-icons/react-native";
 import { BlurTargetView } from "expo-blur";
 import { router } from "expo-router";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Animated, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { FlatList as GestureFlatList, Pressable as GesturePressable } from "react-native-gesture-handler";
 import { Image as ExpoImage } from "expo-image";
@@ -23,7 +23,7 @@ const ChatScreen = () => {
   const { width } = useWindowDimensions();
   const posterHeight = 600;
   const inset = useSafeAreaInsets();
-  const headerScrollX = useRef(new Animated.Value(0)).current;
+  const [headerScrollX] = useState(() => new Animated.Value(0));
   const trackerSource = useMovieTrackerStore(state => state.trackerSource);
   const vm = useHomeViewModel(trackerSource !== 'moviedb');
 

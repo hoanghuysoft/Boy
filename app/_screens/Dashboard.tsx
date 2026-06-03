@@ -8,13 +8,13 @@ import { useAdminCheck, useProfile } from "@/services/userprofile";
 import { useWeather } from "@/services/weather";
 import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { useFocusEffect } from "expo-router/react-navigation";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { ClapperboardBold, TvBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import { useFocusEffect } from "expo-router/react-navigation";
 import { SquircleView } from "expo-squircle-view";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -145,6 +145,19 @@ const DashboardScreen = () => {
         [mediaPages]
     );
     const [bgImageUrl, setBgImageUrl] = useState<string | undefined>(undefined);
+    const initialPhotoUrl = useMemo(() => {
+        if (photos.length === 0) return undefined;
+        // Deterministic hash selection to avoid calling impure Math.random() during render
+        const seed = photos[0].id || photos[0].url || "";
+        let hash = 0;
+        for (let i = 0; i < seed.length; i++) {
+            hash = (hash << 5) - hash + seed.charCodeAt(i);
+            hash |= 0;
+        }
+        const index = Math.abs(hash) % photos.length;
+        return photos[index].url;
+    }, [photos]);
+    const activeBgImageUrl = bgImageUrl || initialPhotoUrl;
 
     useEffect(() => {
         const urls = Array.from(new Set(photos.map((photo) => photo.url).filter(Boolean)));
@@ -156,20 +169,16 @@ const DashboardScreen = () => {
 
     useEffect(() => {
         if (photos.length === 0) return;
-        if (!bgImageUrl) {
-            const initial = photos[Math.floor(Math.random() * photos.length)];
-            setBgImageUrl(initial.url);
-        }
         const timer = setInterval(() => {
             setBgImageUrl((prev) => {
-                const candidates = photos.filter((p) => p.url !== prev);
+                const current = prev || initialPhotoUrl;
+                const candidates = photos.filter((p) => p.url !== current);
                 const pool = candidates.length > 0 ? candidates : photos;
                 return pool[Math.floor(Math.random() * pool.length)].url;
             });
         }, 30_000);
         return () => clearInterval(timer);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [photos.length]);
+    }, [photos, initialPhotoUrl]);
 
     const { data: trending, isLoading: isTrendingLoading } = useTrendingAll();
     const weatherCity = activeProfile?.hometown?.trim() || "Ho Chi Minh City";
@@ -188,7 +197,7 @@ const DashboardScreen = () => {
             <View style={StyleSheet.absoluteFill}>
                 <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
                     <Image
-                        source={{ uri: bgImageUrl ?? activeProfile?.avatar_url }}
+                        source={{ uri: activeBgImageUrl ?? activeProfile?.avatar_url }}
                         style={{ width: '100%', height: '100%' }}
                         contentFit="cover"
                         transition={{ effect: 'cross-dissolve', duration: 1200 }}
@@ -285,14 +294,14 @@ const DashboardScreen = () => {
                                 <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>ReClip</FlexText>
                             </TouchableOpacity>
 
-                                    {isAdmin && (
-                                        <TouchableOpacity onPress={() => router.push("/webview?url=https://boy-server.vercel.app/&isUseSafeArea=true&safeAreaColor=white&isShowBackButton=true")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
-                                            <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
-                                                <Image source={require("../../assets/images/logo_head.png")} style={{ width: 34, height: 34 }} contentFit="contain" />
-                                            </SquircleView>
-                                            <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>WeLove Admin</FlexText>
-                                        </TouchableOpacity>
-                                    )}
+                            {isAdmin && (
+                                <TouchableOpacity onPress={() => router.push("/webview?url=https://boy-server.vercel.app/&isUseSafeArea=true&safeAreaColor=white&isShowBackButton=true")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                    <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                        <Image source={require("../../assets/images/logo_head.png")} style={{ width: 34, height: 34 }} contentFit="contain" />
+                                    </SquircleView>
+                                    <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>WeLove Admin</FlexText>
+                                </TouchableOpacity>
+                            )}
 
                             <TouchableOpacity onPress={() => router.push("/_screens/Bulletinboard")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
                                 <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>

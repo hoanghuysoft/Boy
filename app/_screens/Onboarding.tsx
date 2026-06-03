@@ -1,11 +1,12 @@
 import { FlexText } from '@/components/FlexText';
 import { useThemeContext } from '@/context/ThemeContext';
 import { createCommonStyles } from '@/styles/common';
-import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { DateTimePicker } from '@expo/ui/community/datetime-picker';
+import { Image as ExpoImage } from 'expo-image';
+import { Spinner } from 'heroui-native';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    ActivityIndicator,
     Platform,
     StyleSheet,
     TextInput,
@@ -13,10 +14,8 @@ import {
     View,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { Image as ExpoImage } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useOnboardingViewModel } from '../../viewmodels/OnboardingViewModel';
-import { Spinner } from 'heroui-native';
 
 const OnboardingScreen = () => {
     const { colors, typography } = useThemeContext();

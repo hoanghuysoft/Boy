@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Modal, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import { getCachedImageDimension } from "@/components/gallery/imageDimensionCache";
@@ -17,7 +17,6 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
     blurhash: _blurhash,
     onClose,
 }) => {
-    const [mounted, setMounted] = useState(visible);
     const { width: viewportWidth, height: viewportHeight } = useWindowDimensions();
 
     const cachedDimensions = imageUrl ? getCachedImageDimension(imageUrl) : null;
@@ -30,18 +29,10 @@ const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
     const resolvedWidth = hasCachedDimensions ? cachedDimensions.width * cachedScale : maxWidth;
     const resolvedHeight = hasCachedDimensions ? cachedDimensions.height * cachedScale : maxHeight;
 
-    useEffect(() => {
-        if (visible) {
-            setMounted(true);
-        } else {
-            setMounted(false);
-        }
-    }, [visible]);
-
 
     return (
         <Modal
-            visible={mounted}
+            visible={visible}
             animationType="fade"
             onRequestClose={onClose}
             backdropColor={"#000000e1"}
