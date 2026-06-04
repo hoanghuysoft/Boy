@@ -11,7 +11,8 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  View
+  View,
+  useWindowDimensions
 } from "react-native";
 import { Snackbar } from 'react-native-paper';
 import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
@@ -194,6 +195,7 @@ const ProfileContent = () => {
     safePresent,
   } = useProfileViewModel();
   const { t } = useTranslation();
+  const { height: windowHeight } = useWindowDimensions();
 
   // ─── Header avatar spring animation (native thread via Reanimated) ───
   const headerAvatarProgress = useSharedValue(0);
@@ -400,13 +402,13 @@ const ProfileContent = () => {
         }}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={makeEmptyComponent("Feed")}
-        contentContainerStyle={{ paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
+        contentContainerStyle={{ minHeight: windowHeight + headerHeight, paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
         showsVerticalScrollIndicator={false}
         onScrollY={onScrollYChange}
         ListHeaderComponent={<View style={{ height: 12 }} />}
       />
     );
-  }, [colors.card, feedPosts, handlePostOptionsPress, handleLikeCountPress, handleCommentPress, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange]);
+  }, [colors.card, feedPosts, handlePostOptionsPress, handleLikeCountPress, handleCommentPress, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, windowHeight]);
 
   // ─── Images tab renderer ──────────────────────────────────────────
   const renderImagesTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
@@ -431,13 +433,13 @@ const ProfileContent = () => {
         }}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={makeEmptyComponent("Images")}
-        contentContainerStyle={{ paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
+        contentContainerStyle={{ minHeight: windowHeight + headerHeight, paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
         showsVerticalScrollIndicator={false}
         onScrollY={onScrollYChange}
         ListHeaderComponent={<View style={{ height: 12 }} />}
       />
     );
-  }, [colors.card, imageChunkedRows, renderImageChunkedRow, imageChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange]);
+  }, [colors.card, imageChunkedRows, renderImageChunkedRow, imageChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, windowHeight]);
 
   // ─── Videos tab renderer ──────────────────────────────────────────
   const renderVideosTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
@@ -463,14 +465,14 @@ const ProfileContent = () => {
           }}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={makeEmptyComponent("Videos")}
-          contentContainerStyle={{ paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
+          contentContainerStyle={{ minHeight: windowHeight + headerHeight, paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
           showsVerticalScrollIndicator={false}
           onScrollY={onScrollYChange}
           ListHeaderComponent={<View style={{ height: 12 }} />}
         />
       </MediaViewerWrapper>
     );
-  }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, videoMediaViewerItems]);
+  }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, videoMediaViewerItems, windowHeight]);
 
   // Loading / Error state
   if (!profile) {

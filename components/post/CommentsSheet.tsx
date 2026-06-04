@@ -5,6 +5,7 @@ import { Galeria } from "@nandorojo/galeria";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { GalleryAddBold, PenNewRoundBold, Plain2Bold } from "@solar-icons/react-native";
 import { Image } from "expo-image";
+import { EMOJI_ASSETS } from "../../utils/emojiResolver";
 import { Avatar, Button, SkeletonGroup, Spinner } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,7 @@ import { Comment } from "../../types/comment";
 import { parseCommentContent, useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
 import { FlexText } from "../FlexText";
 import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
+import { EmojiSelectorSheet } from "../EmojiSelectorSheet";
 
 // ============================================================================
 // Types
@@ -88,15 +90,23 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
 
                     {imageUrl && (
                         <View style={{ marginTop: 8, position: 'relative' }}>
-                            <Galeria urls={[imageUrl]} theme={theme}>
-                                <Galeria.Image>
-                                    <Image
-                                        source={{ uri: imageUrl }}
-                                        style={[styles.commentImage, { width: '100%' }]}
-                                        contentFit="cover"
-                                    />
-                                </Galeria.Image>
-                            </Galeria>
+                            {EMOJI_ASSETS[imageUrl] ? (
+                                <Image
+                                    source={EMOJI_ASSETS[imageUrl]}
+                                    style={{ width: 120, height: 120 }}
+                                    contentFit="contain"
+                                />
+                            ) : (
+                                <Galeria urls={[imageUrl]} theme={theme}>
+                                    <Galeria.Image>
+                                        <Image
+                                            source={{ uri: imageUrl }}
+                                            style={[styles.commentImage, { width: '100%' }]}
+                                            contentFit="cover"
+                                        />
+                                    </Galeria.Image>
+                                </Galeria>
+                            )}
                         </View>
                     )}
                 </View>
@@ -153,6 +163,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
     ({ postId, onDismiss, useReanimated = false, detents = [0.7] }, ref) => {
         const insets = useSafeAreaInsets();
         const sheetRef = useRef<TrueSheet>(null);
+        const emojiSheetRef = useRef<TrueSheet>(null);
         const isPresentedRef = useRef(false);
 
         useImperativeHandle(ref, () => ({
@@ -338,7 +349,11 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 {/* Selected Image Preview */}
                 {vm.selectedImageUrl && (
                     <View style={styles.previewContainer}>
-                        <Image source={{ uri: vm.selectedImageUrl }} style={styles.previewImage} contentFit="cover" />
+                        {EMOJI_ASSETS[vm.selectedImageUrl] ? (
+                            <Image source={EMOJI_ASSETS[vm.selectedImageUrl]} style={styles.previewImage} contentFit="contain" />
+                        ) : (
+                            <Image source={{ uri: vm.selectedImageUrl }} style={styles.previewImage} contentFit="cover" />
+                        )}
                         <TouchableOpacity style={styles.previewRemoveButton} onPress={() => vm.setSelectedImageUrl(null)}>
                             <MaterialIcons name="close" size={16} color="#fff" />
                         </TouchableOpacity>
@@ -398,6 +413,17 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                             disabled={!!vm.selectedImageUrl}
                         >
                             <GalleryAddBold size={24} color={vm.colors.text} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.toolbarButton,
+                                { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                                vm.selectedImageUrl ? { opacity: 0.5 } : {}
+                            ]}
+                            onPress={() => { emojiSheetRef.current?.present(); Keyboard.dismiss(); }}
+                            disabled={!!vm.selectedImageUrl}
+                        >
+                            <MaterialIcons name="emoji-emotions" size={24} color={vm.colors.text} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
@@ -465,9 +491,20 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         );
 
         return (
-            <TrueSheet {...sharedProps}>
-                {sheetContent}
-            </TrueSheet>
+            <>
+                <TrueSheet {...sharedProps}>
+                    {sheetContent}
+                </TrueSheet>
+                <EmojiSelectorSheet 
+                    ref={emojiSheetRef} 
+                    theme={vm.theme} 
+                    colors={vm.colors} 
+                    onSelect={(emoji) => {
+                        vm.setSelectedImageUrl(emoji);
+                        emojiSheetRef.current?.dismiss();
+                    }} 
+                />
+            </>
         );
     }
 ));
