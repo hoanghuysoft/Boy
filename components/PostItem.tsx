@@ -5,6 +5,7 @@ import CommentIcon from "@/icons/comment";
 import LikeIcon from "@/icons/like";
 import LikeSolidIcon from "@/icons/likedsolid";
 import ShareIcon from "@/icons/share";
+import VerifiedIcon from "@/icons/verified";
 import { usePrecacheProfileFromPost } from "@/services/profileCache";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Media, Post } from "@/types/post";
@@ -116,6 +117,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>
                             <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
+                            {post.profile_is_verified && <VerifiedIcon size={16} backgroundColor={vm.colors.verify} />}
                         </View>
                         <PostMetaInfo post={post} />
                     </View>

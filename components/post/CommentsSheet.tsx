@@ -165,6 +165,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const sheetRef = useRef<TrueSheet>(null);
         const emojiSheetRef = useRef<TrueSheet>(null);
         const isPresentedRef = useRef(false);
+        const inputRef = useRef<TextInput>(null);
 
         useImperativeHandle(ref, () => ({
             present: () => {
@@ -362,6 +363,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
 
                 <View style={styles.inputInnerWrapper}>
                     <TextInput
+                        ref={inputRef}
                         style={[styles.input, {
                             backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                             color: vm.colors.text,
@@ -503,6 +505,9 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         vm.setSelectedImageUrl(emoji);
                         emojiSheetRef.current?.dismiss();
                     }} 
+                    onDismiss={() => {
+                        inputRef.current?.focus();
+                    }}
                 />
             </>
         );
