@@ -29,7 +29,6 @@ import { PostMetaInfo } from "./PostMetaInfo";
 import { YouTubePostPlayer } from "./YouTubePostPlayer";
 
 // TurboImage cache policy - use dataCache for aggressive local caching
-const IMAGE_CACHE_POLICY = "dataCache" as const;
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export interface PostItemProps {
@@ -182,7 +181,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                     style={[vm.common.row, { gap: 6, alignItems: 'center', marginTop: 4 }]}
                                 >
                                     <ExpoImage
-                                        source={{ uri: originalPost.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                                        source={{ uri: originalPost.profile_avatar }}
                                         style={{ width: 18, height: 18, borderRadius: 9999 }}
                                         contentFit="cover"
                                         placeholder={{ blurhash: originalAvatarPlaceholder }}

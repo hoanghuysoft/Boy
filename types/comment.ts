@@ -6,7 +6,7 @@ export interface Comment {
     created_at: string;
     updated_at: string;
     profile_name: string;
-    profile_avatar: string | null;
+    profile_avatar: string | undefined;
     profile_is_verified: boolean;
     profile_id: string | null;
 }

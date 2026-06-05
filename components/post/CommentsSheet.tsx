@@ -5,7 +5,6 @@ import { Galeria } from "@nandorojo/galeria";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { GalleryAddBold, PenNewRoundBold, Plain2Bold } from "@solar-icons/react-native";
 import { Image } from "expo-image";
-import { EMOJI_ASSETS } from "../../utils/emojiResolver";
 import { Avatar, Button, SkeletonGroup, Spinner } from "heroui-native";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,10 +18,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Comment } from "../../types/comment";
+import { EMOJI_ASSETS } from "../../utils/emojiResolver";
 import { parseCommentContent, useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
+import { EmojiSelectorSheet } from "../EmojiSelectorSheet";
 import { FlexText } from "../FlexText";
 import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
-import { EmojiSelectorSheet } from "../EmojiSelectorSheet";
 
 // ============================================================================
 // Types
@@ -64,7 +64,7 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
             {/* Avatar */}
             <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
                 <Avatar style={styles.avatar}>
-                    <Avatar.Image source={{ uri: comment.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }} />
+                    <Avatar.Image source={{ uri: comment.profile_avatar }} />
                     <Avatar.Fallback>{comment.profile_name?.[0] || 'U'}</Avatar.Fallback>
                 </Avatar>
             </TouchableOpacity>
@@ -221,7 +221,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 deleteLabel={t('post.commentsSheet.actionDelete')}
                 isDeleting={vm.deletingId === item.id}
             />
-        ), [vm.colors, vm.common, vm.theme, vm.currentProfileId, vm.handleUserPress, vm.handleDeleteComment, vm.handleEditComment, vm.formatTimeAgo, t, vm.deletingId]);
+        ), [vm, t]);
 
         const renderListFooter = useCallback(() => {
             if (vm.isFetchingNextPage) {
@@ -240,7 +240,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
 
         useEffect(() => {
             GiphyDialog.configure({
-                theme: vm.theme === 'dark' ? 'dark' : 'light',
+                theme: vm.theme,
                 rating: GiphyRating.R,
             });
         }, [vm.theme, t]);
@@ -257,7 +257,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 GiphyDialog.hide();
             });
             return () => listener.remove();
-        }, [vm.setSelectedImageUrl]);
+        }, [vm.setSelectedImageUrl, vm]);
 
         const renderEmpty = useCallback(() => {
             if (vm.isLoading) {
@@ -278,7 +278,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             }
             return (
                 <View style={styles.emptyState}>
-                    <View style={[styles.emptyIconContainer, { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                    <View style={[styles.emptyIconContainer, { backgroundColor: vm.colors.card }]}>
                         <MaterialIcons name="comment" size={32} color={vm.colors.muted} />
                     </View>
                     <FlexText style={[vm.common.heading, { fontSize: 18, marginTop: 16, marginBottom: 8 }]}>
@@ -289,15 +289,14 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     </FlexText>
                 </View>
             );
-        }, [vm.isLoading, vm.colors, vm.common, vm.theme, t]);
+        }, [vm.isLoading, vm.colors, vm.common, t]);
 
         // Modern Input Footer
         const commentInputFooter = (
             <View style={[
                 styles.footerContainer,
                 {
-                    backgroundColor: vm.theme === "dark" ? vm.colors.containerContent : "#ffffff",
-                    borderTopColor: vm.theme === "dark" ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                    backgroundColor: vm.colors.containerContent,
                     paddingBottom: Math.max(insets.bottom, 12),
                 }
             ]}>
@@ -305,7 +304,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 {vm.isEditing && (
                     <View style={[
                         styles.editBanner,
-                        { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }
+                        { backgroundColor: vm.colors.card }
                     ]}>
                         <MaterialIcons name="edit" size={14} color={vm.colors.muted} style={{ marginRight: 6 }} />
                         <FlexText
@@ -325,7 +324,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
 
                 {/* URL Input */}
                 {isKeyboardVisible && vm.showUrlInput && (
-                    <View style={[styles.urlInputWrapper, { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
+                    <View style={[styles.urlInputWrapper, { backgroundColor: vm.colors.containerContent }]}>
                         <MaterialIcons name="link" size={18} color={vm.colors.muted} />
                         <TextInput
                             style={[styles.urlInput, { color: vm.colors.text }]}
@@ -365,7 +364,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     <TextInput
                         ref={inputRef}
                         style={[styles.input, {
-                            backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                            backgroundColor: vm.colors.card,
                             color: vm.colors.text,
                         }]}
                         placeholder={vm.isEditing ? t('post.commentsSheet.placeholderEdit') : t('post.commentsSheet.placeholderAdd')}
@@ -408,7 +407,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         <TouchableOpacity
                             style={[
                                 styles.toolbarButton,
-                                { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                                { backgroundColor: vm.colors.card },
                                 vm.selectedImageUrl ? { opacity: 0.5 } : {}
                             ]}
                             onPress={() => vm.setShowUrlInput(!vm.showUrlInput)}
@@ -419,7 +418,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         <TouchableOpacity
                             style={[
                                 styles.toolbarButton,
-                                { backgroundColor: vm.theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                                { backgroundColor: vm.colors.card },
                                 vm.selectedImageUrl ? { opacity: 0.5 } : {}
                             ]}
                             onPress={() => { emojiSheetRef.current?.present(); Keyboard.dismiss(); }}
@@ -430,13 +429,13 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         <TouchableOpacity
                             style={[
                                 styles.toolbarButton,
-                                { backgroundColor: 'rgba(238, 238, 238, 0.95)' },
+                                { backgroundColor: vm.colors.card },
                                 vm.selectedImageUrl ? { opacity: 0.5 } : {}
                             ]}
                             onPress={() => { GiphyDialog.show() }}
                             disabled={!!vm.selectedImageUrl}
                         >
-                            <Image source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/8/82/Giphy-logo.svg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original" }} style={{ width: 64, height: 24 }} contentFit="contain" />
+                            <MaterialIcons name="gif" size={24} color={vm.colors.text} />
                         </TouchableOpacity>
 
                     </View>
@@ -447,7 +446,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const sharedProps = {
             ref: sheetRef,
             scrollable: true,
-            backgroundColor: vm.theme === "dark" ? vm.colors.containerContent : "#ffffff",
+            backgroundColor: vm.colors.containerContent,
             grabberOptions: {
                 color: vm.colors.muted || "#C4C4C4",
                 height: 5,
@@ -497,14 +496,14 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 <TrueSheet {...sharedProps}>
                     {sheetContent}
                 </TrueSheet>
-                <EmojiSelectorSheet 
-                    ref={emojiSheetRef} 
-                    theme={vm.theme} 
-                    colors={vm.colors} 
+                <EmojiSelectorSheet
+                    ref={emojiSheetRef}
+                    theme={vm.theme}
+                    colors={vm.colors}
                     onSelect={(emoji) => {
                         vm.setSelectedImageUrl(emoji);
                         emojiSheetRef.current?.dismiss();
-                    }} 
+                    }}
                     onDismiss={() => {
                         inputRef.current?.focus();
                     }}
@@ -593,7 +592,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     footerContainer: {
-        borderTopWidth: 1,
         paddingHorizontal: 16,
         paddingTop: 12,
     },
@@ -658,7 +656,7 @@ const styles = StyleSheet.create({
     toolbarButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
+        paddingHorizontal: 6,
         paddingVertical: 6,
         borderRadius: 999,
         gap: 6,

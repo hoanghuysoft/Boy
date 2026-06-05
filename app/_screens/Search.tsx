@@ -160,17 +160,22 @@ const SearchScreen = () => {
       {isLoading ? (
         <FlashList
           data={[1, 2, 3, 4, 5, 6, 7, 8]}
-          renderItem={() => renderProfileSkeleton({ colors, styles })}
+          renderItem={({ index }: any) => renderProfileSkeleton({
+            colors,
+            styles,
+            isFirst: index === 0,
+            isLast: index === 7,
+          })}
           keyExtractor={(item: any) => item.toString()}
           contentContainerStyle={[
             styles.listContent,
+            { gap: 3 },
             { paddingBottom: contentBottomPadding },
           ]}
           ListHeaderComponent={ListHeaderComponent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           estimatedItemSize={80}
-          ItemSeparatorComponent={ITEM_SEPARATOR}
         />
       ) : (
         <FlatList

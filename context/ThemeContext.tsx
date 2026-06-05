@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { Appearance } from 'react-native';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Platform, useColorScheme } from 'react-native';
+import { requireNativeModule } from 'expo-modules-core';
 import { Uniwind } from "uniwind";
 import { ThemePreference, useSettingsStore } from "../stores/settings";
 import { createTypography, TypographyScale } from "../styles/typography";
@@ -81,8 +82,25 @@ const darkColors: ThemeColors = {
   },
 };
 
-const getSystemTheme = (): ThemeMode => {
-  return Appearance.getColorScheme() === "dark" ? "dark" : "light";
+let ExpoRouter: any = null;
+try {
+  ExpoRouter = requireNativeModule('ExpoRouter');
+} catch {
+  // Silent fallback for non-Android / non-expo environments
+}
+
+const getMaterialYouColor = (name: string, scheme: ThemeMode, fallback: string): string => {
+  if (Platform.OS !== 'android') return fallback;
+  try {
+    if (!ExpoRouter) {
+      ExpoRouter = requireNativeModule('ExpoRouter');
+    }
+    const color = ExpoRouter.Material3DynamicColor(name, scheme);
+    return color || fallback;
+  } catch (e) {
+    console.warn(`[ThemeContext] Failed to get Material You color for ${name}:`, e);
+    return fallback;
+  }
 };
 
 const getAdaptiveTheme = (): ThemeMode => {
@@ -95,24 +113,14 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   // Use persisted settings store for theme preference
   const { themePreference, setThemePreference } = useSettingsStore();
-  const [systemTheme, setSystemTheme] = useState<ThemeMode>(getSystemTheme());
+  const colorScheme = useColorScheme();
+  const systemTheme: ThemeMode = colorScheme === "dark" ? "dark" : "light";
   const [adaptiveTheme, setAdaptiveTheme] = useState<ThemeMode>(getAdaptiveTheme());
   const [typographyScale, setTypographyScale] = useState<TypographyScale>("m3");
-
-  // Listen for system theme changes
-  useEffect(() => {
-    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-      setSystemTheme(colorScheme === "dark" ? "dark" : "light");
-    });
-    return () => subscription.remove();
-  }, []);
 
   // Check time for adaptive theme
   useEffect(() => {
     if (themePreference !== 'adaptive') return;
-
-    // Initial check
-    setAdaptiveTheme(getAdaptiveTheme());
 
     // Check every minute
     const interval = setInterval(() => {
@@ -126,7 +134,8 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const theme: ThemeMode =
     themePreference === "system" ? systemTheme :
       themePreference === "adaptive" ? adaptiveTheme :
-        themePreference;
+        themePreference === "material-you" ? systemTheme :
+          themePreference;
 
   // Sync theme with Uniwind (HeroUI Native)
   useEffect(() => {
@@ -137,28 +146,54 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [theme, themePreference]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     // Toggle between light and dark (not system)
     setThemePreference(theme === "light" ? "dark" : "light");
-  };
+  }, [theme, setThemePreference]);
 
   const typography = useMemo(
     () => createTypography(typographyScale),
     [typographyScale]
   );
 
+  const colors = useMemo<ThemeColors>(() => {
+    if (Platform.OS === "android" && themePreference === "material-you") {
+      return {
+        background: getMaterialYouColor("background", systemTheme, lightColors.background),
+        text: getMaterialYouColor("onSurface", systemTheme, lightColors.text),
+        card: getMaterialYouColor("surfaceContainerHigh", systemTheme, lightColors.card),
+        tabBar: getMaterialYouColor("surfaceContainerLow", systemTheme, lightColors.tabBar),
+        tabActive: getMaterialYouColor("primary", systemTheme, lightColors.tabActive),
+        tabInactive: getMaterialYouColor("onSurfaceVariant", systemTheme, lightColors.tabInactive),
+        containerContent: getMaterialYouColor("surfaceContainer", systemTheme, lightColors.containerContent),
+        divider: getMaterialYouColor("outlineVariant", systemTheme, lightColors.divider),
+        muted: getMaterialYouColor("onSurfaceVariant", systemTheme, lightColors.muted),
+        verify: getMaterialYouColor("primary", systemTheme, lightColors.verify),
+        secondary: getMaterialYouColor("secondary", systemTheme, lightColors.secondary),
+        secondaryMuted: getMaterialYouColor("secondaryContainer", systemTheme, lightColors.secondaryMuted),
+        pillTab: {
+          activeBg: getMaterialYouColor("primaryContainer", systemTheme, lightColors.pillTab.activeBg),
+          activeText: getMaterialYouColor("onPrimaryContainer", systemTheme, lightColors.pillTab.activeText),
+          inactiveBg: "transparent",
+          inactiveText: getMaterialYouColor("onSurfaceVariant", systemTheme, lightColors.pillTab.inactiveText),
+        },
+      };
+    }
+    return theme === "light" ? lightColors : darkColors;
+  }, [theme, themePreference, systemTheme]);
+
   const value = useMemo(
     () => ({
       theme,
       themePreference,
-      colors: theme === "light" ? lightColors : darkColors,
+      colors,
       typography,
       typographyScale,
       toggleTheme,
       setThemePreference,
       setTypographyScale,
     }),
-    [theme, themePreference, typography, typographyScale],
+    [theme, themePreference, colors, typography, typographyScale, toggleTheme, setThemePreference, setTypographyScale],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

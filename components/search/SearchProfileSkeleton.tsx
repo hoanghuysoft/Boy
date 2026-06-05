@@ -1,9 +1,14 @@
 import React from "react";
 import { View } from "react-native";
 import { ShimmerEffect } from "../shimmer/Shimmer";
+import { CustomSurface } from "../CustomSurface";
 
-export const renderProfileSkeleton = ({ colors, styles }: any) => (
-    <View style={[styles.profileCard, { backgroundColor: colors.containerContent }]}>
+export const renderProfileSkeleton = ({ colors, styles, isFirst, isLast }: any) => (
+    <CustomSurface
+        isFirst={isFirst}
+        isLast={isLast}
+        style={styles.profileCard}
+    >
         <ShimmerEffect
             isLoading={true}
             style={{
@@ -34,5 +39,14 @@ export const renderProfileSkeleton = ({ colors, styles }: any) => (
                 }}
             />
         </View>
-    </View>
+        <ShimmerEffect
+            isLoading={true}
+            style={{
+                width: 50,
+                height: 28,
+                borderRadius: 999,
+                backgroundColor: colors.divider,
+            }}
+        />
+    </CustomSurface>
 );

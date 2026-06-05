@@ -6,6 +6,7 @@ const themeSettings = {
         dark:     { label: 'Dark',     description: 'Always use dark theme' },
         system:   { label: 'System',   description: 'Follow device settings' },
         adaptive: { label: 'Adaptive', description: 'Change theme based on sunset and sunrise' },
+        'material-you': { label: 'Material You', description: 'Dynamic wallpaper-based colors (Android only)' },
     },
 } as const;
 

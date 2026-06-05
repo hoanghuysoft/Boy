@@ -5,7 +5,7 @@ export const renderFooter = ({ isFetchingNextPage, colors, styles, renderProfile
     if (!isFetchingNextPage) return null;
     return (
         <View style={{ paddingVertical: 20 }}>
-            {renderProfileSkeleton({ colors, styles })}
+            {renderProfileSkeleton({ colors, styles, isFirst: true, isLast: true })}
         </View>
     );
 };

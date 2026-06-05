@@ -1,13 +1,14 @@
+import { CustomSurface } from "@/components/CustomSurface";
 import { FlexText } from "@/components/FlexText";
 import { ThemeColors, ThemePreference, useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CheckCircleBold, ClockCircleBold, MoonBold, SmartphoneBold, Sun2Bold } from '@solar-icons/react-native';
+import { CheckCircleBold, ClockCircleBold, MoonBold, Palette2Bold, SmartphoneBold, Sun2Bold } from '@solar-icons/react-native';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { CustomSurface } from "@/components/CustomSurface";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Only static, non-translatable data lives outside the component.
@@ -17,19 +18,20 @@ type ThemeOption = {
     icon: React.ComponentType<any>;
 };
 
-const themeOptions: ThemeOption[] = [
-    { id: "light", icon: Sun2Bold },
-    { id: "dark", icon: MoonBold },
-    { id: "system", icon: SmartphoneBold },
-    { id: "adaptive", icon: ClockCircleBold },
-];
-
 const ThemeSettingsScreen = () => {
     const { colors, themePreference, setThemePreference, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const styles = style(colors, common);
     const inset = useSafeAreaInsets();
     const { t } = useTranslation();
+
+    const themeOptions = useMemo<ThemeOption[]>(() => [
+        { id: "light", icon: Sun2Bold },
+        { id: "dark", icon: MoonBold },
+        { id: "system", icon: SmartphoneBold },
+        { id: "adaptive", icon: ClockCircleBold },
+        ...(Platform.OS === 'android' ? [{ id: "material-you" as ThemePreference, icon: Palette2Bold }] : []),
+    ], []);
 
     return (
         <ScrollView style={[common.screenPadding, { backgroundColor: colors.background }]}>

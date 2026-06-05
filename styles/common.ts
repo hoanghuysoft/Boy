@@ -19,7 +19,7 @@ export const createCommonStyles = (
       backgroundColor: colors.background,
     },
     screenPadding: {
-      padding: 16,
+      padding: 12,
     },
 
     display: createTextStyle(typography.display, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
@@ -66,13 +66,13 @@ export const createCommonStyles = (
     card: {
       backgroundColor: colors.containerContent,
       borderRadius: 24,
-      padding: 16,
+      padding: 12,
     },
     button: {
       backgroundColor: colors.card,
       borderRadius: 12,
       paddingVertical: 12,
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       alignItems: "center",
       justifyContent: "center",
     },

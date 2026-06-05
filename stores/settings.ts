@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-export type ThemePreference = 'light' | 'dark' | 'system' | 'adaptive';
+export type ThemePreference = 'light' | 'dark' | 'system' | 'adaptive' | 'material-you';
 
 // Cache size options in bytes
 export const CACHE_SIZE_OPTIONS = [

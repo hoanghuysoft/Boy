@@ -8,7 +8,7 @@ export interface LikeUser {
     user_id: string;
     profile_id: string | null;
     profile_name: string;
-    profile_avatar: string | null;
+    profile_avatar: string | undefined;
     profile_is_verified: boolean;
 }
 

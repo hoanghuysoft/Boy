@@ -1,14 +1,14 @@
 import VerifiedIcon from "@/icons/verified";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { GhostSmileBold, GhostSmileOutline, HeartUnlockBold, HeartUnlockOutline } from '@solar-icons/react-native';
 import React, { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemeColors, useThemeContext } from "../../context/ThemeContext";
 import { Profile } from "../../types/profile";
-import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 
 // ============================================================================
 // PostOptionBadge Component
@@ -116,7 +116,7 @@ export const CreateProfileHeader = memo(({
     const avatarContent = (
         <View style={profileHeaderStyles.avatarWrapper}>
             <Image
-                source={{ uri: profile.avatar_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+                source={{ uri: profile.avatar_url }}
                 style={[createStyles.profileAvatar]}
             />
             {isAdmin && (

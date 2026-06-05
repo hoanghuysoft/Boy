@@ -50,7 +50,7 @@ export const SearchProfileItem = React.memo(({
             style={styles.profileCard}
         >
             <Avatar style={styles.avatar}>
-                <Avatar.Image source={{ uri: item.avatar_url || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }} />
+                <Avatar.Image source={{ uri: item.avatar_url }} />
                 <Avatar.Fallback>{item.name?.[0] || 'U'}</Avatar.Fallback>
             </Avatar>
             <View style={styles.profileInfo}>

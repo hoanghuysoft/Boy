@@ -64,7 +64,8 @@ const SettingsScreen = () => {
         light: t('settings.light'),
         dark: t('settings.dark'),
         system: t('settings.system'),
-        adaptive: t('settings.adaptive')
+        adaptive: t('settings.adaptive'),
+        'material-you': t('themeSettings.options.material-you.label')
     };
 
     useEffect(() => {

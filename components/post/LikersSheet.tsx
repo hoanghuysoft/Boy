@@ -38,7 +38,7 @@ const LikerItem = memo(({ user, colors, common, onPress }: LikerItemProps) => (
         activeOpacity={0.7}
     >
         <ExpoImage
-            source={{ uri: user.profile_avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+            source={{ uri: user.profile_avatar }}
             style={[styles.avatar, { backgroundColor: colors.divider }]}
             contentFit="cover"
         />

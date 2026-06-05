@@ -101,10 +101,10 @@ const HashtagListScreen = () => {
                     >
                         {/* Header Section */}
                         <Column modifiers={[padding(0, insets.top + 66, 0, 16)]}>
-                            <Text color={colors.text} style={{ fontSize: 28, fontWeight: '700', fontFamily: 'GoogleSansFlexBold' }}>
+                            <Text color={colors.text as any} style={{ fontSize: 28, fontWeight: '700', fontFamily: 'GoogleSansFlexBold' }}>
                                 {t('hashtag.list.title')}
                             </Text>
-                            <Text color={colors.muted} style={{ fontSize: 14, fontWeight: '400', fontFamily: 'GoogleSansFlexRegular' }} modifiers={[padding(0, 2, 0, 0)]}>
+                            <Text color={colors.muted as any} style={{ fontSize: 14, fontWeight: '400', fontFamily: 'GoogleSansFlexRegular' }} modifiers={[padding(0, 2, 0, 0)]}>
                                 {allTags.length > 0
                                     ? t('hashtag.list.tagsCount', { count: allTags.length })
                                     : t('hashtag.list.subtitle')}
@@ -142,7 +142,7 @@ const HashtagListScreen = () => {
                         {!isLoading && allTags.map((item, index) => (
                             <Surface
                                 key={item.id}
-                                color={colors.containerContent}
+                                color={colors.containerContent as any}
                                 shape={Shape.RoundedCorner({ cornerRadii: getCornerRadii(index, allTags.length) })}
                                 onClick={() => navigateToTag(item.tag)}
                                 modifiers={[fillMaxWidth()]}
@@ -153,11 +153,11 @@ const HashtagListScreen = () => {
                                     modifiers={[fillMaxWidth(), padding(16, 14, 16, 14)]}
                                 >
                                     <Column>
-                                        <Text color={colors.text} style={{ fontSize: 16, fontWeight: '600', fontFamily: 'GoogleSansFlexMedium' }}>
+                                        <Text color={colors.text as any} style={{ fontSize: 16, fontWeight: '600', fontFamily: 'GoogleSansFlexMedium' }}>
                                             #{item.tag}
                                         </Text>
                                         {item.count != null && (
-                                            <Text color={colors.muted} style={{ fontSize: 12, fontFamily: 'GoogleSansFlexRegular' }} modifiers={[padding(0, 2, 0, 0)]}>
+                                            <Text color={colors.muted as any} style={{ fontSize: 12, fontFamily: 'GoogleSansFlexRegular' }} modifiers={[padding(0, 2, 0, 0)]}>
                                                 {t('hashtag.posts.count', { count: item.count })}
                                             </Text>
                                         )}
@@ -179,13 +179,13 @@ const HashtagListScreen = () => {
                                     modifiers={[size(80, 80)]}
                                 >
                                     <Row verticalAlignment="center" horizontalArrangement="center" modifiers={[fillMaxSize()]}>
-                                        <Text color={colors.text} style={{ fontSize: 32, fontFamily: 'GoogleSansFlexRegular' }}>#</Text>
+                                        <Text color={colors.text as any} style={{ fontSize: 32, fontFamily: 'GoogleSansFlexRegular' }}>#</Text>
                                     </Row>
                                 </Surface>
-                                <Text color={colors.text} style={{ fontSize: 20, fontWeight: '700', textAlign: 'center', fontFamily: 'GoogleSansFlexBold' }} modifiers={[padding(0, 20, 0, 0)]}>
+                                <Text color={colors.text as any} style={{ fontSize: 20, fontWeight: '700', textAlign: 'center', fontFamily: 'GoogleSansFlexBold' }} modifiers={[padding(0, 20, 0, 0)]}>
                                     {t('hashtag.list.emptyTitle')}
                                 </Text>
-                                <Text color={colors.muted} style={{ fontSize: 14, textAlign: 'center', lineHeight: 22, fontFamily: 'GoogleSansFlexRegular' }} modifiers={[padding(0, 8, 0, 0)]}>
+                                <Text color={colors.muted as any} style={{ fontSize: 14, textAlign: 'center', lineHeight: 22, fontFamily: 'GoogleSansFlexRegular' }} modifiers={[padding(0, 8, 0, 0)]}>
                                     {t('hashtag.list.emptyBody')}
                                 </Text>
                             </Column>
