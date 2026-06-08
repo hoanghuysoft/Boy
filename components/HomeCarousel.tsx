@@ -25,14 +25,14 @@ const CarouselImage = memo(({ imageUrl, onImageLoaded }: CarouselImageProps) => 
 CarouselImage.displayName = "CarouselImage";
 
 const ColorGradientOverlay = memo(({ carouselHeight }: { carouselHeight: number }) => {
-    const { theme } = useThemeContext();
+    const { colors } = useThemeContext();
     const overlayHeight = carouselHeight * 0.8;
 
     // Explicitly define the 0-opacity starting colors to prevent muddy gray banding
-    const transparentColor = theme === "light" ? "rgba(246, 246, 246, 0)" : "rgba(0, 0, 0, 0)";
-    const midColor1 = theme === "light" ? "rgba(246, 246, 246, 0.35)" : "rgba(0, 0, 0, 0.35)";
-    const midColor2 = theme === "light" ? "rgba(246, 246, 246, 0.8)" : "rgba(0, 0, 0, 0.8)";
-    const solidColor = theme === "light" ? "rgba(246, 246, 246, 1)" : "rgba(0, 0, 0, 1)";
+    const transparentColor = colors.background + "00";
+    const midColor1 = colors.background + "59";
+    const midColor2 = colors.background + "CC";
+    const solidColor = colors.background;
 
     return (
         <LinearGradient

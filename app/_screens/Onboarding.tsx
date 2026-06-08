@@ -4,7 +4,7 @@ import { createCommonStyles } from '@/styles/common';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import { Image as ExpoImage } from 'expo-image';
 import { Spinner } from 'heroui-native';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Platform,
@@ -15,11 +15,17 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useObserve } from 'expo-observe';
 import { useOnboardingViewModel } from '../../viewmodels/OnboardingViewModel';
 
 const OnboardingScreen = () => {
     const { colors, typography } = useThemeContext();
     const { t } = useTranslation();
+    const { markInteractive } = useObserve();
+
+    useEffect(() => {
+        markInteractive();
+    }, [markInteractive]);
     const common = createCommonStyles(colors, typography);
     const style = styles(colors);
 

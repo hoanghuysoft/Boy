@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import {
     NativeScrollEvent,
     NativeSyntheticEvent,
-    TouchableOpacity,
+    StyleSheet,
     View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -18,7 +18,7 @@ import * as Yup from "yup";
 // Components
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Image } from "expo-image";
-import { Card, Dialog, Button } from "heroui-native";
+import { Button, Card, Dialog } from "heroui-native";
 import {
     ContentInput,
     CreateActionBar,
@@ -215,7 +215,7 @@ const CreateScreen = () => {
                     if (values.useThirdPartyUpload) {
                         const { uploadToThirdParty } = await import("../../services/thirdPartyUpload");
                         const { createMediaRecord } = await import("../../services/mediaUpload");
-                        
+
                         mediaIds = [];
                         for (const media of values.selectedMedia) {
                             const files: FileAsset = {
@@ -492,21 +492,8 @@ const CreateScreen = () => {
     return (
         <View style={[common.screen]}>
             <View style={createStyles.container}>
-                {/* Floating back button, same pattern as Bookmarks/ShowList */}
-                <View style={{ position: 'absolute', top: insets.top + 16, left: 16, zIndex: 1000 }}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={{
-                            backgroundColor: colors.containerContent,
-                            borderRadius: 999,
-                            width: 40,
-                            height: 40,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <Ionicons name="chevron-back" size={24} color={colors.text} />
-                    </TouchableOpacity>
+                <View style={styles.grabber}>
+                    <View style={[styles.grabberBar, { backgroundColor: colors.muted || "#C4C4C4" }]} />
                 </View>
 
                 <Dialog isOpen={dialog.visible} onOpenChange={(open) => !open && setDialog((prev) => ({ ...prev, visible: false }))}>
@@ -535,7 +522,7 @@ const CreateScreen = () => {
                 <CreateScreenHeader
                     colors={colors}
                     common={common}
-                    topPadding={insets.top + 60}
+                    topPadding={insets.top + 25}
                     canSubmit={canSubmit}
                     isSubmitting={isSubmitting}
                     onSubmit={onSubmitPress}
@@ -749,3 +736,21 @@ const CreateScreen = () => {
 };
 
 export default CreateScreen;
+
+const styles = StyleSheet.create({
+    grabber: {
+        position: 'absolute',
+        top: 50,
+        left: 0,
+        right: 0,
+        height: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    grabberBar: {
+        width: 40,
+        height: 5,
+        borderRadius: 2.5,
+    },
+});
