@@ -1,3 +1,5 @@
+import { getFullScreenSheetScale } from "@/components/stack/screen-options";
+import { Stack } from "@/components/stack/stack";
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
 import * as Sentry from '@sentry/react-native';
@@ -5,7 +7,7 @@ import { BottomSheetProvider } from "@swmansion/react-native-bottom-sheet";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
-import { Stack, usePathname } from "expo-router";
+import { usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from 'heroui-native';
 import React, { useEffect } from "react";
@@ -22,6 +24,7 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import Transition from "react-native-screen-transitions";
 import { GlobalAudioPlayer } from "../components/GlobalAudioPlayer";
 import { SessionProvider } from "../context/SessionContext";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
@@ -181,108 +184,40 @@ const RootContent = () => {
           }
         />
         <StatusBarFade />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-            animation: "slide_from_right",
-          }}
-        >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="login"
-            options={{ headerShown: false, animation: "fade" }}
-          />
-          <Stack.Screen
-            name="onboarding"
-            options={{ headerShown: false, animation: "fade", gestureEnabled: false }}
-          />
-          <Stack.Screen
-            name="video_player"
-            options={{ headerShown: false, animation: "slide_from_bottom" }}
-          />
-          <Stack.Screen name="profile/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="image_poster" options={{ headerShown: false }} />
+        <Stack>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="login" />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="video_player" options={Transition.Presets.SlideFromBottom()} />
+          <Stack.Screen name="profile/[id]" />
+          <Stack.Screen name="image_poster" />
           <Stack.Screen
             name="settings"
-            options={{ headerShown: false, animation: "slide_from_bottom" }}
           />
           <Stack.Screen
             name="bookmarks"
-            options={{ headerShown: false, animation: "slide_from_bottom" }}
+            options={Transition.Presets.SlideFromBottom()}
           />
-          <Stack.Screen
-            name="language-settings"
-            options={{ headerShown: false, animation: "slide_from_right" }}
+          <Stack.Screen name="language-settings" />
+          <Stack.Screen name="fprofile" />
+          <Stack.Screen name="search" />
+          <Stack.Screen name="hashtag/[tag]" />
+          <Stack.Screen name="hashtag-list" />
+          <Stack.Screen name="show_detail" />
+          <Stack.Screen name="show_list" />
+          <Stack.Screen name="watchlist" />
+          <Stack.Screen name="create"
+            options={getFullScreenSheetScale()}
           />
-          <Stack.Screen
-            name="fprofile"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="search"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="hashtag/[tag]"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="hashtag-list"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="show_detail"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="show_list"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="watchlist"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="create"
-            options={{ headerShown: false, animation: "slide_from_bottom" }}
-          />
-          <Stack.Screen
-            name="inapp_browser"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="movie_detail"
-            options={{ headerShown: false, animation: "none" }}
-          />
-          <Stack.Screen
-            name="tv_detail"
-            options={{ headerShown: false, animation: "none" }}
-          />
-          <Stack.Screen
-            name="person_detail"
-            options={{ headerShown: false, animation: "none" }}
-          />
-          <Stack.Screen
-            name="movie_list"
-            options={{ headerShown: false, animation: "none" }}
-          />
-          <Stack.Screen
-            name="search_movies"
-            options={{ headerShown: false, animation: "none" }}
-          />
-          <Stack.Screen
-            name="webview"
-            options={{ headerShown: false, animation: "fade" }}
-          />
-          <Stack.Screen
-            name="movie-tracker-settings"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
-          <Stack.Screen
-            name="bulletinboard"
-            options={{ headerShown: false, animation: "slide_from_right" }}
-          />
+          <Stack.Screen name="inapp_browser" />
+          <Stack.Screen name="movie_detail" />
+          <Stack.Screen name="tv_detail" />
+          <Stack.Screen name="person_detail" />
+          <Stack.Screen name="movie_list" />
+          <Stack.Screen name="search_movies" />
+          <Stack.Screen name="webview" />
+          <Stack.Screen name="movie-tracker-settings" />
+          <Stack.Screen name="bulletinboard" />
         </Stack>
         <GlobalAudioPlayer />
       </View>

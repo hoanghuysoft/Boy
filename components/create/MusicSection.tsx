@@ -1,11 +1,11 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { FlashList } from "@shopify/flash-list";
 import { CheckCircleBold, VinylRecordBold } from "@solar-icons/react-native";
 import { SquircleView } from "expo-squircle-view";
+import { Spinner } from "heroui-native";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
+    FlatList,
     Image,
     TextInput,
     TouchableOpacity,
@@ -16,7 +16,6 @@ import { DeezerTrack } from "../../services/deezer";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
-import { Spinner } from "heroui-native";
 
 // ============================================================================
 // MusicSearchResult Component
@@ -182,7 +181,7 @@ export const MusicSection = memo(({
             )}
 
             {musicResults.length > 0 && (
-                <FlashList
+                <FlatList
                     data={musicResults}
                     keyExtractor={(item) => item.deezer_id}
                     renderItem={({ item }) => (
