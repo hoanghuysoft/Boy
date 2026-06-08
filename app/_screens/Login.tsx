@@ -5,10 +5,17 @@ import { Image } from "expo-image";
 import { Spinner } from "heroui-native";
 import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useObserve } from "expo-observe";
+import React from "react";
 import { useLoginViewModel } from "../../viewmodels/LoginViewModel";
 
 const LoginScreen = () => {
     const { colors, typography } = useThemeContext();
+    const { markInteractive } = useObserve();
+
+    React.useEffect(() => {
+        markInteractive();
+    }, [markInteractive]);
     const common = createCommonStyles(colors, typography);
     const style = styles(colors);
 

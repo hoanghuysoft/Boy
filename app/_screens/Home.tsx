@@ -8,6 +8,7 @@ import {
   MagnifierLineDuotone
 } from "@solar-icons/react-native";
 import { Image as ExpoImage } from "expo-image";
+import { useObserve } from "expo-observe";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { GalleryModal } from "../../components/gallery/GalleryModal";
@@ -18,6 +19,11 @@ import HomeTabs from "./home/HomeTabs";
 
 const HomeScreen = () => {
   const vm = useHomeViewModel();
+  const { markInteractive } = useObserve();
+
+  React.useEffect(() => {
+    markInteractive();
+  }, [markInteractive]);
   const {
     common,
     carouselEnabled,

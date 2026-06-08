@@ -1,8 +1,9 @@
-import { getFullScreenSheetScale } from "@/components/stack/screen-options";
+import { getFullScreenSheetScale, getParallaxSlideTransition } from "@/components/stack/screen-options";
 import { Stack } from "@/components/stack/stack";
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
 import * as Sentry from '@sentry/react-native';
+import { Observe, ObserveRoot } from 'expo-observe';
 import { BottomSheetProvider } from "@swmansion/react-native-bottom-sheet";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Image as ExpoImage } from 'expo-image';
@@ -53,6 +54,13 @@ Sentry.init({
 (globalThis as any).fetch = nitroFetch;
 
 GiphySDK.configure({ apiKey: process.env.EXPO_PUBLIC_GIPHY_API_KEY || '' });
+
+// Configure EAS Observe
+Observe.configure({
+  integrations: {
+    'expo-router': true,
+  },
+});
 
 // Disable Reanimated strict mode warning
 configureReanimatedLogger({
@@ -189,10 +197,11 @@ const RootContent = () => {
           <Stack.Screen name="login" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="video_player" options={Transition.Presets.SlideFromBottom()} />
-          <Stack.Screen name="profile/[id]" />
+          <Stack.Screen name="profile/[id]" options={getParallaxSlideTransition()} />
           <Stack.Screen name="image_poster" />
           <Stack.Screen
             name="settings"
+            options={getParallaxSlideTransition()}
           />
           <Stack.Screen
             name="bookmarks"
@@ -229,29 +238,31 @@ const RootContent = () => {
 const withSentry = __DEV__ ? (fn: () => React.ReactElement) => fn : Sentry.wrap;
 export default withSentry(function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <HeroUINativeProvider>
-        <BottomSheetProvider>
-          <PersistQueryClientProvider
-            client={queryClient}
-            persistOptions={{
-              persister: clientPersister,
-              maxAge: 1000 * 60 * 60, // 1 hour max cache age allowed on boot
-              buster: "v1.1", // cache buster to invalidate stale layouts
-            }}
-          >
-            <SafeAreaProvider>
-              <KeyboardProvider>
-                <ThemeProvider>
-                  <StatusBarProvider>
-                    <RootContent />
-                  </StatusBarProvider>
-                </ThemeProvider>
-              </KeyboardProvider>
-            </SafeAreaProvider>
-          </PersistQueryClientProvider>
-        </BottomSheetProvider>
-      </HeroUINativeProvider>
-    </GestureHandlerRootView>
+    <ObserveRoot>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <HeroUINativeProvider>
+          <BottomSheetProvider>
+            <PersistQueryClientProvider
+              client={queryClient}
+              persistOptions={{
+                persister: clientPersister,
+                maxAge: 1000 * 60 * 60, // 1 hour max cache age allowed on boot
+                buster: "v1.1", // cache buster to invalidate stale layouts
+              }}
+            >
+              <SafeAreaProvider>
+                <KeyboardProvider>
+                  <ThemeProvider>
+                    <StatusBarProvider>
+                      <RootContent />
+                    </StatusBarProvider>
+                  </ThemeProvider>
+                </KeyboardProvider>
+              </SafeAreaProvider>
+            </PersistQueryClientProvider>
+          </BottomSheetProvider>
+        </HeroUINativeProvider>
+      </GestureHandlerRootView>
+    </ObserveRoot>
   );
 });

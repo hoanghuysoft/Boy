@@ -522,7 +522,7 @@ const CreateScreen = () => {
                 <CreateScreenHeader
                     colors={colors}
                     common={common}
-                    topPadding={insets.top + 60}
+                    topPadding={insets.top + 25}
                     canSubmit={canSubmit}
                     isSubmitting={isSubmitting}
                     onSubmit={onSubmitPress}
