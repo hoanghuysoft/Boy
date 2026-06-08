@@ -25,7 +25,7 @@ import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { Image } from "expo-image";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -145,8 +145,6 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
             backHandler.onDidDismiss();
         }
     }, [backHandler]);
-
-    const screenHeight = useMemo(() => Dimensions.get('window').height, []);
 
     const parsedMetadata = useMemo(() => {
         if (!profile?.metadata) return null;
@@ -311,7 +309,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
             index={index}
             onIndexChange={handleIndexChange}
             onSettle={handleSettle}
-            detents={[0, 0.7 * screenHeight, 'content']}
+            detents={[0, 0.7, 'content']}
             scrimColor="rgba(0, 0, 0, 1)"
             scrimOpacities={[0, 0.5, 1]}
             surface={

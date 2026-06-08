@@ -35,7 +35,7 @@
     "@shopify/react-native-skia": "2.6.2",
     "@solar-icons/react-native": "1.1.1",
     "@supabase/supabase-js": "2.107.0",
-    "@swmansion/react-native-bottom-sheet": "^0.13.0",
+    "@swmansion/react-native-bottom-sheet": "^0.14.1",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-query-persist-client": "^5.101.0",
     "@types/node": "^25.9.2",
