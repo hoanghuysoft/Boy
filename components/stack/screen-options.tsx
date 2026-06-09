@@ -72,7 +72,6 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
                     style: {
                         transform: [{ scale }, { translateY }],
                         borderRadius: 24,
-                        overflow: 'hidden',
                     },
                 },
                 backdrop: {
