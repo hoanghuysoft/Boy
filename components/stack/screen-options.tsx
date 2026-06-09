@@ -2,7 +2,6 @@ import { interpolate, interpolateColor } from "react-native-reanimated";
 import { ScreenInterpolationProps } from "react-native-screen-transitions";
 import { BlankStackNavigationOptions } from "react-native-screen-transitions/blank-stack";
 
-// Open spring: robust and snappy
 const SNAPPY_OPEN_SPRING = {
     stiffness: 1000,
     damping: 500,
@@ -12,10 +11,6 @@ const SNAPPY_OPEN_SPRING = {
     restDisplacementThreshold: 0.002,
 }
 
-// Close spring: slightly OVERDAMPED (damping 45 > critical 40)
-// This prevents the spring from bouncing below 0 when it settles,
-// which fixes the "glitch" where the background screen scales out and in again.
-// overshootClamping=false is still kept to prevent instant cancellation on frame drops.
 const SMOOTH_CLOSE_SPRING = {
     stiffness: 400,
     damping: 45,
@@ -32,8 +27,6 @@ const PARALLAX_SPRING_OPEN = {
     overshootClamping: true
 }
 
-// Lighter spring for close — ensures visible slide-out even on fast flings
-// Overdamped (damping 45 > critical 37) to prevent bounce glitch.
 const PARALLAX_SPRING_CLOSE = {
     stiffness: 350,
     damping: 45,
@@ -154,12 +147,7 @@ export const getParallaxSlideTransition = (): BlankStackNavigationOptions => {
                 },
             };
         },
-        // Limit gesture activation to left edge (20px) to prevent conflict
-        // with MaterialTopTabNavigator's full-screen horizontal swipe.
-        // This mirrors iOS standard back-gesture behavior.
-        gestureActivationArea: "edge" as const,
         gestureResponseDistance: 20,
-        // Lower velocity impact = more deliberate swipe needed → fewer false dismissals
         gestureVelocityImpact: 0.2,
         transitionSpec: {
             open: PARALLAX_SPRING_OPEN,
