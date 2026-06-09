@@ -142,5 +142,16 @@
     "@flixsrota/player@0.3.0": "patches/@flixsrota%2Fplayer@0.3.0.patch",
     "heroui-native@1.0.4": "patches/heroui-native@1.0.4.patch",
     "react-native-nitro-wallpaper@1.1.5": "patches/react-native-nitro-wallpaper@1.1.5.patch"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-nitro-fetch",
+          "react-native-system-navigation-bar"
+        ],
+        "listUnknownPackages": false
+      }
+    }
   }
 }
