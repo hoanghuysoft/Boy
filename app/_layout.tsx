@@ -192,7 +192,7 @@ const RootContent = () => {
           }
         />
         <StatusBarFade />
-        <Stack>
+        <Stack screenOptions={{ ...getParallaxSlideTransition() }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="login" />
           <Stack.Screen name="onboarding" />
