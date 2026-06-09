@@ -1,12 +1,12 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import RnGoogleSignin from "@novastera-oss/rn-google-signin";
+import { mmkvSupabaseAdapter } from "./supabase-storage-adapter";
 // import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { createClient } from "@supabase/supabase-js";
-import { storage } from "./storage";
-import "react-native-url-polyfill/auto";
+import { useMovieTrackerStore } from "@/stores/movieTracker";
 import { useSearchHistoryStore } from "@/stores/searchHistory";
 import { useShowWatchlistStore } from "@/stores/showWatchlist";
-import { useMovieTrackerStore } from "@/stores/movieTracker";
+import { createClient } from "@supabase/supabase-js";
+import "react-native-url-polyfill/auto";
+import { storage } from "./storage";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
@@ -15,7 +15,7 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
         flowType: "pkce",
-        storage: AsyncStorage,
+        storage: mmkvSupabaseAdapter,
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
@@ -41,7 +41,7 @@ export async function signInWithGoogle() {
         const userInfo = await RnGoogleSignin.signIn({});
 
         if (userInfo.idToken) {
-            const { data, error } = await supabase.auth.signInWithIdToken({
+            const { error } = await supabase.auth.signInWithIdToken({
                 provider: 'google',
                 token: userInfo.idToken,
             });
@@ -60,11 +60,10 @@ export async function signOut() {
     const { error } = await supabase.auth.signOut();
     await RnGoogleSignin.signOut();
 
-    // ─── Wipe all persistence layers ────────────────────────────────────────
     // 1. MMKV: all user-specific keys (query cache, watchlists, history, etc.)
+    //    This now also covers Supabase auth tokens (sb-*-auth-token keys)
+    //    since the Supabase adapter writes to the same MMKV instance.
     storage.clearAll();
-    // 2. AsyncStorage: supabase auth tokens + settings store (uses AsyncStorage)
-    await AsyncStorage.clear();
 
     // ─── Reset in-memory Zustand stores ─────────────────────────────────────
     // MMKV clearAll() wipes the persistence layer but the running store keeps
