@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { settingsStorage as mmkv } from '../services/storage';
 
 export type ThemePreference = 'light' | 'dark' | 'system' | 'adaptive' | 'material-you';
 
@@ -39,6 +39,12 @@ interface SettingsStore {
     setX02ApiKey: (key: string) => void;
 }
 
+const mmkvZustandStorage = createJSONStorage(() => ({
+    getItem: (name: string): string | null => mmkv.getString(name) ?? null,
+    setItem: (name: string, value: string): void => mmkv.set(name, value),
+    removeItem: (name: string): boolean => mmkv.remove(name),
+}));
+
 export const useSettingsStore = create<SettingsStore>()(
     persist(
         (set) => ({
@@ -68,7 +74,7 @@ export const useSettingsStore = create<SettingsStore>()(
         }),
         {
             name: 'settings-storage',
-            storage: createJSONStorage(() => AsyncStorage),
+            storage: mmkvZustandStorage,
         }
     )
 );

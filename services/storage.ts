@@ -32,6 +32,7 @@
  *  person detail dominant color | person:darkDominant:*
  *  show detail dominant color   | show:darkDominant:*
  *  gallery image dimensions     | dimension:v1:*
+ *  settings (zustand)           | settings-storage
  */
 
 import { createMMKV } from "react-native-mmkv";
@@ -56,3 +57,5 @@ export const personDetailStorage = storage;
 export const movieDetailStorage = storage;
 export const showDetailStorage = storage;
 export const imageDimensionStorage = storage;
+export const settingsStorage = storage;
+
