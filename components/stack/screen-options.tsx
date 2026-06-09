@@ -12,13 +12,14 @@ const SNAPPY_OPEN_SPRING = {
     restDisplacementThreshold: 0.002,
 }
 
-// Close spring: overshootClamping=false is CRITICAL. 
-// If true, high velocity swipes or frame drops (when returning from heavy Native Activities like Image Picker)
-// cause the spring to overshoot and instantly clamp, killing the animation without firing the end callback.
+// Close spring: slightly OVERDAMPED (damping 45 > critical 40)
+// This prevents the spring from bouncing below 0 when it settles,
+// which fixes the "glitch" where the background screen scales out and in again.
+// overshootClamping=false is still kept to prevent instant cancellation on frame drops.
 const SMOOTH_CLOSE_SPRING = {
-    stiffness: 600,
-    damping: 60,
-    mass: 4,
+    stiffness: 400,
+    damping: 45,
+    mass: 1,
     overshootClamping: false,
     restSpeedThreshold: 0.02,
     restDisplacementThreshold: 0.002,
@@ -32,9 +33,10 @@ const PARALLAX_SPRING_OPEN = {
 }
 
 // Lighter spring for close — ensures visible slide-out even on fast flings
+// Overdamped (damping 45 > critical 37) to prevent bounce glitch.
 const PARALLAX_SPRING_CLOSE = {
     stiffness: 350,
-    damping: 38,
+    damping: 45,
     mass: 1,
     overshootClamping: false,
     restSpeedThreshold: 0.02,
@@ -52,12 +54,18 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
                 screen: { height },
             },
             progress,
+            next,
         }: ScreenInterpolationProps
         ) => {
             "worklet";
             const scale = interpolate(progress, [0, 1, 2], [1, 1, 0.96], "clamp");
             const translateY = interpolate(progress, [0, 1, 2], [height, 0, top - 14]);
             const opacity = interpolate(progress, [0, 1, 2], [0, 0.4, 0.4], "clamp");
+
+            // Background screen scale effect
+            const previousScale = interpolate(progress, [0, 1, 2], [1, 0.94, 0.94], "clamp");
+            const previousBorderRadius = interpolate(progress, [0, 1, 2], [0, 20, 20], "clamp");
+            const previousTranslateY = interpolate(progress, [0, 1, 2], [0, 10, 10], "clamp");
 
             return {
                 content: {
@@ -71,6 +79,16 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
                     style: {
                         backgroundColor: 'black',
                         opacity: opacity,
+                    },
+                },
+                _ROOT_CONTAINER: {
+                    style: {
+                        transform: [
+                            { scale: !next ? previousScale : 1 },
+                            { translateY: !next ? previousTranslateY : 0 }
+                        ],
+                        borderRadius: !next ? previousBorderRadius : 0,
+                        overflow: 'hidden',
                     },
                 },
             }
