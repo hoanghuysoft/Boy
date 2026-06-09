@@ -2,22 +2,26 @@ import { interpolate, interpolateColor } from "react-native-reanimated";
 import { ScreenInterpolationProps } from "react-native-screen-transitions";
 import { BlankStackNavigationOptions } from "react-native-screen-transitions/blank-stack";
 
-// Open spring: snappy, fast settle — user feels instant response
+// Open spring: robust and snappy
 const SNAPPY_OPEN_SPRING = {
     stiffness: 1000,
     damping: 500,
     mass: 3,
-    overshootClamping: true
+    overshootClamping: true,
+    restSpeedThreshold: 0.02,
+    restDisplacementThreshold: 0.002,
 }
 
-// Close spring: smooth enough for the screen to visibly slide off-screen
-// High stiffness + high damping kills the animation in 1-2 frames when velocity is large.
-// Use lighter spring so the dismiss gesture always produces a visible slide-out.
+// Close spring: overshootClamping=false is CRITICAL. 
+// If true, high velocity swipes or frame drops (when returning from heavy Native Activities like Image Picker)
+// cause the spring to overshoot and instantly clamp, killing the animation without firing the end callback.
 const SMOOTH_CLOSE_SPRING = {
-    stiffness: 300,
-    damping: 35,
-    mass: 1,
-    overshootClamping: true
+    stiffness: 600,
+    damping: 60,
+    mass: 4,
+    overshootClamping: false,
+    restSpeedThreshold: 0.02,
+    restDisplacementThreshold: 0.002,
 }
 
 const PARALLAX_SPRING_OPEN = {
@@ -32,7 +36,9 @@ const PARALLAX_SPRING_CLOSE = {
     stiffness: 350,
     damping: 38,
     mass: 1,
-    overshootClamping: true
+    overshootClamping: false,
+    restSpeedThreshold: 0.02,
+    restDisplacementThreshold: 0.002,
 }
 
 export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
@@ -41,21 +47,18 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
         gestureEnabled: true,
         gestureDirection: "vertical" as const,
         screenStyleInterpolator: ({
-            insets: { top, bottom, left, right },
+            insets: { top },
             layouts: {
-                screen: { height, width },
+                screen: { height },
             },
             progress,
         }: ScreenInterpolationProps
         ) => {
             "worklet";
             const scale = interpolate(progress, [0, 1, 2], [1, 1, 0.96], "clamp");
-            const translateY = interpolate(
-                progress,
-                [0, 1, 2],
-                [height, 0, top - 14],
-                "clamp",
-            );
+            const translateY = interpolate(progress, [0, 1, 2], [height, 0, top - 14]);
+            const opacity = interpolate(progress, [0, 1, 2], [0, 0.4, 0.4], "clamp");
+
             return {
                 content: {
                     style: {
@@ -66,15 +69,12 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
                 },
                 backdrop: {
                     style: {
-                        backgroundColor: 'transparent',
+                        backgroundColor: 'black',
+                        opacity: opacity,
                     },
                 },
             }
         },
-        // Bug workaround: gestureVelocityImpact=0.15 (default=0.3) reduces false-positive
-        // dismiss when a system overlay (e.g. Android image picker) is dismissed and
-        // triggers a spurious beforeRemove nav event intercepted by the library.
-        // The lower value requires more deliberate user intent to dismiss.
         gestureVelocityImpact: 0.15,
         transitionSpec: {
             open: SNAPPY_OPEN_SPRING,
