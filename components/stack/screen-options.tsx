@@ -64,14 +64,12 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
 
             // Background screen scale effect
             const previousScale = interpolate(progress, [0, 1, 2], [1, 0.94, 0.94], "clamp");
-            const previousBorderRadius = interpolate(progress, [0, 1, 2], [0, 20, 20], "clamp");
             const previousTranslateY = interpolate(progress, [0, 1, 2], [0, 10, 10], "clamp");
 
             return {
                 content: {
                     style: {
                         transform: [{ scale }, { translateY }],
-                        borderRadius: 24,
                     },
                 },
                 backdrop: {
@@ -86,8 +84,6 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
                             { scale: !next ? previousScale : 1 },
                             { translateY: !next ? previousTranslateY : 0 }
                         ],
-                        borderRadius: !next ? previousBorderRadius : 0,
-                        overflow: 'hidden',
                     },
                 },
             }
