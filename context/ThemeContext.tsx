@@ -1,6 +1,6 @@
+import { requireNativeModule } from 'expo-modules-core';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Platform, useColorScheme } from 'react-native';
-import { requireNativeModule } from 'expo-modules-core';
 import { Uniwind } from "uniwind";
 import { ThemePreference, useSettingsStore } from "../stores/settings";
 import { createTypography, TypographyScale } from "../styles/typography";

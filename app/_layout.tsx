@@ -3,16 +3,16 @@ import { Stack } from "@/components/stack/stack";
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
 import * as Sentry from '@sentry/react-native';
-import { Observe, ObserveRoot } from 'expo-observe';
 import { BottomSheetProvider } from "@swmansion/react-native-bottom-sheet";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
+import { Observe, ObserveRoot } from 'expo-observe';
 import { usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from 'heroui-native';
 import React, { useEffect } from "react";
-import { StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { StatusBar, StyleSheet, Text, TextInput, useColorScheme, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -166,6 +166,7 @@ const RootContent = () => {
 
   const { isReady, session, hasProfile } = useRootLayoutViewModel();
   useAutoLanguageSync();
+  useColorScheme();
 
   useEffect(() => {
     SplashScreen.hideAsync();
