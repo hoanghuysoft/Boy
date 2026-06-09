@@ -12,7 +12,7 @@ import { usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from 'heroui-native';
 import React, { useEffect } from "react";
-import { StatusBar, StyleSheet, Text, TextInput, useColorScheme, View } from "react-native";
+import { StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -166,7 +166,6 @@ const RootContent = () => {
 
   const { isReady, session, hasProfile } = useRootLayoutViewModel();
   useAutoLanguageSync();
-  useColorScheme();
 
   useEffect(() => {
     SplashScreen.hideAsync();
