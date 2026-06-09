@@ -2,23 +2,42 @@ import { interpolate, interpolateColor } from "react-native-reanimated";
 import { ScreenInterpolationProps } from "react-native-screen-transitions";
 import { BlankStackNavigationOptions } from "react-native-screen-transitions/blank-stack";
 
-const SNAPPY_SPRING = {
+// Open spring: snappy, fast settle — user feels instant response
+const SNAPPY_OPEN_SPRING = {
     stiffness: 1000,
     damping: 500,
     mass: 3,
     overshootClamping: true
 }
 
-const PARALLAX_SPRING = {
+// Close spring: smooth enough for the screen to visibly slide off-screen
+// High stiffness + high damping kills the animation in 1-2 frames when velocity is large.
+// Use lighter spring so the dismiss gesture always produces a visible slide-out.
+const SMOOTH_CLOSE_SPRING = {
+    stiffness: 300,
+    damping: 35,
+    mass: 1,
+    overshootClamping: true
+}
+
+const PARALLAX_SPRING_OPEN = {
     stiffness: 800,
     damping: 80,
     mass: 1,
     overshootClamping: true
 }
 
+// Lighter spring for close — ensures visible slide-out even on fast flings
+const PARALLAX_SPRING_CLOSE = {
+    stiffness: 350,
+    damping: 38,
+    mass: 1,
+    overshootClamping: true
+}
+
 export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
     return {
-        experimental_enableHighRefreshRate: true,
+        experimental_enableHighRefreshRate: false,
         gestureEnabled: true,
         gestureDirection: "vertical" as const,
         screenStyleInterpolator: ({
@@ -52,9 +71,14 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
                 },
             }
         },
+        // Bug workaround: gestureVelocityImpact=0.15 (default=0.3) reduces false-positive
+        // dismiss when a system overlay (e.g. Android image picker) is dismissed and
+        // triggers a spurious beforeRemove nav event intercepted by the library.
+        // The lower value requires more deliberate user intent to dismiss.
+        gestureVelocityImpact: 0.15,
         transitionSpec: {
-            open: SNAPPY_SPRING,
-            close: SNAPPY_SPRING
+            open: SNAPPY_OPEN_SPRING,
+            close: SMOOTH_CLOSE_SPRING,
         }
     }
 }
@@ -66,7 +90,7 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
  */
 export const getParallaxSlideTransition = (): BlankStackNavigationOptions => {
     return {
-        experimental_enableHighRefreshRate: true,
+        experimental_enableHighRefreshRate: false,
         gestureEnabled: true,
         gestureDirection: "horizontal" as const,
         screenStyleInterpolator: ({
@@ -117,9 +141,16 @@ export const getParallaxSlideTransition = (): BlankStackNavigationOptions => {
                 },
             };
         },
+        // Limit gesture activation to left edge (20px) to prevent conflict
+        // with MaterialTopTabNavigator's full-screen horizontal swipe.
+        // This mirrors iOS standard back-gesture behavior.
+        gestureActivationArea: "edge" as const,
+        gestureResponseDistance: 20,
+        // Lower velocity impact = more deliberate swipe needed → fewer false dismissals
+        gestureVelocityImpact: 0.2,
         transitionSpec: {
-            open: PARALLAX_SPRING,
-            close: PARALLAX_SPRING
+            open: PARALLAX_SPRING_OPEN,
+            close: PARALLAX_SPRING_CLOSE,
         }
     }
 }
@@ -130,7 +161,7 @@ export const getParallaxSlideTransition = (): BlankStackNavigationOptions => {
  */
 export const getScaleFadeTransition = (): BlankStackNavigationOptions => {
     return {
-        experimental_enableHighRefreshRate: true,
+        experimental_enableHighRefreshRate: false,
         gestureEnabled: true,
         gestureDirection: "horizontal" as const,
         screenStyleInterpolator: ({
@@ -165,8 +196,8 @@ export const getScaleFadeTransition = (): BlankStackNavigationOptions => {
             };
         },
         transitionSpec: {
-            open: PARALLAX_SPRING,
-            close: PARALLAX_SPRING
+            open: PARALLAX_SPRING_OPEN,
+            close: PARALLAX_SPRING_CLOSE,
         }
     }
 }

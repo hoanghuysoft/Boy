@@ -5,15 +5,14 @@ import { Media } from '@/types/media';
 import { ProfileMusic } from '@/types/profilemusic';
 import { Directory, Paths } from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
-import { useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
+import { useToast } from 'heroui-native';
 import React, { useCallback, useRef, useState } from 'react';
 import { Modal, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Gallery, stackTransition, type GalleryRefType } from 'react-native-zoom-toolkit';
 import GalleryImage from './GalleryImage';
-import { useToast } from 'heroui-native';
 
 interface ProfileGalleryModalContentProps {
     imagesUrl: string[];
@@ -35,7 +34,6 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
     profileName,
     isVerified,
 }) => {
-    const router = useRouter();
     const ref = useRef<GalleryRefType>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [isWallpaperVisible, setIsWallpaperVisible] = useState(false);
@@ -43,7 +41,6 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
     const { toast } = useToast();
 
     const currentPhoto = photos[currentIndex];
-    const currentMusic = music?.[0];
 
     const handlePoster = () => {
         if (currentPhoto?.url) {
@@ -109,7 +106,10 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
         }
     };
 
-    const transition = useCallback(stackTransition, []);
+    const transition = useCallback(
+        (options: Parameters<typeof stackTransition>[0]) => stackTransition(options),
+        [],
+    );
 
     return (
         <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000' }}>

@@ -103,7 +103,10 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
         }
     };
 
-    const transition = useCallback(stackTransition, []);
+    const transition = useCallback(
+        (options: Parameters<typeof stackTransition>[0]) => stackTransition(options),
+        [],
+    );
 
     return (
         <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000' }}>
