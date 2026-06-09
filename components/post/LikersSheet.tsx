@@ -177,9 +177,9 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
                 index={index}
                 onIndexChange={handleIndexChange}
                 onSettle={handleSettle}
-                detents={[0, 0.6, 'content']}
-                scrimColor="rgba(0, 0, 0, 1)"
-                scrimOpacities={[0, 500, 1]}
+                detents={[0, 600, 'content']}
+                scrimColor="rgba(7, 7, 7, 1)"
+                scrimOpacities={[0, 0.5, 1]}
                 surface={
                     <View
                         style={[
