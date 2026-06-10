@@ -97,5 +97,16 @@ export const showsKeys = {
     searchPage: (query: string, page: number) => [...showsKeys.search(query), page] as const,
     // video detail
     videoDetail: (slug: string) => [...showsKeys.all, 'video', slug] as const,
+    // latest
+    latest: () => [...showsKeys.all, 'latest'] as const,
+    latestPage: (page: number) => [...showsKeys.latest(), page] as const,
+    // popular
+    popular: () => [...showsKeys.all, 'popular'] as const,
+    popularPage: (page: number) => [...showsKeys.popular(), page] as const,
+    // least-viewed
+    leastViewed: () => [...showsKeys.all, 'leastViewed'] as const,
+    leastViewedPage: (page: number) => [...showsKeys.leastViewed(), page] as const,
+    // chat
+    chat: (i?: string, c?: string) => [...showsKeys.all, 'chat', i || '', c || ''] as const,
 };
 

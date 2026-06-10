@@ -222,7 +222,8 @@ const RootContent = () => {
           <Stack.Screen name="search_movies" />
           <Stack.Screen name="webview" />
           <Stack.Screen name="moviehub" options={Transition.Presets.ZoomIn()} />
-          <Stack.Screen name="bulletinboard" />
+           <Stack.Screen name="bulletinboard" />
+          <Stack.Screen name="show_chat" />
         </Stack>
         <GlobalAudioPlayer />
       </View>

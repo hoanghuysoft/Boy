@@ -3,7 +3,7 @@ import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import type { VideoCard } from "@/types/shows";
 import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { FolderFavouriteBookmarkBold, RoundedMagnifierBold } from "@solar-icons/react-native";
+import { FolderFavouriteBookmarkBold, RoundedMagnifierBold, ChatRoundLikeBold } from "@solar-icons/react-native";
 import { BlurTargetView } from "expo-blur";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
@@ -221,7 +221,31 @@ const MovieHubScreen = () => {
               </Animated.ScrollView>
               {vm.sections?.sections?.map((section, index) => (
                 <View key={index}>
-                  <Pressable onPress={() => { router.push("/show_list") }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
+                  <Pressable
+                    onPress={() => {
+                      const headingLower = section.heading.toLowerCase();
+                      const urlLower = section.more_url.toLowerCase();
+                      let mode = "latest";
+                      if (
+                        headingLower.includes("popular") ||
+                        headingLower.includes("most viewed") ||
+                        urlLower.includes("/popular") ||
+                        urlLower.includes("/most-viewed")
+                      ) {
+                        mode = "popular";
+                      } else if (
+                        headingLower.includes("least viewed") ||
+                        urlLower.includes("/least-viewed")
+                      ) {
+                        mode = "leastViewed";
+                      }
+                      router.push({
+                        pathname: "/show_list",
+                        params: { mode },
+                      });
+                    }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}
+                  >
                     <FlexText style={[styles.sectionTitle, { color: "white", marginBottom: 12, flex: 1 }]}>
                       {section.heading}
                     </FlexText>
@@ -261,6 +285,18 @@ const MovieHubScreen = () => {
           <Text style={[styles.textStyle, { color: "white", fontSize: 34, fontWeight: "700" }]}>Hub</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+          <TouchableOpacity
+            onPress={() => router.push("/show_chat")}
+            style={{
+              borderRadius: 999,
+              width: 40,
+              height: 40,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <ChatRoundLikeBold size={28} color={"white"} />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push("/watchlist")}
             style={{

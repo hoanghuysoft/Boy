@@ -1,7 +1,12 @@
 import { FlexText } from "@/components/FlexText";
 import { ShimmerEffect } from "@/components/shimmer/Shimmer";
-import { useCategoryInfiniteQuery } from "@/services/shows/category";
-import { useTagInfiniteQuery } from "@/services/shows/tag";
+import {
+  useCategoryInfiniteQuery,
+  useTagInfiniteQuery,
+  useLatestInfiniteQuery,
+  usePopularInfiniteQuery,
+  useLeastViewedInfiniteQuery
+} from "@/services/shows";
 import type { VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { router, useLocalSearchParams } from "expo-router";
@@ -22,20 +27,39 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 
-type Mode = "category" | "tag";
+type Mode = "category" | "tag" | "latest" | "popular" | "leastViewed";
 
 const ShowListScreen = () => {
   const { colors, typography } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const inset = useSafeAreaInsets();
 
-  const params = useLocalSearchParams<{ mode: Mode; slug: string }>();
-  const mode: Mode = params.mode === "tag" ? "tag" : "category";
+  const params = useLocalSearchParams<{ mode: string; slug?: string }>();
+  const mode: Mode = (params.mode as Mode) || "latest";
   const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug ?? "");
 
   const categoryQuery = useCategoryInfiniteQuery(mode === "category" ? slug : undefined);
   const tagQuery = useTagInfiniteQuery(mode === "tag" ? slug : undefined);
-  const query = mode === "category" ? categoryQuery : tagQuery;
+  const latestQuery = useLatestInfiniteQuery(mode === "latest");
+  const popularQuery = usePopularInfiniteQuery(mode === "popular");
+  const leastViewedQuery = useLeastViewedInfiniteQuery(mode === "leastViewed");
+
+  const query = useMemo(() => {
+    switch (mode) {
+      case "category":
+        return categoryQuery;
+      case "tag":
+        return tagQuery;
+      case "latest":
+        return latestQuery;
+      case "popular":
+        return popularQuery;
+      case "leastViewed":
+        return leastViewedQuery;
+      default:
+        return latestQuery;
+    }
+  }, [mode, categoryQuery, tagQuery, latestQuery, popularQuery, leastViewedQuery]);
 
   const {
     data,
@@ -53,13 +77,39 @@ const ShowListScreen = () => {
     [data],
   );
 
-  const heading = mode === "tag"
-    ? `#${slug}`
-    : slug.charAt(0).toUpperCase() + slug.slice(1);
+  const heading = useMemo(() => {
+    switch (mode) {
+      case "tag":
+        return `#${slug}`;
+      case "category":
+        return slug.charAt(0).toUpperCase() + slug.slice(1);
+      case "latest":
+        return "Latest Videos";
+      case "popular":
+        return "Popular Videos";
+      case "leastViewed":
+        return "Least Viewed Videos";
+      default:
+        return "Videos";
+    }
+  }, [mode, slug]);
 
-  const subtitle = mode === "tag"
-    ? `Videos tagged with #${slug}`
-    : `Videos in the "${heading}" category`;
+  const subtitle = useMemo(() => {
+    switch (mode) {
+      case "tag":
+        return `Videos tagged with #${slug}`;
+      case "category":
+        return `Videos in the "${heading}" category`;
+      case "latest":
+        return "Showing the most recently added videos";
+      case "popular":
+        return "Showing the most viewed videos";
+      case "leastViewed":
+        return "Showing the least viewed videos";
+      default:
+        return "";
+    }
+  }, [mode, slug, heading]);
 
   const renderItem = useCallback(
     ({ item }: { item: VideoCard }) => (

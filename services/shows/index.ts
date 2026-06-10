@@ -6,4 +6,9 @@ export * from "./categories";
 export * from "./category";
 export * from "./search";
 export * from "./health";
+export * from "./latest";
+export * from "./popular";
+export * from "./leastViewed";
+export * from "./chat";
+
 

@@ -205,7 +205,111 @@ Response:
 }
 ```
 
-### 8) Health check
+### 8) Latest Videos (paged)
+
+`GET /latest?page=<n>`
+
+Example:
+- `GET /latest?page=1`
+
+Response:
+```json
+{
+  "page": 1,
+  "total_pages": 30,
+  "items": [
+    {
+      "video_url": "https://traingon.top/video/....",
+      "title": "....",
+      "views": "....",
+      "duration": "....",
+      "hot": false,
+      "thumb_url": "https://...jpg"
+    }
+  ]
+}
+```
+
+### 9) Popular Videos (paged)
+
+`GET /popular?page=<n>`
+
+Example:
+- `GET /popular?page=1`
+
+Response:
+```json
+{
+  "page": 1,
+  "total_pages": 30,
+  "items": [
+    {
+      "video_url": "https://traingon.top/video/....",
+      "title": "....",
+      "views": "....",
+      "duration": "....",
+      "hot": false,
+      "thumb_url": "https://...jpg"
+    }
+  ]
+}
+```
+
+### 10) Least Viewed Videos (paged)
+
+`GET /least-viewed?page=<n>`
+
+Example:
+- `GET /least-viewed?page=1`
+
+Response:
+```json
+{
+  "page": 1,
+  "total_pages": 30,
+  "items": [
+    {
+      "video_url": "https://traingon.top/video/....",
+      "title": "....",
+      "views": "....",
+      "duration": "....",
+      "hot": false,
+      "thumb_url": "https://...jpg"
+    }
+  ]
+}
+```
+
+### 11) Chat messages (CBox Archive + optional pagination)
+
+`GET /chat?i=<i>&c=<c>`
+
+- `i` (optional): start message ID/index
+- `c` (optional): page direction/offset
+
+Examples:
+- `GET /chat` (returns the absolute latest messages)
+- `GET /chat?i=2376&c=3` (paginates backward to fetch older messages prior to ID 2376)
+
+Response:
+```json
+{
+  "messages": [
+    {
+      "id": "2376",
+      "uid": "0",
+      "time": 1779439017,
+      "date": "22 May 26, 03:36 PM",
+      "name": "cutie_",
+      "body": "josephmrkao185 pleaseeee",
+      "avatar_url": null,
+      "is_admin": false
+    }
+  ]
+}
+```
+
+### 12) Health check
 
 `GET /health`
 
