@@ -30,7 +30,7 @@ export const useSearchViewModel = () => {
     const listRef = useRef<any>(null);
 
     // ─── Auth / Admin Check ─────────────────────────────────────────
-    const { data: adminData } = useAdminCheck();
+    useAdminCheck();
     const isAdmin = true; // adminData?.isAdmin ?? false;
 
     // ─── Data Fetching ─────────────────────────────────────────────

@@ -60,52 +60,74 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                     <Ionicons name="close" size={24} color="white" />
                 </TouchableOpacity>
 
-                <View style={styles.galleryPagination}>
-                    <FlexText style={styles.galleryPaginationText}>
-                        {currentIndex + 1} / {totalCount}
-                    </FlexText>
-                </View>
+                {totalCount <= 8 ? (
+                    <View style={styles.galleryDotsContainer}>
+                        {Array.from({ length: totalCount }).map((_, index) => (
+                            <View
+                                key={index}
+                                style={[
+                                    styles.galleryDot,
+                                    index === currentIndex ? styles.galleryDotActive : styles.galleryDotInactive,
+                                ]}
+                            />
+                        ))}
+                    </View>
+                ) : (
+                    <View style={styles.galleryPagination}>
+                        <FlexText style={styles.galleryPaginationText}>
+                            {currentIndex + 1} OF {totalCount}
+                        </FlexText>
+                    </View>
+                )}
 
-                <View style={styles.actionButtons}>
-                    {onShare && (
-                        <TouchableOpacity
-                            onPress={onShare}
-                            style={[styles.galleryButton, styles.galleryButtonBg]}
-                        >
-                            <ShareBold size={24} color="white" />
-                        </TouchableOpacity>
-                    )}
-                    {onPoster && (
-                        <TouchableOpacity
-                            onPress={onPoster}
-                            style={[styles.galleryButton, styles.galleryButtonBg]}
-                        >
-                            <WallpaperBold size={24} color="white" />
-                        </TouchableOpacity>
-                    )}
-                    {showDownload && onDownload && (
-                        <TouchableOpacity
-                            onPress={onDownload}
-                            style={[styles.galleryButton, styles.galleryButtonBg]}
-                        >
-                            <GalleryDownloadBold size={24} color="white" />
-                        </TouchableOpacity>
-                    )}
-                    {/* Placeholder to maintain spacing when no buttons */}
-                    {!onShare && !showDownload && !onPoster && <View style={styles.galleryButton} />}
-                </View>
+                {/* Empty view to balance the top bar layout and center the pagination */}
+                <View style={{ width: 40 }} />
             </View>
 
             {/* Bottom Bar */}
-            {showBottomBar && (profileName || caption) && (
+            {(showBottomBar || onShare || onPoster || (showDownload && onDownload)) && (
                 <View style={[styles.galleryBottomBar, { paddingBottom: inset.bottom + 16 }]}>
-                    {profileName && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <FlexText style={styles.galleryProfileName}>{profileName}</FlexText>
-                            {isVerified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
+                    {/* Top Row: Name on the left, buttons on the right */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: (showBottomBar && caption) ? 12 : 0 }}>
+                        {showBottomBar && profileName ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                <FlexText style={styles.galleryProfileName}>{profileName}</FlexText>
+                                {isVerified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
+                            </View>
+                        ) : (
+                            <View style={{ flex: 1 }} />
+                        )}
+
+                        <View style={styles.actionButtons}>
+                            {onShare && (
+                                <TouchableOpacity
+                                    onPress={onShare}
+                                    style={[styles.galleryButton, styles.galleryButtonBg]}
+                                >
+                                    <ShareBold size={24} color="white" />
+                                </TouchableOpacity>
+                            )}
+                            {onPoster && (
+                                <TouchableOpacity
+                                    onPress={onPoster}
+                                    style={[styles.galleryButton, styles.galleryButtonBg]}
+                                >
+                                    <WallpaperBold size={24} color="white" />
+                                </TouchableOpacity>
+                            )}
+                            {showDownload && onDownload && (
+                                <TouchableOpacity
+                                    onPress={onDownload}
+                                    style={[styles.galleryButton, styles.galleryButtonBg]}
+                                >
+                                    <GalleryDownloadBold size={24} color="white" />
+                                </TouchableOpacity>
+                            )}
                         </View>
-                    )}
-                    {caption && (
+                    </View>
+
+                    {/* Bottom Row: Caption spans full width under the name and buttons */}
+                    {showBottomBar && caption && (
                         <FlexText style={styles.galleryImageCaption} numberOfLines={3}>
                             {caption}
                         </FlexText>
@@ -144,16 +166,43 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     galleryPagination: {
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        paddingHorizontal: 18,
-        paddingVertical: 10,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
         borderRadius: 9999,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     galleryPaginationText: {
         color: 'white',
-        fontSize: 14,
-        fontWeight: '600',
-        letterSpacing: 0.5,
+        fontSize: 12,
+        fontWeight: '700',
+        letterSpacing: 1.5,
+    },
+    galleryDotsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 9999,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    galleryDot: {
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: 'white',
+    },
+    galleryDotActive: {
+        width: 14,
+        opacity: 1,
+    },
+    galleryDotInactive: {
+        width: 6,
+        opacity: 0.35,
     },
     galleryBottomBar: {
         paddingHorizontal: 16,

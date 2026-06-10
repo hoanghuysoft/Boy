@@ -3,7 +3,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { ActivityIndicator, BackHandler, Linking, TouchableOpacity, View } from "react-native";
+import { BackHandler, Linking, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type WebViewType from "react-native-webview";
 import WebView from "react-native-webview";

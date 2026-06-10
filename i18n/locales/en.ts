@@ -16,7 +16,6 @@ import search from './en/search';
 import settings from './en/settings';
 import shots from './en/shots';
 import themeSettings from './en/themeSettings';
-import serviceSettings from './en/serviceSettings';
 import wallpaperOverlay from './en/wallpaperOverlay';
 
 const en = {
@@ -36,7 +35,6 @@ const en = {
     search,
     shots,
     themeSettings,
-    serviceSettings,
     wallpaperOverlay,
 } as const;
 

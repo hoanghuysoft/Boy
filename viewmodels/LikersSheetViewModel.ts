@@ -23,20 +23,22 @@ export const useLikersSheetViewModel = (
         refetch,
     } = useLikers(postId || undefined);
 
+    const pages = data?.pages;
+
     // Flatten pages into a single array of likers
     const likers = useMemo(() => {
-        if (!data?.pages) return [];
-        return data.pages.flatMap(page => page.data);
-    }, [data?.pages]);
+        if (!pages) return [];
+        return pages.flatMap(page => page.data);
+    }, [pages]);
 
-    const totalLikes = data?.pages?.[0]?.pagination?.total ?? 0;
+    const totalLikes = pages?.[0]?.pagination?.total ?? 0;
 
     // Refetch when postId changes
     useEffect(() => {
         if (postId) {
             refetch();
         }
-    }, [postId]);
+    }, [postId, refetch]);
 
     const handleEndReached = useCallback(() => {
         if (hasNextPage && !isFetchingNextPage) {

@@ -4,14 +4,16 @@ import { getOrDownloadFile } from '@/services/fileCacheUtils';
 import { Media } from '@/types/media';
 import { ProfileMusic } from '@/types/profilemusic';
 import { Directory, Paths } from 'expo-file-system';
+import { Image as ExpoImage } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { useToast } from 'heroui-native';
-import React, { useCallback, useRef, useState } from 'react';
-import { Modal, StatusBar } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Modal, StatusBar, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Gallery, stackTransition, type GalleryRefType } from 'react-native-zoom-toolkit';
+import { resolveBlurhash } from './fallbackBlurhash';
 import GalleryImage from './GalleryImage';
 
 interface ProfileGalleryModalContentProps {
@@ -36,9 +38,17 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
 }) => {
     const ref = useRef<GalleryRefType>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
+    const [debouncedIndex, setDebouncedIndex] = useState(initialIndex);
     const [isWallpaperVisible, setIsWallpaperVisible] = useState(false);
     const destination = new Directory(Paths.cache, 'images');
     const { toast } = useToast();
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedIndex(currentIndex);
+        }, 150);
+        return () => clearTimeout(handler);
+    }, [currentIndex]);
 
     const currentPhoto = photos[currentIndex];
 
@@ -106,14 +116,24 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
         }
     };
 
-    const transition = useCallback(
-        (options: Parameters<typeof stackTransition>[0]) => stackTransition(options),
-        [],
-    );
+    const bgPhoto = photos[debouncedIndex];
+    const bgImageUri = imagesUrl[debouncedIndex];
+    const bgBlurhash = resolveBlurhash(bgPhoto?.blurhash, bgPhoto?.id);
 
     return (
         <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000' }}>
             <StatusBar hidden />
+            {bgImageUri && (
+                <View style={StyleSheet.absoluteFill}>
+                    <ExpoImage
+                        source={{ blurhash: bgBlurhash }}
+                        style={StyleSheet.absoluteFill}
+                        contentFit="cover"
+                        transition={200}
+                    />
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.55)' }]} />
+                </View>
+            )}
             <Gallery
                 ref={ref}
                 data={imagesUrl}
@@ -123,7 +143,7 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
                 onIndexChange={onIndexChange}
                 onTap={onTap}
                 maxScale={3}
-                customTransition={transition}
+                customTransition={stackTransition}
                 zoomEnabled={true}
                 onVerticalPull={() => {
                     'worklet';

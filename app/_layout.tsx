@@ -1,4 +1,4 @@
-import { getFullScreenSheetScale, getParallaxSlideTransition } from "@/components/stack/screen-options";
+import { getParallaxSlideTransition } from "@/components/stack/screen-options";
 import { Stack } from "@/components/stack/stack";
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
@@ -196,16 +196,14 @@ const RootContent = () => {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="login" />
           <Stack.Screen name="onboarding" />
-          <Stack.Screen name="video_player" options={Transition.Presets.SlideFromBottom()} />
-          <Stack.Screen name="profile/[id]" options={getParallaxSlideTransition()} />
+          <Stack.Screen name="video_player" options={Transition.Presets.ZoomIn()} />
+          <Stack.Screen name="profile/[id]" />
           <Stack.Screen name="image_poster" />
           <Stack.Screen
             name="settings"
-            options={getParallaxSlideTransition()}
           />
           <Stack.Screen
             name="bookmarks"
-            options={Transition.Presets.SlideFromBottom()}
           />
           <Stack.Screen name="language-settings" />
           <Stack.Screen name="fprofile" />
@@ -215,9 +213,7 @@ const RootContent = () => {
           <Stack.Screen name="show_detail" />
           <Stack.Screen name="show_list" />
           <Stack.Screen name="watchlist" />
-          <Stack.Screen name="create"
-            options={getFullScreenSheetScale()}
-          />
+          <Stack.Screen name="create" />
           <Stack.Screen name="inapp_browser" />
           <Stack.Screen name="movie_detail" />
           <Stack.Screen name="tv_detail" />
@@ -225,7 +221,7 @@ const RootContent = () => {
           <Stack.Screen name="movie_list" />
           <Stack.Screen name="search_movies" />
           <Stack.Screen name="webview" />
-          <Stack.Screen name="movie-tracker-settings" />
+          <Stack.Screen name="moviehub" options={Transition.Presets.ZoomIn()} />
           <Stack.Screen name="bulletinboard" />
         </Stack>
         <GlobalAudioPlayer />

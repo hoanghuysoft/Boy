@@ -33,7 +33,7 @@ export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) =>
             for (const item of activeCarouselData) {
                 const url = item.image_url;
 
-                if (!url || localCache[url]) continue;
+                if (!url) continue;
 
                 try {
                     CAROUSEL_CACHE_DIR.create({ idempotent: true, intermediates: true });
@@ -43,12 +43,12 @@ export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) =>
 
                     if (localFile.exists) {
                         if (isMounted) {
-                            setLocalCache(prev => ({ ...prev, [url]: fileUri }));
+                            setLocalCache(prev => prev[url] ? prev : { ...prev, [url]: fileUri });
                         }
                     } else {
                         await File.downloadFileAsync(url, localFile);
                         if (localFile.exists && isMounted) {
-                            setLocalCache(prev => ({ ...prev, [url]: localFile.uri }));
+                            setLocalCache(prev => prev[url] ? prev : { ...prev, [url]: localFile.uri });
                         }
                     }
                 } catch (error) {
@@ -72,7 +72,10 @@ export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) =>
 
     const remainingIndicesRef = useRef<number[]>([]);
     const currentIndexRef = useRef(currentIndex);
-    currentIndexRef.current = currentIndex;
+
+    useEffect(() => {
+        currentIndexRef.current = currentIndex;
+    }, [currentIndex]);
 
     useEffect(() => {
         remainingIndicesRef.current = _.range(activeCarouselData.length);
@@ -98,7 +101,10 @@ export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) =>
     }, [activeCarouselData.length]);
 
     const getNextRandomIndexRef = useRef(getNextRandomIndex);
-    getNextRandomIndexRef.current = getNextRandomIndex;
+
+    useEffect(() => {
+        getNextRandomIndexRef.current = getNextRandomIndex;
+    }, [getNextRandomIndex]);
 
     const isVisibleRef = useRef(true);
 

@@ -52,25 +52,31 @@ export const useCommentsSheetViewModel = (
     const deleteCommentMutation = useDeleteComment(postId || "");
     const updateCommentMutation = useUpdateComment(postId || "");
 
+    const pages = data?.pages;
+
     // Flatten pages into a single array of comments
     const comments = useMemo(() => {
-        if (!data?.pages) return [];
-        return data.pages.flatMap(page => page.data);
-    }, [data?.pages]);
+        if (!pages) return [];
+        return pages.flatMap(page => page.data);
+    }, [pages]);
 
-    const totalComments = data?.pages?.[0]?.pagination?.total ?? 0;
+    const totalComments = pages?.[0]?.pagination?.total ?? 0;
 
-    // When postId changes, reset all local input state so the sheet
-    // opens cleanly for the new post (no stale edit/image from the last one).
+    const [prevPostId, setPrevPostId] = useState<string | null>(postId);
+
+    if (postId !== prevPostId) {
+        setPrevPostId(postId);
+        setCommentText("");
+        setSelectedImageUrl(null);
+        setEditingComment(null);
+    }
+
+    // When postId changes, trigger refetch for the new post
     useEffect(() => {
         if (postId) {
-            setCommentText("");
-            setSelectedImageUrl(null);
-            setEditingComment(null);
             refetch();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [postId]);
+    }, [postId, refetch]);
 
     const handleEndReached = useCallback(() => {
         if (hasNextPage && !isFetchingNextPage) {

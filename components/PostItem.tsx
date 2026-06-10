@@ -75,10 +75,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         [post.content]
     );
 
-    const avatarPlaceholder = React.useMemo(
-        () => resolveBlurhash(undefined, post.profile_id),
-        [post.profile_id]
-    );
+
 
     const originalAvatarPlaceholder = React.useMemo(
         () => resolveBlurhash(undefined, originalPost?.profile_id),

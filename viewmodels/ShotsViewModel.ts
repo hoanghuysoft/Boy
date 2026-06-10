@@ -13,6 +13,10 @@ import { createCommonStyles } from "../styles/common";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
+const VIEWABILITY_CONFIG = {
+    itemVisiblePercentThreshold: 50,
+};
+
 /**
  * ViewModel for the Shots (TikTok-style) screen.
  *
@@ -55,21 +59,17 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
     const [isPaused, setIsPaused] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
 
-    const [readyIndices, setReadyIndices] = useState<Set<number>>(new Set());
+    const [, setReadyIndices] = useState<Set<number>>(new Set());
     const readyIndicesRef = useRef<Set<number>>(new Set());
 
     // ─── Pre-buffer Strategy ────────────────────────────────────
-    const preloadIndicesRef = useRef<number[]>([0]);
-    const newIndices: number[] = [];
-    if (activeIndex > 0) newIndices.push(activeIndex - 1);
-    newIndices.push(activeIndex);
-    if (activeIndex < videos.length - 1) newIndices.push(activeIndex + 1);
-    const indicesKey = newIndices.join(',');
-    const prevIndicesKey = preloadIndicesRef.current.join(',');
-    if (indicesKey !== prevIndicesKey) {
-        preloadIndicesRef.current = newIndices;
-    }
-    const preloadIndices = preloadIndicesRef.current;
+    const preloadIndices = useMemo(() => {
+        const newIndices: number[] = [];
+        if (activeIndex > 0) newIndices.push(activeIndex - 1);
+        newIndices.push(activeIndex);
+        if (activeIndex < videos.length - 1) newIndices.push(activeIndex + 1);
+        return newIndices;
+    }, [activeIndex, videos.length]);
 
     const activeVideo = videos[activeIndex] || null;
 
@@ -85,11 +85,17 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
     // ─── Like State (optimistic, per video) ─────────────────────
     // likeMap: videoId → { isLiked, likeCount }
     // Initialized from server data on first render; toggled locally.
-    const [likeMap, setLikeMap] = useState<Map<string, { isLiked: boolean; likeCount: number }>>(new Map());
+    const [prevVideos, setPrevVideos] = useState<VideoItem[]>(videos);
+    const [likeMap, setLikeMap] = useState<Map<string, { isLiked: boolean; likeCount: number }>>(() => {
+        const map = new Map<string, { isLiked: boolean; likeCount: number }>();
+        for (const v of videos) {
+            map.set(v.id, { isLiked: v.is_liked ?? false, likeCount: v.like_count });
+        }
+        return map;
+    });
 
-    // Seed the map with any newly fetched videos that aren't already tracked
-    useEffect(() => {
-        if (videos.length === 0) return;
+    if (videos !== prevVideos) {
+        setPrevVideos(videos);
         setLikeMap(prev => {
             let changed = false;
             const next = new Map(prev);
@@ -101,7 +107,7 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
             }
             return changed ? next : prev;
         });
-    }, [videos]);
+    }
 
     const getLikeState = useCallback((video: VideoItem) => {
         return likeMap.get(video.id) ?? { isLiked: false, likeCount: video.like_count };
@@ -167,7 +173,7 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
         setIsPaused(prev => !prev);
     }, []);
 
-    const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    const onViewableItemsChangedRef = useRef(({ viewableItems }: any) => {
         if (viewableItems.length > 0) {
             const newIndex = viewableItems[0].index ?? 0;
             setActiveIndex(newIndex);
@@ -175,11 +181,13 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
             // Skip the buffering flash if the video was already preloaded and ready
             setIsBuffering(!readyIndicesRef.current.has(newIndex));
         }
-    }).current;
+    });
 
-    const viewabilityConfig = useRef({
-        itemVisiblePercentThreshold: 50,
-    }).current;
+    const onViewableItemsChanged = useCallback((info: any) => {
+        onViewableItemsChangedRef.current(info);
+    }, []);
+
+    const viewabilityConfig = VIEWABILITY_CONFIG;
 
     const markReady = useCallback((index: number) => {
         readyIndicesRef.current.add(index);
@@ -229,17 +237,25 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
         }
     }, [activeIndex, videos.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+    const [prevScrollTrigger, setPrevScrollTrigger] = useState(scrollTrigger);
+
+    if (scrollTrigger !== prevScrollTrigger) {
+        setPrevScrollTrigger(scrollTrigger);
+        if (scrollTrigger && scrollTrigger > 0) {
+            setActiveIndex(0);
+            setReadyIndices(new Set());
+            setLikeMap(new Map());
+            setIsPaused(false);
+            setIsBuffering(true);
+        }
+    }
+
     // ─── Scroll to Top Handle ───────────────────────────────────
     useEffect(() => {
         if (scrollTrigger && scrollTrigger > 0) {
             listRef.current?.scrollToOffset({ offset: 0, animated: true });
             queryClient.removeQueries({ queryKey: ["videoFeed", feedType], exact: false });
-            setActiveIndex(0);
             readyIndicesRef.current = new Set();
-            setReadyIndices(new Set());
-            setLikeMap(new Map());
-            setIsPaused(false);
-            setIsBuffering(true);
             refetch();
         }
     }, [scrollTrigger, refetch, queryClient, feedType]);

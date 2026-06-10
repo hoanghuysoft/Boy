@@ -7,8 +7,8 @@ import {
     View,
 } from "react-native";
 import Reanimated, {
-    useSharedValue,
     useAnimatedStyle,
+    useSharedValue,
 } from "react-native-reanimated";
 
 // ─── Constants (mirroring reference VideoOverlay exactly) ───────────
@@ -229,6 +229,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         paddingVertical: SEEK_BAR_HIT_SLOP,
+        paddingHorizontal: 16,
     },
     seekBarTrack: {
         height: SEEK_BAR_HEIGHT,

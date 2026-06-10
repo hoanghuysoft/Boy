@@ -2,7 +2,7 @@ import { useThemeContext } from "@/context/ThemeContext";
 import { SquircleView } from "expo-squircle-view";
 import React, { useState } from 'react';
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import { Spinner, useToast } from "heroui-native";
 import { WallpaperSet } from 'react-native-nitro-wallpaper';

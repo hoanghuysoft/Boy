@@ -134,7 +134,7 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
         );
 
         return () => subscription.unsubscribe();
-    }, []);
+    }, [setHasProfile]);
 
     // ─── Route protection ──────────────────────────────────────────────────────
     useEffect(() => {
@@ -151,7 +151,7 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
             if (inAuthGroup || inOnboarding) router.replace('/');
         }
         // hasProfile === undefined while still checking: don't redirect yet.
-    }, [isSessionReady, segments, session, hasProfile]);
+    }, [isSessionReady, segments, session, hasProfile, router]);
 
     // ─── Splash screen ─────────────────────────────────────────────────────────
     // Wait for both the session AND (when logged in) the profile flag before

@@ -16,20 +16,22 @@ export const useHashtagPostsViewModel = (tag: string) => {
         isRefetching,
     } = useHashtagPosts(tag);
 
+    const pages = data?.pages;
+
     const posts = useMemo((): Post[] => {
-        if (!data?.pages) return [];
-        return data.pages.flatMap((page) => page.data);
-    }, [data?.pages]);
+        if (!pages) return [];
+        return pages.flatMap((page) => page.data);
+    }, [pages]);
 
     const totalCount = useMemo(() => {
-        if (!data?.pages?.length) return 0;
-        return data.pages[0].pagination.total;
-    }, [data?.pages]);
+        if (!pages?.length) return 0;
+        return pages[0].pagination.total;
+    }, [pages]);
 
     const hashtagLabel = useMemo(() => {
-        if (!data?.pages?.length) return tag;
-        return data.pages[0].hashtag?.tag ?? tag;
-    }, [data?.pages, tag]);
+        if (!pages?.length) return tag;
+        return pages[0].hashtag?.tag ?? tag;
+    }, [pages, tag]);
 
     const handleEndReached = useCallback(() => {
         if (hasNextPage && !isFetchingNextPage) {

@@ -51,8 +51,7 @@ export const useImageGridViewModel = (options: UseImageGridViewModelOptions = {}
         fetchingMore = false
     } = options;
 
-    const { colors, typography } = useThemeContext();
-    const common = createCommonStyles(colors, typography);
+    const { colors } = useThemeContext();
     const { width: screenWidth } = useWindowDimensions();
 
     // ─── Constants ─────────────────────────────────────────────────
@@ -60,8 +59,6 @@ export const useImageGridViewModel = (options: UseImageGridViewModelOptions = {}
     const placeholderImage = 'https://placehold.net/default.png';
 
     // ─── State ─────────────────────────────────────────────────────
-    const [gridData, setGridData] = useState<GridItemType[]>([]);
-    const [sortedUrls, setSortedUrls] = useState<string[]>([]);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [previewBlurhash, setPreviewBlurhash] = useState<string | null>(null);
     const [isPreviewVisible, setIsPreviewVisible] = useState(false);
@@ -108,38 +105,34 @@ export const useImageGridViewModel = (options: UseImageGridViewModelOptions = {}
     );
 
     // ─── Data Processing & Prefetch ────────────────────────────────
-    useEffect(() => {
-        try {
-            const mediaList = photos || [];
-            const result = processMediaToFlat(mediaList);
+    const mediaList = useMemo(() => photos || [], [photos]);
+    const result = useMemo(() => processMediaToFlat(mediaList), [mediaList]);
 
-            let finalGridData: GridItemType[] = result.gridData;
+    const gridData = useMemo(() => {
+        let finalGridData = result.gridData;
 
-            if (loading && mediaList.length === 0) {
-                finalGridData = Array.from({ length: NUM_COLUMNS * 2 }).map((_, index) => ({
-                    type: 'shimmer' as const,
-                    flatIndex: index,
-                }));
-            } else if (fetchingMore) {
-                const shimmerItems: GridItemType[] = Array.from({ length: NUM_COLUMNS }).map((_, i) => ({
-                    type: 'shimmer' as const,
-                    flatIndex: -(i + 1),
-                }));
-                finalGridData = [...finalGridData, ...shimmerItems];
-            }
-
-            setSortedUrls(result.sortedUrls);
-            setGridData(finalGridData);
-
-            // Prefetch images for faster grid loading
-            if (result.sortedUrls.length > 0) {
-                const urlsToPreload = result.sortedUrls.slice(0, 12);
-                // If using expo-image prefetch, prefetch here.
-            }
-        } catch (error) {
-            console.error("Error processing media:", error);
+        if (loading && mediaList.length === 0) {
+            finalGridData = Array.from({ length: NUM_COLUMNS * 2 }).map((_, index) => ({
+                type: 'shimmer' as const,
+                flatIndex: index,
+            }));
+        } else if (fetchingMore) {
+            const shimmerItems: GridItemType[] = Array.from({ length: NUM_COLUMNS }).map((_, i) => ({
+                type: 'shimmer' as const,
+                flatIndex: -(i + 1),
+            }));
+            finalGridData = [...finalGridData, ...shimmerItems];
         }
-    }, [photos, loading, fetchingMore]);
+        return finalGridData;
+    }, [result.gridData, loading, mediaList.length, fetchingMore]);
+
+    const sortedUrls = result.sortedUrls;
+
+    useEffect(() => {
+        if (sortedUrls.length > 0) {
+            // If using expo-image prefetch, prefetch sortedUrls.slice(0, 12) here.
+        }
+    }, [sortedUrls]);
 
     // ─── Key Extractor ─────────────────────────────────────────────
     const keyExtractor = useCallback((item: GridItemType, index: number): string => {

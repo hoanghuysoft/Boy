@@ -16,6 +16,7 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { SquircleView } from "expo-squircle-view";
+import { useToast } from "heroui-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -116,6 +117,7 @@ const DashboardScreen = () => {
     const { data: adminData } = useAdminCheck();
     const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin ?? myProfile?.is_admin);
     const activeProfile = selectedProfile ?? myProfile ?? null;
+    const { toast } = useToast();
 
     const handlePickProfile = useCallback((picked: Profile | null) => {
         if (picked && picked.id === myProfile?.id) {
@@ -327,7 +329,7 @@ const DashboardScreen = () => {
                                 {t('dashboard.sections.entertainment')}
                             </FlexText>
                             <View style={{ borderRadius: 999, backgroundColor: `${colors.secondary}33`, paddingHorizontal: 10, paddingVertical: 4 }}>
-                                <FlexText style={{ fontSize: 12, color: colors.text, fontWeight: '600' }}>Coming Soon</FlexText>
+                                <FlexText style={{ fontSize: 12, color: colors.text, fontWeight: '600' }}>Beta</FlexText>
                             </View>
                         </View>
                         <FlexText style={{ fontSize: 14, color: colors.text, opacity: 0.8, marginBottom: 14 }}>
@@ -335,14 +337,16 @@ const DashboardScreen = () => {
                         </FlexText>
                         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                             <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
-                                <TvBold size={20} color={colors.text} />
-                                <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>Live Channels</FlexText>
-                                <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Preview mode</FlexText>
+                                <TouchableOpacity onPress={() => isAdmin ? router.push('/moviehub') : toast.show({ variant: 'danger', label: 'Not available yet', placement: 'top', description: 'You are not allowed to use this service. Contact Support for more information.' })}>
+                                    <TvBold size={20} color={colors.text} />
+                                    <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>WeLoveHub</FlexText>
+                                    <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Private entertainment</FlexText>
+                                </TouchableOpacity>
                             </SquircleView>
                             <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
                                 <ClapperboardBold size={20} color={colors.text} />
-                                <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>Movies Hub</FlexText>
-                                <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Preview mode</FlexText>
+                                <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>WeLoveTV</FlexText>
+                                <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Watch your favorite movies and TV shows</FlexText>
                             </SquircleView>
                         </View>
                         <SquircleView cornerSmoothing={100} borderRadius={16} style={{ backgroundColor: `${colors.text}10`, padding: 12, gap: 10 }}>
@@ -373,7 +377,7 @@ const DashboardScreen = () => {
                                                         ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
                                                         : undefined,
                                                 }}
-                                                style={{ width: '100%', aspectRatio: 2 / 3, borderRadius: 4, backgroundColor: `${colors.text}12` }}
+                                                style={{ width: '100%', aspectRatio: 2 / 3, borderRadius: 8, backgroundColor: `${colors.text}12` }}
                                                 contentFit="cover"
                                             />
                                             <FlexText numberOfLines={1} style={{ fontSize: 11, color: colors.text, opacity: 0.85 }}>

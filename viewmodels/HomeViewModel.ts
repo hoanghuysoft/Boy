@@ -55,7 +55,7 @@ export const useHomeViewModel = () => {
   // ─── Carousel Settings ─────────────────────────────────────────
   const { showCarousel: carouselEnabled } = useSettingsStore();
   const isCarouselVisible = useRef(true);
-  const carouselVisibility = useRef(new Animated.Value(1)).current;
+  const [carouselVisibility] = useState(() => new Animated.Value(1));
   const [modalVisible, setModalVisible] = useState(false);
 
   // ─── Carousel Color Tracking ───────────────────────────────────
@@ -89,8 +89,8 @@ export const useHomeViewModel = () => {
   }, [useCarouselColor, overlayColor, colors.text]);
 
   // ─── Scroll Animation ──────────────────────────────────────────
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const tabVisibility = useRef(new Animated.Value(1)).current;
+  const [scrollY] = useState(() => new Animated.Value(0));
+  const [tabVisibility] = useState(() => new Animated.Value(1));
   const lastScrollY = useRef(0);
   const isTabVisible = useRef(true);
 
@@ -110,7 +110,7 @@ export const useHomeViewModel = () => {
     extrapolate: "clamp",
   });
 
-  const pillBgColor = useMemo(() => colors.tabBar + "E6", [theme]);
+  const pillBgColor = useMemo(() => colors.tabBar + "E6", [colors.tabBar]);
 
   // ─── Layout Constants ──────────────────────────────────────────
   const totalHeaderHeight = HEADER_HEIGHT + TABS_HEIGHT;
@@ -122,7 +122,7 @@ export const useHomeViewModel = () => {
 
   const openSettingsPage = useCallback(() => {
     router.navigate("/settings");
-  }, []);
+  }, [router]);
 
   const onScroll = useCallback(
     (event: any) => {
@@ -162,7 +162,7 @@ export const useHomeViewModel = () => {
         );
       }
     },
-    [carouselEnabled, isUsingCarouselColor],
+    [carouselEnabled, isUsingCarouselColor, tabVisibility, carouselVisibility],
   );
 
   const handlePostOptionsPress = useCallback((post: Post) => {
@@ -215,7 +215,7 @@ export const useHomeViewModel = () => {
       }).start();
     }
     lastScrollY.current = 0;
-  }, []);
+  }, [tabVisibility]);
 
   const navigateToSearch = useCallback(() => {
     router.push("/search");

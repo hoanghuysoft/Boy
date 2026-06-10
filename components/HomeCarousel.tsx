@@ -19,6 +19,7 @@ const CarouselImage = memo(({ imageUrl, onImageLoaded }: CarouselImageProps) => 
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             onLoad={onImageLoaded}
+            transition={200}
         />
     );
 });

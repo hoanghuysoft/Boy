@@ -1,7 +1,9 @@
 import { Post } from "@/types/post";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { Alert, Clipboard } from "react-native";
+import { useToast } from "heroui-native";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Clipboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
 import { useToggleBookmark } from "../services/bookmark";
 import { useToggleLike } from "../services/like";
@@ -9,8 +11,6 @@ import { useCreatePost, useSharePost } from "../services/post";
 import { useProfile } from "../services/userprofile";
 import { useAudioStore } from "../stores/audio";
 import { createCommonStyles } from "../styles/common";
-import { useTranslation } from "react-i18next";
-import { useToast } from "heroui-native";
 
 interface UsePostItemViewModelProps {
     post: Post;
@@ -31,16 +31,13 @@ export const usePostItemViewModel = ({
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
 
+    // ─── Post ID Tracking for Cell Recycling ────────────────────
+    const [prevPostId, setPrevPostId] = useState(post.id);
+
     // ─── Like State (optimistic) ────────────────────────────────
     const [isLiked, setIsLiked] = useState(post.is_liked);
     const [likeCount, setLikeCount] = useState(post.like_count);
     const toggleLikeMutation = useToggleLike();
-
-    // Sync with server data when post prop changes (including cell recycling)
-    useEffect(() => {
-        setIsLiked(post.is_liked);
-        setLikeCount(post.like_count);
-    }, [post.id, post.is_liked, post.like_count]);
 
     const handleLikePress = useCallback(() => {
         const newIsLiked = !isLiked;
@@ -101,10 +98,12 @@ export const usePostItemViewModel = ({
     const [isBookmarked, setIsBookmarked] = useState(!!post.is_bookmarked);
     const toggleBookmarkMutation = useToggleBookmark();
 
-    // Sync bookmark state when post prop changes (cell recycling)
-    useEffect(() => {
+    if (post.id !== prevPostId) {
+        setPrevPostId(post.id);
+        setIsLiked(post.is_liked);
+        setLikeCount(post.like_count);
         setIsBookmarked(!!post.is_bookmarked);
-    }, [post.id, post.is_bookmarked]);
+    }
 
     const handleBookmarkPress = useCallback(() => {
         const prev = isBookmarked;
@@ -123,7 +122,7 @@ export const usePostItemViewModel = ({
     const { t } = useTranslation();
     const { toast } = useToast();
     const { data: myProfile } = useProfile('me', true);
-    
+
     const sharePostMutation = useSharePost();
     const createPostMutation = useCreatePost(myProfile?.id || "");
 
@@ -169,7 +168,7 @@ export const usePostItemViewModel = ({
         try {
             // Build direct repost content
             const repostContent = `<post id="${post.id}" />`;
-            
+
             await createPostMutation.mutateAsync({
                 content: repostContent,
                 device: "Mobile Repost",
@@ -191,7 +190,7 @@ export const usePostItemViewModel = ({
                 variant: "danger"
             });
         }
-    }, [myProfile?.id, post.id, post.profile_name, post.content, post.deezer_id, post.links, createPostMutation, sharePostMutation, t, toast]);
+    }, [myProfile?.id, post.id, createPostMutation, sharePostMutation, t, toast]);
 
     const handleQuoteRepost = useCallback(() => {
         const firstImageMedia = post.media?.find((m: any) => m.type === 'image' || m.type === 'photo' || m.type === 'video');

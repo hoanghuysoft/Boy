@@ -72,16 +72,18 @@ export const useProfileHeaderViewModel = ({
             ? require('../assets/images/AV86.png')
             : null;
 
+    const profileMetadata = profile?.metadata;
+
     const parsedMetadata = useMemo(() => {
-        if (!profile?.metadata) return null;
+        if (!profileMetadata) return null;
         try {
-            return typeof profile.metadata === 'string'
-                ? JSON.parse(profile.metadata)
-                : profile.metadata;
+            return typeof profileMetadata === 'string'
+                ? JSON.parse(profileMetadata)
+                : profileMetadata;
         } catch {
             return null;
         }
-    }, [profile?.metadata]);
+    }, [profileMetadata]);
 
     const threedEmoji = parsedMetadata?.threed_emoji || null;
     const hasFacebook = !!parsedMetadata?.facebook;
@@ -96,10 +98,18 @@ export const useProfileHeaderViewModel = ({
         return countries.getAlpha2Code(potentialCountry, "en");
     }, [homeInfo]);
 
+    const [prevHasCover, setPrevHasCover] = useState<boolean>(hasCover);
+
+    if (hasCover !== prevHasCover) {
+        setPrevHasCover(hasCover);
+        if (hasCover) {
+            setGradientColors([]);
+        }
+    }
+
     // ─── Color Extraction for Mesh Gradient ────────────────────────
     useEffect(() => {
         if (hasCover) {
-            setGradientColors([]);
             return;
         }
 

@@ -13,11 +13,16 @@ import { useEffect, useState } from 'react';
  *   <Image source={{ uri: imageUri }} />
  */
 export const useCachedImage = (url: string | null | undefined): string | null => {
+    const [prevUrl, setPrevUrl] = useState<string | null | undefined>(url);
     const [resolved, setResolved] = useState<string | null>(url ?? null);
+
+    if (url !== prevUrl) {
+        setPrevUrl(url);
+        setResolved(url ?? null);
+    }
 
     useEffect(() => {
         if (!url) {
-            setResolved(null);
             return;
         }
 

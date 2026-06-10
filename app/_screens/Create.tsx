@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import {
     NativeScrollEvent,
     NativeSyntheticEvent,
-    StyleSheet,
+    TouchableOpacity,
     View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -492,8 +492,20 @@ const CreateScreen = () => {
     return (
         <View style={[common.screen]}>
             <View style={createStyles.container}>
-                <View style={styles.grabber}>
-                    <View style={[styles.grabberBar, { backgroundColor: colors.muted || "#C4C4C4" }]} />
+                <View style={{ position: 'absolute', top: insets.top + 16, left: 12, zIndex: 1000 }}>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={{
+                            backgroundColor: colors.containerContent,
+                            borderRadius: 999,
+                            width: 40,
+                            height: 40,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <Ionicons name="chevron-back" size={24} color={colors.text} />
+                    </TouchableOpacity>
                 </View>
 
                 <Dialog isOpen={dialog.visible} onOpenChange={(open) => !open && setDialog((prev) => ({ ...prev, visible: false }))}>
@@ -522,7 +534,7 @@ const CreateScreen = () => {
                 <CreateScreenHeader
                     colors={colors}
                     common={common}
-                    topPadding={insets.top + 25}
+                    topPadding={insets.top + 55}
                     canSubmit={canSubmit}
                     isSubmitting={isSubmitting}
                     onSubmit={onSubmitPress}
@@ -736,21 +748,3 @@ const CreateScreen = () => {
 };
 
 export default CreateScreen;
-
-const styles = StyleSheet.create({
-    grabber: {
-        position: 'absolute',
-        top: 50,
-        left: 0,
-        right: 0,
-        height: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
-    },
-    grabberBar: {
-        width: 40,
-        height: 5,
-        borderRadius: 2.5,
-    },
-});

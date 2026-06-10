@@ -2,12 +2,14 @@
 import { FlexText } from "@/components/FlexText";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { VideoFeedType, VideoItem } from "@/types/video";
+import { useShotsViewModel } from "@/viewmodels/ShotsViewModel";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useIsFocused } from "expo-router/react-navigation";
 import { Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+    FlatList,
     LayoutChangeEvent,
     Platform,
     RefreshControl,
@@ -18,7 +20,6 @@ import {
     ViewToken
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useShotsViewModel } from "@/viewmodels/ShotsViewModel";
 import {
     DECELERATION_RATE,
     Direction,
@@ -32,7 +33,6 @@ import {
     USE_PLACEHOLDER_OUTSIDE_PRELOAD,
 } from "./constants";
 import { ShotItem } from "./ShotItem";
-import { FlatList } from "react-native-gesture-handler";
 
 // ─── Feed Tab (adopting reference VideoFeedList pattern with LegendList) ─
 export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {

@@ -7,7 +7,6 @@ import {
 import { Spinner } from "heroui-native";
 import React from "react";
 import {
-  ActivityIndicator,
   StyleSheet,
   TouchableOpacity,
   View,

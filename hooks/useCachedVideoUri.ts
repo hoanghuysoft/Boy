@@ -14,11 +14,18 @@ import { useEffect, useState } from "react";
  *   const resolvedUrl = useCachedVideoUri(videoUrl, backupUrl);
  */
 export const useCachedVideoUri = (primaryUrl: string | null, backupUrl?: string | null): string | null => {
+    const [prevPrimaryUrl, setPrevPrimaryUrl] = useState<string | null>(primaryUrl);
+    const [prevBackupUrl, setPrevBackupUrl] = useState<string | null | undefined>(backupUrl);
     const [resolved, setResolved] = useState<string | null>(primaryUrl);
+
+    if (primaryUrl !== prevPrimaryUrl || backupUrl !== prevBackupUrl) {
+        setPrevPrimaryUrl(primaryUrl);
+        setPrevBackupUrl(backupUrl);
+        setResolved(primaryUrl);
+    }
 
     useEffect(() => {
         if (!primaryUrl) {
-            setResolved(null);
             return;
         }
 

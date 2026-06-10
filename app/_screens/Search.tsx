@@ -31,8 +31,6 @@ import { useSearchViewModel } from "../../viewmodels/SearchViewModel";
 
 const FlashList = FlashListOriginal as any;
 
-const ITEM_SEPARATOR = () => <View style={{ height: 12 }} />;
-
 const SearchScreen = () => {
   const navigation = useRouter();
   const { colors, typography } = useThemeContext();

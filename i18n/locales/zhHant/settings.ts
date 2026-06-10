@@ -25,8 +25,6 @@ const settings = {
     maxCacheSize: '最大快取大小',
     clearCacheIdle: '清除影片快取',
     clearCacheClearing: '正在清除…',
-    service: '服務',
-    trackerSource: '影片服務',
     account: '帳號',
     logout: '登出',
     loggingOut: '正在登出…',

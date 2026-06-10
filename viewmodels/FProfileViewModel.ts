@@ -24,17 +24,19 @@ export function useFProfileViewModel() {
         }
     }, [params.profile]);
 
+    const profileMetadata = profile?.metadata;
+
     // ─── Parse metadata ──────────────────────────────────────────────────
     const parsedMetadata = useMemo(() => {
-        if (!profile?.metadata) return null;
+        if (!profileMetadata) return null;
         try {
-            return typeof profile.metadata === 'string'
-                ? JSON.parse(profile.metadata)
-                : profile.metadata;
+            return typeof profileMetadata === 'string'
+                ? JSON.parse(profileMetadata)
+                : profileMetadata;
         } catch {
             return null;
         }
-    }, [profile?.metadata]);
+    }, [profileMetadata]);
 
     const facebookMeta: FacebookMetadata | null = parsedMetadata?.facebook ?? null;
 
@@ -46,11 +48,19 @@ export function useFProfileViewModel() {
         highlights: null,
         groups: null,
     });
-    const [isLoading, setIsLoading] = useState(true);
+
+    const currentProfileId = profile?.id ?? null;
+    const hasFBData = !!(currentProfileId && facebookMeta);
+    const [prevProfileId, setPrevProfileId] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(hasFBData);
+
+    if (currentProfileId !== prevProfileId) {
+        setPrevProfileId(currentProfileId);
+        setIsLoading(hasFBData);
+    }
 
     useEffect(() => {
-        if (!profile?.id || !facebookMeta) {
-            setIsLoading(false);
+        if (!currentProfileId || !facebookMeta) {
             return;
         }
 
@@ -58,7 +68,7 @@ export function useFProfileViewModel() {
 
         (async () => {
             setIsLoading(true);
-            const data = await fetchAllFacebookData(profile.id, facebookMeta);
+            const data = await fetchAllFacebookData(currentProfileId, facebookMeta);
             if (!cancelled) {
                 setFbData(data);
                 setIsLoading(false);
@@ -68,7 +78,7 @@ export function useFProfileViewModel() {
         return () => {
             cancelled = true;
         };
-    }, [profile?.id, facebookMeta]);
+    }, [currentProfileId, facebookMeta]);
 
     // ─── Derived data ────────────────────────────────────────────────────
 

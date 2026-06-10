@@ -4,7 +4,6 @@ import { LANGUAGE_LABELS } from "@/i18n";
 import { useAdminCheck } from "@/services/userprofile";
 import { clearVideoCache, formatBytes, getCacheCount, getCacheSize, setMaxCacheSize } from "@/services/videoCache";
 import { useLanguageStore } from "@/stores/language";
-import { useMovieTrackerStore } from "@/stores/movieTracker";
 
 import { CustomSurface } from "@/components/CustomSurface";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
@@ -35,10 +34,6 @@ const SettingsScreen = () => {
         imgbbApiKey, setImgbbApiKey,
         x02ApiKey, setX02ApiKey,
     } = useSettingsStore();
-    const { trackerSource } = useMovieTrackerStore();
-    const trackerSourceLabel = trackerSource === 'shows'
-        ? t('serviceSettings.showsOption')
-        : t('serviceSettings.moviedbOption');
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isFocused, setIsFocused] = useState(false);
@@ -115,299 +110,284 @@ const SettingsScreen = () => {
             </View>
             <ScrollView style={common.screenPadding}>
                 <View style={{ marginTop: inset.top + 66 }}></View>
-            <View style={styles.searchBar}>
-                <TextInput
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    placeholder=""
-                    placeholderTextColor={colors.muted}
-                    style={styles.searchInput}
-                />
-                {!searchQuery && !isFocused && (
-                    <View style={styles.placeholderContainer} pointerEvents="none">
-                        <Ionicons name='search' size={18} color={colors.muted} />
-                        <FlexText style={[common.body, { color: colors.muted, marginLeft: 6 }]}>{t('settings.search')}</FlexText>
-                    </View>
-                )}
-            </View>
-            <FlexText style={[styles.title]}>{t('settings.preferences')}</FlexText>
-            <View style={{ gap: 3 }}>
-                <CustomSurface
-                    isFirst
-                    onPress={() => router.push('/theme-settings')}
-                    style={styles.option}
-                >
-                    <View>
-                        <FlexText style={[common.body]}>{t('settings.theme')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{themePreferenceLabels[themePreference]}</FlexText>
-                    </View>
-                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
-                </CustomSurface>
-                <CustomSurface
-                    position="middle"
-                    onPress={() => router.push('/language-settings' as Href)}
-                    style={styles.option}
-                >
-                    <View>
-                        <FlexText style={[common.body]}>{t('settings.language')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>
-                            {languageMode === 'auto' ? t('settings.languageAuto') : LANGUAGE_LABELS[language]}
+                <View style={styles.searchBar}>
+                    <TextInput
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
+                        placeholder=""
+                        placeholderTextColor={colors.muted}
+                        style={styles.searchInput}
+                    />
+                    {!searchQuery && !isFocused && (
+                        <View style={styles.placeholderContainer} pointerEvents="none">
+                            <Ionicons name='search' size={18} color={colors.muted} />
+                            <FlexText style={[common.body, { color: colors.muted, marginLeft: 6 }]}>{t('settings.search')}</FlexText>
+                        </View>
+                    )}
+                </View>
+                <FlexText style={[styles.title]}>{t('settings.preferences')}</FlexText>
+                <View style={{ gap: 3 }}>
+                    <CustomSurface
+                        isFirst
+                        onPress={() => router.push('/theme-settings')}
+                        style={styles.option}
+                    >
+                        <View>
+                            <FlexText style={[common.body]}>{t('settings.theme')}</FlexText>
+                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>{themePreferenceLabels[themePreference]}</FlexText>
+                        </View>
+                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                    </CustomSurface>
+                    <CustomSurface
+                        position="middle"
+                        onPress={() => router.push('/language-settings' as Href)}
+                        style={styles.option}
+                    >
+                        <View>
+                            <FlexText style={[common.body]}>{t('settings.language')}</FlexText>
+                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>
+                                {languageMode === 'auto' ? t('settings.languageAuto') : LANGUAGE_LABELS[language]}
+                            </FlexText>
+                        </View>
+                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                    </CustomSurface>
+                    <CustomSurface position="middle" style={styles.option}>
+                        <ControlField
+                            isSelected={!showSensitiveContent}
+                            onSelectedChange={toggleShowSensitiveContent}
+                            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <Label>{t('settings.adultFilter')}</Label>
+                                <Description>{showSensitiveContent ? t('settings.adultFilterOff') : t('settings.adultFilterOn')}</Description>
+                            </View>
+                            <ControlField.Indicator />
+                        </ControlField>
+                    </CustomSurface>
+                    <CustomSurface isLast style={styles.option}>
+                        <ControlField
+                            isSelected={showCarousel}
+                            onSelectedChange={toggleCarousel}
+                            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <Label>{t('settings.homeCarousel')}</Label>
+                                <Description>{t('settings.homeCarouselDescription')}</Description>
+                            </View>
+                            <ControlField.Indicator />
+                        </ControlField>
+                    </CustomSurface>
+                </View>
+
+                {/* ─── Third-Party Storage ────────────────────────────────── */}
+                <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.thirdPartyStorage', 'Third-Party Cloud')}</FlexText>
+                <View style={{ gap: 3 }}>
+                    {/* ImgBB API Key Input */}
+                    <CustomSurface isFirst>
+                        <FlexText style={[common.body, { marginBottom: 8 }]}>ImgBB API Key</FlexText>
+                        <TextInput
+                            value={imgbbApiKey}
+                            onChangeText={setImgbbApiKey}
+                            placeholder="Enter ImgBB API Key"
+                            placeholderTextColor={colors.muted}
+                            secureTextEntry
+                            style={{
+                                backgroundColor: colors.card,
+                                borderRadius: 8,
+                                paddingHorizontal: 12,
+                                paddingVertical: 10,
+                                color: colors.text,
+                                fontSize: 14,
+                                borderWidth: 1,
+                                borderColor: colors.divider,
+                            }}
+                        />
+                        <FlexText style={[common.caption, { color: colors.muted, marginTop: 6 }]}>
+                            Required for image uploads.
                         </FlexText>
-                    </View>
-                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
-                </CustomSurface>
-                <CustomSurface position="middle" style={styles.option}>
-                    <ControlField
-                        isSelected={!showSensitiveContent}
-                        onSelectedChange={toggleShowSensitiveContent}
-                        style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-                    >
-                        <View style={{ flex: 1 }}>
-                            <Label>{t('settings.adultFilter')}</Label>
-                            <Description>{showSensitiveContent ? t('settings.adultFilterOff') : t('settings.adultFilterOn')}</Description>
+                    </CustomSurface>
+
+                    {/* x02.me API Key Input */}
+                    <CustomSurface isLast>
+                        <FlexText style={[common.body, { marginBottom: 8 }]}>x02.me API Key (Optional)</FlexText>
+                        <TextInput
+                            value={x02ApiKey}
+                            onChangeText={setX02ApiKey}
+                            placeholder="Enter x02.me API Key"
+                            placeholderTextColor={colors.muted}
+                            secureTextEntry
+                            style={{
+                                backgroundColor: colors.card,
+                                borderRadius: 8,
+                                paddingHorizontal: 12,
+                                paddingVertical: 10,
+                                color: colors.text,
+                                fontSize: 14,
+                                borderWidth: 1,
+                                borderColor: colors.divider,
+                            }}
+                        />
+                        <FlexText style={[common.caption, { color: colors.muted, marginTop: 6 }]}>
+                            Optional for video uploads. Used for file deletion hooks.
+                        </FlexText>
+                    </CustomSurface>
+                </View>
+
+                {/* ─── Storage & Cache ──────────────────────────────────── */}
+                <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.storageCache')}</FlexText>
+                <View style={{ gap: 3 }}>
+                    {/* Cache usage bar */}
+                    <CustomSurface isFirst>
+                        <View style={styles.cacheInfoRow}>
+                            <FlexText style={[common.body]}>{t('settings.videoCache')}</FlexText>
+                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>
+                                {formatBytes(cacheSize)} / {currentLimitLabel}
+                            </FlexText>
                         </View>
-                        <ControlField.Indicator />
-                    </ControlField>
-                </CustomSurface>
-                <CustomSurface isLast style={styles.option}>
-                    <ControlField
-                        isSelected={showCarousel}
-                        onSelectedChange={toggleCarousel}
-                        style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-                    >
-                        <View style={{ flex: 1 }}>
-                            <Label>{t('settings.homeCarousel')}</Label>
-                            <Description>{t('settings.homeCarouselDescription')}</Description>
+                        <FlexText style={[common.bodySmall, { color: colors.muted, marginBottom: 8 }]}>
+                            {t('settings.videoCacheDescription', { count: cacheCount })}
+                        </FlexText>
+                        <View style={styles.progressBarBg}>
+                            <View
+                                style={[
+                                    styles.progressBarFill,
+                                    {
+                                        width: `${Math.max(cacheUsagePercent * 100, 0)}%`,
+                                        backgroundColor: cacheUsagePercent > 0.9 ? '#ff4444' : cacheUsagePercent > 0.7 ? '#ffaa00' : '#54d340',
+                                    },
+                                ]}
+                            />
                         </View>
-                        <ControlField.Indicator />
-                    </ControlField>
-                </CustomSurface>
-            </View>
+                    </CustomSurface>
 
-            {/* ─── Third-Party Storage ────────────────────────────────── */}
-            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.thirdPartyStorage', 'Third-Party Cloud')}</FlexText>
-            <View style={{ gap: 3 }}>
-                {/* ImgBB API Key Input */}
-                <CustomSurface isFirst>
-                    <FlexText style={[common.body, { marginBottom: 8 }]}>ImgBB API Key</FlexText>
-                    <TextInput
-                        value={imgbbApiKey}
-                        onChangeText={setImgbbApiKey}
-                        placeholder="Enter ImgBB API Key"
-                        placeholderTextColor={colors.muted}
-                        secureTextEntry
-                        style={{
-                            backgroundColor: colors.card,
-                            borderRadius: 8,
-                            paddingHorizontal: 12,
-                            paddingVertical: 10,
-                            color: colors.text,
-                            fontSize: 14,
-                            borderWidth: 1,
-                            borderColor: colors.divider,
-                        }}
-                    />
-                    <FlexText style={[common.caption, { color: colors.muted, marginTop: 6 }]}>
-                        Required for image uploads.
-                    </FlexText>
-                </CustomSurface>
+                    {/* Cache size limit picker */}
+                    <CustomSurface position="middle" style={{ padding: 0 }}>
+                        <Select
+                            value={{ value: videoCacheSizeLimit.toString(), label: currentLimitLabel }}
+                            onValueChange={(opt: any) => handleSetCacheLimit(Number(opt.value))}
+                            presentation="dialog"
+                        >
+                            <Select.Trigger style={{ backgroundColor: 'transparent' }} asChild>
+                                <TouchableOpacity style={[styles.option, { padding: 16 }]}>
+                                    <View>
+                                        <FlexText style={[common.body]}>{t('settings.maxCacheSize')}</FlexText>
+                                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{currentLimitLabel}</FlexText>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                                </TouchableOpacity>
+                            </Select.Trigger>
+                            <Select.Portal>
+                                <Select.Overlay />
+                                <Select.Content presentation="dialog" >
+                                    {CACHE_SIZE_OPTIONS.map((option) => (
+                                        <Select.Item key={option.value} value={option.value.toString()} label={option.label} />
+                                    ))}
+                                </Select.Content>
+                            </Select.Portal>
+                        </Select>
+                    </CustomSurface>
 
-                {/* x02.me API Key Input */}
-                <CustomSurface isLast>
-                    <FlexText style={[common.body, { marginBottom: 8 }]}>x02.me API Key (Optional)</FlexText>
-                    <TextInput
-                        value={x02ApiKey}
-                        onChangeText={setX02ApiKey}
-                        placeholder="Enter x02.me API Key"
-                        placeholderTextColor={colors.muted}
-                        secureTextEntry
-                        style={{
-                            backgroundColor: colors.card,
-                            borderRadius: 8,
-                            paddingHorizontal: 12,
-                            paddingVertical: 10,
-                            color: colors.text,
-                            fontSize: 14,
-                            borderWidth: 1,
-                            borderColor: colors.divider,
-                        }}
-                    />
-                    <FlexText style={[common.caption, { color: colors.muted, marginTop: 6 }]}>
-                        Optional for video uploads. Used for file deletion hooks.
-                    </FlexText>
-                </CustomSurface>
-            </View>
+                    {/* Clear cache button */}
+                    <CustomSurface
+                        isLast
+                        onPress={cacheSize === 0 ? undefined : handleClearCache}
+                        style={styles.option}
+                    >
+                        <FlexText style={[common.body, { color: cacheSize === 0 ? colors.muted : '#ff4444' }]}>
+                            {isClearing ? t('settings.clearCacheClearing') : t('settings.clearCacheIdle')}
+                        </FlexText>
+                        {isClearing && <Spinner size="md" color={colors.muted} />}
+                    </CustomSurface>
+                </View>
 
-            {/* ─── Service ────────────────────────────────────────────── */}
-            {isAdmin && <><FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.service')}</FlexText>
+                <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.about')}</FlexText>
                 <CustomSurface
                     position="single"
-                    onPress={() => router.push('/movie-tracker-settings' as any)}
+                    onPress={() => router.push('/about' as any)}
                     style={styles.option}
                 >
                     <View>
-                        <FlexText style={[common.body]}>{t('settings.trackerSource')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{trackerSourceLabel}</FlexText>
+                        <FlexText style={[common.body]}>{t('settings.aboutApp')}</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.aboutAppDescription')}</FlexText>
                     </View>
                     <Ionicons name="chevron-forward" size={24} color={colors.text} />
                 </CustomSurface>
-            </>}
 
-            {/* ─── Storage & Cache ──────────────────────────────────── */}
-            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.storageCache')}</FlexText>
-            <View style={{ gap: 3 }}>
-                {/* Cache usage bar */}
-                <CustomSurface isFirst>
-                    <View style={styles.cacheInfoRow}>
-                        <FlexText style={[common.body]}>{t('settings.videoCache')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>
-                            {formatBytes(cacheSize)} / {currentLimitLabel}
-                        </FlexText>
-                    </View>
-                    <FlexText style={[common.bodySmall, { color: colors.muted, marginBottom: 8 }]}>
-                        {t('settings.videoCacheDescription', { count: cacheCount })}
-                    </FlexText>
-                    <View style={styles.progressBarBg}>
-                        <View
-                            style={[
-                                styles.progressBarFill,
-                                {
-                                    width: `${Math.max(cacheUsagePercent * 100, 0)}%`,
-                                    backgroundColor: cacheUsagePercent > 0.9 ? '#ff4444' : cacheUsagePercent > 0.7 ? '#ffaa00' : '#54d340',
-                                },
-                            ]}
-                        />
-                    </View>
-                </CustomSurface>
-
-                {/* Cache size limit picker */}
-                <CustomSurface position="middle" style={{ padding: 0 }}>
-                    <Select
-                        value={{ value: videoCacheSizeLimit.toString(), label: currentLimitLabel }}
-                        onValueChange={(opt: any) => handleSetCacheLimit(Number(opt.value))}
-                        presentation="bottom-sheet"
-                    >
-                        <Select.Trigger asChild>
-                            <TouchableOpacity style={[styles.option, { padding: 16 }]}>
-                                <View>
-                                    <FlexText style={[common.body]}>{t('settings.maxCacheSize')}</FlexText>
-                                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>{currentLimitLabel}</FlexText>
-                                </View>
-                                <Ionicons name="chevron-forward" size={24} color={colors.text} />
-                            </TouchableOpacity>
-                        </Select.Trigger>
-                        <Select.Portal>
-                            <Select.Overlay />
-                            <Select.Content presentation="bottom-sheet" snapPoints={['40%']}>
-                                {CACHE_SIZE_OPTIONS.map((option) => (
-                                    <Select.Item key={option.value} value={option.value.toString()} label={option.label} />
-                                ))}
-                            </Select.Content>
-                        </Select.Portal>
-                    </Select>
-                </CustomSurface>
-
-                {/* Clear cache button */}
+                <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.account')}</FlexText>
                 <CustomSurface
-                    isLast
-                    onPress={cacheSize === 0 ? undefined : handleClearCache}
+                    position="single"
+                    onPress={async () => {
+                        try {
+                            setIsLoggingOut(true);
+                            const { signOut } = await import("@/services/login");
+                            await signOut();
+                            router.dismissAll();
+                            router.replace("/");
+                        } catch (e) {
+                            console.error(e);
+                        } finally {
+                            setIsLoggingOut(false);
+                        }
+                    }}
                     style={styles.option}
                 >
-                    <FlexText style={[common.body, { color: cacheSize === 0 ? colors.muted : '#ff4444' }]}>
-                        {isClearing ? t('settings.clearCacheClearing') : t('settings.clearCacheIdle')}
-                    </FlexText>
-                    {isClearing && <Spinner size="md" color={colors.muted} />}
+                    <FlexText style={[common.body, { color: colors.text }]}>{t('settings.logout')}</FlexText>
+                    <Logout3Bold size={24} color={colors.text} />
                 </CustomSurface>
-            </View>
 
-            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.about')}</FlexText>
-            <CustomSurface
-                position="single"
-                onPress={() => router.push('/about' as any)}
-                style={styles.option}
-            >
-                <View>
-                    <FlexText style={[common.body]}>{t('settings.aboutApp')}</FlexText>
-                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.aboutAppDescription')}</FlexText>
-                </View>
-                <Ionicons name="chevron-forward" size={24} color={colors.text} />
-            </CustomSurface>
-
-            <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.account')}</FlexText>
-            <CustomSurface
-                position="single"
-                onPress={async () => {
-                    try {
-                        setIsLoggingOut(true);
-                        const { signOut } = await import("@/services/login");
-                        await signOut();
-                        router.dismissAll();
-                        router.replace("/");
-                    } catch (e) {
-                        console.error(e);
-                    } finally {
-                        setIsLoggingOut(false);
-                    }
-                }}
-                style={styles.option}
-            >
-                <FlexText style={[common.body, { color: colors.text }]}>{t('settings.logout')}</FlexText>
-                <Logout3Bold size={24} color={colors.text} />
-            </CustomSurface>
-
-            {/* ─── Logging Out Modal ─────────────────────────────────── */}
-            <Modal
-                visible={isLoggingOut}
-                transparent
-                animationType="fade"
-                statusBarTranslucent
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Spinner size="lg" color={colors.text} />
-                        <FlexText style={[common.body, { color: colors.text, marginTop: 12 }]}>{t('settings.loggingOut')}</FlexText>
+                {/* ─── Logging Out Modal ─────────────────────────────────── */}
+                <Modal
+                    visible={isLoggingOut}
+                    transparent
+                    animationType="fade"
+                    statusBarTranslucent
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <Spinner size="lg" color={colors.text} />
+                            <FlexText style={[common.body, { color: colors.text, marginTop: 12 }]}>{t('settings.loggingOut')}</FlexText>
+                        </View>
                     </View>
-                </View>
-            </Modal>
+                </Modal>
 
 
-            <Dialog isOpen={isClearCacheDialogOpen} onOpenChange={setIsClearCacheDialogOpen}>
-                <Dialog.Portal>
-                    <Dialog.Overlay />
-                    <Dialog.Content>
-                        <Dialog.Close />
-                        <View style={{ marginBottom: 20, gap: 6 }}>
-                            <Dialog.Title>{t('settings.clearVideoCache')}</Dialog.Title>
-                            <Dialog.Description>
-                                {t('settings.clearVideoCacheConfirmation', { size: formatBytes(cacheSize) })}
-                            </Dialog.Description>
-                        </View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-                            <Button variant="ghost" onPress={() => setIsClearCacheDialogOpen(false)}>
-                                {t('settings.cancel')}
-                            </Button>
-                            <Button
-                                variant="danger"
-                                onPress={async () => {
-                                    setIsClearCacheDialogOpen(false);
-                                    setIsClearing(true);
-                                    await clearVideoCache();
-                                    await refreshCacheInfo();
-                                    setIsClearing(false);
-                                }}
-                            >
-                                {t('settings.clear')}
-                            </Button>
-                        </View>
-                    </Dialog.Content>
-                </Dialog.Portal>
-            </Dialog>
-            <View style={{ marginBottom: inset.bottom + 16 }}></View>
-        </ScrollView>
-    </View>
-  );
+                <Dialog isOpen={isClearCacheDialogOpen} onOpenChange={setIsClearCacheDialogOpen}>
+                    <Dialog.Portal>
+                        <Dialog.Overlay />
+                        <Dialog.Content>
+                            <Dialog.Close />
+                            <View style={{ marginBottom: 20, gap: 6 }}>
+                                <Dialog.Title>{t('settings.clearVideoCache')}</Dialog.Title>
+                                <Dialog.Description>
+                                    {t('settings.clearVideoCacheConfirmation', { size: formatBytes(cacheSize) })}
+                                </Dialog.Description>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                                <Button variant="ghost" onPress={() => setIsClearCacheDialogOpen(false)}>
+                                    {t('settings.cancel')}
+                                </Button>
+                                <Button
+                                    variant="danger"
+                                    onPress={async () => {
+                                        setIsClearCacheDialogOpen(false);
+                                        setIsClearing(true);
+                                        await clearVideoCache();
+                                        await refreshCacheInfo();
+                                        setIsClearing(false);
+                                    }}
+                                >
+                                    {t('settings.clear')}
+                                </Button>
+                            </View>
+                        </Dialog.Content>
+                    </Dialog.Portal>
+                </Dialog>
+                <View style={{ marginBottom: inset.bottom + 16 }}></View>
+            </ScrollView>
+        </View>
+    );
 };
 
 const style = (colors: ThemeColors, common: any) => StyleSheet.create({

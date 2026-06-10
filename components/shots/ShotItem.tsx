@@ -470,8 +470,8 @@ export const ShotItem = React.memo(function ShotItem({
                 {/* Like */}
                 <TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10}>
                     {isLiked
-                        ? <HeartBold size={36} color="#ff4d6d" />
-                        : <HeartBold size={36} color="white" />
+                        ? <HeartBold size={32} color="#ff4d6d" />
+                        : <HeartBold size={32} color="white" />
                     }
                     <FlexText style={[styles.actionText, isLiked && { color: '#ff4d6d' }]}>
                         {likeCount > 0 ? likeCount : 0}
@@ -480,7 +480,7 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Comments */}
                 <TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10}>
-                    <ChatRoundLikeBold size={36} color="white" />
+                    <ChatRoundLikeBold size={32} color="white" />
                     <FlexText style={styles.actionText}>
                         {item.comment_count > 0 ? item.comment_count : 0}
                     </FlexText>
@@ -488,7 +488,7 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Share */}
                 <TouchableOpacity style={styles.actionButton}>
-                    <SquareShareLineBold size={36} color="white" />
+                    <SquareShareLineBold size={32} color="white" />
                 </TouchableOpacity>
             </View>
         </View>
