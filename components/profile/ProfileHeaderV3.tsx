@@ -4,6 +4,7 @@ import { CaseMinimalisticBold, NotesBold, PointOnMapBold } from '@solar-icons/re
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
+import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { Avatar, Button } from 'heroui-native';
 import countries from "i18n-iso-countries";
 import en from "i18n-iso-countries/langs/en.json";
@@ -120,11 +121,25 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
             <View pointerEvents="none" style={{ height: vm.insets.top + 70 }} />
 
             <SquircleView pointerEvents="none" borderRadius={36} cornerSmoothing={100} preserveSmoothing style={styles.coverContainer}>
-                <ExpoImage
-                    source={{ uri: profile?.cover_url || "https://picsum.photos/1000" }}
-                    style={styles.coverImage}
-                    contentFit="cover"
-                />
+                {profile?.cover_url ? (
+                    <ExpoImage
+                        source={{ uri: profile.cover_url }}
+                        style={styles.coverImage}
+                        contentFit="cover"
+                    />
+                ) : (
+                    vm.gradientColors.length === 4 && (
+                        <MeshGradient
+                            brightness={vm.meshGradientDefaults.brightness}
+                            contrast={vm.meshGradientDefaults.contrast}
+                            speed={vm.meshGradientDefaults.speed}
+                            colors={vm.gradientColors}
+                            frequency={vm.meshGradientDefaults.frequency}
+                            amplitude={vm.meshGradientDefaults.amplitude}
+                            style={styles.coverImage}
+                        />
+                    )
+                )}
             </SquircleView>
             <View pointerEvents="box-none" style={styles.avatarRow}>
                 <Avatar>

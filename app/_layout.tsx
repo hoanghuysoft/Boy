@@ -1,4 +1,4 @@
-import { getParallaxSlideTransition } from "@/components/stack/screen-options";
+import { getParallaxSlideTransition, getScaleFadeTransition } from "@/components/stack/screen-options";
 import { Stack } from "@/components/stack/stack";
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
@@ -213,7 +213,7 @@ const RootContent = () => {
           <Stack.Screen name="show_detail" />
           <Stack.Screen name="show_list" />
           <Stack.Screen name="watchlist" />
-          <Stack.Screen name="create" />
+          <Stack.Screen name="create" options={getScaleFadeTransition()} />
           <Stack.Screen name="inapp_browser" />
           <Stack.Screen name="movie_detail" />
           <Stack.Screen name="tv_detail" />
@@ -222,7 +222,7 @@ const RootContent = () => {
           <Stack.Screen name="search_movies" />
           <Stack.Screen name="webview" />
           <Stack.Screen name="moviehub" options={Transition.Presets.ZoomIn()} />
-           <Stack.Screen name="bulletinboard" />
+          <Stack.Screen name="bulletinboard" />
           <Stack.Screen name="show_chat" />
         </Stack>
         <GlobalAudioPlayer />

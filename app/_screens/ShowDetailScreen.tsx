@@ -10,12 +10,12 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { BookmarkBold, BookmarkOutline, CloudDownloadBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
+import { Image as ExpoImage } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { getColors } from "react-native-image-colors";
-import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { showDetailStorage as storage } from "../../services/storage";
@@ -64,17 +64,16 @@ const ChatScreen = () => {
   const params = useLocalSearchParams();
   const videoUrlOrSlug = Array.isArray(params.video_url) ? params.video_url[0] : params.video_url;
 
-  const fallbackPosterUrl = "https://fastly.picsum.photos/id/36/4179/2790.jpg?hmac=OCuYYm0PkDCMwxWhrtoSefG5UDir4O0XCcR2x-aSPjs";
   const { data: videoDetail, isLoading: isVideoDetailLoading, isError: isVideoDetailError } = useVideoDetailQuery(videoUrlOrSlug);
 
   const detail = videoDetail?.video_detail;
   const relatedVideos = videoDetail?.related_videos;
-  const posterUrl = detail?.poster_url ?? fallbackPosterUrl;
-  const image = useImage(posterUrl);
+  const posterUrl = detail?.poster_url;
+  const image = useImage(posterUrl || null);
 
   // Keep the shimmer visible until both the API data and the Skia image are ready
-  const isLoading = (isVideoDetailLoading || image === null) && !isVideoDetailError;
-  const { width, height } = useWindowDimensions();
+  const isLoading = (isVideoDetailLoading || (posterUrl ? image === null : false)) && !isVideoDetailError;
+  const { width } = useWindowDimensions();
   const posterHeight = 500;
   const inset = useSafeAreaInsets();
 
@@ -180,13 +179,6 @@ const ChatScreen = () => {
 
   const relatedVideoKeyExtractor = useCallback((item: VideoCard) => item.video_url, []);
 
-  const fallbackWebsiteUrl = useMemo(() => {
-    if (!videoUrlOrSlug) return "";
-    const normalizedSlug = String(videoUrlOrSlug).replace(/^\/+/, "");
-    return normalizedSlug ? `https://traingon.top/${normalizedSlug}` : "";
-  }, [videoUrlOrSlug]);
-
-  const webviewUrl = fallbackWebsiteUrl;
   const downloadUrl = detail?.download_url ?? "";
 
   const renderTag = useCallback(
@@ -206,7 +198,7 @@ const ChatScreen = () => {
         </TouchableOpacity>
       );
     },
-    [],
+    [colors.card, colors.text],
   );
 
   const tagKeyExtractor = useCallback((item: string) => item, []);
@@ -244,11 +236,13 @@ const ChatScreen = () => {
   };
 
   useEffect(() => {
+    const url = posterUrl;
+    if (!url) return;
     let cancelled = false;
 
     const run = async () => {
       try {
-        const cacheKey = `${DARK_DOMINANT_CACHE_PREFIX}${posterUrl}:${fallbackBase}`;
+        const cacheKey = `${DARK_DOMINANT_CACHE_PREFIX}${url}:${fallbackBase}`;
         const cachedDarkDominant = storage.getString(cacheKey);
 
         if (cachedDarkDominant) {
@@ -256,10 +250,10 @@ const ChatScreen = () => {
           return;
         }
 
-        const result = await getColors(posterUrl, {
+        const result = await getColors(url, {
           fallback: fallbackBase,
           cache: true,
-          key: posterUrl,
+          key: url,
         });
 
         let dominant: string | undefined | null = null;
@@ -271,9 +265,9 @@ const ChatScreen = () => {
         const finalDarkDominant = darker;
         storage.set(cacheKey, finalDarkDominant);
         if (!cancelled) setDarkDominant(finalDarkDominant);
-      } catch (e) {
+      } catch {
         const fallbackDarkDominant = darkenHex(fallbackBase, 0.55);
-        storage.set(`${DARK_DOMINANT_CACHE_PREFIX}${posterUrl}:${fallbackBase}`, fallbackDarkDominant);
+        storage.set(`${DARK_DOMINANT_CACHE_PREFIX}${url}:${fallbackBase}`, fallbackDarkDominant);
         if (!cancelled) setDarkDominant(fallbackDarkDominant);
       }
     };
@@ -321,42 +315,44 @@ const ChatScreen = () => {
             <>
               {/* Header poster (scrolls away) */}
               <View style={[styles.header, { height: posterHeight }]}>
-                <Canvas style={{ height: posterHeight }}>
-                  <BlurMask
-                    mask={
-                      <LinearGradient
-                        start={vec(0, posterHeight * 0.5)}
-                        end={vec(0, posterHeight)}
-                        colors={["transparent", "black"]}
+                {image && (
+                  <Canvas style={{ height: posterHeight }}>
+                    <BlurMask
+                      mask={
+                        <LinearGradient
+                          start={vec(0, posterHeight * 0.5)}
+                          end={vec(0, posterHeight)}
+                          colors={["transparent", "black"]}
+                        />
+                      }
+                    >
+                      <ImageShader
+                        image={image}
+                        x={0}
+                        width={width}
+                        height={posterHeight}
+                        fit="cover"
+                        tx="clamp"
+                        ty="clamp"
                       />
-                    }
-                  >
-                    <ImageShader
-                      image={image}
-                      x={0}
-                      width={width}
-                      height={posterHeight}
-                      fit="cover"
-                      tx="clamp"
-                      ty="clamp"
-                    />
-                  </BlurMask>
+                    </BlurMask>
 
-                  {/* Bottom→top overlay to blend into the solid background */}
-                  <Rect x={0} y={0} width={width} height={posterHeight}>
-                    <LinearGradient
-                      start={vec(0, posterHeight)}
-                      end={vec(0, 0)}
-                      // Strong at bottom, fades out quickly (adjust positions to taste)
-                      colors={[
-                        withAlpha(darkDominant, "FF"), // solid at bottom
-                        withAlpha(darkDominant, "99"), // stronger mid fade
-                        "transparent",
-                      ]}
-                      positions={[0, 0.25, 1]}
-                    />
-                  </Rect>
-                </Canvas>
+                    {/* Bottom→top overlay to blend into the solid background */}
+                    <Rect x={0} y={0} width={width} height={posterHeight}>
+                      <LinearGradient
+                        start={vec(0, posterHeight)}
+                        end={vec(0, 0)}
+                        // Strong at bottom, fades out quickly (adjust positions to taste)
+                        colors={[
+                          withAlpha(darkDominant, "FF"), // solid at bottom
+                          withAlpha(darkDominant, "99"), // stronger mid fade
+                          "transparent",
+                        ]}
+                        positions={[0, 0.25, 1]}
+                      />
+                    </Rect>
+                  </Canvas>
+                )}
 
                 <View
                   pointerEvents="none"

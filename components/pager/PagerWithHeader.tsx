@@ -13,7 +13,7 @@
  *  5. The tab bar sits below the header and sticks at the top.
  */
 
-import { type JSX, memo, useCallback, useEffect, useRef, useState } from 'react'
+import { type JSX, memo, useCallback, useEffect, useRef, useState, useImperativeHandle } from 'react'
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -48,8 +48,13 @@ export interface PagerWithHeaderChildParams {
   scrollElRef: React.MutableRefObject<ListMethods | ScrollView | null>
 }
 
+export interface PagerWithHeaderRef {
+  setPage: (index: number) => void
+  scrollToTop: () => void
+}
+
 export interface PagerWithHeaderProps {
-  ref?: React.Ref<PagerRef>
+  ref?: React.Ref<PagerWithHeaderRef>
   testID?: string
   children:
     | (((props: PagerWithHeaderChildParams) => JSX.Element) | null)[]
@@ -94,6 +99,26 @@ export function PagerWithHeader({
   const [headerOnlyHeight, setHeaderOnlyHeight] = useState(0)
   const scrollY = useSharedValue(0)
   const headerHeight = headerOnlyHeight + tabBarHeight
+
+  // Track scroll refs for all tabs (UI thread accessible)
+  const scrollRefs = useSharedValue<(AnimatedRef<any> | null)[]>([])
+
+  const pagerRef = useRef<PagerRef>(null)
+
+  useImperativeHandle(ref, () => ({
+    setPage: (index: number) => {
+      pagerRef.current?.setPage(index)
+    },
+    scrollToTop: () => {
+      const refs = scrollRefs.get()
+      const currentRef = refs[currentPage]
+      if (currentRef) {
+        runOnUI(() => {
+          scrollTo(currentRef, 0, 0, true)
+        })()
+      }
+    },
+  }))
 
   // Capture the tab bar sizing
   const onTabBarLayout = useCallback((evt: LayoutChangeEvent) => {
@@ -149,8 +174,7 @@ export function PagerWithHeader({
     ],
   )
 
-  // Track scroll refs for all tabs (UI thread accessible)
-  const scrollRefs = useSharedValue<Array<AnimatedRef<any> | null>>([])
+
   const registerRef = useCallback(
     (scrollRef: AnimatedRef<any> | null, atIndex: number) => {
       scrollRefs.modify(refs => {
@@ -213,7 +237,7 @@ export function PagerWithHeader({
 
   return (
     <Pager
-      ref={ref}
+      ref={pagerRef}
       testID={testID}
       initialPage={initialPage}
       onTabPressed={onTabPressed}

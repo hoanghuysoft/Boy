@@ -1,5 +1,4 @@
 import { FlexText } from "@/components/FlexText";
-import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { useThemeContext } from "@/context/ThemeContext";
 import {
     useAiringTodayTVInfinite,
@@ -15,6 +14,7 @@ import { Movie } from "@/types/moviedb";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import { Skeleton, SkeletonGroup } from "heroui-native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
     Animated,
@@ -32,7 +32,6 @@ import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CARD_WIDTH = 140;
-const POSTER_HEIGHT = 600;
 
 const getImageUrl = (path: string | null | undefined, size: number = 500) => {
     if (!path) return `https://via.placeholder.com/${size}x750?text=No+Image`;
@@ -53,19 +52,168 @@ export const IMDbBadge = ({ score, style }: { score?: number, style?: any }) => 
     );
 };
 
-/** Lightweight shimmer placeholder for a single horizontal section row */
+/** Lightweight skeleton placeholder for a single horizontal section row */
 const SectionShimmer = ({ title }: { title: string }) => (
-    <View style={{ gap: 16 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16 }}>
-            <ShimmerEffect style={{ height: 22, width: Math.min(title.length * 11, 200), borderRadius: 4, flex: 0 }} />
+    <SkeletonGroup isLoading={true} variant="shimmer">
+        <View style={{ gap: 16 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16 }}>
+                <SkeletonGroup.Item
+                    style={{
+                        height: 22,
+                        width: Math.min(title.length * 11, 200),
+                        borderRadius: 4,
+                    }}
+                />
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+                <SkeletonGroup.Item style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
+                <SkeletonGroup.Item style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
+                <SkeletonGroup.Item style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
+            </ScrollView>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-            <ShimmerEffect style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-        </ScrollView>
-    </View>
+    </SkeletonGroup>
 );
+
+interface MediaCardProps {
+    id: number;
+    title: string;
+    posterPath: string | null | undefined;
+    voteAverage?: number;
+    type: "movie" | "tv";
+}
+
+const MediaCard = React.memo(({ id, title, posterPath, voteAverage, type }: MediaCardProps) => {
+    const handlePress = useCallback(() => {
+        router.navigate({ pathname: type === "movie" ? "/movie_detail" : "/tv_detail", params: { id } });
+    }, [id, type]);
+
+    return (
+        <GesturePressable
+            onPress={handlePress}
+            style={{ width: CARD_WIDTH, marginRight: 12, overflow: "hidden", position: "relative" }}
+        >
+            <View style={{ width: CARD_WIDTH, borderRadius: 16, overflow: "hidden", position: "relative" }}>
+                <Image
+                    source={{ uri: getImageUrl(posterPath, 342) }}
+                    style={{
+                        width: CARD_WIDTH,
+                        aspectRatio: 2 / 3,
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        borderColor: "rgba(132,132,132,0.34)",
+                    }}
+                    contentFit="cover"
+                />
+            </View>
+            <FlexText
+                numberOfLines={2}
+                ellipsizeMode="tail"
+                style={[styles.textStyle, { color: "white", width: "100%", flexShrink: 1, marginBottom: 4 }]}
+            >
+                {title}
+            </FlexText>
+            <IMDbBadge score={voteAverage} />
+        </GesturePressable>
+    );
+});
+
+MediaCard.displayName = "MediaCard";
+
+interface PersonCardProps {
+    id: number;
+    name: string;
+    profilePath: string | null | undefined;
+    knownForDepartment?: string;
+}
+
+const PersonCard = React.memo(({ id, name, profilePath, knownForDepartment }: PersonCardProps) => {
+    const handlePress = useCallback(() => {
+        router.navigate({ pathname: "/person_detail", params: { id } });
+    }, [id]);
+
+    return (
+        <GesturePressable
+            onPress={handlePress}
+            style={{ width: 100, marginRight: 16, alignItems: "center" }}
+        >
+            <Image
+                source={{ uri: getImageUrl(profilePath, 185) }}
+                style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 9999,
+                    borderWidth: 1,
+                    borderColor: "rgba(132,132,132,0.34)",
+                }}
+                contentFit="cover"
+            />
+            <FlexText
+                numberOfLines={2}
+                style={[styles.textStyle, { color: "white", width: "100%", textAlign: "center", marginTop: 8, fontWeight: "600" }]}
+            >
+                {name}
+            </FlexText>
+            <FlexText
+                numberOfLines={1}
+                style={[styles.textStyle, { color: "rgba(255,255,255,0.5)", width: "100%", textAlign: "center", marginTop: 2, fontSize: 12 }]}
+            >
+                {knownForDepartment}
+            </FlexText>
+        </GesturePressable>
+    );
+});
+
+PersonCard.displayName = "PersonCard";
+
+interface MediaSectionProps<T> {
+    title: string;
+    isLoading: boolean;
+    data: T[];
+    renderItem: (info: ListRenderItemInfo<T>) => React.ReactElement | null;
+    keyExtractor: (item: T, index: number) => string;
+    onPressHeader: () => void;
+    style?: any;
+}
+
+const MediaSection = <T,>({
+    title,
+    isLoading,
+    data,
+    renderItem,
+    keyExtractor,
+    onPressHeader,
+    style,
+}: MediaSectionProps<T>) => {
+    if (isLoading) {
+        return <SectionShimmer title={title} />;
+    }
+    if (!data || data.length === 0) {
+        return null;
+    }
+    return (
+        <View style={style}>
+            <Pressable
+                onPress={onPressHeader}
+                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}
+            >
+                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
+                    {title}
+                </FlexText>
+                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
+                    <Ionicons name="chevron-forward" size={20} color="white" />
+                </View>
+            </Pressable>
+            <FlatList
+                horizontal
+                data={data}
+                keyExtractor={keyExtractor}
+                renderItem={renderItem}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16 }}
+            />
+        </View>
+    );
+};
 
 export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }) => {
     const { colors } = useThemeContext();
@@ -125,103 +273,43 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
 
     const renderMovieItem = useCallback(
         ({ item }: ListRenderItemInfo<Movie>) => (
-            <GesturePressable
-                onPress={() => router.navigate({ pathname: "/movie_detail", params: { id: item.id } })}
-                style={{ width: CARD_WIDTH, marginRight: 12, overflow: "hidden", position: "relative" }}
-            >
-                <View style={{ width: CARD_WIDTH, borderRadius: 16, overflow: "hidden", position: "relative" }}>
-                    <Image
-                        source={{ uri: getImageUrl(item.poster_path, 342) }}
-                        style={{
-                            width: CARD_WIDTH,
-                            aspectRatio: 2 / 3,
-                            borderRadius: 16,
-                            borderWidth: 1,
-                            borderColor: "rgba(132,132,132,0.34)",
-                        }}
-                        contentFit="cover"
-                    />
-                </View>
-                <FlexText
-                    numberOfLines={2}
-                    ellipsizeMode="tail"
-                    style={[styles.textStyle, { color: "white", width: "100%", flexShrink: 1, marginBottom: 4 }]}
-                >
-                    {item.title}
-                </FlexText>
-                <IMDbBadge score={item.vote_average} />
-            </GesturePressable>
+            <MediaCard
+                id={item.id}
+                title={item.title}
+                posterPath={item.poster_path}
+                voteAverage={item.vote_average}
+                type="movie"
+            />
         ),
         [],
     );
 
     const renderTvItem = useCallback(
-        ({ item }: { item: any }) => (
-            <GesturePressable
-                onPress={() => router.navigate({ pathname: "/tv_detail", params: { id: item.id } })}
-                style={{ width: CARD_WIDTH, marginRight: 12, overflow: "hidden", position: "relative" }}
-            >
-                <View style={{ width: CARD_WIDTH, borderRadius: 16, overflow: "hidden", position: "relative" }}>
-                    <Image
-                        source={{ uri: getImageUrl(item.poster_path, 342) }}
-                        style={{
-                            width: CARD_WIDTH,
-                            aspectRatio: 2 / 3,
-                            borderRadius: 16,
-                            borderWidth: 1,
-                            borderColor: "rgba(132,132,132,0.34)",
-                        }}
-                        contentFit="cover"
-                    />
-                </View>
-                <FlexText
-                    numberOfLines={2}
-                    ellipsizeMode="tail"
-                    style={[styles.textStyle, { color: "white", width: "100%", flexShrink: 1, marginBottom: 4 }]}
-                >
-                    {item.name}
-                </FlexText>
-                <IMDbBadge score={item.vote_average} />
-            </GesturePressable>
+        ({ item }: ListRenderItemInfo<any>) => (
+            <MediaCard
+                id={item.id}
+                title={item.name}
+                posterPath={item.poster_path}
+                voteAverage={item.vote_average}
+                type="tv"
+            />
         ),
         [],
     );
 
     const renderPersonItem = useCallback(
-        ({ item }: { item: any }) => (
-            <GesturePressable
-                onPress={() => router.navigate({ pathname: "/person_detail", params: { id: item.id } })}
-                style={{ width: 100, marginRight: 16, alignItems: "center" }}
-            >
-                <Image
-                    source={{ uri: getImageUrl(item.profile_path, 185) }}
-                    style={{
-                        width: 100,
-                        height: 100,
-                        borderRadius: 9999,
-                        borderWidth: 1,
-                        borderColor: "rgba(132,132,132,0.34)",
-                    }}
-                    contentFit="cover"
-                />
-                <FlexText
-                    numberOfLines={2}
-                    style={[styles.textStyle, { color: "white", width: "100%", textAlign: "center", marginTop: 8, fontWeight: "600" }]}
-                >
-                    {item.name}
-                </FlexText>
-                <FlexText
-                    numberOfLines={1}
-                    style={[styles.textStyle, { color: "rgba(255,255,255,0.5)", width: "100%", textAlign: "center", marginTop: 2, fontSize: 12 }]}
-                >
-                    {item.known_for_department}
-                </FlexText>
-            </GesturePressable>
+        ({ item }: ListRenderItemInfo<any>) => (
+            <PersonCard
+                id={item.id}
+                name={item.name}
+                profilePath={item.profile_path}
+                knownForDepartment={item.known_for_department}
+            />
         ),
         [],
     );
 
-    const movieKeyExtractor = useCallback((item: Movie) => item.id.toString(), []);
+    const mediaKeyExtractor = useCallback((item: any) => item.id.toString(), []);
 
     return (
         <ScrollView
@@ -238,9 +326,9 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                 />
             }
         >
-            {/* Hero shimmer — only blocks on the trending banner */}
+            {/* Hero skeleton — only blocks on the trending banner */}
             {isLoading && (
-                <ShimmerEffect style={{ height: posterHeight, width: "100%" }} />
+                <Skeleton style={{ height: posterHeight, width: "100%" }} />
             )}
 
             {!isLoading && (
@@ -344,240 +432,97 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                     )}
 
                     {/* Now Playing Movies */}
-                    {isNowLoading ? (
-                        <SectionShimmer title="In Theatres" />
-                    ) : nowPlaying && nowPlaying.length > 0 && (
-                        <View style={{ marginTop: 24 }}>
-                            <Pressable
-                                onPress={() => router.navigate({ pathname: "/movie_list", params: { mode: "now_playing", title: "In Theatres" } })}
-                                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                    In Theatres
-                                </FlexText>
-                                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                    <Ionicons name="chevron-forward" size={20} color="white" />
-                                </View>
-                            </Pressable>
-                            <FlatList
-                                horizontal
-                                data={nowPlaying}
-                                keyExtractor={movieKeyExtractor}
-                                renderItem={renderMovieItem}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            />
-                        </View>
-                    )}
+                    <MediaSection
+                        title="In Theatres"
+                        isLoading={isNowLoading}
+                        data={nowPlaying}
+                        renderItem={renderMovieItem}
+                        keyExtractor={mediaKeyExtractor}
+                        onPressHeader={() => router.navigate({ pathname: "/movie_list", params: { mode: "now_playing", title: "In Theatres" } })}
+                        style={{ marginTop: 24 }}
+                    />
 
                     {/* Airing Today TV */}
-                    {isAirTodayLoading ? (
-                        <SectionShimmer title="Airing Today" />
-                    ) : tvAiringToday && tvAiringToday.length > 0 && (
-                        <View>
-                            <Pressable
-                                onPress={() => router.navigate({ pathname: "/movie_list", params: { mode: "tv_airing_today", title: "Airing Today" } })}
-                                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                    Airing Today
-                                </FlexText>
-                                <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                    <Ionicons name="chevron-forward" size={20} color="white" />
-                                </View>
-                            </Pressable>
-                            <FlatList
-                                horizontal
-                                data={tvAiringToday}
-                                keyExtractor={(item: any, index) => `${item.id}-${index}`}
-                                renderItem={renderTvItem}
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            />
-                        </View>
-                    )}
+                    <MediaSection
+                        title="Airing Today"
+                        isLoading={isAirTodayLoading}
+                        data={tvAiringToday}
+                        renderItem={renderTvItem}
+                        keyExtractor={mediaKeyExtractor}
+                        onPressHeader={() => router.navigate({ pathname: "/movie_list", params: { mode: "tv_airing_today", title: "Airing Today" } })}
+                    />
 
                     {!isBelowFoldReady ? null : (
                         <>
                             {/* Upcoming Movies */}
-                            {isUpLoading ? (
-                                <SectionShimmer title="Upcoming Movies" />
-                            ) : upcoming && upcoming.length > 0 && (
-                                <View>
-                                    <Pressable
-                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "upcoming", title: "Upcoming Movies" } })}
-                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                            Upcoming Movies
-                                        </FlexText>
-                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                            <Ionicons name="chevron-forward" size={20} color="white" />
-                                        </View>
-                                    </Pressable>
-                                    <FlatList
-                                        horizontal
-                                        data={upcoming}
-                                        keyExtractor={movieKeyExtractor}
-                                        renderItem={renderMovieItem}
-                                        showsHorizontalScrollIndicator={false}
-                                        contentContainerStyle={{ paddingHorizontal: 16 }}
-                                    />
-                                </View>
-                            )}
+                            <MediaSection
+                                title="Upcoming Movies"
+                                isLoading={isUpLoading}
+                                data={upcoming}
+                                renderItem={renderMovieItem}
+                                keyExtractor={mediaKeyExtractor}
+                                onPressHeader={() => router.push({ pathname: "/movie_list", params: { mode: "upcoming", title: "Upcoming Movies" } })}
+                            />
 
-                            {/* On The Air TV */}
-                            {isOnAirLoading ? (
-                                <SectionShimmer title="Currently On TV" />
-                            ) : tvOnTheAir && tvOnTheAir.length > 0 && (
-                                <View>
-                                    <Pressable
-                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_on_the_air", title: "On The Air" } })}
-                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                            Currently On TV
-                                        </FlexText>
-                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                            <Ionicons name="chevron-forward" size={20} color="white" />
-                                        </View>
-                                    </Pressable>
-                                    <FlatList
-                                        horizontal
-                                        data={tvOnTheAir}
-                                        keyExtractor={(item: any, index) => `${item.id}-${index}`}
-                                        renderItem={renderTvItem}
-                                        showsHorizontalScrollIndicator={false}
-                                        contentContainerStyle={{ paddingHorizontal: 16 }}
-                                    />
-                                </View>
-                            )}
+                            {/* Currently On TV */}
+                            <MediaSection
+                                title="Currently On TV"
+                                isLoading={isOnAirLoading}
+                                data={tvOnTheAir}
+                                renderItem={renderTvItem}
+                                keyExtractor={mediaKeyExtractor}
+                                onPressHeader={() => router.push({ pathname: "/movie_list", params: { mode: "tv_on_the_air", title: "On The Air" } })}
+                            />
 
                             {/* Popular Movies */}
-                            {isPopularLoading ? (
-                                <SectionShimmer title="Popular Movies" />
-                            ) : popular && popular.length > 0 && (
-                                <View>
-                                    <Pressable
-                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "popular", title: "Popular Movies" } })}
-                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                            Popular Movies
-                                        </FlexText>
-                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                            <Ionicons name="chevron-forward" size={20} color="white" />
-                                        </View>
-                                    </Pressable>
-                                    <FlatList
-                                        horizontal
-                                        data={popular}
-                                        keyExtractor={movieKeyExtractor}
-                                        renderItem={renderMovieItem}
-                                        showsHorizontalScrollIndicator={false}
-                                        contentContainerStyle={{ paddingHorizontal: 16 }}
-                                    />
-                                </View>
-                            )}
+                            <MediaSection
+                                title="Popular Movies"
+                                isLoading={isPopularLoading}
+                                data={popular}
+                                renderItem={renderMovieItem}
+                                keyExtractor={mediaKeyExtractor}
+                                onPressHeader={() => router.push({ pathname: "/movie_list", params: { mode: "popular", title: "Popular Movies" } })}
+                            />
 
-                            {/* Popular TV */}
-                            {isPopTvLoading ? (
-                                <SectionShimmer title="Popular TV Shows" />
-                            ) : tvPopular && tvPopular.length > 0 && (
-                                <View>
-                                    <Pressable
-                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_popular", title: "Popular TV Shows" } })}
-                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                            Popular TV Shows
-                                        </FlexText>
-                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                            <Ionicons name="chevron-forward" size={20} color="white" />
-                                        </View>
-                                    </Pressable>
-                                    <FlatList
-                                        horizontal
-                                        data={tvPopular}
-                                        keyExtractor={(item: any, index) => `${item.id}-${index}`}
-                                        renderItem={renderTvItem}
-                                        showsHorizontalScrollIndicator={false}
-                                        contentContainerStyle={{ paddingHorizontal: 16 }}
-                                    />
-                                </View>
-                            )}
+                            {/* Popular TV Shows */}
+                            <MediaSection
+                                title="Popular TV Shows"
+                                isLoading={isPopTvLoading}
+                                data={tvPopular}
+                                renderItem={renderTvItem}
+                                keyExtractor={mediaKeyExtractor}
+                                onPressHeader={() => router.push({ pathname: "/movie_list", params: { mode: "tv_popular", title: "Popular TV Shows" } })}
+                            />
 
-                            {/* Popular People */}
-                            {isPopPeopleLoading ? (
-                                <SectionShimmer title="Trending People" />
-                            ) : popularPeople && popularPeople.length > 0 && (
-                                <View>
-                                    <Pressable
-                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "popular_people", title: "Trending People" } })}
-                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                            Trending People
-                                        </FlexText>
-                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                            <Ionicons name="chevron-forward" size={20} color="white" />
-                                        </View>
-                                    </Pressable>
-                                    <FlatList
-                                        horizontal
-                                        data={popularPeople}
-                                        keyExtractor={(item) => item.id.toString()}
-                                        renderItem={renderPersonItem}
-                                        showsHorizontalScrollIndicator={false}
-                                        contentContainerStyle={{ paddingHorizontal: 16 }}
-                                    />
-                                </View>
-                            )}
+                            {/* Trending People */}
+                            <MediaSection
+                                title="Trending People"
+                                isLoading={isPopPeopleLoading}
+                                data={popularPeople}
+                                renderItem={renderPersonItem}
+                                keyExtractor={mediaKeyExtractor}
+                                onPressHeader={() => router.push({ pathname: "/movie_list", params: { mode: "popular_people", title: "Trending People" } })}
+                            />
 
                             {/* Top Rated Movies */}
-                            {isTopRatedLoading ? (
-                                <SectionShimmer title="Top Rated Movies" />
-                            ) : topRated && topRated.length > 0 && (
-                                <View>
-                                    <Pressable
-                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "top_rated", title: "Top Rated Movies" } })}
-                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                            Top Rated Movies
-                                        </FlexText>
-                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                            <Ionicons name="chevron-forward" size={20} color="white" />
-                                        </View>
-                                    </Pressable>
-                                    <FlatList
-                                        horizontal
-                                        data={topRated}
-                                        keyExtractor={movieKeyExtractor}
-                                        renderItem={renderMovieItem}
-                                        showsHorizontalScrollIndicator={false}
-                                        contentContainerStyle={{ paddingHorizontal: 16 }}
-                                    />
-                                </View>
-                            )}
+                            <MediaSection
+                                title="Top Rated Movies"
+                                isLoading={isTopRatedLoading}
+                                data={topRated}
+                                renderItem={renderMovieItem}
+                                keyExtractor={mediaKeyExtractor}
+                                onPressHeader={() => router.push({ pathname: "/movie_list", params: { mode: "top_rated", title: "Top Rated Movies" } })}
+                            />
 
-                            {/* Top Rated TV */}
-                            {isTopTvLoading ? (
-                                <SectionShimmer title="Top Rated TV Shows" />
-                            ) : tvTopRated && tvTopRated.length > 0 && (
-                                <View>
-                                    <Pressable
-                                        onPress={() => router.push({ pathname: "/movie_list", params: { mode: "tv_top_rated", title: "Top Rated TV" } })}
-                                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
-                                        <FlexText style={[styles.sectionTitle, { color: "white", flex: 1 }]}>
-                                            Top Rated TV Shows
-                                        </FlexText>
-                                        <View style={{ backgroundColor: "rgba(52, 52, 52, 1)", padding: 8, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 999 }}>
-                                            <Ionicons name="chevron-forward" size={20} color="white" />
-                                        </View>
-                                    </Pressable>
-                                    <FlatList
-                                        horizontal
-                                        data={tvTopRated}
-                                        keyExtractor={(item: any, index) => `${item.id}-${index}`}
-                                        renderItem={renderTvItem}
-                                        showsHorizontalScrollIndicator={false}
-                                        contentContainerStyle={{ paddingHorizontal: 16 }}
-                                    />
-                                </View>
-                            )}
+                            {/* Top Rated TV Shows */}
+                            <MediaSection
+                                title="Top Rated TV Shows"
+                                isLoading={isTopTvLoading}
+                                data={tvTopRated}
+                                renderItem={renderTvItem}
+                                keyExtractor={mediaKeyExtractor}
+                                onPressHeader={() => router.push({ pathname: "/movie_list", params: { mode: "tv_top_rated", title: "Top Rated TV" } })}
+                            />
                         </>
                     )}
                 </>

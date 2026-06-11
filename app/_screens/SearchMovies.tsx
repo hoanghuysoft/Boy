@@ -1,11 +1,10 @@
 import { FlexText } from "@/components/FlexText";
-import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { SearchType, useTypedSearchInfinite } from "@/hooks/useMovies";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import { useRouter } from "expo-router";
-import { Spinner } from "heroui-native";
+import { SkeletonGroup, Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   FlatList,
@@ -294,17 +293,19 @@ const SearchMoviesScreen = () => {
         ListEmptyComponent={() => {
           if (isLoading && submittedQuery) {
             return (
-              <View style={{ padding: 16, gap: 12 }}>
-                {[1, 2, 3, 4, 5].map((key) => (
-                  <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
-                    <ShimmerEffect style={styles.thumbnail} />
-                    <View style={{ flex: 1, gap: 8 }}>
-                      <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 4 }} />
-                      <ShimmerEffect style={{ height: 12, width: '60%', borderRadius: 4 }} />
+              <SkeletonGroup isLoading={true} variant="shimmer">
+                <View style={{ padding: 16, gap: 12 }}>
+                  {[1, 2, 3, 4, 5].map((key) => (
+                    <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
+                      <SkeletonGroup.Item style={styles.thumbnail} />
+                      <View style={{ flex: 1, gap: 8 }}>
+                        <SkeletonGroup.Item style={{ height: 16, width: '80%', borderRadius: 4 }} />
+                        <SkeletonGroup.Item style={{ height: 12, width: '60%', borderRadius: 4 }} />
+                      </View>
                     </View>
-                  </View>
-                ))}
-              </View>
+                  ))}
+                </View>
+              </SkeletonGroup>
             );
           }
 
@@ -407,8 +408,8 @@ const makeStyles = (colors: any) =>
     },
     thumbnail: {
       width: 90,
-      height: 135,
-      borderRadius: 12,
+      height: 90,
+      borderRadius: 45,
       backgroundColor: "rgba(255,255,255,0.08)",
     },
     title: {

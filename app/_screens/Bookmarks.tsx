@@ -1,8 +1,8 @@
 import BookmarkIcon from "@/icons/bookmark";
 import { useBookmarks } from "@/services/bookmark";
 import { BookmarkedPost } from "@/types/bookmarkedpost";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useRouter } from "expo-router";
 import { SkeletonGroup, Spinner } from "heroui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -218,7 +218,8 @@ const BookmarksScreen = () => {
                         colors={[colors.text]}
                         progressBackgroundColor={colors.card}
                         progressViewOffset={insets.top}
-                    />}
+                    />
+                }
             />
 
             <LikersSheet ref={likersSheetRef} postId={selectedLikePostId} onDismiss={handleLikersSheetDismiss} />

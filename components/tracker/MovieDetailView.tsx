@@ -1,7 +1,6 @@
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
-import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import { useThemeContext } from "@/context/ThemeContext";
@@ -11,14 +10,15 @@ import { CastMember } from "@/types/moviedb";
 import { Movie } from "@/types/moviedb/movie";
 import { TMDBVideoResult } from "@/types/moviedb/movie-entities";
 import { TMDBMovieImage } from "@/types/moviedb/movie-images";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { DialogBold, WallpaperBold } from "@solar-icons/react-native";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { SkeletonGroup } from "heroui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     FlatList,
@@ -251,7 +251,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                 </GesturePressable>
             )
         },
-        [router],
+        [],
     );
 
     const renderVideoItem = useCallback(
@@ -323,15 +323,17 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     if (isLoading || !isReady || skiaImage === null) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
-                <View style={{ gap: 16 }}>
-                    <ShimmerEffect style={{ height: posterHeight, width: "100%" }} />
-                    <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
-                        <ShimmerEffect style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
-                        <ShimmerEffect style={{ height: 16, width: "100%", borderRadius: 8 }} />
-                        <ShimmerEffect style={{ height: 16, width: "80%", borderRadius: 8 }} />
-                        <ShimmerEffect style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
+                <SkeletonGroup isLoading={true} variant="shimmer">
+                    <View style={{ gap: 16 }}>
+                        <SkeletonGroup.Item style={{ height: posterHeight, width: "100%" }} />
+                        <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
+                            <SkeletonGroup.Item style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
+                            <SkeletonGroup.Item style={{ height: 16, width: "100%", borderRadius: 8 }} />
+                            <SkeletonGroup.Item style={{ height: 16, width: "80%", borderRadius: 8 }} />
+                            <SkeletonGroup.Item style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
+                        </View>
                     </View>
-                </View>
+                </SkeletonGroup>
             </View>
         );
     }

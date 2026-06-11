@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/refs */
 import { GalleryModal } from "@/components/gallery/GalleryModal";
-import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
+import { SkeletonGroup } from "heroui-native";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { DialogBold, WallpaperBold } from "@solar-icons/react-native";
@@ -38,15 +38,17 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
     if (vm.isLoading || !isReady || vm.skiaImage === null) {
         return (
             <View style={[styles.screen, { backgroundColor: vm.darkDominant }]}>
-                <View style={{ gap: 16 }}>
-                    <ShimmerEffect style={{ height: 500, width: "100%" }} />
-                    <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
-                        <ShimmerEffect style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
-                        <ShimmerEffect style={{ height: 16, width: "100%", borderRadius: 8 }} />
-                        <ShimmerEffect style={{ height: 16, width: "80%", borderRadius: 8 }} />
-                        <ShimmerEffect style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
+                <SkeletonGroup isLoading={true} variant="shimmer">
+                    <View style={{ gap: 16 }}>
+                        <SkeletonGroup.Item style={{ height: 500, width: "100%" }} />
+                        <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
+                            <SkeletonGroup.Item style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
+                            <SkeletonGroup.Item style={{ height: 16, width: "100%", borderRadius: 8 }} />
+                            <SkeletonGroup.Item style={{ height: 16, width: "80%", borderRadius: 8 }} />
+                            <SkeletonGroup.Item style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
+                        </View>
                     </View>
-                </View>
+                </SkeletonGroup>
             </View>
         );
     }

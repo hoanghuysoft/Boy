@@ -1,5 +1,5 @@
 import { FlexText } from "@/components/FlexText";
-import { ShimmerEffect } from "@/components/shimmer/Shimmer";
+import { SkeletonGroup } from "heroui-native";
 import type { VideoCard } from "@/types/shows";
 import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
@@ -102,25 +102,27 @@ const MovieHubScreen = () => {
         >
           {/* Loading Shimmer */}
           {(vm.isLoadingSlider || vm.isLoadingSections) ? (
-            <View style={{ gap: 24 }}>
-              <ShimmerEffect style={{ height: posterHeight, width: '100%' }} />
-              <View style={{ gap: 16 }}>
-                <ShimmerEffect style={{ height: 24, width: 120, marginLeft: 16, borderRadius: 4 }} />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                </ScrollView>
+            <SkeletonGroup isLoading={true} variant="shimmer">
+              <View style={{ gap: 24 }}>
+                <SkeletonGroup.Item style={{ height: posterHeight, width: '100%' }} />
+                <View style={{ gap: 16 }}>
+                  <SkeletonGroup.Item style={{ height: 24, width: 120, marginLeft: 16, borderRadius: 4 }} />
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+                    <SkeletonGroup.Item style={{ height: 110, width: 200, borderRadius: 16 }} />
+                    <SkeletonGroup.Item style={{ height: 110, width: 200, borderRadius: 16 }} />
+                    <SkeletonGroup.Item style={{ height: 110, width: 200, borderRadius: 16 }} />
+                  </ScrollView>
+                </View>
+                <View style={{ gap: 16 }}>
+                  <SkeletonGroup.Item style={{ height: 24, width: 150, marginLeft: 16, borderRadius: 4 }} />
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
+                    <SkeletonGroup.Item style={{ height: 110, width: 200, borderRadius: 16 }} />
+                    <SkeletonGroup.Item style={{ height: 110, width: 200, borderRadius: 16 }} />
+                    <SkeletonGroup.Item style={{ height: 110, width: 200, borderRadius: 16 }} />
+                  </ScrollView>
+                </View>
               </View>
-              <View style={{ gap: 16 }}>
-                <ShimmerEffect style={{ height: 24, width: 150, marginLeft: 16, borderRadius: 4 }} />
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                  <ShimmerEffect style={{ height: 110, width: 200, borderRadius: 16 }} />
-                </ScrollView>
-              </View>
-            </View>
+            </SkeletonGroup>
           ) : (
             <>
               {(vm.isErrorSlider || vm.isErrorSections) && (

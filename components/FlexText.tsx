@@ -11,6 +11,7 @@ interface FlexTextProps extends TextProps {
   light?: boolean;
   thin?: boolean;
   extraLight?: boolean;
+  parse?: any[];
 }
 
 const FONT_MAP: Record<string, string> = {
@@ -26,7 +27,7 @@ const FONT_MAP: Record<string, string> = {
 };
 
 export function FlexText(props: FlexTextProps) {
-  const { style, children, bold, medium, light, thin, extraLight, ...rest } = props;
+  const { style, children, bold, medium, light, thin, extraLight, parse, ...rest } = props;
 
   let selectedFont = '';
   if (bold) selectedFont = 'GoogleSansFlexBold';
@@ -41,16 +42,20 @@ export function FlexText(props: FlexTextProps) {
     selectedFont = FONT_MAP[weight] || 'GoogleSansFlexRegular';
   }
 
+  const defaultParse = [
+    {
+      pattern: EMOJI_PATTERN,
+      style: styles.emojiFont, 
+    },
+  ];
+
+  const mergedParse = parse ? [...defaultParse, ...parse] : defaultParse;
+
   return (
     <ParsedText
       {...rest}
       style={[style, { fontFamily: selectedFont }]}
-      parse={[
-        {
-          pattern: EMOJI_PATTERN,
-          style: styles.emojiFont, 
-        },
-      ]}
+      parse={mergedParse}
     >
       {children}
     </ParsedText>

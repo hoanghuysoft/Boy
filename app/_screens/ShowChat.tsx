@@ -9,6 +9,7 @@ import { BlurTargetView, BlurView } from "expo-blur";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
+import { flatMap } from "lodash";
 import { memo, useCallback, useMemo, useRef } from "react";
 import { Dimensions, FlatList, RefreshControl, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -40,16 +41,24 @@ const ChatItem = memo(({
     if (showDateDivider) {
         const today = dayjs().startOf('day');
         const itemDay = dayjs(item.time * 1000).startOf('day');
+        const isVi = dayjs.locale() === 'vi';
         if (itemDay.isSame(today)) {
-            dateString = 'Today';
+            dateString = isVi ? 'Hôm nay' : 'Today';
         } else if (itemDay.isSame(today.subtract(1, 'day'))) {
-            dateString = 'Yesterday';
+            dateString = isVi ? 'Hôm qua' : 'Yesterday';
         } else {
-            dateString = itemDay.format('MMMM D, YYYY');
+            dateString = isVi ? itemDay.format('DD/MM/YYYY') : itemDay.format('MMMM D, YYYY');
         }
     }
 
     const bubbleColor = colors.card;
+
+    const parsePatterns = useMemo(() => [
+        {
+            pattern: /\B@\w+/,
+            style: { color: colors.secondary, fontWeight: 'bold' } as const,
+        }
+    ], [colors.secondary]);
 
     return (
         <View>
@@ -77,7 +86,7 @@ const ChatItem = memo(({
             <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 24, alignItems: 'flex-start', gap: 4 }}>
                 <SquircleView preserveSmoothing cornerSmoothing={100} borderRadius={2} style={{ width: 36, height: 36, overflow: "hidden" }}>
                     <ExpoImage
-                        source={item.avatar_url ? { uri: item.avatar_url } : require("../../assets/images/AV17.png")}
+                        source={{ uri: item.avatar_url || `https://i.pravatar.cc/100?u=${item.uid}` }}
                         style={{ width: 36, height: 36, borderRadius: 18 }}
                         contentFit="cover"
                     />
@@ -110,7 +119,7 @@ const ChatItem = memo(({
                                 borderBottomRightRadius: 5,
                             }}
                         >
-                            <FlexText style={{ fontSize: 16, color: colors.text, lineHeight: 22 }}>{item.body}</FlexText>
+                            <FlexText parse={parsePatterns} style={{ fontSize: 16, color: colors.text, lineHeight: 22 }}>{item.body}</FlexText>
                         </View>
                     </View>
                 </View>
@@ -120,7 +129,8 @@ const ChatItem = memo(({
 }, (prevProps, nextProps) => {
     return prevProps.item.id === nextProps.item.id &&
         prevProps.olderItem?.id === nextProps.olderItem?.id &&
-        prevProps.colors.card === nextProps.colors.card;
+        prevProps.colors.card === nextProps.colors.card &&
+        prevProps.colors.secondary === nextProps.colors.secondary;
 });
 
 ChatItem.displayName = "ChatItem";
@@ -141,7 +151,7 @@ const ShowChatScreen = () => {
     } = useChatInfiniteQuery();
 
     const items = useMemo<ChatMessage[]>(
-        () => data?.pages.flatMap((p) => p.messages) ?? [],
+        () => flatMap(data?.pages, (p) => [...p.messages].reverse()),
         [data]
     );
 
@@ -188,10 +198,11 @@ const ShowChatScreen = () => {
                     onEndReachedThreshold={0.3}
                     refreshControl={
                         <RefreshControl
-                            refreshing={isFetching && !isLoading}
+                            refreshing={isFetching}
                             onRefresh={refetch}
-                            tintColor={colors.secondary}
-                            colors={[colors.secondary]}
+                            tintColor={colors.text}
+                            colors={[colors.text]}
+                            progressBackgroundColor={colors.card}
                         />
                     }
                 />

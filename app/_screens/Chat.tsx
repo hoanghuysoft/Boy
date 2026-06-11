@@ -1,10 +1,10 @@
 import { MovieDBView } from "@/components/tracker/MovieDBView";
-import { FolderFavouriteBookmarkBold, RoundedMagnifierBold } from "@solar-icons/react-native";
+import { RoundedMagnifierBold } from "@solar-icons/react-native";
 import { BlurTargetView } from "expo-blur";
+import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -38,18 +38,6 @@ const ChatScreen = () => {
           <Text style={[styles.textStyle, { color: "white", fontSize: 42, fontWeight: "700" }]}>tv</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-          <TouchableOpacity
-            onPress={() => router.push("/watchlist")}
-            style={{
-              borderRadius: 999,
-              width: 40,
-              height: 40,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <FolderFavouriteBookmarkBold size={28} color={"white"} />
-          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push("/search_movies")}
             style={{

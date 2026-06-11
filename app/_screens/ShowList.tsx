@@ -1,5 +1,4 @@
 import { FlexText } from "@/components/FlexText";
-import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import {
   useCategoryInfiniteQuery,
   useTagInfiniteQuery,
@@ -22,7 +21,7 @@ import {
 } from "react-native";
 
 import { Image as ExpoImage } from "expo-image";
-import { Spinner } from "heroui-native";
+import { SkeletonGroup, Spinner } from "heroui-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -161,17 +160,19 @@ const ShowListScreen = () => {
   const ListFooterComponent = useCallback(() => {
     if (isLoading) {
       return (
-        <View style={{ gap: 12, paddingHorizontal: 16, paddingTop: 16 }}>
-          {[1, 2, 3, 4, 5].map((key) => (
-            <View key={key} style={[styles.row, { padding: 0 }]}>
-              <ShimmerEffect style={styles.thumbnail} />
-              <View style={{ flex: 1, gap: 8 }}>
-                <ShimmerEffect style={{ height: 16, width: '80%', borderRadius: 4 }} />
-                <ShimmerEffect style={{ height: 12, width: '60%', borderRadius: 4 }} />
+        <SkeletonGroup isLoading={true} variant="shimmer">
+          <View style={{ gap: 12, paddingHorizontal: 16, paddingTop: 16 }}>
+            {[1, 2, 3, 4, 5].map((key) => (
+              <View key={key} style={[styles.row, { padding: 0 }]}>
+                <SkeletonGroup.Item style={styles.thumbnail} />
+                <View style={{ flex: 1, gap: 8 }}>
+                  <SkeletonGroup.Item style={{ height: 16, width: '80%', borderRadius: 4 }} />
+                  <SkeletonGroup.Item style={{ height: 12, width: '60%', borderRadius: 4 }} />
+                </View>
               </View>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        </SkeletonGroup>
       );
     }
 

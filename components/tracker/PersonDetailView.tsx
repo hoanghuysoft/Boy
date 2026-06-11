@@ -2,8 +2,8 @@
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
-import { ShimmerEffect } from "@/components/shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
+import { SkeletonGroup } from "heroui-native";
 import { useThemeContext } from "@/context/ThemeContext";
 import { usePersonDetails } from "@/hooks/useMovies";
 import { useGalleryStore } from "@/stores/gallery";
@@ -238,15 +238,17 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
     if (isLoading || !isReady || skiaImage === null) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
-                <View style={{ gap: 16 }}>
-                    <ShimmerEffect style={{ height: posterHeight, width: "100%" }} />
-                    <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
-                        <ShimmerEffect style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
-                        <ShimmerEffect style={{ height: 16, width: "100%", borderRadius: 8 }} />
-                        <ShimmerEffect style={{ height: 16, width: "80%", borderRadius: 8 }} />
-                        <ShimmerEffect style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
+                <SkeletonGroup isLoading={true} variant="shimmer">
+                    <View style={{ gap: 16 }}>
+                        <SkeletonGroup.Item style={{ height: posterHeight, width: "100%" }} />
+                        <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
+                            <SkeletonGroup.Item style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
+                            <SkeletonGroup.Item style={{ height: 16, width: "100%", borderRadius: 8 }} />
+                            <SkeletonGroup.Item style={{ height: 16, width: "80%", borderRadius: 8 }} />
+                            <SkeletonGroup.Item style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
+                        </View>
                     </View>
-                </View>
+                </SkeletonGroup>
             </View>
         );
     }
