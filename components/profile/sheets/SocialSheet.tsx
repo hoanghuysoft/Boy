@@ -3,8 +3,10 @@ import { useAddSocialLink, useDeleteSocialLink, useUpdateSocialLink } from '@/se
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { EarthBold } from '@solar-icons/react-native';
-import { Button, Chip, Spinner } from "heroui-native";
+import { Earth } from "@solar-icons/react-native/Bold";
+import { Button } from "heroui-native/button";
+import { Chip } from "heroui-native/chip";
+import { Spinner } from "heroui-native/spinner";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, Keyboard, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
@@ -266,7 +268,7 @@ const SocialLinkItem = memo(({
                         />
                     ) : (
                         <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
-                            <EarthBold size={24} color={colors.text} />
+                            <Earth size={24} color={colors.text} />
                         </View>
                     );
 

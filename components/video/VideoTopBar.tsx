@@ -1,5 +1,5 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { MutedBold, Pip2Bold, VolumeLoudBold } from "@solar-icons/react-native";
+import { Muted, Pip2, VolumeLoud } from "@solar-icons/react-native/Bold";
 import React from "react";
 import {
   Animated,
@@ -50,7 +50,7 @@ export const VideoTopBar: React.FC<VideoTopBarProps> = ({
           <Ionicons name="close" size={24} color={"white"} />
         </TouchableOpacity>
         <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onPipMode}>
-          <Pip2Bold size={20} color={"white"} />
+          <Pip2 size={20} color={"white"} />
         </TouchableOpacity>
       </View>
       <View style={[commonRowStyle, { gap: 12 }]} pointerEvents="box-none">
@@ -59,9 +59,9 @@ export const VideoTopBar: React.FC<VideoTopBarProps> = ({
         </TouchableOpacity> */}
         <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onMuteToggle}>
           {isMute ? (
-            <MutedBold size={20} color={"white"} />
+            <Muted size={20} color={"white"} />
           ) : (
-            <VolumeLoudBold size={20} color={"white"} />
+            <VolumeLoud size={20} color={"white"} />
           )}
         </TouchableOpacity>
       </View>

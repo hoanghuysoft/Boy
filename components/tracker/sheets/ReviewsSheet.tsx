@@ -10,7 +10,7 @@ import { ActivityIndicator } from 'react-native-paper';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { useSheetBackHandler } from "../../profile/sheets/useSheetBackHandler";
-import { Spinner } from 'heroui-native';
+import { Spinner } from "heroui-native/spinner";
 
 interface ReviewsSheetProps {
     data: TMDBReview[];

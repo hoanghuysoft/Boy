@@ -10,7 +10,8 @@ import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { Workplace } from '../../../types/profileworplace';
 import { useSheetBackHandler } from "./useSheetBackHandler";
-import { Button, Spinner } from "heroui-native";
+import { Button } from "heroui-native/button";
+import { Spinner } from "heroui-native/spinner";
 import { useAddWorkplace, useUpdateWorkplace, useDeleteWorkplace } from '@/services/workplace';
 import DateTimePicker from '@expo/ui/community/datetime-picker';
 

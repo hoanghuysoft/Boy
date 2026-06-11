@@ -18,7 +18,9 @@ import * as Yup from "yup";
 // Components
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Image } from "expo-image";
-import { Button, Card, Dialog } from "heroui-native";
+import { Button } from "heroui-native/button";
+import { Card } from "heroui-native/card";
+import { Dialog } from "heroui-native/dialog";
 import {
     ContentInput,
     CreateActionBar,

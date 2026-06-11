@@ -1,10 +1,12 @@
 import { FlexText } from '@/components/FlexText';
 import { WatchlistShow, useShowWatchlistStore } from '@/stores/showWatchlist';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { RoundedMagnifierOutline, TrashBinTrashBold } from '@solar-icons/react-native';
+import { RoundedMagnifier } from "@solar-icons/react-native/Outline";
+import { TrashBinTrash } from "@solar-icons/react-native/Bold";
 import dayjs from 'dayjs';
 import { router } from 'expo-router';
-import { Button, Dialog } from "heroui-native";
+import { Button } from "heroui-native/button";
+import { Dialog } from "heroui-native/dialog";
 import React, { useCallback, useMemo, useState } from 'react';
 import {
     FlatList,
@@ -166,7 +168,7 @@ const ShowWatchlistScreen = () => {
                         onPress={handleClearAll}
                         style={[styles.iconButton, { backgroundColor: colors.containerContent }]}
                     >
-                        <TrashBinTrashBold size={20} color={colors.muted} />
+                        <TrashBinTrash size={20} color={colors.muted} />
                     </TouchableOpacity>
                 </View>
             )}
@@ -212,7 +214,7 @@ const ShowWatchlistScreen = () => {
                     ]}
                 >
                     <View style={[styles.searchBar, { backgroundColor: colors.containerContent }]}>
-                        <RoundedMagnifierOutline size={18} color={colors.muted} style={{ marginLeft: 14 }} />
+                        <RoundedMagnifier size={18} color={colors.muted} style={{ marginLeft: 14 }} />
                         <TextInput
                             style={[styles.searchInput, { color: colors.text }]}
                             placeholder="Search your watchlist..."

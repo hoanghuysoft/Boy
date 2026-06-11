@@ -1,10 +1,5 @@
-import {
-  PauseBold,
-  PlayBold,
-  Rewind5SecondsBackBold,
-  Rewind5SecondsForwardBold,
-} from "@solar-icons/react-native";
-import { Spinner } from "heroui-native";
+import { Pause, Play, Rewind5SecondsBack, Rewind5SecondsForward } from "@solar-icons/react-native/Bold";
+import { Spinner } from "heroui-native/spinner";
 import React from "react";
 import {
   StyleSheet,
@@ -48,7 +43,7 @@ export const VideoPlaybackControls: React.FC<VideoPlaybackControlsProps> = ({
       ]}
     >
       <TouchableOpacity onPress={onMoveBackward} style={styles.largeButton}>
-        <Rewind5SecondsBackBold size={32} color={"white"} />
+        <Rewind5SecondsBack size={32} color={"white"} />
       </TouchableOpacity>
       <TouchableOpacity
         onPress={onTogglePlayPause}
@@ -57,13 +52,13 @@ export const VideoPlaybackControls: React.FC<VideoPlaybackControlsProps> = ({
         {isLoading && <Spinner size="lg" color="white" />}
         {!isLoading &&
           (isPaused ? (
-            <PlayBold size={50} color="white" />
+            <Play size={50} color="white" />
           ) : (
-            <PauseBold size={50} color="white" />
+            <Pause size={50} color="white" />
           ))}
       </TouchableOpacity>
       <TouchableOpacity onPress={onMoveForward} style={styles.largeButton}>
-        <Rewind5SecondsForwardBold size={32} color={"white"} />
+        <Rewind5SecondsForward size={32} color={"white"} />
       </TouchableOpacity>
     </View>
   );

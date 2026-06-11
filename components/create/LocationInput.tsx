@@ -1,5 +1,5 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { MapPointBold } from "@solar-icons/react-native";
+import { MapPoint } from "@solar-icons/react-native/Bold";
 import React, { memo } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
@@ -39,7 +39,7 @@ export const LocationInput = memo(({
                 { backgroundColor: colors.card, borderColor: colors.divider },
             ]}
         >
-            <MapPointBold size={24} color={COLORS.primary} />
+            <MapPoint size={24} color={COLORS.primary} />
             <TextInput
                 style={[common.body, createStyles.locationInput, { color: colors.text }]}
                 placeholder={t('create.form.locationPlaceholder')}

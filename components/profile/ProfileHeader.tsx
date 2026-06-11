@@ -1,6 +1,7 @@
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CaseMinimalisticBold, PlayCircleBold, PlayCircleOutline, PointOnMapBold } from '@solar-icons/react-native';
+import { CaseMinimalistic, PlayCircle as PlayCircleBold, PointOnMap } from "@solar-icons/react-native/Bold";
+import { PlayCircle as PlayCircleOutline } from "@solar-icons/react-native/Outline";
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import React, { memo } from 'react';
@@ -205,7 +206,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                   labelStyle={vm.common.label}
                   leading={(
                     <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>
-                      <PointOnMapBold size={28} color={vm.colors.text} />
+                      <PointOnMap size={28} color={vm.colors.text} />
                     </View>
                   )}
                 >
@@ -221,7 +222,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                   labelStyle={vm.common.label}
                   leading={(
                     <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>
-                      <CaseMinimalisticBold size={28} color={vm.colors.text} />
+                      <CaseMinimalistic size={28} color={vm.colors.text} />
                     </View>
                   )}
                 >

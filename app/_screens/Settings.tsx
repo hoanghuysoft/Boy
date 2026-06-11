@@ -9,9 +9,15 @@ import { CustomSurface } from "@/components/CustomSurface";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { Logout3Bold } from '@solar-icons/react-native';
+import { Logout3 } from "@solar-icons/react-native/Bold";
 import { Href, router } from "expo-router";
-import { Button, ControlField, Description, Dialog, Label, Select, Spinner } from "heroui-native";
+import { Button } from "heroui-native/button";
+import { ControlField } from "heroui-native/control-field";
+import { Description } from "heroui-native/description";
+import { Dialog } from "heroui-native/dialog";
+import { Label } from "heroui-native/label";
+import { Select } from "heroui-native/select";
+import { Spinner } from "heroui-native/spinner";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
@@ -334,7 +340,7 @@ const SettingsScreen = () => {
                     style={styles.option}
                 >
                     <FlexText style={[common.body, { color: colors.text }]}>{t('settings.logout')}</FlexText>
-                    <Logout3Bold size={24} color={colors.text} />
+                    <Logout3 size={24} color={colors.text} />
                 </CustomSurface>
 
                 {/* ─── Logging Out Modal ─────────────────────────────────── */}

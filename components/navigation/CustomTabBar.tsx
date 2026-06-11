@@ -1,15 +1,5 @@
-import {
-    ClapperboardBold,
-    ClapperboardOutline,
-    GalleryWideBold,
-    GalleryWideOutline,
-    HomeBold,
-    HomeOutline,
-    UserRoundedBold,
-    UserRoundedOutline,
-    VideoLibraryBold,
-    VideoLibraryOutline
-} from "@solar-icons/react-native";
+import { Clapperboard as ClapperboardBold, GalleryWide as GalleryWideBold, Home as HomeBold, UserRounded as UserRoundedBold, VideoLibrary as VideoLibraryBold } from "@solar-icons/react-native/Bold";
+import { Clapperboard as ClapperboardOutline, GalleryWide as GalleryWideOutline, Home as HomeOutline, UserRounded as UserRoundedOutline, VideoLibrary as VideoLibraryOutline } from "@solar-icons/react-native/Outline";
 import { LinearGradient } from "expo-linear-gradient";
 import { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs";
 import { SquircleView } from "expo-squircle-view";

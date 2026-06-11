@@ -16,7 +16,7 @@ import { createCommonStyles } from "../../styles/common";
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
-import { Spinner } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
 
 
 const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>\]/i;

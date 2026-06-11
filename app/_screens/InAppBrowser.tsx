@@ -1,6 +1,6 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { router, useLocalSearchParams } from "expo-router";
-import { Spinner } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
 import React, { useMemo, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Snackbar } from "react-native-paper";

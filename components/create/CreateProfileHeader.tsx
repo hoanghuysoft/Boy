@@ -1,6 +1,7 @@
 import VerifiedIcon from "@/icons/verified";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { GhostSmileBold, GhostSmileOutline, HeartUnlockBold, HeartUnlockOutline } from '@solar-icons/react-native';
+import { GhostSmile as GhostSmileBold, HeartUnlock as HeartUnlockBold } from "@solar-icons/react-native/Bold";
+import { GhostSmile as GhostSmileOutline, HeartUnlock as HeartUnlockOutline } from "@solar-icons/react-native/Outline";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";

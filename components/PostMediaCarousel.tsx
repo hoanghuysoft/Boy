@@ -4,10 +4,10 @@ import { useGalleryStore } from "@/stores/gallery";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
-import { PauseBold, PlayBold, VolumeCrossBold, VolumeLoudBold } from "@solar-icons/react-native";
+import { Pause as PauseBold, Play as PlayBold, VolumeCross, VolumeLoud } from "@solar-icons/react-native/Bold";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Dimensions, Platform, Pressable as RNPressable, Text, View, ViewabilityConfig, ViewToken } from "react-native";
+import { ActivityIndicator, Platform, Pressable as RNPressable, Text, View, ViewabilityConfig, ViewToken, useWindowDimensions } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
@@ -31,12 +31,10 @@ interface PostMediaCarouselProps {
     musicTitle?: string;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const ASPECT_RATIO = 3 / 4;
 
 // Defined outside component so it's never recreated
 const PLACEHOLDER_IMAGE_VIDEO = 'https://placehold.net/3-600x800.png';
-const MEDIA_HEIGHT = SCREEN_WIDTH / ASPECT_RATIO;
 
 // ─── VideoCarouselItem ────────────────────────────────────────────────────────
 interface VideoCarouselItemProps {
@@ -46,6 +44,8 @@ interface VideoCarouselItemProps {
     content?: string;
     colors: any;
     placeholderImageVideo: string;
+    mediaHeight: number;
+    screenWidth: number;
 }
 
 const VideoCarouselItem = React.memo(({
@@ -55,6 +55,8 @@ const VideoCarouselItem = React.memo(({
     content,
     colors,
     placeholderImageVideo,
+    mediaHeight,
+    screenWidth,
 }: VideoCarouselItemProps) => {
     const videoRef = useRef<BlueskyVideoView>(null);
     const isMuted = useFeedVideoStore(s => s.isMuted);
@@ -101,7 +103,7 @@ const VideoCarouselItem = React.memo(({
         status === 'pending';
 
     return (
-        <View style={{ width: SCREEN_WIDTH }}>
+        <View style={{ width: screenWidth }}>
             <View style={{ width: '100%', aspectRatio: ASPECT_RATIO }}>
                 {/* BlueskyVideoView: the native module handles autoplay via
                     updateActiveVideoViewAsync. Each mounted instance registers
@@ -112,7 +114,7 @@ const VideoCarouselItem = React.memo(({
                         url={videoUrl}
                         autoplay={true}
                         beginMuted={isMuted}
-                        style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT, borderRadius: 0 }}
+                        style={{ width: screenWidth, height: mediaHeight, borderRadius: 0 }}
                         onActiveChange={e => {
                             setIsActive(e.nativeEvent.isActive);
                         }}
@@ -150,7 +152,7 @@ const VideoCarouselItem = React.memo(({
                     <ExpoImage
                         source={{ uri: fallbackUrls[prev] }}
                         recyclingKey={fallbackUrls[prev]}
-                        style={{ width: SCREEN_WIDTH, height: MEDIA_HEIGHT }}
+                        style={{ width: screenWidth, height: mediaHeight }}
                         contentFit="cover"
                         onError={handleThumbnailError}
                         placeholder={{ blurhash: placeholderBlurhash }}
@@ -255,9 +257,9 @@ const VideoCarouselItem = React.memo(({
                             }}
                         >
                             {isMuted ? (
-                                <VolumeCrossBold size={16} color="#ffffff" />
+                                <VolumeCross size={16} color="#ffffff" />
                             ) : (
-                                <VolumeLoudBold size={16} color="#ffffff" />
+                                <VolumeLoud size={16} color="#ffffff" />
                             )}
                         </RNPressable>
                     </>
@@ -279,20 +281,23 @@ interface PhotoCarouselItemProps {
     photoIndex: number;
     colors: any;
     mediaHeight: number;
+    screenWidth: number;
     onPress: () => void;
 }
 
 const PhotoCarouselItem = React.memo(({
     item,
     colors,
+    mediaHeight,
+    screenWidth,
     onPress,
 }: PhotoCarouselItemProps) => {
     return (
-        <View style={{ width: SCREEN_WIDTH }}>
+        <View style={{ width: screenWidth }}>
             <Pressable android_ripple={{ color: colors.divider, foreground: true }} onPress={onPress}>
                 <View style={{
-                    width: SCREEN_WIDTH,
-                    height: MEDIA_HEIGHT,
+                    width: screenWidth,
+                    height: mediaHeight,
                     backgroundColor: colors.divider,
                     overflow: 'hidden',
                 }}>
@@ -324,6 +329,7 @@ interface MediaCarouselItemProps {
     colors: any;
     placeholderImageVideo: string;
     mediaHeight: number;
+    screenWidth: number;
     onPhotoPress: (photoIndex: number) => void;
 }
 
@@ -337,6 +343,7 @@ const MediaCarouselItem = React.memo(({
     colors,
     placeholderImageVideo,
     mediaHeight,
+    screenWidth,
     onPhotoPress,
 }: MediaCarouselItemProps) => {
     // Photo index: how many photos came before this slot
@@ -359,6 +366,8 @@ const MediaCarouselItem = React.memo(({
                 content={content}
                 colors={colors}
                 placeholderImageVideo={placeholderImageVideo}
+                mediaHeight={mediaHeight}
+                screenWidth={screenWidth}
             />
         );
     }
@@ -369,6 +378,7 @@ const MediaCarouselItem = React.memo(({
             photoIndex={photoIndex}
             colors={colors}
             mediaHeight={mediaHeight}
+            screenWidth={screenWidth}
             onPress={handlePhotoPress}
         />
     );
@@ -408,6 +418,8 @@ const ClassicMediaCarousel = React.memo(({
     media, postId, profileName, content, colors,
     isAdult = false, isVerified, musicUrl, musicTitle,
 }: PostMediaCarouselProps) => {
+    const { width: screenWidth } = useWindowDimensions();
+    const mediaHeight = screenWidth / ASPECT_RATIO;
     const pressAnim = useSharedValue<number>(0);
     const pressAnimRef = useRef(pressAnim);
     const isMomentumScrolling = useRef(false);
@@ -485,11 +497,12 @@ const ClassicMediaCarousel = React.memo(({
                 content={content}
                 colors={colors}
                 placeholderImageVideo={PLACEHOLDER_IMAGE_VIDEO}
-                mediaHeight={MEDIA_HEIGHT}
+                mediaHeight={mediaHeight}
+                screenWidth={screenWidth}
                 onPhotoPress={handlePhotoPress}
             />
         </AnimatedMediaWrapper>
-    ), [pressAnim, media, postId, profileName, content, colors, handlePhotoPress]);
+    ), [pressAnim, media, postId, profileName, content, colors, mediaHeight, screenWidth, handlePhotoPress]);
 
     if (!media || media.length === 0) return null;
 
@@ -523,8 +536,8 @@ const ClassicMediaCarousel = React.memo(({
                     pressAnimRef.current.value = withDelay(120, withTiming(0, { duration: 400 }));
                 }}
                 getItemLayout={(_data, index) => ({
-                    length: SCREEN_WIDTH,
-                    offset: SCREEN_WIDTH * index,
+                    length: screenWidth,
+                    offset: screenWidth * index,
                     index,
                 })}
             />

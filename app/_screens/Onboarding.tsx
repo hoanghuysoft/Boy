@@ -3,7 +3,7 @@ import { useThemeContext } from '@/context/ThemeContext';
 import { createCommonStyles } from '@/styles/common';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import { Image as ExpoImage } from 'expo-image';
-import { Spinner } from 'heroui-native';
+import { Spinner } from "heroui-native/spinner";
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

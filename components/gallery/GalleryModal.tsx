@@ -8,7 +8,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, StatusBar, StyleSheet, View } from 'react-native';
-import { useToast } from "heroui-native";
+import { useToast } from "heroui-native/toast";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Gallery, stackTransition, type GalleryRefType } from 'react-native-zoom-toolkit';

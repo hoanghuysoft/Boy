@@ -2,7 +2,7 @@ import { FlexText } from "@/components/FlexText";
 import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import { Image } from "expo-image";
-import { Spinner } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
 import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useObserve } from "expo-observe";

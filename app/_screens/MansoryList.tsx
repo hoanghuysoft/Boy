@@ -19,7 +19,8 @@ import dayjs from "dayjs";
 import { Image as ExpoImage } from "expo-image";
 import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
-import { Avatar, SkeletonGroup } from "heroui-native";
+import { Avatar } from "heroui-native/avatar";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

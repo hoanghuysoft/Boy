@@ -1,5 +1,5 @@
 import { Profile } from '@/types/profile';
-import { CalendarBold, HeartPulse2Bold, MailboxBold, MenBold, NotebookBookmarkBold, PhoneBold, SquareAcademicCapBold, WheelBold, WomenBold } from '@solar-icons/react-native';
+import { Calendar, HeartPulse2, Mailbox, Men, NotebookBookmark, Phone, SquareAcademicCap, Wheel, Women } from "@solar-icons/react-native/Bold";
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { FlexText } from '../FlexText';
@@ -31,31 +31,31 @@ const FProfilePersonalInfo: React.FC<FProfilePersonalInfoProps> = ({
     const details: { icon: React.ComponentType<any>; label: string }[] = [];
 
     if (profile.college) {
-        details.push({ icon: SquareAcademicCapBold, label: profile.college });
+        details.push({ icon: SquareAcademicCap, label: profile.college });
     }
     if (profile.highschool) {
-        details.push({ icon: NotebookBookmarkBold, label: profile.highschool });
+        details.push({ icon: NotebookBookmark, label: profile.highschool });
     }
     if (profile.birthday) {
         details.push({
-            icon: CalendarBold,
+            icon: Calendar,
             label: formatBirthday(profile.birthday) || profile.birthday,
         });
     }
     if (profile.gender) {
         details.push({
-            icon: profile.gender === 'male' ? MenBold : WomenBold,
+            icon: profile.gender === 'male' ? Men : Women,
             label: profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1),
         });
     }
     if (profile.email) {
-        details.push({ icon: MailboxBold, label: profile.email });
+        details.push({ icon: Mailbox, label: profile.email });
     }
     if (profile.phone) {
-        details.push({ icon: PhoneBold, label: profile.phone });
+        details.push({ icon: Phone, label: profile.phone });
     }
     if (profile.license_plate) {
-        details.push({ icon: WheelBold, label: profile.license_plate });
+        details.push({ icon: Wheel, label: profile.license_plate });
     }
 
     // Family members
@@ -85,7 +85,7 @@ const FProfilePersonalInfo: React.FC<FProfilePersonalInfoProps> = ({
                 {familyMembers.length > 0 && (
                     <View style={styles.detailItem}>
                         <View style={styles.detailIconContainer}>
-                            <HeartPulse2Bold
+                            <HeartPulse2
                                 size={24}
                                 color={fbColors.iconColor}
                             />

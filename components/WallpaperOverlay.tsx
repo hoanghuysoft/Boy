@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Image as ExpoImage } from "expo-image";
-import { Spinner, useToast } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
+import { useToast } from "heroui-native/toast";
 import { WallpaperSet } from 'react-native-nitro-wallpaper';
 import { FlexText } from "./FlexText";
 

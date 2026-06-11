@@ -4,7 +4,8 @@ import { BookmarkedPost } from "@/types/bookmarkedpost";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useRouter } from "expo-router";
-import { SkeletonGroup, Spinner } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Spinner } from "heroui-native/spinner";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

@@ -5,7 +5,8 @@ import type { Category, VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import { useRouter } from "expo-router";
-import { SkeletonGroup, Spinner } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Spinner } from "heroui-native/spinner";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   FlatList,

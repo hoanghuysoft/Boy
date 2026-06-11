@@ -2,25 +2,21 @@ import { FlexText } from "@/components/FlexText";
 import { getCachedUri } from "@/services/videoCache";
 import { VideoItem } from "@/types/video";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import {
-    ChatRoundLikeBold,
-    HeartBold,
-    SquareShareLineBold,
-} from "@solar-icons/react-native";
+import { ChatRoundLike, Heart, SquareShareLine } from "@solar-icons/react-native/Bold";
 import { useEventListener } from "expo";
 import { router } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { Avatar } from "heroui-native";
+import { Avatar } from "heroui-native/avatar";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     AppState,
     StyleSheet,
     TouchableOpacity,
     TouchableWithoutFeedback,
-    View
+    View,
+    useWindowDimensions
 } from "react-native";
 import Reanimated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
-import { SCREEN_WIDTH } from "./constants";
 import { FloatingHeart } from "./FloatingHeart";
 import { ShotSeekBar } from "./ShotSeekBar";
 
@@ -59,6 +55,7 @@ export const ShotItem = React.memo(function ShotItem({
     insets,
     isCommentsOpen,
 }: ShotItemProps) {
+    const { width: screenWidth } = useWindowDimensions();
     // ─── Per-item URI resolution ─────────────────────────────────
     const [resolvedUri, setResolvedUri] = useState(item.media_url);
 
@@ -387,9 +384,9 @@ export const ShotItem = React.memo(function ShotItem({
     }, []);
 
     return (
-        <View style={[styles.itemContainer, { height: itemHeight }]}>
+        <View style={[styles.itemContainer, { height: itemHeight, width: screenWidth }]}>
             {/* Video area — covers full cell height (no shrink on comments open) */}
-            <View style={[styles.videoArea, { height: itemHeight }]}>
+            <View style={[styles.videoArea, { height: itemHeight, width: screenWidth }]}>
                 <VideoView
                     player={player}
                     style={StyleSheet.absoluteFill}
@@ -470,8 +467,8 @@ export const ShotItem = React.memo(function ShotItem({
                 {/* Like */}
                 <TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10}>
                     {isLiked
-                        ? <HeartBold size={32} color="#ff4d6d" />
-                        : <HeartBold size={32} color="white" />
+                        ? <Heart size={32} color="#ff4d6d" />
+                        : <Heart size={32} color="white" />
                     }
                     <FlexText style={[styles.actionText, isLiked && { color: '#ff4d6d' }]}>
                         {likeCount > 0 ? likeCount : 0}
@@ -480,7 +477,7 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Comments */}
                 <TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10}>
-                    <ChatRoundLikeBold size={32} color="white" />
+                    <ChatRoundLike size={32} color="white" />
                     <FlexText style={styles.actionText}>
                         {item.comment_count > 0 ? item.comment_count : 0}
                     </FlexText>
@@ -488,7 +485,7 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Share */}
                 <TouchableOpacity style={styles.actionButton}>
-                    <SquareShareLineBold size={32} color="white" />
+                    <SquareShareLine size={32} color="white" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -513,18 +510,15 @@ ShotItem.displayName = 'ShotItem';
 // ─── Styles ─────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
     itemContainer: {
-        width: SCREEN_WIDTH,
         backgroundColor: '#000',
         overflow: "hidden",
     },
     videoArea: {
-        width: SCREEN_WIDTH,
         overflow: 'hidden',
         justifyContent: 'center',
         alignItems: 'center',
     },
     videoContent: {
-        width: SCREEN_WIDTH,
         height: '100%',
     },
     pausedOverlay: {

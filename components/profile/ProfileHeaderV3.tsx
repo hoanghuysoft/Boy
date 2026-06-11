@@ -1,11 +1,12 @@
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CaseMinimalisticBold, NotesBold, PointOnMapBold } from '@solar-icons/react-native';
+import { CaseMinimalistic, Notes, PointOnMap } from "@solar-icons/react-native/Bold";
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
-import { Avatar, Button } from 'heroui-native';
+import { Avatar } from "heroui-native/avatar";
+import { Button } from "heroui-native/button";
 import countries from "i18n-iso-countries";
 import en from "i18n-iso-countries/langs/en.json";
 import React, { memo, useMemo } from 'react';
@@ -148,7 +149,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 </Avatar>
                 <View pointerEvents="box-none" className="flex-row gap-2">
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
-                        <NotesBold color={vm.colors.text} size={34} />
+                        <Notes color={vm.colors.text} size={34} />
                     </Button>
                     <SquircleView borderRadius={999} cornerSmoothing={100} preserveSmoothing style={styles.editButton}>
                         <TouchableOpacity onPress={() => {
@@ -237,7 +238,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                             labelStyle={vm.common.label}
                             leading={(
                                 <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>
-                                    <PointOnMapBold size={28} color={vm.colors.text} />
+                                    <PointOnMap size={28} color={vm.colors.text} />
                                 </View>
                             )}
                         >
@@ -255,7 +256,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                             labelStyle={vm.common.label}
                             leading={(
                                 <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>
-                                    <CaseMinimalisticBold size={28} color={vm.colors.text} />
+                                    <CaseMinimalistic size={28} color={vm.colors.text} />
                                 </View>
                             )}
                         >

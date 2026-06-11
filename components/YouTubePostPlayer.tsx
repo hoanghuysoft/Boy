@@ -1,22 +1,20 @@
 import { useActiveYouTubeStore } from '@/stores/activeYouTube';
 import { extractYouTubeIds, youtubeThumbnailUrl } from '@/utils/youtube';
 import { PlayerView } from '@flixsrota/player';
-import { PlayBold } from '@solar-icons/react-native';
+import { Play } from "@solar-icons/react-native/Bold";
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-    Dimensions,
     Pressable,
     View,
     type NativeScrollEvent,
     type NativeSyntheticEvent,
+    useWindowDimensions,
 } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ASPECT_RATIO = 16 / 9;
-const PLAYER_HEIGHT = SCREEN_WIDTH / ASPECT_RATIO;
 
 const BUNDLE_ID =
     (Constants.expoConfig as any)?.ios?.bundleIdentifier ||
@@ -33,13 +31,15 @@ interface YouTubeSlotProps {
     slotKey: string;
     isActive: boolean;
     onActivate: () => void;
+    screenWidth: number;
+    playerHeight: number;
 }
 
 const YouTubeSlot: React.FC<YouTubeSlotProps> = React.memo(
-    ({ videoId, slotKey: _slotKey, isActive, onActivate }) => {
+    ({ videoId, slotKey: _slotKey, isActive, onActivate, screenWidth, playerHeight }) => {
         if (isActive) {
             return (
-                <View style={{ width: SCREEN_WIDTH, height: PLAYER_HEIGHT, backgroundColor: '#000' }}>
+                <View style={{ width: screenWidth, height: playerHeight, backgroundColor: '#000' }}>
                     <PlayerView bundleId={BUNDLE_ID} videoId={videoId} />
                 </View>
             );
@@ -49,8 +49,8 @@ const YouTubeSlot: React.FC<YouTubeSlotProps> = React.memo(
             <Pressable
                 onPress={onActivate}
                 style={{
-                    width: SCREEN_WIDTH,
-                    height: PLAYER_HEIGHT,
+                    width: screenWidth,
+                    height: playerHeight,
                     backgroundColor: '#000',
                 }}
             >
@@ -82,7 +82,7 @@ const YouTubeSlot: React.FC<YouTubeSlotProps> = React.memo(
                             justifyContent: 'center',
                         }}
                     >
-                        <PlayBold size={32} color="#ffffff" />
+                        <Play size={32} color="#ffffff" />
                     </View>
                 </View>
             </Pressable>
@@ -92,6 +92,8 @@ const YouTubeSlot: React.FC<YouTubeSlotProps> = React.memo(
 YouTubeSlot.displayName = 'YouTubeSlot';
 
 export const YouTubePostPlayer: React.FC<YouTubePostPlayerProps> = ({ postId, caption }) => {
+    const { width: screenWidth } = useWindowDimensions();
+    const playerHeight = screenWidth / ASPECT_RATIO;
     const videoIds = useMemo(() => extractYouTubeIds(caption), [caption]);
     const activeKey = useActiveYouTubeStore((s) => s.activeKey);
     const setActive = useActiveYouTubeStore((s) => s.setActive);
@@ -103,7 +105,7 @@ export const YouTubePostPlayer: React.FC<YouTubePostPlayerProps> = ({ postId, ca
 
     const handleMomentumEnd = useCallback(
         (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-            const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+            const idx = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
             if (idx !== pageIndex) {
                 setPageIndex(idx);
                 // Swiping to a different video should stop any currently-playing
@@ -113,7 +115,7 @@ export const YouTubePostPlayer: React.FC<YouTubePostPlayerProps> = ({ postId, ca
                 }
             }
         },
-        [pageIndex, activeKey, postId, makeKey, setActive]
+        [pageIndex, activeKey, postId, makeKey, setActive, screenWidth]
     );
 
     const renderItem = useCallback(
@@ -125,10 +127,12 @@ export const YouTubePostPlayer: React.FC<YouTubePostPlayerProps> = ({ postId, ca
                     slotKey={slotKey}
                     isActive={activeKey === slotKey}
                     onActivate={() => setActive(slotKey)}
+                    screenWidth={screenWidth}
+                    playerHeight={playerHeight}
                 />
             );
         },
-        [activeKey, makeKey, setActive]
+        [activeKey, makeKey, setActive, screenWidth, playerHeight]
     );
 
     const keyExtractor = useCallback((item: string, index: number) => `${item}-${index}`, []);
@@ -144,6 +148,8 @@ export const YouTubePostPlayer: React.FC<YouTubePostPlayerProps> = ({ postId, ca
                     slotKey={slotKey}
                     isActive={activeKey === slotKey}
                     onActivate={() => setActive(slotKey)}
+                    screenWidth={screenWidth}
+                    playerHeight={playerHeight}
                 />
             </View>
         );
@@ -161,8 +167,8 @@ export const YouTubePostPlayer: React.FC<YouTubePostPlayerProps> = ({ postId, ca
                 renderItem={renderItem}
                 onMomentumScrollEnd={handleMomentumEnd}
                 getItemLayout={(_, index) => ({
-                    length: SCREEN_WIDTH,
-                    offset: SCREEN_WIDTH * index,
+                    length: screenWidth,
+                    offset: screenWidth * index,
                     index,
                 })}
             />

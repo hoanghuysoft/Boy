@@ -4,7 +4,7 @@ import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, SupportedLanguage } from "@/i18n"
 import { LanguageMode, useLanguageStore } from "@/stores/language";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CheckCircleBold } from '@solar-icons/react-native';
+import { CheckCircle } from "@solar-icons/react-native/Bold";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { CustomSurface } from "@/components/CustomSurface";
@@ -144,7 +144,7 @@ const LanguageSettingsScreen = () => {
                                     </FlexText>
                                 </View>
                             </View>
-                            {active && <CheckCircleBold size={24} color="#54d340" />}
+                            {active && <CheckCircle size={24} color="#54d340" />}
                         </CustomSurface>
                     );
                 })}

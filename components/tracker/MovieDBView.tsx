@@ -14,7 +14,8 @@ import { Movie } from "@/types/moviedb";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { Skeleton, SkeletonGroup } from "heroui-native";
+import { Skeleton } from "heroui-native/skeleton";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useEffect, useState } from "react";
 import {
     Animated,

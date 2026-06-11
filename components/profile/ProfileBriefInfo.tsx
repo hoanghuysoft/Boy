@@ -1,4 +1,4 @@
-import { CaseMinimalisticBold, NotebookBookmarkBold, PointOnMapBold, SquareAcademicCapBold } from '@solar-icons/react-native';
+import { CaseMinimalistic, NotebookBookmark, PointOnMap, SquareAcademicCap } from "@solar-icons/react-native/Bold";
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from "react-native";
@@ -50,18 +50,18 @@ const ProfileBriefInfo: React.FC<ProfileBriefInfoProps> = ({ profile, workplaces
     const workItems: any[] = [];
     if (workplaces.length > 0) {
         workItems.push({
-            solarIcon: CaseMinimalisticBold,
+            solarIcon: CaseMinimalistic,
             label: t('profile.briefInfo.workAt', { position: workplaces[0].position, company: workplaces[0].company_name })
         });
     }
 
     const eduItems: any[] = [];
-    if (profile?.college) eduItems.push({ solarIcon: SquareAcademicCapBold, label: profile.college });
-    if (profile?.highschool) eduItems.push({ solarIcon: NotebookBookmarkBold, label: profile.highschool });
+    if (profile?.college) eduItems.push({ solarIcon: SquareAcademicCap, label: profile.college });
+    if (profile?.highschool) eduItems.push({ solarIcon: NotebookBookmark, label: profile.highschool });
 
     // Hometown/Address
     const homeItems: any[] = [];
-    if (homeInfo) homeItems.push({ solarIcon: PointOnMapBold, label: homeInfo });
+    if (homeInfo) homeItems.push({ solarIcon: PointOnMap, label: homeInfo });
 
     if (!workItems.length && !eduItems.length && !homeItems.length) return null;
 

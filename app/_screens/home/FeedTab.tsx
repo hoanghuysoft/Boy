@@ -1,5 +1,6 @@
 import { FlexText } from "@/components/FlexText";
 import { List } from "@/components/list";
+import { useNonReactiveCallback } from "@/components/list/useNonReactiveCallback";
 import { queryClient } from "@/services/client";
 import { useFeed } from "@/services/feed";
 import { useFeedVideoStore } from "@/stores/feedVideo";
@@ -7,7 +8,7 @@ import { Post } from "@/types/post";
 import { updateActiveVideoViewAsync } from "@bsky.app/video";
 import { Image } from "expo-image";
 import { useFocusEffect } from "expo-router";
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -48,6 +49,10 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
+
+    const stableOnOptionsPress = useNonReactiveCallback(onOptionsPress);
+    const stableOnLikeCountPress = useNonReactiveCallback(onLikeCountPress);
+    const stableOnCommentPress = useNonReactiveCallback(onCommentPress);
 
     const {
         data,
@@ -181,10 +186,15 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const renderItem = useCallback(({ item }: { item: Post }) => {
         return (
             <View style={{ marginBottom: 30 }}>
-                <PostItem post={item} onOptionsPress={onOptionsPress} onLikeCountPress={onLikeCountPress} onCommentPress={onCommentPress} />
+                <PostItem
+                    post={item}
+                    onOptionsPress={stableOnOptionsPress}
+                    onLikeCountPress={stableOnLikeCountPress}
+                    onCommentPress={stableOnCommentPress}
+                />
             </View>
         );
-    }, [onOptionsPress, onLikeCountPress, onCommentPress]);
+    }, [stableOnOptionsPress, stableOnLikeCountPress, stableOnCommentPress]);
 
     const renderPostSkeleton = useCallback(() => {
         return (

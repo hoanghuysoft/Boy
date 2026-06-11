@@ -3,7 +3,7 @@ import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { useThemeContext } from "@/context/ThemeContext";
 import { usePersonDetails } from "@/hooks/useMovies";
 import { useGalleryStore } from "@/stores/gallery";

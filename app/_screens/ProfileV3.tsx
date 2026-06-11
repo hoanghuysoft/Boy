@@ -1,6 +1,8 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
-import { SkeletonGroup, Spinner, Tabs } from 'heroui-native';
+import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Spinner } from "heroui-native/spinner";
+import { Tabs } from "heroui-native/tabs";
 import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {

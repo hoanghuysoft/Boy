@@ -1,5 +1,5 @@
 import { MovieDBView } from "@/components/tracker/MovieDBView";
-import { RoundedMagnifierBold } from "@solar-icons/react-native";
+import { RoundedMagnifier } from "@solar-icons/react-native/Bold";
 import { BlurTargetView } from "expo-blur";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
@@ -48,7 +48,7 @@ const ChatScreen = () => {
               alignItems: "center",
             }}
           >
-            <RoundedMagnifierBold size={28} color={"white"} />
+            <RoundedMagnifier size={28} color={"white"} />
           </TouchableOpacity>
         </View>
       </View>

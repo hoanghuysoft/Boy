@@ -5,7 +5,7 @@ import { VideoFeedType, VideoItem } from "@/types/video";
 import { useShotsViewModel } from "@/viewmodels/ShotsViewModel";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useIsFocused } from "expo-router/react-navigation";
-import { Spinner } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -17,7 +17,8 @@ import {
     StyleSheet,
     TouchableOpacity,
     View,
-    ViewToken
+    ViewToken,
+    useWindowDimensions
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -28,7 +29,6 @@ import {
     ITEM_OVERLAP,
     PRELOAD_AHEAD,
     PRELOAD_BEHIND,
-    SCREEN_WIDTH,
     SCROLL_EVENT_THROTTLE,
     USE_PLACEHOLDER_OUTSIDE_PRELOAD,
 } from "./constants";
@@ -36,6 +36,7 @@ import { ShotItem } from "./ShotItem";
 
 // ─── Feed Tab (adopting reference VideoFeedList pattern with LegendList) ─
 export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
+    const { width: screenWidth } = useWindowDimensions();
     const vm = useShotsViewModel(feedType);
     const insets = useSafeAreaInsets();
     const isFocused = useIsFocused();
@@ -148,7 +149,7 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                     <View
                         style={[
                             styles.placeholder,
-                            { width: SCREEN_WIDTH, height: itemHeight },
+                            { width: screenWidth, height: itemHeight },
                         ]}
                     />
                 );
@@ -282,7 +283,7 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                     onEndReachedThreshold={0.8}
                     bounces={false}
                     overScrollMode="never"
-                    style={styles.list}
+                    style={[styles.list, { width: screenWidth }]}
                     contentContainerStyle={styles.listContent}
                     getItemLayout={getItemLayout}
                     initialNumToRender={2}
@@ -323,7 +324,6 @@ const styles = StyleSheet.create({
     },
     list: {
         flex: 1,
-        width: SCREEN_WIDTH,
     },
     listContent: {
         paddingVertical: 0,

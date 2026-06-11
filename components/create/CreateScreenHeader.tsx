@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
-import { Spinner } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
 
 // ============================================================================
 // CreateScreenHeader Component

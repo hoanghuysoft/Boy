@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/immutability */
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React, { useRef } from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Animated, {
     Easing,
     useAnimatedStyle,
@@ -18,7 +18,6 @@ const LONG_PRESS_DELAY = 400;
 // Movement threshold in px — if finger moves more than this before long-press
 // fires, we cancel the long-press (prevents accidental speed-up on swipe)
 const MOVE_CANCEL_THRESHOLD = 15;
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 // Speed scrubber config
 const BASE_SPEED = 2;
@@ -93,13 +92,19 @@ interface TapIndicatorProps {
 }
 
 const TapIndicator: React.FC<TapIndicatorProps> = ({ direction, animatedStyle }) => {
+    const { width: screenWidth } = useWindowDimensions();
     const isForward = direction === "forward";
     const chevrons = [0.35, 0.65, 1] as const;
 
     return (
         <Animated.View
             pointerEvents="none"
-            style={[styles.tapZone, isForward ? styles.tapZoneRight : styles.tapZoneLeft, animatedStyle]}
+            style={[
+                styles.tapZone,
+                { width: screenWidth / 2 },
+                isForward ? styles.tapZoneRight : styles.tapZoneLeft,
+                animatedStyle,
+            ]}
         >
             <View style={[styles.chevronRow, isForward ? null : styles.chevronRowReversed]}>
                 {chevrons.map((alpha, i) => (
@@ -136,6 +141,7 @@ export const LongPressSpeedZone: React.FC<LongPressSpeedZoneProps> = ({
     onDoubleTap,
 }) => {
     'use no memo';
+    const { width: screenWidth } = useWindowDimensions();
     // ── Gesture state machine ──
     const gestureStateRef = useRef<GestureState>('idle');
 
@@ -289,7 +295,7 @@ export const LongPressSpeedZone: React.FC<LongPressSpeedZoneProps> = ({
                     cancelDoubleTapTimer();
                     tapCountRef.current = 0;
 
-                    if (tapPageXRef.current < SCREEN_WIDTH / 2) {
+                    if (tapPageXRef.current < screenWidth / 2) {
                         onDoubleTap("backward");
                         flashIndicator(backwardOpacity);
                     } else {
@@ -333,7 +339,6 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: 0,
         bottom: 0,
-        width: SCREEN_WIDTH / 2,
         justifyContent: "center",
         alignItems: "center",
         gap: 10,

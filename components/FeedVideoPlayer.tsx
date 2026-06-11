@@ -1,12 +1,10 @@
 import { useFeedVideoStore } from '@/stores/feedVideo';
-import { PauseBold, PlayBold, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
+import { Pause as PauseBold, Play as PlayBold, VolumeCross, VolumeLoud } from "@solar-icons/react-native/Bold";
 import { BlueskyVideoView } from '@bsky.app/video';
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ASPECT_RATIO = 3 / 4;
-const VIDEO_HEIGHT = SCREEN_WIDTH / ASPECT_RATIO;
 
 /**
  * FeedVideoPlayer — Uses Bluesky's native video component (@bsky.app/video).
@@ -27,6 +25,8 @@ interface FeedVideoPlayerProps {
 }
 
 export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ videoUrl }) => {
+    const { width: screenWidth } = useWindowDimensions();
+    const videoHeight = screenWidth / ASPECT_RATIO;
     const isMuted = useFeedVideoStore(s => s.isMuted);
     const setEnded = useFeedVideoStore(s => s.setEnded);
     const videoRef = useRef<BlueskyVideoView>(null);
@@ -56,7 +56,7 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
     }
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { width: screenWidth, height: videoHeight }]}>
             <BlueskyVideoView
                 ref={videoRef}
                 url={videoUrl}
@@ -161,9 +161,9 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
                         }}
                     >
                         {isMuted ? (
-                            <VolumeCrossBold size={16} color="#ffffff" />
+                            <VolumeCross size={16} color="#ffffff" />
                         ) : (
-                            <VolumeLoudBold size={16} color="#ffffff" />
+                            <VolumeLoud size={16} color="#ffffff" />
                         )}
                     </Pressable>
                 </>
@@ -195,8 +195,6 @@ FeedVideoPlayer.displayName = 'FeedVideoPlayer';
 
 const styles = StyleSheet.create({
     container: {
-        width: SCREEN_WIDTH,
-        height: VIDEO_HEIGHT,
         backgroundColor: '#000',
     },
     video: {

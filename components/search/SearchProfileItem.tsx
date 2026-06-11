@@ -1,7 +1,7 @@
 import VerifiedIcon from "@/icons/verified";
 import { Profile } from "@/types/profile";
 import { calculateAge } from "@/utils/timeandage";
-import { Avatar } from "heroui-native";
+import { Avatar } from "heroui-native/avatar";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";

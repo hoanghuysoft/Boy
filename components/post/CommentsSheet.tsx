@@ -3,9 +3,12 @@ import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from "@nandorojo/galeria";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import { GalleryAddBold, PenNewRoundBold, Plain2Bold } from "@solar-icons/react-native";
+import { GalleryAdd, PenNewRound, Plain2 } from "@solar-icons/react-native/Bold";
 import { Image } from "expo-image";
-import { Avatar, Button, SkeletonGroup, Spinner } from "heroui-native";
+import { Avatar } from "heroui-native/avatar";
+import { Button } from "heroui-native/button";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Spinner } from "heroui-native/spinner";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -387,11 +390,11 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                                 <Spinner className="md" color={vm.colors.background} />
                             ) : (
 
-                                !vm.isEditing ? (<Plain2Bold
+                                !vm.isEditing ? (<Plain2
                                     size={24}
                                     color={vm.colors.background}
                                 />)
-                                    : (<PenNewRoundBold
+                                    : (<PenNewRound
                                         size={24}
                                         color={vm.colors.background}
                                     />)
@@ -413,7 +416,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                             onPress={() => vm.setShowUrlInput(!vm.showUrlInput)}
                             disabled={!!vm.selectedImageUrl}
                         >
-                            <GalleryAddBold size={24} color={vm.colors.text} />
+                            <GalleryAdd size={24} color={vm.colors.text} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[

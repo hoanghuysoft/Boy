@@ -1,4 +1,4 @@
-import { GalleryBold, LinkBold, MapPointBold, MusicLibrary2Bold } from '@solar-icons/react-native';
+import { Gallery, Link, MapPoint, MusicLibrary2 } from "@solar-icons/react-native/Bold";
 import React, { memo, useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import AnimatedGlow from 'react-native-animated-glow';
@@ -133,7 +133,7 @@ export const CreateActionBar = memo(({
                 >
                     {!hideMediaOption && (
                         <ActionButton
-                            icon={GalleryBold}
+                            icon={Gallery}
                             isActive={selectedMediaCount > 0}
                             onPress={onPickMedia}
                             disabled={selectedMediaCount >= 10}
@@ -141,19 +141,19 @@ export const CreateActionBar = memo(({
                         />
                     )}
                     <ActionButton
-                        icon={MapPointBold}
+                        icon={MapPoint}
                         isActive={showLocationInput || hasLocation}
                         onPress={onToggleLocation}
                         colors={colors}
                     />
                     <ActionButton
-                        icon={MusicLibrary2Bold}
+                        icon={MusicLibrary2}
                         isActive={showMusicSearch || selectedTrack !== null}
                         onPress={onToggleMusic}
                         colors={colors}
                     />
                     <ActionButton
-                        icon={LinkBold}
+                        icon={Link}
                         isActive={linksCount > 0}
                         onPress={onAddLink}
                         colors={colors}

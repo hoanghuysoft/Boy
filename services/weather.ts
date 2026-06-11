@@ -253,7 +253,10 @@ export const getSmartWeather = async (hometown?: string): Promise<WeatherSummary
 
   try {
     return await fetchWeatherByCoords(coords, placeName);
-  } catch (e) {
+  } catch (e: any) {
+    if (e?.name === "AbortError" || e?.message?.includes("aborted")) {
+      return null;
+    }
     console.error("[weather] fetchWeatherByCoords error", e);
     return null;
   }

@@ -1,6 +1,6 @@
 import { Post } from "@/types/post";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useToast } from "heroui-native";
+import { useToast } from "heroui-native/toast";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Clipboard } from "react-native";

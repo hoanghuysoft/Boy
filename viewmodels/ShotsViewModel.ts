@@ -4,14 +4,12 @@ import { VideoFeedType, VideoItem } from "@/types/video";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Dimensions } from "react-native";
+import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../context/ThemeContext";
 import { useToggleLike } from "../services/like";
 import { useInfiniteVideoFeed } from "../services/videos";
 import { createCommonStyles } from "../styles/common";
-
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const VIEWABILITY_CONFIG = {
     itemVisiblePercentThreshold: 50,
@@ -30,6 +28,7 @@ const VIEWABILITY_CONFIG = {
  */
 export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => {
     const { colors, typography } = useThemeContext();
+    const { height: screenHeight } = useWindowDimensions();
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
     const queryClient = useQueryClient();
@@ -153,7 +152,7 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
     }, []);
 
     // ─── Layout ─────────────────────────────────────────────────
-    const itemHeight = SCREEN_HEIGHT;
+    const itemHeight = screenHeight;
 
     // ─── Handlers ───────────────────────────────────────────────
     const switchFeedType = useCallback((type: VideoFeedType) => {

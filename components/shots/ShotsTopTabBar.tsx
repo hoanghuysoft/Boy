@@ -2,9 +2,8 @@ import { FlexText } from "@/components/FlexText";
 import { useReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import { MaterialTopTabBarProps } from "expo-router/build/react-navigation/material-top-tabs";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import Reanimated, { useAnimatedStyle } from "react-native-reanimated";
-import { SCREEN_HEIGHT } from "./constants";
 
 interface ShotsTopTabBarProps extends MaterialTopTabBarProps {
     insets: any;
@@ -12,11 +11,12 @@ interface ShotsTopTabBarProps extends MaterialTopTabBarProps {
 }
 
 export const ShotsTopTabBar = ({ state, navigation, insets, t }: ShotsTopTabBarProps) => {
+    const { height: screenHeight } = useWindowDimensions();
     // Hide the tab bar when comment sheet is open
     const { animatedPosition } = useReanimatedTrueSheet();
     const tabBarStyle = useAnimatedStyle(() => {
         // animatedPosition ≈ SCREEN_HEIGHT when sheet is dismissed, smaller when open
-        const isSheetOpen = animatedPosition.value < SCREEN_HEIGHT - 10;
+        const isSheetOpen = animatedPosition.value < screenHeight - 10;
         return {
             opacity: isSheetOpen ? 0 : 1,
             pointerEvents: isSheetOpen ? 'none' : 'auto',

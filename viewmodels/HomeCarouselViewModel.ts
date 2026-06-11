@@ -3,14 +3,14 @@ import { useCarouselColorStore } from "@/stores/carouselColor";
 import { Directory, File, Paths } from 'expo-file-system';
 import _ from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Dimensions } from "react-native";
+import { Animated, useWindowDimensions } from "react-native";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CAROUSEL_HEIGHT = SCREEN_HEIGHT * 0.28;
 const AUTO_SCROLL_INTERVAL = 30000;
 const CAROUSEL_CACHE_DIR = new Directory(Paths.cache, 'carousel-images');
 
 export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) => {
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+    const carouselHeight = screenHeight * 0.28;
     const [currentIndex, setCurrentIndex] = useState(0);
     const [localCache, setLocalCache] = useState<Record<string, string>>({});
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -157,7 +157,7 @@ export const useHomeCarouselViewModel = (animatedVisibility?: Animated.Value) =>
         cachedImagesMap: localCache, // <- Pass this if rendering a list of items
         activeCarouselData,
         analyzeImageLuminance,
-        SCREEN_WIDTH,
-        CAROUSEL_HEIGHT,
+        SCREEN_WIDTH: screenWidth,
+        CAROUSEL_HEIGHT: carouselHeight,
     };
 };

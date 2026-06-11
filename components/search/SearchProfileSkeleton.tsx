@@ -1,6 +1,6 @@
 import React from "react";
 import { View } from "react-native";
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { CustomSurface } from "../CustomSurface";
 
 export const renderProfileSkeleton = ({ colors, styles, isFirst, isLast }: any) => (

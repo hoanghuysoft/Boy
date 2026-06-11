@@ -1,6 +1,4 @@
-import {
-  RewindForwardBoldDuotone
-} from "@solar-icons/react-native";
+import { RewindForward } from "@solar-icons/react-native/BoldDuotone";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { FlexText } from "../FlexText";
@@ -25,7 +23,7 @@ export const SpeedIndicator: React.FC<SpeedIndicatorProps> = ({
   return (
     <View style={styles.speedIndicator}>
       <View style={styles.speedBadge}>
-        <RewindForwardBoldDuotone size={16} color="white" />
+        <RewindForward size={16} color="white" />
         <FlexText style={styles.speedText}>{label}</FlexText>
         {isScrubbing && (
           <Text style={styles.scrubHint}>‹ drag ›</Text>

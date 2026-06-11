@@ -13,12 +13,12 @@ import { TMDBMovieImage } from "@/types/moviedb/movie-images";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
-import { DialogBold, WallpaperBold } from "@solar-icons/react-native";
+import { Dialog, Wallpaper } from "@solar-icons/react-native/Bold";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     FlatList,
@@ -613,7 +613,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                                 onPress={() => reviewsSheetRef.current?.present()}
                                 style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                             >
-                                <DialogBold size={28} color="white" />
+                                <Dialog size={28} color="white" />
                             </Pressable>
                         </BlurView>
                     )}
@@ -626,7 +626,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                             onPress={() => { setShowWallpaper(true); setUrlWallpaper(posterUrl || ""); }}
                             style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                         >
-                            <WallpaperBold size={28} color="white" />
+                            <Wallpaper size={28} color="white" />
                         </Pressable>
                     </BlurView>}
                 </View>

@@ -7,7 +7,7 @@ import { BackHandler, Linking, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type WebViewType from "react-native-webview";
 import WebView from "react-native-webview";
-import { Spinner } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
 import { supabase } from "@/services/login";
 
 interface ReVideoProps {

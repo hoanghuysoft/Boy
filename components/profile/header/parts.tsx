@@ -1,6 +1,6 @@
 import VerifiedIcon from '@/icons/verified';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
-import { ChatSquareLikeBold, HeartAngleBold, HeartBold } from '@solar-icons/react-native';
+import { ChatSquareLike, HeartAngle, Heart } from "@solar-icons/react-native/Bold";
 import { Image } from 'expo-image';
 import { MediaViewer } from 'expo-media-viewer';
 import { SquircleView } from 'expo-squircle-view';
@@ -164,7 +164,7 @@ export const ActionButtonsSection = ({ vm, isOwner, onKnowMe }: { vm: any; isOwn
           {isOwner ? (
             <Ionicons name="pencil-outline" size={20} color="#fff" style={{ marginRight: 6 }} />
           ) : (
-            <HeartAngleBold size={22} color="#fff" />
+            <HeartAngle size={22} color="#fff" />
           )}
           <FlexText style={[headerStyles.actionLabel, { color: '#fff' }]}>
             {isOwner ? t('profile.header.actions.editProfile', 'Edit Profile') : t('profile.header.actions.addLove')}
@@ -173,7 +173,7 @@ export const ActionButtonsSection = ({ vm, isOwner, onKnowMe }: { vm: any; isOwn
       </SquircleView>
       <SquircleView cornerSmoothing={60} preserveSmoothing borderRadius={10} style={[headerStyles.actionCard, { backgroundColor: vm.colors.card }]}>
         <TouchableOpacity onPress={onKnowMe} style={[headerStyles.actionButton, { paddingVertical: 6 }]}>
-          <ChatSquareLikeBold size={22} color={vm.colors.text} />
+          <ChatSquareLike size={22} color={vm.colors.text} />
           <FlexText style={[headerStyles.actionLabel, { color: vm.colors.text }]}>
             {t('profile.header.actions.knowMe')}
           </FlexText>
@@ -216,7 +216,7 @@ export const FamilyStackSection = ({
           {lovedOnes.length} {t('profile.header.countFamilyMembers', { count: lovedOnes.length })}
         </FlexText>
       </View>
-      <HeartBold size={18} color={vm.colors.muted} />
+      <Heart size={18} color={vm.colors.muted} />
     </TouchableOpacity>
   );
 };

@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { HeadphonesRoundSoundBold } from '@solar-icons/react-native';
+import { HeadphonesRoundSound } from "@solar-icons/react-native/Bold";
 import { Image } from 'expo-image';
 
 interface SpinningArtworkProps {
@@ -63,7 +63,7 @@ export const SpinningArtwork: React.FC<SpinningArtworkProps> = ({
       <Animated.View style={[{ width: '100%', height: '100%' }, animatedStyle]}>
         {!hasMusic ? (
           <View style={[styles.placeholderIcon, { backgroundColor: colors.card }]}>
-            <HeadphonesRoundSoundBold size={18} color={colors.text} />
+            <HeadphonesRoundSound size={18} color={colors.text} />
           </View>
         ) : (
           <Image

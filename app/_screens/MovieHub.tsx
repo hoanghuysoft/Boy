@@ -2,11 +2,12 @@ import { FlexText } from "@/components/FlexText";
 import type { VideoCard } from "@/types/shows";
 import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { ChatLineBoldDuotone, FolderFavouriteBookmarkBold, RoundedMagnifierBold } from "@solar-icons/react-native";
+import { ChatLine } from "@solar-icons/react-native/BoldDuotone";
+import { FolderFavouriteBookmark, RoundedMagnifier } from "@solar-icons/react-native/Bold";
 import { BlurTargetView } from "expo-blur";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useRef, useState } from "react";
 import { Animated, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { FlatList as GestureFlatList, Pressable as GesturePressable } from "react-native-gesture-handler";
@@ -297,7 +298,7 @@ const MovieHubScreen = () => {
               alignItems: "center",
             }}
           >
-            <ChatLineBoldDuotone size={28} color={"white"} />
+            <ChatLine size={28} color={"white"} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push("/watchlist")}
@@ -309,7 +310,7 @@ const MovieHubScreen = () => {
               alignItems: "center",
             }}
           >
-            <FolderFavouriteBookmarkBold size={28} color={"white"} />
+            <FolderFavouriteBookmark size={28} color={"white"} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push("/search_shows")}
@@ -321,7 +322,7 @@ const MovieHubScreen = () => {
               alignItems: "center",
             }}
           >
-            <RoundedMagnifierBold size={28} color={"white"} />
+            <RoundedMagnifier size={28} color={"white"} />
           </TouchableOpacity>
         </View>
       </View>

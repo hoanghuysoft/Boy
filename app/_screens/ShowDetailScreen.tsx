@@ -8,7 +8,8 @@ import { useShowWatchlistStore } from "@/stores/showWatchlist";
 import type { VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
-import { BookmarkBold, BookmarkOutline, CloudDownloadBold } from "@solar-icons/react-native";
+import { Bookmark as BookmarkBold, CloudDownload } from "@solar-icons/react-native/Bold";
+import { Bookmark as BookmarkOutline } from "@solar-icons/react-native/Outline";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image as ExpoImage } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
@@ -565,7 +566,7 @@ const ChatScreen = () => {
                   alignItems: 'center',
                 }}
               >
-                <CloudDownloadBold size={24} color={'white'} />
+                <CloudDownload size={24} color={'white'} />
               </TouchableOpacity>
             </BlurView>
           ) : null}

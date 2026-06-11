@@ -1,7 +1,7 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CheckCircleBold, VinylRecordBold } from "@solar-icons/react-native";
+import { CheckCircle, VinylRecord } from "@solar-icons/react-native/Bold";
 import { SquircleView } from "expo-squircle-view";
-import { Spinner } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -60,7 +60,7 @@ const MusicSearchResult = memo(({
                 </FlexText>
             </View>
             {isSelected && (
-                <CheckCircleBold size={24} color={COLORS.primary} />
+                <CheckCircle size={24} color={COLORS.primary} />
             )}
         </TouchableOpacity>
     </SquircleView >
@@ -161,7 +161,7 @@ export const MusicSection = memo(({
                     { backgroundColor: colors.card, borderColor: colors.divider },
                 ]}
             >
-                <VinylRecordBold size={24} color={COLORS.primary} />
+                <VinylRecord size={24} color={COLORS.primary} />
                 <TextInput
                     style={[createStyles.musicSearchInput, common.body, { color: colors.text }]}
                     placeholder={t('create.form.searchMusicPlaceholder')}

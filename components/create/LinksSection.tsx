@@ -15,7 +15,7 @@ import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
 import { COLORS } from "./types";
 import { StyleSheet } from "react-native";
-import { Spinner } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
 
 // ─── Shared OG cache (mirrors PostLinkPreview – same module-level maps) ───────
 // Imported lazily so the two modules share one cache at runtime.

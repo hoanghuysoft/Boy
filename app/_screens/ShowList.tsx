@@ -21,7 +21,8 @@ import {
 } from "react-native";
 
 import { Image as ExpoImage } from "expo-image";
-import { SkeletonGroup, Spinner } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Spinner } from "heroui-native/spinner";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";

@@ -3,7 +3,7 @@ import { useDeezerSearch, type DeezerTrack } from '@/services/deezer';
 import { useAddMusic, useDeleteMusic } from '@/services/music';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { Spinner } from 'heroui-native';
+import { Spinner } from "heroui-native/spinner";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import {

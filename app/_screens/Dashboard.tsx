@@ -10,13 +10,13 @@ import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { ClapperboardBold, TvBold } from "@solar-icons/react-native";
+import { Clapperboard, Tv } from "@solar-icons/react-native/Bold";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { SquircleView } from "expo-squircle-view";
-import { useToast } from "heroui-native";
+import { useToast } from "heroui-native/toast";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -92,11 +92,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 //                     {t('dashboard.sections.entertainment')}
 //                 </FlexText>
 //                 <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-//                     <TvBold size={28} color={colors.text} />
+//                     <Tv size={28} color={colors.text} />
 //                     <FlexText style={{ fontSize: 16, color: colors.text }}>WeLoveTV</FlexText>
 //                 </TouchableOpacity>
 //                 <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-//                     <ClapperboardBold size={28} color={colors.text} />
+//                     <Clapperboard size={28} color={colors.text} />
 //                     <FlexText style={{ fontSize: 16, color: colors.text }}>Movies & TV</FlexText>
 //                 </TouchableOpacity>
 //             </View>
@@ -338,13 +338,13 @@ const DashboardScreen = () => {
                         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                             <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
                                 <TouchableOpacity onPress={() => isAdmin ? router.push('/moviehub') : toast.show({ variant: 'danger', label: 'Not available yet', placement: 'top', description: 'You are not allowed to use this service. Contact Support for more information.' })}>
-                                    <TvBold size={20} color={colors.text} />
+                                    <Tv size={20} color={colors.text} />
                                     <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>WeLoveHub</FlexText>
                                     <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Private entertainment</FlexText>
                                 </TouchableOpacity>
                             </SquircleView>
                             <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
-                                <ClapperboardBold size={20} color={colors.text} />
+                                <Clapperboard size={20} color={colors.text} />
                                 <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>WeLoveTV</FlexText>
                                 <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Watch your favorite movies and TV shows</FlexText>
                             </SquircleView>

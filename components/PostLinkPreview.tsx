@@ -12,7 +12,7 @@ import {
     View,
 } from 'react-native';
 import { ThemeColors } from '../context/ThemeContext';
-import { Spinner } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
 
 // ─── Module-level cache ───────────────────────────────────────────────────────
 // Keyed by URL. Stores the settled PreviewData (or null on error/no-data).

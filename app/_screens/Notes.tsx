@@ -5,7 +5,10 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Button, Dialog, SkeletonGroup, Spinner } from "heroui-native";
+import { Button } from "heroui-native/button";
+import { Dialog } from "heroui-native/dialog";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Spinner } from "heroui-native/spinner";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

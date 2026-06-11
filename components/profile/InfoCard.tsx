@@ -1,7 +1,7 @@
 import { Bank } from '@/types/bank';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import { CalendarBold, LetterBold, MenBold, NotebookBookmarkBold, PhoneBold, PointOnMapBold, SquareAcademicCapBold, WeigherBold, WheelBold, WomenBold } from '@solar-icons/react-native';
+import { Calendar, Letter, Men, NotebookBookmark, Phone, PointOnMap, SquareAcademicCap, Weigher, Wheel, Women } from "@solar-icons/react-native/Bold";
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from "react-native";
@@ -69,7 +69,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.email}
                         </FlexText>
-                        <LetterBold size={22} color={colors.text} />
+                        <Letter size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -82,7 +82,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.phone}
                         </FlexText>
-                        <PhoneBold size={22} color={colors.text} />
+                        <Phone size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -117,7 +117,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <FlexText style={[common.body, { textTransform: 'capitalize' }]}>
                             {profile.gender}
                         </FlexText>
-                        {profile.gender === 'male' ? <MenBold size={22} color={colors.text} /> : profile.gender === 'female' ? <WomenBold size={22} color={colors.text} /> : null}
+                        {profile.gender === 'male' ? <Men size={22} color={colors.text} /> : profile.gender === 'female' ? <Women size={22} color={colors.text} /> : null}
                     </View>
                 </>
             )}
@@ -131,7 +131,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <FlexText style={[common.body, { flex: 1 }]}>
                             {formatBirthday(profile.birthday)}
                         </FlexText>
-                        <CalendarBold size={22} color={colors.text} />
+                        <Calendar size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -159,7 +159,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <FlexText style={[common.body, { flex: 1 }]}>
                             {weight} kg
                         </FlexText>
-                        <WeigherBold size={22} color={colors.text} />
+                        <Weigher size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -173,7 +173,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.hometown}
                         </FlexText>
-                        <PointOnMapBold size={22} color={colors.text} />
+                        <PointOnMap size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -187,7 +187,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.college}
                         </FlexText>
-                        <SquareAcademicCapBold size={22} color={colors.text} />
+                        <SquareAcademicCap size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -201,7 +201,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.highschool}
                         </FlexText>
-                        <NotebookBookmarkBold size={22} color={colors.text} />
+                        <NotebookBookmark size={22} color={colors.text} />
                     </View>
                 </>
             )}
@@ -229,7 +229,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         <FlexText style={[common.body, { flex: 1 }]}>
                             {profile.license_plate}
                         </FlexText>
-                        <WheelBold size={22} color={colors.text} />
+                        <Wheel size={22} color={colors.text} />
                     </View>
                 </>
             )}

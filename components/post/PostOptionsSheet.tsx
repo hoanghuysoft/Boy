@@ -1,6 +1,8 @@
-import { CopyBold, DangerBold, PenNewRoundBold, ShareBold, TrashBinTrashBold } from "@solar-icons/react-native";
+import { Copy, Danger, PenNewRound, Share, TrashBinTrash } from "@solar-icons/react-native/Bold";
 import { router } from "expo-router";
-import { Button, Dialog, useToast } from "heroui-native";
+import { Button } from "heroui-native/button";
+import { Dialog } from "heroui-native/dialog";
+import { useToast } from "heroui-native/toast";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Clipboard, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -307,7 +309,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                         <View>
                             {!post?.reposted_post && (
                                 <OptionItem
-                                    icon={ShareBold}
+                                    icon={Share}
                                     label={t('post.optionsSheet.share')}
                                     onPress={handleShare}
                                     colors={colors}
@@ -316,7 +318,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                             )}
 
                             <OptionItem
-                                icon={CopyBold}
+                                icon={Copy}
                                 label={t('post.optionsSheet.copyLink')}
                                 onPress={handleCopyLink}
                                 colors={colors}
@@ -325,7 +327,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 
                             {!isOwner && (
                                 <OptionItem
-                                    icon={DangerBold}
+                                    icon={Danger}
                                     label={t('post.optionsSheet.report')}
                                     onPress={handleReport}
                                     colors={colors}
@@ -335,7 +337,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 
                             {isOwner && !post?.reposted_post && (
                                 <OptionItem
-                                    icon={PenNewRoundBold}
+                                    icon={PenNewRound}
                                     label={t('post.optionsSheet.editPost')}
                                     onPress={handleEdit}
                                     colors={colors}
@@ -345,7 +347,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 
                             {isOwner && (
                                 <OptionItem
-                                    icon={TrashBinTrashBold}
+                                    icon={TrashBinTrash}
                                     label={t('post.optionsSheet.deletePost')}
                                     onPress={handleDelete}
                                     destructive

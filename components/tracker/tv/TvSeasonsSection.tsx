@@ -1,4 +1,4 @@
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { router } from "expo-router";
 import React from "react";

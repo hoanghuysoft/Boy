@@ -11,13 +11,16 @@ import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Media, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { MusicNotesBold, MusicNotesOutline, VolumeCrossBold, VolumeLoudBold } from '@solar-icons/react-native';
+import { MusicNotes as MusicNotesBold, VolumeCross, VolumeLoud } from "@solar-icons/react-native/Bold";
+import { MusicNotes as MusicNotesOutline } from "@solar-icons/react-native/Outline";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
-import { Avatar, Button, Dialog } from "heroui-native";
+import { Avatar } from "heroui-native/avatar";
+import { Button } from "heroui-native/button";
+import { Dialog } from "heroui-native/dialog";
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Dimensions, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { Pressable, ScrollView } from 'react-native-gesture-handler';
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
@@ -28,9 +31,6 @@ import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 import { YouTubePostPlayer } from "./YouTubePostPlayer";
 
-// TurboImage cache policy - use dataCache for aggressive local caching
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
 export interface PostItemProps {
     post: Post;
     onOptionsPress?: (post: Post) => void;
@@ -40,6 +40,7 @@ export interface PostItemProps {
 }
 
 export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, isBookmarked = false }: PostItemProps) => {
+    const { width: screenWidth } = useWindowDimensions();
     const { t } = useTranslation();
 
     const isRepost = !!post.reposted_post;
@@ -232,7 +233,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             zIndex: 20,
                         }}
                     >
-                        {isVideoMuted ? <VolumeCrossBold size={18} color="white" /> : <VolumeLoudBold size={18} color="white" />}
+                        {isVideoMuted ? <VolumeCross size={18} color="white" /> : <VolumeLoud size={18} color="white" />}
                     </Pressable>
                 )}
 
@@ -267,7 +268,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
 
             {/* Invisible Spacer for No-Media Posts */}
             {!vm.hasMedia && (
-                <View style={{ width: SCREEN_WIDTH, height: 1 }} />
+                <View style={{ width: screenWidth, height: 1 }} />
             )}
 
             {/* Audio Button for No-Media Posts */}
@@ -305,7 +306,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             url={displayPost.links[0].url}
                             label={displayPost.links[0].label}
                             colors={vm.colors}
-                            cardWidth={SCREEN_WIDTH - 32}
+                            cardWidth={screenWidth - 32}
                         />
                     </View>)
                 ) : (

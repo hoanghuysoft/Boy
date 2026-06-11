@@ -3,7 +3,7 @@ import { FlexText } from "@/components/FlexText";
 import { ThemeColors, ThemePreference, useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CheckCircleBold, ClockCircleBold, MoonBold, Palette2Bold, SmartphoneBold, Sun2Bold } from '@solar-icons/react-native';
+import { CheckCircle, ClockCircle, Moon, Palette2, Smartphone, Sun2 } from "@solar-icons/react-native/Bold";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import React, { useMemo } from "react";
@@ -26,11 +26,11 @@ const ThemeSettingsScreen = () => {
     const { t } = useTranslation();
 
     const themeOptions = useMemo<ThemeOption[]>(() => [
-        { id: "light", icon: Sun2Bold },
-        { id: "dark", icon: MoonBold },
-        { id: "system", icon: SmartphoneBold },
-        { id: "adaptive", icon: ClockCircleBold },
-        ...(Platform.OS === 'android' ? [{ id: "material-you" as ThemePreference, icon: Palette2Bold }] : []),
+        { id: "light", icon: Sun2 },
+        { id: "dark", icon: Moon },
+        { id: "system", icon: Smartphone },
+        { id: "adaptive", icon: ClockCircle },
+        ...(Platform.OS === 'android' ? [{ id: "material-you" as ThemePreference, icon: Palette2 }] : []),
     ], []);
 
     return (
@@ -83,7 +83,7 @@ const ThemeSettingsScreen = () => {
                             </View>
                         </View>
                         {themePreference === option.id && (
-                            <CheckCircleBold size={24} color="#54d340" />
+                            <CheckCircle size={24} color="#54d340" />
                         )}
                     </CustomSurface>
                 ))}

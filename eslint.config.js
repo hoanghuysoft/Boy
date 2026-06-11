@@ -7,4 +7,20 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    rules: {
+      "no-restricted-imports": ["error", {
+        "paths": [
+          {
+            "name": "@solar-icons/react-native",
+            "message": "Please use granular category imports to keep Metro fast."
+          },
+          {
+            "name": "heroui-native",
+            "message": "Please use granular component imports to keep Metro fast."
+          }
+        ]
+      }]
+    }
+  }
 ]);

@@ -8,7 +8,11 @@ import dayjs from 'dayjs';
 import { Image as ExpoImage } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
-import { Button, Chip, Spinner, Switch, Tabs } from 'heroui-native';
+import { Button } from "heroui-native/button";
+import { Chip } from "heroui-native/chip";
+import { Spinner } from "heroui-native/spinner";
+import { Switch } from "heroui-native/switch";
+import { Tabs } from "heroui-native/tabs";
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import {
     Alert,

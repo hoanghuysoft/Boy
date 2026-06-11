@@ -5,7 +5,8 @@ import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { Spinner, useToast } from "heroui-native";
+import { Spinner } from "heroui-native/spinner";
+import { useToast } from "heroui-native/toast";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

@@ -1,4 +1,4 @@
-import { HeartBold } from "@solar-icons/react-native";
+import { Heart } from "@solar-icons/react-native/Bold";
 import React, { useEffect } from "react";
 import Reanimated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
@@ -49,7 +49,7 @@ export const FloatingHeart = React.memo(({ x, y, onComplete }: FloatingHeartProp
 
     return (
         <Reanimated.View style={[style, { zIndex: 9999 }]} pointerEvents="none">
-            <HeartBold size={100} color="#ff4d6d" />
+            <Heart size={100} color="#ff4d6d" />
         </Reanimated.View>
     );
 });

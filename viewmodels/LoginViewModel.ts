@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { signInWithGoogle } from "../services/login";
-import { useToast } from "heroui-native";
+import { useToast } from "heroui-native/toast";
 
 export const useLoginViewModel = () => {
     const [isSigningIn, setIsSigningIn] = useState(false);

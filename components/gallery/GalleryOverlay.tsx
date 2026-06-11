@@ -1,7 +1,7 @@
 import { useThemeContext } from '@/context/ThemeContext';
 import VerifiedIcon from '@/icons/verified';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { GalleryDownloadBold, ShareBold, WallpaperBold } from '@solar-icons/react-native';
+import { GalleryDownload, Share, Wallpaper } from "@solar-icons/react-native/Bold";
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -104,7 +104,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                                     onPress={onShare}
                                     style={[styles.galleryButton, styles.galleryButtonBg]}
                                 >
-                                    <ShareBold size={24} color="white" />
+                                    <Share size={24} color="white" />
                                 </TouchableOpacity>
                             )}
                             {onPoster && (
@@ -112,7 +112,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                                     onPress={onPoster}
                                     style={[styles.galleryButton, styles.galleryButtonBg]}
                                 >
-                                    <WallpaperBold size={24} color="white" />
+                                    <Wallpaper size={24} color="white" />
                                 </TouchableOpacity>
                             )}
                             {showDownload && onDownload && (
@@ -120,7 +120,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                                     onPress={onDownload}
                                     style={[styles.galleryButton, styles.galleryButtonBg]}
                                 >
-                                    <GalleryDownloadBold size={24} color="white" />
+                                    <GalleryDownload size={24} color="white" />
                                 </TouchableOpacity>
                             )}
                         </View>

@@ -1,6 +1,7 @@
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { Image as ExpoImage } from "expo-image";
-import { SkeletonGroup, Spinner } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Spinner } from "heroui-native/spinner";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";

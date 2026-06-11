@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/refs */
 import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { DialogBold, WallpaperBold } from "@solar-icons/react-native";
+import { Dialog, Wallpaper } from "@solar-icons/react-native/Bold";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -158,7 +158,7 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
                             onPress={() => { vm.setShowWallpaper(true); vm.setUrlWallpaper(vm.posterUrl || "");}}
                             style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                         >
-                            <WallpaperBold size={28} color="white" />
+                            <Wallpaper size={28} color="white" />
                         </Pressable>
                     </BlurView>}
                     {vm.reviews.length > 0 && (
@@ -167,7 +167,7 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
                                 onPress={vm.openReviewsSheet}
                                 style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                             >
-                                <DialogBold size={28} color="white" />
+                                <Dialog size={28} color="white" />
                             </TouchableOpacity>
                         </BlurView>
                     )}

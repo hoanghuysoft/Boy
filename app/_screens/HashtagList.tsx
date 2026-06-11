@@ -2,7 +2,7 @@ import { FlexText } from '@/components/FlexText';
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useRouter } from 'expo-router';
-import { SkeletonGroup } from 'heroui-native';
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
