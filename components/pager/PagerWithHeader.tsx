@@ -13,12 +13,12 @@
  *  5. The tab bar sits below the header and sticks at the top.
  */
 
-import { type JSX, memo, useCallback, useEffect, useRef, useState, useImperativeHandle } from 'react'
+import { type JSX, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
-  type ScrollView,
   Platform,
+  type ScrollView,
   StyleSheet,
   View,
 } from 'react-native'
@@ -57,8 +57,8 @@ export interface PagerWithHeaderProps {
   ref?: React.Ref<PagerWithHeaderRef>
   testID?: string
   children:
-    | (((props: PagerWithHeaderChildParams) => JSX.Element) | null)[]
-    | ((props: PagerWithHeaderChildParams) => JSX.Element)
+  | (((props: PagerWithHeaderChildParams) => JSX.Element) | null)[]
+  | ((props: PagerWithHeaderChildParams) => JSX.Element)
   items: string[]
   isHeaderReady: boolean
   renderHeader?: ({
@@ -372,12 +372,12 @@ let PagerTabBar = ({
         }}>
         {renderTabBar
           ? renderTabBar({
-              items,
-              currentPage,
-              onSelect,
-              dragProgress,
-              dragState,
-            })
+            items,
+            currentPage,
+            onSelect,
+            dragProgress,
+            dragState,
+          })
           : null}
       </View>
     </Animated.View>

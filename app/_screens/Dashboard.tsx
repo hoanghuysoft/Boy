@@ -297,7 +297,7 @@ const DashboardScreen = () => {
                             </TouchableOpacity>
 
                             {isAdmin && (
-                                <TouchableOpacity onPress={() => router.push("/webview?url=https://boy-server.vercel.app/&isUseSafeArea=true&safeAreaColor=white&isShowBackButton=true")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                <TouchableOpacity onPress={() => router.push("/webview?url=https://boy-server.vercel.app/&isUseSafeArea=true&safeAreaColor=white&isShowBackButton=true&injectToken=true")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
                                     <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
                                         <Image source={require("../../assets/images/logo_head.png")} style={{ width: 34, height: 34 }} contentFit="contain" />
                                     </SquircleView>
