@@ -1,7 +1,7 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
 import { SkeletonGroup, Spinner, Tabs } from 'heroui-native';
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FlatList,
@@ -31,7 +31,7 @@ import { useProfileViewModel } from "../../viewmodels/ProfileViewModel";
 
 import { FlexText } from "@/components/FlexText";
 import { List } from "@/components/list";
-import { PagerWithHeader, type PagerWithHeaderChildParams, type PagerWithHeaderRef } from "@/components/pager/PagerWithHeader";
+import { PagerWithHeader, type PagerWithHeaderChildParams } from "@/components/pager/PagerWithHeader";
 import { PostOptionsSheet } from "@/components/post";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { LikersSheet } from "@/components/post/LikersSheet";
@@ -196,13 +196,6 @@ const ProfileContent = () => {
   } = useProfileViewModel();
   const { t } = useTranslation();
   const { height: windowHeight } = useWindowDimensions();
-
-  const pagerWithHeaderRef = useRef<PagerWithHeaderRef>(null);
-
-  const handleScrollToTop = useCallback(() => {
-    pagerWithHeaderRef.current?.scrollToTop();
-    scrollToTop();
-  }, [scrollToTop]);
 
   // ─── Header avatar spring animation (native thread via Reanimated) ───
   const headerAvatarProgress = useSharedValue(0);
@@ -533,7 +526,6 @@ const ProfileContent = () => {
 
           {/* ─── PagerWithHeader: the collapsible header + tab architecture ─── */}
           <PagerWithHeader
-            ref={pagerWithHeaderRef}
             items={tabItems}
             isHeaderReady={!!profile}
             renderHeader={renderHeader}
@@ -589,7 +581,7 @@ const ProfileContent = () => {
                 headerAvatarContainerStyle,
               ]}
             >
-              <TouchableOpacity activeOpacity={0.8} onPress={handleScrollToTop}>
+              <TouchableOpacity activeOpacity={0.8} onPress={scrollToTop}>
                 <Reanimated.View
                   style={[
                     {

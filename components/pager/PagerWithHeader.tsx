@@ -13,12 +13,12 @@
  *  5. The tab bar sits below the header and sticks at the top.
  */
 
-import { type JSX, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { type JSX, memo, useCallback, useEffect, useRef, useState } from 'react'
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
-  Platform,
   type ScrollView,
+  Platform,
   StyleSheet,
   View,
 } from 'react-native'
@@ -48,17 +48,12 @@ export interface PagerWithHeaderChildParams {
   scrollElRef: React.MutableRefObject<ListMethods | ScrollView | null>
 }
 
-export interface PagerWithHeaderRef {
-  setPage: (index: number) => void
-  scrollToTop: () => void
-}
-
 export interface PagerWithHeaderProps {
-  ref?: React.Ref<PagerWithHeaderRef>
+  ref?: React.Ref<PagerRef>
   testID?: string
   children:
-  | (((props: PagerWithHeaderChildParams) => JSX.Element) | null)[]
-  | ((props: PagerWithHeaderChildParams) => JSX.Element)
+    | (((props: PagerWithHeaderChildParams) => JSX.Element) | null)[]
+    | ((props: PagerWithHeaderChildParams) => JSX.Element)
   items: string[]
   isHeaderReady: boolean
   renderHeader?: ({
@@ -99,26 +94,6 @@ export function PagerWithHeader({
   const [headerOnlyHeight, setHeaderOnlyHeight] = useState(0)
   const scrollY = useSharedValue(0)
   const headerHeight = headerOnlyHeight + tabBarHeight
-
-  // Track scroll refs for all tabs (UI thread accessible)
-  const scrollRefs = useSharedValue<(AnimatedRef<any> | null)[]>([])
-
-  const pagerRef = useRef<PagerRef>(null)
-
-  useImperativeHandle(ref, () => ({
-    setPage: (index: number) => {
-      pagerRef.current?.setPage(index)
-    },
-    scrollToTop: () => {
-      const refs = scrollRefs.get()
-      const currentRef = refs[currentPage]
-      if (currentRef) {
-        runOnUI(() => {
-          scrollTo(currentRef, 0, 0, true)
-        })()
-      }
-    },
-  }))
 
   // Capture the tab bar sizing
   const onTabBarLayout = useCallback((evt: LayoutChangeEvent) => {
@@ -174,7 +149,8 @@ export function PagerWithHeader({
     ],
   )
 
-
+  // Track scroll refs for all tabs (UI thread accessible)
+  const scrollRefs = useSharedValue<Array<AnimatedRef<any> | null>>([])
   const registerRef = useCallback(
     (scrollRef: AnimatedRef<any> | null, atIndex: number) => {
       scrollRefs.modify(refs => {
@@ -237,7 +213,7 @@ export function PagerWithHeader({
 
   return (
     <Pager
-      ref={pagerRef}
+      ref={ref}
       testID={testID}
       initialPage={initialPage}
       onTabPressed={onTabPressed}
@@ -372,12 +348,12 @@ let PagerTabBar = ({
         }}>
         {renderTabBar
           ? renderTabBar({
-            items,
-            currentPage,
-            onSelect,
-            dragProgress,
-            dragState,
-          })
+              items,
+              currentPage,
+              onSelect,
+              dragProgress,
+              dragState,
+            })
           : null}
       </View>
     </Animated.View>
