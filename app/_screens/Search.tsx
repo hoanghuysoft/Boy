@@ -131,7 +131,7 @@ const SearchScreen = () => {
         <TouchableOpacity
           onPress={() => navigation.back()}
           style={{
-            backgroundColor: colors.containerContent,
+            backgroundColor: colors.surfaceContainer,
             borderRadius: 999,
             width: 40,
             height: 40,
@@ -139,13 +139,13 @@ const SearchScreen = () => {
             alignItems: "center",
           }}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
       </View>
 
       <View style={[styles.header, { marginTop: insets.top + 66 }]}>
         <FlexText style={[common.heading, { fontSize: 28 }]}>{t('search.header.title')}</FlexText>
-        <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
+        <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
           {searchQuery
             ? t('search.header.resultsCount', { count: totalResults })
             : isAdmin
@@ -196,9 +196,9 @@ const SearchScreen = () => {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={handleRefresh}
-              tintColor={colors.text}
-              colors={[colors.text]}
-              progressBackgroundColor={colors.card}
+              tintColor={colors.onSurface}
+              colors={[colors.onSurface]}
+              progressBackgroundColor={colors.surfaceContainerHigh}
             />
           }
           onEndReached={handleEndReached}
@@ -220,12 +220,12 @@ const SearchScreen = () => {
           activeState={isFocused ? "press" : "default"}
           style={{ borderRadius: 999 }}
         >
-          <View style={[styles.searchBar]}>
+          <View style={[styles.searchBar, { backgroundColor: colors.tertiaryContainer }]}>
             <TextInput
               ref={inputRef}
-              style={[styles.searchInput, { color: "white", marginLeft: 12 }]}
+              style={[styles.searchInput, { color: colors.onTertiaryContainer, marginLeft: 12 }]}
               placeholder={t('search.searchBar.placeholder')}
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colors.onTertiaryContainer + "80"}
               value={searchQuery}
               onChangeText={handleSearchChange}
               onFocus={handleFocus}
@@ -242,13 +242,13 @@ const SearchScreen = () => {
                 <View
                   style={[
                     styles.clearButtonInner,
-                    { backgroundColor: colors.card },
+                    { backgroundColor: colors.onTertiaryContainer + "20" },
                   ]}
                 >
                   <Ionicons
                     name="close"
                     size={16}
-                    color={colors.text}
+                    color={colors.onTertiaryContainer}
                   />
                 </View>
               </TouchableOpacity>

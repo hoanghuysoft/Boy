@@ -13,7 +13,8 @@ import { useSheetBackHandler } from "./useSheetBackHandler";
 import { Button } from "heroui-native/button";
 import { Spinner } from "heroui-native/spinner";
 import { useAddWorkplace, useUpdateWorkplace, useDeleteWorkplace } from '@/services/workplace';
-import DateTimePicker from '@expo/ui/community/datetime-picker';
+import { DateTimePicker } from '@expo/ui/community/datetime-picker';
+import { parseServerDate, formatToServerDate } from '@/utils/date';
 
 // ============================================================================
 // Props & Helpers
@@ -29,6 +30,8 @@ interface WorkplaceSheetProps {
 const formatDate = (date: string) => {
     return dayjs(date).format('MMM YYYY');
 };
+
+
 
 const calculateDuration = (startDate: string, endDate: string | null, t: any) => {
     const start = dayjs(startDate);
@@ -192,8 +195,8 @@ const AddEditWorkplaceSheet = memo(
                     setCompanyName(editingWorkplace.company_name || '');
                     setPosition(editingWorkplace.position || '');
                     setLocation(editingWorkplace.location || '');
-                    setStartDate(editingWorkplace.start_date ? dayjs(editingWorkplace.start_date).format('YYYY-MM-DD') : '');
-                    setEndDate(editingWorkplace.end_date ? dayjs(editingWorkplace.end_date).format('YYYY-MM-DD') : '');
+                    setStartDate(parseServerDate(editingWorkplace.start_date));
+                    setEndDate(parseServerDate(editingWorkplace.end_date));
                     setDescription(editingWorkplace.description || '');
                 } else {
                     setWorkplaceToEdit(null);
@@ -250,8 +253,8 @@ const AddEditWorkplaceSheet = memo(
                 company_name: companyName.trim(),
                 position: position.trim(),
                 location: location.trim(),
-                start_date: dayjs(startDate.trim()).toISOString(),
-                end_date: endDate.trim() ? dayjs(endDate.trim()).toISOString() : null,
+                start_date: formatToServerDate(startDate.trim()),
+                end_date: formatToServerDate(endDate.trim()),
                 description: description.trim() || null,
             };
 
@@ -461,16 +464,26 @@ const AddEditWorkplaceSheet = memo(
                         {showStartPicker && (
                             <View style={{ marginTop: 8, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 16, padding: 8, alignItems: 'center' }}>
                                 <DateTimePicker
-                                    value={startDate ? dayjs(startDate).toDate() : new Date()}
+                                    value={(() => {
+                                        if (!startDate) {
+                                            const now = new Date();
+                                            return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+                                        }
+                                        const [year, month, day] = startDate.split('-').map(Number);
+                                        return new Date(Date.UTC(year, month - 1, day));
+                                    })()}
                                     mode="date"
                                     display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                                    onChange={(event, date) => {
-                                        if (Platform.OS === 'android') {
-                                            setShowStartPicker(false);
-                                        }
-                                        if (date) {
-                                            setStartDate(dayjs(date).format('YYYY-MM-DD'));
-                                        }
+                                    presentation={Platform.OS === 'android' ? 'dialog' : undefined}
+                                    onValueChange={(_event, date) => {
+                                        setShowStartPicker(false);
+                                        const year = date.getUTCFullYear();
+                                        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getUTCDate()).padStart(2, '0');
+                                        setStartDate(`${year}-${month}-${day}`);
+                                    }}
+                                    onDismiss={() => {
+                                        setShowStartPicker(false);
                                     }}
                                     themeVariant={theme}
                                 />
@@ -524,16 +537,26 @@ const AddEditWorkplaceSheet = memo(
                         {showEndPicker && (
                             <View style={{ marginTop: 8, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 16, padding: 8, alignItems: 'center' }}>
                                 <DateTimePicker
-                                    value={endDate ? dayjs(endDate).toDate() : new Date()}
+                                    value={(() => {
+                                        if (!endDate) {
+                                            const now = new Date();
+                                            return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+                                        }
+                                        const [year, month, day] = endDate.split('-').map(Number);
+                                        return new Date(Date.UTC(year, month - 1, day));
+                                    })()}
                                     mode="date"
                                     display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                                    onChange={(event, date) => {
-                                        if (Platform.OS === 'android') {
-                                            setShowEndPicker(false);
-                                        }
-                                        if (date) {
-                                            setEndDate(dayjs(date).format('YYYY-MM-DD'));
-                                        }
+                                    presentation={Platform.OS === 'android' ? 'dialog' : undefined}
+                                    onValueChange={(_event, date) => {
+                                        setShowEndPicker(false);
+                                        const year = date.getUTCFullYear();
+                                        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getUTCDate()).padStart(2, '0');
+                                        setEndDate(`${year}-${month}-${day}`);
+                                    }}
+                                    onDismiss={() => {
+                                        setShowEndPicker(false);
                                     }}
                                     themeVariant={theme}
                                 />

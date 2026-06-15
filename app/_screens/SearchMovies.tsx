@@ -146,7 +146,7 @@ const SearchMoviesScreen = () => {
           style={({ pressed }) => [
             styles.row,
             {
-              backgroundColor: colors.background,
+              backgroundColor: colors.surfaceContainerLow,
               opacity: pressed ? 0.9 : 1,
             },
           ]}
@@ -157,12 +157,12 @@ const SearchMoviesScreen = () => {
             contentFit="cover"
           />
           <View style={{ flex: 1, gap: 4 }}>
-            <FlexText numberOfLines={2} style={[styles.title, { color: colors.text }]}>
+            <FlexText numberOfLines={2} style={[styles.title, { color: colors.onSurface }]}>
               {title}
             </FlexText>
             <FlexText
               numberOfLines={1}
-              style={[styles.description, { color: (colors as any).mutedText ?? "rgba(255,255,255,0.7)" }]}
+              style={[styles.description, { color: colors.onSurfaceVariant }]}
             >
               {isPerson ? item.known_for_department : (dateRaw ? new Date(dateRaw).getFullYear() : "—")}
             </FlexText>
@@ -196,7 +196,7 @@ const SearchMoviesScreen = () => {
               <View style={styles.categoryPill}>
                 <FlexText
                   numberOfLines={1}
-                  style={{ color: colors.text, fontWeight: "600" }}
+                  style={{ color: colors.onSurface, fontWeight: "600" }}
                 >
                   {c.name}
                 </FlexText>
@@ -206,7 +206,7 @@ const SearchMoviesScreen = () => {
         </ScrollView>
       </View>
     );
-  }, [common.heading, colors.text, handleCategoryPress, submittedQuery, styles.categoryPill]);
+  }, [common.heading, colors.onSurface, handleCategoryPress, submittedQuery, styles.categoryPill]);
 
   const ListFooterComponent = useCallback(() => {
     if (!submittedQuery || !hasNextPage) return null;
@@ -218,13 +218,13 @@ const SearchMoviesScreen = () => {
           disabled={isFetchingNextPage}
           style={[
             styles.loadMoreButton,
-            { backgroundColor: colors.card, opacity: isFetchingNextPage ? 0.7 : 1 },
+            { backgroundColor: colors.surfaceContainerHigh, opacity: isFetchingNextPage ? 0.7 : 1 },
           ]}
         >
           {isFetchingNextPage ? (
             <Spinner size="md" />
           ) : (
-            <FlexText style={{ color: colors.text, fontWeight: "700" }}>
+            <FlexText style={{ color: colors.onSurface, fontWeight: "700" }}>
               Load more
             </FlexText>
           )}
@@ -253,7 +253,7 @@ const SearchMoviesScreen = () => {
         <TouchableOpacity
           onPress={() => router.back()}
           style={{
-            backgroundColor: colors.containerContent,
+            backgroundColor: colors.surfaceContainer,
             borderRadius: 999,
             width: 40,
             height: 40,
@@ -261,7 +261,7 @@ const SearchMoviesScreen = () => {
             alignItems: "center",
           }}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
       </View>
 
@@ -269,7 +269,7 @@ const SearchMoviesScreen = () => {
         <FlexText style={[common.heading, { fontSize: 28 }]}>
           Search
         </FlexText>
-        <FlexText style={[common.bodySmall, { color: colors.muted ?? "rgba(255,255,255,0.7)", marginTop: 2 }]}>
+        <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
           {submittedQuery
             ? `Results for "${submittedQuery}"`
             : "Type a name then press Enter to search."}
@@ -278,8 +278,8 @@ const SearchMoviesScreen = () => {
 
       <View style={{ flexDirection: "row", paddingHorizontal: 16, marginTop: 16, marginBottom: 8, gap: 16 }}>
         {(['movie', 'tv', 'person'] as const).map(type => (
-          <TouchableOpacity key={type} onPress={() => setSearchType(type)} style={{ paddingBottom: 8, borderBottomWidth: searchType === type ? 2 : 0, borderBottomColor: (colors as any).primary ?? "white" }}>
-            <FlexText style={{ color: searchType === type ? colors.text : colors.muted, fontWeight: searchType === type ? "700" : "500" }}>
+          <TouchableOpacity key={type} onPress={() => setSearchType(type)} style={{ paddingBottom: 8, borderBottomWidth: searchType === type ? 2 : 0, borderBottomColor: colors.primary }}>
+            <FlexText style={{ color: searchType === type ? colors.onSurface : colors.onSurfaceVariant, fontWeight: searchType === type ? "700" : "500" }}>
               {type === 'movie' ? 'Movies' : type === 'tv' ? 'TV Shows' : 'People'}
             </FlexText>
           </TouchableOpacity>
@@ -313,11 +313,11 @@ const SearchMoviesScreen = () => {
           if (!isLoading && submittedQuery && items.length === 0) {
             return (
               <View style={{ padding: 16, alignItems: 'center', marginTop: 40 }}>
-                <Ionicons name="search-outline" size={48} color={(colors as any).muted ?? "rgba(255,255,255,0.5)"} />
-                <FlexText style={{ color: colors.text, fontSize: 18, fontWeight: "600", marginTop: 16 }}>
+                <Ionicons name="search-outline" size={48} color={colors.onSurfaceVariant} />
+                <FlexText style={{ color: colors.onSurface, fontSize: 18, fontWeight: "600", marginTop: 16 }}>
                   No results found
                 </FlexText>
-                <FlexText style={{ color: (colors as any).muted ?? "rgba(255,255,255,0.7)", marginTop: 8, textAlign: "center" }}>
+                <FlexText style={{ color: colors.onSurfaceVariant, marginTop: 8, textAlign: "center" }}>
                   We couldn&apos;t find anything matching &quot;{submittedQuery}&quot;. Try adjusting your search query.
                 </FlexText>
               </View>
@@ -338,9 +338,9 @@ const SearchMoviesScreen = () => {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={() => refetch()}
-            tintColor={colors.text}
-            colors={[colors.text]}
-            progressBackgroundColor={colors.card}
+            tintColor={colors.onSurface}
+            colors={[colors.onSurface]}
+            progressBackgroundColor={colors.surfaceContainerHigh}
             progressViewOffset={insets.top}
           />
         }
@@ -355,12 +355,12 @@ const SearchMoviesScreen = () => {
           },
         ]}
       >
-        <View style={[styles.searchBar, { backgroundColor: colors.card }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.tertiaryContainer }]}>
           <TextInput
             ref={inputRef}
-            style={[styles.searchInput, { color: "white" }]}
+            style={[styles.searchInput, { color: colors.onTertiaryContainer }]}
             placeholder="Search movies..."
-            placeholderTextColor={colors.muted ?? "rgba(255,255,255,0.5)"}
+            placeholderTextColor={colors.onTertiaryContainer + "80"}
             value={searchText}
             onChangeText={setSearchText}
             onSubmitEditing={submitSearch}
@@ -373,13 +373,13 @@ const SearchMoviesScreen = () => {
               <View
                 style={[
                   styles.clearButtonInner,
-                  { backgroundColor: colors.card },
+                  { backgroundColor: colors.onTertiaryContainer + "20" },
                 ]}
               >
                 <Ionicons
                   name="close"
                   size={16}
-                  color={colors.text}
+                  color={colors.onTertiaryContainer}
                 />
               </View>
             </TouchableOpacity>
@@ -388,7 +388,7 @@ const SearchMoviesScreen = () => {
 
         {isError && submittedQuery && (
           <View style={{ marginTop: 8 }}>
-            <FlexText style={{ color: "white", fontWeight: "700" }}>
+            <FlexText style={{ color: colors.error, fontWeight: "700" }}>
               Failed to load results.
             </FlexText>
           </View>
@@ -411,7 +411,7 @@ const makeStyles = (colors: any) =>
       width: 90,
       height: 90,
       borderRadius: 45,
-      backgroundColor: "rgba(255,255,255,0.08)",
+      backgroundColor: colors.outlineVariant,
     },
     title: {
       fontSize: 16,
@@ -457,7 +457,7 @@ const makeStyles = (colors: any) =>
       borderRadius: 999,
       paddingHorizontal: 14,
       paddingVertical: 10,
-      backgroundColor: colors.card ?? "rgba(255,255,255,0.08)",
+      backgroundColor: colors.surfaceContainerHigh,
     },
     loadMoreButton: {
       borderRadius: 99999,

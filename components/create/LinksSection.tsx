@@ -1,20 +1,19 @@
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { getPreviewData } from "@flyerhq/react-native-link-preview";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React, { memo, useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { Link } from "../../types/post";
-import { useTranslation } from "react-i18next";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
-import { COLORS } from "./types";
-import { StyleSheet } from "react-native";
+
 import { Spinner } from "heroui-native/spinner";
 
 // ─── Shared OG cache (mirrors PostLinkPreview – same module-level maps) ───────
@@ -174,16 +173,16 @@ const LinkItem = memo(({
     // ── Validity indicator colour ─────────────────────────────────────────────
     const urlBorderColor =
         urlValid === false
-            ? COLORS.error
+            ? colors.error
             : urlValid === true
-                ? COLORS.success
-                : colors.divider;
+                ? colors.primary
+                : colors.outlineVariant;
 
     return (
         <View
             style={[
                 createStyles.linkItemContainer,
-                { backgroundColor: colors.card },
+                { backgroundColor: colors.surfaceContainer },
             ]}
         >
             <View style={createStyles.linkInputsContainer}>
@@ -194,13 +193,13 @@ const LinkItem = memo(({
                             createStyles.linkInput,
                             common.body,
                             {
-                                color: colors.text,
+                                color: colors.onSurface,
                                 borderColor: urlBorderColor,
                                 borderWidth: 1,
                             },
                         ]}
                         placeholder={t("create.form.linkUrlPlaceholder")}
-                        placeholderTextColor={colors.muted}
+                        placeholderTextColor={colors.onSurfaceVariant}
                         value={urlDraft}
                         onChangeText={setUrlDraft}
                         onBlur={handleUrlBlur}
@@ -213,7 +212,7 @@ const LinkItem = memo(({
                     {/* Validity pill */}
                     {urlValid === false && (
                         <View style={linkStyles.validityPill}>
-                            <Text style={[linkStyles.validityText, { color: COLORS.error }]}>
+                            <Text style={[linkStyles.validityText, { color: colors.error }]}>
                                 ✕ Invalid URL
                             </Text>
                         </View>
@@ -227,14 +226,14 @@ const LinkItem = memo(({
                             createStyles.linkInput,
                             common.body,
                             {
-                                color: colors.text,
-                                borderColor: colors.divider,
+                                color: colors.onSurface,
+                                borderColor: colors.outlineVariant,
                                 borderWidth: 1,
                                 flex: 1,
                             },
                         ]}
                         placeholder={t("create.form.linkLabelPlaceholder")}
-                        placeholderTextColor={colors.muted}
+                        placeholderTextColor={colors.onSurfaceVariant}
                         value={link.label}
                         onChangeText={(text) => onUpdate("label", text)}
                         returnKeyType="done"
@@ -242,7 +241,7 @@ const LinkItem = memo(({
                     {isFetchingLabel && (
                         <Spinner
                             size="sm"
-                            color={colors.muted}
+                            color={colors.onSurfaceVariant}
                             style={linkStyles.labelSpinner}
                         />
                     )}
@@ -253,12 +252,12 @@ const LinkItem = memo(({
             <TouchableOpacity
                 style={[
                     createStyles.removeLinkButton,
-                    { backgroundColor: COLORS.error },
+                    { backgroundColor: colors.errorContainer },
                 ]}
                 onPress={onRemove}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-                <Ionicons name="close" size={14} color="#fff" />
+                <Ionicons name="close" size={14} color={colors.onErrorContainer} />
             </TouchableOpacity>
         </View>
     );
@@ -313,7 +312,7 @@ export const LinksSection = memo(({
     return (
         <View style={createStyles.linksSection}>
             <FlexText
-                style={[common.label, { color: colors.text, marginBottom: 12 }]}
+                style={[common.label, { color: colors.onSurface, marginBottom: 12 }]}
             >
                 {t("create.form.links")}
             </FlexText>

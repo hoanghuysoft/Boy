@@ -16,47 +16,46 @@ export const createCommonStyles = (
   StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
     },
     screenPadding: {
       padding: 12,
     },
 
-    display: createTextStyle(typography.display, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
-    headline: createTextStyle(typography.headline, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
-    heading: createTextStyle(typography.title, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
+    display: createTextStyle(typography.display, colors.onSurface, { fontFamily: 'GoogleSansFlexRegular' }),
+    headline: createTextStyle(typography.headline, colors.onSurface, { fontFamily: 'GoogleSansFlexRegular' }),
+    heading: createTextStyle(typography.title, colors.onSurface, { fontFamily: 'GoogleSansFlexRegular' }),
 
-    title: createTextStyle(typography.title, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
+    title: createTextStyle(typography.title, colors.onSurface, { fontFamily: 'GoogleSansFlexRegular' }),
     subheading: createTextStyle(
       ("titleMedium" in typography ? typography.titleMedium : typography.subtitle1) as TextStyle,
-      colors.text, { fontFamily: 'GoogleSansFlexRegular' }
+      colors.onSurface, { fontFamily: 'GoogleSansFlexRegular' }
     ),
 
-    body: createTextStyle(typography.body, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
+    body: createTextStyle(typography.body, colors.onSurface, { fontFamily: 'GoogleSansFlexRegular' }),
     bodySmall: createTextStyle(
       ("bodySmall" in typography ? typography.bodySmall : typography.body2) as TextStyle,
-      colors.text, { fontFamily: 'GoogleSansFlexRegular' }
+      colors.onSurface, { fontFamily: 'GoogleSansFlexRegular' }
     ),
 
-    label: createTextStyle(typography.label, colors.text, { fontFamily: 'GoogleSansFlexRegular' }),
+    label: createTextStyle(typography.label, colors.onSurface, { fontFamily: 'GoogleSansFlexRegular' }),
     buttonText: createTextStyle(
       ("button" in typography ? typography.button : typography.label) as TextStyle,
-      colors.text,
+      colors.onSurface,
       { textAlign: "center" }
     ),
 
     caption: createTextStyle(
       typography.caption,
-      colors.text,
+      colors.onSurface,
       { fontFamily: 'GoogleSansFlexRegular' }
     ),
     muted: {
       ...createTextStyle(
         ("bodySmall" in typography ? typography.bodySmall : typography.body2) as TextStyle,
-        colors.text,
+        colors.onSurfaceVariant,
         { fontFamily: 'GoogleSansFlexRegular' }
       ),
-      opacity: 0.7,
     },
 
     row: {
@@ -64,12 +63,12 @@ export const createCommonStyles = (
       alignItems: "center",
     },
     card: {
-      backgroundColor: colors.containerContent,
+      backgroundColor: colors.surfaceContainer,
       borderRadius: 24,
       padding: 12,
     },
     button: {
-      backgroundColor: colors.card,
+      backgroundColor: colors.surfaceContainerHigh,
       borderRadius: 12,
       paddingVertical: 12,
       paddingHorizontal: 12,
@@ -81,7 +80,7 @@ export const createCommonStyles = (
       height: 95,
       borderRadius: 100,
       borderWidth: 3,
-      borderColor: colors.background,
+      borderColor: colors.surface,
     },
     section: {
       gap: 12,
@@ -91,7 +90,7 @@ export const createCommonStyles = (
     },
     divider: {
       height: 1,
-      backgroundColor: colors.divider,
+      backgroundColor: colors.outlineVariant,
       marginVertical: 16,
     },
   });

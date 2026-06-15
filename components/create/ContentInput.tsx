@@ -35,10 +35,10 @@ export const ContentInput = memo(({
                     common.body,
                     createStyles.contentInput,
                     styles.textInput,
-                    { color: colors.text },
+                    { color: colors.onSurface },
                 ]}
                 placeholder={t("create.form.contentPlaceholder")}
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={colors.onSurfaceVariant}
                 value={content}
                 onChangeText={onContentChange}
                 multiline
@@ -46,15 +46,15 @@ export const ContentInput = memo(({
             />
             {content.length > 0 && (
                 <TouchableOpacity
-                    style={[styles.clearButton, { backgroundColor: colors.muted + "30" }]}
+                    style={[styles.clearButton, { backgroundColor: colors.onSurfaceVariant + "30" }]}
                     onPress={() => onContentChange("")}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                    <Ionicons name="close" size={16} color={colors.muted} />
+                    <Ionicons name="close" size={16} color={colors.onSurfaceVariant} />
                 </TouchableOpacity>
             )}
         </View>
-        <FlexText style={[common.caption, createStyles.characterCount, { color: colors.muted }]}>
+        <FlexText style={[common.caption, createStyles.characterCount, { color: colors.onSurfaceVariant }]}>
             {content.length}/{maxLength}
         </FlexText>
     </View>

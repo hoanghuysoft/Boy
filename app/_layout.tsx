@@ -1,4 +1,4 @@
-import { getParallaxSlideTransition, getScaleFadeTransition } from "@/components/stack/screen-options";
+import { getParallaxSlideTransition } from "@/components/stack/screen-options";
 import { Stack } from "@/components/stack/stack";
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
@@ -197,7 +197,7 @@ const RootContent = () => {
           <Stack.Screen name="login" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="video_player" options={Transition.Presets.ZoomIn()} />
-          <Stack.Screen name="profile/[id]" />
+          <Stack.Screen name="profile/[id]" options={Transition.Presets.ZoomIn()} />
           <Stack.Screen name="image_poster" />
           <Stack.Screen
             name="settings"
@@ -210,14 +210,14 @@ const RootContent = () => {
           <Stack.Screen name="search" />
           <Stack.Screen name="hashtag/[tag]" />
           <Stack.Screen name="hashtag-list" />
-          <Stack.Screen name="show_detail" />
+          <Stack.Screen name="show_detail" options={Transition.Presets.ZoomIn()} />
           <Stack.Screen name="show_list" />
           <Stack.Screen name="watchlist" />
-          <Stack.Screen name="create" options={getScaleFadeTransition()} />
+          <Stack.Screen name="create" options={Transition.Presets.ZoomIn()} />
           <Stack.Screen name="inapp_browser" />
-          <Stack.Screen name="movie_detail" />
-          <Stack.Screen name="tv_detail" />
-          <Stack.Screen name="person_detail" />
+          <Stack.Screen name="movie_detail" options={Transition.Presets.ZoomIn()} />
+          <Stack.Screen name="tv_detail" options={Transition.Presets.ZoomIn()} />
+          <Stack.Screen name="person_detail" options={Transition.Presets.ZoomIn()} />
           <Stack.Screen name="movie_list" />
           <Stack.Screen name="search_movies" />
           <Stack.Screen name="webview" />

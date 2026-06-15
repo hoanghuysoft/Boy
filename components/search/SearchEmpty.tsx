@@ -17,7 +17,7 @@ export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin 
         <FlexText
             style={[
                 common.heading,
-                { color: colors.muted, textAlign: "center", marginTop: 16 },
+                { color: colors.onSurfaceVariant, textAlign: "center", marginTop: 16 },
             ]}
         >
             {searchQuery
@@ -30,7 +30,7 @@ export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin 
             style={[
                 common.bodySmall,
                 {
-                    color: colors.muted,
+                    color: colors.onSurfaceVariant,
                     textAlign: "center",
                     marginTop: 8,
                     opacity: 0.7,

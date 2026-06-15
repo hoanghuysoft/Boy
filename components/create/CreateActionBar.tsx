@@ -5,7 +5,6 @@ import AnimatedGlow from 'react-native-animated-glow';
 import { ThemeColors } from "../../context/ThemeContext";
 import { DeezerTrack } from "../../services/deezer";
 import { abyssalGlow } from '../glow/AbyssGlowConfig';
-import { COLORS } from "./types";
 
 // ============================================================================
 // ActionButton Component
@@ -30,7 +29,7 @@ const ActionButton = memo(({
         style={[
             styles.actionButton,
             {
-                backgroundColor: isActive ? COLORS.primary + "20" : "transparent",
+                backgroundColor: isActive ? colors.primaryContainer : "transparent",
             },
         ]}
         onPress={onPress}
@@ -39,7 +38,7 @@ const ActionButton = memo(({
     >
         <Icon
             size={24}
-            color={isActive ? COLORS.primary : colors.text}
+            color={isActive ? colors.onPrimaryContainer : colors.onSurface}
         />
     </TouchableOpacity>
 ));
@@ -126,8 +125,8 @@ export const CreateActionBar = memo(({
                     style={[
                         styles.pillBar,
                         {
-                            backgroundColor: colors.containerContent,
-                            borderColor: colors.divider,
+                            backgroundColor: colors.surfaceContainer,
+                            borderColor: colors.outlineVariant,
                         },
                     ]}
                 >

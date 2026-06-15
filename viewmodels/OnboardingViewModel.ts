@@ -2,6 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { createProfile, uploadAvatar } from '../services/onboarding';
+import { toUTCDate } from '../utils/date';
 
 export interface OnboardingForm {
     name: string;
@@ -24,17 +25,17 @@ export interface OnboardingViewModel {
 
 function isAtLeast18(date: Date): boolean {
     const threshold = new Date(
-        date.getFullYear() + 18,
-        date.getMonth(),
-        date.getDate()
+        date.getUTCFullYear() + 18,
+        date.getUTCMonth(),
+        date.getUTCDate()
     );
     return new Date() >= threshold;
 }
 
 function toIsoDate(date: Date): string {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(date.getUTCDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
 }
 
@@ -44,8 +45,11 @@ export const useOnboardingViewModel = (): OnboardingViewModel => {
     const router = useRouter();
 
     // Latest selectable birthday — must be 18 years ago or earlier.
-    const maxBirthday = new Date();
-    maxBirthday.setFullYear(maxBirthday.getFullYear() - 18);
+    const maxBirthday = (() => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 18);
+        return toUTCDate(d);
+    })();
 
     const [form, setForm] = useState<OnboardingForm>({
         name: '',

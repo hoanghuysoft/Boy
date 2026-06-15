@@ -1,13 +1,11 @@
 import { Redirect, Tabs } from "expo-router";
-import React, { useRef } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
-import { CustomTabBar } from "../../components/navigation/CustomTabBar";
+import { CurvedTabBar } from "../../components/navigation/tab-bar";
 import { useSession } from "../../context/SessionContext";
 
 export default function TabLayout() {
     const { session, hasProfile } = useSession();
-    const blurTargetRef = useRef<View | null>(null);
     const { t } = useTranslation();
 
     if (!session) {
@@ -20,7 +18,7 @@ export default function TabLayout() {
 
     return (
         <Tabs
-            tabBar={(props) => <CustomTabBar {...props} blurTargetRef={blurTargetRef} />}
+            tabBar={(props) => <CurvedTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
             }}

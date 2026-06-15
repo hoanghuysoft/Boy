@@ -133,7 +133,7 @@ const SearchShowsScreen = () => {
         style={({ pressed }) => [
           styles.row,
           {
-            backgroundColor: colors.background,
+            backgroundColor: colors.surfaceContainerLow,
             opacity: pressed ? 0.9 : 1,
           },
         ]}
@@ -146,7 +146,7 @@ const SearchShowsScreen = () => {
         <View style={{ flex: 1, gap: 4 }}>
           <FlexText
             numberOfLines={1}
-            style={[styles.title, { color: colors.text }]}
+            style={[styles.title, { color: colors.onSurface }]}
           >
             {item.title}
           </FlexText>
@@ -155,7 +155,7 @@ const SearchShowsScreen = () => {
             style={[
               styles.description,
               {
-                color: (colors as any).mutedText ?? "rgba(255,255,255,0.7)",
+                color: colors.onSurfaceVariant,
               },
             ]}
           >
@@ -189,7 +189,7 @@ const SearchShowsScreen = () => {
                     styles.categoryPill,
                     {
                       width: i === 0 ? 96 : i === 1 ? 120 : i === 2 ? 88 : 110,
-                      backgroundColor: colors.card,
+                      backgroundColor: colors.surfaceContainerHigh,
                     },
                   ]}
                 />
@@ -211,7 +211,7 @@ const SearchShowsScreen = () => {
                 <View style={styles.categoryPill}>
                   <FlexText
                     numberOfLines={1}
-                    style={{ color: colors.text, fontWeight: "600" }}
+                    style={{ color: colors.onSurface, fontWeight: "600" }}
                   >
                     {c.name}
                   </FlexText>
@@ -222,7 +222,7 @@ const SearchShowsScreen = () => {
         )}
       </View>
     );
-  }, [categories, common.heading, colors.card, colors.text, handleCategoryPress, isCategoriesLoading, submittedQuery, styles.categoryPill]);
+  }, [categories, common.heading, colors.surfaceContainerHigh, colors.onSurface, handleCategoryPress, isCategoriesLoading, submittedQuery, styles.categoryPill]);
 
   const ListFooterComponent = useCallback(() => {
     if (!submittedQuery || !hasNextPage) return null;
@@ -234,13 +234,13 @@ const SearchShowsScreen = () => {
           disabled={isFetchingNextPage}
           style={[
             styles.loadMoreButton,
-            { backgroundColor: colors.card, opacity: isFetchingNextPage ? 0.7 : 1 },
+            { backgroundColor: colors.surfaceContainerHigh, opacity: isFetchingNextPage ? 0.7 : 1 },
           ]}
         >
           {isFetchingNextPage ? (
             <Spinner size="md" />
           ) : (
-            <FlexText style={{ color: colors.text, fontWeight: "700" }}>
+            <FlexText style={{ color: colors.onSurface, fontWeight: "700" }}>
               Load more
             </FlexText>
           )}
@@ -269,7 +269,7 @@ const SearchShowsScreen = () => {
         <TouchableOpacity
           onPress={() => router.back()}
           style={{
-            backgroundColor: colors.containerContent,
+            backgroundColor: colors.surfaceContainer,
             borderRadius: 999,
             width: 40,
             height: 40,
@@ -277,7 +277,7 @@ const SearchShowsScreen = () => {
             alignItems: "center",
           }}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
       </View>
 
@@ -285,7 +285,7 @@ const SearchShowsScreen = () => {
         <FlexText style={[common.heading, { fontSize: 28 }]}>
           Search Shows
         </FlexText>
-        <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
+        <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
           {submittedQuery
             ? `Results for "${submittedQuery}"`
             : "Pick a phrase then press Enter to search."}
@@ -329,9 +329,9 @@ const SearchShowsScreen = () => {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={() => refetch()}
-            tintColor={colors.text}
-            colors={[colors.text]}
-            progressBackgroundColor={colors.card}
+            tintColor={colors.onSurface}
+            colors={[colors.onSurface]}
+            progressBackgroundColor={colors.surfaceContainerHigh}
             progressViewOffset={insets.top}
           />
         }
@@ -346,12 +346,12 @@ const SearchShowsScreen = () => {
           },
         ]}
       >
-        <View style={[styles.searchBar, { backgroundColor: colors.card }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.tertiaryContainer }]}>
           <TextInput
             ref={inputRef}
-            style={[styles.searchInput, { color: "white" }]}
+            style={[styles.searchInput, { color: colors.onTertiaryContainer }]}
             placeholder="Search shows..."
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.onTertiaryContainer + "80"}
             value={searchText}
             onChangeText={setSearchText}
             onSubmitEditing={submitSearch}
@@ -364,13 +364,13 @@ const SearchShowsScreen = () => {
               <View
                 style={[
                   styles.clearButtonInner,
-                  { backgroundColor: colors.card },
+                  { backgroundColor: colors.onTertiaryContainer + "20" },
                 ]}
               >
                 <Ionicons
                   name="close"
                   size={16}
-                  color={colors.text}
+                  color={colors.onTertiaryContainer}
                 />
               </View>
             </TouchableOpacity>
@@ -379,7 +379,7 @@ const SearchShowsScreen = () => {
 
         {isError && submittedQuery && (
           <View style={{ marginTop: 8 }}>
-            <FlexText style={{ color: "white", fontWeight: "700" }}>
+            <FlexText style={{ color: colors.error, fontWeight: "700" }}>
               Failed to load results.
             </FlexText>
           </View>
@@ -402,7 +402,7 @@ const makeStyles = (colors: any) =>
       width: 150,
       height: 80,
       borderRadius: 12,
-      backgroundColor: "rgba(255,255,255,0.08)",
+      backgroundColor: colors.outlineVariant,
     },
     title: {
       fontSize: 16,
@@ -448,7 +448,7 @@ const makeStyles = (colors: any) =>
       borderRadius: 999,
       paddingHorizontal: 14,
       paddingVertical: 10,
-      backgroundColor: colors.card ?? "rgba(255,255,255,0.08)",
+      backgroundColor: colors.surfaceContainerHigh,
     },
     loadMoreButton: {
       borderRadius: 99999,

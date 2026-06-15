@@ -15,6 +15,7 @@ const settings = {
     adultFilter: '敏感内容过滤',
     adultFilterOn: '开启',
     adultFilterOff: '关闭',
+    curveBottomBar: '弧形底部导航栏',
     homeCarousel: '首页轮播',
     homeCarouselDescription: '轮播中可能包含敏感媒体内容。',
 

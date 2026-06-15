@@ -15,6 +15,7 @@ const settings = {
     adultFilter: 'Sensitive content filter',
     adultFilterOn: 'On',
     adultFilterOff: 'Off',
+    curveBottomBar: 'Curve bottom bar',
     homeCarousel: 'Home carousel',
     homeCarouselDescription: 'The carousel may contain sensitive media.',
 

@@ -77,10 +77,10 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                 <View>
                     <View style={styles.commentHeader}>
                         <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <FlexText style={[common.bodySmall, { color: colors.muted, fontSize: 13, fontWeight: '600' }]} numberOfLines={1}>
+                            <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 13, fontWeight: '600' }]} numberOfLines={1}>
                                 {comment.profile_name}
                             </FlexText>
-                            {comment.profile_is_verified && <VerifiedIcon size={12} backgroundColor={colors.verify} />}
+                            {comment.profile_is_verified && <VerifiedIcon size={12} backgroundColor={colors.primary} />}
                         </TouchableOpacity>
                     </View>
 
@@ -115,23 +115,23 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                 </View>
 
                 <View style={[common.row, { alignItems: 'center', marginTop: 4 }]}>
-                    <FlexText style={[common.bodySmall, { color: colors.muted, fontSize: 12 }]}>
+                    <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 12 }]}>
                         {formatTimeAgo(comment.created_at)}
                     </FlexText>
 
                     {isOwn && (
                         <>
-                            <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
+                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
                             <TouchableOpacity
                                 onPress={onEdit}
                                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                 style={styles.actionButton}
                             >
-                                <FlexText style={{ color: colors.muted, fontSize: 12, fontWeight: '600' }}>
+                                <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
                                     {editLabel}
                                 </FlexText>
                             </TouchableOpacity>
-                            <FlexText style={{ color: colors.muted, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
+                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
                             <TouchableOpacity
                                 onPress={onDelete}
                                 disabled={isDeleting}
@@ -139,9 +139,9 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                                 style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
                             >
                                 {isDeleting ? (
-                                    <Spinner size="md" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
+                                    <Spinner size="md" color={colors.onSurfaceVariant} style={{ transform: [{ scale: 0.8 }] }} />
                                 ) : (
-                                    <FlexText style={{ color: colors.muted, fontSize: 12, fontWeight: '600' }}>
+                                    <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
                                         {deleteLabel}
                                     </FlexText>
                                 )}
@@ -281,13 +281,13 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             }
             return (
                 <View style={styles.emptyState}>
-                    <View style={[styles.emptyIconContainer, { backgroundColor: vm.colors.card }]}>
-                        <MaterialIcons name="comment" size={32} color={vm.colors.muted} />
+                    <View style={[styles.emptyIconContainer, { backgroundColor: vm.colors.surfaceContainerHigh }]}>
+                        <MaterialIcons name="comment" size={32} color={vm.colors.onSurfaceVariant} />
                     </View>
                     <FlexText style={[vm.common.heading, { fontSize: 18, marginTop: 16, marginBottom: 8 }]}>
                         {t('post.commentsSheet.emptyTitle')}
                     </FlexText>
-                    <FlexText style={[vm.common.body, { color: vm.colors.muted, textAlign: 'center' }]}>
+                    <FlexText style={[vm.common.body, { color: vm.colors.onSurfaceVariant, textAlign: 'center' }]}>
                         {t('post.commentsSheet.emptyBody')}
                     </FlexText>
                 </View>
@@ -299,7 +299,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             <View style={[
                 styles.footerContainer,
                 {
-                    backgroundColor: vm.colors.containerContent,
+                    backgroundColor: vm.colors.surfaceContainer,
                     paddingBottom: Math.max(insets.bottom, 12),
                 }
             ]}>
@@ -307,11 +307,11 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 {vm.isEditing && (
                     <View style={[
                         styles.editBanner,
-                        { backgroundColor: vm.colors.card }
+                        { backgroundColor: vm.colors.surfaceContainerHigh }
                     ]}>
-                        <MaterialIcons name="edit" size={14} color={vm.colors.muted} style={{ marginRight: 6 }} />
+                        <MaterialIcons name="edit" size={14} color={vm.colors.onSurfaceVariant} style={{ marginRight: 6 }} />
                         <FlexText
-                            style={[vm.common.bodySmall, { color: vm.colors.muted, flex: 1, fontSize: 12 }]}
+                            style={[vm.common.bodySmall, { color: vm.colors.onSurfaceVariant, flex: 1, fontSize: 12 }]}
                             numberOfLines={1}
                         >
                             {t('post.commentsSheet.editingBanner')}
@@ -320,30 +320,30 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                             onPress={vm.handleCancelEdit}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
-                            <MaterialIcons name="close" size={16} color={vm.colors.muted} />
+                            <MaterialIcons name="close" size={16} color={vm.colors.onSurfaceVariant} />
                         </TouchableOpacity>
                     </View>
                 )}
 
                 {/* URL Input */}
                 {isKeyboardVisible && vm.showUrlInput && (
-                    <View style={[styles.urlInputWrapper, { backgroundColor: vm.colors.containerContent }]}>
-                        <MaterialIcons name="link" size={18} color={vm.colors.muted} />
+                    <View style={[styles.urlInputWrapper, { backgroundColor: vm.colors.tertiaryContainer }]}>
+                        <MaterialIcons name="link" size={18} color={vm.colors.onTertiaryContainer} />
                         <TextInput
-                            style={[styles.urlInput, { color: vm.colors.text }]}
+                            style={[styles.urlInput, { color: vm.colors.onTertiaryContainer }]}
                             placeholder="Enter image URL..."
-                            placeholderTextColor={vm.colors.muted}
+                            placeholderTextColor={vm.colors.onTertiaryContainer}
                             value={vm.imageUrlInput}
                             onChangeText={vm.setImageUrlInput}
                             autoFocus
                             autoCapitalize="none"
                             keyboardType="url"
-                            selectionColor={vm.colors.text}
+                            selectionColor={vm.colors.onTertiaryContainer}
                             onSubmitEditing={vm.handleAddImageUrl}
                         />
                         {vm.imageUrlInput.trim().length > 0 && (
                             <TouchableOpacity onPress={vm.handleAddImageUrl} style={{ marginLeft: 8 }}>
-                                <MaterialIcons name="check-circle" size={24} color={vm.colors.verify || vm.colors.text} />
+                                <MaterialIcons name="check-circle" size={24} color={vm.colors.onTertiaryContainer} />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -367,11 +367,11 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     <TextInput
                         ref={inputRef}
                         style={[styles.input, {
-                            backgroundColor: vm.colors.card,
-                            color: vm.colors.text,
+                            backgroundColor: vm.colors.tertiaryContainer,
+                            color: vm.colors.onTertiaryContainer,
                         }]}
                         placeholder={vm.isEditing ? t('post.commentsSheet.placeholderEdit') : t('post.commentsSheet.placeholderAdd')}
-                        placeholderTextColor={vm.colors.muted}
+                        placeholderTextColor={vm.colors.onTertiaryContainer}
                         value={vm.commentText}
                         onChangeText={vm.setCommentText}
                         multiline
@@ -384,19 +384,19 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                             isIconOnly
                             isDisabled={vm.isActionLoading}
                             onPress={vm.onPrimaryAction}
-                            style={{ backgroundColor: vm.colors.text, width: 44, height: 44, borderRadius: 22, marginBottom: 2 }}
+                            style={{ backgroundColor: vm.colors.primary, width: 44, height: 44, borderRadius: 22, marginBottom: 2 }}
                         >
                             {vm.isActionLoading ? (
-                                <Spinner className="md" color={vm.colors.background} />
+                                <Spinner className="md" color={vm.colors.onPrimary} />
                             ) : (
 
                                 !vm.isEditing ? (<Plain2
                                     size={24}
-                                    color={vm.colors.background}
+                                    color={vm.colors.onPrimary}
                                 />)
                                     : (<PenNewRound
                                         size={24}
-                                        color={vm.colors.background}
+                                        color={vm.colors.onPrimary}
                                     />)
 
                             )}
@@ -410,35 +410,35 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         <TouchableOpacity
                             style={[
                                 styles.toolbarButton,
-                                { backgroundColor: vm.colors.card },
+                                { backgroundColor: vm.colors.surfaceContainerHigh },
                                 vm.selectedImageUrl ? { opacity: 0.5 } : {}
                             ]}
                             onPress={() => vm.setShowUrlInput(!vm.showUrlInput)}
                             disabled={!!vm.selectedImageUrl}
                         >
-                            <GalleryAdd size={24} color={vm.colors.text} />
+                            <GalleryAdd size={24} color={vm.colors.onSurface} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
                                 styles.toolbarButton,
-                                { backgroundColor: vm.colors.card },
+                                { backgroundColor: vm.colors.surfaceContainerHigh },
                                 vm.selectedImageUrl ? { opacity: 0.5 } : {}
                             ]}
                             onPress={() => { emojiSheetRef.current?.present(); Keyboard.dismiss(); }}
                             disabled={!!vm.selectedImageUrl}
                         >
-                            <MaterialIcons name="emoji-emotions" size={24} color={vm.colors.text} />
+                            <MaterialIcons name="emoji-emotions" size={24} color={vm.colors.onSurface} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
                                 styles.toolbarButton,
-                                { backgroundColor: vm.colors.card },
+                                { backgroundColor: vm.colors.surfaceContainerHigh },
                                 vm.selectedImageUrl ? { opacity: 0.5 } : {}
                             ]}
                             onPress={() => { GiphyDialog.show() }}
                             disabled={!!vm.selectedImageUrl}
                         >
-                            <MaterialIcons name="gif" size={24} color={vm.colors.text} />
+                            <MaterialIcons name="gif" size={24} color={vm.colors.onSurface} />
                         </TouchableOpacity>
 
                     </View>
@@ -449,9 +449,9 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const sharedProps = {
             ref: sheetRef,
             scrollable: true,
-            backgroundColor: vm.colors.containerContent,
+            backgroundColor: vm.colors.surfaceContainer,
             grabberOptions: {
-                color: vm.colors.muted || "#C4C4C4",
+                color: vm.colors.onSurfaceVariant || "#C4C4C4",
                 height: 5,
                 width: 40,
             },

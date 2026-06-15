@@ -1,12 +1,11 @@
 import FontAwesome from "@react-native-vector-icons/fontawesome/static";
+import { Spinner } from "heroui-native/spinner";
 import React, { memo } from "react";
-import { ActivityIndicator, TouchableOpacity, View } from "react-native";
-import { ThemeColors } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
+import { TouchableOpacity, View } from "react-native";
+import { ThemeColors } from "../../context/ThemeContext";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
-import { COLORS } from "./types";
-import { Spinner } from "heroui-native/spinner";
 
 // ============================================================================
 // CreateScreenHeader Component
@@ -32,6 +31,9 @@ export const CreateScreenHeader = memo(({
 }: CreateScreenHeaderProps) => {
     const { t } = useTranslation();
 
+    const buttonBgColor = canSubmit ? colors.primary : colors.surfaceContainerHigh;
+    const buttonTextColor = canSubmit ? colors.onPrimary : colors.onSurfaceVariant;
+
     return (
         <View
             style={[
@@ -46,7 +48,7 @@ export const CreateScreenHeader = memo(({
                 <FlexText style={[common.heading, { fontSize: 28 }]} numberOfLines={1}>
                     {t('create.header.title')}
                 </FlexText>
-                <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]} numberOfLines={1}>
+                <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]} numberOfLines={1}>
                     {t('create.header.subtitle')}
                 </FlexText>
             </View>
@@ -55,7 +57,7 @@ export const CreateScreenHeader = memo(({
                 style={[
                     createStyles.submitButton,
                     {
-                        backgroundColor: canSubmit ? COLORS.primary : colors.divider,
+                        backgroundColor: buttonBgColor,
                         flexShrink: 0,
                     },
                 ]}
@@ -63,12 +65,12 @@ export const CreateScreenHeader = memo(({
                 disabled={!canSubmit}
             >
                 {isSubmitting ? (
-                    <Spinner size="md" color="#fff" />
+                    <Spinner size="md" color={buttonTextColor} />
                 ) : (
                     <>
-                        <FontAwesome name="send" size={16} color="#fff" />
+                        <FontAwesome name="send" size={16} color={buttonTextColor} />
                         <FlexText
-                            style={createStyles.submitButtonText}
+                            style={[createStyles.submitButtonText, { color: buttonTextColor }]}
                             numberOfLines={1}
                         >
                             {t('create.action.post')}

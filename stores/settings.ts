@@ -32,6 +32,11 @@ interface SettingsStore {
     profileDesign: 'v3' | 'classic';
     setProfileDesign: (design: 'v3' | 'classic') => void;
 
+    // Bottom bar design
+    makeBottomBarCurve: boolean;
+    setMakeBottomBarCurve: (curve: boolean) => void;
+    toggleMakeBottomBarCurve: () => void;
+
     // Third-party upload keys and settings
     imgbbApiKey: string;
     setImgbbApiKey: (key: string) => void;
@@ -65,6 +70,11 @@ export const useSettingsStore = create<SettingsStore>()(
             // Profile Design
             profileDesign: 'v3',
             setProfileDesign: (design) => set({ profileDesign: design }),
+
+            // Bottom bar design
+            makeBottomBarCurve: false,
+            setMakeBottomBarCurve: (curve) => set({ makeBottomBarCurve: curve }),
+            toggleMakeBottomBarCurve: () => set((state) => ({ makeBottomBarCurve: !state.makeBottomBarCurve })),
 
             // Third-party upload settings
             imgbbApiKey: '',

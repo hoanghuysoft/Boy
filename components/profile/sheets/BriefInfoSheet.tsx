@@ -292,8 +292,9 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
             onIndexChange={handleIndexChange}
             onSettle={handleSettle}
             detents={[0, 'content']}
-            scrimColor="rgba(0, 0, 0, 1)"
+            scrimColor={colors.background}
             scrimOpacities={[0, 0.5, 1]}
+            extendUnderStatusBar
             surface={
                 <View
                     style={[

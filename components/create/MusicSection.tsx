@@ -15,11 +15,6 @@ import { ThemeColors } from "../../context/ThemeContext";
 import { DeezerTrack } from "../../services/deezer";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
-import { COLORS } from "./types";
-
-// ============================================================================
-// MusicSearchResult Component
-// ============================================================================
 
 // ============================================================================
 // MusicSearchResult Component
@@ -41,7 +36,7 @@ const MusicSearchResult = memo(({
     common,
 }: MusicSearchResultProps) => (
     <SquircleView style={[{
-        backgroundColor: isSelected ? COLORS.primary + "20" : colors.card,
+        backgroundColor: isSelected ? colors.primaryContainer : colors.surfaceContainerHigh,
         borderRadius: 8
     }]}>
         <TouchableOpacity
@@ -52,15 +47,15 @@ const MusicSearchResult = memo(({
         >
             <Image source={{ uri: track.cover_url }} style={createStyles.musicCover} />
             <View style={createStyles.musicInfo}>
-                <FlexText style={[common.subheading, createStyles.musicTitle, { color: colors.text }]} numberOfLines={1}>
+                <FlexText style={[common.subheading, createStyles.musicTitle, { color: isSelected ? colors.onPrimaryContainer : colors.onSurface }]} numberOfLines={1}>
                     {track.title}
                 </FlexText>
-                <FlexText style={[common.caption, createStyles.musicArtist, { color: colors.muted }]} numberOfLines={1}>
+                <FlexText style={[common.caption, createStyles.musicArtist, { color: isSelected ? colors.onPrimaryContainer : colors.onSurfaceVariant }]} numberOfLines={1}>
                     {track.artist}
                 </FlexText>
             </View>
             {isSelected && (
-                <CheckCircle size={24} color={COLORS.primary} />
+                <CheckCircle size={24} color={colors.primary} />
             )}
         </TouchableOpacity>
     </SquircleView >
@@ -85,24 +80,24 @@ const SelectedMusicCard = memo(({
     common,
     onRemove,
 }: SelectedMusicCardProps) => (
-    <View style={[createStyles.selectedMusic, { backgroundColor: COLORS.primary + "15" }]}>
+    <View style={[createStyles.selectedMusic, { backgroundColor: colors.primaryContainer }]}>
         <Image
             source={{ uri: track.cover_url }}
             style={createStyles.selectedMusicCover}
         />
         <View style={createStyles.selectedMusicInfo}>
-            <FlexText style={[common.subheading, createStyles.selectedMusicTitle, { color: colors.text }]} numberOfLines={1}>
+            <FlexText style={[common.subheading, createStyles.selectedMusicTitle, { color: colors.onPrimaryContainer }]} numberOfLines={1}>
                 {track.title}
             </FlexText>
-            <FlexText style={[common.caption, createStyles.selectedMusicArtist, { color: colors.muted }]} numberOfLines={1}>
+            <FlexText style={[common.caption, createStyles.selectedMusicArtist, { color: colors.onPrimaryContainer }]} numberOfLines={1}>
                 {track.artist}
             </FlexText>
         </View>
         <TouchableOpacity
-            style={[createStyles.removeSelectedMusic, { backgroundColor: COLORS.error }]}
+            style={[createStyles.removeSelectedMusic, { backgroundColor: colors.error }]}
             onPress={onRemove}
         >
-            <Ionicons name="close" size={14} color="#fff" />
+            <Ionicons name="close" size={14} color={colors.onError} />
         </TouchableOpacity>
     </View>
 ));
@@ -142,7 +137,7 @@ export const MusicSection = memo(({
 
     return (
         <View style={createStyles.musicSection}>
-            <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
+            <FlexText style={[common.label, { color: colors.onSurface, marginBottom: 12 }]}>
                 {t('create.form.addMusic')}
             </FlexText>
 
@@ -158,26 +153,26 @@ export const MusicSection = memo(({
             <View
                 style={[
                     createStyles.musicSearchContainer,
-                    { backgroundColor: colors.card, borderColor: colors.divider },
+                    { backgroundColor: colors.tertiaryContainer },
                 ]}
             >
-                <VinylRecord size={24} color={COLORS.primary} />
+                <VinylRecord size={24} color={colors.onTertiaryContainer} />
                 <TextInput
-                    style={[createStyles.musicSearchInput, common.body, { color: colors.text }]}
+                    style={[createStyles.musicSearchInput, common.body, { color: colors.onTertiaryContainer }]}
                     placeholder={t('create.form.searchMusicPlaceholder')}
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={colors.onTertiaryContainer}
                     value={searchQuery}
                     onChangeText={onSearchQueryChange}
                 />
                 {searchQuery.length > 0 && (
                     <TouchableOpacity onPress={() => onSearchQueryChange("")}>
-                        <Ionicons name="close" size={18} color={colors.muted} />
+                        <Ionicons name="close" size={18} color={colors.onTertiaryContainer} />
                     </TouchableOpacity>
                 )}
             </View>
 
             {isLoading && (
-                <Spinner size="md" color={COLORS.primary} style={createStyles.musicLoading} />
+                <Spinner size="md" color={colors.primary} style={createStyles.musicLoading} />
             )}
 
             {musicResults.length > 0 && (

@@ -5,11 +5,10 @@ import { GhostSmile as GhostSmileOutline, HeartUnlock as HeartUnlockOutline } fr
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
-import { ThemeColors, useThemeContext } from "../../context/ThemeContext";
+import { ThemeColors } from "../../context/ThemeContext";
 import { Profile } from "../../types/profile";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
-import { COLORS } from "./types";
 
 // ============================================================================
 // PostOptionBadge Component
@@ -27,7 +26,8 @@ interface PostOptionBadgeProps {
     onPress: () => void;
     colors: ThemeColors;
     common: any;
-    activeColor?: string;
+    activeBgColor: string;
+    activeTextColor: string;
 }
 
 const PostOptionBadge = memo(({
@@ -38,39 +38,39 @@ const PostOptionBadge = memo(({
     onPress,
     colors,
     common,
-    activeColor = COLORS.primary,
+    activeBgColor,
+    activeTextColor,
 }: PostOptionBadgeProps) => (
     <TouchableOpacity
         style={[
             createStyles.optionBadge,
             {
-                backgroundColor: isActive ? activeColor + "30" : colors.card,
-                borderColor: isActive ? activeColor : colors.divider,
+                backgroundColor: isActive ? activeBgColor : colors.surfaceContainerHigh,
             },
         ]}
         onPress={onPress}
     >
         {isActive ? (
             iconActive === "ghost-smile-bold" ? (
-                <GhostSmileBold size={14} color={activeColor} />
+                <GhostSmileBold size={14} color={activeTextColor} />
             ) : iconActive === "cloud-upload" ? (
-                <Ionicons name="cloud-upload" size={14} color={activeColor} />
+                <Ionicons name="cloud-upload" size={14} color={activeTextColor} />
             ) : (
-                <HeartUnlockBold size={14} color={activeColor} />
+                <HeartUnlockBold size={14} color={activeTextColor} />
             )
         ) : (
             icon === "ghost-smile-outline" ? (
-                <GhostSmileOutline size={14} color={colors.muted} />
+                <GhostSmileOutline size={14} color={colors.onSurfaceVariant} />
             ) : icon === "cloud-upload-outline" ? (
-                <Ionicons name="cloud-upload-outline" size={14} color={colors.muted} />
+                <Ionicons name="cloud-upload-outline" size={14} color={colors.onSurfaceVariant} />
             ) : (
-                <HeartUnlockOutline size={14} color={colors.muted} />
+                <HeartUnlockOutline size={14} color={colors.onSurfaceVariant} />
             )
         )}
         <FlexText
             style={[
                 common.caption,
-                { color: isActive ? activeColor : colors.muted, fontWeight: "500" },
+                { color: isActive ? activeTextColor : colors.onSurfaceVariant, fontWeight: "500" },
             ]}
         >
             {label}
@@ -112,7 +112,6 @@ export const CreateProfileHeader = memo(({
     onSwitchProfile,
 }: CreateProfileHeaderProps) => {
     const { t } = useTranslation();
-    const { theme } = useThemeContext();
 
     const avatarContent = (
         <View style={profileHeaderStyles.avatarWrapper}>
@@ -124,10 +123,10 @@ export const CreateProfileHeader = memo(({
                 <View
                     style={[
                         profileHeaderStyles.swapBadge,
-                        { backgroundColor: theme === "dark" ? "#1c1c1e" : "#ffffff" },
+                        { backgroundColor: colors.surfaceContainer },
                     ]}
                 >
-                    <Ionicons name="swap-horizontal" size={11} color={colors.text} />
+                    <Ionicons name="swap-horizontal" size={11} color={colors.onSurface} />
                 </View>
             )}
         </View>
@@ -144,10 +143,10 @@ export const CreateProfileHeader = memo(({
             )}
             <View>
                 <View style={[common.row, { gap: 4 }]}>
-                    <FlexText style={[common.subheading, { color: colors.text }]} numberOfLines={1}>
+                    <FlexText style={[common.subheading, { color: colors.onSurface }]} numberOfLines={1}>
                         {profile.name}
                     </FlexText>
-                    {profile.is_verified && <VerifiedIcon size={14} backgroundColor={colors.verify} />}
+                    {profile.is_verified && <VerifiedIcon size={14} backgroundColor={colors.primary} />}
                 </View>
                 {(onToggleGhost || onToggleAdult || onToggleThirdPartyUpload) && (
                     <View style={createStyles.postOptionsRow}>
@@ -160,7 +159,8 @@ export const CreateProfileHeader = memo(({
                                 onPress={onToggleGhost}
                                 colors={colors}
                                 common={common}
-                                activeColor={COLORS.primary}
+                                activeBgColor={colors.primaryContainer}
+                                activeTextColor={colors.onPrimaryContainer}
                             />
                         )}
                         {onToggleThirdPartyUpload && (
@@ -172,7 +172,8 @@ export const CreateProfileHeader = memo(({
                                 onPress={onToggleThirdPartyUpload}
                                 colors={colors}
                                 common={common}
-                                activeColor={colors.verify || COLORS.success}
+                                activeBgColor={colors.secondaryContainer}
+                                activeTextColor={colors.onSecondaryContainer}
                             />
                         )}
                         {onToggleAdult && (
@@ -184,7 +185,8 @@ export const CreateProfileHeader = memo(({
                                 onPress={onToggleAdult}
                                 colors={colors}
                                 common={common}
-                                activeColor={COLORS.error}
+                                activeBgColor={colors.errorContainer}
+                                activeTextColor={colors.onErrorContainer}
                             />
                         )}
                     </View>

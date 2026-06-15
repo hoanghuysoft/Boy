@@ -31,7 +31,7 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
         <SquircleView
             cornerSmoothing={100}
             preserveSmoothing
-            style={[styles.card, { backgroundColor: colors.containerContent }]}
+            style={[styles.card, { backgroundColor: colors.surfaceContainer }]}
 
         >
             {profile.avatar_url ? (
@@ -56,18 +56,18 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
             <View style={styles.textBlock}>
                 <View style={styles.nameRow}>
                     <FlexText
-                        style={[common.label, { color: colors.text, fontWeight: '600', flexShrink: 1 }]}
+                        style={[common.label, { color: colors.onSurface, fontWeight: '600', flexShrink: 1 }]}
                         numberOfLines={1}
                     >
                         {profile.name}
                     </FlexText>
                     {profile.is_verified && (
-                        <VerifiedIcon size={12} backgroundColor={colors.verify} />
+                        <VerifiedIcon size={12} backgroundColor={colors.primary} />
                     )}
                 </View>
                 {profile.username ? (
                     <FlexText
-                        style={[common.caption, { color: colors.muted }]}
+                        style={[common.caption, { color: colors.onSurfaceVariant }]}
                         numberOfLines={1}
                     >
                         @{profile.username}

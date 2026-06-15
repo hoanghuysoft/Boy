@@ -498,7 +498,7 @@ const CreateScreen = () => {
                     <TouchableOpacity
                         onPress={() => router.back()}
                         style={{
-                            backgroundColor: colors.containerContent,
+                            backgroundColor: colors.surfaceContainer,
                             borderRadius: 999,
                             width: 40,
                             height: 40,
@@ -506,14 +506,14 @@ const CreateScreen = () => {
                             alignItems: 'center',
                         }}
                     >
-                        <Ionicons name="chevron-back" size={24} color={colors.text} />
+                        <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
                     </TouchableOpacity>
                 </View>
 
                 <Dialog isOpen={dialog.visible} onOpenChange={(open) => !open && setDialog((prev) => ({ ...prev, visible: false }))}>
                     <Dialog.Portal>
                         <Dialog.Overlay />
-                        <Dialog.Content style={{ backgroundColor: colors.background }}>
+                        <Dialog.Content style={{ backgroundColor: colors.surface }}>
                             <Dialog.Close />
                             <View style={{ marginBottom: 20, gap: 6 }}>
                                 <Dialog.Title>{dialog.title}</Dialog.Title>
@@ -642,15 +642,15 @@ const CreateScreen = () => {
                             ) : (
                                 <Card.Body style={{ gap: 8, padding: 16 }}>
                                     <View style={[common.row, { gap: 6, alignItems: 'center' }]}>
-                                        <Ionicons name="repeat" size={16} color={colors.verify} />
-                                        <Card.Title style={{ color: colors.verify, fontSize: 13, fontWeight: '700' }}>
+                                        <Ionicons name="repeat" size={16} color={colors.primary} />
+                                        <Card.Title style={{ color: colors.primary, fontSize: 13, fontWeight: '700' }}>
                                             {t('post.dialogs.repostQuote')} @{params.repost_author}
                                         </Card.Title>
                                     </View>
                                     {!!params.repost_content && (
                                         <Card.Description
                                             style={{
-                                                color: colors.text,
+                                                color: colors.onSurface,
                                                 fontSize: 14,
                                                 lineHeight: 20,
                                             }}

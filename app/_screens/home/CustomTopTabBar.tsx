@@ -1,6 +1,6 @@
 import { FlexText } from "@/components/FlexText";
 import { MaterialTopTabBarProps } from "expo-router/build/react-navigation/material-top-tabs";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -23,13 +23,14 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
     const common = createCommonStyles(colors, typography);
 
     // Create animated values for each tab indicator
-    const indicatorAnims = useRef(
-        state.routes.map((_: {}, index: number) => new Animated.Value(state.index === index ? 1 : 0))
-    ).current;
+    const indicatorAnims = useMemo(
+        () => state.routes.map((_: any, index: number) => new Animated.Value(state.index === index ? 1 : 0)),
+        [state.routes.length]
+    );
 
     useEffect(() => {
         // Animate all indicators
-        const animations = state.routes.map((_: {}, index: number) =>
+        const animations = state.routes.map((_: any, index: number) =>
             Animated.spring(indicatorAnims[index], {
                 toValue: state.index === index ? 1 : 0,
                 useNativeDriver: true,
@@ -39,7 +40,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
         );
 
         Animated.parallel(animations).start();
-    }, [state.index]);
+    }, [state.index, indicatorAnims, state.routes]);
 
     return (
         <Animated.View style={{
@@ -56,7 +57,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                 <Animated.View
                     style={{
                         ...StyleSheet.absoluteFill,
-                        backgroundColor: colors.tabBar + "E6",
+                        backgroundColor: colors.surfaceContainerLow + "E6",
                         opacity: tabBgOpacity,
                     }}
                 />
@@ -66,7 +67,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                     style={{ flexGrow: 0 }}
                     contentContainerStyle={{ padding: 12 }}
                 >
-                    {state.routes.map((route : any, index : number) => {
+                    {state.routes.map((route: any, index: number) => {
                         const { options } = descriptors[route.key];
                         const label = options.tabBarLabel !== undefined
                             ? options.tabBarLabel
@@ -90,7 +91,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
 
                         // Use provided iconColor if available, otherwise use theme colors
                         // For focused: full opacity, for unfocused: reduced opacity
-                        const textColor = iconColor || (isFocused ? colors.text : colors.muted);
+                        const textColor = iconColor || (isFocused ? colors.onSurface : colors.onSurfaceVariant);
 
                         return (
                             <TouchableOpacity
@@ -116,6 +117,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                                     style={[
                                         styles.activeIndicator,
                                         {
+                                            backgroundColor: colors.primary,
                                             opacity: indicatorAnims[index],
                                             transform: [{ scaleX: indicatorAnims[index] }],
                                         },

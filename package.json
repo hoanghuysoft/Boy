@@ -12,6 +12,10 @@
   },
   "dependencies": {
     "@bam.tech/react-native-app-security": "1.0.0",
+    "@bsky.app/expo-guess-language": "^0.2.8",
+    "@bsky.app/expo-translate-text": "^0.2.9",
+    "@bsky.app/sift": "^0.3.9",
+    "@bsky.app/tapper": "^0.6.1",
     "@bsky.app/video": "^0.3.6",
     "@expo/ui": "~56.0.17",
     "@flixsrota/player": "^0.3.0",
@@ -34,7 +38,7 @@
     "@shopify/react-native-skia": "2.6.2",
     "@solar-icons/react-native": "1.1.1",
     "@supabase/supabase-js": "2.108.1",
-    "@swmansion/react-native-bottom-sheet": "^0.14.1",
+    "@swmansion/react-native-bottom-sheet": "^0.15.0",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-query-persist-client": "^5.101.0",
     "@types/node": "^25.9.3",
@@ -48,6 +52,7 @@
     "expo-blur": "~56.0.3",
     "expo-build-properties": "~56.0.18",
     "expo-camera": "~56.0.8",
+    "expo-clipboard": "~56.0.4",
     "expo-constants": "~56.0.18",
     "expo-crypto": "~56.0.4",
     "expo-dev-client": "~56.0.20",
@@ -92,6 +97,7 @@
     "react-native-country-flag": "2.0.2",
     "react-native-device-info": "15.0.2",
     "react-native-easing-gradient": "1.1.1",
+    "react-native-gemini-nano": "^0.1.10",
     "react-native-gesture-handler": "~2.31.1",
     "react-native-image-colors": "2.6.0",
     "react-native-keyboard-controller": "1.21.6",
@@ -100,7 +106,7 @@
     "react-native-nitro-haptics": "^0.2.3",
     "react-native-nitro-in-app-browser": "^2.0.2",
     "react-native-nitro-modules": "0.35.9",
-    "react-native-nitro-player": "^1.4.2",
+    "react-native-nitro-player": "^1.4.3",
     "react-native-nitro-wallpaper": "^1.1.5",
     "react-native-pager-view": "8.0.1",
     "react-native-paper": "5.15.3",
@@ -112,20 +118,22 @@
     "react-native-shared-element": "0.9.0-rc0",
     "react-native-svg": "15.15.4",
     "react-native-system-navigation-bar": "^2.8.0",
-    "react-native-tab-view": "^4.3.0",
+    "react-native-tab-view": "^4.3.1",
     "react-native-url-polyfill": "3.0.0",
     "react-native-web": "~0.21.2",
     "react-native-webview": "13.16.1",
     "react-native-worklets": "0.8.3",
     "react-native-zoom-toolkit": "5.1.0",
     "react-qr-code": "2.2.0",
+    "react-textarea-autosize": "^8.5.9",
     "tailwind-merge": "^3.6.0",
     "tailwind-variants": "^3.2.2",
-    "tailwindcss": "^4.3.0",
-    "uniwind": "^1.8.0",
+    "tailwindcss": "^4.3.1",
+    "uniwind": "^1.9.0",
     "yup": "1.7.1",
     "zustand": "5.0.14"
   },
+  "private": true,
   "devDependencies": {
     "@types/lodash": "4.17.24",
     "@types/react": "~19.2.15",
@@ -134,7 +142,6 @@
     "react-native-svg-transformer": "1.5.3",
     "typescript": "~6.0.3"
   },
-  "private": true,
   "trustedDependencies": [
     "@shopify/react-native-skia"
   ],
@@ -148,7 +155,8 @@
       "reactNativeDirectoryCheck": {
         "exclude": [
           "react-native-nitro-fetch",
-          "react-native-system-navigation-bar"
+          "react-native-system-navigation-bar",
+          "@bsky.app/expo-guess-language"
         ],
         "listUnknownPackages": false
       }

@@ -85,8 +85,8 @@ export const useHomeViewModel = () => {
     if (useCarouselColor) {
       return overlayColor === "#000000" ? "#000000" : "#FFFFFF";
     }
-    return colors.text;
-  }, [useCarouselColor, overlayColor, colors.text]);
+    return colors.onSurface;
+  }, [useCarouselColor, overlayColor, colors.onSurface]);
 
   // ─── Scroll Animation ──────────────────────────────────────────
   const [scrollY] = useState(() => new Animated.Value(0));
@@ -110,7 +110,7 @@ export const useHomeViewModel = () => {
     extrapolate: "clamp",
   });
 
-  const pillBgColor = useMemo(() => colors.tabBar + "E6", [colors.tabBar]);
+  const pillBgColor = useMemo(() => colors.surfaceContainerLow + "E6", [colors.surfaceContainerLow]);
 
   // ─── Layout Constants ──────────────────────────────────────────
   const totalHeaderHeight = HEADER_HEIGHT + TABS_HEIGHT;

@@ -1,4 +1,5 @@
 import { Copy, Danger, PenNewRound, Share, TrashBinTrash } from "@solar-icons/react-native/Bold";
+import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { router } from "expo-router";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
@@ -7,7 +8,6 @@ import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useS
 import { useTranslation } from "react-i18next";
 import { Clipboard, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useCreatePost, useDeletePost, useSharePost } from "../../services/post";
 import { useProfile } from "../../services/userprofile";
@@ -58,16 +58,16 @@ const OptionItem = memo(({
     >
         <View
             className="h-12 w-12 items-center justify-center rounded-full"
-            style={{ backgroundColor: destructive ? "#EF444420" : colors.card }}
+            style={{ backgroundColor: destructive ? colors.errorContainer : colors.surfaceContainerHigh }}
         >
             <Icon
                 size={24}
-                color={destructive ? "#EF4444" : colors.text}
+                color={destructive ? colors.onErrorContainer : colors.onSurface}
             />
         </View>
         <FlexText style={[
             common.body,
-            { color: destructive ? "#EF4444" : colors.text, fontWeight: "680" }
+            { color: destructive ? colors.onErrorContainer : colors.onSurface, fontWeight: "680" }
         ]}>
             {label}
         </FlexText>
@@ -288,7 +288,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                             style={[
                                 StyleSheet.absoluteFill,
                                 {
-                                    backgroundColor: theme === "dark" ? colors.containerContent : "#ffffff",
+                                    backgroundColor: colors.surfaceContainer,
                                     borderTopLeftRadius: 32,
                                     borderTopRightRadius: 32,
                                     overflow: "hidden",
@@ -297,7 +297,7 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                         />
                     }
                 >
-                    <View style={[styles.grabber, { backgroundColor: colors.muted || "#C4C4C4" }]} />
+                    <View style={[styles.grabber, { backgroundColor: colors.onSurfaceVariant || "#C4C4C4" }]} />
                     <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 20 }}>
                         {/* Header */}
                         <View className="mb-4">

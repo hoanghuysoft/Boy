@@ -2,6 +2,7 @@ import { FlexText } from '@/components/FlexText';
 import { useThemeContext } from '@/context/ThemeContext';
 import { createCommonStyles } from '@/styles/common';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
+import { formatUTCDate, toUTCDate } from '@/utils/date';
 import { Image as ExpoImage } from 'expo-image';
 import { Spinner } from "heroui-native/spinner";
 import { useEffect, useRef, useState } from 'react';
@@ -105,7 +106,9 @@ const OnboardingScreen = () => {
                             mode="date"
                             display="compact"
                             maximumDate={maxBirthday}
-                            onChange={(_, date) => { if (date) setField('birthday', date); }}
+                            onValueChange={(_event, date) => {
+                                setField('birthday', toUTCDate(date));
+                            }}
                             themeVariant={colors.background === '#ffffff' ? 'light' : 'dark'}
                             style={{ alignSelf: 'flex-start', marginLeft: -8 }}
                         />
@@ -119,7 +122,7 @@ const OnboardingScreen = () => {
                             >
                                 <FlexText style={{ color: form.birthday ? colors.text : colors.muted }}>
                                     {form.birthday
-                                        ? form.birthday.toLocaleDateString('en-GB')
+                                        ? formatUTCDate(form.birthday)
                                         : t('onboarding.birthday.placeholder')}
                                 </FlexText>
                             </TouchableOpacity>
@@ -129,10 +132,11 @@ const OnboardingScreen = () => {
                                     mode="date"
                                     display="default"
                                     maximumDate={maxBirthday}
-                                    onChange={(event, date) => {
+                                    onValueChange={(_event, date) => {
                                         setShowAndroidPicker(false);
-                                        if (event.type === 'set' && date) setField('birthday', date);
+                                        setField('birthday', toUTCDate(date));
                                     }}
+                                    onDismiss={() => setShowAndroidPicker(false)}
                                 />
                             )}
                         </>

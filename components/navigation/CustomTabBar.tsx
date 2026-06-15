@@ -156,6 +156,9 @@ const AnimatedTabButton = ({
     );
 };
 
+/**
+ * @deprecated Use `CurvedTabBar` from `@/components/navigation/tab-bar` instead.
+ */
 export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: BottomTabBarProps & { blurTargetRef?: RefObject<View | null> }) => {
     const { colors, theme } = useThemeContext();
     const { t } = useTranslation();

@@ -114,7 +114,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>
                             <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
-                            {post.profile_is_verified && <VerifiedIcon size={16} backgroundColor={vm.colors.verify} />}
+                            {post.profile_is_verified && <VerifiedIcon size={16} backgroundColor={vm.colors.primary} />}
                         </View>
                         <PostMetaInfo post={post} />
                     </View>
@@ -122,10 +122,10 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 {!isBookmarked && (
                     <TouchableOpacity
                         hitSlop={10}
-                        style={{ backgroundColor: vm.colors.card, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
+                        style={{ backgroundColor: vm.colors.surfaceContainerHigh, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
                         onPress={vm.handleOptionsPress}
                     >
-                        <Ionicons name="ellipsis-horizontal" size={20} color={vm.colors.text} />
+                        <Ionicons name="ellipsis-horizontal" size={20} color={vm.colors.onSurface} />
                     </TouchableOpacity>
                 )}
             </View>
@@ -138,14 +138,14 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             {!!captionWithoutYouTube && <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />}
                             <View style={[vm.common.row, {
                                 borderLeftWidth: 3,
-                                borderLeftColor: '#EF4444',
+                                borderLeftColor: vm.colors.error,
                                 paddingLeft: 12,
                                 paddingVertical: 4,
                                 gap: 8,
                                 alignItems: 'center'
                             }]}>
-                                <Ionicons name="alert-circle-outline" size={16} color={vm.colors.muted} />
-                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted, fontStyle: 'italic' }]}>
+                                <Ionicons name="alert-circle-outline" size={16} color={vm.colors.onSurfaceVariant} />
+                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.onSurfaceVariant, fontStyle: 'italic' }]}>
                                     {originalPost.text || t('post.dialogs.repostFailed')}
                                 </FlexText>
                             </View>
@@ -160,12 +160,12 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             {/* Quoted Original Post with author info right under it */}
                             <View style={{
                                 borderLeftWidth: 3,
-                                borderLeftColor: vm.colors.verify,
+                                borderLeftColor: vm.colors.primary,
                                 paddingLeft: 12,
                                 paddingVertical: 2,
                             }}>
                                 {!!originalPost.content && (
-                                    <FlexText style={[vm.common.body, { fontStyle: 'italic', fontSize: 14, color: vm.colors.text }]} numberOfLines={4}>
+                                    <FlexText style={[vm.common.body, { fontStyle: 'italic', fontSize: 14, color: vm.colors.onSurface }]} numberOfLines={4}>
                                         {originalPost.content}
                                     </FlexText>
                                 )}
@@ -184,7 +184,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                         contentFit="cover"
                                         placeholder={{ blurhash: originalAvatarPlaceholder }}
                                     />
-                                    <FlexText style={[vm.common.label, { color: vm.colors.muted, fontSize: 11, fontWeight: '600' }]}>
+                                    <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11, fontWeight: '600' }]}>
                                         Reposted from {originalPost.profile_name}
                                     </FlexText>
                                 </TouchableOpacity>
@@ -277,18 +277,18 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     <Pressable
                         onPress={vm.toggleMusic}
                         style={{
-                            backgroundColor: vm.colors.card,
+                            backgroundColor: vm.colors.surfaceContainerHigh,
                             paddingHorizontal: 12,
                             paddingVertical: 6,
                             borderRadius: 20,
                             borderWidth: 1,
-                            borderColor: vm.colors.divider,
+                            borderColor: vm.colors.outlineVariant,
                             flexDirection: 'row',
                             alignItems: 'center',
                             gap: 6
                         }}
                     >
-                        <Ionicons name={vm.isPlaying ? "volume-high" : "volume-mute"} size={16} color={vm.colors.text} />
+                        <Ionicons name={vm.isPlaying ? "volume-high" : "volume-mute"} size={16} color={vm.colors.onSurface} />
                         <FlexText style={[vm.common.label, { fontSize: 12 }]}>
                             {t('post.audioPreview')}
                         </FlexText>
@@ -340,7 +340,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 <FlexText
                     style={[
                         vm.common.label,
-                        { color: vm.colors.muted, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 },
+                        { color: vm.colors.onSurfaceVariant, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 },
                     ]}
                 >
                     {t('post.createdOnDevice', { device: displayPost.device })}
@@ -354,24 +354,24 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <Pressable hitSlop={10} onPress={vm.handleLikePress}>
                             {vm.isLiked ? (
-                                <LikeSolidIcon size={24} color={vm.colors.text} />
+                                <LikeSolidIcon size={24} color={vm.colors.onSurface} />
                             ) : (
-                                <LikeIcon size={24} color={vm.colors.text} />
+                                <LikeIcon size={24} color={vm.colors.onSurface} />
                             )}
                         </Pressable>
                         <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
-                            <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
                         </TouchableOpacity>
                     </View>
                     <Pressable hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                        <CommentIcon size={24} color={vm.colors.text} />
-                        <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</FlexText>
+                        <CommentIcon size={24} color={vm.colors.onSurface} />
+                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
                     </Pressable>
                     <Pressable hitSlop={10} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
-                            <BookmarkSolidIcon size={24} color={vm.colors.text} />
+                            <BookmarkSolidIcon size={24} color={vm.colors.onSurface} />
                         ) : (
-                            <BookmarkIcon size={24} color={vm.colors.text} />
+                            <BookmarkIcon size={24} color={vm.colors.onSurface} />
                         )}
                     </Pressable>
                 </View>)
@@ -382,31 +382,31 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                             <TouchableOpacity hitSlop={10} onPress={vm.handleLikePress}>
                                 {vm.isLiked ? (
-                                    <LikeSolidIcon size={24} color={vm.colors.text} />
+                                    <LikeSolidIcon size={24} color={vm.colors.onSurface} />
                                 ) : (
-                                    <LikeIcon size={24} color={vm.colors.text} />
+                                    <LikeIcon size={24} color={vm.colors.onSurface} />
                                 )}
                             </TouchableOpacity>
                             <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
-                                <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
+                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
                             </TouchableOpacity>
                         </View>
                         <TouchableOpacity hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                            <CommentIcon size={24} color={vm.colors.text} />
-                            <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.comment_count}</FlexText>
+                            <CommentIcon size={24} color={vm.colors.onSurface} />
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
                         </TouchableOpacity>
                         {!isRepost && (
                             <TouchableOpacity hitSlop={10} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                                <ShareIcon size={24} color={vm.colors.text} />
-                                <FlexText style={[vm.common.label, { color: vm.colors.text, fontWeight: '800' }]}>{post.share_count}</FlexText>
+                                <ShareIcon size={24} color={vm.colors.onSurface} />
+                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.share_count}</FlexText>
                             </TouchableOpacity>
                         )}
                     </View>
                     <TouchableOpacity hitSlop={10} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
-                            <BookmarkSolidIcon size={24} color={vm.colors.text} />
+                            <BookmarkSolidIcon size={24} color={vm.colors.onSurface} />
                         ) : (
-                            <BookmarkIcon size={24} color={vm.colors.text} />
+                            <BookmarkIcon size={24} color={vm.colors.onSurface} />
                         )}
                     </TouchableOpacity>
                 </View>)

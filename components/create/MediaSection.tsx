@@ -5,7 +5,7 @@ import { FlatList, Image, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
-import { COLORS, SelectedMedia } from "./types";
+import { SelectedMedia } from "./types";
 
 // ============================================================================
 // MediaThumbnail Component
@@ -21,6 +21,7 @@ interface MediaThumbnailProps {
 const MediaThumbnail = memo(({
     media,
     onRemove,
+    colors,
     uploadProgress,
 }: MediaThumbnailProps) => (
     <View style={createStyles.mediaThumbnailContainer}>
@@ -36,10 +37,10 @@ const MediaThumbnail = memo(({
             </View>
         )}
         <TouchableOpacity
-            style={[createStyles.removeButton, { backgroundColor: COLORS.error }]}
+            style={[createStyles.removeButton, { backgroundColor: colors.error }]}
             onPress={onRemove}
         >
-            <Ionicons name="close" size={12} color="#fff" />
+            <Ionicons name="close" size={12} color={colors.onError} />
         </TouchableOpacity>
     </View>
 ));
@@ -71,7 +72,7 @@ export const MediaSection = memo(({
 
     return (
         <View style={createStyles.mediaSection}>
-            <FlexText style={[common.label, { color: colors.text, marginBottom: 12 }]}>
+            <FlexText style={[common.label, { color: colors.onSurface, marginBottom: 12 }]}>
                 {t('create.form.media')} ({selectedMedia.length}/10)
             </FlexText>
             <FlatList

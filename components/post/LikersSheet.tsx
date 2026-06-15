@@ -40,7 +40,7 @@ const LikerItem = memo(({ user, colors, common, onPress }: LikerItemProps) => (
     >
         <ExpoImage
             source={{ uri: user.profile_avatar }}
-            style={[styles.avatar, { backgroundColor: colors.divider }]}
+            style={[styles.avatar, { backgroundColor: colors.outlineVariant }]}
             contentFit="cover"
         />
         <View style={styles.userInfo}>
@@ -49,7 +49,7 @@ const LikerItem = memo(({ user, colors, common, onPress }: LikerItemProps) => (
                     {user.profile_name}
                 </FlexText>
                 {user.profile_is_verified && (
-                    <VerifiedIcon size={14} backgroundColor={colors.verify} />
+                    <VerifiedIcon size={14} backgroundColor={colors.primary} />
                 )}
             </View>
         </View>
@@ -128,12 +128,12 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
             if (isFetchingNextPage) {
                 return (
                     <View style={styles.footerLoader}>
-                        <Spinner size="md" color={colors.text} />
+                        <Spinner size="md" color={colors.onSurface} />
                     </View>
                 );
             }
             return null;
-        }, [isFetchingNextPage, colors.text]);
+        }, [isFetchingNextPage, colors.onSurface]);
 
         const renderEmpty = useCallback(() => {
             if (isLoading) {
@@ -152,10 +152,10 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
             }
             return (
                 <View style={styles.emptyState}>
-                    <FlexText style={[common.body, { color: colors.muted, textAlign: 'center' }]}>
+                    <FlexText style={[common.body, { color: colors.onSurfaceVariant, textAlign: 'center' }]}>
                         {t('post.likersSheet.emptyTitle')}
                     </FlexText>
-                    <FlexText style={[common.bodySmall, { color: colors.muted, textAlign: 'center', marginTop: 4 }]}>
+                    <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, textAlign: 'center', marginTop: 4 }]}>
                         {t('post.likersSheet.emptyBody')}
                     </FlexText>
                 </View>
@@ -179,14 +179,15 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
                 onIndexChange={handleIndexChange}
                 onSettle={handleSettle}
                 detents={[0, 'content']}
-                scrimColor="rgba(7, 7, 7, 1)"
+                scrimColor={colors.surface}
                 scrimOpacities={[0, 0.5, 1]}
+                extendUnderStatusBar
                 surface={
                     <View
                         style={[
                             StyleSheet.absoluteFill,
                             {
-                                backgroundColor: theme === "dark" ? colors.containerContent : "#ffffff",
+                                backgroundColor: colors.surfaceContainer,
                                 borderTopLeftRadius: 32,
                                 borderTopRightRadius: 32,
                                 overflow: "hidden",
@@ -195,7 +196,7 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
                     />
                 }
             >
-                <View style={[styles.grabber, { backgroundColor: colors.muted || "#C4C4C4" }]} />
+                <View style={[styles.grabber, { backgroundColor: colors.onSurfaceVariant || "#C4C4C4" }]} />
                 <View style={[styles.container, { paddingBottom: insets.bottom + 12 }]}>
                     <FlatList
                         nestedScrollEnabled

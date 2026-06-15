@@ -25,7 +25,7 @@ export const TrendingHashtagsSection = () => {
                 <FlexText style={[common.subheading, { fontSize: 15 }]}>{t('search.sections.trending')}</FlexText>
                 {vm.hasMoreTags && (
                     <TouchableOpacity onPress={vm.navigateToAllTags} hitSlop={8}>
-                        <FlexText style={[common.bodySmall, { color: colors.pillTab.activeText }]}>
+                        <FlexText style={[common.bodySmall, { color: colors.primary }]}>
                             {t('search.sections.seeAll')}
                         </FlexText>
                     </TouchableOpacity>
@@ -40,7 +40,7 @@ export const TrendingHashtagsSection = () => {
                             key={i}
                             style={[
                                 styles.tagPillSkeleton,
-                                { backgroundColor: colors.containerContent },
+                                { backgroundColor: colors.surfaceContainer },
                             ]}
                         />
                     ))}
@@ -59,13 +59,13 @@ export const TrendingHashtagsSection = () => {
                                 preserveSmoothing
                                 style={[
                                     styles.tagPill,
-                                    { backgroundColor: colors.containerContent },
+                                    { backgroundColor: colors.surfaceContainer },
                                 ]}
-                            >
+                              >
                                 <FlexText
                                     style={[
                                         common.bodySmall,
-                                        { color: colors.pillTab.activeText, fontWeight: '600' },
+                                        { color: colors.primary, fontWeight: '600' },
                                     ]}
                                     numberOfLines={1}
                                 >
@@ -75,7 +75,7 @@ export const TrendingHashtagsSection = () => {
                                     <FlexText
                                         style={[
                                             common.caption,
-                                            { color: colors.muted, marginTop: 2 },
+                                            { color: colors.onSurfaceVariant, marginTop: 2 },
                                         ]}
                                     >
                                         {t('search.sections.postsCount', { count: hashtag.count })}

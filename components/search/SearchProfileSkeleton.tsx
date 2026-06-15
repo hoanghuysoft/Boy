@@ -15,7 +15,7 @@ export const renderProfileSkeleton = ({ colors, styles, isFirst, isLast }: any) 
                     width: 52,
                     height: 52,
                     borderRadius: 26,
-                    backgroundColor: colors.divider,
+                    backgroundColor: colors.outlineVariant,
                 }}
             />
             <View style={styles.profileInfo}>
@@ -24,7 +24,7 @@ export const renderProfileSkeleton = ({ colors, styles, isFirst, isLast }: any) 
                         width: 140,
                         height: 18,
                         borderRadius: 8,
-                        backgroundColor: colors.divider,
+                        backgroundColor: colors.outlineVariant,
                     }}
                 />
                 <SkeletonGroup.Item
@@ -33,7 +33,7 @@ export const renderProfileSkeleton = ({ colors, styles, isFirst, isLast }: any) 
                         height: 14,
                         borderRadius: 6,
                         marginTop: 6,
-                        backgroundColor: colors.divider,
+                        backgroundColor: colors.outlineVariant,
                     }}
                 />
             </View>
@@ -42,7 +42,7 @@ export const renderProfileSkeleton = ({ colors, styles, isFirst, isLast }: any) 
                     width: 50,
                     height: 28,
                     borderRadius: 999,
-                    backgroundColor: colors.divider,
+                    backgroundColor: colors.outlineVariant,
                 }}
             />
         </SkeletonGroup>

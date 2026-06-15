@@ -5,7 +5,6 @@ import { TextInput, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 import { createStyles } from "./styles";
-import { COLORS } from "./types";
 
 // ============================================================================
 // LocationInput Component
@@ -36,19 +35,19 @@ export const LocationInput = memo(({
         <View
             style={[
                 createStyles.locationSection,
-                { backgroundColor: colors.card, borderColor: colors.divider },
+                { backgroundColor: colors.tertiaryContainer },
             ]}
         >
-            <MapPoint size={24} color={COLORS.primary} />
+            <MapPoint size={24} color={colors.onTertiaryContainer} />
             <TextInput
-                style={[common.body, createStyles.locationInput, { color: colors.text }]}
+                style={[common.body, createStyles.locationInput, { color: colors.onTertiaryContainer }]}
                 placeholder={t('create.form.locationPlaceholder')}
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={colors.onTertiaryContainer}
                 value={location}
                 onChangeText={onLocationChange}
             />
             <TouchableOpacity onPress={onClose}>
-                <Ionicons name="close" size={18} color={colors.muted} />
+                <Ionicons name="close" size={18} color={colors.onTertiaryContainer} />
             </TouchableOpacity>
         </View>
     );

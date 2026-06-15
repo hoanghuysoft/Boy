@@ -3,6 +3,7 @@ import { useThemeContext } from '@/context/ThemeContext';
 import { useProfile, useUpdateProfile } from '@/services/userprofile';
 import { createCommonStyles } from '@/styles/common';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
+import { parseServerDate, formatToServerDate } from '@/utils/date';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from 'dayjs';
 import { Image as ExpoImage } from 'expo-image';
@@ -130,6 +131,8 @@ const FormInput = ({
     );
 };
 
+
+
 // ============================================================================
 // Expandable Premium Date Picker Field
 // ============================================================================
@@ -151,6 +154,15 @@ const FormDatePicker = ({
 }) => {
     const { colors, common, theme } = useForm();
     const [showPicker, setShowPicker] = useState(false);
+
+    const initialDate = useMemo(() => {
+        if (!value) {
+            const now = new Date();
+            return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+        }
+        const [year, month, day] = value.split('-').map(Number);
+        return new Date(Date.UTC(year, month - 1, day));
+    }, [value]);
 
     return (
         <View style={formStyles.fieldGroup}>
@@ -190,16 +202,19 @@ const FormDatePicker = ({
             {showPicker && (
                 <View style={{ marginTop: 8, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 16, padding: 8, alignItems: 'center' }}>
                     <DateTimePicker
-                        value={value ? dayjs(value).toDate() : new Date()}
+                        value={initialDate}
                         mode="date"
                         display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                        onChange={(event, date) => {
-                            if (Platform.OS === 'android') {
-                                setShowPicker(false);
-                            }
-                            if (date) {
-                                onChange(dayjs(date).format('YYYY-MM-DD'));
-                            }
+                        presentation={Platform.OS === 'android' ? 'dialog' : undefined}
+                        onValueChange={(_event, date) => {
+                            setShowPicker(false);
+                            const year = date.getUTCFullYear();
+                            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                            const day = String(date.getUTCDate()).padStart(2, '0');
+                            onChange(`${year}-${month}-${day}`);
+                        }}
+                        onDismiss={() => {
+                            setShowPicker(false);
                         }}
                         themeVariant={theme}
                     />
@@ -658,7 +673,7 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
             username: targetProfile.username || '',
             email: targetProfile.email || '',
             phone: targetProfile.phone || '',
-            birthday: targetProfile.birthday ? dayjs(targetProfile.birthday).format('YYYY-MM-DD') : '',
+            birthday: parseServerDate(targetProfile.birthday),
             gender: targetProfile.gender || '',
             pronouns: targetProfile.pronouns || '',
             avatar_url: targetProfile.avatar_url || '',
@@ -670,7 +685,7 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
             website: targetProfile.website || '',
             hobby: targetProfile.hobby || '',
             talent: targetProfile.talent || '',
-            married_date: targetProfile.married_date ? dayjs(targetProfile.married_date).format('YYYY-MM-DD') : '',
+            married_date: parseServerDate(targetProfile.married_date),
             license_plate: targetProfile.license_plate || '',
             is_verified: targetProfile.is_verified || false,
             is_admin: targetProfile.is_admin || false,
@@ -731,8 +746,8 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
 
         const payload = {
             ...formData,
-            birthday: formData.birthday ? dayjs(formData.birthday).toISOString() : null,
-            married_date: formData.married_date ? dayjs(formData.married_date).toISOString() : null,
+            birthday: formatToServerDate(formData.birthday),
+            married_date: formatToServerDate(formData.married_date),
         };
 
         if (!isAdmin) {

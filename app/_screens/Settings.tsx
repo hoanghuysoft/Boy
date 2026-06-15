@@ -39,6 +39,7 @@ const SettingsScreen = () => {
         videoCacheSizeLimit, setVideoCacheSizeLimit,
         imgbbApiKey, setImgbbApiKey,
         x02ApiKey, setX02ApiKey,
+        makeBottomBarCurve, toggleMakeBottomBarCurve,
     } = useSettingsStore();
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -103,7 +104,7 @@ const SettingsScreen = () => {
                 <TouchableOpacity
                     onPress={() => router.back()}
                     style={{
-                        backgroundColor: colors.containerContent,
+                        backgroundColor: colors.surfaceContainer,
                         borderRadius: 999,
                         width: 40,
                         height: 40,
@@ -111,7 +112,7 @@ const SettingsScreen = () => {
                         alignItems: 'center'
                     }}
                 >
-                    <Ionicons name='chevron-back' size={24} color={colors.text} />
+                    <Ionicons name='chevron-back' size={24} color={colors.onSurface} />
                 </TouchableOpacity>
             </View>
             <ScrollView style={common.screenPadding}>
@@ -123,13 +124,13 @@ const SettingsScreen = () => {
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         placeholder=""
-                        placeholderTextColor={colors.muted}
+                        placeholderTextColor={colors.onSurfaceVariant}
                         style={styles.searchInput}
                     />
                     {!searchQuery && !isFocused && (
                         <View style={styles.placeholderContainer} pointerEvents="none">
-                            <Ionicons name='search' size={18} color={colors.muted} />
-                            <FlexText style={[common.body, { color: colors.muted, marginLeft: 6 }]}>{t('settings.search')}</FlexText>
+                            <Ionicons name='search' size={18} color={colors.onSurfaceVariant} />
+                            <FlexText style={[common.body, { color: colors.onSurfaceVariant, marginLeft: 6 }]}>{t('settings.search')}</FlexText>
                         </View>
                     )}
                 </View>
@@ -142,9 +143,9 @@ const SettingsScreen = () => {
                     >
                         <View>
                             <FlexText style={[common.body]}>{t('settings.theme')}</FlexText>
-                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>{themePreferenceLabels[themePreference]}</FlexText>
+                            <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant }]}>{themePreferenceLabels[themePreference]}</FlexText>
                         </View>
-                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                        <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
                     </CustomSurface>
                     <CustomSurface
                         position="middle"
@@ -153,11 +154,24 @@ const SettingsScreen = () => {
                     >
                         <View>
                             <FlexText style={[common.body]}>{t('settings.language')}</FlexText>
-                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>
+                            <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant }]}>
                                 {languageMode === 'auto' ? t('settings.languageAuto') : LANGUAGE_LABELS[language]}
                             </FlexText>
                         </View>
-                        <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                        <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
+                    </CustomSurface>
+                    <CustomSurface position="middle" style={styles.option}>
+                        <ControlField
+                            isSelected={makeBottomBarCurve}
+                            onSelectedChange={toggleMakeBottomBarCurve}
+                            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <Label>{t('settings.curveBottomBar')}</Label>
+                                <Description>{makeBottomBarCurve ? t('settings.adultFilterOn') : t('settings.adultFilterOff')}</Description>
+                            </View>
+                            <ControlField.Indicator />
+                        </ControlField>
                     </CustomSurface>
                     <CustomSurface position="middle" style={styles.option}>
                         <ControlField
@@ -197,20 +211,20 @@ const SettingsScreen = () => {
                             value={imgbbApiKey}
                             onChangeText={setImgbbApiKey}
                             placeholder="Enter ImgBB API Key"
-                            placeholderTextColor={colors.muted}
+                            placeholderTextColor={colors.onSurfaceVariant}
                             secureTextEntry
                             style={{
-                                backgroundColor: colors.card,
+                                backgroundColor: colors.surfaceContainerHigh,
                                 borderRadius: 8,
                                 paddingHorizontal: 12,
                                 paddingVertical: 10,
-                                color: colors.text,
+                                color: colors.onSurface,
                                 fontSize: 14,
                                 borderWidth: 1,
-                                borderColor: colors.divider,
+                                borderColor: colors.outlineVariant,
                             }}
                         />
-                        <FlexText style={[common.caption, { color: colors.muted, marginTop: 6 }]}>
+                        <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: 6 }]}>
                             Required for image uploads.
                         </FlexText>
                     </CustomSurface>
@@ -222,20 +236,20 @@ const SettingsScreen = () => {
                             value={x02ApiKey}
                             onChangeText={setX02ApiKey}
                             placeholder="Enter x02.me API Key"
-                            placeholderTextColor={colors.muted}
+                            placeholderTextColor={colors.onSurfaceVariant}
                             secureTextEntry
                             style={{
-                                backgroundColor: colors.card,
+                                backgroundColor: colors.surfaceContainerHigh,
                                 borderRadius: 8,
                                 paddingHorizontal: 12,
                                 paddingVertical: 10,
-                                color: colors.text,
+                                color: colors.onSurface,
                                 fontSize: 14,
                                 borderWidth: 1,
-                                borderColor: colors.divider,
+                                borderColor: colors.outlineVariant,
                             }}
                         />
-                        <FlexText style={[common.caption, { color: colors.muted, marginTop: 6 }]}>
+                        <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: 6 }]}>
                             Optional for video uploads. Used for file deletion hooks.
                         </FlexText>
                     </CustomSurface>
@@ -248,11 +262,11 @@ const SettingsScreen = () => {
                     <CustomSurface isFirst>
                         <View style={styles.cacheInfoRow}>
                             <FlexText style={[common.body]}>{t('settings.videoCache')}</FlexText>
-                            <FlexText style={[common.bodySmall, { color: colors.muted }]}>
+                            <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant }]}>
                                 {formatBytes(cacheSize)} / {currentLimitLabel}
                             </FlexText>
                         </View>
-                        <FlexText style={[common.bodySmall, { color: colors.muted, marginBottom: 8 }]}>
+                        <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginBottom: 8 }]}>
                             {t('settings.videoCacheDescription', { count: cacheCount })}
                         </FlexText>
                         <View style={styles.progressBarBg}>
@@ -279,9 +293,9 @@ const SettingsScreen = () => {
                                 <TouchableOpacity style={[styles.option, { padding: 16 }]}>
                                     <View>
                                         <FlexText style={[common.body]}>{t('settings.maxCacheSize')}</FlexText>
-                                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{currentLimitLabel}</FlexText>
+                                        <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant }]}>{currentLimitLabel}</FlexText>
                                     </View>
-                                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                                    <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
                                 </TouchableOpacity>
                             </Select.Trigger>
                             <Select.Portal>
@@ -301,10 +315,10 @@ const SettingsScreen = () => {
                         onPress={cacheSize === 0 ? undefined : handleClearCache}
                         style={styles.option}
                     >
-                        <FlexText style={[common.body, { color: cacheSize === 0 ? colors.muted : '#ff4444' }]}>
+                        <FlexText style={[common.body, { color: cacheSize === 0 ? colors.onSurfaceVariant : '#ff4444' }]}>
                             {isClearing ? t('settings.clearCacheClearing') : t('settings.clearCacheIdle')}
                         </FlexText>
-                        {isClearing && <Spinner size="md" color={colors.muted} />}
+                        {isClearing && <Spinner size="md" color={colors.onSurfaceVariant} />}
                     </CustomSurface>
                 </View>
 
@@ -316,9 +330,9 @@ const SettingsScreen = () => {
                 >
                     <View>
                         <FlexText style={[common.body]}>{t('settings.aboutApp')}</FlexText>
-                        <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.aboutAppDescription')}</FlexText>
+                        <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant }]}>{t('settings.aboutAppDescription')}</FlexText>
                     </View>
-                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                    <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
                 </CustomSurface>
 
                 <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.account')}</FlexText>
@@ -339,8 +353,8 @@ const SettingsScreen = () => {
                     }}
                     style={styles.option}
                 >
-                    <FlexText style={[common.body, { color: colors.text }]}>{t('settings.logout')}</FlexText>
-                    <Logout3 size={24} color={colors.text} />
+                    <FlexText style={[common.body, { color: colors.onSurface }]}>{t('settings.logout')}</FlexText>
+                    <Logout3 size={24} color={colors.onSurface} />
                 </CustomSurface>
 
                 {/* ─── Logging Out Modal ─────────────────────────────────── */}
@@ -352,8 +366,8 @@ const SettingsScreen = () => {
                 >
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalContent}>
-                            <Spinner size="lg" color={colors.text} />
-                            <FlexText style={[common.body, { color: colors.text, marginTop: 12 }]}>{t('settings.loggingOut')}</FlexText>
+                            <Spinner size="lg" color={colors.onSurface} />
+                            <FlexText style={[common.body, { color: colors.onSurface, marginTop: 12 }]}>{t('settings.loggingOut')}</FlexText>
                         </View>
                     </View>
                 </Modal>
@@ -398,7 +412,7 @@ const SettingsScreen = () => {
 
 const style = (colors: ThemeColors, common: any) => StyleSheet.create({
     card: {
-        backgroundColor: colors.containerContent,
+        backgroundColor: colors.surfaceContainer,
         borderRadius: 12,
         padding: 16,
         marginBottom: 16,
@@ -415,11 +429,11 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
     },
     divider: {
         height: 1,
-        backgroundColor: colors.divider,
+        backgroundColor: colors.outlineVariant,
         marginVertical: 8,
     },
     searchBar: {
-        backgroundColor: colors.containerContent,
+        backgroundColor: colors.surfaceContainer,
         borderRadius: 9999,
         height: 48,
         marginBottom: 16,
@@ -427,7 +441,7 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
         position: 'relative',
     },
     searchInput: {
-        color: colors.text,
+        color: colors.onSurface,
         fontSize: 16,
         paddingHorizontal: 16,
         textAlign: 'center',
@@ -447,7 +461,7 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: colors.containerContent,
+        backgroundColor: colors.surfaceContainer,
         borderRadius: 16,
         paddingVertical: 28,
         paddingHorizontal: 36,
@@ -467,7 +481,7 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
     },
     progressBarBg: {
         height: 6,
-        backgroundColor: colors.divider,
+        backgroundColor: colors.outlineVariant,
         borderRadius: 3,
         overflow: 'hidden',
     },
