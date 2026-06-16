@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useWindowDimensions, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
+import React, { useState } from 'react';
+import { useWindowDimensions, View } from 'react-native';
 import { fitContainer } from 'react-native-zoom-toolkit';
 import { getCachedImageDimension, setCachedImageDimension } from './imageDimensionCache';
 

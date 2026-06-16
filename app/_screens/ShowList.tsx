@@ -1,10 +1,11 @@
 import { FlexText } from "@/components/FlexText";
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import {
   useCategoryInfiniteQuery,
-  useTagInfiniteQuery,
   useLatestInfiniteQuery,
+  useLeastViewedInfiniteQuery,
   usePopularInfiniteQuery,
-  useLeastViewedInfiniteQuery
+  useTagInfiniteQuery
 } from "@/services/shows";
 import type { VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
@@ -123,13 +124,14 @@ const ShowListScreen = () => {
         }
         style={({ pressed }) => [
           styles.row,
-          { backgroundColor: colors.background, opacity: pressed ? 0.9 : 1 },
+          { opacity: pressed ? 0.9 : 1 },
         ]}
       >
         <ExpoImage
           source={{ uri: item.thumb_url }}
           style={styles.thumbnail}
           contentFit="cover"
+          placeholder={{ blurhash: resolveBlurhash((item as any).blurhash, item.video_url || item.thumb_url) }}
         />
         <View style={{ flex: 1, gap: 4 }}>
           <FlexText numberOfLines={1} style={[styles.title, { color: colors.text }]}>
@@ -162,7 +164,7 @@ const ShowListScreen = () => {
   const ListFooterComponent = useCallback(() => {
     if (isLoading) {
       return (
-        <SkeletonGroup isLoading={true} variant="shimmer">
+        <SkeletonGroup isLoading={true} variant="pulse">
           <View style={{ gap: 12, paddingHorizontal: 16, paddingTop: 16 }}>
             {[1, 2, 3, 4, 5].map((key) => (
               <View key={key} style={[styles.row, { padding: 0 }]}>

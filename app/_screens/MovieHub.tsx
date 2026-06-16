@@ -1,3 +1,4 @@
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { FlexText } from "@/components/FlexText";
 import type { VideoCard } from "@/types/shows";
 import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
@@ -44,6 +45,7 @@ const MovieHubScreen = () => {
               aspectRatio: 16 / 9
             }}
             contentFit="cover"
+            placeholder={{ blurhash: resolveBlurhash((item as any).blurhash, item.video_url || item.thumb_url) }}
           />
           <View
             style={{
@@ -202,6 +204,7 @@ const MovieHubScreen = () => {
                           source={{ uri: slider.background_image }}
                           style={{ width: "100%", height: "100%" }}
                           contentFit="cover"
+                          placeholder={{ blurhash: resolveBlurhash((slider as any).blurhash, slider.video_url || slider.background_image) }}
                         />
                       </Animated.View>
                       <Animated.View

@@ -1,3 +1,4 @@
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { FlexText } from "@/components/FlexText";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { SearchType, useTypedSearchInfinite } from "@/hooks/useMovies";
@@ -146,17 +147,21 @@ const SearchMoviesScreen = () => {
           style={({ pressed }) => [
             styles.row,
             {
-              backgroundColor: colors.surfaceContainerLow,
               opacity: pressed ? 0.9 : 1,
             },
           ]}
         >
           <ExpoImage
             source={{ uri: getImageUrl(thumbnailPath) }}
-            style={{ width: 90, height: 90, borderRadius: 45 }}
+            style={
+              isPerson
+                ? { width: 90, height: 90, borderRadius: 45 }
+                : { width: 70, height: 105, borderRadius: 8 }
+            }
             contentFit="cover"
+            placeholder={{ blurhash: resolveBlurhash(item.blurhash, thumbnailPath || getImageUrl(thumbnailPath)) }}
           />
-          <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ flex: 1, justifyContent: 'center', gap: 6 }}>
             <FlexText numberOfLines={2} style={[styles.title, { color: colors.onSurface }]}>
               {title}
             </FlexText>
@@ -166,7 +171,7 @@ const SearchMoviesScreen = () => {
             >
               {isPerson ? item.known_for_department : (dateRaw ? new Date(dateRaw).getFullYear() : "—")}
             </FlexText>
-            {!isPerson && <IMDbBadge score={item.vote_average} />}
+            {!isPerson && <IMDbBadge score={item.vote_average} textColor={colors.onSurface} />}
           </View>
         </Pressable>
       );
@@ -207,6 +212,50 @@ const SearchMoviesScreen = () => {
       </View>
     );
   }, [common.heading, colors.onSurface, handleCategoryPress, submittedQuery, styles.categoryPill]);
+
+  const keyExtractor = useCallback((item: any) => item.id.toString(), []);
+
+  const ListEmptyComponent = useCallback(() => {
+    if (isLoading && submittedQuery) {
+      const isPerson = searchType === 'person';
+      return (
+        <SkeletonGroup isLoading={true} variant="shimmer">
+          <View style={{ padding: 16, gap: 12 }}>
+            {[1, 2, 3, 4, 5].map((key) => (
+              <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
+                <SkeletonGroup.Item
+                  style={[
+                    styles.thumbnail,
+                    !isPerson && { width: 70, height: 105, borderRadius: 8 }
+                  ]}
+                />
+                <View style={{ flex: 1, gap: 8 }}>
+                  <SkeletonGroup.Item style={{ height: 16, width: '80%', borderRadius: 4 }} />
+                  <SkeletonGroup.Item style={{ height: 12, width: '60%', borderRadius: 4 }} />
+                </View>
+              </View>
+            ))}
+          </View>
+        </SkeletonGroup>
+      );
+    }
+
+    if (!isLoading && submittedQuery && items.length === 0) {
+      return (
+        <View style={{ padding: 16, alignItems: 'center', marginTop: 40 }}>
+          <Ionicons name="search-outline" size={48} color={colors.onSurfaceVariant} />
+          <FlexText style={{ color: colors.onSurface, fontSize: 18, fontWeight: "600", marginTop: 16 }}>
+            No results found
+          </FlexText>
+          <FlexText style={{ color: colors.onSurfaceVariant, marginTop: 8, textAlign: "center" }}>
+            We couldn&apos;t find anything matching &quot;{submittedQuery}&quot;. Try adjusting your search query.
+          </FlexText>
+        </View>
+      );
+    }
+
+    return null;
+  }, [isLoading, submittedQuery, searchType, styles, items.length, colors]);
 
   const ListFooterComponent = useCallback(() => {
     if (!submittedQuery || !hasNextPage) return null;
@@ -288,44 +337,10 @@ const SearchMoviesScreen = () => {
 
       <FlatList
         data={items}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={keyExtractor}
         renderItem={renderItem}
         ListHeaderComponent={ListHeaderComponent}
-        ListEmptyComponent={() => {
-          if (isLoading && submittedQuery) {
-            return (
-              <SkeletonGroup isLoading={true} variant="shimmer">
-                <View style={{ padding: 16, gap: 12 }}>
-                  {[1, 2, 3, 4, 5].map((key) => (
-                    <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
-                      <SkeletonGroup.Item style={styles.thumbnail} />
-                      <View style={{ flex: 1, gap: 8 }}>
-                        <SkeletonGroup.Item style={{ height: 16, width: '80%', borderRadius: 4 }} />
-                        <SkeletonGroup.Item style={{ height: 12, width: '60%', borderRadius: 4 }} />
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              </SkeletonGroup>
-            );
-          }
-
-          if (!isLoading && submittedQuery && items.length === 0) {
-            return (
-              <View style={{ padding: 16, alignItems: 'center', marginTop: 40 }}>
-                <Ionicons name="search-outline" size={48} color={colors.onSurfaceVariant} />
-                <FlexText style={{ color: colors.onSurface, fontSize: 18, fontWeight: "600", marginTop: 16 }}>
-                  No results found
-                </FlexText>
-                <FlexText style={{ color: colors.onSurfaceVariant, marginTop: 8, textAlign: "center" }}>
-                  We couldn&apos;t find anything matching &quot;{submittedQuery}&quot;. Try adjusting your search query.
-                </FlexText>
-              </View>
-            );
-          }
-
-          return null;
-        }}
+        ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={ListFooterComponent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -337,7 +352,7 @@ const SearchMoviesScreen = () => {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={() => refetch()}
+            onRefresh={refetch}
             tintColor={colors.onSurface}
             colors={[colors.onSurface]}
             progressBackgroundColor={colors.surfaceContainerHigh}

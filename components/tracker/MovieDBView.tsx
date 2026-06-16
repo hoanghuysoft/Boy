@@ -39,7 +39,7 @@ const getImageUrl = (path: string | null | undefined, size: number = 500) => {
     return `https://image.tmdb.org/t/p/w${size}${path}`;
 };
 
-export const IMDbBadge = ({ score, style }: { score?: number, style?: any }) => {
+export const IMDbBadge = ({ score, style, textColor }: { score?: number, style?: any, textColor?: string }) => {
     if (!score) return null;
     return (
         <View style={[{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#f5c518", borderRadius: 999, overflow: "hidden", alignSelf: "flex-start" }, style]}>
@@ -47,7 +47,7 @@ export const IMDbBadge = ({ score, style }: { score?: number, style?: any }) => 
                 <Text style={{ color: "black", fontSize: 10, fontWeight: "900" }}>IMDb</Text>
             </View>
             <View style={{ paddingHorizontal: 6, paddingVertical: 2 }}>
-                <Text style={{ color: "white", fontSize: 10, fontWeight: "700" }}>{score.toFixed(1)}</Text>
+                <Text style={{ color: textColor ?? "white", fontSize: 10, fontWeight: "700" }}>{score.toFixed(1)}</Text>
             </View>
         </View>
     );

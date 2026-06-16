@@ -1,3 +1,4 @@
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { FlexText } from "@/components/FlexText";
 import { useCategoriesQuery } from "@/services/shows";
 import { useSearchInfiniteQuery } from "@/services/shows/search";
@@ -142,6 +143,7 @@ const SearchShowsScreen = () => {
           source={{ uri: item.thumb_url }}
           style={styles.thumbnail}
           contentFit="cover"
+          placeholder={{ blurhash: resolveBlurhash((item as any).blurhash, item.video_url || item.thumb_url) }}
         />
         <View style={{ flex: 1, gap: 4 }}>
           <FlexText
