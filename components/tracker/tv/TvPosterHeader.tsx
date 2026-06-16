@@ -2,8 +2,10 @@ import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { Canvas, ImageShader, LinearGradient, Rect, SkImage, vec } from "@shopify/react-native-skia";
-import React from "react";
+import React, { useMemo } from "react";
 import { Text, useWindowDimensions, View } from "react-native";
+import { Image } from "expo-image";
+import { TMDBMovieImage } from "@/types/moviedb/movie-images";
 import {
     ContentRatingPill,
     DotSep,
@@ -11,7 +13,21 @@ import {
     sharedStyles,
     WatchProviderIcon,
 } from "./shared/TvDetailAtoms";
-import { withAlpha } from "./shared/tvDetailUtils";
+import { withAlpha, getImageUrl } from "./shared/tvDetailUtils";
+
+const getBestLogo = (logos?: TMDBMovieImage[]) => {
+    if (!logos || logos.length === 0) return null;
+    const enLogos = logos.filter(l => l.iso_639_1 === "en");
+    if (enLogos.length > 0) {
+        return enLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+    }
+    const neutralLogos = logos.filter(l => !l.iso_639_1);
+    if (neutralLogos.length > 0) {
+        return neutralLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+    }
+    return [...logos].sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+};
+
 
 interface TvPosterHeaderProps {
     tv: any;
@@ -22,6 +38,7 @@ interface TvPosterHeaderProps {
     firstAirYear: string;
     runtime: string;
     posterHeight?: number;
+    logos?: TMDBMovieImage[];
 }
 
 export const TvPosterHeader = ({
@@ -33,8 +50,11 @@ export const TvPosterHeader = ({
     firstAirYear,
     runtime,
     posterHeight = 500,
+    logos = [],
 }: TvPosterHeaderProps) => {
     const { width } = useWindowDimensions();
+    const bestLogo = useMemo(() => getBestLogo(logos), [logos]);
+
 
     const deduplicedProviders = [
         ...(watchProviders?.flatrate ?? []),
@@ -83,9 +103,21 @@ export const TvPosterHeader = ({
                 }}
             >
                 {/* Title */}
-                <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
-                    {tv.name}
-                </FlexText>
+                {bestLogo ? (
+                    <Image
+                        source={{ uri: getImageUrl(bestLogo.file_path, 500) }}
+                        style={{
+                            height: 70,
+                            width: 70 * bestLogo.aspect_ratio,
+                            maxWidth: width * 0.8,
+                        }}
+                        contentFit="contain"
+                    />
+                ) : (
+                    <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
+                        {tv.name}
+                    </FlexText>
+                )}
 
                 {/* Tagline */}
                 {tv.tagline ? (

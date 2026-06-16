@@ -3,16 +3,17 @@ import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { useThemeContext } from "@/context/ThemeContext";
 import { usePersonDetails } from "@/hooks/useMovies";
 import { useGalleryStore } from "@/stores/gallery";
+import { TMDBMovieImage } from "@/types/moviedb/movie-images";
 import { enrichProfileData } from "@/utils/zodiacCalculation";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     FlatList,
@@ -59,6 +60,20 @@ const getImageUrl = (path: string | null | undefined, size: number = 500) => {
     return `https://image.tmdb.org/t/p/w${size}${path}`;
 };
 
+const getBestLogo = (logos?: TMDBMovieImage[]) => {
+    if (!logos || logos.length === 0) return null;
+    const enLogos = logos.filter(l => l.iso_639_1 === "en");
+    if (enLogos.length > 0) {
+        return enLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+    }
+    const neutralLogos = logos.filter(l => !l.iso_639_1);
+    if (neutralLogos.length > 0) {
+        return neutralLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+    }
+    return [...logos].sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+};
+
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 interface PersonDetailViewProps {
@@ -73,6 +88,8 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
     const inset = useSafeAreaInsets();
 
     const { data: person, isLoading, isError } = usePersonDetails(personId);
+    const bestLogo = useMemo(() => getBestLogo(person?.images?.logos), [person?.images?.logos]);
+
 
     // Defer heavy rendering until after push animation
     const [isReady, setIsReady] = useState(false);
@@ -238,7 +255,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
     if (isLoading || !isReady || skiaImage === null) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
-                <SkeletonGroup isLoading={true} variant="shimmer">
+                <SkeletonGroup isLoading={true} variant="pulse">
                     <View style={{ gap: 16 }}>
                         <SkeletonGroup.Item style={{ height: posterHeight, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
@@ -305,9 +322,21 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                         </Canvas>
 
                         <View pointerEvents="none" style={[styles.headerOverlay, { paddingBottom: 24 }]}>
-                            <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
-                                {person.name}
-                            </FlexText>
+                            {bestLogo ? (
+                                <Image
+                                    source={{ uri: getImageUrl(bestLogo.file_path, 500) }}
+                                    style={{
+                                        height: 70,
+                                        width: 70 * bestLogo.aspect_ratio,
+                                        maxWidth: width * 0.8,
+                                    }}
+                                    contentFit="contain"
+                                />
+                            ) : (
+                                <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
+                                    {person.name}
+                                </FlexText>
+                            )}
                             {/* Meta row — same dot separator */}
                             <View style={{ flexDirection: "row", gap: 10, alignItems: "center", marginTop: 12, flexWrap: "wrap", justifyContent: "center", paddingHorizontal: 16 }}>
                                 <FlexText style={[styles.textStyle, { color: "white" }]}>{person.known_for_department}</FlexText>

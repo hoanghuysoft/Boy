@@ -1,6 +1,7 @@
 import VerifiedIcon from '@/icons/verified';
 import { LocalProfile } from '@/stores/searchHistory';
 import { useMostSearchedViewModel } from '@/viewmodels/MostSearchedViewModel';
+import { Image as ExpoImage } from 'expo-image';
 import { SquircleView } from 'expo-squircle-view';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +10,6 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
 import { FlexText } from '../FlexText';
@@ -62,7 +62,7 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
                         {profile.name}
                     </FlexText>
                     {profile.is_verified && (
-                        <VerifiedIcon size={12} backgroundColor={colors.primary} />
+                        <VerifiedIcon size={12} />
                     )}
                 </View>
                 {profile.username ? (

@@ -10,17 +10,20 @@ import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Logout3 } from "@solar-icons/react-native/Bold";
+import { LinearGradient } from 'expo-linear-gradient';
 import { Href, router } from "expo-router";
 import { Button } from "heroui-native/button";
 import { ControlField } from "heroui-native/control-field";
 import { Description } from "heroui-native/description";
 import { Dialog } from "heroui-native/dialog";
+import { Input } from "heroui-native/input";
 import { Label } from "heroui-native/label";
 import { Select } from "heroui-native/select";
 import { Spinner } from "heroui-native/spinner";
+import { TextField } from "heroui-native/text-field";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Keyboard, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 
@@ -53,6 +56,26 @@ const SettingsScreen = () => {
     const [isClearCacheDialogOpen, setIsClearCacheDialogOpen] = useState(false);
     const { data: adminData } = useAdminCheck();
     const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin);
+
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+    // Keep the absolute search bar above the keyboard.
+    useEffect(() => {
+        const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+        const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+        const showSub = Keyboard.addListener(showEvent, (e) => {
+            setKeyboardHeight(e.endCoordinates?.height ?? 0);
+        });
+        const hideSub = Keyboard.addListener(hideEvent, () => {
+            setKeyboardHeight(0);
+        });
+
+        return () => {
+            showSub.remove();
+            hideSub.remove();
+        };
+    }, []);
 
 
 
@@ -104,7 +127,7 @@ const SettingsScreen = () => {
                 <TouchableOpacity
                     onPress={() => router.back()}
                     style={{
-                        backgroundColor: colors.surfaceContainer,
+                        backgroundColor: colors.surfaceContainerHigh,
                         borderRadius: 999,
                         width: 40,
                         height: 40,
@@ -117,23 +140,6 @@ const SettingsScreen = () => {
             </View>
             <ScrollView style={common.screenPadding}>
                 <View style={{ marginTop: inset.top + 66 }}></View>
-                <View style={styles.searchBar}>
-                    <TextInput
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        onFocus={() => setIsFocused(true)}
-                        onBlur={() => setIsFocused(false)}
-                        placeholder=""
-                        placeholderTextColor={colors.onSurfaceVariant}
-                        style={styles.searchInput}
-                    />
-                    {!searchQuery && !isFocused && (
-                        <View style={styles.placeholderContainer} pointerEvents="none">
-                            <Ionicons name='search' size={18} color={colors.onSurfaceVariant} />
-                            <FlexText style={[common.body, { color: colors.onSurfaceVariant, marginLeft: 6 }]}>{t('settings.search')}</FlexText>
-                        </View>
-                    )}
-                </View>
                 <FlexText style={[styles.title]}>{t('settings.preferences')}</FlexText>
                 <View style={{ gap: 3 }}>
                     <CustomSurface
@@ -206,24 +212,22 @@ const SettingsScreen = () => {
                 <View style={{ gap: 3 }}>
                     {/* ImgBB API Key Input */}
                     <CustomSurface isFirst>
-                        <FlexText style={[common.body, { marginBottom: 8 }]}>ImgBB API Key</FlexText>
-                        <TextInput
-                            value={imgbbApiKey}
-                            onChangeText={setImgbbApiKey}
-                            placeholder="Enter ImgBB API Key"
-                            placeholderTextColor={colors.onSurfaceVariant}
-                            secureTextEntry
-                            style={{
-                                backgroundColor: colors.surfaceContainerHigh,
-                                borderRadius: 8,
-                                paddingHorizontal: 12,
-                                paddingVertical: 10,
-                                color: colors.onSurface,
-                                fontSize: 14,
-                                borderWidth: 1,
-                                borderColor: colors.outlineVariant,
-                            }}
-                        />
+                        <TextField>
+                            <FlexText style={[common.body, { marginBottom: 8 }]}>ImgBB API Key</FlexText>
+                            <Input value={imgbbApiKey}
+                                onChangeText={setImgbbApiKey}
+                                variant="secondary"
+                                placeholder="Enter ImgBB API Key"
+                                placeholderTextColor={colors.onSurfaceVariant}
+                                secureTextEntry
+                                style={{
+                                    backgroundColor: colors.surfaceContainerHighest,
+                                    color: colors.onSurfaceVariant,
+                                    fontSize: 14,
+                                    paddingHorizontal: 16,
+                                }}
+                            />
+                        </TextField>
                         <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: 6 }]}>
                             Required for image uploads.
                         </FlexText>
@@ -231,24 +235,23 @@ const SettingsScreen = () => {
 
                     {/* x02.me API Key Input */}
                     <CustomSurface isLast>
-                        <FlexText style={[common.body, { marginBottom: 8 }]}>x02.me API Key (Optional)</FlexText>
-                        <TextInput
-                            value={x02ApiKey}
-                            onChangeText={setX02ApiKey}
-                            placeholder="Enter x02.me API Key"
-                            placeholderTextColor={colors.onSurfaceVariant}
-                            secureTextEntry
-                            style={{
-                                backgroundColor: colors.surfaceContainerHigh,
-                                borderRadius: 8,
-                                paddingHorizontal: 12,
-                                paddingVertical: 10,
-                                color: colors.onSurface,
-                                fontSize: 14,
-                                borderWidth: 1,
-                                borderColor: colors.outlineVariant,
-                            }}
-                        />
+                        <TextField>
+                            <FlexText style={[common.body, { marginBottom: 8 }]}>x02.me API Key (Optional)</FlexText>
+                            <Input
+                                value={x02ApiKey}
+                                onChangeText={setX02ApiKey}
+                                variant="secondary"
+                                placeholder="Enter x02.me API Key"
+                                placeholderTextColor={colors.onSurfaceVariant}
+                                secureTextEntry
+                                style={{
+                                    backgroundColor: colors.surfaceContainerHighest,
+                                    color: colors.onSurface,
+                                    fontSize: 14,
+                                    paddingHorizontal: 16,
+                                }}
+                            />
+                        </TextField>
                         <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: 6 }]}>
                             Optional for video uploads. Used for file deletion hooks.
                         </FlexText>
@@ -289,7 +292,7 @@ const SettingsScreen = () => {
                             onValueChange={(opt: any) => handleSetCacheLimit(Number(opt.value))}
                             presentation="dialog"
                         >
-                            <Select.Trigger style={{ backgroundColor: 'transparent' }} asChild>
+                            <Select.Trigger variant="unstyled" asChild>
                                 <TouchableOpacity style={[styles.option, { padding: 16 }]}>
                                     <View>
                                         <FlexText style={[common.body]}>{t('settings.maxCacheSize')}</FlexText>
@@ -375,12 +378,11 @@ const SettingsScreen = () => {
 
                 <Dialog isOpen={isClearCacheDialogOpen} onOpenChange={setIsClearCacheDialogOpen}>
                     <Dialog.Portal>
-                        <Dialog.Overlay />
-                        <Dialog.Content>
-                            <Dialog.Close />
+                        <Dialog.Overlay style={{ backgroundColor: colors.scrim + "70" }} />
+                        <Dialog.Content style={{ backgroundColor: colors.surfaceContainerHigh }} >
                             <View style={{ marginBottom: 20, gap: 6 }}>
-                                <Dialog.Title>{t('settings.clearVideoCache')}</Dialog.Title>
-                                <Dialog.Description>
+                                <Dialog.Title style={{ color: colors.onSurface }}>{t('settings.clearVideoCache')}</Dialog.Title>
+                                <Dialog.Description style={{ color: colors.onSurfaceVariant }}>
                                     {t('settings.clearVideoCacheConfirmation', { size: formatBytes(cacheSize) })}
                                 </Dialog.Description>
                             </View>
@@ -404,8 +406,54 @@ const SettingsScreen = () => {
                         </Dialog.Content>
                     </Dialog.Portal>
                 </Dialog>
-                <View style={{ marginBottom: inset.bottom + 16 }}></View>
+                <View style={{ marginBottom: inset.bottom + 16 + 64 + 16 }}></View>
             </ScrollView>
+
+            {/* Fade overlay from solid at the bottom to transparent at the top */}
+            <LinearGradient
+                colors={[colors.background, 'transparent']}
+                style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: inset.bottom + 16 + keyboardHeight + 48 + 24,
+                    zIndex: 999,
+                }}
+                start={{ x: 0, y: 1 }}
+                end={{ x: 0, y: 0 }}
+                pointerEvents="none"
+            />
+
+            {/* Floating search bar */}
+            <View
+                style={{
+                    position: "absolute",
+                    left: 16,
+                    right: 16,
+                    bottom: inset.bottom + 16 + keyboardHeight,
+                    zIndex: 1000,
+                }}
+            >
+                <View style={[styles.searchBar, { marginBottom: 0 }]}>
+                    <Input
+                        variant="primary"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
+                        placeholder=""
+                        placeholderTextColor={colors.surfaceContainerHighest}
+                        style={styles.searchInput}
+                    />
+                    {!searchQuery && !isFocused && (
+                        <View style={styles.placeholderContainer} pointerEvents="none">
+                            <Ionicons name='search' size={18} color={colors.onSurfaceVariant} />
+                            <FlexText style={[common.body, { color: colors.onSurfaceVariant, marginLeft: 6 }]}>{t('settings.search')}</FlexText>
+                        </View>
+                    )}
+                </View>
+            </View>
         </View>
     );
 };
@@ -433,10 +481,6 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
         marginVertical: 8,
     },
     searchBar: {
-        backgroundColor: colors.surfaceContainer,
-        borderRadius: 9999,
-        height: 48,
-        marginBottom: 16,
         justifyContent: "center",
         position: 'relative',
     },
@@ -445,6 +489,10 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
         fontSize: 16,
         paddingHorizontal: 16,
         textAlign: 'center',
+        backgroundColor: colors.surfaceContainerHighest,
+        borderRadius: 9999,
+        height: 48,
+        borderWidth: 0
     },
     placeholderContainer: {
         position: 'absolute',

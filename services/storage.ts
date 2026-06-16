@@ -23,6 +23,7 @@
  *  weather service              | weather:*
  *  localfb cache                | localfb_* / localfb_url_*
  *  search history (zustand)     | search-history
+ *  search query text history    | search-query-history:*
  *  show watchlist (zustand)     | show-watchlist
  *  movie tracker (zustand)      | movie-tracker-settings
  *  carousel luminance cache     | luminance:*

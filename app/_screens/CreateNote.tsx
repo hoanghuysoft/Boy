@@ -244,7 +244,7 @@ const CreateNoteScreen = () => {
                 <TouchableOpacity
                     onPress={() => router.back()}
                     style={{
-                        backgroundColor: colors.containerContent,
+                        backgroundColor: colors.surfaceContainerHigh,
                         borderRadius: 999,
                         width: 40,
                         height: 40,
@@ -252,33 +252,33 @@ const CreateNoteScreen = () => {
                         alignItems: 'center',
                     }}
                 >
-                    <Ionicons name="close" size={24} color={colors.text} />
+                    <Ionicons name="close" size={24} color={colors.onSurface} />
                 </TouchableOpacity>
                 <SquircleView
                     cornerSmoothing={100}
                     preserveSmoothing
                     style={{
-                        backgroundColor: colors.containerContent,
+                        backgroundColor: colors.surfaceContainerHigh,
                         paddingHorizontal: 16,
                         paddingVertical: 8,
                         borderRadius: 20,
                     }}>
-                    <FlexText style={[common.heading, { fontSize: 20 }]}>{isEditMode ? t("notes.editor.titleEdit") : t("notes.editor.titleNew")}</FlexText>
+                    <FlexText style={[common.heading, { fontSize: 20, color: colors.onSurface }]}>{isEditMode ? t("notes.editor.titleEdit") : t("notes.editor.titleNew")}</FlexText>
                 </SquircleView>
                 <TouchableOpacity
                     onPress={handleSave}
                     disabled={!canSubmit}
                     style={{
-                        backgroundColor: canSubmit ? colors.text : colors.muted,
+                        backgroundColor: canSubmit ? colors.onPrimary : colors.onSurfaceVariant,
                         paddingHorizontal: 16,
                         paddingVertical: 8,
                         borderRadius: 20,
                     }}
                 >
                     {isSubmitting ? (
-                        <Spinner size="sm" color={colors.background} />
+                        <Spinner size="sm" color={colors.onPrimary} />
                     ) : (
-                        <FlexText style={{ color: colors.background, fontWeight: 'bold' }}>{t("notes.editor.save")}</FlexText>
+                        <FlexText style={{ color: colors.onPrimary, fontWeight: 'bold' }}>{t("notes.editor.save")}</FlexText>
                     )}
                 </TouchableOpacity>
             </SquircleView>

@@ -163,6 +163,7 @@ export function useTvDetailViewModel(tvId: number, isReady: boolean) {
     const runtime =
         tv?.episode_run_time?.length ? `${tv.episode_run_time[0]}m` : "—";
     const backdrops = images?.backdrops ?? [];
+    const logos = images?.logos ?? [];
     const seasons = tv?.seasons ?? [];
 
     return {
@@ -194,6 +195,7 @@ export function useTvDetailViewModel(tvId: number, isReady: boolean) {
         openGallery,
         galleryImages,
         backdrops,
+        logos,
         // media
         cast,
         videos,

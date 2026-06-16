@@ -10,13 +10,16 @@ import {
     useTopRatedTVInfinite,
     useTrendingAll, useUpcomingMoviesInfinite
 } from "@/hooks/useMovies";
+import { useQueries } from "@tanstack/react-query";
+import { tmdbClient } from "@/services/client";
+import { TMDBMovieImage } from "@/types/moviedb/movie-images";
 import { Movie } from "@/types/moviedb";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Skeleton } from "heroui-native/skeleton";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Animated,
     FlatList,
@@ -38,6 +41,20 @@ const getImageUrl = (path: string | null | undefined, size: number = 500) => {
     if (!path) return `https://via.placeholder.com/${size}x750?text=No+Image`;
     return `https://image.tmdb.org/t/p/w${size}${path}`;
 };
+
+const getBestLogo = (logos?: TMDBMovieImage[]) => {
+    if (!logos || logos.length === 0) return null;
+    const enLogos = logos.filter(l => l.iso_639_1 === "en");
+    if (enLogos.length > 0) {
+        return enLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+    }
+    const neutralLogos = logos.filter(l => !l.iso_639_1);
+    if (neutralLogos.length > 0) {
+        return neutralLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+    }
+    return [...logos].sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+};
+
 
 export const IMDbBadge = ({ score, style, textColor }: { score?: number, style?: any, textColor?: string }) => {
     if (!score) return null;
@@ -230,6 +247,20 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
     }, []);
 
     const { data: trending, isLoading: isTrendingLoading, isError: isTrendingError, refetch: refetchTrending } = useTrendingAll();
+    
+    const trendingSlice = useMemo(() => trending?.slice(0, 5) ?? [], [trending]);
+    const imagesQueries = useQueries({
+        queries: trendingSlice.map((item) => ({
+            queryKey: [item.media_type, "images", item.id],
+            queryFn: async () => {
+                const { data } = await tmdbClient.get<any>(`${item.media_type}/${item.id}/images`);
+                return data;
+            },
+            enabled: !!item.id,
+            staleTime: 10 * 60 * 1000,
+        })),
+    });
+
     const { data: popData, isLoading: isPopularLoading, isError: isPopularError, refetch: refetchPopular } = usePopularMoviesInfinite("en-US", isBelowFoldReady);
     const { data: topData, isLoading: isTopRatedLoading, isError: isTopRatedError, refetch: refetchTopRated } = useTopRatedMoviesInfinite("en-US", isBelowFoldReady);
     const { data: nowData, isLoading: isNowLoading, isError: isNowError, refetch: refetchNow } = useNowPlayingMoviesInfinite();
@@ -329,7 +360,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
         >
             {/* Hero skeleton — only blocks on the trending banner */}
             {isLoading && (
-                <Skeleton style={{ height: posterHeight, width: "100%" }} />
+                <Skeleton variant="pulse" style={{ height: posterHeight, width: "100%" }} />
             )}
 
             {!isLoading && (
@@ -382,6 +413,9 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                     extrapolate: "clamp",
                                 });
 
+                                const queryData = imagesQueries[i]?.data;
+                                const bestLogo = queryData ? getBestLogo(queryData.logos) : null;
+
                                 return (
                                     <Pressable
                                         key={item.id}
@@ -419,9 +453,23 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                             pointerEvents="none"
                                             style={[styles.headerOverlay, { paddingBottom: 24, opacity: overlayOpacity }]}
                                         >
-                                            <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
-                                                {item.title || item.name}
-                                            </FlexText>
+                                            {bestLogo ? (
+                                                <Image
+                                                    source={{ uri: getImageUrl(bestLogo.file_path, 500) }}
+                                                    style={{
+                                                        height: 70,
+                                                        width: 70 * bestLogo.aspect_ratio,
+                                                        maxWidth: width * 0.8,
+                                                        alignSelf: "center",
+                                                        marginBottom: 12,
+                                                    }}
+                                                    contentFit="contain"
+                                                />
+                                            ) : (
+                                                <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
+                                                    {item.title || item.name}
+                                                </FlexText>
+                                            )}
                                             <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
                                                 <IMDbBadge score={item.vote_average} />
                                             </View>

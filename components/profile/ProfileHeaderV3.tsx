@@ -1,10 +1,10 @@
+import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { CaseMinimalistic, Notes, PointOnMap } from "@solar-icons/react-native/Bold";
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
-import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { Avatar } from "heroui-native/avatar";
 import { Button } from "heroui-native/button";
 import countries from "i18n-iso-countries";
@@ -12,11 +12,11 @@ import en from "i18n-iso-countries/langs/en.json";
 import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import CountryFlag from 'react-native-country-flag';
 import Reanimated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
 import { usePagerHeaderContext } from '../pager/PagerHeaderContext';
 
 import VerifiedIcon from '@/icons/verified';
+import CountryFlag from 'react-native-country-flag';
 import { ProfileAddress } from '../../types/profileaddress';
 import { ProfileDetail } from '../../types/profiledetail';
 import { ProfileLink } from '../../types/profilelink';
@@ -151,7 +151,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
                         <Notes color={vm.colors.text} size={34} />
                     </Button>
-                    <SquircleView borderRadius={999} cornerSmoothing={100} preserveSmoothing style={styles.editButton}>
+                    <SquircleView borderRadius={999} cornerSmoothing={100} preserveSmoothing style={[styles.editButton, { backgroundColor: vm.colors.primary }]}>
                         <TouchableOpacity onPress={() => {
                             if (isOwner) {
                                 router.push({
@@ -162,7 +162,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                                 // Add love action
                             }
                         }}>
-                            <FlexText style={{ color: '#fff', fontWeight: "bold", fontSize: 16 }}>
+                            <FlexText style={{ color: vm.colors.onPrimary, fontWeight: "bold", fontSize: 16 }}>
                                 {isOwner ? t('profile.header.actions.editProfile', 'Edit Profile') : t("profile.header.actions.addLove")}
                             </FlexText>
                         </TouchableOpacity>
@@ -170,9 +170,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 </View>
             </View>
             <View pointerEvents="none" className="flex-row items-center gap-1 mb-1">
-                <FlexText style={[vm.common.headline, { fontWeight: 'bold' }]}>{profile?.name}</FlexText>
-                {profile?.is_verified && <VerifiedIcon size={16} backgroundColor={vm.colors.verify} />}
-                {flagCode && <CountryFlag isoCode={flagCode} size={14} style={{ borderRadius: 2 }} />}
+                <FlexText style={[vm.common.headline, { fontWeight: 'bold' }]}>{profile?.name} {profile?.is_verified && <VerifiedIcon size={24} />} {flagCode && <CountryFlag isoCode={flagCode} size={14} style={{ borderRadius: 2 }} />}</FlexText>
             </View>
             {!!profile?.username && (
                 <View pointerEvents="none"><FlexText style={[vm.common.body, { color: vm.colors.muted, marginBottom: 8 }]}>@{profile.username}</FlexText></View>
@@ -299,7 +297,6 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     editButton: {
-        backgroundColor: '#3b82f6',
         paddingHorizontal: 32,
         justifyContent: "center",
         alignItems: "center",

@@ -10,7 +10,7 @@ interface VerifiedIconProps extends SvgProps {
 const VerifiedIcon = ({
   size = 24,
   color = "#fff",
-  backgroundColor = "#fff",
+  backgroundColor = "#1c94e6",
   ...props
 }: VerifiedIconProps) => (
   <Svg

@@ -66,6 +66,20 @@ const getImageUrl = (path: string | null | undefined, size: number = 500) => {
     return `https://image.tmdb.org/t/p/w${size}${path}`;
 };
 
+const getBestLogo = (logos?: TMDBMovieImage[]) => {
+    if (!logos || logos.length === 0) return null;
+    const enLogos = logos.filter(l => l.iso_639_1 === "en");
+    if (enLogos.length > 0) {
+        return enLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+    }
+    const neutralLogos = logos.filter(l => !l.iso_639_1);
+    if (neutralLogos.length > 0) {
+        return neutralLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+    }
+    return [...logos].sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
+};
+
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const GenrePill = ({ name }: { name: string }) => (
@@ -129,6 +143,8 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     }, []);
 
     const { data: images } = useMovieImages(isReady ? movieId : undefined);
+    const bestLogo = useMemo(() => getBestLogo(images?.logos), [images?.logos]);
+
     const { data: similarData } = useMovieSimilarInfinite(isReady ? movieId : undefined);
     const { data: recData } = useMovieRecommendationsInfinite(isReady ? movieId : undefined);
     const { data: reviewsData, fetchNextPage: fetchNextReviews, isFetchingNextPage: isFetchingReviews } = useMovieReviewsInfinite(isReady ? movieId : undefined);
@@ -323,7 +339,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     if (isLoading || !isReady || skiaImage === null) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
-                <SkeletonGroup isLoading={true} variant="shimmer">
+                <SkeletonGroup isLoading={true} variant="pulse">
                     <View style={{ gap: 16 }}>
                         <SkeletonGroup.Item style={{ height: posterHeight, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
@@ -390,9 +406,21 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                         </Canvas>
 
                         <View pointerEvents="none" style={[styles.headerOverlay, { paddingBottom: 24 }]}>
-                            <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
-                                {movie.title}
-                            </FlexText>
+                            {bestLogo ? (
+                                <Image
+                                    source={{ uri: getImageUrl(bestLogo.file_path, 500) }}
+                                    style={{
+                                        height: 70,
+                                        width: 70 * bestLogo.aspect_ratio,
+                                        maxWidth: width * 0.8,
+                                    }}
+                                    contentFit="contain"
+                                />
+                            ) : (
+                                <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
+                                    {movie.title}
+                                </FlexText>
+                            )}
                             {movie.tagline ? (
                                 <Text style={{ color: "white", opacity: 0.6, fontSize: 14, textAlign: "center", fontStyle: "italic", marginTop: 4 }}>
                                     {movie.tagline}

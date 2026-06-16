@@ -1,8 +1,8 @@
 import { THICKNESS } from "@/constants/tab-bar";
 import { useThemeContext } from "@/context/ThemeContext";
-import { useSettingsStore } from "@/stores/settings";
 import { ITabBarSurface } from "@/interfaces/tab-bar-surface.interface";
 import { strokedArcPath } from "@/lib/stroke-arc-path";
+import { useSettingsStore } from "@/stores/settings";
 import { GlassContainer, GlassView } from "expo-glass-effect";
 import { StyleSheet } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -24,7 +24,7 @@ const TabBarSurface: React.FC<ITabBarSurface> = ({
   const path = makeBottomBarCurve
     ? strokedArcPath(arc, THICKNESS)
     : `M 0 ${-THICKNESS / 2} L ${innerWidth} ${-THICKNESS / 2} A ${THICKNESS / 2} ${THICKNESS / 2} 0 0 1 ${innerWidth} ${THICKNESS / 2} L 0 ${THICKNESS / 2} A ${THICKNESS / 2} ${THICKNESS / 2} 0 0 1 0 ${-THICKNESS / 2} Z`;
-  const surfaceColor = colors.surfaceContainerLow;
+  const surfaceColor = colors.surfaceContainer;
 
   return (
     <>

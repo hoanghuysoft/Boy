@@ -1,7 +1,13 @@
-import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { FlexText } from "@/components/FlexText";
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
+import { SearchHistoryPills } from "@/components/search/SearchHistoryPills";
 import { useCategoriesQuery } from "@/services/shows";
 import { useSearchInfiniteQuery } from "@/services/shows/search";
+import {
+  addSearchQueryToHistory,
+  getSearchQueryHistory,
+  removeSearchQueryFromHistory,
+} from "@/stores/searchQueryHistory";
 import type { Category, VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
@@ -49,6 +55,10 @@ const SearchShowsScreen = () => {
   const [searchText, setSearchText] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
+  const [recentQueries, setRecentQueries] = useState<string[]>(() =>
+    getSearchQueryHistory("shows"),
+  );
 
   const { data: categoriesData, isLoading: isCategoriesLoading } = useCategoriesQuery();
   const categories = useMemo(() => categoriesData?.categories ?? [], [categoriesData]);
@@ -104,6 +114,26 @@ const SearchShowsScreen = () => {
     // New query — changing the key resets the infinite query automatically.
     setSubmittedQuery(q);
   }, [refetch, searchText, submittedQuery]);
+
+  /** Called when the keyboard's search button is pressed. Saves + searches. */
+  const handleSubmitEditing = useCallback(() => {
+    const q = searchText.trim();
+    if (q) {
+      addSearchQueryToHistory("shows", q);
+      setRecentQueries(getSearchQueryHistory("shows"));
+    }
+    submitSearch();
+  }, [searchText, submitSearch]);
+
+  /** Called when the input loses focus. Saves whatever is typed (if non-empty). */
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+    const q = searchText.trim();
+    if (q) {
+      addSearchQueryToHistory("shows", q);
+      setRecentQueries(getSearchQueryHistory("shows"));
+    }
+  }, [searchText]);
 
   const clearSearch = useCallback(() => {
     setSearchText("");
@@ -348,15 +378,36 @@ const SearchShowsScreen = () => {
           },
         ]}
       >
-        <View style={[styles.searchBar, { backgroundColor: colors.tertiaryContainer }]}>
+        {isFocused && recentQueries.length > 0 && (
+          <SearchHistoryPills
+            queries={recentQueries}
+            colors={colors}
+            onSelect={(q) => {
+              setSearchText(q);
+              setSubmittedQuery(q);
+              addSearchQueryToHistory("shows", q);
+              setRecentQueries(getSearchQueryHistory("shows"));
+            }}
+            onRemove={(q) => {
+              removeSearchQueryFromHistory("shows", q);
+              setRecentQueries(getSearchQueryHistory("shows"));
+            }}
+          />
+        )}
+        <View style={[styles.searchBar, { backgroundColor: colors.surfaceContainerHighest }]}>
           <TextInput
             ref={inputRef}
-            style={[styles.searchInput, { color: colors.onTertiaryContainer }]}
+            style={[styles.searchInput, { color: colors.onSurface }]}
             placeholder="Search shows..."
-            placeholderTextColor={colors.onTertiaryContainer + "80"}
+            placeholderTextColor={colors.onSurfaceVariant}
             value={searchText}
             onChangeText={setSearchText}
-            onSubmitEditing={submitSearch}
+            onSubmitEditing={handleSubmitEditing}
+            onFocus={() => {
+              setIsFocused(true);
+              setRecentQueries(getSearchQueryHistory("shows"));
+            }}
+            onBlur={handleBlur}
             returnKeyType="search"
             autoCorrect={false}
             autoCapitalize="none"

@@ -1,12 +1,12 @@
 /* eslint-disable react-hooks/refs */
 import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Dialog, Wallpaper } from "@solar-icons/react-native/Bold";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { router } from "expo-router";
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,7 +38,7 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
     if (vm.isLoading || !isReady || vm.skiaImage === null) {
         return (
             <View style={[styles.screen, { backgroundColor: vm.darkDominant }]}>
-                <SkeletonGroup isLoading={true} variant="shimmer">
+                <SkeletonGroup isLoading={true} variant="pulse">
                     <View style={{ gap: 16 }}>
                         <SkeletonGroup.Item style={{ height: 500, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
@@ -82,6 +82,7 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
                         watchProviders={vm.watchProviders}
                         firstAirYear={vm.firstAirYear}
                         runtime={vm.runtime}
+                        logos={vm.logos}
                     />
 
                     {/* ─── Overview ─── */}
@@ -155,7 +156,7 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
                         style={{ borderRadius: 999, overflow: "hidden" }}
                     >
                         <Pressable
-                            onPress={() => { vm.setShowWallpaper(true); vm.setUrlWallpaper(vm.posterUrl || "");}}
+                            onPress={() => { vm.setShowWallpaper(true); vm.setUrlWallpaper(vm.posterUrl || ""); }}
                             style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                         >
                             <Wallpaper size={28} color="white" />

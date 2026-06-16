@@ -3,6 +3,7 @@ import { appleIntelli } from "@/components/glow/AppleIntelliConfig";
 import { MostSearchedSection } from "@/components/search/MostSearchedSection";
 import { renderEmptyState } from "@/components/search/SearchEmpty";
 import { renderFooter } from "@/components/search/SearchFooter";
+import { SearchHistoryPills } from "@/components/search/SearchHistoryPills";
 import { SearchProfileItem } from "@/components/search/SearchProfileItem";
 import { renderProfileSkeleton } from "@/components/search/SearchProfileSkeleton";
 import { TrendingHashtagsSection } from "@/components/search/TrendingHashtagsSection";
@@ -60,6 +61,9 @@ const SearchScreen = () => {
     handleRefresh,
     handleEndReached,
     handleProfilePress,
+    recentQueries,
+    selectRecentQuery,
+    removeRecentQuery,
   } = useSearchViewModel();
 
   const renderItem = useCallback(
@@ -215,6 +219,14 @@ const SearchScreen = () => {
           animatedSearchBarStyle,
         ]}
       >
+        {isFocused && recentQueries.length > 0 && (
+          <SearchHistoryPills
+            queries={recentQueries}
+            colors={colors}
+            onSelect={selectRecentQuery}
+            onRemove={removeRecentQuery}
+          />
+        )}
         <AnimatedGlow
           preset={appleIntelli}
           activeState={isFocused ? "press" : "default"}

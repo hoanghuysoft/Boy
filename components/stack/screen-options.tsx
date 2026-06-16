@@ -149,6 +149,7 @@ export const getParallaxSlideTransition = (): BlankStackNavigationOptions => {
         },
         gestureResponseDistance: 20,
         gestureVelocityImpact: 0.2,
+        gestureActivationArea: 'edge',
         transitionSpec: {
             open: PARALLAX_SPRING_OPEN,
             close: PARALLAX_SPRING_CLOSE,

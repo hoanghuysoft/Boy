@@ -2,6 +2,11 @@ import { queryClient } from "@/services/client";
 import { ProfilesResponse, useAdminCheck, useInfiniteProfiles } from "@/services/userprofile";
 import { useScrollStore } from "@/stores/scroll";
 import { useSearchHistoryStore } from "@/stores/searchHistory";
+import {
+    addSearchQueryToHistory,
+    getSearchQueryHistory,
+    removeSearchQueryFromHistory,
+} from "@/stores/searchQueryHistory";
 import { Profile } from "@/types/profile";
 import { useRouter } from "expo-router";
 import { debounce, flatMap } from "lodash";
@@ -26,6 +31,9 @@ export const useSearchViewModel = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
     const [isFocused, setIsFocused] = useState(false);
+    const [recentQueries, setRecentQueries] = useState<string[]>(() =>
+        getSearchQueryHistory("people"),
+    );
     const inputRef = useRef<TextInput>(null);
     const listRef = useRef<any>(null);
 
@@ -90,11 +98,17 @@ export const useSearchViewModel = () => {
     // ─── Focus / Blur ─────────────────────────────────────────────
     const handleFocus = useCallback(() => {
         setIsFocused(true);
+        setRecentQueries(getSearchQueryHistory("people"));
     }, []);
 
     const handleBlur = useCallback(() => {
         setIsFocused(false);
-    }, []);
+        // Save the live query (not debounced) so we capture exactly what was typed.
+        if (searchQuery.trim()) {
+            addSearchQueryToHistory("people", searchQuery.trim());
+            setRecentQueries(getSearchQueryHistory("people"));
+        }
+    }, [searchQuery]);
 
     // ─── Keyboard Blur on Hide ────────────────────────────────────
     useEffect(() => {
@@ -202,6 +216,20 @@ export const useSearchViewModel = () => {
         if (hasNextPage) fetchNextPage();
     }, [hasNextPage, fetchNextPage]);
 
+    // ─── Recent query selection ────────────────────────────────────
+    const selectRecentQuery = useCallback((q: string) => {
+        setSearchQuery(q);
+        setDebouncedSearchQuery(q);
+        addSearchQueryToHistory("people", q);
+        setRecentQueries(getSearchQueryHistory("people"));
+    }, []);
+
+    // ─── Recent query removal ─────────────────────────────────────
+    const removeRecentQuery = useCallback((q: string) => {
+        removeSearchQueryFromHistory("people", q);
+        setRecentQueries(getSearchQueryHistory("people"));
+    }, []);
+
     // ─── Return ViewModel ─────────────────────────────────────────
     return {
         // State
@@ -226,6 +254,11 @@ export const useSearchViewModel = () => {
 
         // Animated
         animatedSearchBarStyle,
+
+        // History
+        recentQueries,
+        selectRecentQuery,
+        removeRecentQuery,
 
         // Handlers
         handleSearchChange,

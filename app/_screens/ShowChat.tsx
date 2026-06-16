@@ -228,7 +228,7 @@ const ShowChatScreen = () => {
                             alignItems: 'center'
                         }}
                     >
-                        <Ionicons name='chevron-back' size={24} color={colors.text} />
+                        <Ionicons name='chevron-back' size={24} color={colors.onSurface} />
                     </TouchableOpacity>
                 </BlurView>
 

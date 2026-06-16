@@ -1,3 +1,4 @@
+import { useThemeContext } from "@/context/ThemeContext";
 import React, { useMemo } from "react";
 import {
   StyleProp,
@@ -7,7 +8,6 @@ import {
   ViewProps,
   ViewStyle,
 } from "react-native";
-import { useThemeContext } from "@/context/ThemeContext";
 import { FlexText } from "./FlexText";
 
 export interface CustomSurfaceProps extends Omit<ViewProps, "style"> {
@@ -120,7 +120,7 @@ export const CustomSurface: React.FC<CustomSurfaceProps> = ({
         return { backgroundColor: "transparent" };
       case "default":
       default:
-        return { backgroundColor: colors.containerContent };
+        return { backgroundColor: colors.surfaceContainer };
     }
   }, [variant, colors]);
 

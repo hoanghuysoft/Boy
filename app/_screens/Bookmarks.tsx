@@ -183,7 +183,7 @@ const BookmarksScreen = () => {
                 <TouchableOpacity
                     onPress={() => router.back()}
                     style={{
-                        backgroundColor: colors.containerContent,
+                        backgroundColor: colors.surfaceContainerHigh,
                         borderRadius: 999,
                         width: 40,
                         height: 40,
@@ -191,7 +191,7 @@ const BookmarksScreen = () => {
                         alignItems: 'center',
                     }}
                 >
-                    <Ionicons name="chevron-back" size={24} color={colors.text} />
+                    <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
                 </TouchableOpacity>
             </View>
 

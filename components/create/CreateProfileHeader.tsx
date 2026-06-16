@@ -146,7 +146,7 @@ export const CreateProfileHeader = memo(({
                     <FlexText style={[common.subheading, { color: colors.onSurface }]} numberOfLines={1}>
                         {profile.name}
                     </FlexText>
-                    {profile.is_verified && <VerifiedIcon size={14} backgroundColor={colors.primary} />}
+                    {profile.is_verified && <VerifiedIcon size={14} />}
                 </View>
                 {(onToggleGhost || onToggleAdult || onToggleThirdPartyUpload) && (
                     <View style={createStyles.postOptionsRow}>

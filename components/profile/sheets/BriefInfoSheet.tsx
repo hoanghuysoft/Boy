@@ -109,24 +109,28 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
         dismiss: () => controllerRef.current.dismiss(),
     }), []);
 
-    const backHandler = useSheetBackHandler(controllerRef as any);
+    const { onDidPresent, onDidDismiss } = useSheetBackHandler(controllerRef as any);
+
+    useEffect(() => {
+        if (index > 0) {
+            onDidPresent();
+        } else {
+            onDidDismiss();
+        }
+    }, [index, onDidPresent, onDidDismiss]);
 
     const handleIndexChange = useCallback((newIndex: number) => {
         if (newIndex > 0) {
             wasOpenRef.current = true;
-            backHandler.onDidPresent();
-        } else {
-            backHandler.onDidDismiss();
         }
         setIndex(newIndex);
-    }, [backHandler]);
+    }, []);
 
     const handleSettle = useCallback((settledIndex: number) => {
         if (settledIndex === 0 && wasOpenRef.current) {
             wasOpenRef.current = false;
-            backHandler.onDidDismiss();
         }
-    }, [backHandler]);
+    }, []);
 
     const parsedMetadata = useMemo(() => {
         if (!profile?.metadata) return null;
@@ -292,7 +296,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
             onIndexChange={handleIndexChange}
             onSettle={handleSettle}
             detents={[0, 'content']}
-            scrimColor={colors.background}
+            scrimColor={colors.scrim}
             scrimOpacities={[0, 0.5, 1]}
             extendUnderStatusBar
             surface={
@@ -300,7 +304,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
                     style={[
                         StyleSheet.absoluteFill,
                         {
-                            backgroundColor: theme === 'dark' ? colors.containerContent : '#ffffff',
+                            backgroundColor: colors.surfaceContainerLow,
                             borderTopLeftRadius: 32,
                             borderTopRightRadius: 32,
                             overflow: 'hidden',
@@ -309,7 +313,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
                 />
             }
         >
-            <View style={[styles.grabber, { backgroundColor: colors.muted || "#C4C4C4" }]} />
+            <View style={[styles.grabber, { backgroundColor: colors.onSurfaceVariant, marginTop: inset.top + 12 }]} />
             <ScrollView nestedScrollEnabled style={{ flex: 1, paddingHorizontal: 12, paddingTop: 4 }}>
 
                 {/* Header */}
@@ -387,7 +391,5 @@ const styles = StyleSheet.create({
         width: 40,
         height: 5,
         borderRadius: 2.5,
-        marginTop: 10,
-        marginBottom: 8,
     },
 });

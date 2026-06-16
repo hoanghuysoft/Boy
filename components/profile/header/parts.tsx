@@ -1,15 +1,15 @@
 import VerifiedIcon from '@/icons/verified';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
-import { ChatSquareLike, HeartAngle, Heart } from "@solar-icons/react-native/Bold";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { ChatSquareLike, Heart, HeartAngle } from "@solar-icons/react-native/Bold";
 import { Image } from 'expo-image';
 import { MediaViewer } from 'expo-media-viewer';
+import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
-import { useRouter } from 'expo-router';
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 
 import { ProfileDetail } from '../../../types/profiledetail';
 import { getFamilyAvatarSource } from '../../../utils/familyAvatar';
@@ -119,7 +119,7 @@ export const IdentitySection = ({
         <FlexText style={[vm.common.heading, headerStyles.identityName]}>
           {profile?.name || t('profile.header.notFound')}
         </FlexText>
-        {profile?.is_verified && <VerifiedIcon size={14} backgroundColor={vm.colors.verify} />}
+        {profile?.is_verified && <VerifiedIcon size={14} />}
         {vm.flagCode && <CountryFlag isoCode={vm.flagCode} size={12} style={headerStyles.identityFlag} />}
       </View>
       <View style={[vm.common.row, headerStyles.identityCounts]}>

@@ -114,7 +114,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>
                             <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
-                            {post.profile_is_verified && <VerifiedIcon size={16} backgroundColor={vm.colors.primary} />}
+                            {post.profile_is_verified && <VerifiedIcon size={16} />}
                         </View>
                         <PostMetaInfo post={post} />
                     </View>

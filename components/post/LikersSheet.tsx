@@ -49,7 +49,7 @@ const LikerItem = memo(({ user, colors, common, onPress }: LikerItemProps) => (
                     {user.profile_name}
                 </FlexText>
                 {user.profile_is_verified && (
-                    <VerifiedIcon size={14} backgroundColor={colors.primary} />
+                    <VerifiedIcon size={14} />
                 )}
             </View>
         </View>
@@ -179,7 +179,7 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
                 onIndexChange={handleIndexChange}
                 onSettle={handleSettle}
                 detents={[0, 'content']}
-                scrimColor={colors.surface}
+                scrimColor={colors.scrim}
                 scrimOpacities={[0, 0.5, 1]}
                 extendUnderStatusBar
                 surface={
@@ -187,7 +187,7 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
                         style={[
                             StyleSheet.absoluteFill,
                             {
-                                backgroundColor: colors.surfaceContainer,
+                                backgroundColor: colors.surfaceContainerLow,
                                 borderTopLeftRadius: 32,
                                 borderTopRightRadius: 32,
                                 overflow: "hidden",
@@ -196,7 +196,7 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
                     />
                 }
             >
-                <View style={[styles.grabber, { backgroundColor: colors.onSurfaceVariant || "#C4C4C4" }]} />
+                <View style={[styles.grabber, { backgroundColor: colors.onSurfaceVariant, marginTop: insets.top + 12 }]} />
                 <View style={[styles.container, { paddingBottom: insets.bottom + 12 }]}>
                     <FlatList
                         nestedScrollEnabled
@@ -222,7 +222,6 @@ LikersSheet.displayName = "LikersSheet";
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingTop: 8,
     },
     header: {
         marginBottom: 12,
@@ -256,7 +255,7 @@ const styles = StyleSheet.create({
         paddingVertical: 32,
     },
     listContent: {
-        paddingHorizontal: 20,
+        paddingHorizontal: 12,
         paddingBottom: 40,
     },
     grabber: {
@@ -264,7 +263,5 @@ const styles = StyleSheet.create({
         width: 40,
         height: 5,
         borderRadius: 2.5,
-        marginTop: 10,
-        marginBottom: 8,
     },
 });

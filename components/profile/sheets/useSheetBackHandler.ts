@@ -1,5 +1,5 @@
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { BackHandler } from 'react-native';
 
 /**
@@ -21,8 +21,12 @@ export function useSheetBackHandler(ref: React.ForwardedRef<TrueSheet>) {
         return () => sub.remove();
     }, [isOpen, ref]);
 
+    const onDidPresent = useCallback(() => setIsOpen(true), []);
+    const onDidDismiss = useCallback(() => setIsOpen(false), []);
+
     return {
-        onDidPresent: () => setIsOpen(true),
-        onDidDismiss: () => setIsOpen(false),
+        onDidPresent,
+        onDidDismiss,
     };
 }
+

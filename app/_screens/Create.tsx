@@ -498,7 +498,7 @@ const CreateScreen = () => {
                     <TouchableOpacity
                         onPress={() => router.back()}
                         style={{
-                            backgroundColor: colors.surfaceContainer,
+                            backgroundColor: colors.surfaceContainerHigh,
                             borderRadius: 999,
                             width: 40,
                             height: 40,

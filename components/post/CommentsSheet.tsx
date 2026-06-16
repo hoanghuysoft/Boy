@@ -5,6 +5,7 @@ import { Galeria } from "@nandorojo/galeria";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { GalleryAdd, PenNewRound, Plain2 } from "@solar-icons/react-native/Bold";
 import { Image } from "expo-image";
+import { SquircleView } from "expo-squircle-view";
 import { Avatar } from "heroui-native/avatar";
 import { Button } from "heroui-native/button";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
@@ -80,7 +81,7 @@ const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDe
                             <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 13, fontWeight: '600' }]} numberOfLines={1}>
                                 {comment.profile_name}
                             </FlexText>
-                            {comment.profile_is_verified && <VerifiedIcon size={12} backgroundColor={colors.primary} />}
+                            {comment.profile_is_verified && <VerifiedIcon size={12} />}
                         </TouchableOpacity>
                     </View>
 
@@ -299,7 +300,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             <View style={[
                 styles.footerContainer,
                 {
-                    backgroundColor: vm.colors.surfaceContainer,
+                    backgroundColor: vm.colors.surfaceContainerLow,
                     paddingBottom: Math.max(insets.bottom, 12),
                 }
             ]}>
@@ -327,26 +328,25 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
 
                 {/* URL Input */}
                 {isKeyboardVisible && vm.showUrlInput && (
-                    <View style={[styles.urlInputWrapper, { backgroundColor: vm.colors.tertiaryContainer }]}>
-                        <MaterialIcons name="link" size={18} color={vm.colors.onTertiaryContainer} />
+                    <SquircleView cornerSmoothing={100} preserveSmoothing style={[styles.urlInputWrapper, { backgroundColor: vm.colors.surfaceContainerHighest }]}>
+                        <MaterialIcons name="link" size={18} color={vm.colors.onSurface} />
                         <TextInput
-                            style={[styles.urlInput, { color: vm.colors.onTertiaryContainer }]}
+                            style={[styles.urlInput, { backgroundColor: vm.colors.surfaceContainerHighest, color: vm.colors.onSurface }]}
                             placeholder="Enter image URL..."
-                            placeholderTextColor={vm.colors.onTertiaryContainer}
+                            placeholderTextColor={vm.colors.onSurfaceVariant}
                             value={vm.imageUrlInput}
                             onChangeText={vm.setImageUrlInput}
                             autoFocus
                             autoCapitalize="none"
                             keyboardType="url"
-                            selectionColor={vm.colors.onTertiaryContainer}
                             onSubmitEditing={vm.handleAddImageUrl}
                         />
                         {vm.imageUrlInput.trim().length > 0 && (
                             <TouchableOpacity onPress={vm.handleAddImageUrl} style={{ marginLeft: 8 }}>
-                                <MaterialIcons name="check-circle" size={24} color={vm.colors.onTertiaryContainer} />
+                                <MaterialIcons name="check-circle" size={24} color={vm.colors.onSurface} />
                             </TouchableOpacity>
                         )}
-                    </View>
+                    </SquircleView>
                 )}
 
                 {/* Selected Image Preview */}
@@ -367,11 +367,11 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     <TextInput
                         ref={inputRef}
                         style={[styles.input, {
-                            backgroundColor: vm.colors.tertiaryContainer,
-                            color: vm.colors.onTertiaryContainer,
+                            backgroundColor: vm.colors.surfaceContainerHighest,
+                            color: vm.colors.onSurface,
                         }]}
                         placeholder={vm.isEditing ? t('post.commentsSheet.placeholderEdit') : t('post.commentsSheet.placeholderAdd')}
-                        placeholderTextColor={vm.colors.onTertiaryContainer}
+                        placeholderTextColor={vm.colors.onSurfaceVariant}
                         value={vm.commentText}
                         onChangeText={vm.setCommentText}
                         multiline
@@ -449,7 +449,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const sharedProps = {
             ref: sheetRef,
             scrollable: true,
-            backgroundColor: vm.colors.surfaceContainer,
+            backgroundColor: vm.colors.surfaceContainerLow,
             grabberOptions: {
                 color: vm.colors.onSurfaceVariant || "#C4C4C4",
                 height: 5,

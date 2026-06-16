@@ -14,39 +14,41 @@ export type ThemeColors = {
   onPrimary: string;
   primaryContainer: string;
   onPrimaryContainer: string;
-  
+
   secondary: string;
   onSecondary: string;
   secondaryContainer: string;
   onSecondaryContainer: string;
-  
+
   tertiary: string;
   onTertiary: string;
   tertiaryContainer: string;
   onTertiaryContainer: string;
-  
+
   error: string;
   onError: string;
   errorContainer: string;
   onErrorContainer: string;
-  
+
   surface: string;
   onSurface: string;
   surfaceVariant: string;
   onSurfaceVariant: string;
-  
+
   surfaceContainerLowest: string;
   surfaceContainerLow: string;
   surfaceContainer: string;
   surfaceContainerHigh: string;
   surfaceContainerHighest: string;
-  
+
   outline: string;
   outlineVariant: string;
-  
+
   inverseSurface: string;
   inverseOnSurface: string;
   inversePrimary: string;
+
+  scrim: string;
 
   // --- Deprecated Aliases for Backward Compatibility ---
   /** @deprecated Use `surface` or `surfaceContainerLow` instead */
@@ -97,39 +99,40 @@ const lightColors: ThemeColors = {
   onPrimary: "#ffffff",
   primaryContainer: "#E7F3FF",
   onPrimaryContainer: "#0866FF",
-  
+
   secondary: "#0e64f6",
   onSecondary: "#ffffff",
   secondaryContainer: "#ecf4fe",
   onSecondaryContainer: "#0e64f6",
-  
+
   tertiary: "#1c94e6",
   onTertiary: "#ffffff",
   tertiaryContainer: "#E2F3FF",
   onTertiaryContainer: "#1c94e6",
-  
+
   error: "#ba1a1a",
   onError: "#ffffff",
   errorContainer: "#ffdad6",
   onErrorContainer: "#410002",
-  
+
   surface: "#f6f6f6",
   onSurface: "#0F172A",
   surfaceVariant: "#e0e0e2",
   onSurfaceVariant: "#888888",
-  
+
   surfaceContainerLowest: "#ffffff",
   surfaceContainerLow: "#f1f1f3",
   surfaceContainer: "#ffffff",
   surfaceContainerHigh: "#e0e0e2",
   surfaceContainerHighest: "#d5d5d7",
-  
+
   outline: "#79747e",
   outlineVariant: "#e0e0e2",
-  
+
   inverseSurface: "#2f3033",
   inverseOnSurface: "#f1f0f4",
   inversePrimary: "#d0bcff",
+  scrim: "#f1f1f3",
 
   // Legacy Aliases
   background: "#f6f6f6",
@@ -157,39 +160,40 @@ const darkColors: ThemeColors = {
   onPrimary: "#1f2937",
   primaryContainer: "#263951",
   onPrimaryContainer: "#5890FF",
-  
+
   secondary: "#0e64f6",
   onSecondary: "#ffffff",
   secondaryContainer: "#001b3a",
   onSecondaryContainer: "#5890FF",
-  
+
   tertiary: "#1c94e6",
   onTertiary: "#ffffff",
   tertiaryContainer: "#001b3a",
   onTertiaryContainer: "#5890FF",
-  
+
   error: "#ffb4ab",
   onError: "#690005",
   errorContainer: "#93000a",
   onErrorContainer: "#ffdad6",
-  
+
   surface: "#000000",
   onSurface: "#E5E7EB",
   surfaceVariant: "#4a4a4c",
   onSurfaceVariant: "#888888",
-  
+
   surfaceContainerLowest: "#0d0d0d",
   surfaceContainerLow: "#171719",
   surfaceContainer: "#171719",
   surfaceContainerHigh: "#242426",
   surfaceContainerHighest: "#363638",
-  
+
   outline: "#938f99",
   outlineVariant: "#363638",
-  
+
   inverseSurface: "#e3e2e6",
   inverseOnSurface: "#2f3033",
   inversePrimary: "#6750a4",
+  scrim: "#171719",
 
   // Legacy Aliases
   background: "#000000",
@@ -291,40 +295,40 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       const onPrimary = getMaterialYouColor("onPrimary", systemTheme, systemTheme === "light" ? lightColors.onPrimary : darkColors.onPrimary);
       const primaryContainer = getMaterialYouColor("primaryContainer", systemTheme, systemTheme === "light" ? lightColors.primaryContainer : darkColors.primaryContainer);
       const onPrimaryContainer = getMaterialYouColor("onPrimaryContainer", systemTheme, systemTheme === "light" ? lightColors.onPrimaryContainer : darkColors.onPrimaryContainer);
-      
+
       const secondary = getMaterialYouColor("secondary", systemTheme, systemTheme === "light" ? lightColors.secondary : darkColors.secondary);
       const onSecondary = getMaterialYouColor("onSecondary", systemTheme, systemTheme === "light" ? lightColors.onSecondary : darkColors.onSecondary);
       const secondaryContainer = getMaterialYouColor("secondaryContainer", systemTheme, systemTheme === "light" ? lightColors.secondaryContainer : darkColors.secondaryContainer);
       const onSecondaryContainer = getMaterialYouColor("onSecondaryContainer", systemTheme, systemTheme === "light" ? lightColors.onSecondaryContainer : darkColors.onSecondaryContainer);
-      
+
       const tertiary = getMaterialYouColor("tertiary", systemTheme, systemTheme === "light" ? lightColors.tertiary : darkColors.tertiary);
       const onTertiary = getMaterialYouColor("onTertiary", systemTheme, systemTheme === "light" ? lightColors.onTertiary : darkColors.onTertiary);
       const tertiaryContainer = getMaterialYouColor("tertiaryContainer", systemTheme, systemTheme === "light" ? lightColors.tertiaryContainer : darkColors.tertiaryContainer);
       const onTertiaryContainer = getMaterialYouColor("onTertiaryContainer", systemTheme, systemTheme === "light" ? lightColors.onTertiaryContainer : darkColors.onTertiaryContainer);
-      
+
       const error = getMaterialYouColor("error", systemTheme, systemTheme === "light" ? lightColors.error : darkColors.error);
       const onError = getMaterialYouColor("onError", systemTheme, systemTheme === "light" ? lightColors.onError : darkColors.onError);
       const errorContainer = getMaterialYouColor("errorContainer", systemTheme, systemTheme === "light" ? lightColors.errorContainer : darkColors.errorContainer);
       const onErrorContainer = getMaterialYouColor("onErrorContainer", systemTheme, systemTheme === "light" ? lightColors.onErrorContainer : darkColors.onErrorContainer);
-      
+
       const surface = getMaterialYouColor("background", systemTheme, systemTheme === "light" ? lightColors.surface : darkColors.surface);
       const onSurface = getMaterialYouColor("onSurface", systemTheme, systemTheme === "light" ? lightColors.onSurface : darkColors.onSurface);
       const surfaceVariant = getMaterialYouColor("surfaceVariant", systemTheme, systemTheme === "light" ? lightColors.surfaceVariant : darkColors.surfaceVariant);
       const onSurfaceVariant = getMaterialYouColor("onSurfaceVariant", systemTheme, systemTheme === "light" ? lightColors.onSurfaceVariant : darkColors.onSurfaceVariant);
-      
+
       const surfaceContainerLowest = getMaterialYouColor("surfaceContainerLowest", systemTheme, systemTheme === "light" ? lightColors.surfaceContainerLowest : darkColors.surfaceContainerLowest);
       const surfaceContainerLow = getMaterialYouColor("surfaceContainerLow", systemTheme, systemTheme === "light" ? lightColors.surfaceContainerLow : darkColors.surfaceContainerLow);
       const surfaceContainer = getMaterialYouColor("surfaceContainer", systemTheme, systemTheme === "light" ? lightColors.surfaceContainer : darkColors.surfaceContainer);
       const surfaceContainerHigh = getMaterialYouColor("surfaceContainerHigh", systemTheme, systemTheme === "light" ? lightColors.surfaceContainerHigh : darkColors.surfaceContainerHigh);
       const surfaceContainerHighest = getMaterialYouColor("surfaceContainerHighest", systemTheme, systemTheme === "light" ? lightColors.surfaceContainerHighest : darkColors.surfaceContainerHighest);
-      
+
       const outline = getMaterialYouColor("outline", systemTheme, systemTheme === "light" ? lightColors.outline : darkColors.outline);
       const outlineVariant = getMaterialYouColor("outlineVariant", systemTheme, systemTheme === "light" ? lightColors.outlineVariant : darkColors.outlineVariant);
-      
+
       const inverseSurface = getMaterialYouColor("inverseSurface", systemTheme, systemTheme === "light" ? lightColors.inverseSurface : darkColors.inverseSurface);
       const inverseOnSurface = getMaterialYouColor("inverseOnSurface", systemTheme, systemTheme === "light" ? lightColors.inverseOnSurface : darkColors.inverseOnSurface);
       const inversePrimary = getMaterialYouColor("inversePrimary", systemTheme, systemTheme === "light" ? lightColors.inversePrimary : darkColors.inversePrimary);
-
+      const scrim = getMaterialYouColor("scrim", systemTheme, systemTheme === "light" ? lightColors.scrim : darkColors.scrim);
       return {
         primary,
         onPrimary,
@@ -356,6 +360,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         inverseSurface,
         inverseOnSurface,
         inversePrimary,
+        scrim,
 
         // Legacy Aliases mapped directly to standard M3 roles
         background: surface,

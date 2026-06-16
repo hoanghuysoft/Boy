@@ -63,7 +63,7 @@ const ProfileRow = memo(
                             {item.name}
                         </FlexText>
                         {item.is_verified && (
-                            <VerifiedIcon size={14} backgroundColor={colors.verify} />
+                            <VerifiedIcon size={14} />
                         )}
                     </View>
                     {item.username ? (

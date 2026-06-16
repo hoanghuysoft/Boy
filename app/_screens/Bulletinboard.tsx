@@ -5,12 +5,12 @@ import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from "dayjs";
 import { BlurTargetView, BlurView } from "expo-blur";
+import { Image as ExpoImage } from "expo-image";
 import { MediaViewer } from 'expo-media-viewer';
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { memo, useCallback, useRef, useState } from "react";
 import { Dimensions, FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
-import { Image as ExpoImage } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get('window');
@@ -162,7 +162,7 @@ const BulletinItem = memo(({
             </View>
 
             {/* Avatar and Content */}
-            <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 24, alignItems: 'flex-start' }}>
+            <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 24, alignItems: 'flex-start', gap: 10 }}>
                 <SquircleView preserveSmoothing cornerSmoothing={100} borderRadius={2} style={{ width: 36, height: 36, overflow: "hidden" }}>
                     <ExpoImage
                         source={{ uri: item.publish_user?.avatar_thumb?.url_list?.[0] }}
@@ -286,7 +286,7 @@ const Bulletinboard = () => {
                             alignItems: 'center'
                         }}
                     >
-                        <Ionicons name='chevron-back' size={24} color={colors.text} />
+                        <Ionicons name='chevron-back' size={24} color={colors.onSurface} />
                     </TouchableOpacity>
                 </BlurView>
 
