@@ -232,19 +232,30 @@ const MovieHubScreen = () => {
                       if (
                         headingLower.includes("popular") ||
                         headingLower.includes("most viewed") ||
-                        urlLower.includes("/popular") ||
-                        urlLower.includes("/most-viewed")
+                        headingLower.includes("rated") ||
+                        headingLower.includes("hot") ||
+                        headingLower.includes("sizzling") ||
+                        urlLower.includes("popular") ||
+                        urlLower.includes("most-viewed") ||
+                        urlLower.includes("hot")
                       ) {
                         mode = "popular";
                       } else if (
                         headingLower.includes("least viewed") ||
-                        urlLower.includes("/least-viewed")
+                        headingLower.includes("least") ||
+                        headingLower.includes("gems") ||
+                        headingLower.includes("hidden") ||
+                        urlLower.includes("least-viewed") ||
+                        urlLower.includes("least")
                       ) {
                         mode = "leastViewed";
                       }
+
+                      const site = section.more_url.includes("site=gvhot") ? "gvhot" : "traingon";
+
                       router.push({
                         pathname: "/show_list",
-                        params: { mode },
+                        params: { mode, site },
                       });
                     }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}

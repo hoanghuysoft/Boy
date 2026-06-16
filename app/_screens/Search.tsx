@@ -220,12 +220,12 @@ const SearchScreen = () => {
           activeState={isFocused ? "press" : "default"}
           style={{ borderRadius: 999 }}
         >
-          <View style={[styles.searchBar, { backgroundColor: colors.tertiaryContainer }]}>
+          <View style={[styles.searchBar]}>
             <TextInput
               ref={inputRef}
-              style={[styles.searchInput, { color: colors.onTertiaryContainer, marginLeft: 12 }]}
+              style={[styles.searchInput, { color: "white", marginLeft: 12 }]}
               placeholder={t('search.searchBar.placeholder')}
-              placeholderTextColor={colors.onTertiaryContainer + "80"}
+              placeholderTextColor={colors.muted}
               value={searchQuery}
               onChangeText={handleSearchChange}
               onFocus={handleFocus}
@@ -242,13 +242,13 @@ const SearchScreen = () => {
                 <View
                   style={[
                     styles.clearButtonInner,
-                    { backgroundColor: colors.onTertiaryContainer + "20" },
+                    { backgroundColor: colors.card },
                   ]}
                 >
                   <Ionicons
                     name="close"
                     size={16}
-                    color={colors.onTertiaryContainer}
+                    color={colors.text}
                   />
                 </View>
               </TouchableOpacity>

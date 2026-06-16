@@ -3,9 +3,9 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { showsClient } from "../client";
 import { showsKeys } from "../queryKeys";
 
-export const getLatestVideos = async (page: number = 1): Promise<LatestVideosResponse> => {
+export const getLatestVideos = async (page: number = 1, site?: string): Promise<LatestVideosResponse> => {
     const res = await showsClient.get("/latest", {
-        params: { page },
+        params: { page, site },
     });
     return res.data;
 };
@@ -27,10 +27,10 @@ export const useLatestVideosQuery = (page: number = 1) => {
  * Infinite scroll latest videos query.
  * Key: ['shows', 'latest'] — shares root with useLatestVideosQuery.
  */
-export const useLatestInfiniteQuery = (enabled: boolean = true) => {
+export const useLatestInfiniteQuery = (enabled: boolean = true, site?: string) => {
     return useInfiniteQuery({
-        queryKey: showsKeys.latest(),
-        queryFn: ({ pageParam }) => getLatestVideos(pageParam),
+        queryKey: [...showsKeys.latest(), site],
+        queryFn: ({ pageParam }) => getLatestVideos(pageParam, site),
         getNextPageParam: (lastPage, allPages) => {
             const total = (lastPage as LatestVideosResponse & { total_pages?: number }).total_pages ?? 1;
             const next = allPages.length + 1;
@@ -41,3 +41,4 @@ export const useLatestInfiniteQuery = (enabled: boolean = true) => {
         staleTime: 5 * 60 * 1000,
     });
 };
+

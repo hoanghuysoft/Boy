@@ -34,15 +34,16 @@ const ShowListScreen = () => {
   const common = createCommonStyles(colors, typography);
   const inset = useSafeAreaInsets();
 
-  const params = useLocalSearchParams<{ mode: string; slug?: string }>();
+  const params = useLocalSearchParams<{ mode: string; slug?: string; site?: string }>();
   const mode: Mode = (params.mode as Mode) || "latest";
   const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug ?? "");
+  const site = Array.isArray(params.site) ? params.site[0] : (params.site ?? undefined);
 
   const categoryQuery = useCategoryInfiniteQuery(mode === "category" ? slug : undefined);
   const tagQuery = useTagInfiniteQuery(mode === "tag" ? slug : undefined);
-  const latestQuery = useLatestInfiniteQuery(mode === "latest");
-  const popularQuery = usePopularInfiniteQuery(mode === "popular");
-  const leastViewedQuery = useLeastViewedInfiniteQuery(mode === "leastViewed");
+  const latestQuery = useLatestInfiniteQuery(mode === "latest", site);
+  const popularQuery = usePopularInfiniteQuery(mode === "popular", site);
+  const leastViewedQuery = useLeastViewedInfiniteQuery(mode === "leastViewed", site);
 
   const query = useMemo(() => {
     switch (mode) {

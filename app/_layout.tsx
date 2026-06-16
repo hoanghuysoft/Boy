@@ -197,7 +197,7 @@ const RootContent = () => {
           <Stack.Screen name="login" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="video_player" options={Transition.Presets.ZoomIn()} />
-          <Stack.Screen name="profile/[id]" options={Transition.Presets.ZoomIn()} />
+          <Stack.Screen name="profile/[id]"/>
           <Stack.Screen name="image_poster" />
           <Stack.Screen
             name="settings"

@@ -3,9 +3,9 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { showsClient } from "../client";
 import { showsKeys } from "../queryKeys";
 
-export const getLeastViewedVideos = async (page: number = 1): Promise<LeastViewedVideosResponse> => {
+export const getLeastViewedVideos = async (page: number = 1, site?: string): Promise<LeastViewedVideosResponse> => {
     const res = await showsClient.get("/least-viewed", {
-        params: { page },
+        params: { page, site },
     });
     return res.data;
 };
@@ -27,10 +27,10 @@ export const useLeastViewedVideosQuery = (page: number = 1) => {
  * Infinite scroll least viewed videos query.
  * Key: ['shows', 'leastViewed'] — shares root with useLeastViewedVideosQuery.
  */
-export const useLeastViewedInfiniteQuery = (enabled: boolean = true) => {
+export const useLeastViewedInfiniteQuery = (enabled: boolean = true, site?: string) => {
     return useInfiniteQuery({
-        queryKey: showsKeys.leastViewed(),
-        queryFn: ({ pageParam }) => getLeastViewedVideos(pageParam),
+        queryKey: [...showsKeys.leastViewed(), site],
+        queryFn: ({ pageParam }) => getLeastViewedVideos(pageParam, site),
         getNextPageParam: (lastPage, allPages) => {
             const total = (lastPage as LeastViewedVideosResponse & { total_pages?: number }).total_pages ?? 1;
             const next = allPages.length + 1;
@@ -41,3 +41,4 @@ export const useLeastViewedInfiniteQuery = (enabled: boolean = true) => {
         staleTime: 5 * 60 * 1000,
     });
 };
+

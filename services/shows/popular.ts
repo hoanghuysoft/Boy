@@ -3,9 +3,9 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { showsClient } from "../client";
 import { showsKeys } from "../queryKeys";
 
-export const getPopularVideos = async (page: number = 1): Promise<PopularVideosResponse> => {
+export const getPopularVideos = async (page: number = 1, site?: string): Promise<PopularVideosResponse> => {
     const res = await showsClient.get("/popular", {
-        params: { page },
+        params: { page, site },
     });
     return res.data;
 };
@@ -27,10 +27,10 @@ export const usePopularVideosQuery = (page: number = 1) => {
  * Infinite scroll popular videos query.
  * Key: ['shows', 'popular'] — shares root with usePopularVideosQuery.
  */
-export const usePopularInfiniteQuery = (enabled: boolean = true) => {
+export const usePopularInfiniteQuery = (enabled: boolean = true, site?: string) => {
     return useInfiniteQuery({
-        queryKey: showsKeys.popular(),
-        queryFn: ({ pageParam }) => getPopularVideos(pageParam),
+        queryKey: [...showsKeys.popular(), site],
+        queryFn: ({ pageParam }) => getPopularVideos(pageParam, site),
         getNextPageParam: (lastPage, allPages) => {
             const total = (lastPage as PopularVideosResponse & { total_pages?: number }).total_pages ?? 1;
             const next = allPages.length + 1;
@@ -41,3 +41,4 @@ export const usePopularInfiniteQuery = (enabled: boolean = true) => {
         staleTime: 5 * 60 * 1000,
     });
 };
+
