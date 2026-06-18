@@ -382,7 +382,7 @@ const MovieListScreen = () => {
 
             <FlashList
                 data={items}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item, index) => item?.id ? `${item.id}-${index}` : index.toString()}
                 ListHeaderComponent={ListHeaderComponent}
                 ListFooterComponent={ListFooterComponent}
                 contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: inset.bottom + 24 }}

@@ -1,6 +1,5 @@
 import { FBPost } from '@/types/localfb';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { LinkRound, Pin } from "@solar-icons/react-native/Bold";
 import { MediaViewer, type MediaViewerItem } from 'expo-media-viewer';
 import React, { memo, useState } from 'react';
 import {
@@ -160,7 +159,7 @@ const FBPostCard: React.FC<{
                             {post.is_pinned && (
                                 <>
                                     <FlexText style={{ color: colors.muted, fontSize: 12 }}> · </FlexText>
-                                    <Pin size={11} color={colors.muted} />
+                                    <Ionicons name="pin" size={11} color={colors.muted} />
                                 </>
                             )}
                         </View>
@@ -179,7 +178,7 @@ const FBPostCard: React.FC<{
                     onPress={() => { if (post.url) Linking.openURL(post.url); }}
                     activeOpacity={0.7}
                 >
-                    <LinkRound size={18} color={colors.text} />
+                    <Ionicons name="link" size={18} color={colors.text} />
                 </TouchableOpacity>
             </View>
 

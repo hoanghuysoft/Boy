@@ -1,7 +1,15 @@
 import { Bank } from '@/types/bank';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import { Calendar, Letter, Men, NotebookBookmark, Phone, PointOnMap, SquareAcademicCap, Weigher, Wheel, Women } from "@solar-icons/react-native/Bold";
+import CalendarIcon from "@/assets/images/svg/calendar-1.svg";
+import LetterIcon from "@/assets/images/svg/mail.svg";
+import MenIcon from "@/assets/images/svg/gender-male.svg";
+import WomenIcon from "@/assets/images/svg/gender-female.svg";
+import MobileIcon from "@/assets/images/svg/mobile.svg";
+import LocationIcon from "@/assets/images/svg/location.svg";
+import EducationIcon from "@/assets/images/svg/education.svg";
+import MeasurementIcon from "@/assets/images/svg/measurement.svg";
+import VehicleIcon from "@/assets/images/svg/vehicle.svg";
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from "react-native";
@@ -11,6 +19,17 @@ import { createCommonStyles } from "../../styles/common";
 import { ProfileDetail } from "../../types/profiledetail";
 import { FlexText } from '../FlexText';
 import QuickPreviewModal from './QuickPreviewModal';
+
+const Calendar = ({ size, ...props }: any) => <CalendarIcon width={size} height={size} {...props} />;
+const Letter = ({ size, ...props }: any) => <LetterIcon width={size} height={size} {...props} />;
+const Men = ({ size, ...props }: any) => <MenIcon width={size} height={size} {...props} />;
+const Women = ({ size, ...props }: any) => <WomenIcon width={size} height={size} {...props} />;
+const Phone = ({ size, ...props }: any) => <MobileIcon width={size} height={size} {...props} />;
+const PointOnMap = ({ size, ...props }: any) => <LocationIcon width={size} height={size} {...props} />;
+const SquareAcademicCap = ({ size, ...props }: any) => <EducationIcon width={size} height={size} {...props} />;
+const NotebookBookmark = ({ size, ...props }: any) => <Ionicons name="book" size={size} {...props} />;
+const Weigher = ({ size, ...props }: any) => <MeasurementIcon width={size} height={size} {...props} />;
+const Wheel = ({ size, ...props }: any) => <VehicleIcon width={size} height={size} {...props} />;
 
 interface InfoCardProps {
     profile?: ProfileDetail | null;

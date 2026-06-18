@@ -7,6 +7,7 @@ import { useThemeContext } from "@/context/ThemeContext";
 import { usePersonDetails } from "@/hooks/useMovies";
 import { useGalleryStore } from "@/stores/gallery";
 import { TMDBMovieImage } from "@/types/moviedb/movie-images";
+import { getBestLogo, getLogoDimensions } from "./logoUtils";
 import { enrichProfileData } from "@/utils/zodiacCalculation";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
@@ -60,18 +61,7 @@ const getImageUrl = (path: string | null | undefined, size: number = 500) => {
     return `https://image.tmdb.org/t/p/w${size}${path}`;
 };
 
-const getBestLogo = (logos?: TMDBMovieImage[]) => {
-    if (!logos || logos.length === 0) return null;
-    const enLogos = logos.filter(l => l.iso_639_1 === "en");
-    if (enLogos.length > 0) {
-        return enLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-    }
-    const neutralLogos = logos.filter(l => !l.iso_639_1);
-    if (neutralLogos.length > 0) {
-        return neutralLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-    }
-    return [...logos].sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-};
+
 
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -325,11 +315,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                             {bestLogo ? (
                                 <Image
                                     source={{ uri: getImageUrl(bestLogo.file_path, 500) }}
-                                    style={{
-                                        height: 70,
-                                        width: 70 * bestLogo.aspect_ratio,
-                                        maxWidth: width * 0.8,
-                                    }}
+                                    style={getLogoDimensions(bestLogo.aspect_ratio, width)}
                                     contentFit="contain"
                                 />
                             ) : (

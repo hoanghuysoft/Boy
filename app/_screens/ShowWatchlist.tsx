@@ -1,9 +1,10 @@
+import TrashBinTrash from "@/assets/images/svg/delete.svg";
+import Magnifier from "@/assets/images/svg/search.svg";
 import { FlexText } from '@/components/FlexText';
 import { WatchlistShow, useShowWatchlistStore } from '@/stores/showWatchlist';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { RoundedMagnifier } from "@solar-icons/react-native/Outline";
-import { TrashBinTrash } from "@solar-icons/react-native/Bold";
 import dayjs from 'dayjs';
+import { Image as ExpoImage } from 'expo-image';
 import { router } from 'expo-router';
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
@@ -18,7 +19,6 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
@@ -168,7 +168,7 @@ const ShowWatchlistScreen = () => {
                         onPress={handleClearAll}
                         style={[styles.iconButton, { backgroundColor: colors.containerContent }]}
                     >
-                        <TrashBinTrash size={20} color={colors.muted} />
+                        <TrashBinTrash width={20} height={20} color={colors.onSurfaceVariant} />
                     </TouchableOpacity>
                 </View>
             )}
@@ -214,7 +214,7 @@ const ShowWatchlistScreen = () => {
                     ]}
                 >
                     <View style={[styles.searchBar, { backgroundColor: colors.containerContent }]}>
-                        <RoundedMagnifier size={18} color={colors.muted} style={{ marginLeft: 14 }} />
+                        <Magnifier width={18} height={18} color={colors.onSurfaceVariant} style={{ marginLeft: 14 }} />
                         <TextInput
                             style={[styles.searchInput, { color: colors.text }]}
                             placeholder="Search your watchlist..."

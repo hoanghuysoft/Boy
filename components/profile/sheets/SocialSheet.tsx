@@ -3,7 +3,7 @@ import { useAddSocialLink, useDeleteSocialLink, useUpdateSocialLink } from '@/se
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { Earth } from "@solar-icons/react-native/Bold";
+import EarthIcon from "@/assets/images/svg/earth.svg";
 import { Button } from "heroui-native/button";
 import { Chip } from "heroui-native/chip";
 import { Spinner } from "heroui-native/spinner";
@@ -17,6 +17,8 @@ import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileLink } from '../../../types/profilelink';
 import { useSheetBackHandler } from "./useSheetBackHandler";
+
+const Earth = ({ size, ...props }: any) => <EarthIcon width={size} height={size} {...props} />;
 
 // ============================================================================
 // Props & Constants

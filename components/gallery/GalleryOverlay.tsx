@@ -1,7 +1,9 @@
 import { useThemeContext } from '@/context/ThemeContext';
 import VerifiedIcon from '@/icons/verified';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { GalleryDownload, Share, Wallpaper } from "@solar-icons/react-native/Bold";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
+import ShareIcon from "@/assets/images/svg/share-1.svg";
+import DownloadIcon from "@/assets/images/svg/download.svg";
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -104,7 +106,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                                     onPress={onShare}
                                     style={[styles.galleryButton, styles.galleryButtonBg]}
                                 >
-                                    <Share size={24} color="white" />
+                                    <ShareIcon width={24} height={24} color="white" />
                                 </TouchableOpacity>
                             )}
                             {onPoster && (
@@ -112,7 +114,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                                     onPress={onPoster}
                                     style={[styles.galleryButton, styles.galleryButtonBg]}
                                 >
-                                    <Wallpaper size={24} color="white" />
+                                    <MaterialIcons name="wallpaper" size={24} color="white" />
                                 </TouchableOpacity>
                             )}
                             {showDownload && onDownload && (
@@ -120,7 +122,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                                     onPress={onDownload}
                                     style={[styles.galleryButton, styles.galleryButtonBg]}
                                 >
-                                    <GalleryDownload size={24} color="white" />
+                                    <DownloadIcon width={24} height={24} color="white" />
                                 </TouchableOpacity>
                             )}
                         </View>

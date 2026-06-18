@@ -1,5 +1,6 @@
-import { RewindForward } from "@solar-icons/react-native/BoldDuotone";
+import FastForward from "@/assets/images/svg/forward.svg";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, View } from "react-native";
 import { FlexText } from "../FlexText";
 
@@ -10,6 +11,8 @@ interface SpeedIndicatorProps {
 export const SpeedIndicator: React.FC<SpeedIndicatorProps> = ({
   playbackRate,
 }) => {
+  const { t } = useTranslation();
+
   if (playbackRate <= 1) return null;
 
   // Format: 2 → "2×", 2.5 → "2.5×"
@@ -23,10 +26,10 @@ export const SpeedIndicator: React.FC<SpeedIndicatorProps> = ({
   return (
     <View style={styles.speedIndicator}>
       <View style={styles.speedBadge}>
-        <RewindForward size={16} color="white" />
+        <FastForward width={20} height={20} color="white" />
         <FlexText style={styles.speedText}>{label}</FlexText>
         {isScrubbing && (
-          <Text style={styles.scrubHint}>‹ drag ›</Text>
+          <Text style={styles.scrubHint}>‹ {t('shots.drag')} ›</Text>
         )}
       </View>
     </View>

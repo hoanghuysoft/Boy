@@ -1,3 +1,4 @@
+import DialogIcon from "@/assets/images/svg/chat-double.svg";
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
@@ -12,8 +13,8 @@ import { TMDBVideoResult } from "@/types/moviedb/movie-entities";
 import { TMDBMovieImage } from "@/types/moviedb/movie-images";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
-import { Dialog, Wallpaper } from "@solar-icons/react-native/Bold";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -35,6 +36,7 @@ import { getColors } from "react-native-image-colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { movieDetailStorage as storage } from "../../services/storage";
 import WallpaperOverlay from "../WallpaperOverlay";
+import { getBestLogo, getLogoDimensions } from "./logoUtils";
 
 // ─── MMKV cache (same pattern as ShowDetailScreen) ────────────────────────────
 
@@ -66,18 +68,7 @@ const getImageUrl = (path: string | null | undefined, size: number = 500) => {
     return `https://image.tmdb.org/t/p/w${size}${path}`;
 };
 
-const getBestLogo = (logos?: TMDBMovieImage[]) => {
-    if (!logos || logos.length === 0) return null;
-    const enLogos = logos.filter(l => l.iso_639_1 === "en");
-    if (enLogos.length > 0) {
-        return enLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-    }
-    const neutralLogos = logos.filter(l => !l.iso_639_1);
-    if (neutralLogos.length > 0) {
-        return neutralLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-    }
-    return [...logos].sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-};
+
 
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -240,17 +231,19 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
 
     const renderCastItem = useCallback(
         ({ item }: ListRenderItemInfo<CastMember>) => {
+            if (!item) return null;
             const getCastAvatarSource = () => {
                 if (item.profile_path) return { uri: getImageUrl(item.profile_path, 185) };
                 // Pseudo-random based on name length to give variety
-                return item.name.length % 2 === 0
+                const name = item.name || "";
+                return name.length % 2 === 0
                     ? require('../../assets/images/AV17.png')
                     : require('../../assets/images/AV86.png');
             };
 
             return (
                 <GesturePressable
-                    onPress={() => router.push({ pathname: "/person_detail", params: { id: item.id } })}
+                    onPress={() => item.id && router.push({ pathname: "/person_detail", params: { id: item.id } })}
                     style={{ gap: 6, alignItems: "center", width: 80 }}
                 >
                     <Image
@@ -259,10 +252,10 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                         contentFit="cover"
                     />
                     <Text numberOfLines={2} style={[styles.textStyle, { color: "white", textAlign: "center", fontSize: 12 }]}>
-                        {item.name}
+                        {item.name || ""}
                     </Text>
                     <Text numberOfLines={1} style={[styles.textStyle, { color: "rgba(255, 255, 255, 0.7)", fontSize: 11 }]}>
-                        {item.character}
+                        {item.character || ""}
                     </Text>
                 </GesturePressable>
             )
@@ -330,9 +323,9 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
         [],
     );
 
-    const castKeyExtractor = useCallback((item: CastMember) => item.id.toString(), []);
-    const movieKeyExtractor = useCallback((item: Movie) => item.id.toString(), []);
-    const videoKeyExtractor = useCallback((item: TMDBVideoResult) => item.id, []);
+    const castKeyExtractor = useCallback((item: CastMember, index: number) => item?.id ? `${item.id}-${index}` : index.toString(), []);
+    const movieKeyExtractor = useCallback((item: Movie, index: number) => item?.id ? `${item.id}-${index}` : index.toString(), []);
+    const videoKeyExtractor = useCallback((item: TMDBVideoResult, index: number) => item?.id ? `${item.id}-${index}` : index.toString(), []);
 
     // ─── Loading / Error ─────────────────────────────────────────────────────
 
@@ -409,11 +402,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                             {bestLogo ? (
                                 <Image
                                     source={{ uri: getImageUrl(bestLogo.file_path, 500) }}
-                                    style={{
-                                        height: 70,
-                                        width: 70 * bestLogo.aspect_ratio,
-                                        maxWidth: width * 0.8,
-                                    }}
+                                    style={getLogoDimensions(bestLogo.aspect_ratio, width)}
                                     contentFit="contain"
                                 />
                             ) : (
@@ -641,7 +630,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                                 onPress={() => reviewsSheetRef.current?.present()}
                                 style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                             >
-                                <Dialog size={28} color="white" />
+                                <DialogIcon width={28} height={28} color="white" />
                             </Pressable>
                         </BlurView>
                     )}
@@ -654,7 +643,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                             onPress={() => { setShowWallpaper(true); setUrlWallpaper(posterUrl || ""); }}
                             style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                         >
-                            <Wallpaper size={28} color="white" />
+                            <MaterialIcons name="wallpaper" size={28} color="white" />
                         </Pressable>
                     </BlurView>}
                 </View>

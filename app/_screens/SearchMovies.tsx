@@ -2,7 +2,7 @@ import { FlexText } from "@/components/FlexText";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { SearchHistoryPills } from "@/components/search/SearchHistoryPills";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
-import { SearchType, useTypedSearchInfinite } from "@/hooks/useMovies";
+import { SearchType, useTypedSearchInfinite, useSearchSuggestions } from "@/hooks/useMovies";
 import {
   addSearchQueryToHistory,
   getSearchQueryHistory,
@@ -45,6 +45,22 @@ const CATEGORIES = [
   { name: "Top Rated", mode: "top_rated", title: "Top Rated" },
 ];
 
+const useDebounce = <T,>(value: T, delay: number): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 const SearchMoviesScreen = () => {
   const router = useRouter();
   const { colors, typography } = useThemeContext();
@@ -56,11 +72,23 @@ const SearchMoviesScreen = () => {
   const inputRef = useRef<TextInput>(null);
   const [searchText, setSearchText] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
-  const [searchType, setSearchType] = useState<SearchType>("movie");
+  const [searchType, setSearchType] = useState<SearchType>("all");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [recentQueries, setRecentQueries] = useState<string[]>(() =>
     getSearchQueryHistory("movies"),
+  );
+
+  const debouncedSearchText = useDebounce(searchText, 300);
+
+  const showSuggestions =
+    isFocused &&
+    searchText.trim().length > 2 &&
+    searchText.trim() !== (submittedQuery || "");
+
+  const { data: suggestions } = useSearchSuggestions(
+    showSuggestions ? debouncedSearchText : "",
+    searchType,
   );
 
   const {
@@ -135,6 +163,20 @@ const SearchMoviesScreen = () => {
     }
   }, [searchText]);
 
+  const handleSuggestionPress = useCallback((suggestion: any) => {
+    const itemMediaType = searchType === 'all' ? suggestion.media_type : searchType;
+    const isMovie = itemMediaType === 'movie';
+    const isPerson = itemMediaType === 'person';
+
+    if (isMovie) {
+      router.push({ pathname: "/movie_detail", params: { id: suggestion.id } });
+    } else if (isPerson) {
+      router.push({ pathname: "/person_detail", params: { id: suggestion.id } });
+    } else {
+      router.push({ pathname: "/tv_detail", params: { id: suggestion.id } });
+    }
+  }, [searchType, router]);
+
   const clearSearch = useCallback(() => {
     setSearchText("");
     setSubmittedQuery(null);
@@ -153,9 +195,10 @@ const SearchMoviesScreen = () => {
 
   const renderItem = useCallback(
     ({ item }: { item: any }) => {
-      const isMovie = searchType === 'movie';
-      const isPerson = searchType === 'person';
-      const isTV = searchType === 'tv';
+      const itemMediaType = (searchType === 'all' ? item.media_type : searchType) || 'movie';
+      const isMovie = itemMediaType === 'movie';
+      const isPerson = itemMediaType === 'person';
+      const isTV = itemMediaType === 'tv';
 
       const title = isMovie ? item.title : item.name;
       const dateRaw = isMovie ? item.release_date : (isTV ? item.first_air_date : undefined);
@@ -199,7 +242,7 @@ const SearchMoviesScreen = () => {
               numberOfLines={1}
               style={[styles.description, { color: colors.onSurfaceVariant }]}
             >
-              {isPerson ? item.known_for_department : (dateRaw ? new Date(dateRaw).getFullYear() : "—")}
+              {isPerson ? item.known_for_department : `${itemMediaType === 'movie' ? 'Movie' : 'TV Show'}${dateRaw ? ` • ${new Date(dateRaw).getFullYear()}` : ''}`}
             </FlexText>
             {!isPerson && <IMDbBadge score={item.vote_average} textColor={colors.onSurface} />}
           </View>
@@ -356,10 +399,10 @@ const SearchMoviesScreen = () => {
       </View>
 
       <View style={{ flexDirection: "row", paddingHorizontal: 16, marginTop: 16, marginBottom: 8, gap: 16 }}>
-        {(['movie', 'tv', 'person'] as const).map(type => (
+        {(['all', 'movie', 'tv', 'person'] as const).map(type => (
           <TouchableOpacity key={type} onPress={() => setSearchType(type)} style={{ paddingBottom: 8, borderBottomWidth: searchType === type ? 2 : 0, borderBottomColor: colors.primary }}>
             <FlexText style={{ color: searchType === type ? colors.onSurface : colors.onSurfaceVariant, fontWeight: searchType === type ? "700" : "500" }}>
-              {type === 'movie' ? 'Movies' : type === 'tv' ? 'TV Shows' : 'People'}
+              {type === 'all' ? 'All' : type === 'movie' ? 'Movies' : type === 'tv' ? 'TV Shows' : 'People'}
             </FlexText>
           </TouchableOpacity>
         ))}
@@ -400,7 +443,7 @@ const SearchMoviesScreen = () => {
           },
         ]}
       >
-        {isFocused && recentQueries.length > 0 && (
+        {isFocused && searchText.trim().length <= 2 && recentQueries.length > 0 && (
           <SearchHistoryPills
             queries={recentQueries}
             colors={colors}
@@ -416,11 +459,59 @@ const SearchMoviesScreen = () => {
             }}
           />
         )}
+
+        {showSuggestions && suggestions && suggestions.length > 0 && (
+          <View style={[styles.suggestionsContainer, { backgroundColor: colors.surfaceContainerHigh }]}>
+            {suggestions.map((item: any) => {
+              const itemMediaType = searchType === 'all' ? item.media_type : searchType;
+              const isMovie = itemMediaType === 'movie';
+              const isPerson = itemMediaType === 'person';
+              const isTV = itemMediaType === 'tv';
+              const title = isMovie ? item.title : item.name;
+              const dateRaw = isMovie ? item.release_date : (isTV ? item.first_air_date : undefined);
+              const thumbnailPath = isPerson ? item.profile_path : item.poster_path;
+              const year = dateRaw ? new Date(dateRaw).getFullYear() : "";
+
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => handleSuggestionPress(item)}
+                  style={styles.suggestionItem}
+                  activeOpacity={0.7}
+                >
+                  <ExpoImage
+                    source={{ uri: getImageUrl(thumbnailPath, 92) }}
+                    style={styles.suggestionThumbnail}
+                    contentFit="cover"
+                  />
+                  <View style={{ flex: 1, justifyContent: "center" }}>
+                    <FlexText numberOfLines={1} style={{ color: colors.onSurface, fontWeight: "600", fontSize: 14 }}>
+                      {title}
+                    </FlexText>
+                    <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginTop: 2 }}>
+                      {isPerson ? item.known_for_department : `${itemMediaType === 'movie' ? 'Movie' : 'TV Show'}${year ? ` • ${year}` : ''}`}
+                    </FlexText>
+                  </View>
+                  <Ionicons name="arrow-up-sharp" size={16} color={colors.onSurfaceVariant} style={{ transform: [{ rotate: '45deg' }] }} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
         <View style={[styles.searchBar, { backgroundColor: colors.surfaceContainerHighest }]}>
           <TextInput
             ref={inputRef}
             style={[styles.searchInput, { color: colors.onSurface }]}
-            placeholder="Search movies..."
+            placeholder={
+              searchType === 'all'
+                ? "Search movies, TV shows, people..."
+                : searchType === 'movie'
+                ? "Search movies..."
+                : searchType === 'tv'
+                ? "Search TV shows..."
+                : "Search people..."
+            }
             placeholderTextColor={colors.onSurfaceVariant}
             value={searchText}
             onChangeText={setSearchText}
@@ -472,6 +563,32 @@ const makeStyles = (colors: any) =>
       borderRadius: 16,
       padding: 12,
       gap: 12,
+    },
+    suggestionsContainer: {
+      borderRadius: 16,
+      padding: 8,
+      marginBottom: 8,
+      gap: 4,
+      borderWidth: 1,
+      borderColor: colors.outlineVariant,
+      elevation: 4,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+    },
+    suggestionItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 8,
+      borderRadius: 12,
+      gap: 12,
+    },
+    suggestionThumbnail: {
+      width: 36,
+      height: 36,
+      borderRadius: 4,
+      backgroundColor: colors.outlineVariant,
     },
     thumbnail: {
       width: 90,

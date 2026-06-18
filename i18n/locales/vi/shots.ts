@@ -10,6 +10,7 @@ const shots = {
     actions: {
         retry: 'Thử lại',
     },
+    drag: 'kéo',
 } as const;
 
 export default shots;

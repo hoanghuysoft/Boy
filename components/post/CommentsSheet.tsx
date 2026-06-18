@@ -3,7 +3,9 @@ import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Galeria } from "@nandorojo/galeria";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import { GalleryAdd, PenNewRound, Plain2 } from "@solar-icons/react-native/Bold";
+import SendIcon from "@/assets/images/svg/send.svg";
+import EditIcon from "@/assets/images/svg/edit-1.svg";
+import ImageAddIcon from "@/assets/images/svg/image-add.svg";
 import { Image } from "expo-image";
 import { SquircleView } from "expo-squircle-view";
 import { Avatar } from "heroui-native/avatar";
@@ -27,6 +29,10 @@ import { parseCommentContent, useCommentsSheetViewModel } from "../../viewmodels
 import { EmojiSelectorSheet } from "../EmojiSelectorSheet";
 import { FlexText } from "../FlexText";
 import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
+
+const Plain2 = ({ size, ...props }: any) => <SendIcon width={size} height={size} {...props} />;
+const PenNewRound = ({ size, ...props }: any) => <EditIcon width={size} height={size} {...props} />;
+const GalleryAdd = ({ size, ...props }: any) => <ImageAddIcon width={size} height={size} {...props} />;
 
 // ============================================================================
 // Types

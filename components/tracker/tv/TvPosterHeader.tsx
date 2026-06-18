@@ -6,6 +6,7 @@ import React, { useMemo } from "react";
 import { Text, useWindowDimensions, View } from "react-native";
 import { Image } from "expo-image";
 import { TMDBMovieImage } from "@/types/moviedb/movie-images";
+import { getBestLogo, getLogoDimensions } from "../logoUtils";
 import {
     ContentRatingPill,
     DotSep,
@@ -15,18 +16,7 @@ import {
 } from "./shared/TvDetailAtoms";
 import { withAlpha, getImageUrl } from "./shared/tvDetailUtils";
 
-const getBestLogo = (logos?: TMDBMovieImage[]) => {
-    if (!logos || logos.length === 0) return null;
-    const enLogos = logos.filter(l => l.iso_639_1 === "en");
-    if (enLogos.length > 0) {
-        return enLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-    }
-    const neutralLogos = logos.filter(l => !l.iso_639_1);
-    if (neutralLogos.length > 0) {
-        return neutralLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-    }
-    return [...logos].sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-};
+
 
 
 interface TvPosterHeaderProps {
@@ -106,11 +96,7 @@ export const TvPosterHeader = ({
                 {bestLogo ? (
                     <Image
                         source={{ uri: getImageUrl(bestLogo.file_path, 500) }}
-                        style={{
-                            height: 70,
-                            width: 70 * bestLogo.aspect_ratio,
-                            maxWidth: width * 0.8,
-                        }}
+                        style={getLogoDimensions(bestLogo.aspect_ratio, width)}
                         contentFit="contain"
                     />
                 ) : (

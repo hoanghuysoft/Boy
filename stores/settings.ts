@@ -42,6 +42,7 @@ interface SettingsStore {
     setImgbbApiKey: (key: string) => void;
     x02ApiKey: string;
     setX02ApiKey: (key: string) => void;
+    reset: () => void;
 }
 
 const mmkvZustandStorage = createJSONStorage(() => ({
@@ -81,6 +82,16 @@ export const useSettingsStore = create<SettingsStore>()(
             setImgbbApiKey: (key) => set({ imgbbApiKey: key }),
             x02ApiKey: '',
             setX02ApiKey: (key) => set({ x02ApiKey: key }),
+            reset: () => set({
+                showSensitiveContent: false,
+                showCarousel: true,
+                themePreference: 'system',
+                videoCacheSizeLimit: 500 * 1024 * 1024,
+                profileDesign: 'v3',
+                makeBottomBarCurve: false,
+                imgbbApiKey: '',
+                x02ApiKey: '',
+            }),
         }),
         {
             name: 'settings-storage',

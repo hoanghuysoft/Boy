@@ -1,12 +1,15 @@
-import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
+import ChatDouble from "@/assets/images/svg/chat-double.svg";
+import Collection from "@/assets/images/svg/collection.svg";
+import Magnifier from "@/assets/images/svg/search.svg";
 import { FlexText } from "@/components/FlexText";
+import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import type { VideoCard } from "@/types/shows";
 import { useHomeViewModel } from "@/viewmodels/Shows/HomeViewModel";
+import MaskedView from "@react-native-masked-view/masked-view";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { ChatLine } from "@solar-icons/react-native/BoldDuotone";
-import { FolderFavouriteBookmark, RoundedMagnifier } from "@solar-icons/react-native/Bold";
-import { BlurTargetView } from "expo-blur";
+import { BlurTargetView, BlurView } from "expo-blur";
 import { Image as ExpoImage } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useRef, useState } from "react";
@@ -24,7 +27,14 @@ const MovieHubScreen = () => {
   const posterHeight = 250;
   const inset = useSafeAreaInsets();
   const [headerScrollX] = useState(() => new Animated.Value(0));
+  const [scrollY] = useState(() => new Animated.Value(0));
   const vm = useHomeViewModel(true); // Always true, active by default now
+
+  const headerBgOpacity = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
 
   const renderSectionItem = useCallback(
     ({ item }: { item: VideoCard }) => (
@@ -86,9 +96,14 @@ const MovieHubScreen = () => {
   return (
     <View style={[common.screen, { backgroundColor: "#000000" }]}>
       <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
-        <ScrollView
+        <Animated.ScrollView
           contentContainerStyle={[{ gap: 12, paddingBottom: 24 }]}
           showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
           refreshControl={
             <RefreshControl
               refreshing={vm.isRefetchingSections || vm.isRefetchingSlider}
@@ -156,26 +171,21 @@ const MovieHubScreen = () => {
                 style={{ height: posterHeight }}
               >
                 {vm.slider?.slider_items.map((slider, i) => {
-                  // 1. We remove the 'extra' width variable entirely.
-
-                  // 2. Parallax translation: Move the image opposite to the scroll direction
-                  // 1. Set a balanced pan distance (10% of screen width)
-                  const panDistance = width * 0.1;
-
-                  const translateX = headerScrollX.interpolate({
+                  const imageTranslateX = headerScrollX.interpolate({
                     inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-                    // Use the panDistance here
-                    outputRange: [panDistance, 0, -panDistance],
+                    outputRange: [-width, 0, width],
                     extrapolate: "clamp",
                   });
-
-                  const scale = headerScrollX.interpolate({
+                  const imageOpacity = headerScrollX.interpolate({
                     inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-                    // Base scale must be at least 1 + (0.1 * 2) = 1.2 to cover the edges
-                    outputRange: [1.2, 1.25, 1.2],
+                    outputRange: [0, 1, 0],
                     extrapolate: "clamp",
                   });
-
+                  const textTranslateX = headerScrollX.interpolate({
+                    inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+                    outputRange: [width * 0.35, 0, -width * 0.35],
+                    extrapolate: "clamp",
+                  });
                   const overlayOpacity = headerScrollX.interpolate({
                     inputRange: [(i - 1) * width, i * width, (i + 1) * width],
                     outputRange: [0, 1, 0],
@@ -194,10 +204,12 @@ const MovieHubScreen = () => {
                       style={{ width, height: posterHeight, overflow: "hidden" }} // Container stays exact width
                     >
                       <Animated.View
+                        pointerEvents="none"
                         style={{
                           width: "100%",  // Match parent perfectly
                           height: "100%", // Match parent perfectly
-                          transform: [{ scale }, { translateX }], // Apply scale and translation here
+                          opacity: imageOpacity,
+                          transform: [{ translateX: imageTranslateX }],
                         }}
                       >
                         <ExpoImage
@@ -206,10 +218,27 @@ const MovieHubScreen = () => {
                           contentFit="cover"
                           placeholder={{ blurhash: resolveBlurhash((slider as any).blurhash, slider.video_url || slider.background_image) }}
                         />
+                        {/* Bottom-to-top black gradient overlay */}
+                        <View
+                          pointerEvents="none"
+                          style={{
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: "60%",
+                            // @ts-ignore — RN 0.76 experimental API
+                            experimental_backgroundImage: "linear-gradient(to top, #000000 0%, rgba(0,0,0,0.6) 50%, transparent 100%)",
+                          }}
+                        />
                       </Animated.View>
                       <Animated.View
                         pointerEvents="none"
-                        style={[styles.headerOverlay, { paddingBottom: 24, opacity: overlayOpacity }]}
+                        style={[styles.headerOverlay, {
+                          paddingBottom: 24,
+                          opacity: overlayOpacity,
+                          transform: [{ translateX: textTranslateX }],
+                        }]}
                       >
                         <FlexText style={{ color: "white", fontSize: 36, fontWeight: "700", textAlign: "center" }}>
                           {slider.title}
@@ -283,61 +312,94 @@ const MovieHubScreen = () => {
             </>
           )}
           <View style={{ height: inset.bottom + 80 }} />
-        </ScrollView>
+        </Animated.ScrollView>
       </BlurTargetView>
       <View
         style={{
           position: "absolute",
-          top: inset.top,
-          left: 16,
-          right: 16,
+          top: 0,
+          left: 0,
+          right: 0,
           zIndex: 1000,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <ExpoImage source={require("../../assets/images/logo_head.png")} style={{ width: 35, aspectRatio: 1 }} contentFit="contain" />
-          <Text style={[styles.textStyle, { color: "white", fontSize: 34, fontWeight: "700" }]}>Hub</Text>
-        </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-          <TouchableOpacity
-            onPress={() => router.push("/show_chat")}
-            style={{
-              borderRadius: 999,
-              width: 40,
-              height: 40,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
+        <Animated.View
+          style={{
+            ...StyleSheet.absoluteFill,
+            opacity: headerBgOpacity,
+            overflow: "hidden",
+          }}
+        >
+          <MaskedView
+            style={StyleSheet.absoluteFill}
+            maskElement={
+              <LinearGradient
+                colors={["black", "transparent"]}
+                style={StyleSheet.absoluteFill}
+              />
+            }
           >
-            <ChatLine size={28} color={"white"} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push("/watchlist")}
-            style={{
-              borderRadius: 999,
-              width: 40,
-              height: 40,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <FolderFavouriteBookmark size={28} color={"white"} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push("/search_shows")}
-            style={{
-              borderRadius: 999,
-              width: 40,
-              height: 40,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <RoundedMagnifier size={28} color={"white"} />
-          </TouchableOpacity>
+            <BlurView
+              blurTarget={blurTargetRef}
+              intensity={20}
+              tint="systemMaterialDark"
+              blurMethod="dimezisBlurViewSdk31Plus"
+              style={StyleSheet.absoluteFill}
+            />
+          </MaskedView>
+        </Animated.View>
+        <View
+          style={{
+            paddingTop: inset.top + 6,
+            paddingBottom: 12,
+            paddingHorizontal: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <ExpoImage source={require("../../assets/images/logo_head.png")} style={{ width: 35, aspectRatio: 1 }} contentFit="contain" />
+            <Text style={[styles.textStyle, { color: "white", fontSize: 34, fontWeight: "700" }]}>Hub</Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+            <TouchableOpacity
+              onPress={() => router.push("/show_chat")}
+              style={{
+                borderRadius: 999,
+                width: 40,
+                height: 40,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <ChatDouble width={28} height={28} color={"white"} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/watchlist")}
+              style={{
+                borderRadius: 999,
+                width: 40,
+                height: 40,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Collection width={28} height={28} color={"white"} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/search_shows")}
+              style={{
+                borderRadius: 999,
+                width: 40,
+                height: 40,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Magnifier width={28} height={28} color={"white"} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>

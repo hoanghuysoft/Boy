@@ -11,8 +11,9 @@ import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Media, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { MusicNotes as MusicNotesBold, VolumeCross, VolumeLoud } from "@solar-icons/react-native/Bold";
-import { MusicNotes as MusicNotesOutline } from "@solar-icons/react-native/Outline";
+import MusicIcon from "@/assets/images/svg/music-2.svg";
+import SoundIcon from "@/assets/images/svg/sound.svg";
+import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import { Avatar } from "heroui-native/avatar";
@@ -233,7 +234,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             zIndex: 20,
                         }}
                     >
-                        {isVideoMuted ? <VolumeCross size={18} color="white" /> : <VolumeLoud size={18} color="white" />}
+                        {isVideoMuted ? <SoundMuteIcon width={18} height={18} color="white" /> : <SoundIcon width={18} height={18} color="white" />}
                     </Pressable>
                 )}
 
@@ -251,7 +252,11 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             zIndex: 20
                         }}
                     >
-                        {vm.isPlaying ? <MusicNotesBold size={18} color="white" /> : <MusicNotesOutline size={18} color="white" />}
+                        {vm.isPlaying ? (
+                            <MusicIcon width={18} height={18} color="white" fill="white" />
+                        ) : (
+                            <MusicIcon width={18} height={18} color="white" fill="none" />
+                        )}
                     </Pressable>
                 )}
             </View>

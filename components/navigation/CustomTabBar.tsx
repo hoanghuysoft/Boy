@@ -1,15 +1,42 @@
-import { Clapperboard as ClapperboardBold, GalleryWide as GalleryWideBold, Home as HomeBold, UserRounded as UserRoundedBold, VideoLibrary as VideoLibraryBold } from "@solar-icons/react-native/Bold";
-import { Clapperboard as ClapperboardOutline, GalleryWide as GalleryWideOutline, Home as HomeOutline, UserRounded as UserRoundedOutline, VideoLibrary as VideoLibraryOutline } from "@solar-icons/react-native/Outline";
+import HomeIcon from "@/assets/images/svg/homeyt.svg";
+import CarouselIcon from "@/assets/images/svg/image-carousel.svg";
+import MediaLibraryIcon from "@/assets/images/svg/libyt.svg";
+import TvIcon from "@/assets/images/svg/tv-2.svg";
+import UserIcon from "@/assets/images/svg/user-1.svg";
 import { LinearGradient } from "expo-linear-gradient";
 import { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs";
 import { SquircleView } from "expo-squircle-view";
-import React, { RefObject, useEffect, useRef } from "react";
+import React, { RefObject, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useScrollStore } from "../../stores/scroll";
+
+const getOpacityColor = (hexColor: string, opacityHex: string = "22") => {
+    if (typeof hexColor === "string" && hexColor.startsWith("#")) {
+        if (hexColor.length === 4) {
+            const r = hexColor[1];
+            const g = hexColor[2];
+            const b = hexColor[3];
+            return `#${r}${r}${g}${g}${b}${b}${opacityHex}`;
+        }
+        if (hexColor.length === 7) {
+            return `${hexColor}${opacityHex}`;
+        }
+        if (hexColor.length === 9) {
+            return hexColor.slice(0, 7) + opacityHex;
+        }
+    }
+    return hexColor;
+};
+
+const Home = ({ size, ...props }: any) => <HomeIcon width={size} height={size} {...props} />;
+const MediaLibrary = ({ size, ...props }: any) => <MediaLibraryIcon width={size} height={size} {...props} />;
+const Tv = ({ size, ...props }: any) => <TvIcon width={size} height={size} {...props} />;
+const User = ({ size, ...props }: any) => <UserIcon width={size} height={size} {...props} />;
+const Carousel = ({ size, ...props }: any) => <CarouselIcon width={size} height={size} {...props} />;
 
 type TabName = "index" | "shots" | "tv" | "profile" | "chat";
 
@@ -25,28 +52,28 @@ const DISABLED_TABS: TabName[] = [];
 const tabs: TabConfig[] = [
     {
         name: "index",
-        IconOutlined: HomeOutline,
-        IconSolid: HomeBold,
+        IconOutlined: Home,
+        IconSolid: Home,
     },
     {
         name: "shots",
-        IconOutlined: VideoLibraryOutline,
-        IconSolid: VideoLibraryBold
+        IconOutlined: MediaLibrary,
+        IconSolid: MediaLibrary
     },
     {
         name: "tv",
-        IconOutlined: ClapperboardOutline,
-        IconSolid: ClapperboardBold,
+        IconOutlined: Tv,
+        IconSolid: Tv,
     },
     {
         name: "chat",
-        IconOutlined: UserRoundedOutline,
-        IconSolid: UserRoundedBold,
+        IconOutlined: User,
+        IconSolid: User,
     },
     {
         name: "profile",
-        IconOutlined: GalleryWideOutline,
-        IconSolid: GalleryWideBold,
+        IconOutlined: Carousel,
+        IconSolid: Carousel,
     },
 ];
 
@@ -71,9 +98,9 @@ const AnimatedTabButton = ({
     colors: any;
     label: string;
 }) => {
-    const scaleAnim = useRef(new Animated.Value(isFocused ? 1 : 0.95)).current;
-    const opacityAnim = useRef(new Animated.Value(isFocused ? 1 : 0.6)).current;
-    const iconScaleAnim = useRef(new Animated.Value(1)).current;
+    const scaleAnim = React.useMemo(() => new Animated.Value(isFocused ? 1 : 0.95), [isFocused]);
+    const opacityAnim = React.useMemo(() => new Animated.Value(isFocused ? 1 : 0.6), [isFocused]);
+    const iconScaleAnim = React.useMemo(() => new Animated.Value(1), []);
 
     useEffect(() => {
         Animated.parallel([
@@ -90,7 +117,7 @@ const AnimatedTabButton = ({
                 tension: 40,
             }),
         ]).start();
-    }, [isFocused]);
+    }, [isFocused, scaleAnim, opacityAnim]);
 
     const handlePressIn = () => {
         Animated.spring(iconScaleAnim, {
@@ -139,6 +166,7 @@ const AnimatedTabButton = ({
                 <Icon
                     size={24}
                     color={color}
+                    fill={isFocused ? getOpacityColor(color, "33") : "none"}
                 />
                 {/* <Text
                     style={[
@@ -166,7 +194,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
     const bottomSpacing = 13 + insets.bottom;
 
     const [layout, setLayout] = React.useState({ width: 0, height: 0 });
-    const translateX = useRef(new Animated.Value(0)).current;
+    const translateX = React.useMemo(() => new Animated.Value(0), []);
 
     useEffect(() => {
         if (layout.width > 0) {
@@ -178,7 +206,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                 tension: 50,
             }).start();
         }
-    }, [state.index, layout.width, state.routes.length]);
+    }, [state.index, layout.width, state.routes.length, translateX]);
 
     const tabWidth = layout.width > 0 ? (layout.width - 10) / state.routes.length : 0;
 
@@ -225,7 +253,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                 ]}
             >
                 <View
-                    style={[styles.tabBarContent, { backgroundColor: theme == 'dark' ? colors.background + "" : colors.containerContent + "" }]}
+                    style={[styles.tabBarContent, { backgroundColor: theme === 'dark' ? colors.background + "" : colors.containerContent + "" }]}
                     onLayout={(e) => setLayout(e.nativeEvent.layout)}
                 >
                     {/* Animated Pill */}

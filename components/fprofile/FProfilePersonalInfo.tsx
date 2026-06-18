@@ -1,9 +1,19 @@
 import { Profile } from '@/types/profile';
-import { Calendar, HeartPulse2, Mailbox, Men, NotebookBookmark, Phone, SquareAcademicCap, Wheel, Women } from "@solar-icons/react-native/Bold";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { FlexText } from '../FlexText';
 import CachedImage from './CachedImage';
+
+const SquareAcademicCap = (props: any) => <Ionicons name="school" {...props} />;
+const NotebookBookmark = (props: any) => <Ionicons name="book" {...props} />;
+const Calendar = (props: any) => <Ionicons name="calendar" {...props} />;
+const Men = (props: any) => <Ionicons name="male" {...props} />;
+const Women = (props: any) => <Ionicons name="female" {...props} />;
+const Mailbox = (props: any) => <Ionicons name="mail" {...props} />;
+const Phone = (props: any) => <Ionicons name="call" {...props} />;
+const Wheel = (props: any) => <Ionicons name="car" {...props} />;
+const HeartPulse2 = (props: any) => <Ionicons name="heart" {...props} />;
 
 // Random placeholder avatars for family members
 const RANDOM_AVATARS = [

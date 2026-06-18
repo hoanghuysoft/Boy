@@ -10,6 +10,7 @@ const shots = {
     actions: {
         retry: '重試',
     },
+    drag: '拖動',
 } as const;
 
 export default shots;

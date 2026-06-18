@@ -1,4 +1,6 @@
-import { CaseMinimalistic, NotebookBookmark, PointOnMap, SquareAcademicCap } from "@solar-icons/react-native/Bold";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+import EducationIcon from "@/assets/images/svg/education.svg";
+import LocationIcon from "@/assets/images/svg/location.svg";
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from "react-native";
@@ -7,6 +9,11 @@ import { createCommonStyles } from "../../styles/common";
 import { ProfileDetail } from "../../types/profiledetail";
 import { Workplace } from "../../types/profileworplace";
 import { FlexText } from '../FlexText';
+
+const CaseMinimalistic = ({ size, ...props }: any) => <Ionicons name="briefcase" size={size} {...props} />;
+const NotebookBookmark = ({ size, ...props }: any) => <Ionicons name="book" size={size} {...props} />;
+const SquareAcademicCap = ({ size, ...props }: any) => <EducationIcon width={size} height={size} {...props} />;
+const PointOnMap = ({ size, ...props }: any) => <LocationIcon width={size} height={size} {...props} />;
 
 interface ProfileBriefInfoProps {
     profile?: ProfileDetail | null;

@@ -1,7 +1,7 @@
 import VerifiedIcon from '@/icons/verified';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { ChatSquareLike, Heart, HeartAngle } from "@solar-icons/react-native/Bold";
+import ChatIcon from "@/assets/images/svg/chat-double.svg";
 import { Image } from 'expo-image';
 import { MediaViewer } from 'expo-media-viewer';
 import { useRouter } from 'expo-router';
@@ -10,7 +10,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
-
 import { ProfileDetail } from '../../../types/profiledetail';
 import { getFamilyAvatarSource } from '../../../utils/familyAvatar';
 import { FlexText } from '../../FlexText';
@@ -18,6 +17,10 @@ import DynamicAvatar from '../DynamicAvatar';
 import QuickPreviewModal from '../QuickPreviewModal';
 import { AVATAR_FRAME_URL, FACEBOOK_BLUE, FALLBACK_AVATAR_URL } from './constants';
 import { headerStyles } from './styles';
+
+const HeartAngle = ({ size, color, ...props }: any) => <Ionicons name="heart" size={size} color={color} {...props} />;
+const Heart = ({ size, color, ...props }: any) => <Ionicons name="heart" size={size} color={color} {...props} />;
+const ChatSquareLike = ({ size, color, ...props }: any) => <ChatIcon width={size} height={size} color={color} {...props} />;
 
 const AnimatedExpoImage = Animated.createAnimatedComponent(Image);
 

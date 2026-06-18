@@ -1,3 +1,6 @@
+import BookmarkCheck from "@/assets/images/svg/bookmark-checked.svg";
+import Bookmark from "@/assets/images/svg/bookmark.svg";
+import CloudDownload from "@/assets/images/svg/cloud-download.svg";
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
@@ -8,8 +11,6 @@ import { useShowWatchlistStore } from "@/stores/showWatchlist";
 import type { VideoCard } from "@/types/shows";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
-import { Bookmark as BookmarkBold, CloudDownload } from "@solar-icons/react-native/Bold";
-import { Bookmark as BookmarkOutline } from "@solar-icons/react-native/Outline";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image as ExpoImage } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
@@ -538,9 +539,9 @@ const ChatScreen = () => {
             >
               {
                 isSaved ? (
-                  <BookmarkBold size={22} color={'#facc15'} />
+                  <BookmarkCheck width={22} height={22} color={'#facc15'} fill={'#facc15' + '66'} />
                 ) : (
-                  <BookmarkOutline size={22} color={'white'} />
+                  <Bookmark width={22} height={22} color={'white'} />
                 )
               }
             </TouchableOpacity>
@@ -566,7 +567,7 @@ const ChatScreen = () => {
                   alignItems: 'center',
                 }}
               >
-                <CloudDownload size={24} color={'white'} />
+                <CloudDownload width={24} height={24} color={'white'} />
               </TouchableOpacity>
             </BlurView>
           ) : null}

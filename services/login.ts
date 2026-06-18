@@ -65,6 +65,14 @@ export async function signOut() {
     //    since the Supabase adapter writes to the same MMKV instance.
     storage.clearAll();
 
+    // ─── Reset React Query client cache ─────────────────────────────────────
+    try {
+        const { queryClient } = await import("@/services/client");
+        queryClient.clear();
+    } catch (e) {
+        console.error("Failed to clear queryClient cache:", e);
+    }
+
     // ─── Reset in-memory Zustand stores ─────────────────────────────────────
     // MMKV clearAll() wipes the persistence layer but the running store keeps
     // its last-hydrated state. Explicitly reset each store so the next user
@@ -72,6 +80,20 @@ export async function signOut() {
     useSearchHistoryStore.getState().clearHistory();
     useShowWatchlistStore.getState().reset();
     useMovieTrackerStore.getState().reset();
+
+    try {
+        const { useSettingsStore } = await import("@/stores/settings");
+        useSettingsStore.getState().reset();
+    } catch (e) {
+        console.error("Failed to reset settings store:", e);
+    }
+
+    try {
+        const { useAudioStore } = await import("@/stores/audio");
+        useAudioStore.getState().stopPlayback();
+    } catch (e) {
+        console.error("Failed to stop audio playback:", e);
+    }
 
     if (error) {
         throw error;

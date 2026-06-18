@@ -1,7 +1,6 @@
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CaseMinimalistic, PlayCircle as PlayCircleBold, PointOnMap } from "@solar-icons/react-native/Bold";
-import { PlayCircle as PlayCircleOutline } from "@solar-icons/react-native/Outline";
+import LocationIcon from "@/assets/images/svg/location.svg";
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import React, { memo } from 'react';
@@ -27,6 +26,11 @@ import {
   IdentitySection,
 } from './header/parts';
 import { headerStyles } from './header/styles';
+
+const CaseMinimalistic = ({ size, ...props }: any) => <Ionicons name="briefcase" size={size} {...props} />;
+const PointOnMap = ({ size, ...props }: any) => <LocationIcon width={size} height={size} {...props} />;
+const PlayCircleBold = ({ size, ...props }: any) => <Ionicons name="play-circle" size={size} {...props} />;
+const PlayCircleOutline = ({ size, ...props }: any) => <Ionicons name="play-circle-outline" size={size} {...props} />;
 
 interface ProfileHeaderProps {
   scrollY: Animated.Value;

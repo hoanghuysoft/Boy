@@ -1,4 +1,14 @@
-import { Copy, Danger, PenNewRound, Share, TrashBinTrash } from "@solar-icons/react-native/Bold";
+import ShareIcon from "@/assets/images/svg/share-1.svg";
+import CopyIcon from "@/assets/images/svg/copy.svg";
+import EditIcon from "@/assets/images/svg/edit-1.svg";
+import DeleteIcon from "@/assets/images/svg/delete.svg";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+
+const Share = ({ size, ...props }: any) => <ShareIcon width={size} height={size} {...props} />;
+const Copy = ({ size, ...props }: any) => <CopyIcon width={size} height={size} {...props} />;
+const PenNewRound = ({ size, ...props }: any) => <EditIcon width={size} height={size} {...props} />;
+const TrashBinTrash = ({ size, ...props }: any) => <DeleteIcon width={size} height={size} {...props} />;
+const Danger = ({ size, color, ...props }: any) => <Ionicons name="warning" size={size} color={color} {...props} />;
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { router } from "expo-router";
 import { Button } from "heroui-native/button";

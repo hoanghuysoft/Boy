@@ -447,15 +447,16 @@ export function useTvEpisodeDetails(tvId?: number, seasonNumber?: number, episod
     });
 }
 
-// Infinite — Typed Search (Movie, TV, Person)
-export type SearchType = 'movie' | 'tv' | 'person';
+// Infinite — Typed Search (All, Movie, TV, Person)
+export type SearchType = 'all' | 'movie' | 'tv' | 'person';
 
 export function useTypedSearchInfinite(query: string, type: SearchType, language: string = 'en-US') {
     const q = query.trim();
     return useInfiniteQuery({
         queryKey: ['movies', 'search', 'inf', type, q, language],
         queryFn: async ({ pageParam = 1 }) => {
-            const { data } = await tmdbClient.get<TMDBResponse<any>>(`search/${type}`, {
+            const endpoint = type === 'all' ? 'search/multi' : `search/${type}`;
+            const { data } = await tmdbClient.get<TMDBResponse<any>>(endpoint, {
                 params: { query: q, language, page: pageParam },
             });
             return data;
@@ -464,5 +465,21 @@ export function useTypedSearchInfinite(query: string, type: SearchType, language
         getNextPageParam: (last) =>
             last.page < last.total_pages ? last.page + 1 : undefined,
         enabled: q.length > 2,
+    });
+}
+
+export function useSearchSuggestions(query: string, type: SearchType, language: string = 'en-US') {
+    const q = query.trim();
+    return useQuery({
+        queryKey: ['movies', 'search', 'suggestions', type, q, language],
+        queryFn: async () => {
+            const endpoint = type === 'all' ? 'search/multi' : `search/${type}`;
+            const { data } = await tmdbClient.get<TMDBResponse<any>>(endpoint, {
+                params: { query: q, language, page: 1 },
+            });
+            return data.results.slice(0, 5);
+        },
+        enabled: q.length > 2,
+        staleTime: 5 * 60 * 1000,
     });
 }

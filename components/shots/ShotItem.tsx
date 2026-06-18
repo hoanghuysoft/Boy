@@ -1,9 +1,11 @@
+import ShareIcon from "@/assets/images/svg/share-1.svg";
+import CommentsIcon from "@/assets/images/svg/tips.svg";
 import { FlexText } from "@/components/FlexText";
 import { getCachedUri } from "@/services/videoCache";
 import { VideoItem } from "@/types/video";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { ChatRoundLike, Heart, SquareShareLine } from "@solar-icons/react-native/Bold";
 import { useEventListener } from "expo";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { Avatar } from "heroui-native/avatar";
@@ -13,8 +15,8 @@ import {
     StyleSheet,
     TouchableOpacity,
     TouchableWithoutFeedback,
-    View,
-    useWindowDimensions
+    useWindowDimensions,
+    View
 } from "react-native";
 import Reanimated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { FloatingHeart } from "./FloatingHeart";
@@ -467,17 +469,17 @@ export const ShotItem = React.memo(function ShotItem({
                 {/* Like */}
                 <TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10}>
                     {isLiked
-                        ? <Heart size={32} color="#ff4d6d" />
-                        : <Heart size={32} color="white" />
+                        ? <Image source={require('@/assets/images/svg/like11.png')} style={{ width: 36, height: 36 }} contentFit="cover" />
+                        : <Image source={require('@/assets/images/svg/like10.png')} style={{ width: 36, height: 36 }} contentFit="cover" />
                     }
-                    <FlexText style={[styles.actionText, isLiked && { color: '#ff4d6d' }]}>
+                    <FlexText style={[styles.actionText, isLiked && { color: 'white' }]}>
                         {likeCount > 0 ? likeCount : 0}
                     </FlexText>
                 </TouchableOpacity>
 
                 {/* Comments */}
                 <TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10}>
-                    <ChatRoundLike size={32} color="white" />
+                    <CommentsIcon width={32} height={32} color="white" />
                     <FlexText style={styles.actionText}>
                         {item.comment_count > 0 ? item.comment_count : 0}
                     </FlexText>
@@ -485,7 +487,7 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Share */}
                 <TouchableOpacity style={styles.actionButton}>
-                    <SquareShareLine size={32} color="white" />
+                    <ShareIcon width={32} height={32} color="white" />
                 </TouchableOpacity>
             </View>
         </View>

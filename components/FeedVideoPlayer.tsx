@@ -1,5 +1,8 @@
+import PauseIcon from "@/assets/images/svg/pause.svg";
+import PlayIcon from "@/assets/images/svg/play.svg";
+import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
+import SoundIcon from "@/assets/images/svg/sound.svg";
 import { useFeedVideoStore } from '@/stores/feedVideo';
-import { Pause as PauseBold, Play as PlayBold, VolumeCross, VolumeLoud } from "@solar-icons/react-native/Bold";
 import { BlueskyVideoView } from '@bsky.app/video';
 import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -113,9 +116,9 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
                         }}
                     >
                         {isPlaying ? (
-                            <PauseBold size={16} color="#ffffff" />
+                            <PauseIcon width={16} height={16} color="#ffffff" />
                         ) : (
-                            <PlayBold size={16} color="#ffffff" />
+                            <PlayIcon width={16} height={16} color="#ffffff" />
                         )}
                     </Pressable>
                     {/* Time remaining badge */}
@@ -161,9 +164,9 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
                         }}
                     >
                         {isMuted ? (
-                            <VolumeCross size={16} color="#ffffff" />
+                            <SoundMuteIcon width={16} height={16} color="#ffffff" />
                         ) : (
-                            <VolumeLoud size={16} color="#ffffff" />
+                            <SoundIcon width={16} height={16} color="#ffffff" />
                         )}
                     </Pressable>
                 </>
@@ -184,7 +187,7 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
                     style={styles.inactiveOverlay}
                 >
                     <View style={styles.playButton}>
-                        <PlayBold size={28} color="#ffffff" />
+                        <PlayIcon width={28} height={28} color="#ffffff" />
                     </View>
                 </Pressable>
             )}

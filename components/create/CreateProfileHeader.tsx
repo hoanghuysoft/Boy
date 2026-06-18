@@ -1,7 +1,8 @@
 import VerifiedIcon from "@/icons/verified";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { GhostSmile as GhostSmileBold, HeartUnlock as HeartUnlockBold } from "@solar-icons/react-native/Bold";
-import { GhostSmile as GhostSmileOutline, HeartUnlock as HeartUnlockOutline } from "@solar-icons/react-native/Outline";
+import LookAroundIcon from "@/assets/images/svg/look-around.svg";
+import CloudUploadIcon from "@/assets/images/svg/cloud-upload.svg";
+import CatIcon from "@/assets/images/svg/cat.svg";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -32,7 +33,7 @@ interface PostOptionBadgeProps {
 
 const PostOptionBadge = memo(({
     icon,
-    iconActive,
+    iconActive: _iconActive,
     label,
     isActive,
     onPress,
@@ -40,43 +41,34 @@ const PostOptionBadge = memo(({
     common,
     activeBgColor,
     activeTextColor,
-}: PostOptionBadgeProps) => (
-    <TouchableOpacity
-        style={[
-            createStyles.optionBadge,
-            {
-                backgroundColor: isActive ? activeBgColor : colors.surfaceContainerHigh,
-            },
-        ]}
-        onPress={onPress}
-    >
-        {isActive ? (
-            iconActive === "ghost-smile-bold" ? (
-                <GhostSmileBold size={14} color={activeTextColor} />
-            ) : iconActive === "cloud-upload" ? (
-                <Ionicons name="cloud-upload" size={14} color={activeTextColor} />
-            ) : (
-                <HeartUnlockBold size={14} color={activeTextColor} />
-            )
-        ) : (
-            icon === "ghost-smile-outline" ? (
-                <GhostSmileOutline size={14} color={colors.onSurfaceVariant} />
-            ) : icon === "cloud-upload-outline" ? (
-                <Ionicons name="cloud-upload-outline" size={14} color={colors.onSurfaceVariant} />
-            ) : (
-                <HeartUnlockOutline size={14} color={colors.onSurfaceVariant} />
-            )
-        )}
-        <FlexText
+}: PostOptionBadgeProps) => {
+    const Icon = icon === "ghost-smile-outline" ? LookAroundIcon : icon === "cloud-upload-outline" ? CloudUploadIcon : CatIcon;
+    return (
+        <TouchableOpacity
             style={[
-                common.caption,
-                { color: isActive ? activeTextColor : colors.onSurfaceVariant, fontWeight: "500" },
+                createStyles.optionBadge,
+                {
+                    backgroundColor: isActive ? activeBgColor : colors.surfaceContainerHigh,
+                },
             ]}
+            onPress={onPress}
         >
-            {label}
-        </FlexText>
-    </TouchableOpacity>
-));
+            <Icon
+                width={14}
+                height={14}
+                color={isActive ? activeTextColor : colors.onSurfaceVariant}
+            />
+            <FlexText
+                style={[
+                    common.caption,
+                    { color: isActive ? activeTextColor : colors.onSurfaceVariant, fontWeight: "500" },
+                ]}
+            >
+                {label}
+            </FlexText>
+        </TouchableOpacity>
+    );
+});
 
 PostOptionBadge.displayName = "PostOptionBadge";
 

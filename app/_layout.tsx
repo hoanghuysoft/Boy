@@ -1,4 +1,4 @@
-import { getParallaxSlideTransition } from "@/components/stack/screen-options";
+import { getFullScreenSheetScale, getParallaxSlideTransition, getScaleFadeTransition } from "@/components/stack/screen-options";
 import { Stack } from "@/components/stack/stack";
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
@@ -25,7 +25,6 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import Transition from "react-native-screen-transitions";
 import { GlobalAudioPlayer } from "../components/GlobalAudioPlayer";
 import { SessionProvider } from "../context/SessionContext";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
@@ -71,9 +70,10 @@ configureReanimatedLogger({
 // Reanimated 4 performance feature flags — fixes FPS drops during scroll
 // See: https://docs.swmansion.com/react-native-reanimated/docs/guides/feature-flags
 (globalThis as any)._REANIMATED_IS_REDUCED_MOTION = false;
-(globalThis as any).USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS = true;
-(globalThis as any).ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS = true;
-(globalThis as any).IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS = true;
+// NOTE: ANDROID/IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS and USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS
+// are intentionally NOT set. The screen transition library uses modify(false) (batched mutations)
+// which is incompatible with synchronous UI prop flushing — it causes screens to get stuck at
+// intermediate opacity/transform states mid-animation (the "disappearing screen" bug).
 // Prevent global font scaling
 interface TextWithDefaultProps extends Text {
   defaultProps?: { allowFontScaling?: boolean };
@@ -196,8 +196,8 @@ const RootContent = () => {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="login" />
           <Stack.Screen name="onboarding" />
-          <Stack.Screen name="video_player" options={Transition.Presets.ZoomIn()} />
-          <Stack.Screen name="profile/[id]"/>
+          <Stack.Screen name="video_player" options={getScaleFadeTransition()} />
+          <Stack.Screen name="profile/[id]" />
           <Stack.Screen name="image_poster" />
           <Stack.Screen
             name="settings"
@@ -210,18 +210,18 @@ const RootContent = () => {
           <Stack.Screen name="search" />
           <Stack.Screen name="hashtag/[tag]" />
           <Stack.Screen name="hashtag-list" />
-          <Stack.Screen name="show_detail" options={Transition.Presets.ZoomIn()} />
+          <Stack.Screen name="show_detail" />
           <Stack.Screen name="show_list" />
           <Stack.Screen name="watchlist" />
-          <Stack.Screen name="create" options={Transition.Presets.ZoomIn()} />
+          <Stack.Screen name="create" options={getFullScreenSheetScale()} />
           <Stack.Screen name="inapp_browser" />
-          <Stack.Screen name="movie_detail" options={Transition.Presets.ZoomIn()} />
-          <Stack.Screen name="tv_detail" options={Transition.Presets.ZoomIn()} />
-          <Stack.Screen name="person_detail" options={Transition.Presets.ZoomIn()} />
+          <Stack.Screen name="movie_detail" />
+          <Stack.Screen name="tv_detail" />
+          <Stack.Screen name="person_detail" />
           <Stack.Screen name="movie_list" />
           <Stack.Screen name="search_movies" />
           <Stack.Screen name="webview" />
-          <Stack.Screen name="moviehub" options={Transition.Presets.ZoomIn()} />
+          <Stack.Screen name="moviehub" />
           <Stack.Screen name="bulletinboard" />
           <Stack.Screen name="show_chat" />
         </Stack>

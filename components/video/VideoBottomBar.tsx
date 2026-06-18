@@ -1,4 +1,5 @@
-import { Repeat, RepeatOne, SmartphoneRotate2 } from "@solar-icons/react-native/Bold";
+import Rotate from "@/assets/images/svg/rotate.svg";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import React from "react";
 import {
   Animated,
@@ -91,13 +92,13 @@ export const VideoBottomBar: React.FC<VideoBottomBarProps> = ({
         <View style={[commonRowStyle, { gap: 8 }]} pointerEvents="box-none">
           <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onLoopToggle}>
             {isLooping ? (
-              <RepeatOne size={20} color={"white"} />
+              <MaterialIcons name="repeat-one" size={20} color={"white"} />
             ) : (
-              <Repeat size={20} color={"white"} />
+              <MaterialIcons name="repeat" size={20} color={"white"} />
             )}
           </TouchableOpacity>
           <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onRotate}>
-            <SmartphoneRotate2 size={24} color={"white"} />
+            <Rotate width={20} height={20} color={"white"} />
           </TouchableOpacity>
         </View>
       </View>

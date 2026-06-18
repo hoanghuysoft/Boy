@@ -1,13 +1,16 @@
+import PauseIcon from "@/assets/images/svg/pause.svg";
+import PlayIcon from "@/assets/images/svg/play.svg";
+import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
+import SoundIcon from "@/assets/images/svg/sound.svg";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
-import { Pause as PauseBold, Play as PlayBold, VolumeCross, VolumeLoud } from "@solar-icons/react-native/Bold";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Platform, Pressable as RNPressable, Text, View, ViewabilityConfig, ViewToken, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Platform, Pressable as RNPressable, Text, useWindowDimensions, View, ViewabilityConfig, ViewToken } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
@@ -175,7 +178,7 @@ const VideoCarouselItem = React.memo(({
                                 backgroundColor: 'rgba(0,0,0,0.4)',
                                 justifyContent: 'center', alignItems: 'center',
                             }}>
-                                <PlayBold size={28} color="#ffffff" />
+                                <PlayIcon width={32} height={32} color="#ffffff" />
                             </View>
                         )}
                     </RNPressable>
@@ -209,9 +212,9 @@ const VideoCarouselItem = React.memo(({
                             }}
                         >
                             {isPlaying ? (
-                                <PauseBold size={16} color="#ffffff" />
+                                <PauseIcon width={24} height={24} color="#ffffff" />
                             ) : (
-                                <PlayBold size={16} color="#ffffff" />
+                                <PlayIcon width={24} height={24} color="#ffffff" />
                             )}
                         </RNPressable>
                         {/* Time remaining badge */}
@@ -257,9 +260,9 @@ const VideoCarouselItem = React.memo(({
                             }}
                         >
                             {isMuted ? (
-                                <VolumeCross size={16} color="#ffffff" />
+                                <SoundMuteIcon width={16} height={16} color="#ffffff" />
                             ) : (
-                                <VolumeLoud size={16} color="#ffffff" />
+                                <SoundIcon width={16} height={16} color="#ffffff" />
                             )}
                         </RNPressable>
                     </>

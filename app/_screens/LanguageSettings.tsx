@@ -1,13 +1,13 @@
+import CheckCircle from "@/assets/images/svg/check-circle.svg";
+import { CustomSurface } from "@/components/CustomSurface";
 import { FlexText } from "@/components/FlexText";
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, SupportedLanguage } from "@/i18n";
 import { LanguageMode, useLanguageStore } from "@/stores/language";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CheckCircle } from "@solar-icons/react-native/Bold";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { CustomSurface } from "@/components/CustomSurface";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -144,7 +144,7 @@ const LanguageSettingsScreen = () => {
                                     </FlexText>
                                 </View>
                             </View>
-                            {active && <CheckCircle size={24} color="#54d340" />}
+                            {active && <CheckCircle width={24} height={24} color="#54d340" />}
                         </CustomSurface>
                     );
                 })}

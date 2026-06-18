@@ -2,7 +2,17 @@ import { FlexText } from "@/components/FlexText";
 import { calculateBMI, enrichProfileData, getBMIStatus } from "@/utils/zodiacCalculation";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import { Calculator, Calendar, CaseMinimalistic, Cat, ClipboardHeart, DumbbellLargeMinimalistic, History, Letter, Men, NotebookBookmark, Phone, PointOnMap, SquareAcademicCap, StarsMinimalistic, Weigher, Wheel, Women } from "@solar-icons/react-native/Bold";
+import CalendarIcon from "@/assets/images/svg/calendar-1.svg";
+import LetterIcon from "@/assets/images/svg/mail.svg";
+import MenIcon from "@/assets/images/svg/gender-male.svg";
+import WomenIcon from "@/assets/images/svg/gender-female.svg";
+import MobileIcon from "@/assets/images/svg/mobile.svg";
+import LocationIcon from "@/assets/images/svg/location.svg";
+import EducationIcon from "@/assets/images/svg/education.svg";
+import MeasurementIcon from "@/assets/images/svg/measurement.svg";
+import VehicleIcon from "@/assets/images/svg/vehicle.svg";
+import CatIcon from "@/assets/images/svg/cat.svg";
+import TimeIcon from "@/assets/images/svg/time.svg";
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { Image } from "expo-image";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
@@ -15,6 +25,24 @@ import { ProfileDetail } from "../../../types/profiledetail";
 import { Workplace } from "../../../types/profileworplace";
 import { getFamilyAvatarSource } from "../../../utils/familyAvatar";
 import { useSheetBackHandler } from "./useSheetBackHandler";
+
+const Calendar = ({ size, ...props }: any) => <CalendarIcon width={size} height={size} {...props} />;
+const Letter = ({ size, ...props }: any) => <LetterIcon width={size} height={size} {...props} />;
+const Men = ({ size, ...props }: any) => <MenIcon width={size} height={size} {...props} />;
+const Women = ({ size, ...props }: any) => <WomenIcon width={size} height={size} {...props} />;
+const Phone = ({ size, ...props }: any) => <MobileIcon width={size} height={size} {...props} />;
+const PointOnMap = ({ size, ...props }: any) => <LocationIcon width={size} height={size} {...props} />;
+const SquareAcademicCap = ({ size, ...props }: any) => <EducationIcon width={size} height={size} {...props} />;
+const NotebookBookmark = ({ size, ...props }: any) => <Ionicons name="book" size={size} {...props} />;
+const Weigher = ({ size, ...props }: any) => <MeasurementIcon width={size} height={size} {...props} />;
+const Wheel = ({ size, ...props }: any) => <VehicleIcon width={size} height={size} {...props} />;
+const Cat = ({ size, ...props }: any) => <CatIcon width={size} height={size} {...props} />;
+const History = ({ size, ...props }: any) => <TimeIcon width={size} height={size} {...props} />;
+const CaseMinimalistic = ({ size, ...props }: any) => <Ionicons name="briefcase" size={size} {...props} />;
+const ClipboardHeart = ({ size, ...props }: any) => <Ionicons name="heart-half" size={size} {...props} />;
+const StarsMinimalistic = ({ size, ...props }: any) => <Ionicons name="sparkles" size={size} {...props} />;
+const Calculator = ({ size, ...props }: any) => <Ionicons name="calculator" size={size} {...props} />;
+const DumbbellLargeMinimalistic = ({ size, ...props }: any) => <Ionicons name="barbell" size={size} {...props} />;
 
 interface BriefInfoSheetProps {
     profile?: ProfileDetail | null;
@@ -132,16 +160,17 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
         }
     }, []);
 
+    const metadata = profile?.metadata;
     const parsedMetadata = useMemo(() => {
-        if (!profile?.metadata) return null;
+        if (!metadata) return null;
         try {
-            return typeof profile.metadata === 'string'
-                ? JSON.parse(profile.metadata)
-                : profile.metadata;
+            return typeof metadata === 'string'
+                ? JSON.parse(metadata)
+                : metadata;
         } catch {
             return null;
         }
-    }, [profile?.metadata]);
+    }, [metadata]);
 
     const height = parsedMetadata?.height;
     const weight = parsedMetadata?.weight;
@@ -155,7 +184,9 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
 
         const birthday = profile?.birthday;
         if (!birthday) {
-            setProfileInfo(null);
+            Promise.resolve().then(() => {
+                if (!cancelled) setProfileInfo(null);
+            });
             return;
         }
 

@@ -1,6 +1,5 @@
 import { Profile } from '@/types/profile';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { ChatRoundLike, PointOnMap, UserPlusRounded } from "@solar-icons/react-native/Bold";
 import { LinearGradient } from 'expo-linear-gradient';
 import { SquircleView } from 'expo-squircle-view';
 import React, { memo } from 'react';
@@ -90,7 +89,7 @@ const FProfileHeader: React.FC<FProfileHeaderProps> = ({
                 <View style={styles.badgesContainer}>
                     {profile.hometown && (
                         <View style={styles.badge}>
-                            <PointOnMap size={18} color={c.primaryText} />
+                            <Ionicons name="location" size={18} color={c.primaryText} />
                             <FlexText style={[styles.badgeText, { color: c.primaryText }]} numberOfLines={1}>
                                 {profile.hometown}
                             </FlexText>
@@ -102,14 +101,14 @@ const FProfileHeader: React.FC<FProfileHeaderProps> = ({
                     <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={8}
                         style={[styles.actionButtonFlex, { backgroundColor: c.buttonBlueBg }]}>
                         <TouchableOpacity style={[styles.actionButton, { flex: 1 }]}>
-                            <UserPlusRounded size={24} color={c.white} />
+                            <Ionicons name="person-add" size={24} color={c.white} />
                             <FlexText style={[styles.actionButtonText, { color: c.white }]}>Add friend</FlexText>
                         </TouchableOpacity>
                     </SquircleView>
                     <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={8}
                         style={[styles.actionButtonFlex, { backgroundColor: c.buttonGrayBg }]}>
                         <TouchableOpacity style={[styles.actionButton, { flex: 1 }]}>
-                            <ChatRoundLike size={24} color={c.primaryText} />
+                            <Ionicons name="chatbubble-ellipses" size={24} color={c.primaryText} />
                             <FlexText style={[styles.actionButtonText, { color: c.primaryText }]}>Message</FlexText>
                         </TouchableOpacity>
                     </SquircleView>

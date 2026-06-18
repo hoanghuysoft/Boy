@@ -23,7 +23,7 @@ interface TvGalleryRowProps {
 export const TvGalleryRow = ({ backdrops, galleryImages, openGallery }: TvGalleryRowProps) => {
     const renderItem = useCallback(
         ({ item, index }: { item: TMDBMovieImage; index: number }) => (
-            <Pressable
+            <GesturePressable
                 onPress={() => openGallery(galleryImages, index)}
                 style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
@@ -32,7 +32,7 @@ export const TvGalleryRow = ({ backdrops, galleryImages, openGallery }: TvGaller
                     style={{ width: 250, aspectRatio: item.aspect_ratio || 16 / 9, borderRadius: 12 }}
                     contentFit="cover"
                 />
-            </Pressable>
+            </GesturePressable>
         ),
         [galleryImages, openGallery],
     );
@@ -45,7 +45,7 @@ export const TvGalleryRow = ({ backdrops, galleryImages, openGallery }: TvGaller
             <GestureFlatList
                 horizontal
                 data={backdrops.slice(0, 20)}
-                keyExtractor={(item, index) => `${item.file_path}-${index}`}
+                keyExtractor={(item, index) => item?.file_path ? `${item.file_path}-${index}` : index.toString()}
                 renderItem={renderItem}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
@@ -62,12 +62,12 @@ interface TvVideosRowProps {
 
 export const TvVideosRow = ({ videos }: TvVideosRowProps) => {
     const renderItem = useCallback(({ item }: { item: TMDBVideoResult }) => {
-        const isYouTube = item.site.toLowerCase() === "youtube";
+        const isYouTube = item?.site?.toLowerCase() === "youtube";
         const thumbnailUrl = isYouTube ? `https://img.youtube.com/vi/${item.key}/hqdefault.jpg` : null;
         return (
-            <Pressable
+            <GesturePressable
                 onPress={() =>
-                    WebBrowser.openBrowserAsync(
+                    item?.key && WebBrowser.openBrowserAsync(
                         isYouTube
                             ? `https://www.youtube.com/watch?v=${item.key}`
                             : `https://vimeo.com/${item.key}`,
@@ -85,9 +85,9 @@ export const TvVideosRow = ({ videos }: TvVideosRowProps) => {
                         <Ionicons name="play-circle" size={48} color="white" style={{ opacity: 0.9 }} />
                     </View>
                 </View>
-                <FlexText numberOfLines={2} style={[sharedStyles.label, { marginTop: 8, fontSize: 13 }]}>{item.name}</FlexText>
-                <FlexText numberOfLines={1} style={[sharedStyles.muted, { fontSize: 11, marginTop: 2 }]}>{item.type}</FlexText>
-            </Pressable>
+                <FlexText numberOfLines={2} style={[sharedStyles.label, { marginTop: 8, fontSize: 13 }]}>{item?.name || ""}</FlexText>
+                <FlexText numberOfLines={1} style={[sharedStyles.muted, { fontSize: 11, marginTop: 2 }]}>{item?.type || ""}</FlexText>
+            </GesturePressable>
         );
     }, []);
 
@@ -99,7 +99,7 @@ export const TvVideosRow = ({ videos }: TvVideosRowProps) => {
             <GestureFlatList
                 horizontal
                 data={videos}
-                keyExtractor={(item, index) => `${item.id}-${index}`}
+                keyExtractor={(item, index) => item?.id ? `${item.id}-${index}` : index.toString()}
                 renderItem={renderItem}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
@@ -116,19 +116,21 @@ interface TvCastRowProps {
 
 export const TvCastRow = ({ cast }: TvCastRowProps) => {
     const renderItem = useCallback(({ item }: { item: CastMember }) => {
+        if (!item) return null;
+        const name = item.name || "";
         const avatarSource = item.profile_path
             ? { uri: getImageUrl(item.profile_path, 185) }
-            : item.name.length % 2 === 0
+            : name.length % 2 === 0
                 ? require('../../../assets/images/AV17.png')
                 : require('../../../assets/images/AV86.png');
         return (
             <GesturePressable
-                onPress={() => router.push({ pathname: "/person_detail", params: { id: item.id } })}
+                onPress={() => item.id && router.push({ pathname: "/person_detail", params: { id: item.id } })}
                 style={{ gap: 6, alignItems: "center", width: 80 }}
             >
                 <Image source={avatarSource} style={{ width: 70, height: 70, borderRadius: 9999 }} contentFit="cover" />
-                <Text numberOfLines={2} style={[sharedStyles.label, { textAlign: "center", fontSize: 12 }]}>{item.name}</Text>
-                <Text numberOfLines={1} style={[sharedStyles.muted, { fontSize: 11 }]}>{item.character}</Text>
+                <Text numberOfLines={2} style={[sharedStyles.label, { textAlign: "center", fontSize: 12 }]}>{item.name || ""}</Text>
+                <Text numberOfLines={1} style={[sharedStyles.muted, { fontSize: 11 }]}>{item.character || ""}</Text>
             </GesturePressable>
         );
     }, []);
@@ -141,7 +143,7 @@ export const TvCastRow = ({ cast }: TvCastRowProps) => {
             <GestureFlatList
                 horizontal
                 data={cast}
-                keyExtractor={(item, index) => `${item.id}-${index}`}
+                keyExtractor={(item, index) => item?.id ? `${item.id}-${index}` : index.toString()}
                 renderItem={renderItem}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ gap: 16, paddingHorizontal: 16 }}

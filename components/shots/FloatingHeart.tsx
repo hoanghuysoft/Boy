@@ -1,4 +1,4 @@
-import { Heart } from "@solar-icons/react-native/Bold";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React, { useEffect } from "react";
 import Reanimated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
@@ -49,7 +49,7 @@ export const FloatingHeart = React.memo(({ x, y, onComplete }: FloatingHeartProp
 
     return (
         <Reanimated.View style={[style, { zIndex: 9999 }]} pointerEvents="none">
-            <Heart size={100} color="#ff4d6d" />
+            <Ionicons name="heart" size={100} color="#ff4d6d" />
         </Reanimated.View>
     );
 });

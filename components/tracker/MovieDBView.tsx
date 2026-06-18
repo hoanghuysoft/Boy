@@ -19,6 +19,7 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Skeleton } from "heroui-native/skeleton";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { getBestLogo, getLogoDimensions } from "./logoUtils";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Animated,
@@ -42,18 +43,7 @@ const getImageUrl = (path: string | null | undefined, size: number = 500) => {
     return `https://image.tmdb.org/t/p/w${size}${path}`;
 };
 
-const getBestLogo = (logos?: TMDBMovieImage[]) => {
-    if (!logos || logos.length === 0) return null;
-    const enLogos = logos.filter(l => l.iso_639_1 === "en");
-    if (enLogos.length > 0) {
-        return enLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-    }
-    const neutralLogos = logos.filter(l => !l.iso_639_1);
-    if (neutralLogos.length > 0) {
-        return neutralLogos.sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-    }
-    return [...logos].sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count)[0];
-};
+
 
 
 export const IMDbBadge = ({ score, style, textColor }: { score?: number, style?: any, textColor?: string }) => {
@@ -233,7 +223,7 @@ const MediaSection = <T,>({
     );
 };
 
-export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }) => {
+export const MovieDBView = ({ headerScrollX, scrollY }: { headerScrollX: Animated.Value; scrollY?: Animated.Value }) => {
     const { colors } = useThemeContext();
     const { width } = useWindowDimensions();
     const posterHeight = width * 1.5; // portrait 2/3 ratio
@@ -341,12 +331,17 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
         [],
     );
 
-    const mediaKeyExtractor = useCallback((item: any) => item.id.toString(), []);
+    const mediaKeyExtractor = useCallback((item: any, index: number) => item?.id ? `${item.id}-${index}` : index.toString(), []);
 
     return (
-        <ScrollView
+        <Animated.ScrollView
             contentContainerStyle={[{ gap: 12, paddingBottom: 24 }]}
             showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onScroll={scrollY ? Animated.event(
+                [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                { useNativeDriver: true }
+            ) : undefined}
             refreshControl={
                 <RefreshControl
                     refreshing={isRefreshing}
@@ -396,15 +391,19 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                             style={{ height: posterHeight }}
                         >
                             {trending.slice(0, 5).map((item, i) => {
-                                const extra = width * 0.15; // shallow parallax for portrait posters
-                                const translateX = headerScrollX.interpolate({
+                                                               const imageTranslateX = headerScrollX.interpolate({
                                     inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-                                    outputRange: [-extra, 0, extra],
+                                    outputRange: [-width, 0, width],
                                     extrapolate: "clamp",
                                 });
-                                const scale = headerScrollX.interpolate({
+                                const imageOpacity = headerScrollX.interpolate({
                                     inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-                                    outputRange: [1, 1.05, 1],
+                                    outputRange: [0, 1, 0],
+                                    extrapolate: "clamp",
+                                });
+                                const textTranslateX = headerScrollX.interpolate({
+                                    inputRange: [(i - 1) * width, i * width, (i + 1) * width],
+                                    outputRange: [width * 0.35, 0, -width * 0.35],
                                     extrapolate: "clamp",
                                 });
                                 const overlayOpacity = headerScrollX.interpolate({
@@ -423,11 +422,12 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                         style={{ width, height: posterHeight, overflow: "hidden" }}
                                     >
                                         <Animated.View
+                                            pointerEvents="none"
                                             style={{
-                                                width: width + extra * 2,
+                                                width: width,
                                                 height: posterHeight,
-                                                marginLeft: -extra,
-                                                transform: [{ translateX }, { scale }],
+                                                opacity: imageOpacity,
+                                                transform: [{ translateX: imageTranslateX }],
                                             }}
                                         >
                                             <Image
@@ -451,18 +451,25 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                                         </Animated.View>
                                         <Animated.View
                                             pointerEvents="none"
-                                            style={[styles.headerOverlay, { paddingBottom: 24, opacity: overlayOpacity }]}
+                                            style={[
+                                                styles.headerOverlay,
+                                                {
+                                                    paddingBottom: 24,
+                                                    opacity: overlayOpacity,
+                                                    transform: [{ translateX: textTranslateX }],
+                                                }
+                                            ]}
                                         >
                                             {bestLogo ? (
                                                 <Image
                                                     source={{ uri: getImageUrl(bestLogo.file_path, 500) }}
-                                                    style={{
-                                                        height: 70,
-                                                        width: 70 * bestLogo.aspect_ratio,
-                                                        maxWidth: width * 0.8,
-                                                        alignSelf: "center",
-                                                        marginBottom: 12,
-                                                    }}
+                                                    style={[
+                                                        getLogoDimensions(bestLogo.aspect_ratio, width),
+                                                        {
+                                                            alignSelf: "center",
+                                                            marginBottom: 12,
+                                                        }
+                                                    ]}
                                                     contentFit="contain"
                                                 />
                                             ) : (
@@ -577,7 +584,7 @@ export const MovieDBView = ({ headerScrollX }: { headerScrollX: Animated.Value }
                 </>
             )}
             <View style={{ height: inset.bottom + 80 }} />
-        </ScrollView>
+        </Animated.ScrollView>
     );
 };
 

@@ -1,7 +1,7 @@
 import { useActiveYouTubeStore } from '@/stores/activeYouTube';
 import { extractYouTubeIds, youtubeThumbnailUrl } from '@/utils/youtube';
 import { PlayerView } from '@flixsrota/player';
-import { Play } from "@solar-icons/react-native/Bold";
+import PlayIcon from "@/assets/images/svg/play.svg";
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -82,7 +82,7 @@ const YouTubeSlot: React.FC<YouTubeSlotProps> = React.memo(
                             justifyContent: 'center',
                         }}
                     >
-                        <Play size={32} color="#ffffff" />
+                        <PlayIcon width={32} height={32} color="#ffffff" />
                     </View>
                 </View>
             </Pressable>

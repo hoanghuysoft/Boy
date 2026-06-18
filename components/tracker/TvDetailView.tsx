@@ -3,7 +3,8 @@ import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { Dialog, Wallpaper } from "@solar-icons/react-native/Bold";
+import DialogIcon from "@/assets/images/svg/chat-double.svg";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { router } from "expo-router";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
@@ -159,17 +160,17 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
                             onPress={() => { vm.setShowWallpaper(true); vm.setUrlWallpaper(vm.posterUrl || ""); }}
                             style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
                         >
-                            <Wallpaper size={28} color="white" />
+                            <MaterialIcons name="wallpaper" size={28} color="white" />
                         </Pressable>
                     </BlurView>}
                     {vm.reviews.length > 0 && (
                         <BlurView tint="systemMaterialDark" intensity={80} blurTarget={blurTargetRef} blurMethod="dimezisBlurViewSdk31Plus" style={{ borderRadius: 999, overflow: "hidden" }}>
-                            <TouchableOpacity
-                                onPress={vm.openReviewsSheet}
-                                style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
-                            >
-                                <Dialog size={28} color="white" />
-                            </TouchableOpacity>
+                             <TouchableOpacity
+                                 onPress={vm.openReviewsSheet}
+                                 style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
+                             >
+                                 <DialogIcon width={28} height={28} color="white" />
+                             </TouchableOpacity>
                         </BlurView>
                     )}
                 </View>

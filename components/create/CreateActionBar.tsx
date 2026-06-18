@@ -1,4 +1,7 @@
-import { Gallery, Link, MapPoint, MusicLibrary2 } from "@solar-icons/react-native/Bold";
+import GalleryIcon from "@/assets/images/svg/image-add.svg";
+import LinkIcon from "@/assets/images/svg/link.svg";
+import LocationIcon from "@/assets/images/svg/location.svg";
+import MusicLibraryIcon from "@/assets/images/svg/music-rectangle-add.svg";
 import React, { memo, useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import AnimatedGlow from 'react-native-animated-glow';
@@ -37,7 +40,8 @@ const ActionButton = memo(({
         activeOpacity={0.7}
     >
         <Icon
-            size={24}
+            width={24}
+            height={24}
             color={isActive ? colors.onPrimaryContainer : colors.onSurface}
         />
     </TouchableOpacity>
@@ -132,7 +136,7 @@ export const CreateActionBar = memo(({
                 >
                     {!hideMediaOption && (
                         <ActionButton
-                            icon={Gallery}
+                            icon={GalleryIcon}
                             isActive={selectedMediaCount > 0}
                             onPress={onPickMedia}
                             disabled={selectedMediaCount >= 10}
@@ -140,19 +144,19 @@ export const CreateActionBar = memo(({
                         />
                     )}
                     <ActionButton
-                        icon={MapPoint}
+                        icon={LocationIcon}
                         isActive={showLocationInput || hasLocation}
                         onPress={onToggleLocation}
                         colors={colors}
                     />
                     <ActionButton
-                        icon={MusicLibrary2}
+                        icon={MusicLibraryIcon}
                         isActive={showMusicSearch || selectedTrack !== null}
                         onPress={onToggleMusic}
                         colors={colors}
                     />
                     <ActionButton
-                        icon={Link}
+                        icon={LinkIcon}
                         isActive={linksCount > 0}
                         onPress={onAddLink}
                         colors={colors}

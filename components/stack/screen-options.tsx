@@ -38,7 +38,7 @@ const PARALLAX_SPRING_CLOSE = {
 
 export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
     return {
-        experimental_enableHighRefreshRate: false,
+        experimental_enableHighRefreshRate: true,
         gestureEnabled: true,
         gestureDirection: "vertical" as const,
         screenStyleInterpolator: ({
@@ -96,7 +96,7 @@ export const getFullScreenSheetScale = (): BlankStackNavigationOptions => {
  */
 export const getParallaxSlideTransition = (): BlankStackNavigationOptions => {
     return {
-        experimental_enableHighRefreshRate: false,
+        experimental_enableHighRefreshRate: true,
         gestureEnabled: true,
         gestureDirection: "horizontal" as const,
         screenStyleInterpolator: ({
@@ -163,7 +163,7 @@ export const getParallaxSlideTransition = (): BlankStackNavigationOptions => {
  */
 export const getScaleFadeTransition = (): BlankStackNavigationOptions => {
     return {
-        experimental_enableHighRefreshRate: false,
+        experimental_enableHighRefreshRate: true,
         gestureEnabled: true,
         gestureDirection: "horizontal" as const,
         screenStyleInterpolator: ({

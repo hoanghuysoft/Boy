@@ -1,8 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { createProfile, uploadAvatar } from '../services/onboarding';
+import { createProfile, setLocalHasProfile } from '../services/onboarding';
 import { toUTCDate } from '../utils/date';
+
+export type OnboardingSubmittingState = 'creating' | 'uploading' | 'saving' | null;
 
 export interface OnboardingForm {
     name: string;
@@ -14,6 +16,7 @@ export interface OnboardingForm {
 export interface OnboardingViewModel {
     form: OnboardingForm;
     isSubmitting: boolean;
+    submittingState: OnboardingSubmittingState;
     error: string | null;
     maxBirthday: Date;
     setField: <K extends keyof OnboardingForm>(key: K, value: OnboardingForm[K]) => void;
@@ -58,6 +61,7 @@ export const useOnboardingViewModel = (): OnboardingViewModel => {
         avatarUri: null,
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submittingState, setSubmittingState] = useState<OnboardingSubmittingState>(null);
     const [error, setError] = useState<string | null>(null);
 
     const setField = <K extends keyof OnboardingForm>(
@@ -105,6 +109,7 @@ export const useOnboardingViewModel = (): OnboardingViewModel => {
         }
 
         setIsSubmitting(true);
+        setSubmittingState('creating');
         try {
             const profile = await createProfile({
                 name,
@@ -113,17 +118,42 @@ export const useOnboardingViewModel = (): OnboardingViewModel => {
             });
 
             if (form.avatarUri) {
-                // Best-effort — avatar failure must not block the user.
-                await uploadAvatar(profile.id, form.avatarUri).catch(() => { });
+                try {
+                    setSubmittingState('uploading');
+                    const filename = form.avatarUri.split('/').pop() || 'avatar.jpg';
+                    const fileAsset = {
+                        uri: form.avatarUri,
+                        name: filename,
+                        type: filename.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg',
+                    };
+
+                    const { smartUpload } = await import('../services/mediaUpload');
+                    const uploadRes = await smartUpload(profile.id, fileAsset);
+
+                    if (uploadRes?.data?.url) {
+                        setSubmittingState('saving');
+                        const { updateProfile } = await import('../services/userprofile');
+                        await updateProfile(profile.id, {
+                            avatar_url: uploadRes.data.url
+                        });
+                    }
+                } catch (uploadErr) {
+                    console.error('Failed to upload/save onboarding avatar:', uploadErr);
+                    // Best-effort — avatar failure must not block onboarding flow completion
+                }
             }
+
+            // Mark onboarding as completed in MMKV so subsequent sessions know the profile is ready.
+            setLocalHasProfile(true);
 
             router.replace('/');
         } catch (err: any) {
             setError(err?.message ?? 'Something went wrong. Please try again.');
         } finally {
             setIsSubmitting(false);
+            setSubmittingState(null);
         }
     };
 
-    return { form, isSubmitting, error, maxBirthday, setField, pickAvatar, handleSubmit };
+    return { form, isSubmitting, submittingState, error, maxBirthday, setField, pickAvatar, handleSubmit };
 };

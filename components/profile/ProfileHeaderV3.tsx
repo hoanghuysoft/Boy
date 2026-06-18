@@ -1,7 +1,9 @@
+import LocationIcon from "@/assets/images/svg/location.svg";
+import StickyNoteIcon from "@/assets/images/svg/sticky-note.svg";
+import VerifiedIcon from '@/icons/verified';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CaseMinimalistic, Notes, PointOnMap } from "@solar-icons/react-native/Bold";
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
@@ -12,11 +14,8 @@ import en from "i18n-iso-countries/langs/en.json";
 import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import Reanimated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
-import { usePagerHeaderContext } from '../pager/PagerHeaderContext';
-
-import VerifiedIcon from '@/icons/verified';
 import CountryFlag from 'react-native-country-flag';
+import Reanimated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
 import { ProfileAddress } from '../../types/profileaddress';
 import { ProfileDetail } from '../../types/profiledetail';
 import { ProfileLink } from '../../types/profilelink';
@@ -25,10 +24,15 @@ import { Workplace } from '../../types/profileworplace';
 import type { TabType } from '../../viewmodels/ProfileHeaderViewModel';
 import { useProfileHeaderViewModel } from '../../viewmodels/ProfileHeaderViewModel';
 import { FlexText } from '../FlexText';
+import { usePagerHeaderContext } from '../pager/PagerHeaderContext';
 import BirthdayCard from './BirthdayCard';
 import { SOCIAL_BG_URL } from './header/constants';
 import { FamilyStackSection, HeaderInfoCard } from './header/parts';
 import { headerStyles } from './header/styles';
+
+const CaseMinimalistic = ({ size, ...props }: any) => <Ionicons name="briefcase" size={size} {...props} />;
+const PointOnMap = ({ size, ...props }: any) => <LocationIcon width={size} height={size} {...props} />;
+const Notes = ({ size, color, ...props }: any) => <StickyNoteIcon width={size} height={size} color={color} {...props} />;
 
 countries.registerLocale(en);
 
@@ -91,12 +95,13 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         music,
     });
 
+    const hometown = profile?.hometown;
     const flagCode = useMemo(() => {
-        if (!profile?.hometown) return null;
-        const parts = profile.hometown.split(',');
+        if (!hometown) return null;
+        const parts = hometown.split(',');
         const potentialCountry = parts[parts.length - 1].trim();
         return countries.getAlpha2Code(potentialCountry, "en");
-    }, [profile?.hometown]);
+    }, [hometown]);
 
 
 
@@ -149,7 +154,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 </Avatar>
                 <View pointerEvents="box-none" className="flex-row gap-2">
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
-                        <Notes color={vm.colors.text} size={34} />
+                        <Notes color={vm.colors.text} size={28} />
                     </Button>
                     <SquircleView borderRadius={999} cornerSmoothing={100} preserveSmoothing style={[styles.editButton, { backgroundColor: vm.colors.primary }]}>
                         <TouchableOpacity onPress={() => {

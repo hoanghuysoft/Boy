@@ -30,7 +30,7 @@ const OnboardingScreen = () => {
     const common = createCommonStyles(colors, typography);
     const style = styles(colors);
 
-    const { form, isSubmitting, error, maxBirthday, setField, pickAvatar, handleSubmit } =
+    const { form, isSubmitting, submittingState, error, maxBirthday, setField, pickAvatar, handleSubmit } =
         useOnboardingViewModel();
 
     const nameRef = useRef<TextInput>(null);
@@ -191,7 +191,14 @@ const OnboardingScreen = () => {
                     activeOpacity={0.8}
                 >
                     {isSubmitting ? (
-                        <Spinner size="md" color="#fff" />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Spinner size="md" color="#fff" />
+                            <FlexText style={[common.buttonText, { color: '#fff', fontWeight: 'bold' }]}>
+                                {submittingState === 'creating' && t('onboarding.submitting.creating', 'Creating Profile...')}
+                                {submittingState === 'uploading' && t('onboarding.submitting.uploading', 'Uploading Avatar...')}
+                                {submittingState === 'saving' && t('onboarding.submitting.saving', 'Saving Avatar...')}
+                            </FlexText>
+                        </View>
                     ) : (
                         <FlexText style={[common.buttonText, { color: '#fff', fontWeight: 'bold' }]}>
                             {t('onboarding.submit')}

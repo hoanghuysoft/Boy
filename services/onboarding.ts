@@ -55,14 +55,13 @@ export async function checkProfileFromServer(): Promise<boolean> {
 
 /**
  * POST /api/onboarding/profile
- * Creates the profile and marks MMKV as true on success.
+ * Creates the profile on the server.
  */
 export async function createProfile(data: CreateProfileData): Promise<OnboardingProfile> {
     const response = await client.post<{ data: OnboardingProfile }>(
         '/api/onboarding/profile',
         data
     );
-    setLocalHasProfile(true);
     return response.data.data;
 }
 

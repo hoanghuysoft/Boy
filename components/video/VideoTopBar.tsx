@@ -1,5 +1,7 @@
+import PIP from "@/assets/images/svg/pipdy.svg";
+import SoundIcon from "@/assets/images/svg/soundlouddy.svg";
+import SoundMuteIcon from "@/assets/images/svg/soundmutedy.svg";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { Muted, Pip2, VolumeLoud } from "@solar-icons/react-native/Bold";
 import React from "react";
 import {
   Animated,
@@ -50,7 +52,7 @@ export const VideoTopBar: React.FC<VideoTopBarProps> = ({
           <Ionicons name="close" size={24} color={"white"} />
         </TouchableOpacity>
         <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onPipMode}>
-          <Pip2 size={20} color={"white"} />
+          <PIP width={28} height={28} color={"white"} />
         </TouchableOpacity>
       </View>
       <View style={[commonRowStyle, { gap: 12 }]} pointerEvents="box-none">
@@ -59,9 +61,9 @@ export const VideoTopBar: React.FC<VideoTopBarProps> = ({
         </TouchableOpacity> */}
         <TouchableOpacity hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} style={styles.smallButton} onPress={onMuteToggle}>
           {isMute ? (
-            <Muted size={20} color={"white"} />
+            <SoundMuteIcon width={28} height={28} color={"white"} />
           ) : (
-            <VolumeLoud size={20} color={"white"} />
+            <SoundIcon width={28} height={28} color={"white"} />
           )}
         </TouchableOpacity>
       </View>

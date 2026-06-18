@@ -5,11 +5,11 @@ import { useAdminCheck } from "@/services/userprofile";
 import { clearVideoCache, formatBytes, getCacheCount, getCacheSize, setMaxCacheSize } from "@/services/videoCache";
 import { useLanguageStore } from "@/stores/language";
 
+import Logout from "@/assets/images/svg/logout.svg";
 import { CustomSurface } from "@/components/CustomSurface";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { Logout3 } from "@solar-icons/react-native/Bold";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Href, router } from "expo-router";
 import { Button } from "heroui-native/button";
@@ -357,7 +357,7 @@ const SettingsScreen = () => {
                     style={styles.option}
                 >
                     <FlexText style={[common.body, { color: colors.onSurface }]}>{t('settings.logout')}</FlexText>
-                    <Logout3 size={24} color={colors.onSurface} />
+                    <Logout width={24} height={24} color={colors.onSurface} />
                 </CustomSurface>
 
                 {/* ─── Logging Out Modal ─────────────────────────────────── */}

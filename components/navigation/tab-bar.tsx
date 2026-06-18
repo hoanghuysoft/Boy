@@ -1,9 +1,13 @@
+import { useThemeContext } from "@/context/ThemeContext";
 import { createCurvedTabs } from "@/lib/create-curved-tabs";
 import { BottomTabBarProps } from "expo-router/tabs";
 import React from "react";
-import { useThemeContext } from "@/context/ThemeContext";
-import { Clapperboard as ClapperboardBold, GalleryWide as GalleryWideBold, Home as HomeBold, UserRounded as UserRoundedBold, VideoLibrary as VideoLibraryBold } from "@solar-icons/react-native/Bold";
-import { Clapperboard as ClapperboardOutline, GalleryWide as GalleryWideOutline, Home as HomeOutline, UserRounded as UserRoundedOutline, VideoLibrary as VideoLibraryOutline } from "@solar-icons/react-native/Outline";
+
+import HomeIcon from "@/assets/images/svg/homeyt.svg";
+import CarouselIcon from "@/assets/images/svg/image-carousel.svg";
+import MediaLibraryIcon from "@/assets/images/svg/libyt.svg";
+import TvIcon from "@/assets/images/svg/tv-2.svg";
+import UserIcon from "@/assets/images/svg/user-1.svg";
 
 import {
   CurvedTabsIndicator,
@@ -22,30 +26,43 @@ const CurvedTabs = createCurvedTabs(
 const tabs = [
   {
     name: "index",
-    IconOutlined: HomeOutline,
-    IconSolid: HomeBold,
+    Icon: HomeIcon,
   },
   {
     name: "shots",
-    IconOutlined: VideoLibraryOutline,
-    IconSolid: VideoLibraryBold,
+    Icon: MediaLibraryIcon,
   },
   {
     name: "tv",
-    IconOutlined: ClapperboardOutline,
-    IconSolid: ClapperboardBold,
+    Icon: TvIcon,
   },
   {
     name: "chat",
-    IconOutlined: UserRoundedOutline,
-    IconSolid: UserRoundedBold,
+    Icon: UserIcon,
   },
   {
     name: "profile",
-    IconOutlined: GalleryWideOutline,
-    IconSolid: GalleryWideBold,
+    Icon: CarouselIcon,
   },
 ];
+
+const getOpacityColor = (hexColor: string, opacityHex: string = "22") => {
+  if (typeof hexColor === "string" && hexColor.startsWith("#")) {
+    if (hexColor.length === 4) {
+      const r = hexColor[1];
+      const g = hexColor[2];
+      const b = hexColor[3];
+      return `#${r}${r}${g}${g}${b}${b}${opacityHex}`;
+    }
+    if (hexColor.length === 7) {
+      return `${hexColor}${opacityHex}`;
+    }
+    if (hexColor.length === 9) {
+      return hexColor.slice(0, 7) + opacityHex;
+    }
+  }
+  return hexColor;
+};
 
 const CurvedTabBar: React.FC<BottomTabBarProps> = (
   props: BottomTabBarProps & React.ComponentProps<typeof CurvedTabBar>,
@@ -61,9 +78,16 @@ const CurvedTabBar: React.FC<BottomTabBarProps> = (
           return (
             <CurvedTabs.Trigger key={route.key} name={route.name}>
               {(active: boolean) => {
-                const Icon = active ? tabConfig.IconSolid : tabConfig.IconOutlined;
+                const Icon = tabConfig.Icon;
                 const color = active ? colors.onSecondaryContainer : colors.onSurfaceVariant;
-                return <Icon size={24} color={color} />;
+                return (
+                  <Icon
+                    width={24}
+                    height={24}
+                    color={color}
+                    fill={active ? getOpacityColor(color, "33") : "none"}
+                  />
+                );
               }}
             </CurvedTabs.Trigger>
           );

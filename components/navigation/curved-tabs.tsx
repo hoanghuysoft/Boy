@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import { LayoutChangeEvent, Pressable, StyleSheet, View } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
+import { useScrollStore } from "../../stores/scroll";
 import { TabBarIcons } from "./tab-bar-icons";
 import { TabBarSurface } from "./tab-bar-surface";
 
@@ -44,7 +45,9 @@ const CurvedTabsRoot: ICurvedTabsRoot = ({
             target: route.key,
             canPreventDefault: true,
         });
-        if (state.index !== index && !event.defaultPrevented) {
+        if (state.index === index) {
+            useScrollStore.getState().triggerScrollToTop(route.name);
+        } else if (!event.defaultPrevented) {
             navigation.navigate(route.name);
         }
     };

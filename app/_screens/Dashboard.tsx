@@ -1,3 +1,5 @@
+import Clapperboard from "@/assets/images/svg/movie-clapper.svg";
+import Tv from "@/assets/images/svg/tv-2.svg";
 import AssemblyText from "@/components/AssemblyText";
 import { FlexText } from "@/components/FlexText";
 import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerSheet";
@@ -10,7 +12,6 @@ import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { Clapperboard, Tv } from "@solar-icons/react-native/Bold";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -338,19 +339,19 @@ const DashboardScreen = () => {
                         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                             <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
                                 <TouchableOpacity onPress={() => isAdmin ? router.push('/moviehub') : toast.show({ variant: 'danger', label: 'Not available yet', placement: 'top', description: 'You are not allowed to use this service. Contact Support for more information.' })}>
-                                    <Tv size={20} color={colors.text} />
-                                    <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>WeLoveHub</FlexText>
-                                    <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Private entertainment</FlexText>
+                                    <Tv width={20} height={20} color={colors.onSurface} />
+                                    <FlexText style={{ marginTop: 8, color: colors.onSurface, fontSize: 14, fontWeight: '600' }}>WeLoveHub</FlexText>
+                                    <FlexText style={{ marginTop: 2, color: colors.onSurface, opacity: 0.65, fontSize: 12 }}>Private entertainment</FlexText>
                                 </TouchableOpacity>
                             </SquircleView>
                             <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
-                                <Clapperboard size={20} color={colors.text} />
-                                <FlexText style={{ marginTop: 8, color: colors.text, fontSize: 14, fontWeight: '600' }}>WeLoveTV</FlexText>
-                                <FlexText style={{ marginTop: 2, color: colors.text, opacity: 0.65, fontSize: 12 }}>Watch your favorite movies and TV shows</FlexText>
+                                <Clapperboard width={20} height={20} color={colors.onSurface} />
+                                <FlexText style={{ marginTop: 8, color: colors.onSurface, fontSize: 14, fontWeight: '600' }}>WeLoveTV</FlexText>
+                                <FlexText style={{ marginTop: 2, color: colors.onSurface, opacity: 0.65, fontSize: 12 }}>Watch your favorite movies and TV shows</FlexText>
                             </SquircleView>
                         </View>
                         <SquircleView cornerSmoothing={100} borderRadius={16} style={{ backgroundColor: `${colors.text}10`, padding: 12, gap: 10 }}>
-                            <FlexText style={{ fontSize: 13, color: colors.text, opacity: 0.75 }}>
+                            <FlexText style={{ fontSize: 13, color: colors.onSurface, opacity: 0.75 }}>
                                 Trending
                             </FlexText>
                             {isTrendingLoading ? (

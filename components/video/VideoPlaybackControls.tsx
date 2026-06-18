@@ -1,4 +1,6 @@
-import { Pause, Play, Rewind5SecondsBack, Rewind5SecondsForward } from "@solar-icons/react-native/Bold";
+import PauseIcon from "@/assets/images/svg/pauseyt.svg";
+import PlayIcon from "@/assets/images/svg/playyt.svg";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { Spinner } from "heroui-native/spinner";
 import React from "react";
 import {
@@ -43,7 +45,7 @@ export const VideoPlaybackControls: React.FC<VideoPlaybackControlsProps> = ({
       ]}
     >
       <TouchableOpacity onPress={onMoveBackward} style={styles.largeButton}>
-        <Rewind5SecondsBack size={32} color={"white"} />
+        <MaterialIcons name="replay-5" size={32} color={"white"} />
       </TouchableOpacity>
       <TouchableOpacity
         onPress={onTogglePlayPause}
@@ -52,13 +54,13 @@ export const VideoPlaybackControls: React.FC<VideoPlaybackControlsProps> = ({
         {isLoading && <Spinner size="lg" color="white" />}
         {!isLoading &&
           (isPaused ? (
-            <Play size={50} color="white" />
+            <PlayIcon width={60} height={60} color="white" />
           ) : (
-            <Pause size={50} color="white" />
+            <PauseIcon width={60} height={60} color="white" />
           ))}
       </TouchableOpacity>
       <TouchableOpacity onPress={onMoveForward} style={styles.largeButton}>
-        <Rewind5SecondsForward size={32} color={"white"} />
+        <MaterialIcons name="forward-5" size={32} color={"white"} />
       </TouchableOpacity>
     </View>
   );

@@ -3,7 +3,12 @@ import { FlexText } from "@/components/FlexText";
 import { ThemeColors, ThemePreference, useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { CheckCircle, ClockCircle, Moon, Palette2, Smartphone, Sun2 } from "@solar-icons/react-native/Bold";
+import Palette from "@/assets/images/svg/palette.svg";
+import LightMode from "@/assets/images/svg/mode-light.svg";
+import DarkMode from "@/assets/images/svg/mode-dark.svg";
+import MobileMode from "@/assets/images/svg/mobile.svg";
+import Time from "@/assets/images/svg/time.svg";
+import CheckCircle from "@/assets/images/svg/check-circle.svg";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import React, { useMemo } from "react";
@@ -26,11 +31,11 @@ const ThemeSettingsScreen = () => {
     const { t } = useTranslation();
 
     const themeOptions = useMemo<ThemeOption[]>(() => [
-        { id: "light", icon: Sun2 },
-        { id: "dark", icon: Moon },
-        { id: "system", icon: Smartphone },
-        { id: "adaptive", icon: ClockCircle },
-        ...(Platform.OS === 'android' ? [{ id: "material-you" as ThemePreference, icon: Palette2 }] : []),
+        { id: "light", icon: LightMode },
+        { id: "dark", icon: DarkMode },
+        { id: "system", icon: MobileMode },
+        { id: "adaptive", icon: Time },
+        ...(Platform.OS === 'android' ? [{ id: "material-you" as ThemePreference, icon: Palette }] : []),
     ], []);
 
     return (
@@ -69,7 +74,8 @@ const ThemeSettingsScreen = () => {
                         <View style={styles.optionLeft}>
                             <SquircleView cornerSmoothing={100} preserveSmoothing={true} style={[styles.iconContainer, themePreference === option.id && styles.iconContainerActive]}>
                                 <option.icon
-                                    size={24}
+                                    width={24}
+                                    height={24}
                                     color={themePreference === option.id ? "#fff" : colors.text}
                                 />
                             </SquircleView>
@@ -83,7 +89,7 @@ const ThemeSettingsScreen = () => {
                             </View>
                         </View>
                         {themePreference === option.id && (
-                            <CheckCircle size={24} color="#54d340" />
+                            <CheckCircle width={24} height={24} color="#54d340" />
                         )}
                     </CustomSurface>
                 ))}

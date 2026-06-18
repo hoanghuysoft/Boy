@@ -1,8 +1,10 @@
+import AddCircle from "@/assets/images/svg/add-circle.svg";
+import Magnifier from "@/assets/images/svg/ai-search.svg";
+import Collection from "@/assets/images/svg/collection.svg";
 import HomeCarousel from "@/components/HomeCarousel";
 import OptionModal from "@/components/HomeOptionModal";
 import SettingsIcon from "@/icons/settings";
 import { useHomeViewModel } from "@/viewmodels/HomeViewModel";
-import { AddCircle, BookmarkOpened, Magnifier } from "@solar-icons/react-native/LineDuotone";
 import { Image as ExpoImage } from "expo-image";
 import { useObserve } from "expo-observe";
 import React from "react";
@@ -164,13 +166,13 @@ const HomeScreen = () => {
                 }}
               />
               <TouchableOpacity onPress={navigateToSearch}>
-                <Magnifier size={24} color={iconColor} />
+                <Magnifier width={24} height={24} color={iconColor} />
               </TouchableOpacity>
               <TouchableOpacity onPress={navigateToCreate}>
-                <AddCircle size={26} color={iconColor} />
+                <AddCircle width={26} height={26} color={iconColor} />
               </TouchableOpacity>
               <TouchableOpacity onPress={navigateToBookmarks}>
-                <BookmarkOpened size={26} color={iconColor} />
+                <Collection width={24} height={24} color={iconColor} />
               </TouchableOpacity>
               <TouchableOpacity onPress={openSettingsPage}>
                 <SettingsIcon size={24} color={iconColor} />
