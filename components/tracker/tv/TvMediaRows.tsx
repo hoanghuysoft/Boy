@@ -44,7 +44,7 @@ export const TvGalleryRow = ({ backdrops, galleryImages, openGallery }: TvGaller
             <Text style={[sharedStyles.sectionTitle, { marginBottom: 12, paddingHorizontal: 16 }]}>Gallery</Text>
             <GestureFlatList
                 horizontal
-                data={backdrops.slice(0, 20)}
+                data={backdrops}
                 keyExtractor={(item, index) => item?.file_path ? `${item.file_path}-${index}` : index.toString()}
                 renderItem={renderItem}
                 showsHorizontalScrollIndicator={false}

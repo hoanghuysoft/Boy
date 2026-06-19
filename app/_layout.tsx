@@ -1,5 +1,3 @@
-import { getFullScreenSheetScale, getParallaxSlideTransition, getScaleFadeTransition } from "@/components/stack/screen-options";
-import { Stack } from "@/components/stack/stack";
 import '@/i18n';
 import { GiphySDK } from '@giphy/react-native-sdk';
 import * as Sentry from '@sentry/react-native';
@@ -8,7 +6,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
 import { Observe, ObserveRoot } from 'expo-observe';
-import { usePathname } from "expo-router";
+import { ExperimentalStack as Stack, usePathname } from 'expo-router';
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native/provider";
 import React, { useEffect } from "react";
@@ -192,11 +190,11 @@ const RootContent = () => {
           }
         />
         <StatusBarFade />
-        <Stack screenOptions={{ ...getParallaxSlideTransition() }}>
+        <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="login" />
           <Stack.Screen name="onboarding" />
-          <Stack.Screen name="video_player" options={getScaleFadeTransition()} />
+          <Stack.Screen name="video_player" />
           <Stack.Screen name="profile/[id]" />
           <Stack.Screen name="image_poster" />
           <Stack.Screen
@@ -213,7 +211,7 @@ const RootContent = () => {
           <Stack.Screen name="show_detail" />
           <Stack.Screen name="show_list" />
           <Stack.Screen name="watchlist" />
-          <Stack.Screen name="create" options={getFullScreenSheetScale()} />
+          <Stack.Screen name="create" />
           <Stack.Screen name="inapp_browser" />
           <Stack.Screen name="movie_detail" />
           <Stack.Screen name="tv_detail" />

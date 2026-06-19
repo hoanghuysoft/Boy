@@ -36,7 +36,7 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
     const vm = useTvDetailViewModel(tvId, isReady);
 
     // ─── Loading ──────────────────────────────────────────────────────────────
-    if (vm.isLoading || !isReady || vm.skiaImage === null) {
+    if (vm.isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: vm.darkDominant }]}>
                 <SkeletonGroup isLoading={true} variant="pulse">

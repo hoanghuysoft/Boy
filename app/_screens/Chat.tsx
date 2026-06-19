@@ -57,8 +57,8 @@ const ChatScreen = () => {
           >
             <BlurView
               blurTarget={blurTargetRef}
-              intensity={20}
-              tint="systemMaterialDark"
+              intensity={80}
+              tint="systemThickMaterialDark"
               blurMethod="dimezisBlurViewSdk31Plus"
               style={StyleSheet.absoluteFill}
             />

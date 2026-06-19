@@ -10,16 +10,14 @@ import {
     useTopRatedTVInfinite,
     useTrendingAll, useUpcomingMoviesInfinite
 } from "@/hooks/useMovies";
-import { useQueries } from "@tanstack/react-query";
 import { tmdbClient } from "@/services/client";
-import { TMDBMovieImage } from "@/types/moviedb/movie-images";
 import { Movie } from "@/types/moviedb";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { useQueries } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Skeleton } from "heroui-native/skeleton";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
-import { getBestLogo, getLogoDimensions } from "./logoUtils";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Animated,
@@ -35,6 +33,7 @@ import {
 } from "react-native";
 import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getBestLogo, getLogoDimensions } from "./logoUtils";
 
 const CARD_WIDTH = 140;
 
@@ -49,7 +48,7 @@ const getImageUrl = (path: string | null | undefined, size: number = 500) => {
 export const IMDbBadge = ({ score, style, textColor }: { score?: number, style?: any, textColor?: string }) => {
     if (!score) return null;
     return (
-        <View style={[{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#f5c518", borderRadius: 999, overflow: "hidden", alignSelf: "flex-start" }, style]}>
+        <View style={[{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#f5c518", borderRadius: 4, overflow: "hidden", alignSelf: "flex-start" }, style]}>
             <View style={{ backgroundColor: "#f5c518", paddingHorizontal: 6, paddingVertical: 2 }}>
                 <Text style={{ color: "black", fontSize: 10, fontWeight: "900" }}>IMDb</Text>
             </View>
@@ -237,7 +236,7 @@ export const MovieDBView = ({ headerScrollX, scrollY }: { headerScrollX: Animate
     }, []);
 
     const { data: trending, isLoading: isTrendingLoading, isError: isTrendingError, refetch: refetchTrending } = useTrendingAll();
-    
+
     const trendingSlice = useMemo(() => trending?.slice(0, 5) ?? [], [trending]);
     const imagesQueries = useQueries({
         queries: trendingSlice.map((item) => ({
@@ -391,7 +390,7 @@ export const MovieDBView = ({ headerScrollX, scrollY }: { headerScrollX: Animate
                             style={{ height: posterHeight }}
                         >
                             {trending.slice(0, 5).map((item, i) => {
-                                                               const imageTranslateX = headerScrollX.interpolate({
+                                const imageTranslateX = headerScrollX.interpolate({
                                     inputRange: [(i - 1) * width, i * width, (i + 1) * width],
                                     outputRange: [-width, 0, width],
                                     extrapolate: "clamp",

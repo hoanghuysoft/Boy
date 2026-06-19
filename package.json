@@ -147,7 +147,8 @@
   "patchedDependencies": {
     "@flixsrota/player@0.3.0": "patches/@flixsrota%2Fplayer@0.3.0.patch",
     "heroui-native@1.0.4": "patches/heroui-native@1.0.4.patch",
-    "react-native-nitro-wallpaper@1.1.5": "patches/react-native-nitro-wallpaper@1.1.5.patch"
+    "react-native-nitro-wallpaper@1.1.5": "patches/react-native-nitro-wallpaper@1.1.5.patch",
+    "react-native-screens@4.25.2": "patches/react-native-screens@4.25.2.patch"
   },
   "expo": {
     "doctor": {

@@ -105,7 +105,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
     // Build gallery images from TMDB profiles
     const galleryImages = useMemo(() => {
         const profiles = person?.images?.profiles ?? [];
-        return profiles.slice(0, 20).map((img: any) => ({
+        return profiles.map((img: any) => ({
             uri: getImageUrl(img.file_path, 1280),
             caption: person?.name,
         }));
@@ -116,8 +116,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
         if (!person?.movie_credits?.cast) return [];
         return [...person.movie_credits.cast]
             .filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i)
-            .sort((a, b) => b.popularity - a.popularity)
-            .slice(0, 20);
+            .sort((a, b) => b.popularity - a.popularity);
     }, [person?.movie_credits?.cast]);
 
     // Credits (TV Shows)
@@ -125,8 +124,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
         if (!person?.tv_credits?.cast) return [];
         return [...person.tv_credits.cast]
             .filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i)
-            .sort((a, b) => b.popularity - a.popularity)
-            .slice(0, 20);
+            .sort((a, b) => b.popularity - a.popularity);
     }, [person?.tv_credits?.cast]);
 
     // ─── Dominant colour (cached via MMKV) ──────────────────────────────────
@@ -242,7 +240,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
 
     // ─── Loading / Error ─────────────────────────────────────────────────────
 
-    if (isLoading || !isReady || skiaImage === null) {
+    if (isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
                 <SkeletonGroup isLoading={true} variant="pulse">
@@ -286,21 +284,23 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                     {/* ─── Poster header — exact same Skia pattern */}
                     <View style={[styles.header, { height: posterHeight }]}>
                         <Canvas style={{ height: posterHeight }}>
-                            <BlurMask
-                                mask={
-                                    <LinearGradient
-                                        start={vec(0, posterHeight * 0.5)}
-                                        end={vec(0, posterHeight)}
-                                        colors={["transparent", "black"]}
+                            {skiaImage && (
+                                <BlurMask
+                                    mask={
+                                        <LinearGradient
+                                            start={vec(0, posterHeight * 0.5)}
+                                            end={vec(0, posterHeight)}
+                                            colors={["transparent", "black"]}
+                                        />
+                                    }
+                                >
+                                    <ImageShader
+                                        image={skiaImage}
+                                        x={0} width={width} height={posterHeight}
+                                        fit="cover" tx="clamp" ty="clamp"
                                     />
-                                }
-                            >
-                                <ImageShader
-                                    image={skiaImage}
-                                    x={0} width={width} height={posterHeight}
-                                    fit="cover" tx="clamp" ty="clamp"
-                                />
-                            </BlurMask>
+                                </BlurMask>
+                            )}
                             <Rect x={0} y={0} width={width} height={posterHeight}>
                                 <LinearGradient
                                     start={vec(0, posterHeight)}
@@ -419,7 +419,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                             </Text>
                             <FlatList
                                 horizontal
-                                data={profiles.slice(0, 20)}
+                                data={profiles}
                                 keyExtractor={(item: any, i) => `${item.file_path}-${i}`}
                                 renderItem={renderGalleryItem}
                                 showsHorizontalScrollIndicator={false}

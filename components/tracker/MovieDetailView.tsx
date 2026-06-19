@@ -153,7 +153,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     // Build gallery images from TMDB backdrops
     const galleryImages = useMemo(() => {
         const backdrops = images?.backdrops ?? [];
-        return backdrops.slice(0, 20).map((img) => ({
+        return backdrops.map((img) => ({
             uri: getImageUrl(img.file_path, 1280),
             caption: movie?.title,
         }));
@@ -162,8 +162,8 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     // First page of similar / recommendations (for the horizontal preview row)
     const similarItems = useMemo<Movie[]>(() => similarData?.pages[0]?.results?.slice(0, 10) ?? [], [similarData]);
     const recItems = useMemo<Movie[]>(() => recData?.pages[0]?.results?.slice(0, 10) ?? [], [recData]);
-    const cast = useMemo(() => movie?.credits?.cast?.slice(0, 20) ?? [], [movie?.credits?.cast]);
-    const videos = useMemo(() => movie?.videos?.results?.slice(0, 10) ?? [], [movie?.videos?.results]);
+    const cast = useMemo(() => movie?.credits?.cast ?? [], [movie?.credits?.cast]);
+    const videos = useMemo(() => movie?.videos?.results ?? [], [movie?.videos?.results]);
     const reviews = useMemo(() => reviewsData?.pages.flatMap((p) => p.results) ?? [], [reviewsData]);
 
     const [showWallpaper, setShowWallpaper] = useState(false);
@@ -329,7 +329,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
 
     // ─── Loading / Error ─────────────────────────────────────────────────────
 
-    if (isLoading || !isReady || skiaImage === null) {
+    if (isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
                 <SkeletonGroup isLoading={true} variant="pulse">
@@ -373,21 +373,23 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                     {/* ─── Poster header — exact same Skia pattern as ShowDetailScreen */}
                     <View style={[styles.header, { height: posterHeight }]}>
                         <Canvas style={{ height: posterHeight }}>
-                            <BlurMask
-                                mask={
-                                    <LinearGradient
-                                        start={vec(0, posterHeight * 0.5)}
-                                        end={vec(0, posterHeight)}
-                                        colors={["transparent", "black"]}
+                            {skiaImage && (
+                                <BlurMask
+                                    mask={
+                                        <LinearGradient
+                                            start={vec(0, posterHeight * 0.5)}
+                                            end={vec(0, posterHeight)}
+                                            colors={["transparent", "black"]}
+                                        />
+                                    }
+                                >
+                                    <ImageShader
+                                        image={skiaImage}
+                                        x={0} width={width} height={posterHeight}
+                                        fit="cover" tx="clamp" ty="clamp"
                                     />
-                                }
-                            >
-                                <ImageShader
-                                    image={skiaImage}
-                                    x={0} width={width} height={posterHeight}
-                                    fit="cover" tx="clamp" ty="clamp"
-                                />
-                            </BlurMask>
+                                </BlurMask>
+                            )}
                             <Rect x={0} y={0} width={width} height={posterHeight}>
                                 <LinearGradient
                                     start={vec(0, posterHeight)}
@@ -483,7 +485,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                             </Text>
                             <FlatList
                                 horizontal
-                                data={backdrops.slice(0, 20)}
+                                data={backdrops}
                                 keyExtractor={galleryKeyExtractor}
                                 renderItem={renderGalleryItem}
                                 showsHorizontalScrollIndicator={false}

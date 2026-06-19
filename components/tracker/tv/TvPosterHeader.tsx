@@ -21,7 +21,7 @@ import { withAlpha, getImageUrl } from "./shared/tvDetailUtils";
 
 interface TvPosterHeaderProps {
     tv: any;
-    skiaImage: SkImage;
+    skiaImage: SkImage | null;
     darkDominant: string;
     contentRating: string | null;
     watchProviders: any | null;
@@ -58,21 +58,23 @@ export const TvPosterHeader = ({
         <View style={{ position: "relative", overflow: "hidden", height: posterHeight }}>
             {/* Skia Canvas with blur + gradient */}
             <Canvas style={{ height: posterHeight }}>
-                <BlurMask
-                    mask={
-                        <LinearGradient
-                            start={vec(0, posterHeight * 0.5)}
-                            end={vec(0, posterHeight)}
-                            colors={["transparent", "black"]}
+                {skiaImage && (
+                    <BlurMask
+                        mask={
+                            <LinearGradient
+                                start={vec(0, posterHeight * 0.5)}
+                                end={vec(0, posterHeight)}
+                                colors={["transparent", "black"]}
+                            />
+                        }
+                    >
+                        <ImageShader
+                            image={skiaImage}
+                            x={0} width={width} height={posterHeight}
+                            fit="cover" tx="clamp" ty="clamp"
                         />
-                    }
-                >
-                    <ImageShader
-                        image={skiaImage}
-                        x={0} width={width} height={posterHeight}
-                        fit="cover" tx="clamp" ty="clamp"
-                    />
-                </BlurMask>
+                    </BlurMask>
+                )}
                 <Rect x={0} y={0} width={width} height={posterHeight}>
                     <LinearGradient
                         start={vec(0, posterHeight)}

@@ -83,7 +83,7 @@ export function useTvDetailViewModel(tvId: number, isReady: boolean) {
 
     const galleryImages = useMemo(() => {
         const backdrops = images?.backdrops ?? [];
-        return backdrops.slice(0, 20).map((img: any) => ({
+        return backdrops.map((img: any) => ({
             uri: getImageUrl(img.file_path, 1280),
             caption: tv?.name,
         }));
@@ -98,8 +98,8 @@ export function useTvDetailViewModel(tvId: number, isReady: boolean) {
         () => recData?.pages[0]?.results?.slice(0, 10) ?? [],
         [recData],
     );
-    const cast = useMemo(() => tv?.credits?.cast?.slice(0, 20) ?? [], [tv?.credits?.cast]);
-    const videos = useMemo(() => tv?.videos?.results?.slice(0, 10) ?? [], [tv?.videos?.results]);
+    const cast = useMemo(() => tv?.credits?.cast ?? [], [tv?.credits?.cast]);
+    const videos = useMemo(() => tv?.videos?.results ?? [], [tv?.videos?.results]);
     const reviews = useMemo(
         () => reviewsData?.pages.flatMap((p) => p.results) ?? [],
         [reviewsData],

@@ -7,7 +7,7 @@ import { parseServerDate, formatToServerDate } from '@/utils/date';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from 'dayjs';
 import { Image as ExpoImage } from 'expo-image';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
 import { Button } from "heroui-native/button";
 import { Chip } from "heroui-native/chip";
@@ -785,8 +785,6 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
     return (
         <FormContext.Provider value={contextValue}>
             <View style={{ flex: 1, backgroundColor: colors.background }}>
-                <Stack.Screen options={{ headerShown: false }} />
-
                 <View style={{
                     paddingTop: insets.top + 12,
                     paddingBottom: 8,

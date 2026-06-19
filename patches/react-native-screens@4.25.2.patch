@@ -1,0 +1,31 @@
+diff --git a/android/src/main/java/com/swmansion/rnscreens/gamma/stack/screen/StackScreenViewManager.kt b/android/src/main/java/com/swmansion/rnscreens/gamma/stack/screen/StackScreenViewManager.kt
+index 8153e3bbd1ac4f2a751fdbaf27d6bf6d90ec7fd7..05fb279989b6e5a8f0e71a260e92a024f1fdf880 100644
+--- a/android/src/main/java/com/swmansion/rnscreens/gamma/stack/screen/StackScreenViewManager.kt	
++++ b/android/src/main/java/com/swmansion/rnscreens/gamma/stack/screen/StackScreenViewManager.kt
+@@ -37,21 +37,14 @@ class StackScreenViewManager :
+         child: View,
+         index: Int,
+     ) {
+-        // HeaderConfig is not added to native hierarchy & it must be the last child of StackScreen.
++        // HeaderConfig is not added to native hierarchy — just attach it regardless of index.
++        // Relaxed ordering: Reanimated 4's batched performOperations can deliver mount items
++        // out of order, so we no longer enforce strict index validation.
+         if (child is StackHeaderConfig) {
+-            if (index < parent.childCount) {
+-                throw JSApplicationCausedNativeException(
+-                    "[RNScreens] StackHeaderConfig must be the last child of StackScreen. ",
+-                )
+-            }
+             parent.attachHeaderConfig(child)
+         } else {
+-            if (index > parent.childCount) {
+-                throw JSApplicationCausedNativeException(
+-                    "[RNScreens] StackHeaderConfig must be the last child of StackScreen. ",
+-                )
+-            }
+-            super.addView(parent, child, index)
++            val clampedIndex = index.coerceAtMost(parent.childCount)
++            super.addView(parent, child, clampedIndex)
+         }
+     }
+ 

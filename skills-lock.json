@@ -19,6 +19,12 @@
       "skillPath": "plugins/expo/skills/building-native-ui/SKILL.md",
       "computedHash": "a0316d2ce842d2dd8067a144e339cf502329dc7701f9f5122268fdb3d4c980f7"
     },
+    "caveman": {
+      "source": "JuliusBrussee/caveman",
+      "sourceType": "github",
+      "skillPath": "skills/caveman/SKILL.md",
+      "computedHash": "b0e7741886c0c32270cedc1a2fc21c2879d90964d3ce00f24952de7064613404"
+    },
     "eas-update-insights": {
       "source": "expo/skills",
       "sourceType": "github",
