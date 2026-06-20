@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "WeLove",
-    "slug": "boy",
+    "slug": "Boy",
     "version": "26.56.6.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -213,14 +213,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "f8070e10-b4c4-4be3-bebd-b45e072d7702"
+        "projectId": "ddac2295-af33-4e05-b689-6caa80c1d9d3"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/f8070e10-b4c4-4be3-bebd-b45e072d7702",
+      "url": "https://u.expo.dev/ddac2295-af33-4e05-b689-6caa80c1d9d3",
       "enableBsdiffPatchSupport": true
     }
   }

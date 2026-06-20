@@ -6,11 +6,12 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
 import { Observe, ObserveRoot } from 'expo-observe';
-import { ExperimentalStack as Stack, usePathname } from 'expo-router';
+import { usePathname } from 'expo-router';
+import { Stack } from 'expo-router/stack';
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native/provider";
 import React, { useEffect } from "react";
-import { StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { AppState, AppStateStatus, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -23,12 +24,14 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { AppLockOverlay } from "../components/AppLockOverlay";
 import { GlobalAudioPlayer } from "../components/GlobalAudioPlayer";
 import { SessionProvider } from "../context/SessionContext";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
 import '../global.css';
 import { clientPersister, queryClient } from "../services/client";
+import { useAppLockStore } from "../stores/appLock";
 import { useAutoLanguageSync } from "../stores/language";
 import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
 
@@ -165,9 +168,34 @@ const RootContent = () => {
   const { isReady, session, hasProfile } = useRootLayoutViewModel();
   useAutoLanguageSync();
 
+  const { appLockEnabled, setLocked, setLastBackgroundTime } = useAppLockStore();
+
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
+
+  useEffect(() => {
+    if (!appLockEnabled) return;
+
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        setLastBackgroundTime(Date.now());
+      } else if (nextAppState === 'active') {
+        const bgTime = useAppLockStore.getState().lastBackgroundTime;
+        if (bgTime > 0) {
+          const elapsed = Date.now() - bgTime;
+          if (elapsed >= 5000) {
+            setLocked(true);
+          }
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      subscription.remove();
+    };
+  }, [appLockEnabled]);
 
   if (!isReady) {
     return <FakeSplashScreen />;
@@ -204,6 +232,7 @@ const RootContent = () => {
             name="bookmarks"
           />
           <Stack.Screen name="language-settings" />
+          <Stack.Screen name="security-settings" />
           <Stack.Screen name="fprofile" />
           <Stack.Screen name="search" />
           <Stack.Screen name="hashtag/[tag]" />
@@ -224,6 +253,7 @@ const RootContent = () => {
           <Stack.Screen name="show_chat" />
         </Stack>
         <GlobalAudioPlayer />
+        <AppLockOverlay />
       </View>
     </SessionProvider>
   );
@@ -235,28 +265,29 @@ export default withSentry(function RootLayout() {
   return (
     <ObserveRoot>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <HeroUINativeProvider>
-          <BottomSheetProvider>
-            <PersistQueryClientProvider
-              client={queryClient}
-              persistOptions={{
-                persister: clientPersister,
-                maxAge: 1000 * 60 * 60, // 1 hour max cache age allowed on boot
-                buster: "v1.1", // cache buster to invalidate stale layouts
-              }}
-            >
-              <SafeAreaProvider>
-                <KeyboardProvider>
+        <KeyboardProvider>
+
+          <HeroUINativeProvider>
+            <BottomSheetProvider>
+              <PersistQueryClientProvider
+                client={queryClient}
+                persistOptions={{
+                  persister: clientPersister,
+                  maxAge: 1000 * 60 * 60, // 1 hour max cache age allowed on boot
+                  buster: "v1.1", // cache buster to invalidate stale layouts
+                }}
+              >
+                <SafeAreaProvider>
                   <ThemeProvider>
                     <StatusBarProvider>
                       <RootContent />
                     </StatusBarProvider>
                   </ThemeProvider>
-                </KeyboardProvider>
-              </SafeAreaProvider>
-            </PersistQueryClientProvider>
-          </BottomSheetProvider>
-        </HeroUINativeProvider>
+                </SafeAreaProvider>
+              </PersistQueryClientProvider>
+            </BottomSheetProvider>
+          </HeroUINativeProvider>
+        </KeyboardProvider>
       </GestureHandlerRootView>
     </ObserveRoot>
   );

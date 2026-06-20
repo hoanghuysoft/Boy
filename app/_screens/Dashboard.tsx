@@ -20,7 +20,8 @@ import { SquircleView } from "expo-squircle-view";
 import { useToast } from "heroui-native/toast";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // const DashboardScreenV1 = () => {
@@ -120,6 +121,18 @@ const DashboardScreen = () => {
     const activeProfile = selectedProfile ?? myProfile ?? null;
     const { toast } = useToast();
 
+    const scrollY = useSharedValue(0);
+    const scrollHandler = useAnimatedScrollHandler((event) => {
+        scrollY.value = event.contentOffset.y;
+    });
+    const overlayStyle = useAnimatedStyle(() => {
+        const opacity = interpolate(scrollY.value, [0, 200], [0, 0.5], Extrapolation.CLAMP);
+        return {
+            opacity,
+            backgroundColor: "black",
+        };
+    });
+
     const handlePickProfile = useCallback((picked: Profile | null) => {
         if (picked && picked.id === myProfile?.id) {
             setSelectedProfile(null);
@@ -205,7 +218,11 @@ const DashboardScreen = () => {
                         contentFit="cover"
                         transition={{ effect: 'cross-dissolve', duration: 1200 }}
                     />
+                    {/* {weather?.condition && /rain|drizzle|shower/i.test(weather.condition) && (
+                        <Raindrops bgUrl={activeBgImageUrl ?? activeProfile?.avatar_url} />
+                    )} */}
                 </BlurTargetView>
+                <Animated.View style={[StyleSheet.absoluteFill, overlayStyle]} pointerEvents="none" />
             </View>
             {isAdmin && (
                 <View style={{ position: "absolute", top: insets.top + 16, right: 16, zIndex: 1000 }}>
@@ -225,7 +242,7 @@ const DashboardScreen = () => {
                     </TouchableOpacity>
                 </View>
             )}
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 250 + insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 99 }}>
+            <Animated.ScrollView onScroll={scrollHandler} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 250 + insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 99 }}>
                 <Pressable onPress={() => activeProfile?.id && router.push(`/profile/${activeProfile.id}`)}>
                     <AssemblyText
                         text={activeProfile?.name ?? ""}
@@ -395,7 +412,7 @@ const DashboardScreen = () => {
                         </SquircleView>
                     </BlurView>
                 </SquircleView>
-            </ScrollView>
+            </Animated.ScrollView>
             {isAdmin && (
                 <ProfilePickerSheet
                     ref={pickerSheetRef}
