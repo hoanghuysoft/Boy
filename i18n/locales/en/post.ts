@@ -45,6 +45,12 @@ const post = {
         actionDelete: 'Delete',
         sendPost: 'Post',
         sendSave: 'Save',
+        actionReply: 'Reply',
+        viewReply_one: 'View {{count}} reply',
+        viewReply_other: 'View {{count}} replies',
+        hideReplies: 'Hide replies',
+        loadMoreReplies: 'Load more replies',
+        replyingTo: 'Replying to {{name}}',
     },
 
     likersSheet: {

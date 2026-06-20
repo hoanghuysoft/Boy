@@ -45,6 +45,12 @@ const post = {
         actionDelete: 'Xóa',
         sendPost: 'Đăng',
         sendSave: 'Lưu',
+        actionReply: 'Phản hồi',
+        viewReply_one: 'Xem {{count}} phản hồi',
+        viewReply_other: 'Xem {{count}} phản hồi',
+        hideReplies: 'Ẩn phản hồi',
+        loadMoreReplies: 'Tải thêm phản hồi',
+        replyingTo: 'Đang phản hồi {{name}}',
     },
 
     likersSheet: {

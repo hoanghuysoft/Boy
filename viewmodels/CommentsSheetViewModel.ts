@@ -22,7 +22,8 @@ export function parseCommentContent(content: string): { text: string; imageUrl: 
 
 export const useCommentsSheetViewModel = (
     postId: string | null,
-    ref: RefObject<TrueSheet | null>
+    ref: RefObject<TrueSheet | null>,
+    onCommentSent?: (comment: Comment) => void
 ) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -34,10 +35,20 @@ export const useCommentsSheetViewModel = (
     const [showUrlInput, setShowUrlInput] = useState(false);
     
     const [editingComment, setEditingComment] = useState<Comment | null>(null);
+    const [replyingToComment, setReplyingToComment] = useState<Comment | null>(null);
     const [isLocalSubmitting, setIsLocalSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const { data: myProfile } = useProfile('me', true);
     const currentProfileId = myProfile?.id || null;
+
+    const [expandedCommentIds, setExpandedCommentIds] = useState<Record<string, boolean>>({});
+
+    const toggleExpandComment = useCallback((commentId: string) => {
+        setExpandedCommentIds(prev => ({
+            ...prev,
+            [commentId]: !prev[commentId]
+        }));
+    }, []);
 
     const {
         data,
@@ -69,6 +80,8 @@ export const useCommentsSheetViewModel = (
         setCommentText("");
         setSelectedImageUrl(null);
         setEditingComment(null);
+        setReplyingToComment(null);
+        setExpandedCommentIds({});
     }
 
     // When postId changes, trigger refetch for the new post
@@ -103,20 +116,30 @@ export const useCommentsSheetViewModel = (
 
         setIsLocalSubmitting(true);
         createCommentMutation.mutate(
-            { content: payloadContent },
+            { content: payloadContent, parent_id: replyingToComment?.id || null },
             {
-                onSuccess: () => {
+                onSuccess: (res) => {
+                    const newComment = res.data;
                     setCommentText("");
                     setSelectedImageUrl(null);
+                    setReplyingToComment(null);
                     Keyboard.dismiss();
                     setIsLocalSubmitting(false);
+
+                    if (newComment.parent_id) {
+                        setExpandedCommentIds(prev => ({
+                            ...prev,
+                            [newComment.parent_id!]: true
+                        }));
+                    }
+                    onCommentSent?.(newComment);
                 },
                 onError: () => {
                     setIsLocalSubmitting(false);
                 }
             }
         );
-    }, [commentText, selectedImageUrl, postId, createCommentMutation, isLocalSubmitting]);
+    }, [commentText, selectedImageUrl, postId, createCommentMutation, isLocalSubmitting, replyingToComment, onCommentSent]);
 
     const isSubmitting = createCommentMutation.isPending || isLocalSubmitting;
 
@@ -133,11 +156,14 @@ export const useCommentsSheetViewModel = (
                     style: "destructive",
                     onPress: () => {
                         setDeletingId(comment.id);
-                        deleteCommentMutation.mutate(comment.id, {
-                            onSettled: () => {
-                                setDeletingId(null);
+                        deleteCommentMutation.mutate(
+                            { commentId: comment.id, parentId: comment.parent_id },
+                            {
+                                onSettled: () => {
+                                    setDeletingId(null);
+                                }
                             }
-                        });
+                        );
                     }
                 }
             ]
@@ -150,6 +176,7 @@ export const useCommentsSheetViewModel = (
         setEditingComment(comment);
         setCommentText(parsed.text);
         setSelectedImageUrl(parsed.imageUrl);
+        setReplyingToComment(null); // Cancel reply when starting edit
     }, []);
 
     // Cancel editing and reset the input
@@ -167,7 +194,11 @@ export const useCommentsSheetViewModel = (
         if (!payloadContent || !editingComment) return;
 
         updateCommentMutation.mutate(
-            { commentId: editingComment.id, data: { content: payloadContent } },
+            { 
+                commentId: editingComment.id, 
+                data: { content: payloadContent }, 
+                parentId: editingComment.parent_id 
+            },
             {
                 onSuccess: () => {
                     setEditingComment(null);
@@ -186,6 +217,29 @@ export const useCommentsSheetViewModel = (
             setShowUrlInput(false);
         }
     }, [imageUrlInput]);
+
+    // Reply handlers
+    const handleReplyToComment = useCallback((comment: Comment) => {
+        setReplyingToComment(comment);
+        setEditingComment(null); // Cancel editing when replying
+        
+        const parentId = comment.parent_id || comment.id;
+        setExpandedCommentIds(prev => ({
+            ...prev,
+            [parentId]: true
+        }));
+
+        if (comment.profile_username) {
+            setCommentText(`@${comment.profile_username} `);
+        } else {
+            setCommentText("");
+        }
+    }, []);
+
+    const handleCancelReply = useCallback(() => {
+        setReplyingToComment(null);
+        setCommentText("");
+    }, []);
 
     const isEditing = editingComment !== null;
     const isSaving = updateCommentMutation.isPending;
@@ -219,6 +273,7 @@ export const useCommentsSheetViewModel = (
         theme,
 
         // Data
+        postId,
         comments,
         totalComments,
         isLoading,
@@ -246,6 +301,16 @@ export const useCommentsSheetViewModel = (
         isEditing,
         isSaving,
         deletingId,
+
+        // Reply state
+        replyingToComment,
+        setReplyingToComment,
+        handleReplyToComment,
+        handleCancelReply,
+
+        // Expanded replies state
+        expandedCommentIds,
+        toggleExpandComment,
 
         // Handlers
         handleEndReached,

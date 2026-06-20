@@ -1,14 +1,11 @@
-import VerifiedIcon from "@/icons/verified";
-import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { Galeria } from "@nandorojo/galeria";
-import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import SendIcon from "@/assets/images/svg/send.svg";
 import EditIcon from "@/assets/images/svg/edit-1.svg";
 import ImageAddIcon from "@/assets/images/svg/image-add.svg";
+import SendIcon from "@/assets/images/svg/send.svg";
+import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { Image } from "expo-image";
 import { SquircleView } from "expo-squircle-view";
-import { Avatar } from "heroui-native/avatar";
 import { Button } from "heroui-native/button";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { Spinner } from "heroui-native/spinner";
@@ -25,10 +22,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Comment } from "../../types/comment";
 import { EMOJI_ASSETS } from "../../utils/emojiResolver";
-import { parseCommentContent, useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
+import { useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
 import { EmojiSelectorSheet } from "../EmojiSelectorSheet";
 import { FlexText } from "../FlexText";
 import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
+import { CommentBlock } from "./CommentBlock";
 
 const Plain2 = ({ size, ...props }: any) => <SendIcon width={size} height={size} {...props} />;
 const PenNewRound = ({ size, ...props }: any) => <EditIcon width={size} height={size} {...props} />;
@@ -47,130 +45,12 @@ interface CommentsSheetProps {
     detents?: (number | 'auto')[];
 }
 
-interface CommentItemProps {
-    comment: Comment;
-    colors: any;
-    common: any;
-    theme: any;
-    isOwn: boolean;
-    onPress: () => void;
-    onDelete: () => void;
-    onEdit: () => void;
-    formatTimeAgo: (dateString: string) => string;
-    editLabel: string;
-    deleteLabel: string;
-    isDeleting?: boolean;
-}
-
-// ============================================================================
-// CommentItem Component
-// ============================================================================
-
-const CommentItem = memo(({ comment, colors, common, theme, isOwn, onPress, onDelete, onEdit, formatTimeAgo, editLabel, deleteLabel, isDeleting }: CommentItemProps) => {
-    const { text, imageUrl } = parseCommentContent(comment.content);
-
-    return (
-        <View style={styles.commentItem}>
-            {/* Avatar */}
-            <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
-                <Avatar style={styles.avatar}>
-                    <Avatar.Image source={{ uri: comment.profile_avatar }} />
-                    <Avatar.Fallback>{comment.profile_name?.[0] || 'U'}</Avatar.Fallback>
-                </Avatar>
-            </TouchableOpacity>
-
-            {/* Content Bubble */}
-            <View style={styles.contentWrapper}>
-                <View>
-                    <View style={styles.commentHeader}>
-                        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 13, fontWeight: '600' }]} numberOfLines={1}>
-                                {comment.profile_name}
-                            </FlexText>
-                            {comment.profile_is_verified && <VerifiedIcon size={12} />}
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Text content (with image tags stripped) */}
-                    {text.length > 0 && (
-                        <FlexText style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
-                            {text}
-                        </FlexText>
-                    )}
-
-                    {imageUrl && (
-                        <View style={{ marginTop: 8, position: 'relative' }}>
-                            {EMOJI_ASSETS[imageUrl] ? (
-                                <Image
-                                    source={EMOJI_ASSETS[imageUrl]}
-                                    style={{ width: 120, height: 120 }}
-                                    contentFit="contain"
-                                />
-                            ) : (
-                                <Galeria urls={[imageUrl]} theme={theme}>
-                                    <Galeria.Image>
-                                        <Image
-                                            source={{ uri: imageUrl }}
-                                            style={[styles.commentImage, { width: '100%' }]}
-                                            contentFit="cover"
-                                        />
-                                    </Galeria.Image>
-                                </Galeria>
-                            )}
-                        </View>
-                    )}
-                </View>
-
-                <View style={[common.row, { alignItems: 'center', marginTop: 4 }]}>
-                    <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 12 }]}>
-                        {formatTimeAgo(comment.created_at)}
-                    </FlexText>
-
-                    {isOwn && (
-                        <>
-                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
-                            <TouchableOpacity
-                                onPress={onEdit}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                style={styles.actionButton}
-                            >
-                                <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
-                                    {editLabel}
-                                </FlexText>
-                            </TouchableOpacity>
-                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
-                            <TouchableOpacity
-                                onPress={onDelete}
-                                disabled={isDeleting}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
-                            >
-                                {isDeleting ? (
-                                    <Spinner size="md" color={colors.onSurfaceVariant} style={{ transform: [{ scale: 0.8 }] }} />
-                                ) : (
-                                    <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
-                                        {deleteLabel}
-                                    </FlexText>
-                                )}
-                            </TouchableOpacity>
-                        </>
-                    )}
-                </View>
-            </View>
-
-
-        </View>
-    );
-});
-
-CommentItem.displayName = "CommentItem";
-
 // ============================================================================
 // CommentsSheet Component
 // ============================================================================
 
 export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
-    ({ postId, onDismiss, useReanimated = false, detents = [0.7] }, ref) => {
+    ({ postId, onDismiss, useReanimated = false, detents = [0.7, 'auto'] }, ref) => {
         const insets = useSafeAreaInsets();
         const sheetRef = useRef<TrueSheet>(null);
         const emojiSheetRef = useRef<TrueSheet>(null);
@@ -190,11 +70,48 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             },
         } as any), []);
 
-        const vm = useCommentsSheetViewModel(postId, sheetRef);
+        const commentsRef = useRef<Comment[]>([]);
+        const flatListRef = useRef<FlatList>(null);
         const { t } = useTranslation();
+
+        const onCommentSent = useCallback((comment: Comment) => {
+            // Give React state rendering a tick/frame to update vm.comments
+            setTimeout(() => {
+                if (comment.parent_id) {
+                    const parentId = comment.parent_id;
+                    const index = commentsRef.current.findIndex(c => c.id === parentId);
+                    if (index !== -1) {
+                        try {
+                            flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.2 });
+                        } catch (e) {
+                            console.warn("scrollToIndex failed", e);
+                        }
+                    }
+                } else {
+                    try {
+                        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+                    } catch (e) {
+                        console.warn("scrollToOffset failed", e);
+                    }
+                }
+            }, 150);
+        }, []);
+
+        const vm = useCommentsSheetViewModel(postId, sheetRef, onCommentSent);
+
+        useEffect(() => {
+            commentsRef.current = vm.comments;
+        }, [vm.comments]);
+
         const backHandler = useSheetBackHandler(sheetRef);
 
         const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+        useEffect(() => {
+            if (vm.replyingToComment) {
+                inputRef.current?.focus();
+            }
+        }, [vm.replyingToComment]);
 
         useEffect(() => {
             const kbShow = Keyboard.addListener('keyboardWillShow', () => setKeyboardVisible(true));
@@ -217,19 +134,10 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         }, [vm]);
 
         const renderItem = useCallback(({ item }: { item: Comment }) => (
-            <CommentItem
-                comment={item}
-                colors={vm.colors}
-                common={vm.common}
-                theme={vm.theme}
-                isOwn={!!vm.currentProfileId && String(vm.currentProfileId) === String(item.profile_id)}
-                onPress={() => vm.handleUserPress(item)}
-                onDelete={() => vm.handleDeleteComment(item)}
-                onEdit={() => vm.handleEditComment(item)}
-                formatTimeAgo={vm.formatTimeAgo}
-                editLabel={t('post.commentsSheet.actionEdit')}
-                deleteLabel={t('post.commentsSheet.actionDelete')}
-                isDeleting={vm.deletingId === item.id}
+            <CommentBlock
+                item={item}
+                vm={vm}
+                t={t}
             />
         ), [vm, t]);
 
@@ -325,6 +233,28 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                         </FlexText>
                         <TouchableOpacity
                             onPress={vm.handleCancelEdit}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                            <MaterialIcons name="close" size={16} color={vm.colors.onSurfaceVariant} />
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* Replying mode banner */}
+                {vm.replyingToComment && (
+                    <View style={[
+                        styles.editBanner,
+                        { backgroundColor: vm.colors.surfaceContainerHigh }
+                    ]}>
+                        <MaterialIcons name="reply" size={14} color={vm.colors.onSurfaceVariant} style={{ marginRight: 6 }} />
+                        <FlexText
+                            style={[vm.common.bodySmall, { color: vm.colors.onSurfaceVariant, flex: 1, fontSize: 12 }]}
+                            numberOfLines={1}
+                        >
+                            {t('post.commentsSheet.replyingTo', { name: vm.replyingToComment.profile_username ? `@${vm.replyingToComment.profile_username}` : vm.replyingToComment.profile_name })}
+                        </FlexText>
+                        <TouchableOpacity
+                            onPress={vm.handleCancelReply}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
                             <MaterialIcons name="close" size={16} color={vm.colors.onSurfaceVariant} />
@@ -484,6 +414,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
 
                 {/* Comments List */}
                 <FlatList
+                    ref={flatListRef}
                     nestedScrollEnabled
                     data={vm.comments}
                     keyExtractor={(item) => item.id}
@@ -693,5 +624,37 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 2,
         borderColor: '#fff',
+    },
+    replyCommentItem: {
+        marginBottom: 12,
+    },
+    replyAvatar: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+    },
+    repliesSectionContainer: {
+        marginLeft: 50,
+        marginBottom: 16,
+    },
+    expandRepliesButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 4,
+    },
+    replyLine: {
+        width: 16,
+        height: 1,
+        marginRight: 8,
+    },
+    repliesList: {
+        marginTop: 8,
+    },
+    repliesLoader: {
+        paddingVertical: 8,
+        alignItems: 'center',
+    },
+    loadMoreRepliesButton: {
+        paddingVertical: 6,
     },
 });

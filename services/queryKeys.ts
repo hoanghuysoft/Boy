@@ -49,6 +49,7 @@ export const postKeys = {
 // ─── Comment ──────────────────────────────────────────────────────────────────
 export const commentKeys = {
     list: (postId: string) => ['comments', postId] as const,
+    replies: (postId: string, commentId: string) => ['comments', postId, commentId, 'replies'] as const,
 };
 
 // ─── Note ─────────────────────────────────────────────────────────────────────

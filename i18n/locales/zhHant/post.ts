@@ -45,6 +45,12 @@ const post = {
         actionDelete: '刪除',
         sendPost: '發佈',
         sendSave: '儲存',
+        actionReply: '回覆',
+        viewReply_one: '查看 {{count}} 條回覆',
+        viewReply_other: '查看 {{count}} 條回覆',
+        hideReplies: '收起回覆',
+        loadMoreReplies: '載入更多回覆',
+        replyingTo: '正在回覆 {{name}}',
     },
 
     likersSheet: {

@@ -1,5 +1,4 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import * as Device from 'expo-device';
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { FormikHelpers, useFormik } from "formik";
@@ -8,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import {
     NativeScrollEvent,
     NativeSyntheticEvent,
+    Platform,
     TouchableOpacity,
     View
 } from "react-native";
@@ -263,7 +263,7 @@ const CreateScreen = () => {
                     links: validLinks.length > 0 ? validLinks : undefined,
                     is_ghost: values.isGhost,
                     is_adult: values.isAdult,
-                    device: Device.osName + " " + Device.osVersion + " " + Device.manufacturer + " " + Device.modelName,
+                    device: Platform.OS,
                 };
 
                 if (params.edit_post_id) {
