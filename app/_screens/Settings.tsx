@@ -43,6 +43,7 @@ const SettingsScreen = () => {
         imgbbApiKey, setImgbbApiKey,
         x02ApiKey, setX02ApiKey,
         makeBottomBarCurve, toggleMakeBottomBarCurve,
+        isGeminiNanoAvailable, checkGeminiNanoAvailability,
     } = useSettingsStore();
     const { appLockEnabled } = useAppLockStore();
 
@@ -105,6 +106,13 @@ const SettingsScreen = () => {
     useEffect(() => {
         setMaxCacheSize(videoCacheSizeLimit);
     }, [videoCacheSizeLimit]);
+
+    // Check Gemini Nano availability on mount
+    useEffect(() => {
+        checkGeminiNanoAvailability().catch((e) => {
+            console.warn("Failed to check Gemini Nano availability", e);
+        });
+    }, [checkGeminiNanoAvailability]);
 
     const handleClearCache = useCallback(() => {
         setIsClearCacheDialogOpen(true);
@@ -341,6 +349,37 @@ const SettingsScreen = () => {
                                 {isClearing ? t('settings.clearCacheClearing') : t('settings.clearCacheIdle')}
                             </FlexText>
                             {isClearing && <Spinner size="md" color={colors.onSurfaceVariant} />}
+                        </CustomSurface>
+                    </View>
+
+                    {/* ─── Gemini Nano Status ────────────────────────────────── */}
+                    <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.onDeviceAi')}</FlexText>
+                    <View style={{ gap: 3 }}>
+                        <CustomSurface position="single" style={styles.option}>
+                            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <View style={{ flex: 1, marginRight: 16 }}>
+                                    <FlexText style={common.body}>Gemini Nano</FlexText>
+                                    <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
+                                        {isGeminiNanoAvailable 
+                                            ? t('settings.geminiNanoAvailable') 
+                                            : t('settings.geminiNanoUnavailable')}
+                                    </FlexText>
+                                </View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                    <View style={{
+                                        width: 8,
+                                        height: 8,
+                                        borderRadius: 4,
+                                        backgroundColor: isGeminiNanoAvailable ? '#54d340' : colors.onSurfaceVariant
+                                    }} />
+                                    <FlexText style={[common.bodySmall, { 
+                                        color: isGeminiNanoAvailable ? '#54d340' : colors.onSurfaceVariant,
+                                        fontWeight: '600' 
+                                    }]}>
+                                        {isGeminiNanoAvailable ? t('settings.statusReady') : t('settings.statusUnavailable')}
+                                    </FlexText>
+                                </View>
+                            </View>
                         </CustomSurface>
                     </View>
 

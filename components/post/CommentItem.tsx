@@ -3,7 +3,7 @@ import { Galeria } from "@nandorojo/galeria";
 import { Image } from "expo-image";
 import { Avatar } from "heroui-native/avatar";
 import { Spinner } from "heroui-native/spinner";
-import React, { memo } from "react";
+import React, { memo, useState, useEffect } from "react";
 import {
     StyleSheet,
     TouchableOpacity,
@@ -13,6 +13,10 @@ import { Comment } from "../../types/comment";
 import { EMOJI_ASSETS } from "../../utils/emojiResolver";
 import { parseCommentContent } from "../../viewmodels/CommentsSheetViewModel";
 import { FlexText } from "../FlexText";
+import { useTranslation } from "react-i18next";
+import { guessLanguageAsync } from "@bsky.app/expo-guess-language";
+import { useLanguageStore } from "../../stores/language";
+import { useTranslationStore } from "../../stores/translation";
 
 export interface CommentItemProps {
     comment: Comment;
@@ -50,6 +54,49 @@ export const CommentItem = memo(({
     onReply
 }: CommentItemProps) => {
     const { text, imageUrl } = parseCommentContent(comment.content);
+    const { t } = useTranslation();
+    const { translationLanguage } = useLanguageStore();
+    const { translations, translate, clearTranslation } = useTranslationStore();
+    const translation = translations[comment.id];
+    const [needsTranslation, setNeedsTranslation] = useState(false);
+
+    useEffect(() => {
+        if (!text) return;
+        // Ignore mentions/tags and check if there's any actual text to translate
+        const cleanText = text.replace(/@\w+/g, '').trim();
+        if (!cleanText) {
+            setNeedsTranslation(false);
+            return;
+        }
+
+        guessLanguageAsync(text).then((guessed: any) => {
+            const detected = guessed?.[0]?.language;
+            if (detected && detected.split('-')[0] !== translationLanguage.split('-')[0]) {
+                setNeedsTranslation(true);
+            } else {
+                setNeedsTranslation(false);
+            }
+        }).catch(() => { });
+    }, [text, translationLanguage]);
+
+    const handleTranslationPress = () => {
+        if (translation?.translatedText || translation?.translationError) {
+            clearTranslation(comment.id);
+        } else {
+            translate(comment.id, text, translationLanguage);
+        }
+    };
+
+    const displayedText = (translation?.translatedText && !translation.isTranslating) 
+        ? translation.translatedText 
+        : text;
+
+    let translateLabel: string = t('post.translate', 'Translate');
+    if (translation?.isTranslating) {
+        translateLabel = t('post.translating', 'Translating...');
+    } else if (translation?.translatedText) {
+        translateLabel = t('post.showOriginal', 'Show Original');
+    }
 
     return (
         <View style={[styles.commentItem, isReply && styles.replyCommentItem]}>
@@ -75,17 +122,24 @@ export const CommentItem = memo(({
 
                     {/* Text content (with image tags stripped) */}
                     {text.length > 0 && (
-                        <FlexText
-                            style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}
-                            parse={[
-                                {
-                                    pattern: /@\w+/g,
-                                    style: { color: colors.primary, fontWeight: '600' }
-                                }
-                            ]}
-                        >
-                            {text}
-                        </FlexText>
+                        <View>
+                            <FlexText
+                                style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}
+                                parse={[
+                                    {
+                                        pattern: /@\w+/g,
+                                        style: { color: colors.primary, fontWeight: '600' }
+                                    }
+                                ]}
+                            >
+                                {displayedText}
+                            </FlexText>
+                            {translation?.translationError && (
+                                <FlexText style={{ color: colors.error || '#ff0000', fontSize: 12, marginTop: 4 }}>
+                                    {translation.translationError}
+                                </FlexText>
+                            )}
+                        </View>
                     )}
 
                     {imageUrl && (
@@ -111,7 +165,7 @@ export const CommentItem = memo(({
                     )}
                 </View>
 
-                <View style={[common.row, { alignItems: 'center', marginTop: 4 }]}>
+                <View style={[common.row, { alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }]}>
                     <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 12 }]}>
                         {formatTimeAgo(comment.created_at)}
                     </FlexText>
@@ -126,6 +180,22 @@ export const CommentItem = memo(({
                             >
                                 <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
                                     {replyLabel}
+                                </FlexText>
+                            </TouchableOpacity>
+                        </>
+                    )}
+
+                    {(needsTranslation || !!translation) && (
+                        <>
+                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
+                            <TouchableOpacity
+                                onPress={handleTranslationPress}
+                                disabled={translation?.isTranslating}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                style={styles.actionButton}
+                            >
+                                <FlexText style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>
+                                    {translateLabel}
                                 </FlexText>
                             </TouchableOpacity>
                         </>

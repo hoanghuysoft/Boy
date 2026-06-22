@@ -14,14 +14,20 @@ import { create } from 'zustand';
 
 export type LanguageMode = 'auto' | 'manual';
 
+export const TRANSLATION_LANGUAGE_KEY = 'translation-language';
+
 interface LanguageStore {
     mode: LanguageMode;
     /** The resolved language that is currently active in i18n. */
     language: SupportedLanguage;
+    /** The preferred language for translating posts in feed. */
+    translationLanguage: SupportedLanguage;
     /** Switch to auto mode — language tracks the device locale. */
     setAuto: () => void;
     /** Pin to a specific language regardless of device locale. */
     setManual: (lang: SupportedLanguage) => void;
+    /** Set translation target language. */
+    setTranslationLanguage: (lang: SupportedLanguage) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -40,25 +46,51 @@ const getPersistedLanguage = (): SupportedLanguage => {
     return i18n.language as SupportedLanguage;
 };
 
+const getPersistedTranslationLanguage = (): SupportedLanguage => {
+    const saved = languageStorage.getString(TRANSLATION_LANGUAGE_KEY);
+    if (saved && (SUPPORTED_LANGUAGES as readonly string[]).includes(saved)) {
+        return saved as SupportedLanguage;
+    }
+    return getPersistedLanguage();
+};
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useLanguageStore = create<LanguageStore>()((set) => ({
     mode: getPersistedMode(),
     language: getPersistedLanguage(),
+    translationLanguage: getPersistedTranslationLanguage(),
 
     setAuto: () => {
         const resolved = getDeviceLanguage();
         languageStorage.set(LANGUAGE_MODE_KEY, 'auto');
         languageStorage.remove(LANGUAGE_KEY);
         i18n.changeLanguage(resolved);
-        set({ mode: 'auto', language: resolved });
+        
+        const hasSavedTranslation = languageStorage.contains(TRANSLATION_LANGUAGE_KEY);
+        const transLang = hasSavedTranslation 
+            ? (languageStorage.getString(TRANSLATION_LANGUAGE_KEY) as SupportedLanguage) 
+            : resolved;
+
+        set({ mode: 'auto', language: resolved, translationLanguage: transLang });
     },
 
     setManual: (lang) => {
         languageStorage.set(LANGUAGE_MODE_KEY, 'manual');
         languageStorage.set(LANGUAGE_KEY, lang);
         i18n.changeLanguage(lang);
-        set({ mode: 'manual', language: lang });
+
+        const hasSavedTranslation = languageStorage.contains(TRANSLATION_LANGUAGE_KEY);
+        const transLang = hasSavedTranslation 
+            ? (languageStorage.getString(TRANSLATION_LANGUAGE_KEY) as SupportedLanguage) 
+            : lang;
+
+        set({ mode: 'manual', language: lang, translationLanguage: transLang });
+    },
+
+    setTranslationLanguage: (lang) => {
+        languageStorage.set(TRANSLATION_LANGUAGE_KEY, lang);
+        set({ translationLanguage: lang });
     },
 }));
 

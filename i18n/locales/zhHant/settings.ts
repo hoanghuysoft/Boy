@@ -43,7 +43,7 @@ const settings = {
     enableAppLockDesc: '需要 6 位密碼以解鎖應用程式',
     useBiometrics: '使用生物識別',
     useBiometricsDescAvailable: '使用裝置的 {{type}} 解锁',
-    useBiometricsDescUnavailable: '此裝置上生物識別不可用',
+    useBiometricsDescUnavailable: '此裝置上生物识别不可用',
     changePasscode: '修改解鎖密碼',
     changePasscodeDesc: '更新您的 6 位解鎖密碼',
     appLocked: '應用程式已鎖定',
@@ -57,6 +57,13 @@ const settings = {
     reenterPin: '重新輸入您的 PIN 碼以驗證',
     incorrectPin: 'PIN 碼錯誤。請重試。',
     pinsDoNotMatch: 'PIN 碼不匹配。請重新開始。',
+
+    // Gemini Nano / On-device AI
+    onDeviceAi: '端側 AI (On-Device AI)',
+    geminiNanoAvailable: '此裝置支援 Gemini Nano',
+    geminiNanoUnavailable: '此裝置不支援 Gemini Nano',
+    statusReady: '就緒',
+    statusUnavailable: '不可用',
 } as const;
 
 export default settings;

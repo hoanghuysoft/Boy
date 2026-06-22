@@ -57,6 +57,13 @@ const settings = {
     reenterPin: 'Re-enter your PIN to verify',
     incorrectPin: 'Incorrect PIN. Please try again.',
     pinsDoNotMatch: 'PINs do not match. Please start over.',
+
+    // Gemini Nano / On-device AI
+    onDeviceAi: 'On-Device AI',
+    geminiNanoAvailable: 'Gemini Nano is available on this device',
+    geminiNanoUnavailable: 'Gemini Nano is not available on this device',
+    statusReady: 'Ready',
+    statusUnavailable: 'Unavailable',
 } as const;
 
 export default settings;

@@ -10,6 +10,19 @@ const post = {
         report: 'Report',
         editPost: 'Edit Post',
         deletePost: 'Delete Post',
+        translate: 'Translate',
+        hideTranslation: 'Hide Translation',
+        summarize: 'Summarize with WeLove AI',
+    },
+
+    summary: {
+        title: 'WeLove AI Summary',
+        generating: 'Generating summary with WeLove AI...',
+        failed: 'Failed to generate summary.',
+        copied: 'Summary copied to clipboard!',
+        copy: 'Copy Summary',
+        close: 'Close',
+        retry: 'Retry',
     },
 
     dialogs: {
@@ -60,6 +73,14 @@ const post = {
         emptyTitle: 'No likes yet',
         emptyBody: 'Be the first to like this post!',
     },
+
+    translate: 'Translate',
+    translating: 'Translating...',
+    translated: 'Translated',
+    showOriginal: 'Show Original',
+    changeLanguage: 'Change',
+    selectLanguage: 'Select Translation Language',
+    sameLanguageError: 'The text/caption is already in your selected language',
 } as const;
 
 export default post;

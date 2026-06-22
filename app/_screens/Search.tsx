@@ -15,6 +15,7 @@ import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   ListRenderItemInfo,
   Platform,
@@ -133,7 +134,16 @@ const SearchScreen = () => {
         }}
       >
         <TouchableOpacity
-          onPress={() => navigation.back()}
+          onPress={() => {
+            Keyboard.dismiss();
+            if (Platform.OS === "android") {
+              setTimeout(() => {
+                navigation.back();
+              }, 50);
+            } else {
+              navigation.back();
+            }
+          }}
           style={{
             backgroundColor: colors.surfaceContainer,
             borderRadius: 999,

@@ -57,6 +57,13 @@ const settings = {
     reenterPin: '重新输入您的 PIN 码以验证',
     incorrectPin: 'PIN 码错误。请重试。',
     pinsDoNotMatch: 'PIN 码不匹配。请重新开始。',
+
+    // Gemini Nano / On-device AI
+    onDeviceAi: '端侧 AI (On-Device AI)',
+    geminiNanoAvailable: '此设备支持 Gemini Nano',
+    geminiNanoUnavailable: '此设备不支持 Gemini Nano',
+    statusReady: '就绪',
+    statusUnavailable: '不可用',
 } as const;
 
 export default settings;

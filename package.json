@@ -40,7 +40,7 @@
     "@swmansion/react-native-bottom-sheet": "^0.15.3",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-query-persist-client": "^5.101.0",
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.0.0",
     "dayjs": "1.11.21",
     "emoji-regex-xs": "2.0.1",
     "expo": "~56.0.12",
@@ -101,7 +101,7 @@
     "react-native-image-colors": "2.6.0",
     "react-native-keyboard-controller": "1.21.6",
     "react-native-mmkv": "4.3.1",
-    "react-native-nitro-fetch": "^1.4.1",
+    "react-native-nitro-fetch": "^1.4.2",
     "react-native-nitro-haptics": "^0.2.3",
     "react-native-nitro-in-app-browser": "^2.0.2",
     "react-native-nitro-modules": "0.35.9",
@@ -112,7 +112,7 @@
     "react-native-parsed-text": "0.0.22",
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screen-transitions": "^3.7.1",
+    "react-native-screen-transitions": "^3.8.0",
     "react-native-screens": "4.25.2",
     "react-native-shared-element": "0.9.0-rc0",
     "react-native-svg": "15.15.4",
@@ -120,7 +120,7 @@
     "react-native-tab-view": "^4.3.1",
     "react-native-url-polyfill": "3.0.0",
     "react-native-web": "~0.21.2",
-    "react-native-webview": "13.16.1",
+    "react-native-webview": "14.0.1",
     "react-native-worklets": "0.8.3",
     "react-native-zoom-toolkit": "5.1.0",
     "react-qr-code": "2.2.0",
@@ -147,8 +147,7 @@
   "patchedDependencies": {
     "@flixsrota/player@0.3.0": "patches/@flixsrota%2Fplayer@0.3.0.patch",
     "heroui-native@1.0.4": "patches/heroui-native@1.0.4.patch",
-    "react-native-nitro-wallpaper@1.1.5": "patches/react-native-nitro-wallpaper@1.1.5.patch",
-    "react-native-screens@4.25.2": "patches/react-native-screens@4.25.2.patch"
+    "react-native-nitro-wallpaper@1.1.5": "patches/react-native-nitro-wallpaper@1.1.5.patch"
   },
   "expo": {
     "doctor": {

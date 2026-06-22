@@ -34,7 +34,7 @@ import { useProfileViewModel } from "../../viewmodels/ProfileViewModel";
 import { FlexText } from "@/components/FlexText";
 import { List } from "@/components/list";
 import { PagerWithHeader, type PagerWithHeaderChildParams } from "@/components/pager/PagerWithHeader";
-import { PostOptionsSheet } from "@/components/post";
+import { PostOptionsSheet, TranslationLanguageSheet } from "@/components/post";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { LikersSheet } from "@/components/post/LikersSheet";
 import { BriefInfoSheet } from "@/components/profile/sheets/BriefInfoSheet";
@@ -715,6 +715,7 @@ const ProfileContent = () => {
           postId={selectedCommentPostId}
           onDismiss={handleCommentSheetDismiss}
         />
+        <TranslationLanguageSheet />
 
       </View>
     </View>

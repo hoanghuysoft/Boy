@@ -10,6 +10,19 @@ const post = {
         report: '举报',
         editPost: '编辑动态',
         deletePost: '删除动态',
+        translate: '翻译',
+        hideTranslation: '隐藏翻译',
+        summarize: 'WeLove AI 智能总结',
+    },
+
+    summary: {
+        title: 'WeLove AI 总结',
+        generating: '正在使用 WeLove AI 生成总结...',
+        failed: '生成总结失败。',
+        copied: '总结已复制到剪贴板！',
+        copy: '复制总结',
+        close: '关闭',
+        retry: '重试',
     },
 
     dialogs: {
@@ -60,6 +73,14 @@ const post = {
         emptyTitle: '暂无点赞',
         emptyBody: '成为第一个点赞的人！',
     },
+
+    translate: '翻译',
+    translating: '正在翻译...',
+    translated: '已翻译',
+    showOriginal: '显示原文',
+    changeLanguage: '更改',
+    selectLanguage: '选择翻译语言',
+    sameLanguageError: '文本/字幕已是您选择的语言',
 } as const;
 
 export default post;

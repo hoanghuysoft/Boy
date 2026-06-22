@@ -57,6 +57,13 @@ const settings = {
     reenterPin: 'Nhập lại mã PIN để xác nhận',
     incorrectPin: 'Mã PIN không đúng. Vui lòng thử lại.',
     pinsDoNotMatch: 'Mã PIN không trùng khớp. Vui lòng thử lại từ đầu.',
+
+    // Gemini Nano / On-device AI
+    onDeviceAi: 'AI trên thiết bị (On-Device AI)',
+    geminiNanoAvailable: 'Gemini Nano khả dụng trên thiết bị này',
+    geminiNanoUnavailable: 'Gemini Nano không khả dụng trên thiết bị này',
+    statusReady: 'Sẵn sàng',
+    statusUnavailable: 'Không khả dụng',
 } as const;
 
 export default settings;

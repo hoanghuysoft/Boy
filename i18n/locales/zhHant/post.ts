@@ -10,6 +10,19 @@ const post = {
         report: '檢舉',
         editPost: '編輯動態',
         deletePost: '刪除動態',
+        translate: '翻譯',
+        hideTranslation: '隱藏翻譯',
+        summarize: 'WeLove AI 智能總結',
+    },
+
+    summary: {
+        title: 'WeLove AI 總結',
+        generating: '正在使用 WeLove AI 生成總結...',
+        failed: '生成總結失敗。',
+        copied: '總結已複製到剪貼簿！',
+        copy: '複製總結',
+        close: '關閉',
+        retry: '重試',
     },
 
     dialogs: {
@@ -60,6 +73,14 @@ const post = {
         emptyTitle: '暫無按讚',
         emptyBody: '成為第一個按讚的人！',
     },
+
+    translate: '翻譯',
+    translating: '正在翻譯...',
+    translated: '已翻譯',
+    showOriginal: '顯示原文',
+    changeLanguage: '更改',
+    selectLanguage: '選擇翻譯語言',
+    sameLanguageError: '文字/字幕已是您選擇的語言',
 } as const;
 
 export default post;

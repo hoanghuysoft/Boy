@@ -1,30 +1,36 @@
-import ShareIcon from "@/assets/images/svg/share-1.svg";
 import CopyIcon from "@/assets/images/svg/copy.svg";
-import EditIcon from "@/assets/images/svg/edit-1.svg";
 import DeleteIcon from "@/assets/images/svg/delete.svg";
+import EditIcon from "@/assets/images/svg/edit-1.svg";
+import ShareIcon from "@/assets/images/svg/share-1.svg";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-
-const Share = ({ size, ...props }: any) => <ShareIcon width={size} height={size} {...props} />;
-const Copy = ({ size, ...props }: any) => <CopyIcon width={size} height={size} {...props} />;
-const PenNewRound = ({ size, ...props }: any) => <EditIcon width={size} height={size} {...props} />;
-const TrashBinTrash = ({ size, ...props }: any) => <DeleteIcon width={size} height={size} {...props} />;
-const Danger = ({ size, color, ...props }: any) => <Ionicons name="warning" size={size} color={color} {...props} />;
-import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
+import * as Clipboard from "expo-clipboard";
 import { router } from "expo-router";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
 import { useToast } from "heroui-native/toast";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Clipboard, StyleSheet, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useCreatePost, useDeletePost, useSharePost } from "../../services/post";
 import { useProfile } from "../../services/userprofile";
+import { useLanguageStore } from "../../stores/language";
+import { useSettingsStore } from "../../stores/settings";
+import { useTranslationStore } from "../../stores/translation";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from "../../types/post";
 import { FlexText } from "../FlexText";
+import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
+import { PostSummarySheet } from "./PostSummarySheet";
 
+const Share = ({ size, ...props }: any) => <ShareIcon width={size} height={size} {...props} />;
+const Copy = ({ size, ...props }: any) => <CopyIcon width={size} height={size} {...props} />;
+const PenNewRound = ({ size, ...props }: any) => <EditIcon width={size} height={size} {...props} />;
+const TrashBinTrash = ({ size, ...props }: any) => <DeleteIcon width={size} height={size} {...props} />;
+const Danger = ({ size, color, ...props }: any) => <Ionicons name="warning" size={size} color={color} {...props} />;
+const SummarizeIcon = ({ size, color, ...props }: any) => <Ionicons name="sparkles" size={size} color={color} {...props} />;
 // ============================================================================
 // Types
 // ============================================================================
@@ -86,13 +92,15 @@ const OptionItem = memo(({
 
 OptionItem.displayName = "OptionItem";
 
+const TranslateIcon = ({ size, color, ...props }: any) => <Ionicons name="language" size={size} color={color} {...props} />;
+
 // ============================================================================
 // PostOptionsSheet Component
 // ============================================================================
 
-export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOptionsSheetProps>(
+export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
     ({ post, currentProfileId, onDeleted }, ref) => {
-        const { colors, typography, theme } = useThemeContext();
+        const { colors, typography } = useThemeContext();
         const common = createCommonStyles(colors, typography);
         const { t } = useTranslation();
         const { toast } = useToast();
@@ -123,35 +131,51 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
         const [dialog, setDialog] = useState<DialogConfig | null>(null);
         const closeDialog = useCallback(() => setDialog(null), []);
 
-        const [index, setIndex] = useState(0);
-        const wasOpenRef = useRef(false);
+        const sheetRef = useRef<TrueSheet>(null);
+        const isPresented = useRef(false);
+        const backHandler = useSheetBackHandler(sheetRef);
+
+        const { translations, translate, clearTranslation } = useTranslationStore();
+        const { translationLanguage } = useLanguageStore();
+        const isTranslated = post ? !!translations[post.id]?.translatedText : false;
+
+        const dismissSheet = useCallback(() => {
+            isPresented.current = false;
+            sheetRef.current?.dismiss();
+        }, []);
+
+        const { isGeminiNanoAvailable } = useSettingsStore();
+        const summarySheetRef = useRef<any>(null);
+        const MIN_SUMMARY_CHAR_LIMIT = 100;
+        const canSummarize = isGeminiNanoAvailable && post?.content && post.content.length >= MIN_SUMMARY_CHAR_LIMIT;
+
+        const handleSummarizePress = useCallback(() => {
+            dismissSheet();
+            setTimeout(() => {
+                summarySheetRef.current?.present();
+            }, 150);
+        }, [dismissSheet]);
 
         useImperativeHandle(ref, () => ({
             present: () => {
-                wasOpenRef.current = true;
-                setIndex(1);
+                isPresented.current = true;
+                sheetRef.current?.present();
             },
             dismiss: () => {
-                setIndex(0);
+                isPresented.current = false;
+                sheetRef.current?.dismiss();
             },
-        }), []);
+        } as any), []);
 
-        const dismissSheet = useCallback(() => {
-            setIndex(0);
-        }, []);
-
-        const handleIndexChange = useCallback((newIndex: number) => {
-            if (newIndex > 0) {
-                wasOpenRef.current = true;
+        const handleTranslatePress = useCallback(() => {
+            dismissSheet();
+            if (!post) return;
+            if (isTranslated) {
+                clearTranslation(post.id);
+            } else {
+                translate(post.id, post.content, translationLanguage);
             }
-            setIndex(newIndex);
-        }, []);
-
-        const handleSettle = useCallback((settledIndex: number) => {
-            if (settledIndex === 0 && wasOpenRef.current) {
-                wasOpenRef.current = false;
-            }
-        }, []);
+        }, [post, isTranslated, translate, clearTranslation, dismissSheet, translationLanguage]);
 
         const handleDelete = useCallback(() => {
             if (!post) return;
@@ -253,11 +277,11 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
             });
         }, [dismissSheet, post, t, handleDirectRepost, handleQuoteRepost, closeDialog]);
 
-        const handleCopyLink = useCallback(() => {
+        const handleCopyLink = useCallback(async () => {
             dismissSheet();
             if (post) {
                 const serverUrl = process.env.EXPO_PUBLIC_SERVER_URL || "https://welove.com";
-                Clipboard.setString(`${serverUrl}/posts/${post.id}`);
+                await Clipboard.setStringAsync(`${serverUrl}/posts/${post.id}`);
                 toast.show({ label: t('post.dialogs.copyLinkTitle'), description: t('post.dialogs.linkCopied'), variant: "success" });
             }
         }, [dismissSheet, post, t, toast]);
@@ -287,27 +311,26 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 
         return (
             <>
-                <ModalBottomSheet
-                    index={index}
-                    onIndexChange={handleIndexChange}
-                    onSettle={handleSettle}
-                    detents={[0, 'content']}
-                    scrimColor="rgba(0, 0, 0, 0.5)"
-                    surface={
-                        <View
-                            style={[
-                                StyleSheet.absoluteFill,
-                                {
-                                    backgroundColor: colors.surfaceContainer,
-                                    borderTopLeftRadius: 32,
-                                    borderTopRightRadius: 32,
-                                    overflow: "hidden",
-                                },
-                            ]}
-                        />
-                    }
+                <TrueSheet
+                    ref={sheetRef}
+                    scrollable={false}
+                    backgroundColor={colors.surfaceContainer}
+                    grabberOptions={{
+                        color: colors.onSurfaceVariant || "#C4C4C4",
+                        height: 5,
+                        width: 40,
+                    }}
+                    cornerRadius={32}
+                    detents={['auto']}
+                    onDidPresent={() => {
+                        isPresented.current = true;
+                        backHandler.onDidPresent();
+                    }}
+                    onDidDismiss={() => {
+                        isPresented.current = false;
+                        backHandler.onDidDismiss();
+                    }}
                 >
-                    <View style={[styles.grabber, { backgroundColor: colors.onSurfaceVariant || "#C4C4C4" }]} />
                     <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 20 }}>
                         {/* Header */}
                         <View className="mb-4">
@@ -334,6 +357,26 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                                 colors={colors}
                                 common={common}
                             />
+
+                            {post?.content && (
+                                <OptionItem
+                                    icon={TranslateIcon}
+                                    label={isTranslated ? t('post.optionsSheet.hideTranslation', 'Hide Translation') : t('post.optionsSheet.translate', 'Translate')}
+                                    onPress={handleTranslatePress}
+                                    colors={colors}
+                                    common={common}
+                                />
+                            )}
+
+                            {canSummarize && (
+                                <OptionItem
+                                    icon={SummarizeIcon}
+                                    label={t('post.optionsSheet.summarize')}
+                                    onPress={handleSummarizePress}
+                                    colors={colors}
+                                    common={common}
+                                />
+                            )}
 
                             {!isOwner && (
                                 <OptionItem
@@ -367,7 +410,13 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
                             )}
                         </View>
                     </View>
-                </ModalBottomSheet>
+                </TrueSheet>
+
+                <PostSummarySheet
+                    ref={summarySheetRef}
+                    postId={post?.id}
+                    content={post?.content}
+                />
 
                 <Dialog isOpen={dialog !== null} onOpenChange={(open) => !open && closeDialog()}>
                     <Dialog.Portal>
@@ -415,14 +464,3 @@ export const PostOptionsSheet = memo(forwardRef<PostOptionsSheetHandle, PostOpti
 ));
 
 PostOptionsSheet.displayName = "PostOptionsSheet";
-
-const styles = StyleSheet.create({
-    grabber: {
-        alignSelf: 'center',
-        width: 40,
-        height: 5,
-        borderRadius: 2.5,
-        marginTop: 10,
-        marginBottom: 8,
-    },
-});

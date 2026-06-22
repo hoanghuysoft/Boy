@@ -1,3 +1,6 @@
+import MusicIcon from "@/assets/images/svg/music-2.svg";
+import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
+import SoundIcon from "@/assets/images/svg/sound.svg";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import BookmarkIcon from "@/icons/bookmark";
 import BookmarkSolidIcon from "@/icons/bookmarksolid";
@@ -10,19 +13,23 @@ import { usePrecacheProfileFromPost } from "@/services/profileCache";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Media, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
+import { guessLanguageAsync } from "@bsky.app/expo-guess-language";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import MusicIcon from "@/assets/images/svg/music-2.svg";
-import SoundIcon from "@/assets/images/svg/sound.svg";
-import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
+import { SquircleView } from "expo-squircle-view";
 import { Avatar } from "heroui-native/avatar";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
-import React, { useEffect } from "react";
+import { Spinner } from "heroui-native/spinner";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { Pressable, ScrollView } from 'react-native-gesture-handler';
+import { LANGUAGE_LABELS, SupportedLanguage } from "../i18n";
+import { useLanguageStore } from "../stores/language";
+import { useTranslationStore } from "../stores/translation";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
@@ -43,6 +50,22 @@ export interface PostItemProps {
 export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, isBookmarked = false }: PostItemProps) => {
     const { width: screenWidth } = useWindowDimensions();
     const { t } = useTranslation();
+    const { translationLanguage } = useLanguageStore();
+    const { translations, translate, clearTranslation, setActivePost } = useTranslationStore();
+    const translation = translations[post.id];
+    const [needsTranslation, setNeedsTranslation] = useState(false);
+
+    useEffect(() => {
+        if (!post.content) return;
+        guessLanguageAsync(post.content).then((guessed: any) => {
+            const detected = guessed?.[0]?.language;
+            if (detected && detected.split('-')[0] !== translationLanguage.split('-')[0]) {
+                setNeedsTranslation(true);
+            } else {
+                setNeedsTranslation(false);
+            }
+        }).catch(() => { });
+    }, [post.content, translationLanguage]);
 
     const isRepost = !!post.reposted_post;
     const originalPost = post.reposted_post;
@@ -196,6 +219,112 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     captionWithoutYouTube ? (
                         <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />
                     ) : null
+                )}
+
+                {/* Translation Link / Translation Results */}
+                {needsTranslation && !translation && (
+                    <TouchableOpacity
+                        onPress={() => translate(post.id, post.content, translationLanguage)}
+                        style={{ marginTop: 4, alignSelf: 'flex-start' }}
+                    >
+                        <FlexText style={[vm.common.bodySmall, { color: vm.colors.primary, fontWeight: '600' }]}>
+                            {t('post.translate', 'Translate')}
+                        </FlexText>
+                    </TouchableOpacity>
+                )}
+
+                {translation && (
+                    <View style={{ marginTop: 8 }}>
+                        {translation.isTranslating && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
+                                <Spinner size="sm" color={vm.colors.primary} />
+                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted }]}>
+                                    {t('post.translating', 'Translating...')}
+                                </FlexText>
+                            </View>
+                        )}
+
+                        {translation.translatedText && !translation.isTranslating && (
+                            <SquircleView cornerSmoothing={100} preserveSmoothing style={{
+                                padding: 12,
+                                marginTop: 6,
+                                borderWidth: 1,
+                                borderColor: vm.colors.outlineVariant,
+                                borderRadius: 16,
+                                gap: 6,
+                                position: 'relative',
+                            }}>
+                                <View style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap',
+                                    paddingRight: 24, // Leave space for close button
+                                }}>
+                                    {translation.detectedLanguage ? (
+                                        <>
+                                            <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11 }]}>
+                                                {LANGUAGE_LABELS[translation.detectedLanguage as SupportedLanguage] || translation.detectedLanguage.toUpperCase()}
+                                            </FlexText>
+                                            <Ionicons name="arrow-forward" size={10} color={vm.colors.onSurfaceVariant} style={{ marginHorizontal: 4 }} />
+                                            <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11 }]}>
+                                                {LANGUAGE_LABELS[translation.targetLanguage as SupportedLanguage] || translation.targetLanguage.toUpperCase()}
+                                            </FlexText>
+                                        </>
+                                    ) : (
+                                        <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11 }]}>
+                                            {t('post.translated', 'Translated')}
+                                        </FlexText>
+                                    )}
+
+                                    <FlexText style={{ color: vm.colors.onSurfaceVariant, fontSize: 11, marginHorizontal: 4 }}>
+                                        &middot;
+                                    </FlexText>
+
+                                    <TouchableOpacity onPress={() => {
+                                        setActivePost(post.id, post.content);
+                                        TrueSheet.present('translation-language-sheet');
+                                    }}>
+                                        <FlexText style={[vm.common.label, { color: vm.colors.primary, fontSize: 11, fontWeight: '600' }]}>
+                                            {t('post.changeLanguage', 'Change')}
+                                        </FlexText>
+                                    </TouchableOpacity>
+                                </View>
+                                <FlexText selectable style={[vm.common.body, { fontSize: 14, color: vm.colors.onSurface, marginTop: 2 }]}>
+                                    {translation.translatedText}
+                                </FlexText>
+                                <TouchableOpacity
+                                    onPress={() => clearTranslation(post.id)}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 10,
+                                        right: 10,
+                                        padding: 4,
+                                    }}
+                                >
+                                    <Ionicons name="close" size={16} color={vm.colors.onSurfaceVariant} />
+                                </TouchableOpacity>
+                            </SquircleView>
+                        )}
+
+                        {translation.translationError && !translation.isTranslating && (
+                            <View style={{
+                                padding: 10,
+                                backgroundColor: vm.colors.errorContainer,
+                                borderRadius: 12,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 6,
+                            }}>
+                                <Ionicons name="alert-circle" size={16} color={vm.colors.onErrorContainer} />
+                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.onErrorContainer, flex: 1, fontSize: 12 }]}>
+                                    {translation.translationError}
+                                </FlexText>
+                                <TouchableOpacity onPress={() => clearTranslation(post.id)}>
+                                    <Ionicons name="close" size={14} color={vm.colors.onErrorContainer} />
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </View>
                 )}
             </View>
 

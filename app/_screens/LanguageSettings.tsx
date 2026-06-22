@@ -1,10 +1,13 @@
 import CheckCircle from "@/assets/images/svg/check-circle.svg";
 import { CustomSurface } from "@/components/CustomSurface";
 import { FlexText } from "@/components/FlexText";
+import { TranslationLanguageSheet } from "@/components/post/TranslationLanguageSheet";
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, SupportedLanguage } from "@/i18n";
 import { LanguageMode, useLanguageStore } from "@/stores/language";
+import { useTranslationStore } from "@/stores/translation";
 import { createCommonStyles } from "@/styles/common";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
@@ -50,7 +53,8 @@ const LanguageSettingsScreen = () => {
     const inset = useSafeAreaInsets();
     const { t } = useTranslation();
 
-    const { mode, language, setAuto, setManual } = useLanguageStore();
+    const { mode, language, translationLanguage, setAuto, setManual } = useLanguageStore();
+    const { setActivePost } = useTranslationStore();
 
     const options: LanguageOption[] = [
         { kind: 'auto' },
@@ -89,7 +93,7 @@ const LanguageSettingsScreen = () => {
                 {t('languageSettings.subtitle')}
             </FlexText>
 
-            <View style={{ gap: 3 }}>
+            <View style={{ gap: 3, marginBottom: 24 }}>
                 {options.map((option, index) => {
                     const active = isOptionActive(option, mode, language);
                     const label =
@@ -149,6 +153,38 @@ const LanguageSettingsScreen = () => {
                     );
                 })}
             </View>
+
+            {/* Translation Language Settings */}
+            <FlexText style={styles.title}>{t('languageSettings.translationTitle', 'Translation Language')}</FlexText>
+            <FlexText style={[common.bodySmall, { color: colors.muted, marginBottom: 16 }]}>
+                {t('languageSettings.translationSubtitle', 'Select your preferred language for translations in your feed.')}
+            </FlexText>
+
+            <View style={{ gap: 3, marginBottom: inset.bottom + 32 }}>
+                <CustomSurface
+                    position="single"
+                    onPress={() => {
+                        setActivePost(null, null);
+                        TrueSheet.present('translation-language-sheet');
+                    }}
+                    style={styles.option}
+                >
+                    <View style={styles.optionLeft}>
+                        <View style={styles.optionText}>
+                            <FlexText style={common.body}>
+                                {LANGUAGE_LABELS[translationLanguage] || translationLanguage}
+                            </FlexText>
+                            <FlexText
+                                style={[common.bodySmall, { color: colors.muted }]}
+                            >
+                                {LANGUAGE_NATIVE_NAMES[translationLanguage] || translationLanguage}
+                            </FlexText>
+                        </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color={colors.text} />
+                </CustomSurface>
+            </View>
+            <TranslationLanguageSheet />
         </ScrollView>
     );
 };
