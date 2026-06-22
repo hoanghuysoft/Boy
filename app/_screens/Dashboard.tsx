@@ -336,6 +336,13 @@ const DashboardScreen = () => {
                                 </SquircleView>
                                 <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>Notes</FlexText>
                             </TouchableOpacity>
+
+                            <TouchableOpacity onPress={() => router.push("/music")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: '#1DB954', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name="musical-notes" size={26} color="#fff" />
+                                </SquircleView>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>Music</FlexText>
+                            </TouchableOpacity>
                         </View>
                     </BlurView>
                 </SquircleView>

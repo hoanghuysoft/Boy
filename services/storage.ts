@@ -34,6 +34,7 @@
  *  show detail dominant color   | show:darkDominant:*
  *  gallery image dimensions     | dimension:v1:*
  *  settings (zustand)           | settings-storage
+ *  fb music auth session        | fb_auth:*
  */
 
 import { createMMKV } from "react-native-mmkv";

@@ -64,44 +64,46 @@ export const GlobalAudioPlayer = () => {
 
     // ── Configure player once on mount ───────────────────────────────────────
     useEffect(() => {
-        void ensureConfigured().catch((err) =>
+        const init = async () => {
+            await ensureConfigured();
+            await ensurePlaylist();
+        };
+        void init().catch((err) =>
             console.error("[GlobalAudioPlayer] configure failed:", err)
         );
     }, []);
 
     // ── Sync store → player ──────────────────────────────────────────────────
     useEffect(() => {
-        if (currentAudioUrl && currentAudioUrl !== prevUrlRef.current) {
+        if (currentAudioUrl && currentlyPlayingId && currentAudioUrl !== prevUrlRef.current) {
             prevUrlRef.current = currentAudioUrl;
             hasStartedPlayingRef.current = false; // reset until playSong resolves
 
             void (async () => {
                 try {
-                    await ensureConfigured();
-                    const playlistId = await ensurePlaylist();
-
-                    // Replace any existing track with the new one
-                    const playlist = PlayerQueue.getPlaylist(playlistId);
-                    if (playlist?.tracks.length) {
-                        await PlayerQueue.removeTrackFromPlaylist(
-                            playlistId,
-                            playlist.tracks[0].id,
-                        );
-                    }
-
-                    await PlayerQueue.addTrackToPlaylist(playlistId, {
-                        id: GLOBAL_TRACK_ID,
+                    const playlistId = globalPlaylistId || await ensurePlaylist();
+                    const trackId = currentlyPlayingId;
+                    const trackObj = {
+                        id: trackId,
                         title: metadata?.title ?? "Unknown",
                         artist: metadata?.artist ?? "",
                         album: "",
                         duration: 0,
                         url: currentAudioUrl,
-                        // artwork is optional — works fine without a cover image
                         artwork: metadata?.coverUrl ?? null,
-                    });
+                    };
 
-                    await PlayerQueue.loadPlaylist(playlistId);
-                    await TrackPlayer.playSong(GLOBAL_TRACK_ID, playlistId);
+                    const playlist = PlayerQueue.getPlaylist(playlistId);
+                    const existingTrack = playlist?.tracks.find((t) => t.id === trackId);
+
+                    if (!existingTrack) {
+                        await PlayerQueue.addTrackToPlaylist(playlistId, trackObj);
+                        await PlayerQueue.loadPlaylist(playlistId);
+                    } else if (existingTrack.url !== currentAudioUrl) {
+                        await TrackPlayer.updateTracks([trackObj]);
+                    }
+
+                    await TrackPlayer.playSong(trackId, playlistId);
                     await TrackPlayer.play();
                     hasStartedPlayingRef.current = true;
                 } catch (err) {
@@ -113,7 +115,7 @@ export const GlobalAudioPlayer = () => {
             hasStartedPlayingRef.current = false;
             void TrackPlayer.pause();
         }
-    }, [currentAudioUrl, metadata]);
+    }, [currentAudioUrl, currentlyPlayingId, metadata]);
 
     // ── Push progress → store ────────────────────────────────────────────────
     const { position, totalDuration } = useOnPlaybackProgressChange();
