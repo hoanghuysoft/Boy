@@ -258,36 +258,23 @@ const MovieHubScreen = () => {
                 <View key={index}>
                   <Pressable
                     onPress={() => {
-                      const headingLower = section.heading.toLowerCase();
-                      const urlLower = section.more_url.toLowerCase();
-                      let mode = "latest";
-                      if (
-                        headingLower.includes("popular") ||
-                        headingLower.includes("most viewed") ||
-                        headingLower.includes("rated") ||
-                        headingLower.includes("hot") ||
-                        headingLower.includes("sizzling") ||
-                        urlLower.includes("popular") ||
-                        urlLower.includes("most-viewed") ||
-                        urlLower.includes("hot")
-                      ) {
+                      // more_url is always in the shape "<mode>?site=<provider>"
+                      // e.g. "latest?site=traingon", "popular?site=gvhot", "least-viewed?site=asiangayporn"
+                      const [modePart, queryPart] = section.more_url.split("?");
+                      const searchParams = new URLSearchParams(queryPart ?? "");
+                      const site = searchParams.get("site") ?? undefined;
+
+                      // Normalize mode string to the enum expected by ShowListScreen
+                      let mode: "latest" | "popular" | "leastViewed" = "latest";
+                      if (modePart.includes("popular") || modePart.includes("hot")) {
                         mode = "popular";
-                      } else if (
-                        headingLower.includes("least viewed") ||
-                        headingLower.includes("least") ||
-                        headingLower.includes("gems") ||
-                        headingLower.includes("hidden") ||
-                        urlLower.includes("least-viewed") ||
-                        urlLower.includes("least")
-                      ) {
+                      } else if (modePart.includes("least")) {
                         mode = "leastViewed";
                       }
 
-                      const site = section.more_url.includes("site=gvhot") ? "gvhot" : "traingon";
-
                       router.push({
                         pathname: "/show_list",
-                        params: { mode, site },
+                        params: { mode, ...(site ? { site } : {}) },
                       });
                     }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}

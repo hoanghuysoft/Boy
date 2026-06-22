@@ -1,5 +1,4 @@
 import { FlexText } from "@/components/FlexText";
-import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { SearchHistoryPills } from "@/components/search/SearchHistoryPills";
 import { useCategoriesQuery } from "@/services/shows";
 import { useSearchInfiniteQuery } from "@/services/shows/search";
@@ -74,10 +73,18 @@ const SearchShowsScreen = () => {
     refetch,
   } = useSearchInfiniteQuery(submittedQuery ?? undefined);
 
-  const items = useMemo<VideoCard[]>(
-    () => data?.pages.flatMap((p) => p.items) ?? [],
-    [data],
-  );
+  const items = useMemo<VideoCard[]>(() => {
+    const rawItems = data?.pages.flatMap((p) => p.items) ?? [];
+    const seen = new Set<string>();
+    return rawItems.filter((item) => {
+      if (!item.video_url) return true;
+      if (seen.has(item.video_url)) {
+        return false;
+      }
+      seen.add(item.video_url);
+      return true;
+    });
+  }, [data]);
 
   // Keep the absolute search bar above the keyboard.
   React.useEffect(() => {
@@ -164,7 +171,6 @@ const SearchShowsScreen = () => {
         style={({ pressed }) => [
           styles.row,
           {
-            backgroundColor: colors.surfaceContainerLow,
             opacity: pressed ? 0.9 : 1,
           },
         ]}
@@ -173,7 +179,6 @@ const SearchShowsScreen = () => {
           source={{ uri: item.thumb_url }}
           style={styles.thumbnail}
           contentFit="cover"
-          placeholder={{ blurhash: resolveBlurhash((item as any).blurhash, item.video_url || item.thumb_url) }}
         />
         <View style={{ flex: 1, gap: 4 }}>
           <FlexText
@@ -281,6 +286,27 @@ const SearchShowsScreen = () => {
     );
   }, [colors, fetchNextPage, hasNextPage, isFetchingNextPage, submittedQuery, styles.loadMoreButton]);
 
+  const ListEmptyComponent = useCallback(() => {
+    if (isLoading && submittedQuery) {
+      return (
+        <SkeletonGroup isLoading={true} variant="shimmer">
+          <View style={{ padding: 16, gap: 12 }}>
+            {[1, 2, 3, 4, 5].map((key) => (
+              <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
+                <SkeletonGroup.Item style={styles.thumbnail} />
+                <View style={{ flex: 1, gap: 8 }}>
+                  <SkeletonGroup.Item style={{ height: 16, width: '80%', borderRadius: 4 }} />
+                  <SkeletonGroup.Item style={{ height: 12, width: '60%', borderRadius: 4 }} />
+                </View>
+              </View>
+            ))}
+          </View>
+        </SkeletonGroup>
+      );
+    }
+    return null;
+  }, [isLoading, submittedQuery, styles.row, styles.thumbnail]);
+
   const contentBottomPadding = insets.bottom + SEARCH_BAR_HEIGHT + 24 + keyboardHeight;
 
   return (
@@ -326,29 +352,10 @@ const SearchShowsScreen = () => {
 
       <FlatList
         data={items}
-        keyExtractor={(item) => item.video_url}
+        keyExtractor={(item, index) => item.video_url || String(index)}
         renderItem={renderItem}
         ListHeaderComponent={ListHeaderComponent}
-        ListEmptyComponent={() => {
-          if (isLoading && submittedQuery) {
-            return (
-              <SkeletonGroup isLoading={true} variant="shimmer">
-                <View style={{ padding: 16, gap: 12 }}>
-                  {[1, 2, 3, 4, 5].map((key) => (
-                    <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
-                      <SkeletonGroup.Item style={styles.thumbnail} />
-                      <View style={{ flex: 1, gap: 8 }}>
-                        <SkeletonGroup.Item style={{ height: 16, width: '80%', borderRadius: 4 }} />
-                        <SkeletonGroup.Item style={{ height: 12, width: '60%', borderRadius: 4 }} />
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              </SkeletonGroup>
-            );
-          }
-          return null;
-        }}
+        ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={ListFooterComponent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

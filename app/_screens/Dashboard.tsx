@@ -362,7 +362,7 @@ const DashboardScreen = () => {
                         </FlexText>
                         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
                             <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
-                                <TouchableOpacity onPress={() => isAdmin ? router.push('/moviehub') : toast.show({ variant: 'danger', label: 'Not available yet', placement: 'top', description: 'You are not allowed to use this service. Contact Support for more information.' })}>
+                                <TouchableOpacity onPress={() => isAdmin ? router.push('/moviehub/(home)') : toast.show({ variant: 'danger', label: 'Not available yet', placement: 'top', description: 'You are not allowed to use this service. Contact Support for more information.' })}>
                                     <Tv width={20} height={20} color={colors.onSurface} />
                                     <FlexText style={{ marginTop: 8, color: colors.onSurface, fontSize: 14, fontWeight: '600' }}>WeLoveHub</FlexText>
                                     <FlexText style={{ marginTop: 2, color: colors.onSurface, opacity: 0.65, fontSize: 12 }}>Private entertainment</FlexText>
