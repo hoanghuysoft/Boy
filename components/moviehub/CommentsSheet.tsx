@@ -1,11 +1,10 @@
 import type { IComment } from '@/services/shows';
+import { LegendList } from '@legendapp/list/react-native';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import MaterialIcons from '@react-native-vector-icons/material-icons/static';
 import { Image as ExpoImage } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollShadow } from 'heroui-native/scroll-shadow';
 import React, { ForwardedRef, useState } from 'react';
-import { FlatList, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { FlexText } from '../FlexText';
 import { CommentItem } from './CommentItem';
 
@@ -38,7 +37,7 @@ export const CommentsSheet = React.forwardRef(({ colors, insets, detentFraction,
       header={
         <View style={[styles.headerContainer, { borderBottomColor: colors.outlineVariant }]}>
           <FlexText style={[styles.headerTitle, { color: colors.onSurface }]}>
-            Comments ({comments.length})
+            Comments
           </FlexText>
           <TouchableOpacity onPress={() => (ref as any).current?.dismiss()}>
             <MaterialIcons name="close" size={24} color={colors.onSurface} />
@@ -64,21 +63,20 @@ export const CommentsSheet = React.forwardRef(({ colors, insets, detentFraction,
         </View>
       }
     >
-      <ScrollShadow LinearGradientComponent={LinearGradient} style={{ flex: 1 }}>
-        <FlatList
-          data={comments}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <CommentItem
-              comment={item}
-              colors={colors}
-            />
-          )}
-          style={{ paddingHorizontal: 12 }}
-          contentContainerStyle={{ paddingBottom: 16 }}
-          showsVerticalScrollIndicator={false}
-        />
-      </ScrollShadow>
+      <LegendList
+        data={comments}
+        keyExtractor={(item, index) => String(item.id) + String(index)}
+        renderItem={({ item }) => (
+          <CommentItem
+            comment={item}
+            colors={colors}
+          />
+        )}
+        recycleItems
+        style={{ paddingHorizontal: 12 }}
+        contentContainerStyle={{ paddingBottom: 16 }}
+        showsVerticalScrollIndicator={false}
+      />
     </TrueSheet>
   );
 });

@@ -1,3 +1,10 @@
-import AppTabs from "@/components/navigation/app-tabs";
-export default AppTabs;
+import Stack from "expo-router/stack";
 
+export default function MovieHubLayout() {
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="video_detail" />
+    </Stack>
+  );
+}

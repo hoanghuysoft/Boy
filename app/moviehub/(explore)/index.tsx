@@ -18,7 +18,7 @@ import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { Spinner } from 'heroui-native/spinner';
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
   Pressable,

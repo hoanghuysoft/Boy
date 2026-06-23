@@ -35,11 +35,14 @@ const VideoDetailScreen = () => {
   const params = useLocalSearchParams<{ video_url: string }>();
   const videoUrl = Array.isArray(params.video_url) ? params.video_url[0] : params.video_url;
 
-  const videoHeight = Math.round(width * (9 / 16));
-  const remainingHeight = screenHeight - videoHeight - insets.top;
+  const videoHeight = width ? Math.round(width * (9 / 16)) : 200;
+  const remainingHeight = screenHeight - videoHeight - (insets?.top ?? 0);
   const detentFraction = useMemo(() => {
-    return Math.max(0.1, Math.min(0.9, remainingHeight / screenHeight));
-  }, [screenHeight, videoHeight, insets.top]);
+    if (!screenHeight || isNaN(screenHeight) || screenHeight <= 0) return 0.55;
+    const fraction = (remainingHeight - 2) / screenHeight;
+    if (isNaN(fraction) || !isFinite(fraction)) return 0.55;
+    return Math.max(0.1, Math.min(0.9, fraction));
+  }, [screenHeight, remainingHeight]);
 
   const { data: videoDetail, isLoading, isError } = useVideoDetailQuery(videoUrl);
   const detail = videoDetail?.video_detail;
@@ -197,10 +200,52 @@ const VideoDetailScreen = () => {
       >
         {isLoading ? (
           <SkeletonGroup isLoading variant="shimmer">
-            <View style={{ padding: 16, gap: 12 }}>
-              <SkeletonGroup.Item style={{ height: 22, width: "75%", borderRadius: 4 }} />
-              <SkeletonGroup.Item style={{ height: 14, width: "50%", borderRadius: 4 }} />
-              <SkeletonGroup.Item style={{ height: 40, width: "100%", borderRadius: 8, marginTop: 8 }} />
+            <View style={{ padding: 16, gap: 20 }}>
+              {/* Title & Metadata Section */}
+              <View style={{ gap: 8 }}>
+                <SkeletonGroup.Item style={{ height: 24, width: "85%", borderRadius: 6 }} />
+                <SkeletonGroup.Item style={{ height: 16, width: "45%", borderRadius: 4 }} />
+              </View>
+
+              {/* Action Bar pill buttons */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 4 }}>
+                <SkeletonGroup.Item style={{ height: 36, width: 36, borderRadius: 18 }} />
+                <SkeletonGroup.Item style={{ height: 36, width: 80, borderRadius: 18 }} />
+                <SkeletonGroup.Item style={{ height: 36, width: 80, borderRadius: 18 }} />
+                <SkeletonGroup.Item style={{ height: 36, width: 80, borderRadius: 18 }} />
+              </View>
+
+              {/* Comments Preview Section */}
+              <View style={{ gap: 8, marginTop: 8 }}>
+                <SkeletonGroup.Item style={{ height: 80, width: "100%", borderRadius: 16 }} />
+              </View>
+
+              {/* Episode selector */}
+              <View style={{ gap: 12, marginTop: 8 }}>
+                <SkeletonGroup.Item style={{ height: 20, width: 100, borderRadius: 4 }} />
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                  <SkeletonGroup.Item style={{ height: 40, flex: 1, minWidth: "28%", maxWidth: "31%", borderRadius: 12 }} />
+                  <SkeletonGroup.Item style={{ height: 40, flex: 1, minWidth: "28%", maxWidth: "31%", borderRadius: 12 }} />
+                  <SkeletonGroup.Item style={{ height: 40, flex: 1, minWidth: "28%", maxWidth: "31%", borderRadius: 12 }} />
+                </View>
+              </View>
+
+              {/* Related Videos List */}
+              <View style={{ gap: 16, marginTop: 12 }}>
+                <SkeletonGroup.Item style={{ height: 20, width: 140, borderRadius: 4 }} />
+                {[1, 2].map((key) => (
+                  <View key={key} style={{ gap: 8 }}>
+                    <SkeletonGroup.Item style={{ width: "100%", height: videoHeight, borderRadius: 16 }} />
+                    <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+                      <SkeletonGroup.Item style={{ height: 32, width: 32, borderRadius: 16 }} />
+                      <View style={{ flex: 1, gap: 6 }}>
+                        <SkeletonGroup.Item style={{ height: 16, width: "80%", borderRadius: 4 }} />
+                        <SkeletonGroup.Item style={{ height: 12, width: "40%", borderRadius: 4 }} />
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
             </View>
           </SkeletonGroup>
         ) : isError ? (
@@ -257,7 +302,7 @@ const VideoDetailScreen = () => {
               item={item}
               onPress={() =>
                 router.push({
-                  pathname: "/moviehub/(explore)/video_detail",
+                  pathname: "/moviehub/video_detail",
                   params: { video_url: item.video_url },
                 })
               }

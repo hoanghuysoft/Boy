@@ -1,7 +1,5 @@
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SquircleView } from 'expo-squircle-view';
-import { ScrollShadow } from 'heroui-native/scroll-shadow';
 import React, { ForwardedRef } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { FlexText } from '../FlexText';
@@ -21,94 +19,93 @@ export const DescriptionSheet = React.forwardRef(({ colors, insets, detentFracti
       detents={[detentFraction]}
       cornerRadius={24}
       grabber
+      scrollable
       backgroundColor={colors.surface}
       dimmed={false}
     >
-      <View style={{ paddingTop: 16, paddingBottom: insets.bottom + 20 }}>
+      <View style={{ flex: 1, paddingTop: 16 }}>
         <View style={{ borderBottomWidth: 1, borderBottomColor: colors.outlineVariant, marginBottom: 8 }}>
           <FlexText style={{ color: colors.onSurface, fontSize: 22, fontWeight: "700", marginVertical: 12, paddingHorizontal: 12 }}>
             Description
           </FlexText>
         </View>
-        <ScrollShadow LinearGradientComponent={LinearGradient}>
-          <ScrollView style={{ paddingHorizontal: 0 }}>
-            <FlexText style={{ color: colors.onSurface, fontSize: 20, fontWeight: "700", marginBottom: 8, paddingHorizontal: 12 }}>
-              {detail?.title}
-            </FlexText>
+        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}>
+          <FlexText style={{ color: colors.onSurface, fontSize: 20, fontWeight: "700", marginBottom: 8, paddingHorizontal: 12 }}>
+            {detail?.title}
+          </FlexText>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 16, paddingHorizontal: 12 }}>
-              <SquircleView cornerSmoothing={100} preserveSmoothing style={[styles.metaCard, { backgroundColor: colors.surfaceContainerHigh }]}>
-                <FlexText numberOfLines={1} style={[styles.metaValue, { color: colors.onSurface }]}>
-                  {detail?.views ? detail.views.replace(/ views/i, "") : "—"}
-                </FlexText>
-                <FlexText style={[styles.metaLabel, { color: colors.onSurfaceVariant }]}>Views</FlexText>
-              </SquircleView>
-
-              {(() => {
-                const uploaded = detail?.uploaded;
-                if (!uploaded) return null;
-                const match = uploaded.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})/);
-                let date = "—", year = "—";
-                if (match) {
-                  const [_, day, month, y] = match;
-                  date = `${day} ${month.slice(0, 3)}`;
-                  year = y.length === 2 ? `20${y}` : y;
-                } else {
-                  const matchSlash = uploaded.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-                  if (matchSlash) {
-                    const [_, day, month, y] = matchSlash;
-                    date = `${day}/${month}`;
-                    year = y;
-                  } else {
-                    date = uploaded;
-                    year = "Ago";
-                  }
-                }
-                return (
-                  <SquircleView cornerSmoothing={100} preserveSmoothing style={[styles.metaCard, { backgroundColor: colors.surfaceContainerHigh }]}>
-                    <FlexText numberOfLines={1} style={[styles.metaValue, { color: colors.onSurface }]}>
-                      {date}
-                    </FlexText>
-                    <FlexText style={[styles.metaLabel, { color: colors.onSurfaceVariant }]}>{year}</FlexText>
-                  </SquircleView>
-                );
-              })()}
-
-              <SquircleView cornerSmoothing={60} preserveSmoothing style={[styles.metaCard, { backgroundColor: colors.surfaceContainerHigh }]}>
-                <FlexText numberOfLines={1} style={[styles.metaValue, { color: colors.onSurface }]}>
-                  {detail?.category || "—"}
-                </FlexText>
-                <FlexText style={[styles.metaLabel, { color: colors.onSurfaceVariant }]}>Category</FlexText>
-              </SquircleView>
-            </View>
-
-            {/* Tags section */}
-            {!!detail?.tags && detail.tags.length > 0 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}
-                style={{ marginVertical: 8 }}
-              >
-                {detail.tags.map((tag: string) => (
-                  <TouchableOpacity
-                    key={tag}
-                    onPress={() => onTagPress(tag)}
-                    style={[styles.tagPill, { backgroundColor: colors.surfaceContainerHigh }]}
-                  >
-                    <Text style={{ color: colors.onSurface, fontSize: 13, fontWeight: "500" }}>{tag}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-
-            <SquircleView cornerSmoothing={100} preserveSmoothing style={[styles.descBox, { backgroundColor: colors.surfaceContainerHigh, marginHorizontal: 12, marginTop: 12 }]}>
-              <FlexText style={{ color: colors.onSurface, fontSize: 15, lineHeight: 22 }}>
-                {detail?.description || "No description available."}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 16, paddingHorizontal: 12 }}>
+            <SquircleView cornerSmoothing={100} preserveSmoothing style={[styles.metaCard, { backgroundColor: colors.surfaceContainerHigh }]}>
+              <FlexText numberOfLines={1} style={[styles.metaValue, { color: colors.onSurface }]}>
+                {detail?.views ? detail.views.replace(/ views/i, "") : "—"}
               </FlexText>
+              <FlexText style={[styles.metaLabel, { color: colors.onSurfaceVariant }]}>Views</FlexText>
             </SquircleView>
-          </ScrollView>
-        </ScrollShadow>
+
+            {(() => {
+              const uploaded = detail?.uploaded;
+              if (!uploaded) return null;
+              const match = uploaded.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})/);
+              let date = "—", year = "—";
+              if (match) {
+                const [_, day, month, y] = match;
+                date = `${day} ${month.slice(0, 3)}`;
+                year = y.length === 2 ? `20${y}` : y;
+              } else {
+                const matchSlash = uploaded.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                if (matchSlash) {
+                  const [_, day, month, y] = matchSlash;
+                  date = `${day}/${month}`;
+                  year = y;
+                } else {
+                  date = uploaded;
+                  year = "Ago";
+                }
+              }
+              return (
+                <SquircleView cornerSmoothing={100} preserveSmoothing style={[styles.metaCard, { backgroundColor: colors.surfaceContainerHigh }]}>
+                  <FlexText numberOfLines={1} style={[styles.metaValue, { color: colors.onSurface }]}>
+                    {date}
+                  </FlexText>
+                  <FlexText style={[styles.metaLabel, { color: colors.onSurfaceVariant }]}>{year}</FlexText>
+                </SquircleView>
+              );
+            })()}
+
+            <SquircleView cornerSmoothing={60} preserveSmoothing style={[styles.metaCard, { backgroundColor: colors.surfaceContainerHigh }]}>
+              <FlexText numberOfLines={1} style={[styles.metaValue, { color: colors.onSurface }]}>
+                {detail?.category || "—"}
+              </FlexText>
+              <FlexText style={[styles.metaLabel, { color: colors.onSurfaceVariant }]}>Category</FlexText>
+            </SquircleView>
+          </View>
+
+          {/* Tags section */}
+          {!!detail?.tags && detail.tags.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}
+              style={{ marginVertical: 8 }}
+            >
+              {detail.tags.map((tag: string) => (
+                <TouchableOpacity
+                  key={tag}
+                  onPress={() => onTagPress(tag)}
+                  style={[styles.tagPill, { backgroundColor: colors.surfaceContainerHigh }]}
+                >
+                  <Text style={{ color: colors.onSurface, fontSize: 13, fontWeight: "500" }}>{tag}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+
+          <SquircleView cornerSmoothing={100} preserveSmoothing style={[styles.descBox, { backgroundColor: colors.surfaceContainerHigh, marginHorizontal: 12, marginTop: 12 }]}>
+            <FlexText style={{ color: colors.onSurface, fontSize: 15, lineHeight: 22 }}>
+              {detail?.description || "No description available."}
+            </FlexText>
+          </SquircleView>
+        </ScrollView>
       </View>
     </TrueSheet>
   );
@@ -122,6 +119,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: 14,
     height: 70,
   },
