@@ -1,6 +1,4 @@
 import MusicIcon from "@/assets/images/svg/music-2.svg";
-import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
-import SoundIcon from "@/assets/images/svg/sound.svg";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import BookmarkIcon from "@/icons/bookmark";
 import BookmarkSolidIcon from "@/icons/bookmarksolid";
@@ -349,24 +347,6 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     musicTitle={displayPost.music ? `${displayPost.music.artist} - ${displayPost.music.title}` : undefined}
                 />
 
-                {/* Video mute/unmute icon — shown when this post is actively playing a video */}
-                {vm.hasMedia && isActiveVideoPost && hasVideo && (
-                    <Pressable
-                        onPress={toggleVideoMute}
-                        style={{
-                            position: 'absolute',
-                            bottom: 24,
-                            right: vm.hasMusic ? 56 : 16,
-                            backgroundColor: 'rgba(0,0,0,0.6)',
-                            padding: 8,
-                            borderRadius: 20,
-                            zIndex: 20,
-                        }}
-                    >
-                        {isVideoMuted ? <SoundMuteIcon width={18} height={18} color="white" /> : <SoundIcon width={18} height={18} color="white" />}
-                    </Pressable>
-                )}
-
                 {/* Music icon */}
                 {vm.hasMedia && vm.hasMusic && (
                     <Pressable
@@ -374,7 +354,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         style={{
                             position: 'absolute',
                             bottom: 24,
-                            right: 16,
+                            right: hasVideo ? 56 : 16,
                             backgroundColor: 'rgba(0,0,0,0.6)',
                             padding: 8,
                             borderRadius: 20,

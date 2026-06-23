@@ -47,6 +47,7 @@ interface VideoPlayerSectionProps {
   posterUrl?: string;
   width: number;
   videoHeight: number;
+  isFocused: boolean;
 }
 
 const SEEK_SECONDS = 10;
@@ -84,6 +85,7 @@ export const VideoPlayerSection = ({
   posterUrl,
   width,
   videoHeight,
+  isFocused,
 }: VideoPlayerSectionProps) => {
   const viewRef = useRef<VideoView>(null);
   const { width: windowWidth } = useWindowDimensions();
@@ -377,14 +379,28 @@ export const VideoPlayerSection = ({
 
   return (
     <View style={containerStyle}>
-      {/* Underlying VideoView — no native controls */}
-      <VideoView
-        ref={viewRef}
-        player={player}
-        style={StyleSheet.absoluteFill}
-        nativeControls={false}
-        contentFit="contain"
-      />
+      {/* Underlying VideoView — only render when focused to avoid black screen on back navigation */}
+      {isFocused ? (
+        <VideoView
+          ref={viewRef}
+          player={player}
+          style={StyleSheet.absoluteFill}
+          nativeControls={false}
+          contentFit="contain"
+        />
+      ) : (
+        <View style={StyleSheet.absoluteFill}>
+          {posterUrl ? (
+            <ExpoImage
+              source={{ uri: posterUrl }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: "#000" }]} />
+          )}
+        </View>
+      )}
 
       {/* Buffering ring */}
       {status === "loading" && (

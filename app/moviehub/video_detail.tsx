@@ -168,6 +168,8 @@ const VideoDetailScreen = () => {
     return () => { cancelled = true; };
   }, [activeEpisodeUrl]);
 
+  const [isFocused, setIsFocused] = useState(true);
+
   // Singleton player — reused across navigations; just replace source.
   const player = useGlobalVideoPlayer();
   const activeOwnerIdRef = useGlobalVideoPlayerOwner();
@@ -187,6 +189,7 @@ const VideoDetailScreen = () => {
   // but this screen's useEffect deps didn't change so it never re-fired).
   useFocusEffect(
     useCallback(() => {
+      setIsFocused(true);
       if (!resolvedUri) return;
       activeOwnerIdRef.current = screenInstanceId;
       player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
@@ -194,6 +197,7 @@ const VideoDetailScreen = () => {
         .catch(() => { });
 
       return () => {
+        setIsFocused(false);
         // Pause only if we are still the active owner when blurred
         if (activeOwnerIdRef.current === screenInstanceId) {
           player.pause();
@@ -234,6 +238,7 @@ const VideoDetailScreen = () => {
         posterUrl={detail?.poster_url}
         width={width}
         videoHeight={videoHeight}
+        isFocused={isFocused}
       />
 
       {/* Scrollable content below the player */}
