@@ -103,7 +103,11 @@ const FeedTab: React.FC<FeedTabProps> = ({
     useFocusEffect(
         useCallback(() => {
             updateActiveVideoViewAsync();
-        }, [])
+            return () => {
+                clearActiveVideo();
+                updateActiveVideoViewAsync();
+            };
+        }, [clearActiveVideo])
     );
 
     /**

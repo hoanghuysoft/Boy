@@ -5,6 +5,7 @@ import SoundIcon from "@/assets/images/svg/sound.svg";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
+import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
@@ -63,6 +64,7 @@ const VideoCarouselItem = React.memo(({
 }: VideoCarouselItemProps) => {
     const videoRef = useRef<BlueskyVideoView>(null);
     const isMuted = useFeedVideoStore(s => s.isMuted);
+    const disableAutoplay = useSettingsStore(s => s.disableAutoplay);
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -86,6 +88,14 @@ const VideoCarouselItem = React.memo(({
     const handleFullScreenPress = useCallback(() => {
         videoRef.current?.enterFullscreen(true);
     }, []);
+
+    const handleMiddlePress = useCallback(() => {
+        if (isPlaying) {
+            handleFullScreenPress();
+        } else {
+            videoRef.current?.togglePlayback();
+        }
+    }, [isPlaying, handleFullScreenPress]);
 
     const formattedTime = useMemo(() => {
         if (isNaN(timeRemaining) || timeRemaining < 0) return '0:00';
@@ -115,11 +125,17 @@ const VideoCarouselItem = React.memo(({
                     <BlueskyVideoView
                         ref={videoRef}
                         url={videoUrl}
-                        autoplay={true}
+                        autoplay={!disableAutoplay}
                         beginMuted={isMuted}
                         style={{ width: screenWidth, height: mediaHeight, borderRadius: 0 }}
                         onActiveChange={e => {
-                            setIsActive(e.nativeEvent.isActive);
+                            const active = e.nativeEvent.isActive;
+                            setIsActive(active);
+                            if (active) {
+                                useFeedVideoStore.getState().setActiveVideo(postId, item.id, videoUrl);
+                            } else if (useFeedVideoStore.getState().activePostId === postId) {
+                                useFeedVideoStore.getState().clearActiveVideo();
+                            }
                         }}
                         onLoadingChange={e => {
                             setIsLoading(e.nativeEvent.isLoading);
@@ -148,8 +164,8 @@ const VideoCarouselItem = React.memo(({
                     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                     backgroundColor: 'transparent',
                     ...Platform.select({
-                        android: { display: showOverlay ? 'flex' : 'none' },
-                        ios: { zIndex: showOverlay ? 1 : -1 },
+                        android: {display: showOverlay ? 'flex' : 'none'},
+                        ios: {zIndex: showOverlay ? 1 : -1},
                     })
                 }}>
                     <ExpoImage
@@ -190,7 +206,7 @@ const VideoCarouselItem = React.memo(({
                     <>
                         {/* Fullscreen tap zone */}
                         <RNPressable
-                            onPress={handleFullScreenPress}
+                            onPress={handleMiddlePress}
                             style={{
                                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                             }}

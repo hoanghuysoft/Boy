@@ -37,6 +37,11 @@ interface SettingsStore {
     setMakeBottomBarCurve: (curve: boolean) => void;
     toggleMakeBottomBarCurve: () => void;
 
+    // Autoplay setting
+    disableAutoplay: boolean;
+    setDisableAutoplay: (disable: boolean) => void;
+    toggleDisableAutoplay: () => void;
+
     // Gemini Nano support
     isGeminiNanoAvailable: boolean;
     setGeminiNanoAvailable: (available: boolean) => void;
@@ -82,6 +87,11 @@ export const useSettingsStore = create<SettingsStore>()(
             setMakeBottomBarCurve: (curve) => set({ makeBottomBarCurve: curve }),
             toggleMakeBottomBarCurve: () => set((state) => ({ makeBottomBarCurve: !state.makeBottomBarCurve })),
 
+            // Autoplay setting
+            disableAutoplay: false, // Default is false (autoplay is active)
+            setDisableAutoplay: (disable) => set({ disableAutoplay: disable }),
+            toggleDisableAutoplay: () => set((state) => ({ disableAutoplay: !state.disableAutoplay })),
+
             // Gemini Nano support
             isGeminiNanoAvailable: false,
             setGeminiNanoAvailable: (available) => set({ isGeminiNanoAvailable: available }),
@@ -110,6 +120,7 @@ export const useSettingsStore = create<SettingsStore>()(
                 videoCacheSizeLimit: 500 * 1024 * 1024,
                 profileDesign: 'v3',
                 makeBottomBarCurve: false,
+                disableAutoplay: false,
                 isGeminiNanoAvailable: false,
                 imgbbApiKey: '',
                 x02ApiKey: '',

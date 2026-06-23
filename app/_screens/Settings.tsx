@@ -43,6 +43,7 @@ const SettingsScreen = () => {
         imgbbApiKey, setImgbbApiKey,
         x02ApiKey, setX02ApiKey,
         makeBottomBarCurve, toggleMakeBottomBarCurve,
+        disableAutoplay, toggleDisableAutoplay,
         isGeminiNanoAvailable, checkGeminiNanoAvailability,
     } = useSettingsStore();
     const { appLockEnabled } = useAppLockStore();
@@ -219,7 +220,7 @@ const SettingsScreen = () => {
                                 <ControlField.Indicator />
                             </ControlField>
                         </CustomSurface>
-                        <CustomSurface isLast style={styles.option}>
+                        <CustomSurface position="middle" style={styles.option}>
                             <ControlField
                                 isSelected={showCarousel}
                                 onSelectedChange={toggleCarousel}
@@ -228,6 +229,19 @@ const SettingsScreen = () => {
                                 <View style={{ flex: 1 }}>
                                     <FlexText style={common.body}>{t('settings.homeCarousel')}</FlexText>
                                     <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.homeCarouselDescription')}</FlexText>
+                                </View>
+                                <ControlField.Indicator />
+                            </ControlField>
+                        </CustomSurface>
+                        <CustomSurface isLast style={styles.option}>
+                            <ControlField
+                                isSelected={!disableAutoplay}
+                                onSelectedChange={toggleDisableAutoplay}
+                                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                            >
+                                <View style={{ flex: 1 }}>
+                                    <FlexText style={common.body}>{t('settings.autoplay')}</FlexText>
+                                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.autoplayDescription')}</FlexText>
                                 </View>
                                 <ControlField.Indicator />
                             </ControlField>

@@ -1,10 +1,10 @@
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
-import { avatar, useVideoDetailQuery, mockComments, IComment } from "@/services/shows";
+import { useGlobalVideoPlayer, useGlobalVideoPlayerOwner } from "@/contexts/VideoPlayerContext";
+import { avatar, IComment, mockComments, useVideoDetailQuery } from "@/services/shows";
 import { resolveVideoSource } from "@/services/shows/videoSource";
 import { useShowWatchlistStore } from "@/stores/showWatchlist";
-import { useGlobalVideoPlayer, useGlobalVideoPlayerOwner } from "@/contexts/VideoPlayerContext";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
@@ -20,14 +20,14 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Sub-components
-import { RelatedVideoCard } from "@/components/moviehub/RelatedVideoCard";
-import { DescriptionSheet } from "@/components/moviehub/DescriptionSheet";
-import { CommentsSheet } from "@/components/moviehub/CommentsSheet";
-import { VideoPlayerSection } from "@/components/moviehub/VideoPlayerSection";
-import { VideoInfoSection } from "@/components/moviehub/VideoInfoSection";
 import { ActionBar } from "@/components/moviehub/ActionBar";
 import { CommentsPreviewSection } from "@/components/moviehub/CommentsPreviewSection";
+import { CommentsSheet } from "@/components/moviehub/CommentsSheet";
+import { DescriptionSheet } from "@/components/moviehub/DescriptionSheet";
 import { EpisodeSelectorSection } from "@/components/moviehub/EpisodeSelectorSection";
+import { RelatedVideoCard } from "@/components/moviehub/RelatedVideoCard";
+import { VideoInfoSection } from "@/components/moviehub/VideoInfoSection";
+import { VideoPlayerSection } from "@/components/moviehub/VideoPlayerSection";
 
 const VideoDetailScreen = () => {
   const { colors } = useThemeContext();
@@ -55,13 +55,6 @@ const VideoDetailScreen = () => {
       (a) => a.name !== "Default" && detail.title.toLowerCase().includes(a.name.toLowerCase())
     ) || avatar.find((a) => a.name === "Default") || avatar[0];
   }, [detail]);
-
-  const channelName = useMemo(() => {
-    if (!matchedAvatar || matchedAvatar.name === "Default") {
-      return "MovieHub Official";
-    }
-    return matchedAvatar.name;
-  }, [matchedAvatar]);
 
   // Local comments state initialized from mockComments
   const [comments, setComments] = useState<IComment[]>(mockComments);
@@ -186,7 +179,7 @@ const VideoDetailScreen = () => {
     activeOwnerIdRef.current = screenInstanceId;
     player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
       .then(() => player.play())
-      .catch(() => {});
+      .catch(() => { });
   }, [resolvedUri, resolvedHeaders, player, screenInstanceId, activeOwnerIdRef]);
 
   // Re-apply source when screen regains focus (e.g. after back-gesture from a
@@ -198,7 +191,7 @@ const VideoDetailScreen = () => {
       activeOwnerIdRef.current = screenInstanceId;
       player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
         .then(() => player.play())
-        .catch(() => {});
+        .catch(() => { });
 
       return () => {
         // Pause only if we are still the active owner when blurred
@@ -214,7 +207,7 @@ const VideoDetailScreen = () => {
     return () => {
       if (activeOwnerIdRef.current === screenInstanceId) {
         player.pause();
-        player.replaceAsync(null).catch(() => {});
+        player.replaceAsync(null).catch(() => { });
         activeOwnerIdRef.current = null;
       }
     };

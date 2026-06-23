@@ -18,6 +18,8 @@ const settings = {
     curveBottomBar: 'Làm cong thanh điều hướng',
     homeCarousel: 'Carousel trang chủ',
     homeCarouselDescription: 'Carousel có thể chứa nội dung nhạy cảm.',
+    autoplay: 'Tự động phát video',
+    autoplayDescription: 'Tự động phát video khi lướt bảng tin.',
 
     storageCache: 'Quản lý dữ liệu tạm thời',
     videoCache: 'Dữ liệu video tạm thời',

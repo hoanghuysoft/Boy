@@ -18,6 +18,8 @@ const settings = {
     curveBottomBar: 'Curve bottom bar',
     homeCarousel: 'Home carousel',
     homeCarouselDescription: 'The carousel may contain sensitive media.',
+    autoplay: 'Autoplay videos',
+    autoplayDescription: 'Automatically play videos in the feed.',
 
     storageCache: 'Storage & Cache',
     videoCache: 'Video cache',

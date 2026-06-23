@@ -18,6 +18,8 @@ const settings = {
     curveBottomBar: '弧形底部导航栏',
     homeCarousel: '首页轮播',
     homeCarouselDescription: '轮播中可能包含敏感媒体内容。',
+    autoplay: '自动播放视频',
+    autoplayDescription: '在信息流中自动播放视频。',
 
     storageCache: '存储与缓存',
     videoCache: '视频缓存',

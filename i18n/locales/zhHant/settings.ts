@@ -18,6 +18,8 @@ const settings = {
     curveBottomBar: '弧形底部導航欄',
     homeCarousel: '首頁輪播',
     homeCarouselDescription: '輪播中可能包含敏感媒體內容。',
+    autoplay: '自動播放影片',
+    autoplayDescription: '在動態消息中自動播放影片。',
 
     storageCache: '儲存與快取',
     videoCache: '影片快取',

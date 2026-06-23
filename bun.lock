@@ -16,7 +16,7 @@
         "@flyerhq/react-native-link-preview": "1.6.0",
         "@giphy/react-native-sdk": "^6.0.1",
         "@kuss/react-native-mesh-gradient": "0.2.0",
-        "@legendapp/list": "^3.0.6",
+        "@legendapp/list": "^3.1.1",
         "@lodev09/react-native-true-sheet": "^3.11.0",
         "@nandorojo/galeria": "3.0.3",
         "@novastera-oss/rn-google-signin": "^1.1.1",
@@ -140,6 +140,7 @@
     "@shopify/react-native-skia",
   ],
   "patchedDependencies": {
+    "@bsky.app/video@0.3.6": "patches/@bsky.app%2Fvideo@0.3.6.patch",
     "heroui-native@1.0.4": "patches/heroui-native@1.0.4.patch",
     "react-native-nitro-wallpaper@1.1.5": "patches/react-native-nitro-wallpaper@1.1.5.patch",
     "@flixsrota/player@0.3.0": "patches/@flixsrota%2Fplayer@0.3.0.patch",
@@ -461,7 +462,7 @@
 
     "@kuss/react-native-mesh-gradient": ["@kuss/react-native-mesh-gradient@0.2.0", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-pZeLwuoNOklOUVdsbJBM8QIGm4MmP/TcuZHnBG8eDnBtIQRxBT7jIaQNWmZ4biGhAf16D8rLMqDh2gIHLVi6Rg=="],
 
-    "@legendapp/list": ["@legendapp/list@3.0.6", "", { "dependencies": { "use-sync-external-store": "^1.5.0" }, "peerDependencies": { "react": "*", "react-dom": "*", "react-native": "*" }, "optionalPeers": ["react-dom", "react-native"] }, "sha512-umEkE+WQpw61Ep1lLQC6f/UzXl19Jxqysg+WUP5VnvfA9TxCCj0VsxU8n2ukEFTovSIrY3ab4aFNKgJt9P1Ngg=="],
+    "@legendapp/list": ["@legendapp/list@3.1.1", "", { "dependencies": { "use-sync-external-store": "^1.5.0" }, "peerDependencies": { "react": "*", "react-dom": "*", "react-native": "*" }, "optionalPeers": ["react-dom", "react-native"] }, "sha512-SoVeZDQORyqtKQNmEculhyvwh2vp1qMuACRoOtnUxUvmua+z+KCsDK0tfwJ9bj5xEvM9EqIG5nYbPhaVe/qZJQ=="],
 
     "@lodev09/react-native-true-sheet": ["@lodev09/react-native-true-sheet@3.11.0", "", { "peerDependencies": { "@radix-ui/react-dialog": ">=1", "@radix-ui/react-presence": ">=1", "@react-navigation/core": ">=7", "react": "*", "react-native": "*", "react-native-reanimated": ">=4", "react-native-worklets": "*" }, "optionalPeers": ["@radix-ui/react-dialog", "@radix-ui/react-presence", "@react-navigation/core", "react-native-reanimated", "react-native-worklets"] }, "sha512-Dku8Gu7c0AQ4noQM+J8ndFHGR8UfqBV2vnBn9qUEERbo3kFCfhld3Jc/ygrpc62ZonSsw7f/70m2YRaxAa4nww=="],
 

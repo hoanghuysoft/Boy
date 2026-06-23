@@ -1,0 +1,12 @@
+diff --git a/android/src/main/java/expo/modules/blueskyvideo/ViewManager.kt b/android/src/main/java/expo/modules/blueskyvideo/ViewManager.kt
+--- a/android/src/main/java/expo/modules/blueskyvideo/ViewManager.kt
++++ b/android/src/main/java/expo/modules/blueskyvideo/ViewManager.kt
+@@ -38,7 +38,7 @@
+ 
+                 views.forEach { view ->
+                     if (!view.isViewableEnough()) {
+-                        return
++                        return@forEach
+                     }
+ 
+                     val position = view.getPositionOnScreen() ?: return@forEach

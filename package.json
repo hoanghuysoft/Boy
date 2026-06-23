@@ -22,7 +22,7 @@
     "@flyerhq/react-native-link-preview": "1.6.0",
     "@giphy/react-native-sdk": "^6.0.1",
     "@kuss/react-native-mesh-gradient": "0.2.0",
-    "@legendapp/list": "^3.0.6",
+    "@legendapp/list": "^3.1.1",
     "@lodev09/react-native-true-sheet": "^3.11.0",
     "@nandorojo/galeria": "3.0.3",
     "@novastera-oss/rn-google-signin": "^1.1.1",
@@ -145,6 +145,7 @@
     "@shopify/react-native-skia"
   ],
   "patchedDependencies": {
+    "@bsky.app/video@0.3.6": "patches/@bsky.app%2Fvideo@0.3.6.patch",
     "@flixsrota/player@0.3.0": "patches/@flixsrota%2Fplayer@0.3.0.patch",
     "heroui-native@1.0.4": "patches/heroui-native@1.0.4.patch",
     "react-native-nitro-wallpaper@1.1.5": "patches/react-native-nitro-wallpaper@1.1.5.patch"
