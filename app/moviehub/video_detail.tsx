@@ -2,12 +2,12 @@ import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { avatar, useVideoDetailQuery, mockComments, IComment } from "@/services/shows";
 import { resolveVideoSource } from "@/services/shows/videoSource";
 import { useShowWatchlistStore } from "@/stores/showWatchlist";
-import { useGlobalVideoPlayer } from "@/contexts/VideoPlayerContext";
+import { useGlobalVideoPlayer, useGlobalVideoPlayerOwner } from "@/contexts/VideoPlayerContext";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -177,14 +177,17 @@ const VideoDetailScreen = () => {
 
   // Singleton player — reused across navigations; just replace source.
   const player = useGlobalVideoPlayer();
+  const activeOwnerIdRef = useGlobalVideoPlayerOwner();
+  const screenInstanceId = useId();
 
   // Apply source whenever URI changes (episode switch, initial load).
   useEffect(() => {
     if (!resolvedUri) return;
+    activeOwnerIdRef.current = screenInstanceId;
     player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
       .then(() => player.play())
       .catch(() => {});
-  }, [resolvedUri, resolvedHeaders]);
+  }, [resolvedUri, resolvedHeaders, player, screenInstanceId, activeOwnerIdRef]);
 
   // Re-apply source when screen regains focus (e.g. after back-gesture from a
   // child video_detail — the singleton player was cleared by the child's cleanup
@@ -192,19 +195,30 @@ const VideoDetailScreen = () => {
   useFocusEffect(
     useCallback(() => {
       if (!resolvedUri) return;
+      activeOwnerIdRef.current = screenInstanceId;
       player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
         .then(() => player.play())
         .catch(() => {});
-    }, [resolvedUri, resolvedHeaders, player])
+
+      return () => {
+        // Pause only if we are still the active owner when blurred
+        if (activeOwnerIdRef.current === screenInstanceId) {
+          player.pause();
+        }
+      };
+    }, [resolvedUri, resolvedHeaders, player, screenInstanceId, activeOwnerIdRef])
   );
 
   // Pause + clear source on unmount so singleton doesn't keep playing in bg.
   useEffect(() => {
     return () => {
-      player.pause();
-      player.replaceAsync(null).catch(() => {});
+      if (activeOwnerIdRef.current === screenInstanceId) {
+        player.pause();
+        player.replaceAsync(null).catch(() => {});
+        activeOwnerIdRef.current = null;
+      }
     };
-  }, [player]);
+  }, [player, screenInstanceId, activeOwnerIdRef]);
 
   const handleTagPress = useCallback((tag: string) => {
     descSheetRef.current?.dismiss();
