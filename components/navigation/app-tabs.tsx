@@ -1,8 +1,18 @@
+import { useThemeContext } from '@/context/ThemeContext';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 export default function AppTabs() {
+  const { colors } = useThemeContext();
   return (
-    <NativeTabs minimizeBehavior="onScrollDown">
+    <NativeTabs
+      backgroundColor={colors.surfaceContainer}
+      indicatorColor={colors.secondaryContainer}
+      iconColor={{ default: colors.onSurfaceVariant, selected: colors.onSecondaryContainer }}
+      labelStyle={{
+        default: { color: colors.onSurfaceVariant },
+        selected: { color: colors.onSurface },
+      }}
+      minimizeBehavior="automatic">
       <NativeTabs.Trigger name="(home)">
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/home.png')}

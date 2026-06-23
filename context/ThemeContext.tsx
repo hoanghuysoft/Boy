@@ -163,8 +163,8 @@ const darkColors: ThemeColors = {
 
   secondary: "#0e64f6",
   onSecondary: "#ffffff",
-  secondaryContainer: "#001b3a",
-  onSecondaryContainer: "#5890FF",
+  secondaryContainer: "#263951",
+  onSecondaryContainer: "#0866FF",
 
   tertiary: "#1c94e6",
   onTertiary: "#ffffff",

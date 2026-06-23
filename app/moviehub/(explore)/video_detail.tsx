@@ -1,38 +1,66 @@
-import { FlexText } from "@/components/FlexText";
-import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
-import { useThemeContext } from "@/context/ThemeContext";
-import { useVideoDetailQuery } from "@/services/shows";
+import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
+import { avatar, useVideoDetailQuery, mockComments, IComment } from "@/services/shows";
 import { resolveVideoSource } from "@/services/shows/videoSource";
-import type { VideoCard } from "@/types/shows";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { Image as ExpoImage } from "expo-image";
+import { useShowWatchlistStore } from "@/stores/showWatchlist";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { router, useLocalSearchParams } from "expo-router";
-import { useVideoPlayer, VideoView } from "expo-video";
+import { useVideoPlayer } from "expo-video";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Pressable,
+  Alert,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
-  TouchableOpacity,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Sub-components
+import { RelatedVideoCard } from "@/components/moviehub/RelatedVideoCard";
+import { DescriptionSheet } from "@/components/moviehub/DescriptionSheet";
+import { CommentsSheet } from "@/components/moviehub/CommentsSheet";
+import { VideoPlayerSection } from "@/components/moviehub/VideoPlayerSection";
+import { VideoInfoSection } from "@/components/moviehub/VideoInfoSection";
+import { ActionBar } from "@/components/moviehub/ActionBar";
+import { CommentsPreviewSection } from "@/components/moviehub/CommentsPreviewSection";
+import { EpisodeSelectorSection } from "@/components/moviehub/EpisodeSelectorSection";
 
 const VideoDetailScreen = () => {
   const { colors } = useThemeContext();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height: screenHeight } = useWindowDimensions();
   const params = useLocalSearchParams<{ video_url: string }>();
   const videoUrl = Array.isArray(params.video_url) ? params.video_url[0] : params.video_url;
 
   const videoHeight = Math.round(width * (9 / 16));
+  const remainingHeight = screenHeight - videoHeight - insets.top;
+  const detentFraction = useMemo(() => {
+    return Math.max(0.1, Math.min(0.9, remainingHeight / screenHeight));
+  }, [screenHeight, videoHeight, insets.top]);
 
   const { data: videoDetail, isLoading, isError } = useVideoDetailQuery(videoUrl);
   const detail = videoDetail?.video_detail;
-  const relatedVideos = videoDetail?.related_videos ?? [];
+  const relatedVideos = Array.isArray(videoDetail?.related_videos) ? videoDetail.related_videos : [];
+
+  const matchedAvatar = useMemo(() => {
+    if (!detail?.title) return avatar[0];
+    return avatar.find(
+      (a) => a.name !== "Default" && detail.title.toLowerCase().includes(a.name.toLowerCase())
+    ) || avatar.find((a) => a.name === "Default") || avatar[0];
+  }, [detail]);
+
+  const channelName = useMemo(() => {
+    if (!matchedAvatar || matchedAvatar.name === "Default") {
+      return "MovieHub Official";
+    }
+    return matchedAvatar.name;
+  }, [matchedAvatar]);
+
+  // Local comments state initialized from mockComments
+  const [comments, setComments] = useState<IComment[]>(mockComments);
 
   // Build episode list
   const episodes = useMemo(() => {
@@ -45,11 +73,73 @@ const VideoDetailScreen = () => {
 
   // Manually overridden episode; empty means "use first"
   const [selectedEpisodeUrl, setSelectedEpisodeUrl] = useState<string>("");
-  // Derive the active URL: manual pick wins, otherwise first episode
   const activeEpisodeUrl = selectedEpisodeUrl || episodes[0]?.url || "";
   const [resolvedUri, setResolvedUri] = useState<string>("");
   const [resolvedHeaders, setResolvedHeaders] = useState<Record<string, string> | undefined>();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Watchlist (Bookmark) store hooks
+  const watchlist = useShowWatchlistStore((s) => s.watchlist);
+  const addToWatchlist = useShowWatchlistStore((s) => s.add);
+  const removeFromWatchlist = useShowWatchlistStore((s) => s.remove);
+  const styles = style(colors);
+
+  const isBookmarked = useMemo(
+    () => watchlist.some((item) => item.video_url === (videoUrl ?? "")),
+    [watchlist, videoUrl]
+  );
+
+  const handleToggleLike = () => {
+    setIsLiked((prev) => !prev);
+  };
+
+  const handleShare = async () => {
+    if (!detail) return;
+    try {
+      await Share.share({
+        message: `Watch "${detail.title}" here: ${videoUrl}`,
+        url: videoUrl,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleToggleBookmark = () => {
+    if (!detail) return;
+    if (isBookmarked) {
+      removeFromWatchlist(videoUrl ?? "");
+    } else {
+      addToWatchlist({
+        video_url: videoUrl ?? "",
+        title: detail.title,
+        thumb_url: detail.poster_url || "",
+        views: detail.views || "",
+        duration: detail.duration || "",
+        added_at: Date.now(),
+      });
+    }
+  };
+
+  const handleReport = () => {
+    Alert.alert("Report", "Thank you for reporting. We will take a look at it.");
+  };
+
+  const handleAddComment = (text: string) => {
+    const newComment: IComment = {
+      id: Date.now(),
+      userName: "Me",
+      avatarUrl: "https://api.dicebear.com/7.x/adventurer/svg?seed=Me",
+      commentText: text,
+      likes: "0",
+      timeAgo: "Just now",
+    };
+    setComments((prev) => [newComment, ...prev]);
+  };
+
+  // Sheet Refs
+  const descSheetRef = useRef<TrueSheet>(null);
+  const commentSheetRef = useRef<TrueSheet>(null);
 
   // Resolve the video source whenever the active URL changes
   useEffect(() => {
@@ -77,74 +167,30 @@ const VideoDetailScreen = () => {
     },
   );
 
-  const renderRelated = useCallback(
-    ({ item }: { item: VideoCard }) => (
-      <Pressable
-        onPress={() =>
-          router.push({
-            pathname: "/moviehub/(explore)/video_detail",
-            params: { video_url: item.video_url },
-          })
-        }
-        style={({ pressed }) => [styles.relatedRow, { opacity: pressed ? 0.85 : 1 }]}
-      >
-        <View style={styles.relatedThumbWrap}>
-          <ExpoImage
-            source={{ uri: item.thumb_url }}
-            style={styles.relatedThumb}
-            contentFit="cover"
-            placeholder={{ blurhash: resolveBlurhash((item as any).blurhash, item.video_url || item.thumb_url) }}
-          />
-          {!!item.duration && (
-            <View style={styles.durationBadge}>
-              <FlexText style={styles.durationText}>{item.duration}</FlexText>
-            </View>
-          )}
-        </View>
-        <View style={{ flex: 1, gap: 3 }}>
-          <FlexText numberOfLines={2} style={[styles.relatedTitle, { color: colors.onSurface }]}>
-            {item.title}
-          </FlexText>
-          <FlexText numberOfLines={1} style={[styles.relatedMeta, { color: colors.onSurfaceVariant }]}>
-            {[item.views, item.duration].filter(Boolean).join(" • ")}
-          </FlexText>
-        </View>
-      </Pressable>
-    ),
-    [colors],
-  );
-
-
+  const handleTagPress = useCallback((tag: string) => {
+    descSheetRef.current?.dismiss();
+    const slug = tag.startsWith("#") ? tag.slice(1) : tag;
+    router.push({
+      pathname: "/show_list",
+      params: { mode: "tag", slug },
+    });
+  }, []);
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* ── Video player (always pinned at top) ── */}
+      {/* Safe Area Spacer at Top */}
       <View style={{ height: insets.top }}></View>
-      <View style={{ width, height: videoHeight, backgroundColor: "#000" }}>
-        {resolvedUri ? (
-          <VideoView
-            player={player}
-            style={{ width: "100%", height: "100%" }}
-            nativeControls
-          />
-        ) : (
-          // Poster / loading placeholder while stream resolves
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#000" }}>
-            {detail?.poster_url ? (
-              <ExpoImage
-                source={{ uri: detail.poster_url }}
-                style={StyleSheet.absoluteFill}
-                contentFit="cover"
-              />
-            ) : null}
-            <View style={styles.loadingOverlay}>
-              <Ionicons name="play-circle" size={56} color="rgba(255,255,255,0.7)" />
-            </View>
-          </View>
-        )}
-      </View>
 
-      {/* ── Scrollable content below the player ── */}
+      {/* Video player Section */}
+      <VideoPlayerSection
+        player={player}
+        resolvedUri={resolvedUri}
+        posterUrl={detail?.poster_url}
+        width={width}
+        videoHeight={videoHeight}
+      />
+
+      {/* Scrollable content below the player */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
@@ -165,204 +211,91 @@ const VideoDetailScreen = () => {
           </View>
         ) : (
           <>
-            {/* Title + meta */}
-            <View style={{ paddingHorizontal: 12, paddingTop: 12, gap: 4 }}>
-              <FlexText style={[styles.title, { color: colors.onSurface }]}>
-                {detail?.title ?? ""}
-              </FlexText>
-              <FlexText style={[styles.meta, { color: colors.onSurfaceVariant }]}>
-                {[detail?.views, detail?.duration, detail?.uploaded].filter(Boolean).join(" · ")}
-              </FlexText>
-            </View>
+            {/* Title & Metadata Section */}
+            <VideoInfoSection
+              detail={detail}
+              colors={colors}
+              onPress={() => descSheetRef.current?.present()}
+            />
 
-            {/* Description (collapsible) */}
-            {!!detail?.description && (
-              <Pressable
-                onPress={() => setIsExpanded((v) => !v)}
-                style={{ paddingHorizontal: 12, paddingTop: 8 }}
-              >
-                <View style={[styles.descBox, { backgroundColor: colors.surfaceContainerHigh }]}>
-                  <FlexText
-                    numberOfLines={isExpanded ? undefined : 2}
-                    style={[styles.desc, { color: colors.onSurface }]}
-                  >
-                    {detail.description}
-                  </FlexText>
-                  <FlexText style={[styles.descToggle, { color: colors.primary }]}>
-                    {isExpanded ? "Show less" : "more"}
-                  </FlexText>
-                </View>
-              </Pressable>
-            )}
+            {/* Action Bar pill buttons */}
+            <ActionBar
+              colors={colors}
+              matchedAvatar={matchedAvatar}
+              isLiked={isLiked}
+              isBookmarked={isBookmarked}
+              onToggleLike={handleToggleLike}
+              onShare={handleShare}
+              onToggleBookmark={handleToggleBookmark}
+              onReport={handleReport}
+            />
 
-            {/* Episode selector (if multiple episodes) */}
-            {episodes.length > 1 && (
-              <View style={{ paddingHorizontal: 12, paddingTop: 12 }}>
-                <FlexText style={[styles.sectionLabel, { color: colors.onSurface }]}>Episodes</FlexText>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingTop: 8 }}>
-                  {episodes.map((ep) => {
-                    const isActive = ep.url === activeEpisodeUrl;
-                    return (
-                      <TouchableOpacity
-                        key={`${ep.episode}-${ep.url}`}
-                        onPress={() => setSelectedEpisodeUrl(ep.url)}
-                        activeOpacity={0.75}
-                        style={[
-                          styles.episodeChip,
-                          {
-                            backgroundColor: isActive ? colors.onSurface : colors.surfaceContainerHigh,
-                          },
-                        ]}
-                      >
-                        <FlexText
-                          style={[
-                            styles.episodeChipText,
-                            { color: isActive ? colors.surface : colors.onSurface },
-                          ]}
-                        >
-                          {`Ep ${ep.episode}`}
-                        </FlexText>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            )}
+            {/* YouTube style comments preview box */}
+            <CommentsPreviewSection
+              comments={comments}
+              colors={colors}
+              onPress={() => commentSheetRef.current?.present()}
+            />
 
-            {/* Divider */}
-            <View style={[styles.divider, { backgroundColor: colors.outlineVariant }]} />
+            {/* Episode selector */}
+            <EpisodeSelectorSection
+              episodes={episodes}
+              activeEpisodeUrl={activeEpisodeUrl}
+              onSelectEpisode={setSelectedEpisodeUrl}
+              colors={colors}
+            />
 
-            {/* Related videos label */}
-            {relatedVideos.length > 0 && (
-              <FlexText style={[styles.sectionLabel, { color: colors.onSurface, paddingHorizontal: 12, paddingTop: 4 }]}>
-                Related Videos
-              </FlexText>
-            )}
+            {/* Spacer */}
+            <View style={{ marginBottom: 16 }} />
           </>
         )}
 
-        {/* Related videos flat list (inside ScrollView via map, avoids nested FlatList) */}
+        {/* Related videos flat list */}
         {relatedVideos.map((item, index) => (
-          <View key={item.video_url || String(index)}>
-            {renderRelated({ item })}
+          <View key={item.video_url || String(index)} style={{ marginBottom: 20 }}>
+            <RelatedVideoCard
+              item={item}
+              onPress={() =>
+                router.push({
+                  pathname: "/moviehub/(explore)/video_detail",
+                  params: { video_url: item.video_url },
+                })
+              }
+              colors={colors}
+              videoHeight={videoHeight}
+              width={width}
+            />
           </View>
         ))}
       </ScrollView>
 
-      {/* Back button */}
-      {/* <TouchableOpacity
-        onPress={() => router.back()}
-        style={[
-          styles.backButton,
-          { top: insets.top + 8, backgroundColor: "rgba(0,0,0,0.55)" },
-        ]}
-      >
-        <Ionicons name="chevron-back" size={22} color="white" />
-      </TouchableOpacity> */}
+      {/* Description Bottom Sheet */}
+      <DescriptionSheet
+        ref={descSheetRef}
+        colors={colors}
+        insets={insets}
+        detentFraction={detentFraction}
+        detail={detail}
+        onTagPress={handleTagPress}
+      />
+
+      {/* Comments Bottom Sheet */}
+      <CommentsSheet
+        ref={commentSheetRef}
+        colors={colors}
+        insets={insets}
+        detentFraction={detentFraction}
+        comments={comments}
+        onAddComment={handleAddComment}
+      />
     </View>
   );
 };
 
 export default VideoDetailScreen;
 
-const styles = StyleSheet.create({
+const style = (colors: ThemeColors) => StyleSheet.create({
   screen: {
     flex: 1,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
-    lineHeight: 22,
-  },
-  meta: {
-    fontSize: 12,
-    fontWeight: "400",
-  },
-  descBox: {
-    borderRadius: 12,
-    padding: 12,
-    gap: 4,
-  },
-  desc: {
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  descToggle: {
-    fontSize: 13,
-    fontWeight: "700",
-    marginTop: 2,
-  },
-  sectionLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  divider: {
-    height: 1,
-    marginHorizontal: 12,
-    marginVertical: 12,
-  },
-  episodeChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 8,
-  },
-  episodeChipText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  relatedRow: {
-    flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  relatedThumbWrap: {
-    width: 160,
-    aspectRatio: 16 / 9,
-    borderRadius: 10,
-    overflow: "hidden",
-    position: "relative",
-  },
-  relatedThumb: {
-    width: "100%",
-    height: "100%",
-  },
-  durationBadge: {
-    position: "absolute",
-    bottom: 4,
-    right: 4,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 3,
-  },
-  durationText: {
-    color: "white",
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  relatedTitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    lineHeight: 18,
-  },
-  relatedMeta: {
-    fontSize: 11,
-    fontWeight: "400",
-  },
-  backButton: {
-    position: "absolute",
-    left: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFill,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.3)",
   },
 });
