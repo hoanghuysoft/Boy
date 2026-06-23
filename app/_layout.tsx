@@ -33,6 +33,7 @@ import '../global.css';
 import { clientPersister, queryClient } from "../services/client";
 import { useAppLockStore } from "../stores/appLock";
 import { useAutoLanguageSync } from "../stores/language";
+import { VideoPlayerProvider } from "../contexts/VideoPlayerContext";
 import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
 
 Sentry.init({
@@ -280,7 +281,9 @@ export default withSentry(function RootLayout() {
                 <SafeAreaProvider>
                   <ThemeProvider>
                     <StatusBarProvider>
-                      <RootContent />
+                      <VideoPlayerProvider>
+                        <RootContent />
+                      </VideoPlayerProvider>
                     </StatusBarProvider>
                   </ThemeProvider>
                 </SafeAreaProvider>

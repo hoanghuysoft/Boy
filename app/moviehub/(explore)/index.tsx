@@ -70,18 +70,25 @@ function flattenPages<T extends { items: VideoCard[] }>(
   );
 }
 
-/** Fisher-Yates shuffle (returns a new array, seed-agnostic but stable per call) */
-function shuffleArray<T>(arr: T[]): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
+function getHash(str: string, seed: number): number {
+  let hash = seed;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
   }
-  return out;
+  return hash;
+}
+
+function stableShuffle<T extends { video_url?: string }>(arr: T[], seed: number): T[] {
+  return [...arr].sort((a, b) => {
+    const hashA = getHash(a.video_url || '', seed);
+    const hashB = getHash(b.video_url || '', seed);
+    return hashA - hashB;
+  });
 }
 
 // ─── "All" hook — parallel fetch + shuffle ────────────────────────────────────
-function useAllShuffled(seed: number) {
+function useAllShuffled(seed: number, setSeed: React.Dispatch<React.SetStateAction<number>>) {
   const popular = usePopularInfiniteQuery(true);
   const latest = useLatestInfiniteQuery(true);
   const least = useLeastViewedInfiniteQuery(true);
@@ -105,23 +112,26 @@ function useAllShuffled(seed: number) {
       seen.add(item.video_url);
       return true;
     });
-    // seed in deps triggers re-shuffle when user taps "All" again
-    void seed;
-    return shuffleArray(deduped);
+    return stableShuffle(deduped, seed);
 
   }, [popular.data, latest.data, least.data, isLoading, seed]);
 
   const refetch = useCallback(() => {
+    setSeed((prev) => prev + 1);
     popular.refetch();
     latest.refetch();
     least.refetch();
-  }, [popular, latest, least]);
+  }, [popular, latest, least, setSeed]);
 
   return { data, isLoading, isRefetching, isFetchingNextPage, hasNextPage, refetch, fetchNextPage: () => { } };
 }
 
 // ─── Per-tab data hook ────────────────────────────────────────────────────────
-function useTabData(tab: Tab, shuffleSeed: number) {
+function useTabData(
+  tab: Tab,
+  shuffleSeed: number,
+  setShuffleSeed: React.Dispatch<React.SetStateAction<number>>
+) {
   const isAll = tab.kind === "builtin" && tab.id === "all";
   const isPopular = tab.kind === "builtin" && tab.id === "popular";
   const isNew = tab.kind === "builtin" && tab.id === "new";
@@ -129,7 +139,7 @@ function useTabData(tab: Tab, shuffleSeed: number) {
   const slug = tab.kind === "category" ? tab.slug : undefined;
 
   // All hooks must be called unconditionally (Rules of Hooks)
-  const allData = useAllShuffled(shuffleSeed);
+  const allData = useAllShuffled(shuffleSeed, setShuffleSeed);
   const popular = usePopularInfiniteQuery(isPopular);
   const latest = useLatestInfiniteQuery(isNew);
   const least = useLeastViewedInfiniteQuery(isHidden);
@@ -172,7 +182,7 @@ const ExploreScreen = () => {
   );
 
   // Data for selected tab
-  const tabQuery = useTabData(selectedTab, shuffleSeed);
+  const tabQuery = useTabData(selectedTab, shuffleSeed, setShuffleSeed);
   const items = useMemo(
     () => flattenPages(tabQuery.data?.pages as any),
     [tabQuery.data]

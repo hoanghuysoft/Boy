@@ -1,11 +1,11 @@
-import React from 'react';
-import { Pressable, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
-import { FlexText } from '../FlexText';
-import { resolveBlurhash } from '../gallery/fallbackBlurhash';
 import { avatar } from '@/services/shows';
 import type { VideoCard } from '@/types/shows';
 import Ionicons from '@react-native-vector-icons/ionicons/static';
+import { Image as ExpoImage } from 'expo-image';
+import React from 'react';
+import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlexText } from '../FlexText';
+import { resolveBlurhash } from '../gallery/fallbackBlurhash';
 
 interface RelatedVideoCardProps {
   item: VideoCard;
@@ -62,6 +62,8 @@ export const RelatedVideoCard = React.memo(({ item, onPress, colors, videoHeight
     </Pressable>
   );
 });
+
+RelatedVideoCard.displayName = "RelatedVideoCard";
 
 const styles = StyleSheet.create({
   infoRow: {

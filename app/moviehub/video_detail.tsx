@@ -2,9 +2,10 @@ import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { avatar, useVideoDetailQuery, mockComments, IComment } from "@/services/shows";
 import { resolveVideoSource } from "@/services/shows/videoSource";
 import { useShowWatchlistStore } from "@/stores/showWatchlist";
+import { useGlobalVideoPlayer } from "@/contexts/VideoPlayerContext";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import { router, useLocalSearchParams } from "expo-router";
-import { useVideoPlayer } from "expo-video";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import * as ScreenOrientation from "expo-screen-orientation";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -80,6 +81,19 @@ const VideoDetailScreen = () => {
   const [resolvedUri, setResolvedUri] = useState<string>("");
   const [resolvedHeaders, setResolvedHeaders] = useState<Record<string, string> | undefined>();
   const [isLiked, setIsLiked] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Toggle fullscreen state reactively to physical screen orientation
+  useEffect(() => {
+    const sub = ScreenOrientation.addOrientationChangeListener((event) => {
+      const orientation = event.orientationInfo.orientation;
+      const isLandscape =
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
+      setIsFullscreen(isLandscape);
+    });
+    return () => sub.remove();
+  }, []);
 
   // Watchlist (Bookmark) store hooks
   const watchlist = useShowWatchlistStore((s) => s.watchlist);
@@ -161,14 +175,36 @@ const VideoDetailScreen = () => {
     return () => { cancelled = true; };
   }, [activeEpisodeUrl]);
 
-  const player = useVideoPlayer(
-    resolvedUri
-      ? { uri: resolvedUri, headers: resolvedHeaders }
-      : null,
-    (p) => {
-      p.play();
-    },
+  // Singleton player — reused across navigations; just replace source.
+  const player = useGlobalVideoPlayer();
+
+  // Apply source whenever URI changes (episode switch, initial load).
+  useEffect(() => {
+    if (!resolvedUri) return;
+    player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
+      .then(() => player.play())
+      .catch(() => {});
+  }, [resolvedUri, resolvedHeaders]);
+
+  // Re-apply source when screen regains focus (e.g. after back-gesture from a
+  // child video_detail — the singleton player was cleared by the child's cleanup
+  // but this screen's useEffect deps didn't change so it never re-fired).
+  useFocusEffect(
+    useCallback(() => {
+      if (!resolvedUri) return;
+      player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
+        .then(() => player.play())
+        .catch(() => {});
+    }, [resolvedUri, resolvedHeaders, player])
   );
+
+  // Pause + clear source on unmount so singleton doesn't keep playing in bg.
+  useEffect(() => {
+    return () => {
+      player.pause();
+      player.replaceAsync(null).catch(() => {});
+    };
+  }, [player]);
 
   const handleTagPress = useCallback((tag: string) => {
     descSheetRef.current?.dismiss();
@@ -182,7 +218,7 @@ const VideoDetailScreen = () => {
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Safe Area Spacer at Top */}
-      <View style={{ height: insets.top }}></View>
+      {!isFullscreen && <View style={{ height: insets.top }}></View>}
 
       {/* Video player Section */}
       <VideoPlayerSection
@@ -195,6 +231,7 @@ const VideoDetailScreen = () => {
 
       {/* Scrollable content below the player */}
       <ScrollView
+        style={{ display: isFullscreen ? "none" : "flex" }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
       >
