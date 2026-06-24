@@ -1,9 +1,9 @@
 import Bookmark from '@/assets/images/svg/bookmark.svg';
-import CloudDownload from '@/assets/images/svg/cloud-download.svg';
+import CloudDownload from '@/assets/images/svg/downloadyt.svg';
 import ImageIcon from '@/assets/images/svg/image.svg';
+import Report from '@/assets/images/svg/report.svg';
 import ShareIcon from '@/assets/images/svg/shareyt.svg';
 import ThumbUp from '@/assets/images/svg/thumb-up.svg';
-import Ionicons from '@react-native-vector-icons/ionicons/static';
 import { Image as ExpoImage } from 'expo-image';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -84,6 +84,7 @@ export const ActionBar = ({
           activeOpacity={0.75}
         >
           <ShareIcon width={22} height={22} color={colors.onSurface} />
+          <Text style={[styles.actionText, { color: colors.onSurface }]}>Share</Text>
         </TouchableOpacity>
 
         {/* Save / Bookmark */}
@@ -109,7 +110,7 @@ export const ActionBar = ({
             style={[styles.actionButton, { backgroundColor: colors.surfaceContainerHigh }]}
             activeOpacity={0.75}
           >
-            <CloudDownload width={20} height={20} color={colors.onSurface} />
+            <CloudDownload width={24} height={24} color={colors.onSurface} />
             <Text style={[styles.actionText, { color: colors.onSurface }]}>Download</Text>
           </TouchableOpacity>
         )}
@@ -120,7 +121,7 @@ export const ActionBar = ({
           style={[styles.actionButton, { backgroundColor: colors.surfaceContainerHigh }]}
           activeOpacity={0.75}
         >
-          <Ionicons name="flag-outline" size={22} color={colors.onSurface} />
+          <Report width={24} height={24} color={colors.onSurface} />
           <Text style={[styles.actionText, { color: colors.onSurface }]}>Report</Text>
         </TouchableOpacity>
       </ScrollView>

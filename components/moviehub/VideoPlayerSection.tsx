@@ -10,8 +10,19 @@
  *  - Custom bottom bar: progress scrub, time, fullscreen
  *  - Fullscreen: orientation lock + zIndex overlay (no native fullscreen)
  */
+import Bookmark from '@/assets/images/svg/bookmarkyt.svg';
+import CommentIcon from '@/assets/images/svg/comment.svg';
+import Drop from '@/assets/images/svg/drop.svg';
 import PauseIcon from '@/assets/images/svg/pause.svg';
 import PlayIcon from '@/assets/images/svg/play.svg';
+import Repeat from '@/assets/images/svg/repeatyt.svg';
+import ReportIcon from '@/assets/images/svg/report.svg';
+import ShareIcon from '@/assets/images/svg/shareyt.svg';
+import ThumbUp from '@/assets/images/svg/thumb-up.svg';
+import Volume from '@/assets/images/svg/volume.svg';
+import VolumeMuted from '@/assets/images/svg/volumemute.svg';
+import ZoomIn from '@/assets/images/svg/zoomin.svg';
+import ZoomOut from '@/assets/images/svg/zoomout.svg';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { useEvent, useEventListener } from "expo";
@@ -33,19 +44,23 @@ import {
   Animated,
   BackHandler,
   LayoutAnimation,
+  Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import {
   Gesture,
   GestureDetector,
+  Pressable as GesturePressable,
 } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SystemNavigationBar from "react-native-system-navigation-bar";
+import { FlexText } from '../FlexText';
 import { VideoPlayerSeekBar } from "./VideoPlayerSeekBar";
 
 interface VideoPlayerSectionProps {
@@ -55,6 +70,15 @@ interface VideoPlayerSectionProps {
   width: number;
   videoHeight: number;
   isFocused: boolean;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
+  onToggleLike?: () => void;
+  onToggleBookmark?: () => void;
+  onCommentPress?: () => void;
+  onSharePress?: () => void;
+  onReportPress?: () => void;
+  relatedVideos?: any[];
+  onSelectRelatedVideo?: (item: any) => void;
 }
 
 const SEEK_SECONDS = 10;
@@ -128,6 +152,15 @@ export const VideoPlayerSection = ({
   width,
   videoHeight,
   isFocused,
+  isLiked = false,
+  isBookmarked = false,
+  onToggleLike,
+  onToggleBookmark,
+  onCommentPress,
+  onSharePress,
+  onReportPress,
+  relatedVideos = [],
+  onSelectRelatedVideo,
 }: VideoPlayerSectionProps) => {
   const viewRef = useRef<VideoView>(null);
   const { width: windowWidth } = useWindowDimensions();
@@ -166,6 +199,7 @@ export const VideoPlayerSection = ({
   const [status, setStatus] = useState(player.status);
   const lastSyncedSecondRef = useRef(-1);
   const [controlsVisible, setControlsVisible] = useState(false);
+  const [showRelatedOverlay, setShowRelatedOverlay] = useState(false);
   const [controlsOpacity] = useState(() => new Animated.Value(0));
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -299,27 +333,14 @@ export const VideoPlayerSection = ({
     slidingValueRef.current = val;
   }, []);
 
-  const lastSeekTime = useRef(0);
-  const lastEmailedSeekTime = useRef(0);
+
   const seekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSeek = useCallback((val: number) => {
     setSlidingValue(val);
     seekTargetTimeRef.current = val;
-
-    const now = Date.now();
-    const timeDiff = now - lastSeekTime.current;
-    const valDiff = Math.abs(val - lastEmailedSeekTime.current);
-
-    // Only seek native player if the target changes significantly (> 0.5 seconds)
-    // or if enough time has passed (> 800ms) to update it during extremely slow drags.
-    if (timeDiff > 200 && (valDiff > 0.5 || timeDiff > 800)) {
-      setPlayerTime(player, val);
-      lastSeekTime.current = now;
-      lastEmailedSeekTime.current = val;
-    }
-  }, [player, setSlidingValue]);
+  }, [setSlidingValue]);
 
   const handleSeekingChange = useCallback((seeking: boolean) => {
     const state = getSeekerState();
@@ -338,12 +359,11 @@ export const VideoPlayerSection = ({
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
       if (stabilizeTimeoutRef.current) clearTimeout(stabilizeTimeoutRef.current);
 
-      const val = slidingValueRef.current;
-      if (val !== null) {
-        setPlayerTime(player, val);
-        setCurrentTime(val);
-        seekTargetTimeRef.current = val;
-        lastEmailedSeekTime.current = val;
+      const finalSeekTime = slidingValueRef.current;
+      if (finalSeekTime !== null) {
+        setPlayerTime(player, finalSeekTime);
+        setCurrentTime(finalSeekTime);
+        seekTargetTimeRef.current = finalSeekTime;
       }
       if (state.wasPlayingOnSlide) {
         try {
@@ -491,10 +511,9 @@ export const VideoPlayerSection = ({
           console.warn("Failed to seek (released):", err);
         }
         showSeekFeedback(side);
-        showControls();
       });
     return gesture;
-  }, [player, windowWidth, showSeekFeedback, showControls]);
+  }, [player, windowWidth, showSeekFeedback]);
 
   const longPress = useMemo(() => {
     const gesture = Gesture.LongPress()
@@ -518,9 +537,8 @@ export const VideoPlayerSection = ({
   }, [player, showControls]);
 
   const combinedGesture = useMemo(() => {
-    singleTap.requireExternalGestureToFail(doubleTap);
     return Gesture.Simultaneous(
-      Gesture.Race(doubleTap, singleTap),
+      Gesture.Exclusive(doubleTap, singleTap),
       longPress
     );
   }, [doubleTap, singleTap, longPress]);
@@ -623,7 +641,7 @@ export const VideoPlayerSection = ({
             styles.bottomBar,
             { opacity: controlsOpacity },
             isFullscreen ? {
-              bottom: insets.bottom + 44,
+              bottom: insets.bottom + 115,
               left: insets.left + 16,
               right: insets.right + 16,
               paddingBottom: 0,
@@ -642,7 +660,7 @@ export const VideoPlayerSection = ({
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               {/* Mute toggle */}
-              <Pressable
+              <GesturePressable
                 onPress={() => {
                   setPlayerMuted(player, !isMuted);
                   scheduleHide();
@@ -650,15 +668,11 @@ export const VideoPlayerSection = ({
                 hitSlop={14}
                 style={styles.controlCircle}
               >
-                <Ionicons
-                  name={isMuted ? "volume-mute" : "volume-high"}
-                  size={18}
-                  color="#fff"
-                />
-              </Pressable>
+                {isMuted ? <VolumeMuted width={28} height={28} color="#fff" /> : <Volume width={28} height={28} color="#fff" />}
+              </GesturePressable>
 
               {/* Fullscreen toggle */}
-              <Pressable
+              <GesturePressable
                 onPress={() => {
                   if (isFullscreen) {
                     exitFullscreen();
@@ -669,12 +683,12 @@ export const VideoPlayerSection = ({
                 hitSlop={14}
                 style={styles.controlCircle}
               >
-                <Ionicons
-                  name={isFullscreen ? "contract" : "expand"}
-                  size={18}
-                  color="#fff"
-                />
-              </Pressable>
+                {/* Full screen */}
+                {isFullscreen ?
+                  <ZoomOut height={28} width={28} color="#fff" />
+                  :
+                  <ZoomIn height={28} width={28} color="#fff" />}
+              </GesturePressable>
             </View>
           </View>
 
@@ -692,7 +706,7 @@ export const VideoPlayerSection = ({
         style={[
           styles.absoluteSeekBarContainer,
           isFullscreen ? {
-            bottom: insets.bottom + 36,
+            bottom: insets.bottom + 86,
             left: insets.left + 16,
             right: insets.right + 16,
             opacity: controlsOpacity,
@@ -713,6 +727,188 @@ export const VideoPlayerSection = ({
         />
       </Animated.View>
 
+      {/* ── Fullscreen horizontal control pill (Like, Bookmark, Comment, Share, Report) ── */}
+      {isFullscreen && controlsVisible && (
+        <Animated.View
+          style={[
+            styles.fullscreenPillContainer,
+            {
+              bottom: insets.bottom + 12,
+              left: insets.left + 16,
+              right: insets.right + 16,
+              opacity: controlsOpacity,
+            }
+          ]}
+          pointerEvents="box-none"
+        >
+          {/* Action Icons Pill (on the left) */}
+          <View style={styles.fullscreenPill}>
+            <GesturePressable
+              onPress={() => {
+                onToggleLike?.();
+                scheduleHide();
+              }}
+              hitSlop={12}
+              style={styles.pillButton}
+            >
+              <ThumbUp
+                width={28}
+                height={28}
+                color={isLiked ? "#ff4757" : "#fff"}
+                fill={isLiked ? "#ff4757" : "none"}
+              />
+            </GesturePressable>
+
+            <GesturePressable
+              onPress={() => {
+                onToggleBookmark?.();
+                scheduleHide();
+              }}
+              hitSlop={12}
+              style={styles.pillButton}
+            >
+              <Bookmark
+                width={28}
+                height={28}
+                color={"#fff"}
+                fill={isBookmarked ? "#fff" : "none"}
+              />
+            </GesturePressable>
+
+            <GesturePressable
+              onPress={() => {
+                onCommentPress?.();
+                scheduleHide();
+              }}
+              hitSlop={12}
+              style={styles.pillButton}
+            >
+              <CommentIcon
+                width={28}
+                height={28}
+                color="#fff"
+              />
+            </GesturePressable>
+
+            <GesturePressable
+              onPress={() => {
+                onSharePress?.();
+                scheduleHide();
+              }}
+              hitSlop={12}
+              style={styles.pillButton}
+            >
+              <ShareIcon
+                width={28}
+                height={28}
+                color="#fff"
+              />
+            </GesturePressable>
+
+            <GesturePressable
+              onPress={() => {
+                onReportPress?.();
+                scheduleHide();
+              }}
+              hitSlop={12}
+              style={styles.pillButton}
+            >
+              <ReportIcon
+                width={28}
+                height={28}
+                color="#fff"
+              />
+            </GesturePressable>
+          </View>
+
+          {/* More videos button (separate element on the right) */}
+          {relatedVideos && relatedVideos.length > 0 ? (
+            <GesturePressable
+              onPress={() => {
+                setShowRelatedOverlay(true);
+                scheduleHide();
+              }}
+              style={styles.moreVideosPill}
+            >
+              <FlexText style={styles.moreVideosText}>More videos</FlexText>
+              <ExpoImage
+                source={{ uri: relatedVideos[0].thumb_url }}
+                style={styles.moreVideosThumb}
+              />
+            </GesturePressable>
+          ) : (
+            <View />
+          )}
+        </Animated.View>
+      )}
+
+      {/* ── YouTube-style horizontal scrolling related videos overlay ── */}
+      <Modal
+        visible={isFullscreen && showRelatedOverlay}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowRelatedOverlay(false)}
+      >
+        <View style={StyleSheet.absoluteFill}>
+          <View
+            style={[
+              styles.relatedOverlayContainer,
+              {
+                paddingTop: insets.top + 16,
+                paddingBottom: insets.bottom + 24,
+                paddingLeft: insets.left,
+                paddingRight: insets.right,
+              }
+            ]}
+          >
+            <View style={styles.relatedOverlayHeader}>
+              <FlexText style={styles.relatedOverlayTitle}>More videos</FlexText>
+              <Pressable
+                onPress={() => setShowRelatedOverlay(false)}
+                hitSlop={14}
+                style={styles.relatedCloseButton}
+              >
+                <MaterialIcons name="close" size={24} color="#fff" />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.relatedScrollContent}
+              style={styles.relatedScroll}
+            >
+              {relatedVideos.map((item, index) => (
+                <Pressable
+                  key={`${item.video_url}-${index}`}
+                  onPress={() => {
+                    setShowRelatedOverlay(false);
+                    onSelectRelatedVideo?.(item);
+                  }}
+                  style={styles.relatedCard}
+                >
+                  <View style={styles.relatedCardThumbContainer}>
+                    <ExpoImage
+                      source={{ uri: item.thumb_url }}
+                      style={styles.relatedCardThumb}
+                      contentFit="cover"
+                    />
+                    {!!item.duration && (
+                      <View style={styles.relatedDurationBadge}>
+                        <Text style={styles.relatedDurationText}>{item.duration}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text numberOfLines={2} style={styles.relatedCardTitle}>
+                    {item.title}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* ── Top control bar ── */}
       {controlsVisible && (
         <Animated.View
@@ -720,7 +916,7 @@ export const VideoPlayerSection = ({
             styles.topBar,
             {
               opacity: controlsOpacity,
-              top: isFullscreen ? insets.top + 8 : 8,
+              top: isFullscreen ? insets.top + 8 : 0,
               left: isFullscreen ? insets.left + 16 : 0,
               right: isFullscreen ? insets.right + 16 : 0,
             },
@@ -728,26 +924,25 @@ export const VideoPlayerSection = ({
           pointerEvents="box-none"
         >
           {/* Chevron down button */}
-          <Pressable
+          <GesturePressable
             onPress={handleChevronPress}
-            style={styles.controlCircle}
             hitSlop={14}
           >
-            <Ionicons name="chevron-down" size={22} color="#fff" />
-          </Pressable>
+            <Drop height={28} width={28} color="#fff" />
+          </GesturePressable>
 
-          {/* Loop toggle button */}
-          <Pressable
+          <GesturePressable
             onPress={toggleLoop}
-            style={[styles.controlCircle, isLooping && { backgroundColor: "rgba(255, 0, 0, 0.25)" }]}
             hitSlop={14}
+            style={{ position: 'relative', width: 28, height: 28 }}
           >
-            <Ionicons
-              name="repeat"
-              size={22}
-              color={isLooping ? "#FF0000" : "#fff"}
-            />
-          </Pressable>
+            <Repeat height={28} width={28} color={"#fff"} />
+            {isLooping && (
+              <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center' }]}>
+                <FlexText style={{ color: 'white', fontSize: 8, fontWeight: 'bold' }}>1</FlexText>
+              </View>
+            )}
+          </GesturePressable>
         </Animated.View>
       )}
 
@@ -758,12 +953,12 @@ export const VideoPlayerSection = ({
             styles.centerPlayPause,
             {
               opacity: controlsOpacity,
-              bottom: isFullscreen ? 0 : 54, // Perfect center in fullscreen
+              bottom: 0,
             },
           ]}
           pointerEvents="box-none"
         >
-          <Pressable
+          <GesturePressable
             onPress={() => {
               if (isPlaying) {
                 player.pause();
@@ -775,8 +970,8 @@ export const VideoPlayerSection = ({
             style={styles.playPauseButton}
             hitSlop={16}
           >
-            {isPlaying ? <PauseIcon width={48} height={48} color={'#fff'} /> : <PlayIcon width={48} height={48} color={'#fff'} />}
-          </Pressable>
+            {isPlaying ? <PauseIcon width={64} height={64} color={'#fff'} /> : <PlayIcon width={64} height={64} color={'#fff'} />}
+          </GesturePressable>
         </Animated.View>
       )}
     </View>
@@ -860,7 +1055,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 54,           // leave room for bottom bar
+    bottom: 0,
     justifyContent: "center",
     alignItems: "center",
     zIndex: 10,
@@ -868,8 +1063,8 @@ const styles = StyleSheet.create({
   playPauseButton: {
     backgroundColor: "rgba(0,0,0,0.45)",
     borderRadius: 36,
-    width: 72,
-    height: 72,
+    width: 64,
+    height: 64,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -886,7 +1081,7 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     position: "absolute",
-    bottom: 0,
+    bottom: 8,
     left: 0,
     right: 0,
     flexDirection: "column",
@@ -902,7 +1097,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   timePill: {
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: 999,
@@ -914,7 +1109,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   controlCircle: {
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -947,5 +1142,109 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 20,
+  },
+  fullscreenPillContainer: {
+    position: "absolute",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    zIndex: 20,
+  },
+  moreVideosPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 8,
+    paddingRight: 16,
+    paddingVertical: 8,
+    gap: 16
+  },
+  moreVideosThumb: {
+    aspectRatio: 16 / 9,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  moreVideosText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+  fullscreenPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.55)",
+    borderRadius: 999,
+    paddingHorizontal: 22,
+    paddingVertical: 8,
+    gap: 28,
+  },
+  pillButton: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  relatedOverlayContainer: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "space-between",
+    zIndex: 100,
+  },
+  relatedScroll: {
+    flexGrow: 0,
+  },
+  relatedOverlayHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  relatedOverlayTitle: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  relatedCloseButton: {
+    padding: 4,
+  },
+  relatedScrollContent: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  relatedCard: {
+    width: 210,
+    gap: 6,
+  },
+  relatedCardThumbContainer: {
+    width: 210,
+    height: 120,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "#222",
+  },
+  relatedCardThumb: {
+    width: "100%",
+    height: "100%",
+  },
+  relatedDurationBadge: {
+    position: "absolute",
+    bottom: 4,
+    right: 4,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  relatedDurationText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  relatedCardTitle: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+    lineHeight: 14,
   },
 });

@@ -10,13 +10,14 @@ interface DescriptionSheetProps {
   detentFraction: number;
   detail: any;
   onTagPress: (tag: string) => void;
+  isFullscreen?: boolean;
 }
 
-export const DescriptionSheet = React.forwardRef(({ colors, insets, detentFraction, detail, onTagPress }: DescriptionSheetProps, ref: ForwardedRef<TrueSheet>) => {
+export const DescriptionSheet = React.forwardRef(({ colors, insets, detentFraction, detail, onTagPress, isFullscreen }: DescriptionSheetProps, ref: ForwardedRef<TrueSheet>) => {
   return (
     <TrueSheet
       ref={ref}
-      detents={[detentFraction]}
+      detents={isFullscreen ? [1] : [detentFraction]}
       cornerRadius={24}
       grabber
       scrollable

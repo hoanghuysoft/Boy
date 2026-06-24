@@ -48,7 +48,7 @@ export const VideoPlayerSeekBar = React.memo(({
     const controlsActive = useSharedValue(controlsVisible ? 1 : 0);
     const isDragging = useSharedValue(false);
     const trackWidth = useSharedValue(1);        // measures actual track width
-    const startPct = useSharedValue(0);           // starting percentage on drag
+    const startPct = useSharedValue(0);
     const durationSV = useSharedValue(initialDuration);
     const bufferedPctSV = useSharedValue(0);
     const isStabilizingSV = useSharedValue(false);
@@ -92,7 +92,7 @@ export const VideoPlayerSeekBar = React.memo(({
 
     // ─── TimeUpdate listener: Updates bar and thumb entirely on UI thread ─────
     useEventListener(player, "timeUpdate", (evt) => {
-        // Skip updates if user is actively dragging the thumb
+        // Skip updates if user is actively dragging
         if (isDragging.value) return;
 
         // Stabilization filter: ignore stale updates right after seek release
@@ -141,6 +141,8 @@ export const VideoPlayerSeekBar = React.memo(({
     };
 
     // ─── RNGH Pan Gesture (v2 builder API — must wrap in useMemo) ──────────────
+    // The gesture detector is attached to the entire seekbar container.
+    // Tapping or dragging anywhere on the container height will drive the seek.
     const thumbPanGesture = useMemo(() =>
         Gesture.Pan()
             .activateAfterLongPress(0)
@@ -215,28 +217,31 @@ export const VideoPlayerSeekBar = React.memo(({
     });
 
     return (
-        <View style={styles.container} pointerEvents={controlsVisible ? "box-none" : "none"}>
-            {/* Track — measures width into shared value */}
-            <View
-                style={styles.trackContainer}
-                onLayout={(e) => {
-                    const w = e.nativeEvent.layout.width;
-                    if (w > 0) trackWidth.value = w;
-                }}
+        <GestureDetector gesture={thumbPanGesture}>
+            <View 
+                style={styles.container} 
+                pointerEvents={controlsVisible ? "auto" : "none"}
             >
-                <View style={styles.track}>
-                    <Reanimated.View style={[styles.bufferedFill, bufferedStyle]} />
-                    <Reanimated.View style={[styles.progressFill, fillStyle]} />
+                {/* Track — measures width into shared value */}
+                <View
+                    style={styles.trackContainer}
+                    onLayout={(e) => {
+                        const w = e.nativeEvent.layout.width;
+                        if (w > 0) trackWidth.value = w;
+                    }}
+                >
+                    <View style={styles.track}>
+                        <Reanimated.View style={[styles.bufferedFill, bufferedStyle]} />
+                        <Reanimated.View style={[styles.progressFill, fillStyle]} />
+                    </View>
                 </View>
-            </View>
 
-            {/* Thumb with RNGH gesture — same native gesture system as overlay */}
-            <GestureDetector gesture={thumbPanGesture}>
+                {/* Thumb — visually rendered, moves with thumbContainerStyle */}
                 <Reanimated.View style={[styles.thumbContainer, thumbContainerStyle]}>
                     <Reanimated.View style={[styles.thumbDot, thumbDotStyle]} />
                 </Reanimated.View>
-            </GestureDetector>
-        </View>
+            </View>
+        </GestureDetector>
     );
 });
 
@@ -244,14 +249,14 @@ VideoPlayerSeekBar.displayName = "VideoPlayerSeekBar";
 
 const styles = StyleSheet.create({
     container: {
-        height: 12,
+        height: 44,
         width: "100%",
         overflow: "visible",
         justifyContent: "flex-end",
     },
     trackContainer: {
         width: "100%",
-        height: 12,
+        height: 44,
         justifyContent: "flex-end",
     },
     track: {

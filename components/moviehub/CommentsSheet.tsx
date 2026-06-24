@@ -14,9 +14,10 @@ interface CommentsSheetProps {
   detentFraction: number;
   comments: IComment[];
   onAddComment: (text: string) => void;
+  isFullscreen?: boolean;
 }
 
-export const CommentsSheet = React.forwardRef(({ colors, insets, detentFraction, comments, onAddComment }: CommentsSheetProps, ref: ForwardedRef<TrueSheet>) => {
+export const CommentsSheet = React.forwardRef(({ colors, insets, detentFraction, comments, onAddComment, isFullscreen }: CommentsSheetProps, ref: ForwardedRef<TrueSheet>) => {
   const [inputText, setInputText] = useState('');
 
   const handleSend = () => {
@@ -28,7 +29,7 @@ export const CommentsSheet = React.forwardRef(({ colors, insets, detentFraction,
   return (
     <TrueSheet
       ref={ref}
-      detents={[detentFraction]}
+      detents={isFullscreen ? [1] : [detentFraction]}
       cornerRadius={24}
       grabber
       backgroundColor={colors.surface}

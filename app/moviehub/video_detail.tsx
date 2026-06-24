@@ -74,6 +74,7 @@ const VideoDetailScreen = () => {
   // Manually overridden episode; empty means "use first"
   const [selectedEpisodeUrl, setSelectedEpisodeUrl] = useState<string>("");
   const activeEpisodeUrl = selectedEpisodeUrl || episodes[0]?.url || "";
+
   const [resolvedUri, setResolvedUri] = useState<string>("");
   const [resolvedHeaders, setResolvedHeaders] = useState<Record<string, string> | undefined>();
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -301,6 +302,18 @@ const VideoDetailScreen = () => {
         width={width}
         videoHeight={videoHeight}
         isFocused={isFocused}
+        isLiked={isLiked}
+        isBookmarked={isBookmarked}
+        onToggleLike={handleToggleLike}
+        onToggleBookmark={handleToggleBookmark}
+        onCommentPress={() => commentSheetRef.current?.present()}
+        onSharePress={handleShare}
+        onReportPress={handleReport}
+        relatedVideos={relatedVideos}
+        onSelectRelatedVideo={(item) => {
+          setSelectedEpisodeUrl("");
+          router.setParams({ video_url: item.video_url });
+        }}
       />
 
       {/* Scrollable content below the player */}
@@ -449,6 +462,7 @@ const VideoDetailScreen = () => {
         detentFraction={detentFraction}
         detail={detail}
         onTagPress={handleTagPress}
+        isFullscreen={isFullscreen}
       />
 
       {/* Comments Bottom Sheet */}
@@ -459,6 +473,7 @@ const VideoDetailScreen = () => {
         detentFraction={detentFraction}
         comments={comments}
         onAddComment={handleAddComment}
+        isFullscreen={isFullscreen}
       />
     </View>
   );

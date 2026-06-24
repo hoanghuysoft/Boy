@@ -17,25 +17,25 @@ export const VideoInfoSection = ({ detail, colors, onPress }: VideoInfoSectionPr
   ].filter(Boolean).join(" · ");
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.container,
-        { opacity: pressed ? 0.85 : 1 }
-      ]}
-    >
+    <View style={styles.container}>
       <FlexText style={[styles.title, { color: colors.onSurface }]}>
         {detail?.title ?? ""}
       </FlexText>
-      <View style={styles.metaRow}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.metaRow,
+          { opacity: pressed ? 0.85 : 1 }
+        ]}
+      >
         <FlexText style={[styles.meta, { color: colors.onSurfaceVariant }]}>
           {metaText}
         </FlexText>
         <Text style={[styles.moreText, { color: colors.primary }]}>
           ...more
         </Text>
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 };
 
