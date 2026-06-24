@@ -12,24 +12,22 @@
  */
 import PauseIcon from '@/assets/images/svg/pause.svg';
 import PlayIcon from '@/assets/images/svg/play.svg';
-import { Slider } from "@expo/ui/community/slider";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { useEvent, useEventListener } from "expo";
 import { Image as ExpoImage } from "expo-image";
+import { router } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import type { VideoPlayer } from "expo-video";
 import { VideoView } from "expo-video";
-import { router } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Spinner } from "heroui-native/spinner";
 import React, {
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
-  useId,
 } from "react";
 import {
   Animated,
@@ -46,7 +44,9 @@ import {
   Gesture,
   GestureDetector,
 } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SystemNavigationBar from "react-native-system-navigation-bar";
+import { VideoPlayerSeekBar } from "./VideoPlayerSeekBar";
 
 interface VideoPlayerSectionProps {
   player: VideoPlayer;
@@ -162,6 +162,7 @@ export const VideoPlayerSection = ({
   const [isLooping, setIsLooping] = useState(player.loop);
   const [currentTime, setCurrentTime] = useState(player.currentTime);
   const [duration, setDuration] = useState(player.duration);
+  const validDuration = typeof duration === "number" && !isNaN(duration) && duration > 0 ? duration : 100;
   const [status, setStatus] = useState(player.status);
 
   // Sync state during render if player instance changes (linter-friendly prop-to-state pattern)
@@ -259,32 +260,20 @@ export const VideoPlayerSection = ({
   }, [clearHideTimer, controlsOpacity, setControlsVisible]);
 
   // ── Seeker State & Handlers ──────────────────────────────────────────────────
-  const [slidingValue, setSlidingValue] = useState<number | null>(null);
+  const [slidingValue, setSlidingValueState] = useState<number | null>(null);
+  const slidingValueRef = useRef<number | null>(null);
+
+  const setSlidingValue = useCallback((val: number | null) => {
+    setSlidingValueState(val);
+    slidingValueRef.current = val;
+  }, []);
+
   const lastSeekTime = useRef(0);
   const seekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleValueChange = useCallback((val: number) => {
-    const state = getSeekerState();
-    // Detect start of sliding
-    if (!state.isSlidingActive) {
-      state.isSlidingActive = true;
-      clearHideTimer();
-      try {
-        state.wasPlayingOnSlide = player.playing;
-        player.pause();
-      } catch {}
-    }
-
+  const handleSeek = useCallback((val: number) => {
     setSlidingValue(val);
-
-    // Cancel pending finalization
-    if (seekTimeoutRef.current) {
-      clearTimeout(seekTimeoutRef.current);
-    }
-    if (lockTimeoutRef.current) {
-      clearTimeout(lockTimeoutRef.current);
-    }
 
     // Throttle native player seeks to 150ms during active dragging
     const now = Date.now();
@@ -292,24 +281,49 @@ export const VideoPlayerSection = ({
       setPlayerTime(player, val);
       lastSeekTime.current = now;
     }
+  }, [player, setSlidingValue]);
 
-    // Debounce slider release: finalize 250ms after the last value change
-    seekTimeoutRef.current = setTimeout(() => {
-      setPlayerTime(player, val);
-      if (state.wasPlayingOnSlide) {
-        try {
-          player.play();
-        } catch {}
+  const handleSeekingChange = useCallback((seeking: boolean) => {
+    const state = getSeekerState();
+    if (seeking) {
+      // Start of seeking
+      state.isSlidingActive = true;
+      clearHideTimer();
+      try {
+        state.wasPlayingOnSlide = player.playing;
+        player.pause();
+      } catch { }
+    } else {
+      // End of seeking
+      // Cancel pending finalization timeouts
+      if (seekTimeoutRef.current) {
+        clearTimeout(seekTimeoutRef.current);
       }
-      scheduleHide();
+      if (lockTimeoutRef.current) {
+        clearTimeout(lockTimeoutRef.current);
+      }
 
-      // Lock sliding state for another 400ms to allow native seek to catch up
-      lockTimeoutRef.current = setTimeout(() => {
-        state.isSlidingActive = false;
-        setSlidingValue(null);
-      }, 400);
-    }, 250);
-  }, [player, getSeekerState, clearHideTimer, scheduleHide]);
+      // Debounce slider release: finalize 250ms after the release
+      seekTimeoutRef.current = setTimeout(() => {
+        const val = slidingValueRef.current;
+        if (val !== null) {
+          setPlayerTime(player, val);
+        }
+        if (state.wasPlayingOnSlide) {
+          try {
+            player.play();
+          } catch { }
+        }
+        scheduleHide();
+
+        // Lock sliding state for another 400ms to allow native seek to catch up
+        lockTimeoutRef.current = setTimeout(() => {
+          state.isSlidingActive = false;
+          setSlidingValue(null);
+        }, 400);
+      }, 250);
+    }
+  }, [player, getSeekerState, clearHideTimer, scheduleHide, setSlidingValue]);
 
   // Clean up seek timeouts on unmount
   useEffect(() => {
@@ -338,7 +352,7 @@ export const VideoPlayerSection = ({
     return () => {
       sub.remove();
       // Restore orientation and system navigation bar defaults on unmount
-      ScreenOrientation.unlockAsync().catch(() => {});
+      ScreenOrientation.unlockAsync().catch(() => { });
       SystemNavigationBar.fullScreen(false);
     };
   }, []);
@@ -491,7 +505,6 @@ export const VideoPlayerSection = ({
       </View>
     );
   }
-  const validDuration = typeof duration === "number" && !isNaN(duration) && duration > 0 ? duration : 100;
   const rawSliderValue = slidingValue !== null ? slidingValue : currentTime;
   const validSliderValue = Math.min(
     validDuration,
@@ -563,7 +576,16 @@ export const VideoPlayerSection = ({
       {/* ── Bottom control bar (always in tree so layout measures work) ── */}
       {controlsVisible && (
         <Animated.View
-          style={[styles.bottomBar, { opacity: controlsOpacity }]}
+          style={[
+            styles.bottomBar,
+            { opacity: controlsOpacity },
+            isFullscreen ? {
+              bottom: insets.bottom + 44,
+              left: insets.left + 16,
+              right: insets.right + 16,
+              paddingBottom: 0,
+            } : {}
+          ]}
           pointerEvents="box-none"
         >
           {/* Top Row: Time Pill and Fullscreen Toggle */}
@@ -613,19 +635,35 @@ export const VideoPlayerSection = ({
             </View>
           </View>
 
-          {/* Bottom Row: Progress track */}
-          <Slider
-            style={{ width: "100%", height: 20 }}
-            minimumValue={0}
-            maximumValue={validDuration}
-            value={validSliderValue}
-            onValueChange={handleValueChange}
-            minimumTrackTintColor="#FF0000"
-            maximumTrackTintColor="rgba(255,255,255,0.25)"
-            thumbTintColor="#FF0000"
-          />
         </Animated.View>
       )}
+
+      {/* ── Progress track (Youtube style at the very bottom edge of the player) ── */}
+      <Animated.View
+        style={[
+          styles.absoluteSeekBarContainer,
+          isFullscreen ? {
+            bottom: insets.bottom + 36,
+            left: insets.left + 16,
+            right: insets.right + 16,
+            opacity: controlsOpacity,
+          } : {
+            bottom: 0,
+            left: 0,
+            right: 0,
+            opacity: 1,
+          }
+        ]}
+      >
+        <VideoPlayerSeekBar
+          currentTime={validSliderValue}
+          duration={validDuration}
+          onSeek={handleSeek}
+          onSeekingChange={handleSeekingChange}
+          controlsVisible={controlsVisible}
+          isFullscreen={isFullscreen}
+        />
+      </Animated.View>
 
       {/* ── Top control bar ── */}
       {controlsVisible && (
@@ -634,7 +672,9 @@ export const VideoPlayerSection = ({
             styles.topBar,
             {
               opacity: controlsOpacity,
-              top: isFullscreen ? insets.top : 8,
+              top: isFullscreen ? insets.top + 8 : 8,
+              left: isFullscreen ? insets.left + 16 : 0,
+              right: isFullscreen ? insets.right + 16 : 0,
             },
           ]}
           pointerEvents="box-none"
@@ -666,7 +706,13 @@ export const VideoPlayerSection = ({
       {/* ── Center play/pause (absolute, above gesture layer via zIndex) ── */}
       {controlsVisible && (
         <Animated.View
-          style={[styles.centerPlayPause, { opacity: controlsOpacity }]}
+          style={[
+            styles.centerPlayPause,
+            {
+              opacity: controlsOpacity,
+              bottom: isFullscreen ? 0 : 54, // Perfect center in fullscreen
+            },
+          ]}
           pointerEvents="box-none"
         >
           <Pressable
@@ -771,7 +817,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 44,           // leave room for bottom bar
+    bottom: 54,           // leave room for bottom bar
     justifyContent: "center",
     alignItems: "center",
     zIndex: 10,
@@ -802,7 +848,7 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: "column",
     paddingHorizontal: 12,
-    paddingBottom: 8,
+    paddingBottom: 22,
     gap: 2,
     zIndex: 10,
   },
@@ -851,5 +897,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.25)",
     borderRadius: 2,
     width: "100%",
+  },
+  absoluteSeekBarContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
   },
 });
