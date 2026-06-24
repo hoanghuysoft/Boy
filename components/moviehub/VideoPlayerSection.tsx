@@ -10,13 +10,18 @@
  *  - Custom bottom bar: progress scrub, time, fullscreen
  *  - Fullscreen: orientation lock + zIndex overlay (no native fullscreen)
  */
+import PauseIcon from '@/assets/images/svg/pause.svg';
+import PlayIcon from '@/assets/images/svg/play.svg';
 import { Slider } from "@expo/ui/community/slider";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { useEvent, useEventListener } from "expo";
 import { Image as ExpoImage } from "expo-image";
 import * as ScreenOrientation from "expo-screen-orientation";
 import type { VideoPlayer } from "expo-video";
 import { VideoView } from "expo-video";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Spinner } from "heroui-native/spinner";
 import React, {
   useCallback,
@@ -24,9 +29,11 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useId,
 } from "react";
 import {
   Animated,
+  BackHandler,
   LayoutAnimation,
   Platform,
   Pressable,
@@ -63,21 +70,56 @@ function formatTime(seconds: number): string {
 // These helpers update the properties of the expo-video VideoPlayer instance.
 // Using external functions bypasses React Compiler/linter prop mutation checks.
 function setPlayerTime(player: VideoPlayer, time: number) {
-  player.currentTime = time;
+  try {
+    player.currentTime = time;
+  } catch (e) {
+    console.warn("Failed to set player time (released):", e);
+  }
 }
 
 function setPlayerPlaybackRate(player: VideoPlayer, rate: number) {
-  player.playbackRate = rate;
+  try {
+    player.playbackRate = rate;
+  } catch (e) {
+    console.warn("Failed to set playback rate (released):", e);
+  }
 }
 
 function getPlayerPlaybackRate(player: VideoPlayer): number {
-  return player.playbackRate;
+  try {
+    return player.playbackRate;
+  } catch (e) {
+    console.warn("Failed to get playback rate (released):", e);
+    return 1.0;
+  }
 }
 
 // Configuration setting helper
 function setPlayerTimeUpdateInterval(player: VideoPlayer, interval: number) {
-  player.timeUpdateEventInterval = interval;
+  try {
+    player.timeUpdateEventInterval = interval;
+  } catch (e) {
+    console.warn("Failed to set time update interval (released):", e);
+  }
 }
+
+function setPlayerMuted(player: VideoPlayer, muted: boolean) {
+  try {
+    player.muted = muted;
+  } catch (e) {
+    console.warn("Failed to set player muted (released):", e);
+  }
+}
+
+function setPlayerLoop(player: VideoPlayer, loop: boolean) {
+  try {
+    player.loop = loop;
+  } catch (e) {
+    console.warn("Failed to set player loop (released):", e);
+  }
+}
+
+const seekerStates = new Map<string, { isSlidingActive: boolean; wasPlayingOnSlide: boolean }>();
 
 export const VideoPlayerSection = ({
   player,
@@ -90,10 +132,34 @@ export const VideoPlayerSection = ({
   const viewRef = useRef<VideoView>(null);
   const { width: windowWidth } = useWindowDimensions();
 
+  const insets = useSafeAreaInsets();
+  const instanceId = useId();
+
+  // Initialize/Cleanup seekerState in global Map
+  useEffect(() => {
+    seekerStates.set(instanceId, { isSlidingActive: false, wasPlayingOnSlide: false });
+    return () => {
+      seekerStates.delete(instanceId);
+    };
+  }, [instanceId]);
+
+  const getSeekerState = useCallback(() => {
+    let state = seekerStates.get(instanceId);
+    if (!state) {
+      state = { isSlidingActive: false, wasPlayingOnSlide: false };
+      seekerStates.set(instanceId, state);
+    }
+    return state;
+  }, [instanceId]);
+
   // ── Player state ────────────────────────────────────────────────────────────
   const { isPlaying } = useEvent(player, "playingChange", {
     isPlaying: player.playing,
   });
+  const { muted: isMuted } = useEvent(player, "mutedChange", {
+    muted: player.muted,
+  });
+  const [isLooping, setIsLooping] = useState(player.loop);
   const [currentTime, setCurrentTime] = useState(player.currentTime);
   const [duration, setDuration] = useState(player.duration);
   const [status, setStatus] = useState(player.status);
@@ -105,6 +171,7 @@ export const VideoPlayerSection = ({
     setCurrentTime(player.currentTime);
     setDuration(player.duration);
     setStatus(player.status);
+    setIsLooping(player.loop);
   }
 
   useEventListener(player, "statusChange", ({ status: s }) => {
@@ -118,6 +185,8 @@ export const VideoPlayerSection = ({
     setCurrentTime(0);
   });
   useEventListener(player, "timeUpdate", ({ currentTime: ct }) => {
+    const state = seekerStates.get(instanceId);
+    if (state?.isSlidingActive) return;
     setCurrentTime(ct);
     if (player.duration) {
       setDuration(player.duration);
@@ -130,6 +199,21 @@ export const VideoPlayerSection = ({
       setPlayerTimeUpdateInterval(player, 0);
     };
   }, [player]);
+
+  const handleChevronPress = () => {
+    if (isFullscreen) {
+      exitFullscreen();
+    } else {
+      router.back();
+    }
+  };
+
+  const toggleLoop = () => {
+    const nextLoop = !isLooping;
+    setPlayerLoop(player, nextLoop);
+    setIsLooping(nextLoop);
+    scheduleHide();
+  };
 
   // ── Controls visibility ──────────────────────────────────────────────────────
   const [controlsVisible, setControlsVisible] = useState(false);
@@ -152,7 +236,7 @@ export const VideoPlayerSection = ({
         useNativeDriver: true,
       }).start(() => setControlsVisible(false));
     }, CONTROLS_HIDE_MS);
-  }, [clearHideTimer, controlsOpacity]);
+  }, [clearHideTimer, controlsOpacity, setControlsVisible]);
 
   const showControls = useCallback(() => {
     clearHideTimer();
@@ -163,7 +247,7 @@ export const VideoPlayerSection = ({
       useNativeDriver: true,
     }).start();
     scheduleHide();
-  }, [clearHideTimer, controlsOpacity, scheduleHide]);
+  }, [clearHideTimer, controlsOpacity, scheduleHide, setControlsVisible]);
 
   const hideControls = useCallback(() => {
     clearHideTimer();
@@ -172,22 +256,24 @@ export const VideoPlayerSection = ({
       duration: 200,
       useNativeDriver: true,
     }).start(() => setControlsVisible(false));
-  }, [clearHideTimer, controlsOpacity]);
+  }, [clearHideTimer, controlsOpacity, setControlsVisible]);
 
   // ── Seeker State & Handlers ──────────────────────────────────────────────────
   const [slidingValue, setSlidingValue] = useState<number | null>(null);
   const lastSeekTime = useRef(0);
   const seekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wasPlayingOnSlideRef = useRef(false);
-  const isSlidingActiveRef = useRef(false);
+  const lockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleValueChange = useCallback((val: number) => {
-    // Detect start of sliding on first value change
-    if (!isSlidingActiveRef.current) {
-      isSlidingActiveRef.current = true;
+    const state = getSeekerState();
+    // Detect start of sliding
+    if (!state.isSlidingActive) {
+      state.isSlidingActive = true;
       clearHideTimer();
-      wasPlayingOnSlideRef.current = player.playing;
-      player.pause();
+      try {
+        state.wasPlayingOnSlide = player.playing;
+        player.pause();
+      } catch {}
     }
 
     setSlidingValue(val);
@@ -195,6 +281,9 @@ export const VideoPlayerSection = ({
     // Cancel pending finalization
     if (seekTimeoutRef.current) {
       clearTimeout(seekTimeoutRef.current);
+    }
+    if (lockTimeoutRef.current) {
+      clearTimeout(lockTimeoutRef.current);
     }
 
     // Throttle native player seeks to 150ms during active dragging
@@ -207,21 +296,26 @@ export const VideoPlayerSection = ({
     // Debounce slider release: finalize 250ms after the last value change
     seekTimeoutRef.current = setTimeout(() => {
       setPlayerTime(player, val);
-      setSlidingValue(null);
-      isSlidingActiveRef.current = false;
-      if (wasPlayingOnSlideRef.current) {
-        player.play();
+      if (state.wasPlayingOnSlide) {
+        try {
+          player.play();
+        } catch {}
       }
       scheduleHide();
-    }, 250);
-  }, [player, clearHideTimer, scheduleHide]);
 
-  // Clean up seek timeout on unmount
+      // Lock sliding state for another 400ms to allow native seek to catch up
+      lockTimeoutRef.current = setTimeout(() => {
+        state.isSlidingActive = false;
+        setSlidingValue(null);
+      }, 400);
+    }, 250);
+  }, [player, getSeekerState, clearHideTimer, scheduleHide]);
+
+  // Clean up seek timeouts on unmount
   useEffect(() => {
     return () => {
-      if (seekTimeoutRef.current) {
-        clearTimeout(seekTimeoutRef.current);
-      }
+      if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
+      if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
     };
   }, []);
 
@@ -243,7 +337,8 @@ export const VideoPlayerSection = ({
 
     return () => {
       sub.remove();
-      // Restore system navigation bar defaults on unmount
+      // Restore orientation and system navigation bar defaults on unmount
+      ScreenOrientation.unlockAsync().catch(() => {});
       SystemNavigationBar.fullScreen(false);
     };
   }, []);
@@ -267,6 +362,22 @@ export const VideoPlayerSection = ({
     );
     showControls();
   }, [showControls]);
+
+  // Intercept Android hardware back button to exit fullscreen first
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    const onBackPress = () => {
+      exitFullscreen();
+      return true; // prevent default go-back behavior
+    };
+
+    const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isFullscreen, exitFullscreen]);
 
   // ── Seek feedback badge ──────────────────────────────────────────────────────
   const [seekFeedback, setSeekFeedback] = useState<{
@@ -313,7 +424,11 @@ export const VideoPlayerSection = ({
       .runOnJS(true)
       .onEnd((e) => {
         const side = e.x < windowWidth / 2 ? "left" : "right";
-        player.seekBy(side === "right" ? SEEK_SECONDS : -SEEK_SECONDS);
+        try {
+          player.seekBy(side === "right" ? SEEK_SECONDS : -SEEK_SECONDS);
+        } catch (err) {
+          console.warn("Failed to seek (released):", err);
+        }
         showSeekFeedback(side);
         showControls();
       });
@@ -370,12 +485,18 @@ export const VideoPlayerSection = ({
             />
           ) : null}
           <View style={styles.loadingOverlay}>
-            <Ionicons name="play-circle" size={56} color="rgba(255,255,255,0.7)" />
+            <MaterialIcons name="play-circle-filled" size={64} color="rgba(255,255,255,0.8)" />
           </View>
         </View>
       </View>
     );
   }
+  const validDuration = typeof duration === "number" && !isNaN(duration) && duration > 0 ? duration : 100;
+  const rawSliderValue = slidingValue !== null ? slidingValue : currentTime;
+  const validSliderValue = Math.min(
+    validDuration,
+    Math.max(0, typeof rawSliderValue === "number" && !isNaN(rawSliderValue) && rawSliderValue >= 0 ? rawSliderValue : 0)
+  );
 
   return (
     <View style={containerStyle}>
@@ -445,42 +566,98 @@ export const VideoPlayerSection = ({
           style={[styles.bottomBar, { opacity: controlsOpacity }]}
           pointerEvents="box-none"
         >
-          {/* Current time */}
-          <Text style={styles.timeText}>
-            {formatTime(slidingValue !== null ? slidingValue : currentTime)}
-          </Text>
+          {/* Top Row: Time Pill and Fullscreen Toggle */}
+          <View style={styles.bottomBarTopRow} pointerEvents="box-none">
+            {/* Time progress pill */}
+            <View style={styles.timePill}>
+              <Text style={styles.timePillText}>
+                {`${formatTime(slidingValue !== null ? slidingValue : currentTime)}/${formatTime(duration)}`}
+              </Text>
+            </View>
 
-          {/* Progress track */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              {/* Mute toggle */}
+              <Pressable
+                onPress={() => {
+                  setPlayerMuted(player, !isMuted);
+                  scheduleHide();
+                }}
+                hitSlop={14}
+                style={styles.controlCircle}
+              >
+                <Ionicons
+                  name={isMuted ? "volume-mute" : "volume-high"}
+                  size={18}
+                  color="#fff"
+                />
+              </Pressable>
+
+              {/* Fullscreen toggle */}
+              <Pressable
+                onPress={() => {
+                  if (isFullscreen) {
+                    exitFullscreen();
+                  } else {
+                    enterFullscreen();
+                  }
+                }}
+                hitSlop={14}
+                style={styles.controlCircle}
+              >
+                <Ionicons
+                  name={isFullscreen ? "contract" : "expand"}
+                  size={18}
+                  color="#fff"
+                />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Bottom Row: Progress track */}
           <Slider
-            style={{ flex: 1, height: 40 }}
+            style={{ width: "100%", height: 20 }}
             minimumValue={0}
-            maximumValue={duration || 100}
-            value={slidingValue !== null ? slidingValue : currentTime}
+            maximumValue={validDuration}
+            value={validSliderValue}
             onValueChange={handleValueChange}
             minimumTrackTintColor="#FF0000"
             maximumTrackTintColor="rgba(255,255,255,0.25)"
             thumbTintColor="#FF0000"
           />
+        </Animated.View>
+      )}
 
-          {/* Duration */}
-          <Text style={styles.timeText}>{formatTime(duration)}</Text>
-
-          {/* Fullscreen toggle */}
+      {/* ── Top control bar ── */}
+      {controlsVisible && (
+        <Animated.View
+          style={[
+            styles.topBar,
+            {
+              opacity: controlsOpacity,
+              top: isFullscreen ? insets.top : 8,
+            },
+          ]}
+          pointerEvents="box-none"
+        >
+          {/* Chevron down button */}
           <Pressable
-            onPress={() => {
-              if (isFullscreen) {
-                exitFullscreen();
-              } else {
-                enterFullscreen();
-              }
-            }}
+            onPress={handleChevronPress}
+            style={styles.controlCircle}
             hitSlop={14}
-            style={styles.fsButton}
+          >
+            <Ionicons name="chevron-down" size={22} color="#fff" />
+          </Pressable>
+
+          {/* Loop toggle button */}
+          <Pressable
+            onPress={toggleLoop}
+            style={[styles.controlCircle, isLooping && { backgroundColor: "rgba(255, 0, 0, 0.25)" }]}
+            hitSlop={14}
           >
             <Ionicons
-              name={isFullscreen ? "contract" : "expand"}
-              size={20}
-              color="#fff"
+              name="repeat"
+              size={22}
+              color={isLooping ? "#FF0000" : "#fff"}
             />
           </Pressable>
         </Animated.View>
@@ -504,11 +681,7 @@ export const VideoPlayerSection = ({
             style={styles.playPauseButton}
             hitSlop={16}
           >
-            <Ionicons
-              name={isPlaying ? "pause" : "play"}
-              size={38}
-              color="#fff"
-            />
+            {isPlaying ? <PauseIcon width={48} height={48} color={'#fff'} /> : <PlayIcon width={48} height={48} color={'#fff'} />}
           </Pressable>
         </Animated.View>
       )}
@@ -605,31 +778,59 @@ const styles = StyleSheet.create({
   },
   playPauseButton: {
     backgroundColor: "rgba(0,0,0,0.45)",
-    borderRadius: 40,
-    padding: 12,
+    borderRadius: 36,
+    width: 72,
+    height: 72,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  topBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    zIndex: 10,
   },
   bottomBar: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: 44,
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "column",
     paddingHorizontal: 12,
-    paddingBottom: 6,
-    gap: 8,
+    paddingBottom: 8,
+    gap: 2,
     zIndex: 10,
   },
-  timeText: {
+  bottomBarTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  timePill: {
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  timePillText: {
     color: "#fff",
     fontSize: 11,
     fontWeight: "600",
-    minWidth: 36,
     textAlign: "center",
   },
-  fsButton: {
-    padding: 2,
+  controlCircle: {
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
   },
   progressBuffered: {
     position: "absolute",

@@ -1,12 +1,12 @@
-import React from 'react';
-import { ScrollView, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import Ionicons from '@react-native-vector-icons/ionicons/static';
-import { Image as ExpoImage } from 'expo-image';
-
-// SVG Icons
 import Bookmark from '@/assets/images/svg/bookmark.svg';
+import CloudDownload from '@/assets/images/svg/cloud-download.svg';
+import ImageIcon from '@/assets/images/svg/image.svg';
 import ShareIcon from '@/assets/images/svg/shareyt.svg';
 import ThumbUp from '@/assets/images/svg/thumb-up.svg';
+import Ionicons from '@react-native-vector-icons/ionicons/static';
+import { Image as ExpoImage } from 'expo-image';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface ActionBarProps {
   colors: any;
@@ -17,6 +17,8 @@ interface ActionBarProps {
   onShare: () => void;
   onToggleBookmark: () => void;
   onReport: () => void;
+  onDownloadPress?: () => void;
+  onGalleryPress?: () => void;
 }
 
 export const ActionBar = ({
@@ -28,6 +30,8 @@ export const ActionBar = ({
   onShare,
   onToggleBookmark,
   onReport,
+  onDownloadPress,
+  onGalleryPress,
 }: ActionBarProps) => {
   return (
     <View style={styles.channelRow}>
@@ -62,6 +66,17 @@ export const ActionBar = ({
           )}
         </TouchableOpacity>
 
+        {/* Gallery */}
+        {onGalleryPress && (
+          <TouchableOpacity
+            onPress={onGalleryPress}
+            style={[styles.actionButton, { backgroundColor: colors.surfaceContainerHigh }]}
+            activeOpacity={0.75}
+          >
+            <ImageIcon width={20} height={20} color={colors.onSurface} />
+          </TouchableOpacity>
+        )}
+
         {/* Share */}
         <TouchableOpacity
           onPress={onShare}
@@ -86,6 +101,18 @@ export const ActionBar = ({
             {isBookmarked ? "Saved" : "Save"}
           </Text>
         </TouchableOpacity>
+
+        {/* Download */}
+        {onDownloadPress && (
+          <TouchableOpacity
+            onPress={onDownloadPress}
+            style={[styles.actionButton, { backgroundColor: colors.surfaceContainerHigh }]}
+            activeOpacity={0.75}
+          >
+            <CloudDownload width={20} height={20} color={colors.onSurface} />
+            <Text style={[styles.actionText, { color: colors.onSurface }]}>Download</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Report */}
         <TouchableOpacity

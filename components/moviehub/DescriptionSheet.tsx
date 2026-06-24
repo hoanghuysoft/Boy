@@ -88,9 +88,9 @@ export const DescriptionSheet = React.forwardRef(({ colors, insets, detentFracti
               contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}
               style={{ marginVertical: 8 }}
             >
-              {detail.tags.map((tag: string) => (
+              {detail.tags.map((tag: string, index: number) => (
                 <TouchableOpacity
-                  key={tag}
+                  key={`${tag}-${index}`}
                   onPress={() => onTagPress(tag)}
                   style={[styles.tagPill, { backgroundColor: colors.surfaceContainerHigh }]}
                 >

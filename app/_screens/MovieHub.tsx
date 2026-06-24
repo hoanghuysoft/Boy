@@ -41,7 +41,7 @@ const MovieHubScreen = () => {
       <GesturePressable
         onPress={() =>
           router.push({
-            pathname: "/show_detail",
+            pathname: "/moviehub/video_detail",
             params: { video_url: item.video_url },
           })
         }
@@ -197,7 +197,7 @@ const MovieHubScreen = () => {
                       key={i}
                       onPress={() =>
                         router.push({
-                          pathname: "/show_detail",
+                          pathname: "/moviehub/video_detail",
                           params: { video_url: slider.video_url },
                         })
                       }

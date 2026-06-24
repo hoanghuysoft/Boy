@@ -1,9 +1,9 @@
 import NetInfo from "@react-native-community/netinfo";
 import { onlineManager, QueryClient } from "@tanstack/react-query";
 import type { Persister } from "@tanstack/react-query-persist-client";
-import { storage } from "./storage";
 import { fetch as nitroFetch } from "react-native-nitro-fetch";
 import { supabase } from "./login";
+import { storage } from "./storage";
 
 onlineManager.setEventListener((setOnline) => {
   return NetInfo.addEventListener((state) => {
@@ -35,7 +35,7 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       gcTime: 1000 * 60 * 5, // lowered to 5 minutes to release heap memory quickly
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      // staleTime: 1000 * 60 * 5, // 5 minutes
       networkMode: "offlineFirst",
     },
     mutations: {

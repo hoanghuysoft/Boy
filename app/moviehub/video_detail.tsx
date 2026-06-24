@@ -2,10 +2,13 @@ import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { useGlobalVideoPlayer, useGlobalVideoPlayerOwner } from "@/contexts/VideoPlayerContext";
 import { avatar, IComment, mockComments, useVideoDetailQuery } from "@/services/shows";
 import { resolveVideoSource } from "@/services/shows/videoSource";
+import { useLikedVideosStore } from "@/stores/likedVideos";
 import { useShowWatchlistStore } from "@/stores/showWatchlist";
+import { useWatchHistoryStore } from "@/stores/watchHistory";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
+import * as WebBrowser from "expo-web-browser";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
@@ -73,8 +76,11 @@ const VideoDetailScreen = () => {
   const activeEpisodeUrl = selectedEpisodeUrl || episodes[0]?.url || "";
   const [resolvedUri, setResolvedUri] = useState<string>("");
   const [resolvedHeaders, setResolvedHeaders] = useState<Record<string, string> | undefined>();
-  const [isLiked, setIsLiked] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Liked videos store
+  const likedStore = useLikedVideosStore();
+  const isLiked = likedStore.isLiked(videoUrl ?? "");
 
   // Toggle fullscreen state reactively to physical screen orientation
   useEffect(() => {
@@ -92,6 +98,9 @@ const VideoDetailScreen = () => {
   const watchlist = useShowWatchlistStore((s) => s.watchlist);
   const addToWatchlist = useShowWatchlistStore((s) => s.add);
   const removeFromWatchlist = useShowWatchlistStore((s) => s.remove);
+
+  // Watch history — records interest signals for the recommendation engine
+  const recordWatch = useWatchHistoryStore((s) => s.recordWatch);
   const styles = style(colors);
 
   const isBookmarked = useMemo(
@@ -100,7 +109,18 @@ const VideoDetailScreen = () => {
   );
 
   const handleToggleLike = () => {
-    setIsLiked((prev) => !prev);
+    if (!detail) return;
+    if (isLiked) {
+      likedStore.removeLike(videoUrl ?? "");
+    } else {
+      likedStore.addLike({
+        video_url: videoUrl ?? "",
+        title: detail.title ?? "",
+        thumb_url: detail.poster_url ?? "",
+        duration: detail.duration ?? "",
+        liked_at: Date.now(),
+      });
+    }
   };
 
   const handleShare = async () => {
@@ -179,10 +199,30 @@ const VideoDetailScreen = () => {
   useEffect(() => {
     if (!resolvedUri) return;
     activeOwnerIdRef.current = screenInstanceId;
-    player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
-      .then(() => player.play())
-      .catch(() => { });
-  }, [resolvedUri, resolvedHeaders, player, screenInstanceId, activeOwnerIdRef]);
+    try {
+      player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
+        .then(() => {
+          try {
+            player.play();
+          } catch (e) {
+            console.warn("Failed to play on URI change (released):", e);
+          }
+        })
+        .catch(() => { });
+    } catch (e) {
+      console.warn("Failed to replace source on URI change (released):", e);
+    }
+    // Record watch event for the recommendation engine
+    if (detail) {
+      recordWatch({
+        video_url: videoUrl ?? '',
+        title: detail.title ?? '',
+        thumb_url: detail.poster_url ?? '',
+        duration: detail.duration ?? '',
+        watched_at: Date.now(),
+      });
+    }
+  }, [resolvedUri, resolvedHeaders, player, screenInstanceId, activeOwnerIdRef, detail, recordWatch, videoUrl]);
 
   // Re-apply source when screen regains focus (e.g. after back-gesture from a
   // child video_detail — the singleton player was cleared by the child's cleanup
@@ -192,15 +232,29 @@ const VideoDetailScreen = () => {
       setIsFocused(true);
       if (!resolvedUri) return;
       activeOwnerIdRef.current = screenInstanceId;
-      player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
-        .then(() => player.play())
-        .catch(() => { });
+      try {
+        player.replaceAsync({ uri: resolvedUri, headers: resolvedHeaders })
+          .then(() => {
+            try {
+              player.play();
+            } catch (e) {
+              console.warn("Failed to play on focus (released):", e);
+            }
+          })
+          .catch(() => { });
+      } catch (e) {
+        console.warn("Failed to replace source on focus (released):", e);
+      }
 
       return () => {
         setIsFocused(false);
         // Pause only if we are still the active owner when blurred
         if (activeOwnerIdRef.current === screenInstanceId) {
-          player.pause();
+          try {
+            player.pause();
+          } catch (e) {
+            console.warn("Failed to pause on blur (released):", e);
+          }
         }
       };
     }, [resolvedUri, resolvedHeaders, player, screenInstanceId, activeOwnerIdRef])
@@ -210,8 +264,16 @@ const VideoDetailScreen = () => {
   useEffect(() => {
     return () => {
       if (activeOwnerIdRef.current === screenInstanceId) {
-        player.pause();
-        player.replaceAsync(null).catch(() => { });
+        try {
+          player.pause();
+        } catch (e) {
+          console.warn("Failed to pause on unmount (released):", e);
+        }
+        try {
+          player.replaceAsync(null).catch(() => { });
+        } catch (e) {
+          console.warn("Failed to clear source on unmount (released):", e);
+        }
         activeOwnerIdRef.current = null;
       }
     };
@@ -259,6 +321,8 @@ const VideoDetailScreen = () => {
               {/* Action Bar pill buttons */}
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 4 }}>
                 <SkeletonGroup.Item style={{ height: 36, width: 36, borderRadius: 18 }} />
+                <SkeletonGroup.Item style={{ height: 36, width: 80, borderRadius: 18 }} />
+                <SkeletonGroup.Item style={{ height: 36, width: 80, borderRadius: 18 }} />
                 <SkeletonGroup.Item style={{ height: 36, width: 80, borderRadius: 18 }} />
                 <SkeletonGroup.Item style={{ height: 36, width: 80, borderRadius: 18 }} />
                 <SkeletonGroup.Item style={{ height: 36, width: 80, borderRadius: 18 }} />
@@ -322,6 +386,20 @@ const VideoDetailScreen = () => {
               onShare={handleShare}
               onToggleBookmark={handleToggleBookmark}
               onReport={handleReport}
+              onDownloadPress={
+                detail?.download_url
+                  ? () => WebBrowser.openBrowserAsync(detail.download_url)
+                  : undefined
+              }
+              onGalleryPress={
+                detail?.extra_images && detail.extra_images.length > 0
+                  ? () =>
+                    router.push({
+                      pathname: "/moviehub/gallery",
+                      params: { video_url: videoUrl },
+                    })
+                  : undefined
+              }
             />
 
             {/* YouTube style comments preview box */}
@@ -346,7 +424,7 @@ const VideoDetailScreen = () => {
 
         {/* Related videos flat list */}
         {relatedVideos.map((item, index) => (
-          <View key={item.video_url || String(index)} style={{ marginBottom: 20 }}>
+          <View key={`${item.video_url}-${index}`} style={{ marginBottom: 20 }}>
             <RelatedVideoCard
               item={item}
               onPress={() =>

@@ -27,11 +27,11 @@ export const EpisodeSelectorSection = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {episodes.map((ep) => {
+        {episodes.map((ep, index) => {
           const isActive = ep.url === activeEpisodeUrl;
           return (
             <TouchableOpacity
-              key={`${ep.episode}-${ep.url}`}
+              key={`${ep.episode}-${ep.url}-${index}`}
               onPress={() => onSelectEpisode(ep.url)}
               activeOpacity={0.75}
               style={[

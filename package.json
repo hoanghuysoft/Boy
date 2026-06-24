@@ -22,8 +22,8 @@
     "@flyerhq/react-native-link-preview": "1.6.0",
     "@giphy/react-native-sdk": "^6.0.1",
     "@kuss/react-native-mesh-gradient": "0.2.0",
-    "@legendapp/list": "^3.1.1",
-    "@lodev09/react-native-true-sheet": "^3.11.0",
+    "@legendapp/list": "^3.1.2",
+    "@lodev09/react-native-true-sheet": "^3.11.1",
     "@nandorojo/galeria": "3.0.3",
     "@novastera-oss/rn-google-signin": "^1.1.1",
     "@react-native-community/netinfo": "12.0.1",
@@ -38,8 +38,8 @@
     "@shopify/react-native-skia": "2.6.2",
     "@supabase/supabase-js": "2.108.2",
     "@swmansion/react-native-bottom-sheet": "^0.15.3",
-    "@tanstack/react-query": "^5.101.0",
-    "@tanstack/react-query-persist-client": "^5.101.0",
+    "@tanstack/react-query": "^5.101.1",
+    "@tanstack/react-query-persist-client": "^5.101.1",
     "@types/node": "^26.0.0",
     "dayjs": "1.11.21",
     "emoji-regex-xs": "2.0.1",
@@ -100,7 +100,7 @@
     "react-native-gesture-handler": "~2.31.1",
     "react-native-image-colors": "2.6.0",
     "react-native-keyboard-controller": "1.21.6",
-    "react-native-mmkv": "4.3.1",
+    "react-native-mmkv": "4.3.2",
     "react-native-nitro-fetch": "^1.4.2",
     "react-native-nitro-haptics": "^0.2.3",
     "react-native-nitro-in-app-browser": "^2.0.2",
@@ -145,7 +145,6 @@
     "@shopify/react-native-skia"
   ],
   "patchedDependencies": {
-    "@bsky.app/video@0.3.6": "patches/@bsky.app%2Fvideo@0.3.6.patch",
     "@flixsrota/player@0.3.0": "patches/@flixsrota%2Fplayer@0.3.0.patch",
     "heroui-native@1.0.4": "patches/heroui-native@1.0.4.patch",
     "react-native-nitro-wallpaper@1.1.5": "patches/react-native-nitro-wallpaper@1.1.5.patch"
