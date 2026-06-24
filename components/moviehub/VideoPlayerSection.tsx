@@ -162,9 +162,12 @@ export const VideoPlayerSection = ({
   const [isLooping, setIsLooping] = useState(player.loop);
   const [currentTime, setCurrentTime] = useState(player.currentTime);
   const [duration, setDuration] = useState(player.duration);
-  const [bufferedPosition, setBufferedPosition] = useState(0);
   const validDuration = typeof duration === "number" && !isNaN(duration) && duration > 0 ? duration : 100;
   const [status, setStatus] = useState(player.status);
+  const lastSyncedSecondRef = useRef(-1);
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const [controlsOpacity] = useState(() => new Animated.Value(0));
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync state during render if player instance changes (linter-friendly prop-to-state pattern)
   const [prevPlayer, setPrevPlayer] = useState(player);
@@ -209,16 +212,17 @@ export const VideoPlayerSection = ({
       }
     }
 
-    setCurrentTime(ct);
+    if (controlsVisible) {
+      const currentSec = Math.floor(ct);
+      if (currentSec !== lastSyncedSecondRef.current) {
+        lastSyncedSecondRef.current = currentSec;
+        setCurrentTime(ct);
+      }
+    }
+
     if (player.duration) {
       setDuration(player.duration);
     }
-    try {
-      const bp = player.bufferedPosition;
-      if (typeof bp === "number" && !isNaN(bp) && player.duration > 0) {
-        setBufferedPosition(bp / player.duration);
-      }
-    } catch { }
   });
 
   useEffect(() => {
@@ -244,9 +248,6 @@ export const VideoPlayerSection = ({
   };
 
   // ── Controls visibility ──────────────────────────────────────────────────────
-  const [controlsVisible, setControlsVisible] = useState(false);
-  const [controlsOpacity] = useState(() => new Animated.Value(0));
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearHideTimer = useCallback(() => {
     if (hideTimerRef.current) {
@@ -268,6 +269,9 @@ export const VideoPlayerSection = ({
 
   const showControls = useCallback(() => {
     clearHideTimer();
+    const ct = player.currentTime;
+    setCurrentTime(ct);
+    lastSyncedSecondRef.current = Math.floor(ct);
     setControlsVisible(true);
     Animated.timing(controlsOpacity, {
       toValue: 1,
@@ -275,7 +279,7 @@ export const VideoPlayerSection = ({
       useNativeDriver: true,
     }).start();
     scheduleHide();
-  }, [clearHideTimer, controlsOpacity, scheduleHide, setControlsVisible]);
+  }, [player, clearHideTimer, controlsOpacity, scheduleHide, setControlsVisible]);
 
   const hideControls = useCallback(() => {
     clearHideTimer();
@@ -296,6 +300,7 @@ export const VideoPlayerSection = ({
   }, []);
 
   const lastSeekTime = useRef(0);
+  const lastEmailedSeekTime = useRef(0);
   const seekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -303,11 +308,16 @@ export const VideoPlayerSection = ({
     setSlidingValue(val);
     seekTargetTimeRef.current = val;
 
-    // Throttle native player seeks to 150ms during active dragging
     const now = Date.now();
-    if (now - lastSeekTime.current > 150) {
+    const timeDiff = now - lastSeekTime.current;
+    const valDiff = Math.abs(val - lastEmailedSeekTime.current);
+
+    // Only seek native player if the target changes significantly (> 0.5 seconds)
+    // or if enough time has passed (> 800ms) to update it during extremely slow drags.
+    if (timeDiff > 200 && (valDiff > 0.5 || timeDiff > 800)) {
       setPlayerTime(player, val);
       lastSeekTime.current = now;
+      lastEmailedSeekTime.current = val;
     }
   }, [player, setSlidingValue]);
 
@@ -333,6 +343,7 @@ export const VideoPlayerSection = ({
         setPlayerTime(player, val);
         setCurrentTime(val);
         seekTargetTimeRef.current = val;
+        lastEmailedSeekTime.current = val;
       }
       if (state.wasPlayingOnSlide) {
         try {
@@ -359,10 +370,13 @@ export const VideoPlayerSection = ({
 
   // Clean up seek timeouts on unmount
   useEffect(() => {
+    const seekTimeout = seekTimeoutRef.current;
+    const lockTimeout = lockTimeoutRef.current;
+    const stabilizeTimeout = stabilizeTimeoutRef.current;
     return () => {
-      if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
-      if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
-      if (stabilizeTimeoutRef.current) clearTimeout(stabilizeTimeoutRef.current);
+      if (seekTimeout) clearTimeout(seekTimeout);
+      if (lockTimeout) clearTimeout(lockTimeout);
+      if (stabilizeTimeout) clearTimeout(stabilizeTimeout);
     };
   }, []);
 
@@ -538,11 +552,7 @@ export const VideoPlayerSection = ({
       </View>
     );
   }
-  const rawSliderValue = slidingValue !== null ? slidingValue : currentTime;
-  const validSliderValue = Math.min(
-    validDuration,
-    Math.max(0, typeof rawSliderValue === "number" && !isNaN(rawSliderValue) && rawSliderValue >= 0 ? rawSliderValue : 0)
-  );
+
 
   return (
     <View style={containerStyle}>
@@ -671,7 +681,13 @@ export const VideoPlayerSection = ({
         </Animated.View>
       )}
 
+      {/* ── Full-area gesture detector — tap/double-tap/long-press layer ── */}
+      <GestureDetector gesture={combinedGesture}>
+        <View style={StyleSheet.absoluteFill} />
+      </GestureDetector>
+
       {/* ── Progress track (Youtube style at the very bottom edge of the player) ── */}
+      {/* Rendered AFTER the GestureDetector so the seekbar's RNGH Pan gesture takes priority */}
       <Animated.View
         style={[
           styles.absoluteSeekBarContainer,
@@ -689,9 +705,7 @@ export const VideoPlayerSection = ({
         ]}
       >
         <VideoPlayerSeekBar
-          currentTime={validSliderValue}
-          duration={validDuration}
-          buffered={bufferedPosition}
+          player={player}
           onSeek={handleSeek}
           onSeekingChange={handleSeekingChange}
           controlsVisible={controlsVisible}
@@ -765,11 +779,6 @@ export const VideoPlayerSection = ({
           </Pressable>
         </Animated.View>
       )}
-
-      {/* ── Full-area gesture detector — topmost touch layer ── */}
-      <GestureDetector gesture={combinedGesture}>
-        <View style={StyleSheet.absoluteFill} />
-      </GestureDetector>
     </View>
   );
 };

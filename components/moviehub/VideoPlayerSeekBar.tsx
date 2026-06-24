@@ -1,26 +1,30 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
-    PanResponder,
     StyleSheet,
     View,
 } from "react-native";
+import {
+    Gesture,
+    GestureDetector,
+} from "react-native-gesture-handler";
 import Reanimated, {
+    runOnJS,
     useAnimatedStyle,
     useSharedValue,
     withTiming,
 } from "react-native-reanimated";
+import { useEventListener } from "expo";
+import type { VideoPlayer } from "expo-video";
 
 // ─── Constants ──────────────────────────────────────────────────────
 const TRACK_H = 2;
 const THUMB = 12;
 const THUMB_DRAG = 20;
-const THUMB_CONTAINER_SIZE = 44; // Dedicated large hit box for thumb
+const THUMB_CONTAINER_SIZE = 44;
 const ANIM_MS = 150;
 
 interface VideoPlayerSeekBarProps {
-    currentTime: number;
-    duration: number;
-    buffered?: number;
+    player: VideoPlayer;
     onSeek?: (seconds: number) => void;
     onSeekingChange?: (seeking: boolean) => void;
     controlsVisible: boolean;
@@ -28,86 +32,162 @@ interface VideoPlayerSeekBarProps {
 }
 
 export const VideoPlayerSeekBar = React.memo(({
-    currentTime,
-    duration,
-    buffered = 0,
+    player,
     onSeek,
     onSeekingChange,
     controlsVisible,
     isFullscreen,
 }: VideoPlayerSeekBarProps) => {
-    const validDuration = typeof duration === "number" && !isNaN(duration) && duration > 0 ? duration : 100;
-    const progress = Math.min(1, Math.max(0, currentTime / validDuration));
-    const bufferedPct = Math.min(100, Math.max(0, buffered * 100));
+    // Initial calculation
+    const initialDuration = player.duration || 100;
+    const initialProgress = Math.min(1, Math.max(0, (player.currentTime || 0) / initialDuration));
 
-    // ─── Shared values (UI thread) ────────────────────────────────────────────
-    const fillWidthPct = useSharedValue(progress * 100);      // Thumb position
-    const trackFillWidthPct = useSharedValue(progress * 100); // Red progress fill position
+    // ─── All shared values (safe to read/write from worklets) ─────────────────
+    const fillWidthPct = useSharedValue(initialProgress * 100);
+    const trackFillWidthPct = useSharedValue(initialProgress * 100);
     const controlsActive = useSharedValue(controlsVisible ? 1 : 0);
     const isDragging = useSharedValue(false);
+    const trackWidth = useSharedValue(1);        // measures actual track width
+    const startPct = useSharedValue(0);           // starting percentage on drag
+    const durationSV = useSharedValue(initialDuration);
+    const bufferedPctSV = useSharedValue(0);
+    const isStabilizingSV = useSharedValue(false);
+    const seekTargetTimeSV = useSharedValue(0);
 
+    const stabilizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Sync controlsVisible prop to shared value
     useEffect(() => {
         controlsActive.value = withTiming(controlsVisible ? 1 : 0, { duration: ANIM_MS });
     }, [controlsVisible]);
 
-    const isDraggingRef = useRef(false);
+    // Sync when player instance changes
     useEffect(() => {
-        if (!isDraggingRef.current) {
-            const pct = Math.min(100, Math.max(0, progress * 100));
+        const dur = player.duration || 100;
+        durationSV.value = dur;
+        const ct = player.currentTime || 0;
+        const pct = Math.min(100, Math.max(0, (ct / dur) * 100));
+        
+        if (!isDragging.value) {
             fillWidthPct.value = pct;
             trackFillWidthPct.value = pct;
         }
-    }, [progress]);
 
-    // ─── Refs ─────────────────────────────────────────────────────────────────
-    const trackLayoutRef = useRef({ width: 1 });
-    const onSeekRef = useRef(onSeek);
-    const onSeekingChangeRef = useRef(onSeekingChange);
-    const durationRef = useRef(validDuration);
-    const startFillPctRef = useRef(0);
+        try {
+            const bp = player.bufferedPosition;
+            if (typeof bp === "number" && !isNaN(bp) && dur > 0) {
+                bufferedPctSV.value = (bp / dur) * 100;
+            }
+        } catch {}
+    }, [player]);
 
-    onSeekRef.current = onSeek;
-    onSeekingChangeRef.current = onSeekingChange;
-    durationRef.current = validDuration;
+    // Clean up stabilize timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (stabilizeTimeoutRef.current) {
+                clearTimeout(stabilizeTimeoutRef.current);
+            }
+        };
+    }, []);
 
-    const endDrag = useRef(() => {
-        // Instantly snap track fill to thumb position on release
-        trackFillWidthPct.value = fillWidthPct.value;
+    // ─── TimeUpdate listener: Updates bar and thumb entirely on UI thread ─────
+    useEventListener(player, "timeUpdate", (evt) => {
+        // Skip updates if user is actively dragging the thumb
+        if (isDragging.value) return;
 
-        onSeekingChangeRef.current?.(false);
-        isDraggingRef.current = false;
-        isDragging.value = false;
-    }).current;
+        // Stabilization filter: ignore stale updates right after seek release
+        if (isStabilizingSV.value) {
+            const target = seekTargetTimeSV.value;
+            if (Math.abs(evt.currentTime - target) < 1.5) {
+                isStabilizingSV.value = false;
+            } else {
+                return;
+            }
+        }
 
-    const panResponder = useRef(
-        PanResponder.create({
-            // Gestures are attached directly to the thumb, so we always accept touches when controls are visible
-            onStartShouldSetPanResponder: () => controlsActive.value > 0.4 && !!onSeekRef.current,
-            onStartShouldSetPanResponderCapture: () => controlsActive.value > 0.4 && !!onSeekRef.current,
-            onMoveShouldSetPanResponder: () => isDraggingRef.current,
-            onPanResponderGrant: () => {
-                startFillPctRef.current = fillWidthPct.value;
-                isDraggingRef.current = true;
+        const dur = player.duration || 100;
+        durationSV.value = dur;
+
+        const pct = Math.min(100, Math.max(0, (evt.currentTime / dur) * 100));
+        fillWidthPct.value = pct;
+        trackFillWidthPct.value = pct;
+
+        try {
+            const bp = player.bufferedPosition;
+            if (typeof bp === "number" && !isNaN(bp) && dur > 0) {
+                bufferedPctSV.value = (bp / dur) * 100;
+            }
+        } catch {}
+    });
+
+    // ─── JS-thread callbacks (called via runOnJS from worklets) ────────────────
+    const handleSeekStart = () => {
+        onSeekingChange?.(true);
+    };
+
+    const handleSeekUpdate = (time: number) => {
+        onSeek?.(time);
+    };
+
+    const handleSeekEnd = (finalTime: number) => {
+        onSeek?.(finalTime);
+        onSeekingChange?.(false);
+
+        // Set safety timer to release stabilization state if target is not reached
+        if (stabilizeTimeoutRef.current) clearTimeout(stabilizeTimeoutRef.current);
+        stabilizeTimeoutRef.current = setTimeout(() => {
+            isStabilizingSV.value = false;
+        }, 1500);
+    };
+
+    // ─── RNGH Pan Gesture (v2 builder API — must wrap in useMemo) ──────────────
+    const thumbPanGesture = useMemo(() =>
+        Gesture.Pan()
+            .activateAfterLongPress(0)
+            .minDistance(0)
+            .onBegin(() => {
+                startPct.value = fillWidthPct.value;
                 isDragging.value = true;
-                onSeekingChangeRef.current?.(true);
-            },
-            onPanResponderMove: (evt, gestureState) => {
-                const { width: trackW } = trackLayoutRef.current;
-                if (trackW <= 0) return;
-                // Delta drag calculation using accumulated gesture distance
-                const deltaPct = (gestureState.dx / trackW) * 100;
-                const newPct = Math.max(0, Math.min(100, startFillPctRef.current + deltaPct));
-                // Only update the thumb position during drag
+                runOnJS(handleSeekStart)();
+            })
+            .onUpdate((e) => {
+                const tw = trackWidth.value;
+                if (tw <= 0) return;
+                const deltaPct = (e.translationX / tw) * 100;
+                const newPct = Math.max(0, Math.min(100, startPct.value + deltaPct));
                 fillWidthPct.value = newPct;
-                onSeekRef.current?.(newPct / 100 * durationRef.current);
-            },
-            onPanResponderRelease: endDrag,
-            onPanResponderTerminate: endDrag,
-        }),
-    ).current;
 
-    // ─── Animated styles ──────────────────────────────────────────────────────
+                const targetTime = (newPct / 100) * durationSV.value;
+                runOnJS(handleSeekUpdate)(targetTime);
+            })
+            .onEnd(() => {
+                // Freeze the visual fill width to match final drag position
+                trackFillWidthPct.value = fillWidthPct.value;
+                isDragging.value = false;
 
+                const finalTime = (fillWidthPct.value / 100) * durationSV.value;
+                isStabilizingSV.value = true;
+                seekTargetTimeSV.value = finalTime;
+
+                runOnJS(handleSeekEnd)(finalTime);
+            })
+            .onFinalize(() => {
+                if (isDragging.value) {
+                    trackFillWidthPct.value = fillWidthPct.value;
+                    isDragging.value = false;
+
+                    const finalTime = (fillWidthPct.value / 100) * durationSV.value;
+                    isStabilizingSV.value = true;
+                    seekTargetTimeSV.value = finalTime;
+
+                    runOnJS(handleSeekEnd)(finalTime);
+                }
+            }),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        []
+    );
+
+    // ─── Animated styles (all on UI thread) ───────────────────────────────────
     const fillStyle = useAnimatedStyle(() => {
         const isWhite = controlsActive.value < 0.5 && !isFullscreen;
         return {
@@ -116,12 +196,14 @@ export const VideoPlayerSeekBar = React.memo(({
         };
     });
 
-    const thumbContainerStyle = useAnimatedStyle(() => {
-        return {
-            left: `${fillWidthPct.value}%` as any,
-            opacity: withTiming(controlsActive.value, { duration: ANIM_MS }),
-        };
-    });
+    const bufferedStyle = useAnimatedStyle(() => ({
+        width: `${bufferedPctSV.value}%` as any,
+    }));
+
+    const thumbContainerStyle = useAnimatedStyle(() => ({
+        left: `${fillWidthPct.value}%` as any,
+        opacity: withTiming(controlsActive.value, { duration: ANIM_MS }),
+    }));
 
     const thumbDotStyle = useAnimatedStyle(() => {
         const size = isDragging.value ? THUMB_DRAG : THUMB;
@@ -134,28 +216,26 @@ export const VideoPlayerSeekBar = React.memo(({
 
     return (
         <View style={styles.container} pointerEvents={controlsVisible ? "box-none" : "none"}>
-            {/* Track container */}
+            {/* Track — measures width into shared value */}
             <View
                 style={styles.trackContainer}
                 onLayout={(e) => {
-                    const { width } = e.nativeEvent.layout;
-                    if (width > 0) trackLayoutRef.current.width = width;
+                    const w = e.nativeEvent.layout.width;
+                    if (w > 0) trackWidth.value = w;
                 }}
             >
-                {/* Base track */}
                 <View style={styles.track}>
-                    <View style={[styles.bufferedFill, { width: `${bufferedPct}%` }]} />
+                    <Reanimated.View style={[styles.bufferedFill, bufferedStyle]} />
                     <Reanimated.View style={[styles.progressFill, fillStyle]} />
                 </View>
             </View>
 
-            {/* Split Thumb: Touch handling is isolated to this 44x44 container */}
-            <Reanimated.View
-                style={[styles.thumbContainer, thumbContainerStyle]}
-                {...panResponder.panHandlers}
-            >
-                <Reanimated.View style={[styles.thumbDot, thumbDotStyle]} />
-            </Reanimated.View>
+            {/* Thumb with RNGH gesture — same native gesture system as overlay */}
+            <GestureDetector gesture={thumbPanGesture}>
+                <Reanimated.View style={[styles.thumbContainer, thumbContainerStyle]}>
+                    <Reanimated.View style={[styles.thumbDot, thumbDotStyle]} />
+                </Reanimated.View>
+            </GestureDetector>
         </View>
     );
 });
@@ -164,7 +244,7 @@ VideoPlayerSeekBar.displayName = "VideoPlayerSeekBar";
 
 const styles = StyleSheet.create({
     container: {
-        height: 12, // container matches the active hover zone
+        height: 12,
         width: "100%",
         overflow: "visible",
         justifyContent: "flex-end",
@@ -176,7 +256,7 @@ const styles = StyleSheet.create({
     },
     track: {
         width: "100%",
-        bottom: 0, // Pinned exactly at bottom of container
+        bottom: 0,
         height: TRACK_H,
         backgroundColor: "rgba(255,255,255,0.25)",
         borderRadius: TRACK_H / 2,
@@ -199,7 +279,7 @@ const styles = StyleSheet.create({
         height: THUMB_CONTAINER_SIZE,
         justifyContent: "center",
         alignItems: "center",
-        bottom: -(THUMB_CONTAINER_SIZE / 2) + TRACK_H / 2, // Centered perfectly on track
+        bottom: -(THUMB_CONTAINER_SIZE / 2) + TRACK_H / 2,
         transform: [
             { translateX: -THUMB_CONTAINER_SIZE / 2 },
         ],
