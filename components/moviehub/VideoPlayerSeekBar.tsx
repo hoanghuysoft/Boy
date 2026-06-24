@@ -10,30 +10,27 @@ import Reanimated, {
     withTiming,
 } from "react-native-reanimated";
 
-// ─── Constants ───────────────────────────────────────
-const SEEK_BAR_HEIGHT = 2; // Base height of the progress track
-const SEEK_BAR_HIT_SLOP = 12;
-const SEEK_BAR_AREA_HEIGHT = SEEK_BAR_HEIGHT + 2 * SEEK_BAR_HIT_SLOP; // 26px
-const SEEK_TRACK_ANIM_DURATION = 150;
+// ─── Constants ──────────────────────────────────────────────────────
+const TRACK_H = 2;
+const THUMB = 12;
+const THUMB_DRAG = 20;
+const THUMB_CONTAINER_SIZE = 44; // Dedicated large hit box for thumb
+const ANIM_MS = 150;
 
 interface VideoPlayerSeekBarProps {
-    /** Playback current time in seconds */
     currentTime: number;
-    /** Total duration in seconds */
     duration: number;
-    /** Called when user seeks to a new time in seconds */
+    buffered?: number;
     onSeek?: (seconds: number) => void;
-    /** Called when seeking state changes */
     onSeekingChange?: (seeking: boolean) => void;
-    /** Whether player controls are currently visible */
     controlsVisible: boolean;
-    /** Whether the player is currently in fullscreen mode */
     isFullscreen: boolean;
 }
 
 export const VideoPlayerSeekBar = React.memo(({
     currentTime,
     duration,
+    buffered = 0,
     onSeek,
     onSeekingChange,
     controlsVisible,
@@ -41,210 +38,175 @@ export const VideoPlayerSeekBar = React.memo(({
 }: VideoPlayerSeekBarProps) => {
     const validDuration = typeof duration === "number" && !isNaN(duration) && duration > 0 ? duration : 100;
     const progress = Math.min(1, Math.max(0, currentTime / validDuration));
+    const bufferedPct = Math.min(100, Math.max(0, buffered * 100));
 
-    // ─── Reanimated shared values drive animations on UI thread ────────────────
-    const fillWidthPct = useSharedValue(progress * 100);
+    // ─── Shared values (UI thread) ────────────────────────────────────────────
+    const fillWidthPct = useSharedValue(progress * 100);      // Thumb position
+    const trackFillWidthPct = useSharedValue(progress * 100); // Red progress fill position
     const controlsActive = useSharedValue(controlsVisible ? 1 : 0);
-    const isDraggingShared = useSharedValue(false);
+    const isDragging = useSharedValue(false);
 
-    // Sync controls visibility reactively
     useEffect(() => {
-        controlsActive.value = withTiming(controlsVisible ? 1 : 0, { duration: SEEK_TRACK_ANIM_DURATION });
+        controlsActive.value = withTiming(controlsVisible ? 1 : 0, { duration: ANIM_MS });
     }, [controlsVisible]);
 
-    // Sync Reanimated value when progress updates from player (not during drag)
     const isDraggingRef = useRef(false);
     useEffect(() => {
         if (!isDraggingRef.current) {
-            fillWidthPct.value = Math.min(100, Math.max(0, progress * 100));
+            const pct = Math.min(100, Math.max(0, progress * 100));
+            fillWidthPct.value = pct;
+            trackFillWidthPct.value = pct;
         }
     }, [progress]);
 
-    const trackLayoutRef = useRef({ x: 0, width: 1 });
-    const seekTrackRef = useRef<View>(null);
+    // ─── Refs ─────────────────────────────────────────────────────────────────
+    const trackLayoutRef = useRef({ width: 1 });
     const onSeekRef = useRef(onSeek);
-    const progressRef = useRef(progress);
     const onSeekingChangeRef = useRef(onSeekingChange);
     const durationRef = useRef(validDuration);
+    const startFillPctRef = useRef(0);
 
     onSeekRef.current = onSeek;
-    progressRef.current = progress;
     onSeekingChangeRef.current = onSeekingChange;
     durationRef.current = validDuration;
 
-    const hideSeekState = useRef(() => {
+    const endDrag = useRef(() => {
+        // Instantly snap track fill to thumb position on release
+        trackFillWidthPct.value = fillWidthPct.value;
+
         onSeekingChangeRef.current?.(false);
         isDraggingRef.current = false;
-        isDraggingShared.value = false;
+        isDragging.value = false;
     }).current;
 
     const panResponder = useRef(
         PanResponder.create({
-            onStartShouldSetPanResponder: () => controlsActive.value > 0.5 && !!onSeekRef.current,
-            onStartShouldSetPanResponderCapture: () => controlsActive.value > 0.5 && !!onSeekRef.current,
-            onMoveShouldSetPanResponder: () => controlsActive.value > 0.5 && !!onSeekRef.current,
-            onPanResponderGrant: (evt) => {
-                const seek = onSeekRef.current;
-                if (!seek) return;
-                isDraggingRef.current = false;
-                const { locationX } = evt.nativeEvent;
-                const { width: trackW } = trackLayoutRef.current;
-                const p =
-                    trackW > 0
-                        ? Math.max(0, Math.min(1, locationX / trackW))
-                        : progressRef.current;
-
-                // Update fill on UI thread immediately
-                fillWidthPct.value = p * 100;
-                seek(p * durationRef.current);
+            // Gestures are attached directly to the thumb, so we always accept touches when controls are visible
+            onStartShouldSetPanResponder: () => controlsActive.value > 0.4 && !!onSeekRef.current,
+            onStartShouldSetPanResponderCapture: () => controlsActive.value > 0.4 && !!onSeekRef.current,
+            onMoveShouldSetPanResponder: () => isDraggingRef.current,
+            onPanResponderGrant: () => {
+                startFillPctRef.current = fillWidthPct.value;
+                isDraggingRef.current = true;
+                isDragging.value = true;
                 onSeekingChangeRef.current?.(true);
             },
-            onPanResponderMove: (evt) => {
-                const seek = onSeekRef.current;
-                if (!seek) return;
-                if (!isDraggingRef.current) {
-                    isDraggingRef.current = true;
-                    isDraggingShared.value = true;
-                }
-                const moveX = evt.nativeEvent.pageX;
-                const { x: trackX, width: trackW } = trackLayoutRef.current;
-                const p =
-                    trackW > 0
-                        ? Math.max(0, Math.min(1, (moveX - trackX) / trackW))
-                        : progressRef.current;
-
-                // Update fill on UI thread — NO JS setState, zero lag
-                fillWidthPct.value = p * 100;
-                seek(p * durationRef.current);
+            onPanResponderMove: (evt, gestureState) => {
+                const { width: trackW } = trackLayoutRef.current;
+                if (trackW <= 0) return;
+                // Delta drag calculation using accumulated gesture distance
+                const deltaPct = (gestureState.dx / trackW) * 100;
+                const newPct = Math.max(0, Math.min(100, startFillPctRef.current + deltaPct));
+                // Only update the thumb position during drag
+                fillWidthPct.value = newPct;
+                onSeekRef.current?.(newPct / 100 * durationRef.current);
             },
-            onPanResponderRelease: () => {
-                hideSeekState();
-            },
-            onPanResponderTerminate: () => {
-                hideSeekState();
-            },
+            onPanResponderRelease: endDrag,
+            onPanResponderTerminate: endDrag,
         }),
     ).current;
 
-    // ─── Animated styles driven entirely on UI thread ─────────────────────────
+    // ─── Animated styles ──────────────────────────────────────────────────────
+
     const fillStyle = useAnimatedStyle(() => {
-        const isWhite = (controlsActive.value < 0.5) && !isFullscreen;
-        const targetColor = isWhite ? "#FFFFFF" : "#FF0000";
+        const isWhite = controlsActive.value < 0.5 && !isFullscreen;
         return {
-            width: `${fillWidthPct.value}%` as any,
-            backgroundColor: withTiming(targetColor, { duration: SEEK_TRACK_ANIM_DURATION }),
+            width: `${trackFillWidthPct.value}%` as any,
+            backgroundColor: withTiming(isWhite ? "#FFFFFF" : "#FF0000", { duration: ANIM_MS }),
         };
     });
 
-    const trackStyle = useAnimatedStyle(() => {
-        // Controls hidden: scale = 1.0 (2px height)
-        // Controls visible: scale = 1.5 (3px height)
-        // Active dragging: scale = 2.5 (5px height)
-        const baseScale = 1.0 + controlsActive.value * 0.5;
-        const dragMultiplier = isDraggingShared.value ? 1.6 : 1.0;
-        return {
-            transform: [
-                { scaleY: withTiming(baseScale * dragMultiplier, { duration: SEEK_TRACK_ANIM_DURATION }) }
-            ],
-        };
-    });
-
-    const thumbStyle = useAnimatedStyle(() => {
-        // Controls hidden: scale = 0 (hidden)
-        // Controls visible: scale = 1.0 (10px diameter)
-        // Active dragging: scale = 1.4 (14px diameter)
-        const baseScale = controlsActive.value;
-        const dragMultiplier = isDraggingShared.value ? 1.4 : 1.0;
+    const thumbContainerStyle = useAnimatedStyle(() => {
         return {
             left: `${fillWidthPct.value}%` as any,
-            transform: [
-                { translateX: -5 },
-                { translateY: 4 }, // Centering the 10px thumb vertically on the bottom 2px track
-                { scale: withTiming(baseScale * dragMultiplier, { duration: SEEK_TRACK_ANIM_DURATION }) }
-            ],
-            opacity: withTiming(controlsActive.value, { duration: SEEK_TRACK_ANIM_DURATION }),
+            opacity: withTiming(controlsActive.value, { duration: ANIM_MS }),
+        };
+    });
+
+    const thumbDotStyle = useAnimatedStyle(() => {
+        const size = isDragging.value ? THUMB_DRAG : THUMB;
+        return {
+            width: withTiming(size, { duration: ANIM_MS }),
+            height: withTiming(size, { duration: ANIM_MS }),
+            borderRadius: withTiming(size / 2, { duration: ANIM_MS }),
         };
     });
 
     return (
-        <View 
-            style={styles.container}
-            pointerEvents={controlsVisible ? "box-none" : "none"}
-        >
-            {/* Seek bar track hit area */}
+        <View style={styles.container} pointerEvents={controlsVisible ? "box-none" : "none"}>
+            {/* Track container */}
             <View
-                ref={seekTrackRef}
-                pointerEvents="box-only"
-                style={styles.seekBarHitArea}
+                style={styles.trackContainer}
                 onLayout={(e) => {
                     const { width } = e.nativeEvent.layout;
-                    if (width > 0) {
-                        trackLayoutRef.current.width = width;
-                    }
-                    seekTrackRef.current?.measureInWindow((x, _y, w) => {
-                        if (w > 0) {
-                            trackLayoutRef.current = { x, width: w };
-                        }
-                    });
+                    if (width > 0) trackLayoutRef.current.width = width;
                 }}
-                {...(onSeek ? panResponder.panHandlers : {})}
             >
-                <Reanimated.View
-                    style={[
-                        styles.seekBarTrack,
-                        trackStyle,
-                    ]}
-                >
-                    {/* Reanimated fill — updates on UI thread, no JS re-render lag */}
-                    <Reanimated.View style={[styles.seekBarFill, fillStyle]} />
-                </Reanimated.View>
-
-                {/* Reanimated red circle thumb */}
-                <Reanimated.View style={[styles.seekBarThumb, thumbStyle]} />
+                {/* Base track */}
+                <View style={styles.track}>
+                    <View style={[styles.bufferedFill, { width: `${bufferedPct}%` }]} />
+                    <Reanimated.View style={[styles.progressFill, fillStyle]} />
+                </View>
             </View>
+
+            {/* Split Thumb: Touch handling is isolated to this 44x44 container */}
+            <Reanimated.View
+                style={[styles.thumbContainer, thumbContainerStyle]}
+                {...panResponder.panHandlers}
+            >
+                <Reanimated.View style={[styles.thumbDot, thumbDotStyle]} />
+            </Reanimated.View>
         </View>
     );
 });
 
-VideoPlayerSeekBar.displayName = 'VideoPlayerSeekBar';
+VideoPlayerSeekBar.displayName = "VideoPlayerSeekBar";
 
-// ─── Styles ─────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
     container: {
-        height: SEEK_BAR_AREA_HEIGHT,
+        height: 12, // container matches the active hover zone
         width: "100%",
-        position: "relative",
-        justifyContent: "center",
+        overflow: "visible",
+        justifyContent: "flex-end",
     },
-    seekBarHitArea: {
-        position: "absolute",
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-        justifyContent: "center",
-        paddingHorizontal: 0, // 100% edge-to-edge, no padding
+    trackContainer: {
+        width: "100%",
+        height: 12,
+        justifyContent: "flex-end",
     },
-    seekBarTrack: {
-        height: SEEK_BAR_HEIGHT,
+    track: {
+        width: "100%",
+        bottom: 0, // Pinned exactly at bottom of container
+        height: TRACK_H,
         backgroundColor: "rgba(255,255,255,0.25)",
-        borderRadius: SEEK_BAR_HEIGHT / 2,
+        borderRadius: TRACK_H / 2,
         overflow: "hidden",
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
     },
-    seekBarFill: {
-        height: "100%",
-        borderRadius: SEEK_BAR_HEIGHT / 2,
-    },
-    seekBarThumb: {
+    bufferedFill: {
         position: "absolute",
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        left: 0, top: 0, bottom: 0,
+        backgroundColor: "rgba(255,255,255,0.45)",
+        borderRadius: TRACK_H / 2,
+    },
+    progressFill: {
+        position: "absolute",
+        left: 0, top: 0, bottom: 0,
+        borderRadius: TRACK_H / 2,
+    },
+    thumbContainer: {
+        position: "absolute",
+        width: THUMB_CONTAINER_SIZE,
+        height: THUMB_CONTAINER_SIZE,
+        justifyContent: "center",
+        alignItems: "center",
+        bottom: -(THUMB_CONTAINER_SIZE / 2) + TRACK_H / 2, // Centered perfectly on track
+        transform: [
+            { translateX: -THUMB_CONTAINER_SIZE / 2 },
+        ],
+        overflow: "visible",
+        zIndex: 99,
+    },
+    thumbDot: {
         backgroundColor: "#FF0000",
-        bottom: 0,
     },
 });

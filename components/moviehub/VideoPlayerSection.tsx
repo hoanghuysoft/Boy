@@ -162,6 +162,7 @@ export const VideoPlayerSection = ({
   const [isLooping, setIsLooping] = useState(player.loop);
   const [currentTime, setCurrentTime] = useState(player.currentTime);
   const [duration, setDuration] = useState(player.duration);
+  const [bufferedPosition, setBufferedPosition] = useState(0);
   const validDuration = typeof duration === "number" && !isNaN(duration) && duration > 0 ? duration : 100;
   const [status, setStatus] = useState(player.status);
 
@@ -185,13 +186,39 @@ export const VideoPlayerSection = ({
     setDuration(d);
     setCurrentTime(0);
   });
+  const isStabilizingRef = useRef(false);
+  const seekTargetTimeRef = useRef<number | null>(null);
+  const stabilizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEventListener(player, "timeUpdate", ({ currentTime: ct }) => {
     const state = seekerStates.get(instanceId);
     if (state?.isSlidingActive) return;
+
+    if (isStabilizingRef.current) {
+      const target = seekTargetTimeRef.current;
+      if (target !== null && Math.abs(ct - target) < 1.5) {
+        // Player has stabilized close to our seek target
+        isStabilizingRef.current = false;
+        if (stabilizeTimeoutRef.current) {
+          clearTimeout(stabilizeTimeoutRef.current);
+          stabilizeTimeoutRef.current = null;
+        }
+      } else {
+        // Ignore stale time updates before the player catches up
+        return;
+      }
+    }
+
     setCurrentTime(ct);
     if (player.duration) {
       setDuration(player.duration);
     }
+    try {
+      const bp = player.bufferedPosition;
+      if (typeof bp === "number" && !isNaN(bp) && player.duration > 0) {
+        setBufferedPosition(bp / player.duration);
+      }
+    } catch { }
   });
 
   useEffect(() => {
@@ -274,6 +301,7 @@ export const VideoPlayerSection = ({
 
   const handleSeek = useCallback((val: number) => {
     setSlidingValue(val);
+    seekTargetTimeRef.current = val;
 
     // Throttle native player seeks to 150ms during active dragging
     const now = Date.now();
@@ -295,33 +323,37 @@ export const VideoPlayerSection = ({
       } catch { }
     } else {
       // End of seeking
-      // Cancel pending finalization timeouts
-      if (seekTimeoutRef.current) {
-        clearTimeout(seekTimeoutRef.current);
-      }
-      if (lockTimeoutRef.current) {
-        clearTimeout(lockTimeoutRef.current);
-      }
+      // Cancel pending timeouts
+      if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
+      if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
+      if (stabilizeTimeoutRef.current) clearTimeout(stabilizeTimeoutRef.current);
 
-      // Debounce slider release: finalize 250ms after the release
-      seekTimeoutRef.current = setTimeout(() => {
-        const val = slidingValueRef.current;
-        if (val !== null) {
-          setPlayerTime(player, val);
-        }
-        if (state.wasPlayingOnSlide) {
-          try {
-            player.play();
-          } catch { }
-        }
-        scheduleHide();
+      const val = slidingValueRef.current;
+      if (val !== null) {
+        setPlayerTime(player, val);
+        setCurrentTime(val);
+        seekTargetTimeRef.current = val;
+      }
+      if (state.wasPlayingOnSlide) {
+        try {
+          player.play();
+        } catch { }
+      }
+      scheduleHide();
 
-        // Lock sliding state for another 400ms to allow native seek to catch up
-        lockTimeoutRef.current = setTimeout(() => {
-          state.isSlidingActive = false;
-          setSlidingValue(null);
-        }, 400);
-      }, 250);
+      // Start stabilization period to filter out old timestamps
+      isStabilizingRef.current = true;
+      stabilizeTimeoutRef.current = setTimeout(() => {
+        isStabilizingRef.current = false;
+      }, 1500);
+
+      // Lock sliding state briefly so native seek has time to complete
+      lockTimeoutRef.current = setTimeout(() => {
+        state.isSlidingActive = false;
+        const finalVal = slidingValueRef.current;
+        if (finalVal !== null) setCurrentTime(finalVal);
+        setSlidingValue(null);
+      }, 400);
     }
   }, [player, getSeekerState, clearHideTimer, scheduleHide, setSlidingValue]);
 
@@ -330,6 +362,7 @@ export const VideoPlayerSection = ({
     return () => {
       if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
+      if (stabilizeTimeoutRef.current) clearTimeout(stabilizeTimeoutRef.current);
     };
   }, []);
 
@@ -658,6 +691,7 @@ export const VideoPlayerSection = ({
         <VideoPlayerSeekBar
           currentTime={validSliderValue}
           duration={validDuration}
+          buffered={bufferedPosition}
           onSeek={handleSeek}
           onSeekingChange={handleSeekingChange}
           controlsVisible={controlsVisible}
