@@ -1,5 +1,5 @@
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
-import { useGlobalVideoPlayer, useGlobalVideoPlayerOwner } from "@/contexts/VideoPlayerContext";
+import { useGlobalVideoPlayer, useGlobalVideoPlayerOwner } from "@/context/VideoPlayerContext";
 import { avatar, IComment, mockComments, useVideoDetailQuery } from "@/services/shows";
 import { resolveVideoSource } from "@/services/shows/videoSource";
 import { useLikedVideosStore } from "@/stores/likedVideos";
@@ -83,17 +83,6 @@ const VideoDetailScreen = () => {
   const likedStore = useLikedVideosStore();
   const isLiked = likedStore.isLiked(videoUrl ?? "");
 
-  // Toggle fullscreen state reactively to physical screen orientation
-  useEffect(() => {
-    const sub = ScreenOrientation.addOrientationChangeListener((event) => {
-      const orientation = event.orientationInfo.orientation;
-      const isLandscape =
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
-      setIsFullscreen(isLandscape);
-    });
-    return () => sub.remove();
-  }, []);
 
   // Watchlist (Bookmark) store hooks
   const watchlist = useShowWatchlistStore((s) => s.watchlist);
@@ -314,6 +303,7 @@ const VideoDetailScreen = () => {
           setSelectedEpisodeUrl("");
           router.setParams({ video_url: item.video_url });
         }}
+        onFullscreenChange={setIsFullscreen}
       />
 
       {/* Scrollable content below the player */}

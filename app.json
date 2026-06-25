@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "26.56.6.5",
+    "version": "26.56.6.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -21,9 +21,9 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#191919",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/android-icon-foreground1.png",
+        "backgroundImage": "./assets/images/android-icon-background1.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome1.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.techfox.boy",
@@ -59,9 +59,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#191919",
+          "backgroundColor": "#181816",
           "android": {
-            "image": "./assets/images/logo_head.png",
+            "image": "./assets/images/icon1.png",
             "imageWidth": 180
           }
         }

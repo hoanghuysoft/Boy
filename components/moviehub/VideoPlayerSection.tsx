@@ -43,14 +43,13 @@ import React, {
 import {
   Animated,
   BackHandler,
-  LayoutAnimation,
+  Dimensions,
   Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View
 } from "react-native";
 import {
@@ -79,6 +78,7 @@ interface VideoPlayerSectionProps {
   onReportPress?: () => void;
   relatedVideos?: any[];
   onSelectRelatedVideo?: (item: any) => void;
+  onFullscreenChange?: (isFullscreen: boolean) => void;
 }
 
 const SEEK_SECONDS = 10;
@@ -161,9 +161,9 @@ export const VideoPlayerSection = ({
   onReportPress,
   relatedVideos = [],
   onSelectRelatedVideo,
+  onFullscreenChange,
 }: VideoPlayerSectionProps) => {
   const viewRef = useRef<VideoView>(null);
-  const { width: windowWidth } = useWindowDimensions();
 
   const insets = useSafeAreaInsets();
   const instanceId = useId();
@@ -195,7 +195,6 @@ export const VideoPlayerSection = ({
   const [isLooping, setIsLooping] = useState(player.loop);
   const [currentTime, setCurrentTime] = useState(player.currentTime);
   const [duration, setDuration] = useState(player.duration);
-  const validDuration = typeof duration === "number" && !isNaN(duration) && duration > 0 ? duration : 100;
   const [status, setStatus] = useState(player.status);
   const lastSyncedSecondRef = useRef(-1);
   const [controlsVisible, setControlsVisible] = useState(false);
@@ -403,53 +402,43 @@ export const VideoPlayerSection = ({
   // ── Fullscreen ───────────────────────────────────────────────────────────────
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Sync fullscreen layout state reactively with physical orientation updates
+  // Lock the physical screen orientation to portrait mode
   useEffect(() => {
-    const sub = ScreenOrientation.addOrientationChangeListener((event) => {
-      const orientation = event.orientationInfo.orientation;
-      const isLandscape =
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
-
-      // Animate the size/layout shift to prevent visible snapping or jump stutters
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setIsFullscreen(isLandscape);
-    });
-
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
     return () => {
-      sub.remove();
-      // Restore orientation and system navigation bar defaults on unmount
-      ScreenOrientation.unlockAsync().catch(() => { });
+      ScreenOrientation.unlockAsync().catch(() => {});
       SystemNavigationBar.fullScreen(false);
     };
   }, []);
 
   const enterFullscreen = useCallback(async () => {
+    setIsFullscreen(true);
+    onFullscreenChange?.(true);
     if (Platform.OS === "android") {
       SystemNavigationBar.stickyImmersive();
     } else {
       SystemNavigationBar.fullScreen(true);
     }
-    await ScreenOrientation.lockAsync(
-      ScreenOrientation.OrientationLock.LANDSCAPE
-    );
     showControls();
-  }, [showControls]);
+  }, [showControls, onFullscreenChange]);
 
   const exitFullscreen = useCallback(async () => {
+    setIsFullscreen(false);
+    onFullscreenChange?.(false);
     SystemNavigationBar.fullScreen(false);
-    await ScreenOrientation.lockAsync(
-      ScreenOrientation.OrientationLock.PORTRAIT_UP
-    );
     showControls();
-  }, [showControls]);
+  }, [showControls, onFullscreenChange]);
 
   // Intercept Android hardware back button to exit fullscreen first
   useEffect(() => {
     if (!isFullscreen) return;
 
     const onBackPress = () => {
-      exitFullscreen();
+      if (showRelatedOverlay) {
+        setShowRelatedOverlay(false);
+      } else {
+        exitFullscreen();
+      }
       return true; // prevent default go-back behavior
     };
 
@@ -458,7 +447,7 @@ export const VideoPlayerSection = ({
     return () => {
       subscription.remove();
     };
-  }, [isFullscreen, exitFullscreen]);
+  }, [isFullscreen, showRelatedOverlay, exitFullscreen]);
 
   // ── Seek feedback badge ──────────────────────────────────────────────────────
   const [seekFeedback, setSeekFeedback] = useState<{
@@ -504,7 +493,8 @@ export const VideoPlayerSection = ({
       .maxDuration(250)
       .runOnJS(true)
       .onEnd((e) => {
-        const side = e.x < windowWidth / 2 ? "left" : "right";
+        const currentWidth = Dimensions.get("window").width;
+        const side = e.x < currentWidth / 2 ? "left" : "right";
         try {
           player.seekBy(side === "right" ? SEEK_SECONDS : -SEEK_SECONDS);
         } catch (err) {
@@ -513,7 +503,7 @@ export const VideoPlayerSection = ({
         showSeekFeedback(side);
       });
     return gesture;
-  }, [player, windowWidth, showSeekFeedback]);
+  }, [player, showSeekFeedback]);
 
   const longPress = useMemo(() => {
     const gesture = Gesture.LongPress()
@@ -547,9 +537,31 @@ export const VideoPlayerSection = ({
   // (Using HeroUI Slider component directly in bottom bar)
 
   // ── Container ────────────────────────────────────────────────────────────────
-  const containerStyle = isFullscreen
-    ? styles.fullscreenContainer
-    : { width, height: videoHeight, backgroundColor: "#000" as const };
+  const landscapeFullscreenStyle = useMemo(() => {
+    const { width: sw, height: sh } = Dimensions.get("window");
+    return {
+      position: "absolute" as const,
+      top: 0,
+      left: 0,
+      width: sh,
+      height: sw,
+      transform: [
+        { translateX: (sw - sh) / 2 },
+        { translateY: (sh - sw) / 2 },
+        { rotate: "90deg" as const },
+      ],
+      zIndex: 9999,
+      elevation: 9999,
+    };
+  }, []);
+
+  const portraitStyle = useMemo(() => ({
+    width,
+    height: videoHeight,
+    backgroundColor: "#000" as const,
+  }), [width, videoHeight]);
+
+  const containerStyle = isFullscreen ? landscapeFullscreenStyle : portraitStyle;
 
   // ── Placeholder (no URI yet) ─────────────────────────────────────────────────
   if (!resolvedUri) {
@@ -582,6 +594,7 @@ export const VideoPlayerSection = ({
           style={StyleSheet.absoluteFill}
           nativeControls={false}
           contentFit="contain"
+          surfaceType="textureView"
         />
       ) : (
         <View style={StyleSheet.absoluteFill}>
@@ -641,9 +654,9 @@ export const VideoPlayerSection = ({
             styles.bottomBar,
             { opacity: controlsOpacity },
             isFullscreen ? {
-              bottom: insets.bottom + 115,
-              left: insets.left + 16,
-              right: insets.right + 16,
+              bottom: 110,
+              left: 16,
+              right: 16,
               paddingBottom: 0,
             } : {}
           ]}
@@ -706,9 +719,9 @@ export const VideoPlayerSection = ({
         style={[
           styles.absoluteSeekBarContainer,
           isFullscreen ? {
-            bottom: insets.bottom + 86,
-            left: insets.left + 16,
-            right: insets.right + 16,
+            bottom: 86,
+            left: 16,
+            right: 16,
             opacity: controlsOpacity,
           } : {
             bottom: 0,
@@ -733,9 +746,9 @@ export const VideoPlayerSection = ({
           style={[
             styles.fullscreenPillContainer,
             {
-              bottom: insets.bottom + 12,
-              left: insets.left + 16,
-              right: insets.right + 16,
+              bottom: 12,
+              left: 16,
+              right: 16,
               opacity: controlsOpacity,
             }
           ]}
@@ -843,21 +856,17 @@ export const VideoPlayerSection = ({
       )}
 
       {/* ── YouTube-style horizontal scrolling related videos overlay ── */}
-      <Modal
-        visible={isFullscreen && showRelatedOverlay}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowRelatedOverlay(false)}
-      >
+      {/* ── YouTube-style horizontal scrolling related videos overlay ── */}
+      {isFullscreen && showRelatedOverlay && (
         <View style={StyleSheet.absoluteFill}>
           <View
             style={[
               styles.relatedOverlayContainer,
               {
-                paddingTop: insets.top + 16,
-                paddingBottom: insets.bottom + 24,
-                paddingLeft: insets.left,
-                paddingRight: insets.right,
+                paddingTop: 16,
+                paddingBottom: 24,
+                paddingLeft: 24,
+                paddingRight: 24,
               }
             ]}
           >
@@ -907,7 +916,7 @@ export const VideoPlayerSection = ({
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      )}
 
       {/* ── Top control bar ── */}
       {controlsVisible && (
@@ -916,9 +925,9 @@ export const VideoPlayerSection = ({
             styles.topBar,
             {
               opacity: controlsOpacity,
-              top: isFullscreen ? insets.top + 8 : 0,
-              left: isFullscreen ? insets.left + 16 : 0,
-              right: isFullscreen ? insets.right + 16 : 0,
+              top: isFullscreen ? 8 : 0,
+              left: isFullscreen ? 16 : 0,
+              right: isFullscreen ? 16 : 0,
             },
           ]}
           pointerEvents="box-none"
@@ -1086,7 +1095,7 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: "column",
     paddingHorizontal: 12,
-    paddingBottom: 22,
+    paddingBottom: 12,
     gap: 2,
     zIndex: 10,
   },

@@ -29,11 +29,11 @@ import { GlobalAudioPlayer } from "../components/GlobalAudioPlayer";
 import { SessionProvider } from "../context/SessionContext";
 import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
+import { VideoPlayerProvider } from "../context/VideoPlayerContext";
 import '../global.css';
 import { clientPersister, queryClient } from "../services/client";
 import { useAppLockStore } from "../stores/appLock";
 import { useAutoLanguageSync } from "../stores/language";
-import { VideoPlayerProvider } from "../contexts/VideoPlayerContext";
 import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
 
 Sentry.init({

@@ -1,3 +1,5 @@
+import { useEventListener } from "expo";
+import type { VideoPlayer } from "expo-video";
 import React, { useEffect, useMemo, useRef } from "react";
 import {
     StyleSheet,
@@ -13,8 +15,6 @@ import Reanimated, {
     useSharedValue,
     withTiming,
 } from "react-native-reanimated";
-import { useEventListener } from "expo";
-import type { VideoPlayer } from "expo-video";
 
 // ─── Constants ──────────────────────────────────────────────────────
 const TRACK_H = 2;
@@ -67,7 +67,7 @@ export const VideoPlayerSeekBar = React.memo(({
         durationSV.value = dur;
         const ct = player.currentTime || 0;
         const pct = Math.min(100, Math.max(0, (ct / dur) * 100));
-        
+
         if (!isDragging.value) {
             fillWidthPct.value = pct;
             trackFillWidthPct.value = pct;
@@ -78,7 +78,7 @@ export const VideoPlayerSeekBar = React.memo(({
             if (typeof bp === "number" && !isNaN(bp) && dur > 0) {
                 bufferedPctSV.value = (bp / dur) * 100;
             }
-        } catch {}
+        } catch { }
     }, [player]);
 
     // Clean up stabilize timeout on unmount
@@ -117,7 +117,7 @@ export const VideoPlayerSeekBar = React.memo(({
             if (typeof bp === "number" && !isNaN(bp) && dur > 0) {
                 bufferedPctSV.value = (bp / dur) * 100;
             }
-        } catch {}
+        } catch { }
     });
 
     // ─── JS-thread callbacks (called via runOnJS from worklets) ────────────────
@@ -155,7 +155,8 @@ export const VideoPlayerSeekBar = React.memo(({
             .onUpdate((e) => {
                 const tw = trackWidth.value;
                 if (tw <= 0) return;
-                const deltaPct = (e.translationX / tw) * 100;
+                const translation = isFullscreen ? e.translationY : e.translationX;
+                const deltaPct = (translation / tw) * 100;
                 const newPct = Math.max(0, Math.min(100, startPct.value + deltaPct));
                 fillWidthPct.value = newPct;
 
@@ -186,7 +187,7 @@ export const VideoPlayerSeekBar = React.memo(({
                 }
             }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        []
+        [isFullscreen]
     );
 
     // ─── Animated styles (all on UI thread) ───────────────────────────────────
@@ -218,13 +219,13 @@ export const VideoPlayerSeekBar = React.memo(({
 
     return (
         <GestureDetector gesture={thumbPanGesture}>
-            <View 
-                style={styles.container} 
+            <View
+                style={[styles.container, { height: isFullscreen ? 20 : 20 }]}
                 pointerEvents={controlsVisible ? "auto" : "none"}
             >
                 {/* Track — measures width into shared value */}
                 <View
-                    style={styles.trackContainer}
+                    style={[styles.trackContainer, { height: isFullscreen ? 20 : 20 }]}
                     onLayout={(e) => {
                         const w = e.nativeEvent.layout.width;
                         if (w > 0) trackWidth.value = w;
