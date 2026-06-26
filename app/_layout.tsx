@@ -251,7 +251,6 @@ const RootContent = () => {
           <Stack.Screen name="webview" />
           <Stack.Screen name="moviehub" />
           <Stack.Screen name="bulletinboard" />
-          <Stack.Screen name="show_chat" />
         </Stack>
         <GlobalAudioPlayer />
         <AppLockOverlay />

@@ -3,15 +3,13 @@ import { useThemeContext } from "@/context/ThemeContext";
 import { useChatInfiniteQuery } from "@/services/shows";
 import { createCommonStyles } from "@/styles/common";
 import type { ChatMessage } from "@/types/shows";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from "dayjs";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image as ExpoImage } from "expo-image";
-import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { flatMap } from "lodash";
 import { memo, useCallback, useMemo, useRef } from "react";
-import { Dimensions, FlatList, RefreshControl, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, FlatList, RefreshControl, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get('window');
@@ -216,35 +214,11 @@ const ShowChatScreen = () => {
                     style={{
                         borderRadius: 999,
                         overflow: 'hidden',
-                        marginRight: 8,
-                    }}
-                >
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={{
-                            width: 40,
-                            height: 40,
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <Ionicons name='chevron-back' size={24} color={colors.onSurface} />
-                    </TouchableOpacity>
-                </BlurView>
-
-                <BlurView
-                    tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"}
-                    intensity={80}
-                    blurTarget={blurTargetRef}
-                    blurMethod="dimezisBlurViewSdk31Plus"
-                    style={{
-                        borderRadius: 999,
-                        overflow: 'hidden',
                     }}
                 >
                     <View style={{ paddingHorizontal: 16, height: 40, justifyContent: 'center' }}>
-                        <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>
-                            Chat Archive
+                        <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.onSurface }}>
+                            Chat Hub
                         </FlexText>
                     </View>
                 </BlurView>

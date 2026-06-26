@@ -7,7 +7,6 @@ import { useShowWatchlistStore } from "@/stores/showWatchlist";
 import { useWatchHistoryStore } from "@/stores/watchHistory";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import * as ScreenOrientation from "expo-screen-orientation";
 import * as WebBrowser from "expo-web-browser";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
@@ -398,7 +397,7 @@ const VideoDetailScreen = () => {
                 detail?.extra_images && detail.extra_images.length > 0
                   ? () =>
                     router.push({
-                      pathname: "/moviehub/gallery",
+                      pathname: "/moviehub/gallery_sub",
                       params: { video_url: videoUrl },
                     })
                   : undefined

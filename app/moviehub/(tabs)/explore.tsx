@@ -1,4 +1,3 @@
-import AiVideo from '@/assets/images/svg/ai-video.svg';
 import { FlexText } from "@/components/FlexText";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { useThemeContext } from "@/context/ThemeContext";
@@ -284,7 +283,6 @@ const ExploreScreen = () => {
     <View style={{ paddingTop: insets.top }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 12, paddingBottom: 16 }}>
         <FlexText style={{ color: colors.onSurface, fontSize: 24, fontWeight: 'bold' }}>Explore</FlexText>
-        <TouchableOpacity onPress={() => router.push('/moviehub/ai_suggestion')}><AiVideo width={32} height={32} color={colors.onSurface} /></TouchableOpacity>
       </View>
       {/* Category chip row */}
       <ScrollView

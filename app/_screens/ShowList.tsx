@@ -118,7 +118,7 @@ const ShowListScreen = () => {
       <Pressable
         onPress={() =>
           router.push({
-            pathname: "/show_detail",
+            pathname: "/moviehub/video_detail",
             params: { video_url: item.video_url },
           })
         }

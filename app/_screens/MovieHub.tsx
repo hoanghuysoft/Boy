@@ -1,6 +1,4 @@
-import ChatDouble from "@/assets/images/svg/chat-double.svg";
 import Collection from "@/assets/images/svg/collection.svg";
-import Magnifier from "@/assets/images/svg/search.svg";
 import { FlexText } from "@/components/FlexText";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import type { VideoCard } from "@/types/shows";
@@ -351,18 +349,6 @@ const MovieHubScreen = () => {
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
             <TouchableOpacity
-              onPress={() => router.push("/show_chat")}
-              style={{
-                borderRadius: 999,
-                width: 40,
-                height: 40,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <ChatDouble width={28} height={28} color={"white"} />
-            </TouchableOpacity>
-            <TouchableOpacity
               onPress={() => router.push("/watchlist")}
               style={{
                 borderRadius: 999,
@@ -373,18 +359,6 @@ const MovieHubScreen = () => {
               }}
             >
               <Collection width={28} height={28} color={"white"} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push("/search_shows")}
-              style={{
-                borderRadius: 999,
-                width: 40,
-                height: 40,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Magnifier width={28} height={28} color={"white"} />
             </TouchableOpacity>
           </View>
         </View>
