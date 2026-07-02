@@ -106,10 +106,11 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
 
 
     const headerCtx = usePagerHeaderContext();
+    const topInset = vm.insets.top;
     const animatedContentStyle = useAnimatedStyle(() => {
         if (!headerCtx) return { opacity: 1 };
         const { scrollY, headerHeight } = headerCtx;
-        const collapseDistance = Math.max(headerHeight - (vm.insets.top + 56), 50);
+        const collapseDistance = Math.max(headerHeight - (topInset + 56), 50);
         const opacity = interpolate(
             scrollY.get(),
             [0, collapseDistance * 0.6],
@@ -118,6 +119,16 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         );
         return {
             opacity,
+            transform: [
+                {
+                    translateY: interpolate(
+                        scrollY.get(),
+                        [0, collapseDistance],
+                        [0, -16],
+                        'clamp'
+                    ),
+                },
+            ],
         };
     });
 

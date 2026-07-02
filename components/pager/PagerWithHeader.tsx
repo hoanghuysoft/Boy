@@ -17,8 +17,8 @@ import { type JSX, memo, useCallback, useEffect, useRef, useState } from 'react'
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
-  type ScrollView,
   Platform,
+  type ScrollView,
   StyleSheet,
   View,
 } from 'react-native'
@@ -52,8 +52,8 @@ export interface PagerWithHeaderProps {
   ref?: React.Ref<PagerRef>
   testID?: string
   children:
-    | (((props: PagerWithHeaderChildParams) => JSX.Element) | null)[]
-    | ((props: PagerWithHeaderChildParams) => JSX.Element)
+  | (((props: PagerWithHeaderChildParams) => JSX.Element) | null)[]
+  | ((props: PagerWithHeaderChildParams) => JSX.Element)
   items: string[]
   isHeaderReady: boolean
   renderHeader?: ({
@@ -150,7 +150,7 @@ export function PagerWithHeader({
   )
 
   // Track scroll refs for all tabs (UI thread accessible)
-  const scrollRefs = useSharedValue<Array<AnimatedRef<any> | null>>([])
+  const scrollRefs = useSharedValue<(AnimatedRef<any> | null)[]>([])
   const registerRef = useCallback(
     (scrollRef: AnimatedRef<any> | null, atIndex: number) => {
       scrollRefs.modify(refs => {
@@ -348,12 +348,12 @@ let PagerTabBar = ({
         }}>
         {renderTabBar
           ? renderTabBar({
-              items,
-              currentPage,
-              onSelect,
-              dragProgress,
-              dragState,
-            })
+            items,
+            currentPage,
+            onSelect,
+            dragProgress,
+            dragState,
+          })
           : null}
       </View>
     </Animated.View>

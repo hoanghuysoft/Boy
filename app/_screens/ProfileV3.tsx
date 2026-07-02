@@ -17,7 +17,7 @@ import {
   useWindowDimensions
 } from "react-native";
 import { Snackbar } from 'react-native-paper';
-import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Reanimated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PostItem } from '../../components/PostItem';
 import ProfileHeaderV3, { COVER_HEIGHT } from '../../components/profile/ProfileHeaderV3';
@@ -25,7 +25,7 @@ import { AddressSheet } from "../../components/profile/sheets/AddressSheet";
 import { MusicSheet } from "../../components/profile/sheets/MusicSheet";
 import { SocialSheet } from "../../components/profile/sheets/SocialSheet";
 import { WorkplaceSheet } from "../../components/profile/sheets/WorkplaceSheet";
-import { useImageGrid, MediaViewerWrapper } from '../../components/profile/useImageGrid';
+import { MediaViewerWrapper, useImageGrid } from '../../components/profile/useImageGrid';
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from '../../types/post';
@@ -204,25 +204,28 @@ const ProfileContent = () => {
 
   useEffect(() => {
     headerAvatarProgress.value = withSpring(showHeaderAvatar ? 1 : 0, {
-      damping: 14,
-      stiffness: 180,
-      mass: 0.8,
+      damping: 18,
+      stiffness: 220,
+      mass: 0.6,
     });
   }, [showHeaderAvatar, headerAvatarProgress]);
 
   const headerAvatarContainerStyle = useAnimatedStyle(() => {
-    const layoutProgress = Math.min(1, Math.max(0, headerAvatarProgress.value));
+    const progress = headerAvatarProgress.value;
     return {
-      width: layoutProgress * 40,
-      marginRight: layoutProgress * 8,
-      opacity: layoutProgress,
+      opacity: progress,
+      transform: [
+        { scale: interpolate(progress, [0, 1], [0.6, 1], 'clamp') },
+        { translateY: interpolate(progress, [0, 1], [10, 0], 'clamp') },
+      ],
     };
   });
 
-  const headerAvatarImageStyle = useAnimatedStyle(() => {
-    const scaleProgress = Math.max(0, headerAvatarProgress.value);
+  const musicPillContainerStyle = useAnimatedStyle(() => {
+    const progress = headerAvatarProgress.value;
+    const translateX = interpolate(progress, [0, 1], [-48, 0], 'clamp');
     return {
-      transform: [{ scale: scaleProgress }],
+      transform: [{ translateX }],
     };
   });
 
@@ -575,8 +578,9 @@ const ProfileContent = () => {
             <Reanimated.View
               style={[
                 {
+                  width: 40,
                   height: 40,
-                  overflow: 'hidden',
+                  marginRight: 8,
                   justifyContent: 'center',
                   alignItems: 'center',
                 },
@@ -584,16 +588,13 @@ const ProfileContent = () => {
               ]}
             >
               <TouchableOpacity activeOpacity={0.8} onPress={scrollToTop}>
-                <Reanimated.View
-                  style={[
-                    {
-                      width: 40,
-                      height: 40,
-                      borderRadius: 999,
-                      overflow: 'hidden',
-                    },
-                    headerAvatarImageStyle,
-                  ]}
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                  }}
                 >
                   <Image
                     source={
@@ -606,46 +607,49 @@ const ProfileContent = () => {
                     style={{ width: '100%', height: '100%' }}
                     contentFit="cover"
                   />
-                </Reanimated.View>
+                </View>
               </TouchableOpacity>
             </Reanimated.View>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => safePresent(musicSheetRef)}
-              style={{ height: 40, width: 150 }}
-            >
-              <BlurView tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"} intensity={80} blurTarget={blurTargetRef} blurMethod="dimezisBlurView" style={styles.blurWrapper}>
-                <View
-                  style={[StyleSheet.absoluteFill, {}]}
-                />
-
-                <View style={styles.blurContent}>
-                  <SpinningArtwork
-                    isMusicPlaying={isMusicPlaying}
-                    hasMusic={hasMusic}
-                    coverUrl={currentTrack?.cover_url}
-                    onPress={handleMusicPress}
-                    colors={colors}
+            {/* Music Pill Wrapper with Translation */}
+            <Reanimated.View style={musicPillContainerStyle}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => safePresent(musicSheetRef)}
+                style={{ height: 40, width: 150 }}
+              >
+                <BlurView tint={theme === "dark" ? "systemMaterialDark" : "systemMaterialLight"} intensity={80} blurTarget={blurTargetRef} blurMethod="dimezisBlurView" style={styles.blurWrapper}>
+                  <View
+                    style={[StyleSheet.absoluteFill, {}]}
                   />
 
-                  <View style={styles.textContainer}>
-                    <FlexText
-                      style={[styles.titleText, { color: colors.text }]}
-                      numberOfLines={1}
-                    >
-                      {hasMusic ? currentTrack?.title : t("profile.music.addMusic")}
-                    </FlexText>
-                    <FlexText
-                      style={[styles.artistText, { color: colors.text }]}
-                      numberOfLines={1}
-                    >
-                      {hasMusic ? currentTrack?.artist : t("profile.music.selectTrack")}
-                    </FlexText>
+                  <View style={styles.blurContent}>
+                    <SpinningArtwork
+                      isMusicPlaying={isMusicPlaying}
+                      hasMusic={hasMusic}
+                      coverUrl={currentTrack?.cover_url}
+                      onPress={handleMusicPress}
+                      colors={colors}
+                    />
+
+                    <View style={styles.textContainer}>
+                      <FlexText
+                        style={[styles.titleText, { color: colors.text }]}
+                        numberOfLines={1}
+                      >
+                        {hasMusic ? currentTrack?.title : t("profile.music.addMusic")}
+                      </FlexText>
+                      <FlexText
+                        style={[styles.artistText, { color: colors.text }]}
+                        numberOfLines={1}
+                      >
+                        {hasMusic ? currentTrack?.artist : t("profile.music.selectTrack")}
+                      </FlexText>
+                    </View>
                   </View>
-                </View>
-              </BlurView>
-            </TouchableOpacity>
+                </BlurView>
+              </TouchableOpacity>
+            </Reanimated.View>
 
           </View>
         </View>
