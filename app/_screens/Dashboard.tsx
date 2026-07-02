@@ -1,10 +1,11 @@
-import Clapperboard from "@/assets/images/svg/movie-clapper.svg";
-import Tv from "@/assets/images/svg/tv-2.svg";
 import AssemblyText from "@/components/AssemblyText";
 import { FlexText } from "@/components/FlexText";
 import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerSheet";
 import { useThemeContext } from "@/context/ThemeContext";
-import { useTrendingAll } from "@/hooks/useMovies";
+import { useCgvMoviesQuery } from "@/services/cgv";
+import { Category, CgvMovie } from "@/types/cgv";
+import { CgvCard } from "@/components/tracker/CgvCard";
+import { CgvDetailSheet } from "@/components/tracker/sheets/CgvDetailSheet";
 import { useInfiniteMedia } from "@/services/media";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
 import { useWeather } from "@/services/weather";
@@ -17,7 +18,6 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { SquircleView } from "expo-squircle-view";
-import { useToast } from "heroui-native/toast";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -119,7 +119,6 @@ const DashboardScreen = () => {
     const { data: adminData } = useAdminCheck();
     const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin ?? myProfile?.is_admin);
     const activeProfile = selectedProfile ?? myProfile ?? null;
-    const { toast } = useToast();
 
     const scrollY = useSharedValue(0);
     const scrollHandler = useAnimatedScrollHandler((event) => {
@@ -196,7 +195,33 @@ const DashboardScreen = () => {
         return () => clearInterval(timer);
     }, [photos, initialPhotoUrl]);
 
-    const { data: trending, isLoading: isTrendingLoading } = useTrendingAll();
+    const { data: cgvMovies, isLoading: isCgvLoading } = useCgvMoviesQuery();
+
+    const selectedCgvList = useMemo(() => {
+        if (!cgvMovies || cgvMovies.length === 0) return [];
+        const showing = cgvMovies.filter(m => m.category === Category.NowShowing || m.category === "Phim Đang Chiếu");
+        const upcoming = cgvMovies.filter(m => m.category === Category.ComingSoon || m.category === "Phim Sắp Chiếu");
+        
+        const result: CgvMovie[] = [];
+        if (showing.length > 0) result.push(showing[0]);
+        if (showing.length > 1) result.push(showing[1]);
+        if (upcoming.length > 0) result.push(upcoming[0]);
+        
+        while (result.length < 3 && cgvMovies.length > result.length) {
+            const next = cgvMovies.find(m => !result.includes(m));
+            if (next) result.push(next);
+            else break;
+        }
+        return result;
+    }, [cgvMovies]);
+
+    const cgvDetailSheetRef = useRef<TrueSheet>(null);
+    const [selectedCgvMovie, setSelectedCgvMovie] = useState<CgvMovie | null>(null);
+
+    const handleCgvPress = useCallback((movie: CgvMovie) => {
+        setSelectedCgvMovie(movie);
+        cgvDetailSheetRef.current?.present();
+    }, []);
     const weatherCity = activeProfile?.hometown?.trim() || "Ho Chi Minh City";
 
     const { data: weather, refetch: refetchWeather, isFetching: isWeatherFetching } = useWeather(weatherCity);
@@ -353,67 +378,48 @@ const DashboardScreen = () => {
                             <FlexText style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>
                                 {t('dashboard.sections.entertainment')}
                             </FlexText>
-                            <View style={{ borderRadius: 999, backgroundColor: `${colors.secondary}33`, paddingHorizontal: 10, paddingVertical: 4 }}>
-                                <FlexText style={{ fontSize: 12, color: colors.text, fontWeight: '600' }}>Beta</FlexText>
+                            <View style={{ borderRadius: 999, backgroundColor: `${'#ffffff'}`, paddingHorizontal: 10, paddingVertical: 4, overflow: 'hidden' }}>
+                                <Image source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/CGV_logo.svg/960px-CGV_logo.svg.png' }}
+                                    style={{
+                                        aspectRatio: 8 / 5,
+                                        height: 24,
+                                    }}
+                                    contentFit="contain"
+                                />
                             </View>
                         </View>
                         <FlexText style={{ fontSize: 14, color: colors.text, opacity: 0.8, marginBottom: 14 }}>
-                            Personalized channels, quick resume, and curated picks will appear here.
+                            Trải nghiệm điện ảnh chất lượng nhất tại cụm rạp CGV trên toàn quốc.
                         </FlexText>
-                        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-                            <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
-                                <TouchableOpacity onPress={() => isAdmin ? router.push('/moviehub/home') : toast.show({ variant: 'danger', label: 'Not available yet', placement: 'top', description: 'You are not allowed to use this service. Contact Support for more information.' })}>
-                                    <Tv width={20} height={20} color={colors.onSurface} />
-                                    <FlexText style={{ marginTop: 8, color: colors.onSurface, fontSize: 14, fontWeight: '600' }}>WeLoveHub</FlexText>
-                                    <FlexText style={{ marginTop: 2, color: colors.onSurface, opacity: 0.65, fontSize: 12 }}>Private entertainment</FlexText>
-                                </TouchableOpacity>
-                            </SquircleView>
-                            <SquircleView cornerSmoothing={100} borderRadius={16} style={{ flex: 1, backgroundColor: `${colors.text}14`, padding: 12 }}>
-                                <Clapperboard width={20} height={20} color={colors.onSurface} />
-                                <FlexText style={{ marginTop: 8, color: colors.onSurface, fontSize: 14, fontWeight: '600' }}>WeLoveTV</FlexText>
-                                <FlexText style={{ marginTop: 2, color: colors.onSurface, opacity: 0.65, fontSize: 12 }}>Watch your favorite movies and TV shows</FlexText>
-                            </SquircleView>
-                        </View>
                         <SquircleView cornerSmoothing={100} borderRadius={16} style={{ backgroundColor: `${colors.text}10`, padding: 12, gap: 10 }}>
                             <FlexText style={{ fontSize: 13, color: colors.onSurface, opacity: 0.75 }}>
-                                Trending
+                                CGV Phim
                             </FlexText>
-                            {isTrendingLoading ? (
+                            {isCgvLoading ? (
                                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                                    <View style={{ flex: 1, height: 110, borderRadius: 4, backgroundColor: `${colors.text}14` }} />
-                                    <View style={{ flex: 1, height: 110, borderRadius: 4, backgroundColor: `${colors.text}14` }} />
-                                    <View style={{ flex: 1, height: 110, borderRadius: 4, backgroundColor: `${colors.text}14` }} />
+                                    <View style={{ flex: 1, height: 110, borderRadius: 8, backgroundColor: `${colors.text}14` }} />
+                                    <View style={{ flex: 1, height: 110, borderRadius: 8, backgroundColor: `${colors.text}14` }} />
+                                    <View style={{ flex: 1, height: 110, borderRadius: 8, backgroundColor: `${colors.text}14` }} />
                                 </View>
-                            ) : (trending ?? []).length > 0 ? (
+                            ) : selectedCgvList.length > 0 ? (
                                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                                    {(trending ?? []).slice(0, 3).map((item) => (
-                                        <TouchableOpacity
-                                            key={item.id}
-                                            activeOpacity={0.75}
-                                            style={{ flex: 1, gap: 6 }}
-                                            onPress={() => item.media_type === 'tv'
-                                                ? router.push({ pathname: '/tv_detail', params: { id: item.id } })
-                                                : router.push({ pathname: '/movie_detail', params: { id: item.id } })
-                                            }
-                                        >
-                                            <Image
-                                                source={{
-                                                    uri: item.poster_path
-                                                        ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                                                        : undefined,
-                                                }}
-                                                style={{ width: '100%', aspectRatio: 2 / 3, borderRadius: 8, backgroundColor: `${colors.text}12` }}
-                                                contentFit="cover"
+                                    {selectedCgvList.map((item) => {
+                                        const isUpcoming = item.category === Category.ComingSoon || item.category === "Phim Sắp Chiếu";
+                                        return (
+                                            <CgvCard
+                                                key={item.id}
+                                                movie={item}
+                                                isUpcoming={isUpcoming}
+                                                onPress={handleCgvPress}
+                                                showCategory={true}
+                                                style={{ flex: 1, marginRight: 0 }}
                                             />
-                                            <FlexText numberOfLines={1} style={{ fontSize: 11, color: colors.text, opacity: 0.85 }}>
-                                                {item.title || item.name}
-                                            </FlexText>
-                                        </TouchableOpacity>
-                                    ))}
+                                        );
+                                    })}
                                 </View>
                             ) : (
                                 <FlexText style={{ fontSize: 12, color: colors.text, opacity: 0.65 }}>
-                                    Trending is not available yet.
+                                    CGV movies are not available yet.
                                 </FlexText>
                             )}
                         </SquircleView>
@@ -427,6 +433,7 @@ const DashboardScreen = () => {
                     onSelect={handlePickProfile}
                 />
             )}
+            <CgvDetailSheet ref={cgvDetailSheetRef} movie={selectedCgvMovie} />
         </View>
     )
 }

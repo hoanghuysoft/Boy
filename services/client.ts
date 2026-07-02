@@ -213,10 +213,12 @@ client.interceptors.request.use(async ({ url, headers }) => {
   return { url, headers };
 });
 
-export const showsClient = createClient({
-  baseURL: "https://flaskmovieapi.vercel.app",
+export const cgvClient = createClient({
+  baseURL: "https://www.cgv.vn",
   headers: {
     "Content-Type": "application/json",
+    "X-Device": "ANDROID_35_2.10.12_159",
+    "User-Agent": "okhttp/3.10.0"
   },
 });
 

@@ -11,15 +11,11 @@ import { Stack } from 'expo-router/stack';
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native/provider";
 import React, { useEffect } from "react";
-import { AppState, AppStateStatus, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { AppState, AppStateStatus, StatusBar, StyleSheet, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
-import {
-  configureReanimatedLogger,
-  ReanimatedLogLevel,
-} from "react-native-reanimated";
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -49,10 +45,9 @@ Sentry.init({
   // Enable Logs
   enableLogs: false,
 
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
+  spotlight: __DEV__,
 });
-(globalThis as any).fetch = nitroFetch;
+global.fetch = nitroFetch;
 
 GiphySDK.configure({ apiKey: process.env.EXPO_PUBLIC_GIPHY_API_KEY || '' });
 
@@ -63,36 +58,7 @@ Observe.configure({
   },
 });
 
-// Disable Reanimated strict mode warning
-configureReanimatedLogger({
-  level: ReanimatedLogLevel.warn,
-  strict: false,
-});
-
-// Reanimated 4 performance feature flags — fixes FPS drops during scroll
-// See: https://docs.swmansion.com/react-native-reanimated/docs/guides/feature-flags
-(globalThis as any)._REANIMATED_IS_REDUCED_MOTION = false;
-// NOTE: ANDROID/IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS and USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS
-// are intentionally NOT set. The screen transition library uses modify(false) (batched mutations)
-// which is incompatible with synchronous UI prop flushing — it causes screens to get stuck at
-// intermediate opacity/transform states mid-animation (the "disappearing screen" bug).
-// Prevent global font scaling
-interface TextWithDefaultProps extends Text {
-  defaultProps?: { allowFontScaling?: boolean };
-}
-interface TextInputWithDefaultProps extends TextInput {
-  defaultProps?: { allowFontScaling?: boolean };
-}
-(Text as unknown as TextWithDefaultProps).defaultProps = (Text as unknown as TextWithDefaultProps).defaultProps || {};
-(Text as unknown as TextWithDefaultProps).defaultProps!.allowFontScaling = false;
-(TextInput as unknown as TextInputWithDefaultProps).defaultProps = (TextInput as unknown as TextInputWithDefaultProps).defaultProps || {};
-(TextInput as unknown as TextInputWithDefaultProps).defaultProps!.allowFontScaling = false;
-
-// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
-
-// ─── StatusBarFade ─────────────────────────────────────────────────────────────
-// Pure UI sub-component: renders a gradient fade beneath the status bar.
 
 const StatusBarFade = () => {
   const { theme } = useThemeContext();
@@ -234,13 +200,9 @@ const RootContent = () => {
           />
           <Stack.Screen name="language-settings" />
           <Stack.Screen name="security-settings" />
-          <Stack.Screen name="fprofile" />
           <Stack.Screen name="search" />
           <Stack.Screen name="hashtag/[tag]" />
           <Stack.Screen name="hashtag-list" />
-          <Stack.Screen name="show_detail" />
-          <Stack.Screen name="show_list" />
-          <Stack.Screen name="watchlist" />
           <Stack.Screen name="create" />
           <Stack.Screen name="inapp_browser" />
           <Stack.Screen name="movie_detail" />
@@ -249,7 +211,6 @@ const RootContent = () => {
           <Stack.Screen name="movie_list" />
           <Stack.Screen name="search_movies" />
           <Stack.Screen name="webview" />
-          <Stack.Screen name="moviehub" />
           <Stack.Screen name="bulletinboard" />
         </Stack>
         <GlobalAudioPlayer />

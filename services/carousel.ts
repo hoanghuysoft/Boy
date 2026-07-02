@@ -1,10 +1,11 @@
 import { CarouselItem } from "@/types/carousel";
 import { useQuery } from "@tanstack/react-query";
 import { client } from "./client";
+import { carouselKeys } from "./queryKeys";
 
 export const useCarouselQuery = () => {
     return useQuery({
-        queryKey: ["carousel"],
+        queryKey: carouselKeys.lists(),
         queryFn: () => getCarouselData(),
     });
 };

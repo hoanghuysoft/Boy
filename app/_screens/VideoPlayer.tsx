@@ -16,7 +16,6 @@ import * as IntentLauncher from "expo-intent-launcher";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { resolveVideoSource } from "@/services/shows";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -72,30 +71,14 @@ const VideoPlayer = () => {
   const wasPlayingRef = useRef(false);
   const isSeekingRef = useRef(false);
   const hasResumedRef = useRef(false);
-  
+
   const [controlsOpacity] = useState(() => new Animated.Value(0));
   const [topBarTranslateY] = useState(() => new Animated.Value(-50));
   const [bottomBarTranslateY] = useState(() => new Animated.Value(50));
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ─── expo-video player ───────────────────────────────────────────────────────
-  const [resolvedSource, setResolvedSource] = useState<any>(null);
-
-  useEffect(() => {
-    let active = true;
-    const fetchSource = async () => {
-      const src = await resolveVideoSource(resolvedVideoUrl || videoUrl);
-      if (active) {
-        setResolvedSource(src);
-      }
-    };
-    fetchSource();
-    return () => {
-      active = false;
-    };
-  }, [resolvedVideoUrl, videoUrl]);
-
-  const player = useVideoPlayer(resolvedSource || "", (p) => {
+  const player = useVideoPlayer(resolvedVideoUrl || videoUrl || "", (p) => {
     p.play();
     p.loop = false;
     p.muted = false;

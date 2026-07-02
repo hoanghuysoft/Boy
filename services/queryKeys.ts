@@ -79,35 +79,15 @@ export const workplaceKeys = {
     all: (profileId: string) => ['workplaces', profileId] as const,
 };
 
-// ─── Shows (external crawler API) ────────────────────────────────────────────
-// Server-side cache is 300s — client staleTime matches that.
-export const showsKeys = {
-    all: ['shows'] as const,
-    health: () => [...showsKeys.all, 'health'] as const,
-    slider: () => [...showsKeys.all, 'slider'] as const,
-    sections: () => [...showsKeys.all, 'sections'] as const,
-    categories: () => [...showsKeys.all, 'categories'] as const,
-    // category — shared root for both paged and infinite variants
-    category: (slug: string) => [...showsKeys.all, 'category', slug] as const,
-    categoryPage: (slug: string, page: number) => [...showsKeys.category(slug), page] as const,
-    // tag
-    tag: (tag: string) => [...showsKeys.all, 'tag', tag] as const,
-    tagPage: (tag: string, page: number) => [...showsKeys.tag(tag), page] as const,
-    // search
-    search: (query: string) => [...showsKeys.all, 'search', query] as const,
-    searchPage: (query: string, page: number) => [...showsKeys.search(query), page] as const,
-    // video detail
-    videoDetail: (slug: string) => [...showsKeys.all, 'video', slug] as const,
-    // latest
-    latest: () => [...showsKeys.all, 'latest'] as const,
-    latestPage: (page: number) => [...showsKeys.latest(), page] as const,
-    // popular
-    popular: () => [...showsKeys.all, 'popular'] as const,
-    popularPage: (page: number) => [...showsKeys.popular(), page] as const,
-    // least-viewed
-    leastViewed: () => [...showsKeys.all, 'leastViewed'] as const,
-    leastViewedPage: (page: number) => [...showsKeys.leastViewed(), page] as const,
-    // chat
-    chat: (i?: string, c?: string) => [...showsKeys.all, 'chat', i || '', c || ''] as const,
+// ─── Carousel ────────────────────────────────────────────────────────────────
+export const carouselKeys = {
+    all: ['carousel'] as const,
+    lists: () => [...carouselKeys.all, 'list'] as const,
 };
 
+// ─── CGV ──────────────────────────────────────────────────────────────────────
+export const cgvKeys = {
+    all: ['cgv'] as const,
+    movies: () => [...cgvKeys.all, 'movies'] as const,
+    sneakShow: () => [...cgvKeys.movies(), 'sneakShow'] as const,
+};

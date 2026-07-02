@@ -3,7 +3,6 @@ import { mmkvSupabaseAdapter } from "./supabase-storage-adapter";
 // import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useMovieTrackerStore } from "@/stores/movieTracker";
 import { useSearchHistoryStore } from "@/stores/searchHistory";
-import { useShowWatchlistStore } from "@/stores/showWatchlist";
 import { createClient } from "@supabase/supabase-js";
 import "react-native-url-polyfill/auto";
 import { storage } from "./storage";
@@ -78,7 +77,6 @@ export async function signOut() {
     // its last-hydrated state. Explicitly reset each store so the next user
     // starts fresh without restarting the app.
     useSearchHistoryStore.getState().clearHistory();
-    useShowWatchlistStore.getState().reset();
     useMovieTrackerStore.getState().reset();
 
     try {

@@ -1,7 +1,7 @@
 const dashboard = {
     sections: {
-        services: 'Dich vu',
-        entertainment: 'Giai tri',
+        services: 'Dịch vụ',
+        entertainment: 'Rạp phim CGV',
     },
 } as const;
 

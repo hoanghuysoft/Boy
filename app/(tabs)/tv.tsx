@@ -1,2 +1,2 @@
-import ChatScreen from "../_screens/Chat";
-export default ChatScreen;
+import MovieScreen from "../_screens/Movie";
+export default MovieScreen;

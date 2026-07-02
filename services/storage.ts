@@ -50,14 +50,12 @@ export const onboardingStorage = storage;
 export const weatherStorage = storage;
 export const localFbStorage = storage;
 export const searchHistoryStorage = storage;
-export const showWatchlistStorage = storage;
 export const movieTrackerStorage = storage;
 export const carouselColorStorage = storage;
 export const videoResumeStorage = storage;
 export const tvDetailStorage = storage;
 export const personDetailStorage = storage;
 export const movieDetailStorage = storage;
-export const showDetailStorage = storage;
 export const imageDimensionStorage = storage;
 export const settingsStorage = storage;
 

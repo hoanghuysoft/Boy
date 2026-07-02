@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 
-const ChatScreen = () => {
+const MovieScreen = () => {
   const { colors, typography } = useThemeContext();
   const blurTargetRef = useRef<View | null>(null);
   const common = createCommonStyles(colors, typography);
@@ -98,7 +98,7 @@ const ChatScreen = () => {
   );
 };
 
-export default ChatScreen;
+export default MovieScreen;
 
 const styles = StyleSheet.create({
   textStyle: {

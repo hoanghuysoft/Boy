@@ -1,16 +1,15 @@
 import { FlexText } from '@/components/FlexText';
 import { TMDBReview } from '@/types/moviedb/movie-entities';
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
+import { Spinner } from "heroui-native/spinner";
 import React, { forwardRef, memo, useCallback } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
-import { ActivityIndicator } from 'react-native-paper';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { useSheetBackHandler } from "../../profile/sheets/useSheetBackHandler";
-import { Spinner } from "heroui-native/spinner";
 
 interface ReviewsSheetProps {
     data: TMDBReview[];
@@ -110,6 +109,7 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
                 height: 5,
                 width: 40,
             }}
+            cornerRadius={36}
             onDidPresent={backHandler.onDidPresent}
             onDidDismiss={backHandler.onDidDismiss}
         >

@@ -6,8 +6,8 @@ import { useTvEpisodeDetails } from '@/hooks/useMovies';
 import { useGalleryStore } from '@/stores/gallery';
 import { CastMember } from '@/types/moviedb';
 import { TMDBVideoResult } from '@/types/moviedb/movie-entities';
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList } from '@shopify/flash-list';
 import { Image } from "expo-image";
 import { router } from 'expo-router';
@@ -150,6 +150,7 @@ export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetP
                 height: 5,
                 width: 40,
             }}
+            cornerRadius={36}
             onDidPresent={backHandler.onDidPresent}
             onDidDismiss={backHandler.onDidDismiss}
         >
