@@ -1,3 +1,4 @@
+import { CustomSurface } from '@/components/CustomSurface';
 import { FlexText } from '@/components/FlexText';
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
@@ -16,7 +17,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '../../context/ThemeContext';
 import { createCommonStyles } from '../../styles/common';
 import { Hashtag } from '../../types/hashtag';
-import { CustomSurface } from '@/components/CustomSurface';
 
 const HashtagListScreen = () => {
     const router = useRouter();
@@ -79,7 +79,7 @@ const HashtagListScreen = () => {
                             <SkeletonGroup
                                 key={i}
                                 isLoading
-                                variant="pulse"
+                                variant="shimmer"
                                 style={[styles.tagRow, cardStyle, { backgroundColor: colors.containerContent }]}
                             >
                                 <View style={styles.tagRowLeft}>

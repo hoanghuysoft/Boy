@@ -15,7 +15,7 @@ import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useCreatePost, useDeletePost, useSharePost } from "../../services/post";
-import { useProfile } from "../../services/userprofile";
+import { useAdminCheck, useProfile } from "../../services/userprofile";
 import { useLanguageStore } from "../../stores/language";
 import { useSettingsStore } from "../../stores/settings";
 import { useTranslationStore } from "../../stores/translation";
@@ -106,11 +106,14 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
         const { toast } = useToast();
 
         const isOwner = post?.profile_id === currentProfileId;
+        const { data: adminData } = useAdminCheck();
         const deletePostMutation = useDeletePost(currentProfileId || "");
         const { data: myProfile } = useProfile('me', true);
         const sharePostMutation = useSharePost();
         const createPostMutation = useCreatePost(myProfile?.id || "");
         const insets = useSafeAreaInsets();
+        const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin ?? myProfile?.is_admin);
+
 
         type DialogButton = {
             text: string;
@@ -378,7 +381,7 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                                 />
                             )}
 
-                            {!isOwner && (
+                            {!isOwner && !isAdmin && (
                                 <OptionItem
                                     icon={Danger}
                                     label={t('post.optionsSheet.report')}
@@ -388,7 +391,7 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                                 />
                             )}
 
-                            {isOwner && !post?.reposted_post && (
+                            {(isOwner || isAdmin) && !post?.reposted_post && (
                                 <OptionItem
                                     icon={PenNewRound}
                                     label={t('post.optionsSheet.editPost')}
@@ -398,7 +401,7 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                                 />
                             )}
 
-                            {isOwner && (
+                            {(isOwner || isAdmin) && (
                                 <OptionItem
                                     icon={TrashBinTrash}
                                     label={t('post.optionsSheet.deletePost')}

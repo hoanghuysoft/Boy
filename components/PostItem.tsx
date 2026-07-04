@@ -8,7 +8,6 @@ import LikeSolidIcon from "@/icons/likedsolid";
 import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
 import { usePrecacheProfileFromPost } from "@/services/profileCache";
-import { useFeedVideoStore } from "@/stores/feedVideo";
 import { Link, Media, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
 import { guessLanguageAsync } from "@bsky.app/expo-guess-language";
@@ -20,6 +19,7 @@ import { SquircleView } from "expo-squircle-view";
 import { Avatar } from "heroui-native/avatar";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
+import { PressableFeedback } from "heroui-native/pressable-feedback";
 import { Spinner } from "heroui-native/spinner";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -87,9 +87,6 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
     const vm = usePostItemViewModel({ post: displayPost, onOptionsPress, onLikeCountPress, onCommentPress });
 
     // Feed video state - optimally select ONLY boolean to prevent mass re-renders
-    const isActiveVideoPost = useFeedVideoStore(s => s.activePostId === post.id);
-    const isVideoMuted = useFeedVideoStore(s => s.isMuted);
-    const toggleVideoMute = useFeedVideoStore(s => s.toggleMute);
     const hasVideo = displayPost.media?.some((m: Media) => m.type === 'video');
 
     // Caption without any YouTube URLs — those are rendered by YouTubePostPlayer.
@@ -124,23 +121,27 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         <View style={{}}>
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <TouchableOpacity onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
-                    <Avatar style={{ width: 40, height: 40 }}>
-                        <Avatar.Image
-                            source={{ uri: post.profile_avatar }}
-                        />
-                        <Avatar.Fallback>
-                            {post.profile_name?.charAt(0).toUpperCase()}
-                        </Avatar.Fallback>
-                    </Avatar>
-                    <View>
-                        <View style={[vm.common.row, { gap: 4 }]}>
-                            <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
-                            {post.profile_is_verified && <VerifiedIcon size={16} />}
+                <PressableFeedback>
+                    <PressableFeedback.Highlight />
+                    <PressableFeedback.Ripple />
+                    <Pressable onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
+                        <Avatar style={{ width: 40, height: 40 }}>
+                            <Avatar.Image
+                                source={{ uri: post.profile_avatar }}
+                            />
+                            <Avatar.Fallback>
+                                {post.profile_name?.charAt(0).toUpperCase()}
+                            </Avatar.Fallback>
+                        </Avatar>
+                        <View>
+                            <View style={[vm.common.row, { gap: 4 }]}>
+                                <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
+                                {post.profile_is_verified && <VerifiedIcon size={16} />}
+                            </View>
+                            <PostMetaInfo post={post} />
                         </View>
-                        <PostMetaInfo post={post} />
-                    </View>
-                </TouchableOpacity>
+                    </Pressable>
+                </PressableFeedback>
                 {!isBookmarked && (
                     <TouchableOpacity
                         hitSlop={10}
@@ -466,16 +467,22 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 // Bookmarks screen: read-only stats, no bookmark button
                 (<View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 20 }]}>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                        <Pressable hitSlop={10} onPress={vm.handleLikePress}>
-                            {vm.isLiked ? (
-                                <LikeSolidIcon size={24} color={vm.colors.onSurface} />
-                            ) : (
-                                <LikeIcon size={24} color={vm.colors.onSurface} />
-                            )}
-                        </Pressable>
-                        <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
-                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
-                        </TouchableOpacity>
+                        <PressableFeedback>
+                            <PressableFeedback.Ripple />
+                            <Pressable hitSlop={10} onPress={vm.handleLikePress}>
+                                {vm.isLiked ? (
+                                    <LikeSolidIcon size={24} color={vm.colors.onSurface} />
+                                ) : (
+                                    <LikeIcon size={24} color={vm.colors.onSurface} />
+                                )}
+                            </Pressable>
+                        </PressableFeedback>
+                        <PressableFeedback>
+                            <PressableFeedback.Ripple />
+                            <Pressable hitSlop={10} onPress={vm.handleLikeCountPress}>
+                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
+                            </Pressable>
+                        </PressableFeedback>
                     </View>
                     <Pressable hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <CommentIcon size={24} color={vm.colors.onSurface} />
@@ -494,35 +501,47 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 (<View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
                     <View style={[vm.common.row, { gap: 20 }]}>
                         <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                            <TouchableOpacity hitSlop={10} onPress={vm.handleLikePress}>
-                                {vm.isLiked ? (
-                                    <LikeSolidIcon size={24} color={vm.colors.onSurface} />
-                                ) : (
-                                    <LikeIcon size={24} color={vm.colors.onSurface} />
-                                )}
-                            </TouchableOpacity>
+                            <PressableFeedback>
+                                <PressableFeedback.Ripple />
+                                <Pressable hitSlop={10} onPress={vm.handleLikePress}>
+                                    {vm.isLiked ? (
+                                        <LikeSolidIcon size={24} color={vm.colors.onSurface} />
+                                    ) : (
+                                        <LikeIcon size={24} color={vm.colors.onSurface} />
+                                    )}
+                                </Pressable>
+                            </PressableFeedback>
                             <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
                                 <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
                             </TouchableOpacity>
                         </View>
-                        <TouchableOpacity hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                            <CommentIcon size={24} color={vm.colors.onSurface} />
-                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
-                        </TouchableOpacity>
+                        <PressableFeedback>
+                            <PressableFeedback.Ripple />
+                            <Pressable hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                                <CommentIcon size={24} color={vm.colors.onSurface} />
+                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
+                            </Pressable>
+                        </PressableFeedback>
                         {!isRepost && (
-                            <TouchableOpacity hitSlop={10} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                                <ShareIcon size={24} color={vm.colors.onSurface} />
-                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.share_count}</FlexText>
-                            </TouchableOpacity>
+                            <PressableFeedback>
+                                <PressableFeedback.Ripple />
+                                <Pressable hitSlop={10} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                                    <ShareIcon size={24} color={vm.colors.onSurface} />
+                                    <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.share_count}</FlexText>
+                                </Pressable>
+                            </PressableFeedback>
                         )}
                     </View>
-                    <TouchableOpacity hitSlop={10} onPress={vm.handleBookmarkPress}>
-                        {vm.isBookmarked ? (
-                            <BookmarkSolidIcon size={24} color={vm.colors.onSurface} />
-                        ) : (
-                            <BookmarkIcon size={24} color={vm.colors.onSurface} />
-                        )}
-                    </TouchableOpacity>
+                    <PressableFeedback>
+                        <PressableFeedback.Ripple />
+                        <Pressable hitSlop={10} onPress={vm.handleBookmarkPress}>
+                            {vm.isBookmarked ? (
+                                <BookmarkSolidIcon size={24} color={vm.colors.onSurface} />
+                            ) : (
+                                <BookmarkIcon size={24} color={vm.colors.onSurface} />
+                            )}
+                        </Pressable>
+                    </PressableFeedback>
                 </View>)
             )}
 

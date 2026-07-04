@@ -22,7 +22,8 @@ import { Spinner } from "heroui-native/spinner";
 import { TextField } from "heroui-native/text-field";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Keyboard, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Easing, Keyboard, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { easeGradient } from "react-native-easing-gradient";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -131,6 +132,20 @@ const SettingsScreen = () => {
 
     const currentLimitLabel = CACHE_SIZE_OPTIONS.find(o => o.value === videoCacheSizeLimit)?.label || formatBytes(videoCacheSizeLimit);
 
+    const { colors: fadeColors, locations: fadeLocations } = easeGradient({
+        colorStops: {
+            0: {
+                color: colors.surface,
+                easing: Easing.ease,
+            },
+            1: {
+                color: 'transparent',
+            },
+        },
+        easing: Easing.linear,
+        extraColorStopsPerTransition: 16,
+    });
+
     return (
         <View style={common.screen}>
             <View style={{ position: 'absolute', top: inset.top + 16, left: 16, zIndex: 1000 }}>
@@ -148,7 +163,7 @@ const SettingsScreen = () => {
                     <Ionicons name='chevron-back' size={24} color={colors.onSurface} />
                 </TouchableOpacity>
             </View>
-            <KeyboardAvoidingView behavior="translate-with-padding">
+            <KeyboardAvoidingView behavior="padding">
                 <ScrollView style={common.screenPadding}>
                     <View style={{ marginTop: inset.top + 66 }}></View>
                     <FlexText style={[styles.title]}>{t('settings.accountAndSecurity')}</FlexText>
@@ -374,8 +389,8 @@ const SettingsScreen = () => {
                                 <View style={{ flex: 1, marginRight: 16 }}>
                                     <FlexText style={common.body}>Gemini Nano</FlexText>
                                     <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
-                                        {isGeminiNanoAvailable 
-                                            ? t('settings.geminiNanoAvailable') 
+                                        {isGeminiNanoAvailable
+                                            ? t('settings.geminiNanoAvailable')
                                             : t('settings.geminiNanoUnavailable')}
                                     </FlexText>
                                 </View>
@@ -386,9 +401,9 @@ const SettingsScreen = () => {
                                         borderRadius: 4,
                                         backgroundColor: isGeminiNanoAvailable ? '#54d340' : colors.onSurfaceVariant
                                     }} />
-                                    <FlexText style={[common.bodySmall, { 
+                                    <FlexText style={[common.bodySmall, {
                                         color: isGeminiNanoAvailable ? '#54d340' : colors.onSurfaceVariant,
-                                        fontWeight: '600' 
+                                        fontWeight: '600'
                                     }]}>
                                         {isGeminiNanoAvailable ? t('settings.statusReady') : t('settings.statusUnavailable')}
                                     </FlexText>
@@ -486,7 +501,8 @@ const SettingsScreen = () => {
 
             {/* Fade overlay from solid at the bottom to transparent at the top */}
             <LinearGradient
-                colors={[colors.surface, 'transparent']}
+                colors={fadeColors as [string, string, ...string[]]}
+                locations={fadeLocations as [number, number, ...number[]]}
                 style={{
                     position: 'absolute',
                     left: 0,

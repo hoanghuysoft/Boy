@@ -410,7 +410,7 @@ export const MovieDBView = ({ headerScrollX, scrollY }: { headerScrollX: Animate
             >
                 {/* Hero skeleton — only blocks on the trending banner */}
                 {isLoading && (
-                    <Skeleton variant="pulse" style={{ height: posterHeight, width: "100%" }} />
+                    <Skeleton variant="shimmer" style={{ height: posterHeight, width: "100%" }} />
                 )}
 
                 {!isLoading && (

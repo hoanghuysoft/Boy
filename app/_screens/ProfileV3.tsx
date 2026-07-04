@@ -7,7 +7,6 @@ import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FlatList,
-  InteractionManager,
   Platform,
   RefreshControl,
   ScrollView,
@@ -49,7 +48,7 @@ const ProfileSkeletonInner = ({ insets }: { insets: any }) => {
   const { colors } = useThemeContext();
   return (
     <View style={{ paddingHorizontal: 12, flex: 1 }}>
-      <SkeletonGroup isLoading variant="pulse" isSkeletonOnly>
+      <SkeletonGroup isLoading variant="shimmer" isSkeletonOnly>
         {/* Top Space */}
         <View style={{ height: insets.top + 12 }} />
 
@@ -805,10 +804,10 @@ const ProfileScreen = () => {
   const [isReady, setIsReady] = React.useState(false);
 
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
+    const handle = requestIdleCallback(() => {
       setIsReady(true);
     });
-    return () => task.cancel();
+    return () => cancelIdleCallback(handle);
   }, []);
 
   if (!isReady) {

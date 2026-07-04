@@ -332,7 +332,7 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     if (isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
-                <SkeletonGroup isLoading={true} variant="pulse">
+                <SkeletonGroup isLoading={true} variant="shimmer">
                     <View style={{ gap: 16 }}>
                         <SkeletonGroup.Item style={{ height: posterHeight, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>

@@ -150,11 +150,10 @@ export const useHomeViewModel = () => {
       const shouldShowCarousel = currentScrollY <= 10;
       if (shouldShowCarousel !== isCarouselVisible.current) {
         isCarouselVisible.current = shouldShowCarousel;
-        Animated.spring(carouselVisibility, {
+        Animated.timing(carouselVisibility, {
           toValue: shouldShowCarousel ? 1 : 0,
+          duration: 300,
           useNativeDriver: true,
-          friction: 8,
-          tension: 100,
         }).start();
 
         setUseCarouselColor(

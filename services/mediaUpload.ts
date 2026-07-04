@@ -9,6 +9,7 @@ import { Media, MediaType } from '@/types/media';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { File as FSFile, UploadType } from 'expo-file-system';
 import { client } from './client';
+import { useSettingsStore } from '@/stores/settings';
 
 // ============================================================================
 // Types
@@ -106,7 +107,7 @@ export const uploadMedia = async (
 ): Promise<UploadMediaResponse> => {
     const type = options.type || getMediaType(file);
     if (type === 'video') {
-        return uploadVideoViaTinyVault(profileId, file, options);
+        return uploadVideoViaX02(profileId, file, options);
     }
 
     const formData = new FormData();
@@ -131,47 +132,57 @@ export const uploadMedia = async (
     return response.data;
 };
 
-const TINYVAULT_UPLOAD_URL = 'https://tinyvault.space/api/upload';
 const VIDEO_UPLOAD_MAX_RETRIES = 5;
 const VIDEO_UPLOAD_RETRY_DELAY_MS = 2000;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const uploadVideoToTinyVault = async (file: FileAsset): Promise<TinyVaultUploadResponse> => {
+const uploadVideoToX02 = async (
+    file: FileAsset,
+    onProgress?: (data: { bytesSent: number; totalBytes: number }) => void
+): Promise<string> => {
+    const { x02ApiKey } = useSettingsStore.getState();
     const fsFile = new FSFile(file.uri);
-    const result = await fsFile.upload(TINYVAULT_UPLOAD_URL, {
+    const headers: Record<string, string> = {
+        'x-response-format': 'json',
+    };
+    if (x02ApiKey) {
+        headers['x-api-key'] = x02ApiKey;
+    }
+
+    const result = await fsFile.upload('https://up.x02.me/api/upload?format=json', {
         httpMethod: 'POST',
         uploadType: UploadType.MULTIPART,
         fieldName: 'file',
         mimeType: file.type || 'video/mp4',
+        headers,
+        onProgress,
     });
 
     if (result.status < 200 || result.status >= 300) {
-        throw new Error(`TinyVault upload failed (${result.status})`);
+        throw new Error(`x02.me video upload failed with status ${result.status}: ${result.body}`);
     }
 
-    const data = JSON.parse(result.body) as Partial<TinyVaultUploadResponse>;
-    if (!data.download_url || !data.token) {
-        throw new Error('TinyVault response is missing token or download_url');
+    const resData = JSON.parse(result.body);
+    if (!resData.success) {
+        throw new Error(resData.error || 'x02.me video upload failed');
     }
 
-    return {
-        token: data.token,
-        download_url: data.download_url,
-    };
+    return resData.data.url;
 };
 
-const uploadVideoViaTinyVault = async (
+const uploadVideoViaX02 = async (
     profileId: string,
     file: FileAsset,
-    options: UploadMediaOptions = {}
+    options: UploadMediaOptions = {},
+    onProgress?: (data: { bytesSent: number; totalBytes: number }) => void
 ): Promise<UploadMediaResponse> => {
     let lastError: unknown = null;
 
     for (let attempt = 1; attempt <= VIDEO_UPLOAD_MAX_RETRIES; attempt += 1) {
         try {
-            const uploaded = await uploadVideoToTinyVault(file);
-            return createMediaRecord(profileId, uploaded.download_url, 'video', {
+            const videoUrl = await uploadVideoToX02(file, onProgress);
+            return createMediaRecord(profileId, videoUrl, 'video', {
                 caption: options.caption,
                 post_id: options.post_id,
             });
@@ -211,6 +222,7 @@ export const getUploadUrl = async (
 export const uploadWithPresignedUrl = async (
     uploadUrl: string,
     file: FileAsset,
+    onProgress?: (data: { bytesSent: number; totalBytes: number }) => void
 ): Promise<void> => {
     const fsFile = new FSFile(file.uri);
     const result = await fsFile.upload(uploadUrl, {
@@ -219,6 +231,7 @@ export const uploadWithPresignedUrl = async (
         headers: {
             'Content-Type': file.type || 'application/octet-stream',
         },
+        onProgress,
     });
 
     if (result.status < 200 || result.status >= 300) {
@@ -257,17 +270,18 @@ export const createMediaRecord = async (
 export const uploadLargeMedia = async (
     profileId: string,
     file: FileAsset,
-    options: UploadMediaOptions = {}
+    options: UploadMediaOptions = {},
+    onProgress?: (data: { bytesSent: number; totalBytes: number }) => void
 ): Promise<UploadMediaResponse> => {
     const type = options.type || getMediaType(file);
     if (type === 'video') {
-        return uploadVideoViaTinyVault(profileId, file, options);
+        return uploadVideoViaX02(profileId, file, options, onProgress);
     }
 
     const filename = file.name || `upload.${getFileExtension(file)}`;
 
     const uploadInfo = await getUploadUrl(profileId, filename, type);
-    await uploadWithPresignedUrl(uploadInfo.uploadUrl, file);
+    await uploadWithPresignedUrl(uploadInfo.uploadUrl, file, onProgress);
 
     if (!uploadInfo.readUrl) {
         throw new Error('Failed to get read URL for uploaded file');
@@ -289,7 +303,8 @@ const localUploadCache = new Map<string, Media>();
 export const smartUpload = async (
     profileId: string,
     file: FileAsset,
-    options: UploadMediaOptions = {}
+    options: UploadMediaOptions = {},
+    onProgress?: (data: { bytesSent: number; totalBytes: number }) => void
 ): Promise<UploadMediaResponse> => {
     // Check in-memory cache first to avoid duplicate uploads in the same session
     if (file.uri && localUploadCache.has(file.uri)) {
@@ -302,13 +317,13 @@ export const smartUpload = async (
 
     // Always use direct-to-storage (pre-signed URL) upload for photos to bypass hosted server
     if (type === 'photo') {
-        response = await uploadLargeMedia(profileId, file, options);
+        response = await uploadLargeMedia(profileId, file, options, onProgress);
     } else {
         const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB
         const fileSize = file.fileSize || 0;
 
         if (fileSize > LARGE_FILE_THRESHOLD) {
-            response = await uploadLargeMedia(profileId, file, options);
+            response = await uploadLargeMedia(profileId, file, options, onProgress);
         } else {
             response = await uploadMedia(profileId, file, options);
         }

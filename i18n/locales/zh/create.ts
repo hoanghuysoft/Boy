@@ -38,6 +38,14 @@ const create = {
         mediaPickerFailed: '无法打开选择器，请重试。',
         ok: '确定',
     },
+    toast: {
+        updating: '正在更新动态...',
+        creating: '正在创建动态...',
+        uploadingMedia: '正在上传媒体并发布...',
+        publishing: '正在发布...',
+        success: '动态发布成功！',
+        updateSuccess: '动态更新成功！',
+    },
 } as const;
 
 export default create;

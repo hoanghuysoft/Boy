@@ -33,7 +33,7 @@ import { useSearchViewModel } from "../../viewmodels/SearchViewModel";
 
 const FlashList = FlashListOriginal as any;
 
-const SearchScreen = () => {
+const SearchContent = () => {
   const navigation = useRouter();
   const { colors, typography } = useThemeContext();
   const common = createCommonStyles(colors, typography);
@@ -280,6 +280,25 @@ const SearchScreen = () => {
       </Animated.View>
     </KeyboardAvoidingView>
   );
+};
+
+const SearchScreen = () => {
+  const [isReady, setIsReady] = React.useState(false);
+
+  React.useEffect(() => {
+    const handle = requestIdleCallback(() => {
+      setIsReady(true);
+    });
+    return () => cancelIdleCallback(handle);
+  }, []);
+
+  const { colors } = useThemeContext();
+
+  if (!isReady) {
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+  }
+
+  return <SearchContent />;
 };
 
 const styles = StyleSheet.create({

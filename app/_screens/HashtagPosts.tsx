@@ -87,7 +87,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
             return (
                 <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <SkeletonGroup key={i} isLoading variant="pulse" style={{ marginBottom: 30 }}>
+                        <SkeletonGroup key={i} isLoading variant="shimmer" style={{ marginBottom: 30 }}>
                             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
                                 <SkeletonGroup.Item className="h-10 w-10 rounded-full" />
                                 <View style={{ marginLeft: 12, flex: 1, gap: 6 }}>

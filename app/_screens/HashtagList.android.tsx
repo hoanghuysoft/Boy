@@ -126,7 +126,7 @@ const HashtagListScreen = () => {
                                 <SkeletonGroup
                                     key={i}
                                     isLoading
-                                    variant="pulse"
+                                    variant="shimmer"
                                     style={[styles.tagRow, cardStyle, { backgroundColor: colors.containerContent }]}
                                 >
                                     <View style={styles.tagRowLeft}>

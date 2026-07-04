@@ -38,6 +38,14 @@ const create = {
         mediaPickerFailed: 'Không thể mở trình chọn media. Vui lòng thử lại.',
         ok: 'OK',
     },
+    toast: {
+        updating: 'Đang cập nhật bài viết...',
+        creating: 'Đang tạo bài viết...',
+        uploadingMedia: 'Đang tải lên media và đăng...',
+        publishing: 'Đang đăng...',
+        success: 'Đăng bài viết thành công!',
+        updateSuccess: 'Cập nhật bài viết thành công!',
+    },
 } as const;
 
 export default create;

@@ -10,13 +10,14 @@ export interface ThirdPartyUploadResult {
 }
 
 export const uploadToThirdParty = async (
-    file: FileAsset
+    file: FileAsset,
+    onProgress?: (data: { bytesSent: number; totalBytes: number }) => void
 ): Promise<ThirdPartyUploadResult> => {
     const { imgbbApiKey, x02ApiKey } = useSettingsStore.getState();
 
-    const isVideo = file.type?.startsWith('video/') || 
-                    file.uri.toLowerCase().includes('.mp4') || 
-                    file.uri.toLowerCase().includes('.mov') || 
+    const isVideo = file.type?.startsWith('video/') ||
+                    file.uri.toLowerCase().includes('.mp4') ||
+                    file.uri.toLowerCase().includes('.mov') ||
                     file.uri.toLowerCase().includes('.webm');
 
     if (isVideo) {
@@ -35,6 +36,7 @@ export const uploadToThirdParty = async (
             fieldName: 'file',
             mimeType: file.type || 'video/mp4',
             headers,
+            onProgress,
         });
 
         if (result.status < 200 || result.status >= 300) {
@@ -67,6 +69,7 @@ export const uploadToThirdParty = async (
             parameters: {
                 key: imgbbApiKey,
             },
+            onProgress,
         });
 
         if (result.status < 200 || result.status >= 300) {

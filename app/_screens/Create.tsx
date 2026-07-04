@@ -15,6 +15,11 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Yup from "yup";
 
+// Toast
+import { LoadingToast, useLoadingState } from "@/components/custom heroui/loading-toast";
+import { ProgressToast, useProgressState } from "@/components/custom heroui/progress-toast";
+import { useToast } from "heroui-native/toast";
+
 // Components
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { Image } from "expo-image";
@@ -71,6 +76,12 @@ const CreateScreen = () => {
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
     const trigger = useScrollStore((state) => state.triggers['chat']);
+
+    const { toast } = useToast();
+    const { setIsLoading } = useLoadingState();
+    const { setProgress, resetProgress } = useProgressState();
+    const LOADING_TOAST_ID = 'loading-toast';
+    const PROGRESS_TOAST_ID = 'progress-toast';
     const params = useLocalSearchParams<{
         repost_author?: string;
         repost_content?: string;
@@ -209,6 +220,37 @@ const CreateScreen = () => {
                 return;
             }
 
+            const isEditing = !!params.edit_post_id;
+            const hasMedia = values.selectedMedia.length > 0;
+            const loadingText = isEditing
+                ? t("create.toast.updating")
+                : t("create.toast.creating");
+            const successText = isEditing
+                ? t("create.toast.updateSuccess")
+                : t("create.toast.success");
+
+            if (hasMedia && !isEditing) {
+                resetProgress();
+                toast.show({
+                    id: PROGRESS_TOAST_ID,
+                    duration: 'persistent',
+                    component: (props) => <ProgressToast {...props} />,
+                });
+            } else {
+                setIsLoading(true);
+                toast.show({
+                    id: LOADING_TOAST_ID,
+                    duration: 'persistent',
+                    component: (props) => (
+                        <LoadingToast
+                            {...props}
+                            loadingText={loadingText}
+                            successText={successText}
+                        />
+                    ),
+                });
+            }
+
             try {
                 let mediaIds: string[] = [];
 
@@ -219,7 +261,8 @@ const CreateScreen = () => {
                         const { createMediaRecord } = await import("../../services/mediaUpload");
 
                         mediaIds = [];
-                        for (const media of values.selectedMedia) {
+                        for (let index = 0; index < values.selectedMedia.length; index++) {
+                            const media = values.selectedMedia[index];
                             const files: FileAsset = {
                                 uri: media.uri,
                                 name: media.name,
@@ -229,7 +272,11 @@ const CreateScreen = () => {
                                 height: media.height,
                             };
 
-                            const uploadResult = await uploadToThirdParty(files);
+                            const uploadResult = await uploadToThirdParty(files, ({ bytesSent, totalBytes }) => {
+                                const fileProgress = (bytesSent / totalBytes) * 100;
+                                const overallProgress = ((index * 100) + fileProgress) / values.selectedMedia.length;
+                                setProgress(overallProgress);
+                            });
                             const mediaType = media.isVideo ? 'video' : 'photo';
                             const createdRecord = await createMediaRecord(profileId, uploadResult.url, mediaType, {
                                 thumbnail_url: uploadResult.thumbnailUrl,
@@ -239,19 +286,47 @@ const CreateScreen = () => {
                             mediaIds.push(createdRecord.data.id);
                         }
                     } else {
-                        const files: FileAsset[] = values.selectedMedia.map((media) => ({
-                            uri: media.uri,
-                            name: media.name,
-                            type: media.type,
-                            fileSize: media.fileSize,
-                            width: media.width,
-                            height: media.height,
-                        }));
+                        const { smartUpload } = await import("../../services/mediaUpload");
+                        mediaIds = [];
+                        for (let index = 0; index < values.selectedMedia.length; index++) {
+                            const media = values.selectedMedia[index];
+                            const file: FileAsset = {
+                                uri: media.uri,
+                                name: media.name,
+                                type: media.type,
+                                fileSize: media.fileSize,
+                                width: media.width,
+                                height: media.height,
+                            };
 
-                        const uploadedMedia = await uploadMediaMutation.mutateAsync({ files });
-
-                        mediaIds = uploadedMedia.map((m) => m.id);
+                            const result = await smartUpload(profileId, file, {}, ({ bytesSent, totalBytes }) => {
+                                const fileProgress = (bytesSent / totalBytes) * 100;
+                                const overallProgress = ((index * 100) + fileProgress) / values.selectedMedia.length;
+                                setProgress(overallProgress);
+                            });
+                            mediaIds.push(result.data.id);
+                        }
                     }
+
+                    // Complete progress bar animation
+                    setProgress(100);
+                    // Give it a brief moment to show 100% complete
+                    await new Promise((resolve) => setTimeout(resolve, 300));
+                    toast.hide(PROGRESS_TOAST_ID);
+
+                    // Switch to LoadingToast to publish post
+                    setIsLoading(true);
+                    toast.show({
+                        id: LOADING_TOAST_ID,
+                        duration: 'persistent',
+                        component: (props) => (
+                            <LoadingToast
+                                {...props}
+                                loadingText={t("create.toast.publishing")}
+                                successText={successText}
+                            />
+                        ),
+                    });
                 }
 
                 // Create/Edit post with validated links
@@ -277,22 +352,22 @@ const CreateScreen = () => {
                     }
                 }
 
-                setDialog({
-                    visible: true,
-                    title: t("create.dialog.successTitle"),
-                    message: params.edit_post_id ? "Post updated successfully!" : t("create.dialog.postCreated"),
-                    onConfirm: () => {
-                        formikResetForm();
-                        resetUIState();
-                        if (router.canGoBack()) {
-                            router.back();
-                        } else {
-                            router.replace("/");
-                        }
-                    },
-                });
+                setIsLoading(false);
+                // Wait for loading toast success transition/auto-hide before navigating
+                await new Promise((resolve) => setTimeout(resolve, 800));
+
+                formikResetForm();
+                resetUIState();
+                if (router.canGoBack()) {
+                    router.back();
+                } else {
+                    router.replace("/");
+                }
             } catch (error: any) {
                 console.error("Error creating/editing post:", error);
+                setIsLoading(false);
+                toast.hide(PROGRESS_TOAST_ID);
+                toast.hide(LOADING_TOAST_ID);
                 setDialog({
                     visible: true,
                     title: t("create.dialog.errorTitle"),

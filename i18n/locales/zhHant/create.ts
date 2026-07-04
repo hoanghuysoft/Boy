@@ -38,6 +38,14 @@ const create = {
         mediaPickerFailed: '無法開啟選擇器，請重試。',
         ok: '確定',
     },
+    toast: {
+        updating: '正在更新動態...',
+        creating: '正在建立動態...',
+        uploadingMedia: '正在上傳媒體並發佈...',
+        publishing: '正在發佈...',
+        success: '動態發佈成功！',
+        updateSuccess: '動態更新成功！',
+    },
 } as const;
 
 export default create;

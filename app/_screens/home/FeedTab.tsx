@@ -204,7 +204,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
         return (
             <SkeletonGroup
                 isLoading={true}
-                variant="pulse"
+                variant="shimmer"
                 style={{ marginTop: 20 }}
             >
                 <View style={[common.row, { gap: 10, marginBottom: 12, paddingHorizontal: 16 }]}>

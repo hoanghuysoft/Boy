@@ -195,7 +195,7 @@ const NotesScreen = () => {
                                 }
                             ]}
                         >
-                            <SkeletonGroup isLoading variant="pulse">
+                            <SkeletonGroup isLoading variant="shimmer">
                                 {/* Title placeholder */}
                                 <SkeletonGroup.Item className="h-5 w-1/3 rounded-md" style={{ marginBottom: 10 }} />
 

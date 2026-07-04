@@ -1,6 +1,6 @@
+import { SkeletonGroup } from "heroui-native/skeleton-group";
 import React from "react";
 import { View } from "react-native";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { CustomSurface } from "../CustomSurface";
 
 export const renderProfileSkeleton = ({ colors, styles, isFirst, isLast }: any) => (
@@ -9,7 +9,7 @@ export const renderProfileSkeleton = ({ colors, styles, isFirst, isLast }: any) 
         isLast={isLast}
         style={styles.profileCard}
     >
-        <SkeletonGroup isLoading={true} variant="pulse" style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <SkeletonGroup isLoading={true} variant="shimmer" style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <SkeletonGroup.Item
                 style={{
                     width: 52,

@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/refs */
+import DialogIcon from "@/assets/images/svg/chat-double.svg";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import DialogIcon from "@/assets/images/svg/chat-double.svg";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { router } from "expo-router";
@@ -39,7 +39,7 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
     if (vm.isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: vm.darkDominant }]}>
-                <SkeletonGroup isLoading={true} variant="pulse">
+                <SkeletonGroup isLoading={true} variant="shimmer">
                     <View style={{ gap: 16 }}>
                         <SkeletonGroup.Item style={{ height: 500, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
@@ -165,12 +165,12 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
                     </BlurView>}
                     {vm.reviews.length > 0 && (
                         <BlurView tint="systemMaterialDark" intensity={80} blurTarget={blurTargetRef} blurMethod="dimezisBlurViewSdk31Plus" style={{ borderRadius: 999, overflow: "hidden" }}>
-                             <TouchableOpacity
-                                 onPress={vm.openReviewsSheet}
-                                 style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
-                             >
-                                 <DialogIcon width={28} height={28} color="white" />
-                             </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={vm.openReviewsSheet}
+                                style={{ borderRadius: 999, width: 40, height: 40, justifyContent: "center", alignItems: "center" }}
+                            >
+                                <DialogIcon width={28} height={28} color="white" />
+                            </TouchableOpacity>
                         </BlurView>
                     )}
                 </View>

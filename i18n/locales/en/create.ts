@@ -38,6 +38,14 @@ const create = {
         mediaPickerFailed: 'Failed to open media picker. Please try again.',
         ok: 'OK',
     },
+    toast: {
+        updating: 'Updating post...',
+        creating: 'Creating post...',
+        uploadingMedia: 'Uploading media and publishing...',
+        publishing: 'Publishing...',
+        success: 'Post created successfully!',
+        updateSuccess: 'Post updated successfully!',
+    },
 } as const;
 
 export default create;

@@ -381,7 +381,7 @@ const MansoryListScreen = () => {
                             {skeletonHeights
                                 .filter((_, i) => i % 2 === col)
                                 .map((h, i) => (
-                                    <SkeletonGroup key={i} isLoading variant="pulse" className="rounded-2xl" style={{ height: h }} />
+                                    <SkeletonGroup key={i} isLoading variant="shimmer" className="rounded-2xl" style={{ height: h }} />
                                 ))}
                         </View>
                     ))}
@@ -439,7 +439,7 @@ const MansoryListScreen = () => {
                         ListHeaderComponent={ListHeaderComponent}
                         ListFooterComponent={
                             isFetchingNextPage ? (
-                                <SkeletonGroup isLoading variant="pulse" style={[styles.footer, { flexDirection: 'row', gap: 8, paddingHorizontal: 8 }]}>
+                                <SkeletonGroup isLoading variant="shimmer" style={[styles.footer, { flexDirection: 'row', gap: 8, paddingHorizontal: 8 }]}>
                                     <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
                                     <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
                                 </SkeletonGroup>

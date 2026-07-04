@@ -11,7 +11,7 @@ import { Stack } from 'expo-router/stack';
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native/provider";
 import React, { useEffect } from "react";
-import { AppState, AppStateStatus, StatusBar, StyleSheet, View } from "react-native";
+import { AppState, AppStateStatus, Easing, StatusBar, StyleSheet, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -77,17 +77,15 @@ const StatusBarFade = () => {
           ? "rgba(0,0,0,0.6)"
           : theme === "light"
             ? "rgba(255,255,255,0.5)"
-            : "rgba(0,0,0,0.6)",
+            : "rgba(0,0,0,1)",
+        easing: Easing.linear,
       },
       1: {
-        color: isShots
-          ? "rgba(0,0,0,0)"
-          : theme === "light"
-            ? "rgba(255,255,255,0)"
-            : "rgba(0,0,0,0)",
+        color: 'transparent',
       },
     },
-    extraColorStopsPerTransition: 12,
+    easing: Easing.linear,
+    extraColorStopsPerTransition: 16,
   });
 
   return (

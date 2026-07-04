@@ -6,8 +6,6 @@ import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { useThemeContext } from "@/context/ThemeContext";
 import { usePersonDetails } from "@/hooks/useMovies";
 import { useGalleryStore } from "@/stores/gallery";
-import { TMDBMovieImage } from "@/types/moviedb/movie-images";
-import { getBestLogo, getLogoDimensions } from "./logoUtils";
 import { enrichProfileData } from "@/utils/zodiacCalculation";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopify/react-native-skia";
@@ -30,6 +28,7 @@ import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { personDetailStorage as storage } from "../../services/storage";
+import { getBestLogo, getLogoDimensions } from "./logoUtils";
 
 // ─── MMKV cache ────────────────────────────────────────────
 
@@ -243,7 +242,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
     if (isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
-                <SkeletonGroup isLoading={true} variant="pulse">
+                <SkeletonGroup isLoading={true} variant="shimmer">
                     <View style={{ gap: 16 }}>
                         <SkeletonGroup.Item style={{ height: posterHeight, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>

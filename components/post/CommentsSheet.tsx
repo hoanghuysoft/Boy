@@ -144,7 +144,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const renderListFooter = useCallback(() => {
             if (vm.isFetchingNextPage) {
                 return (
-                    <SkeletonGroup isLoading variant="pulse" style={[styles.footerLoader, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
+                    <SkeletonGroup isLoading variant="shimmer" style={[styles.footerLoader, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
                         <SkeletonGroup.Item className="rounded-full" style={{ width: 38, height: 38 }} />
                         <View style={{ flex: 1, gap: 6 }}>
                             <SkeletonGroup.Item className="rounded-md" style={{ width: '55%', height: 12 }} />
@@ -182,7 +182,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 return (
                     <View style={{ paddingTop: 8 }}>
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <SkeletonGroup key={i} isLoading variant="pulse" style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
+                            <SkeletonGroup key={i} isLoading variant="shimmer" style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
                                 <SkeletonGroup.Item className="rounded-full" style={{ width: 38, height: 38 }} />
                                 <View style={{ flex: 1, gap: 6 }}>
                                     <SkeletonGroup.Item className="rounded-md" style={{ width: '40%', height: 12 }} />

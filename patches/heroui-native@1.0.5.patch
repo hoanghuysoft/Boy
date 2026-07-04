@@ -1,0 +1,312 @@
+a/lib/module/components/avatar/avatar.js b/lib/module/components/avatar/avatar.js
+index df13832b2e29475bc3db540eb0bd2753fbd115e0..1d3c208887a1c25e46f422d802667a7c38504bce 100644
+--- a/lib/module/components/avatar/avatar.js	
++++ b/lib/module/components/avatar/avatar.js
+@@ -2,6 +2,8 @@
+ 
+ import { forwardRef, useMemo } from 'react';
+ import Animated from 'react-native-reanimated';
++import { Image as ExpoImage } from 'expo-image';
++const AnimatedExpoImage = Animated.createAnimatedComponent(ExpoImage);
+ import { useThemeColor } from "../../helpers/external/hooks/index.js";
+ import { HeroText } from "../../helpers/internal/components/index.js";
+ import { AnimationSettingsProvider } from "../../helpers/internal/contexts/index.js";
+@@ -77,6 +79,7 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
+     asChild,
+     ...restProps
+   } = props;
++  const { status } = useAvatar();
+   const animation = asChild ? undefined : 'animation' in props ? props.animation : undefined;
+   const isAnimatedStyleActive = asChild ? true : 'isAnimatedStyleActive' in props ? props.isAnimatedStyleActive ?? true : true;
+   const {
+@@ -93,18 +96,19 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
+       ref: ref,
+       source: source,
+       className: imageClassName,
+-      style: styleProp,
++      style: [styleProp, status === 'error' && { display: 'none' }],
+       asChild: true,
+       ...restProps
+     });
+   }
+-  return /*#__PURE__*/_jsx(AvatarPrimitives.Image, {
+-    ref: ref,
+-    source: source,
+-    asChild: true,
+-    children: /*#__PURE__*/_jsx(Animated.Image, {
+-      style: imageStyle,
++  return /*#__PURE__*/_jsx(Animated.View, {
++    style: [imageStyle, status === 'error' && { display: 'none' }],
++    className: imageClassName,
++    children: /*#__PURE__*/_jsx(AvatarPrimitives.Image, {
++      ref: ref,
++      source: source,
+       className: imageClassName,
++      style: [{ flex: 1, width: '100%', height: '100%' }, styleProp],
+       ...restProps
+     })
+   });
+diff --git a/lib/module/primitives/avatar/avatar.js b/lib/module/primitives/avatar/avatar.js
+index c58130caf472621dbbfbf85cdbbd7c36c5afe78b..e395831d54ebcb7b4f9f55c9ff1b34ac1f3b9a49 100644
+--- a/lib/module/primitives/avatar/avatar.js	
++++ b/lib/module/primitives/avatar/avatar.js
+@@ -2,7 +2,8 @@
+ 
+ import * as React from 'react';
+ import { createContext, forwardRef, useEffect, useMemo, useState } from 'react';
+-import { Image as RNImage, View } from 'react-native';
++import { View } from 'react-native';
++import { Image as ExpoImage } from 'expo-image';
+ import * as Slot from "../slot/index.js";
+ import { isSameSource, isValidSource } from "./avatar.utils.js";
+ import { jsx as _jsx } from "react/jsx-runtime";
+@@ -90,7 +91,7 @@ const Image = /*#__PURE__*/forwardRef(({
+     onLoadingStatusChange?.('error');
+     onErrorProps?.(e);
+   }, [onErrorProps, setStatus, onLoadingStatusChange]);
+-  const Component = asChild ? Slot.Image : RNImage;
++  const Component = asChild ? Slot.Image : ExpoImage;
+   if (status === 'error') {
+     return null;
+   }
+diff --git a/lib/module/primitives/avatar/avatar.utils.js b/lib/module/primitives/avatar/avatar.utils.js
+index da78034a16fe68babf071af4279034b8a9511ee7..b287d8fb7fe2dda039d9f42110a539449033bca0 100644
+--- a/lib/module/primitives/avatar/avatar.utils.js	
++++ b/lib/module/primitives/avatar/avatar.utils.js
+@@ -24,12 +24,15 @@ export function isValidSource(source) {
+   if (!source) {
+     return false;
+   }
++  if (typeof source === 'string') {
++    return true;
++  }
+   // Using require() for the source returns a number
+   if (typeof source === 'number') {
+     return true;
+   }
+   if (Array.isArray(source)) {
+-    return source.some(s => !!s.uri);
++    return source.some(s => !!s || s && typeof s === 'object' && !!s.uri);
+   }
+   return !!source.uri;
+ }
+@@ -65,13 +68,18 @@ export function isSameSource(source1, source2) {
+     return false;
+   }
+ 
++  // Both are strings
++  if (typeof source1 === 'string' && typeof source2 === 'string') {
++    return source1 === source2;
++  }
++
+   // Both are numbers (require() statements)
+   if (typeof source1 === 'number' && typeof source2 === 'number') {
+     return source1 === source2;
+   }
+ 
+-  // One is a number, the other is not
+-  if (typeof source1 === 'number' || typeof source2 === 'number') {
++  // One is a number or string, the other is not
++  if (typeof source1 === 'number' || typeof source2 === 'number' || typeof source1 === 'string' || typeof source2 === 'string') {
+     return false;
+   }
+ 
+@@ -83,6 +91,9 @@ export function isSameSource(source1, source2) {
+     // Compare each element's URI
+     return source1.every((s1, index) => {
+       const s2 = source2[index];
++      if (typeof s1 === 'string' && typeof s2 === 'string') {
++        return s1 === s2;
++      }
+       return s1?.uri === s2?.uri;
+     });
+   }
+diff --git a/src/components/avatar/avatar.tsx b/src/components/avatar/avatar.tsx
+index 3323c69b88ac94e20476db2456aabd8365e3d002..809ceade40ee545ab72edd1b50e169a247cbc75f 100644
+--- a/src/components/avatar/avatar.tsx	
++++ b/src/components/avatar/avatar.tsx
+@@ -1,6 +1,9 @@
+ import { forwardRef, useMemo } from 'react';
+ import type { ImageSourcePropType } from 'react-native';
+ import Animated from 'react-native-reanimated';
++import { Image as ExpoImage } from 'expo-image';
++
++const AnimatedExpoImage = Animated.createAnimatedComponent(ExpoImage);
+ import { useThemeColor } from '../../helpers/external/hooks';
+ import { HeroText } from '../../helpers/internal/components';
+ import { AnimationSettingsProvider } from '../../helpers/internal/contexts';
+@@ -109,6 +112,8 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+       ...restProps
+     } = props;
+ 
++    const { status } = useAvatar();
++
+     const animation = asChild
+       ? undefined
+       : 'animation' in props
+@@ -139,7 +144,7 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+           ref={ref}
+           source={source}
+           className={imageClassName}
+-          style={styleProp}
++          style={[styleProp, status === 'error' && { display: 'none' }]}
+           asChild
+           {...(restProps as Omit<ImageProps, 'source' | 'style' | 'asChild'>)}
+         />
+@@ -147,17 +152,15 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+     }
+ 
+     return (
+-      <AvatarPrimitives.Image
+-        ref={ref}
+-        source={source as ImageSourcePropType}
+-        asChild
+-      >
+-        <Animated.Image
+-          style={imageStyle}
++      <Animated.View style={[imageStyle, status === 'error' && { display: 'none' }]} className={imageClassName}>
++        <AvatarPrimitives.Image
++          ref={ref}
++          source={source as ImageSourcePropType}
+           className={imageClassName}
++          style={[{ flex: 1, width: '100%', height: '100%' }, styleProp]}
+           {...restProps}
+         />
+-      </AvatarPrimitives.Image>
++      </Animated.View>
+     );
+   }
+ );
+diff --git a/src/primitives/avatar/avatar.tsx b/src/primitives/avatar/avatar.tsx
+index f602d8d5047073e74a1deb707e48c06c8fbc1928..90a57de686d6bd033fdcdb64b35b79efe844f68e 100644
+--- a/src/primitives/avatar/avatar.tsx	
++++ b/src/primitives/avatar/avatar.tsx
+@@ -1,12 +1,9 @@
+ import * as React from 'react';
+ import { createContext, forwardRef, useEffect, useMemo, useState } from 'react';
+ import {
+-  type ImageErrorEventData,
+-  type ImageLoadEvent,
+-  type NativeSyntheticEvent,
+-  Image as RNImage,
+   View,
+ } from 'react-native';
++import { Image as ExpoImage, type ImageLoadEventData, type ImageErrorEventData } from 'expo-image';
+ import * as Slot from '../slot';
+ import type {
+   AvatarStatus,
+@@ -111,24 +108,24 @@ const Image = forwardRef<ImageRef, ImageProps>(
+     }, [props?.source, setStatus]);
+ 
+     const onLoad = React.useCallback(
+-      (e: ImageLoadEvent) => {
++      (e: ImageLoadEventData) => {
+         setStatus('loaded');
+         onLoadingStatusChange?.('loaded');
+-        onLoadProps?.(e);
++        onLoadProps?.(e as any);
+       },
+       [onLoadProps, setStatus, onLoadingStatusChange]
+     );
+ 
+     const onError = React.useCallback(
+-      (e: NativeSyntheticEvent<ImageErrorEventData>) => {
++      (e: ImageErrorEventData) => {
+         setStatus('error');
+         onLoadingStatusChange?.('error');
+-        onErrorProps?.(e);
++        onErrorProps?.(e as any);
+       },
+       [onErrorProps, setStatus, onLoadingStatusChange]
+     );
+ 
+-    const Component = asChild ? Slot.Image : RNImage;
++    const Component = asChild ? Slot.Image : ExpoImage;
+ 
+     if (status === 'error') {
+       return null;
+diff --git a/src/primitives/avatar/avatar.types.ts b/src/primitives/avatar/avatar.types.ts
+index fb373769aaa4eef4788aa29ca74edc9d02e9c3ba..bb0d1cbec7f6cb2c298ba03190f3588f66216dbe 100644
+--- a/src/primitives/avatar/avatar.types.ts	
++++ b/src/primitives/avatar/avatar.types.ts
+@@ -1,4 +1,5 @@
+-import type { Image, ImageProps as RNImageProps } from 'react-native';
++import type { ImageProps as RNImageProps } from 'react-native';
++import { Image } from 'expo-image';
+ import type {
+   ComponentPropsWithAsChild,
+   SlottableViewProps,
+diff --git a/src/primitives/avatar/avatar.utils.ts b/src/primitives/avatar/avatar.utils.ts
+index 01d3890e7aeb175a26da6b81af709e58b00f8abf..c8785d89ab99e79dd71232dbdde2c2b179046d0b 100644
+--- a/src/primitives/avatar/avatar.utils.ts	
++++ b/src/primitives/avatar/avatar.utils.ts
+@@ -20,17 +20,19 @@ import type { ImageSourcePropType } from 'react-native';
+  * isValidSource([{ uri: '' }, { uri: null }]); // false
+  * ```
+  */
+-export function isValidSource(source?: ImageSourcePropType) {
++export function isValidSource(source?: any) {
+   if (!source) {
+     return false;
+   }
+-  // Using require() for the source returns a number
++  if (typeof source === 'string') {
++    return true;
++  }
+   if (typeof source === 'number') {
+     return true;
+   }
+ 
+   if (Array.isArray(source)) {
+-    return source.some((s) => !!s.uri);
++    return source.some((s) => !!s || (s && typeof s === 'object' && !!s.uri));
+   }
+ 
+   return !!source.uri;
+@@ -57,8 +59,8 @@ export function isValidSource(source?: ImageSourcePropType) {
+  * ```
+  */
+ export function isSameSource(
+-  source1?: ImageSourcePropType,
+-  source2?: ImageSourcePropType
++  source1?: any,
++  source2?: any
+ ): boolean {
+   // Both undefined/null
+   if (!source1 && !source2) {
+@@ -70,13 +72,23 @@ export function isSameSource(
+     return false;
+   }
+ 
++  // Both are strings
++  if (typeof source1 === 'string' && typeof source2 === 'string') {
++    return source1 === source2;
++  }
++
+   // Both are numbers (require() statements)
+   if (typeof source1 === 'number' && typeof source2 === 'number') {
+     return source1 === source2;
+   }
+ 
+-  // One is a number, the other is not
+-  if (typeof source1 === 'number' || typeof source2 === 'number') {
++  // One is a number or string, the other is not
++  if (
++    typeof source1 === 'number' ||
++    typeof source2 === 'number' ||
++    typeof source1 === 'string' ||
++    typeof source2 === 'string'
++  ) {
+     return false;
+   }
+ 
+@@ -88,6 +100,9 @@ export function isSameSource(
+     // Compare each element's URI
+     return source1.every((s1, index) => {
+       const s2 = source2[index];
++      if (typeof s1 === 'string' && typeof s2 === 'string') {
++        return s1 === s2;
++      }
+       return s1?.uri === s2?.uri;
+     });
+   }
