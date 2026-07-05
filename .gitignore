@@ -51,3 +51,5 @@ android.keystore
 
 pnpm-lock.yaml
 pnpm-workspace.yaml
+
+bun.lock

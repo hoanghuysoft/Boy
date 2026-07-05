@@ -1,0 +1,792 @@
+diff --git a/node_modules/heroui-native/.bun-tag-17f68cf8ddde61b6 b/.bun-tag-17f68cf8ddde61b6
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/heroui-native/.bun-tag-59302fc07d3048b5 b/.bun-tag-59302fc07d3048b5
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/heroui-native/.bun-tag-b724376a2cf417f5 b/.bun-tag-b724376a2cf417f5
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/heroui-native/.bun-tag-f4e62b11106c40b8 b/.bun-tag-f4e62b11106c40b8
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/lib/module/components/avatar/avatar.js b/lib/module/components/avatar/avatar.js
+index df13832b2e29475bc3db540eb0bd2753fbd115e0..1d3c208887a1c25e46f422d802667a7c38504bce 100644
+--- a/lib/module/components/avatar/avatar.js	
++++ b/lib/module/components/avatar/avatar.js
+@@ -2,6 +2,8 @@
+ 
+ import { forwardRef, useMemo } from 'react';
+ import Animated from 'react-native-reanimated';
++import { Image as ExpoImage } from 'expo-image';
++const AnimatedExpoImage = Animated.createAnimatedComponent(ExpoImage);
+ import { useThemeColor } from "../../helpers/external/hooks/index.js";
+ import { HeroText } from "../../helpers/internal/components/index.js";
+ import { AnimationSettingsProvider } from "../../helpers/internal/contexts/index.js";
+@@ -77,6 +79,7 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
+     asChild,
+     ...restProps
+   } = props;
++  const { status } = useAvatar();
+   const animation = asChild ? undefined : 'animation' in props ? props.animation : undefined;
+   const isAnimatedStyleActive = asChild ? true : 'isAnimatedStyleActive' in props ? props.isAnimatedStyleActive ?? true : true;
+   const {
+@@ -93,18 +96,19 @@ const AvatarImage = /*#__PURE__*/forwardRef((props, ref) => {
+       ref: ref,
+       source: source,
+       className: imageClassName,
+-      style: styleProp,
++      style: [styleProp, status === 'error' && { display: 'none' }],
+       asChild: true,
+       ...restProps
+     });
+   }
+-  return /*#__PURE__*/_jsx(AvatarPrimitives.Image, {
+-    ref: ref,
+-    source: source,
+-    asChild: true,
+-    children: /*#__PURE__*/_jsx(Animated.Image, {
+-      style: imageStyle,
++  return /*#__PURE__*/_jsx(Animated.View, {
++    style: [imageStyle, status === 'error' && { display: 'none' }],
++    className: imageClassName,
++    children: /*#__PURE__*/_jsx(AvatarPrimitives.Image, {
++      ref: ref,
++      source: source,
+       className: imageClassName,
++      style: [{ flex: 1, width: '100%', height: '100%' }, styleProp],
+       ...restProps
+     })
+   });
+diff --git a/lib/module/helpers/internal/components/bottom-sheet-content-container.js b/lib/module/helpers/internal/components/bottom-sheet-content-container.js
+index f9ea035e3b30eafe5eb281e8c0b9aae8149d9daf..d9b411008bf492531386cc1592636dd2ee210a7a 100644
+--- a/lib/module/helpers/internal/components/bottom-sheet-content-container.js	
++++ b/lib/module/helpers/internal/components/bottom-sheet-content-container.js
+@@ -28,7 +28,8 @@ export function BottomSheetContentContainer({
+   contentContainerClassName,
+   contentContainerProps,
+   onOpenChange,
+-  enablePanDownToClose
++  enablePanDownToClose,
++  disableContentView
+ }) {
+   const {
+     close,
+@@ -81,6 +82,9 @@ export function BottomSheetContentContainer({
+     // We only want to snap when isOpen or initialIndex changes.
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [isOpen, initialIndex]);
++  if (disableContentView) {
++    return children;
++  }
+   return /*#__PURE__*/_jsx(BottomSheetView, {
+     className: contentContainerClassName,
+     ...contentContainerProps,
+diff --git a/lib/module/helpers/internal/components/bottom-sheet-content.js b/lib/module/helpers/internal/components/bottom-sheet-content.js
+index b2d8656ceb243952f71efcf729c956caece243a8..b5a066385163aae80c3d19321068ce8d32f24028 100644
+--- a/lib/module/helpers/internal/components/bottom-sheet-content.js	
++++ b/lib/module/helpers/internal/components/bottom-sheet-content.js
+@@ -51,6 +51,7 @@ export const BottomSheetContent = /*#__PURE__*/forwardRef(({
+   progress,
+   isDragging,
+   onOpenChange,
++  disableContentView,
+   ...restProps
+ }, ref) => {
+   const {
+@@ -105,6 +106,7 @@ export const BottomSheetContent = /*#__PURE__*/forwardRef(({
+         contentContainerProps: contentContainerProps,
+         onOpenChange: onOpenChange,
+         enablePanDownToClose: restProps.enablePanDownToClose ?? true,
++        disableContentView: disableContentView,
+         children: children
+       })
+     })
+diff --git a/lib/module/optional/gorhom-bottom-sheet.js b/lib/module/optional/gorhom-bottom-sheet.js
+index 5cee7dd7039a1f0018a10669e59fabd224adf980..5ef1b5d7574f1b88fd6e6f0e1f0fce40e609ebca 100644
+--- a/lib/module/optional/gorhom-bottom-sheet.js	
++++ b/lib/module/optional/gorhom-bottom-sheet.js
+@@ -2,7 +2,7 @@
+ 
+ let GorhomBottomSheetPackage;
+ try {
+-  GorhomBottomSheetPackage = require('@gorhom/bottom-sheet');
++  GorhomBottomSheetPackage = require('@expo/ui/community/bottom-sheet');
+ } catch (_error) {
+   /* @gorhom/bottom-sheet is an optional peer dependency */
+ }
+diff --git a/lib/module/primitives/avatar/avatar.js b/lib/module/primitives/avatar/avatar.js
+index c58130caf472621dbbfbf85cdbbd7c36c5afe78b..e395831d54ebcb7b4f9f55c9ff1b34ac1f3b9a49 100644
+--- a/lib/module/primitives/avatar/avatar.js	
++++ b/lib/module/primitives/avatar/avatar.js
+@@ -2,7 +2,8 @@
+ 
+ import * as React from 'react';
+ import { createContext, forwardRef, useEffect, useMemo, useState } from 'react';
+-import { Image as RNImage, View } from 'react-native';
++import { View } from 'react-native';
++import { Image as ExpoImage } from 'expo-image';
+ import * as Slot from "../slot/index.js";
+ import { isSameSource, isValidSource } from "./avatar.utils.js";
+ import { jsx as _jsx } from "react/jsx-runtime";
+@@ -90,7 +91,7 @@ const Image = /*#__PURE__*/forwardRef(({
+     onLoadingStatusChange?.('error');
+     onErrorProps?.(e);
+   }, [onErrorProps, setStatus, onLoadingStatusChange]);
+-  const Component = asChild ? Slot.Image : RNImage;
++  const Component = asChild ? Slot.Image : ExpoImage;
+   if (status === 'error') {
+     return null;
+   }
+diff --git a/lib/module/primitives/avatar/avatar.utils.js b/lib/module/primitives/avatar/avatar.utils.js
+index da78034a16fe68babf071af4279034b8a9511ee7..b287d8fb7fe2dda039d9f42110a539449033bca0 100644
+--- a/lib/module/primitives/avatar/avatar.utils.js	
++++ b/lib/module/primitives/avatar/avatar.utils.js
+@@ -24,12 +24,15 @@ export function isValidSource(source) {
+   if (!source) {
+     return false;
+   }
++  if (typeof source === 'string') {
++    return true;
++  }
+   // Using require() for the source returns a number
+   if (typeof source === 'number') {
+     return true;
+   }
+   if (Array.isArray(source)) {
+-    return source.some(s => !!s.uri);
++    return source.some(s => !!s || s && typeof s === 'object' && !!s.uri);
+   }
+   return !!source.uri;
+ }
+@@ -65,13 +68,18 @@ export function isSameSource(source1, source2) {
+     return false;
+   }
+ 
++  // Both are strings
++  if (typeof source1 === 'string' && typeof source2 === 'string') {
++    return source1 === source2;
++  }
++
+   // Both are numbers (require() statements)
+   if (typeof source1 === 'number' && typeof source2 === 'number') {
+     return source1 === source2;
+   }
+ 
+-  // One is a number, the other is not
+-  if (typeof source1 === 'number' || typeof source2 === 'number') {
++  // One is a number or string, the other is not
++  if (typeof source1 === 'number' || typeof source2 === 'number' || typeof source1 === 'string' || typeof source2 === 'string') {
+     return false;
+   }
+ 
+@@ -83,6 +91,9 @@ export function isSameSource(source1, source2) {
+     // Compare each element's URI
+     return source1.every((s1, index) => {
+       const s2 = source2[index];
++      if (typeof s1 === 'string' && typeof s2 === 'string') {
++        return s1 === s2;
++      }
+       return s1?.uri === s2?.uri;
+     });
+   }
+diff --git a/lib/typescript/src/components/bottom-sheet/bottom-sheet.d.ts b/lib/typescript/src/components/bottom-sheet/bottom-sheet.d.ts
+index baaae23c4455f0a1d8396861d142e28573aaba81..48ac90933c498e0e7c0e3ddfe1e1829744930ff2 100644
+--- a/lib/typescript/src/components/bottom-sheet/bottom-sheet.d.ts	
++++ b/lib/typescript/src/components/bottom-sheet/bottom-sheet.d.ts
+@@ -41,7 +41,7 @@ declare const BottomSheet: import("react").ForwardRefExoticComponent<BottomSheet
+     /** @optional Background overlay */
+     Overlay: import("react").ForwardRefExoticComponent<BottomSheetOverlayProps & import("react").RefAttributes<import("react-native").View>>;
+     /** @optional Main bottom sheet content container */
+-    Content: import("react").ForwardRefExoticComponent<BottomSheetContentProps & import("react").RefAttributes<import("@gorhom/bottom-sheet/lib/typescript/types").BottomSheetMethods>>;
++    Content: import("react").ForwardRefExoticComponent<BottomSheetContentProps & import("react").RefAttributes<import("@expo/ui/community/bottom-sheet").BottomSheetMethods>>;
+     /** @optional Close button for the bottom sheet */
+     Close: import("react").ForwardRefExoticComponent<import("../close-button").CloseButtonProps & import("react").RefAttributes<import("react-native").View>>;
+     /** @optional Bottom sheet title text */
+diff --git a/lib/typescript/src/components/bottom-sheet/bottom-sheet.types.d.ts b/lib/typescript/src/components/bottom-sheet/bottom-sheet.types.d.ts
+index e1a3f0e2fe757c0292dc4fb7e2dcf962c6b9ec0b..3006877f95fd852cb1ef188782442bc534bf7dc3 100644
+--- a/lib/typescript/src/components/bottom-sheet/bottom-sheet.types.d.ts	
++++ b/lib/typescript/src/components/bottom-sheet/bottom-sheet.types.d.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { TextProps } from 'react-native';
+ import type { SharedValue } from 'react-native-reanimated';
+diff --git a/lib/typescript/src/components/menu/menu.d.ts b/lib/typescript/src/components/menu/menu.d.ts
+index 4c1a1156300e9d0a0ffe03eb06dfbc3b69f3d6a1..ecfb942ce4c048a9299f47a2b464d0a9a86cedce 100644
+--- a/lib/typescript/src/components/menu/menu.d.ts	
++++ b/lib/typescript/src/components/menu/menu.d.ts
+@@ -41,7 +41,7 @@ declare const Menu: import("react").ForwardRefExoticComponent<MenuRootProps & im
+         displayName: string;
+     };
+     Overlay: import("react").ForwardRefExoticComponent<MenuOverlayProps & import("react").RefAttributes<View>>;
+-    Content: import("react").ForwardRefExoticComponent<MenuContentProps & import("react").RefAttributes<View | import("@gorhom/bottom-sheet/lib/typescript/types").BottomSheetMethods>>;
++    Content: import("react").ForwardRefExoticComponent<MenuContentProps & import("react").RefAttributes<View | import("@expo/ui/community/bottom-sheet").BottomSheetMethods>>;
+     Close: import("react").ForwardRefExoticComponent<import("../close-button").CloseButtonProps & import("react").RefAttributes<View>>;
+     Group: import("react").ForwardRefExoticComponent<MenuGroupProps & import("react").RefAttributes<View>>;
+     Label: import("react").ForwardRefExoticComponent<MenuLabelProps & import("react").RefAttributes<RNText>>;
+diff --git a/lib/typescript/src/components/menu/menu.types.d.ts b/lib/typescript/src/components/menu/menu.types.d.ts
+index 3dd09be5e7b7073fb45922a522f70c612cb333ed..4047cb8e60022a3bb18da81dac301d37cdef1b31 100644
+--- a/lib/typescript/src/components/menu/menu.types.d.ts	
++++ b/lib/typescript/src/components/menu/menu.types.d.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { TextProps } from 'react-native';
+ import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
+diff --git a/lib/typescript/src/components/popover/popover.d.ts b/lib/typescript/src/components/popover/popover.d.ts
+index 8ae675153face8f6e65819a69b46981d45c523c3..7dd2e2879d50a371ada9757921009ca4ba6a5221 100644
+--- a/lib/typescript/src/components/popover/popover.d.ts	
++++ b/lib/typescript/src/components/popover/popover.d.ts
+@@ -45,7 +45,7 @@ declare const Popover: import("react").ForwardRefExoticComponent<PopoverRootProp
+         displayName: string;
+     };
+     Overlay: import("react").ForwardRefExoticComponent<PopoverOverlayProps & import("react").RefAttributes<View>>;
+-    Content: import("react").ForwardRefExoticComponent<PopoverContentProps & import("react").RefAttributes<View | import("@gorhom/bottom-sheet/lib/typescript/types").BottomSheetMethods>>;
++    Content: import("react").ForwardRefExoticComponent<PopoverContentProps & import("react").RefAttributes<View | import("@expo/ui/community/bottom-sheet").BottomSheetMethods>>;
+     Arrow: import("react").ForwardRefExoticComponent<PopoverArrowProps & import("react").RefAttributes<View>>;
+     Close: import("react").ForwardRefExoticComponent<import("../close-button").CloseButtonProps & import("react").RefAttributes<View>>;
+     Title: import("react").ForwardRefExoticComponent<PopoverTitleProps & import("react").RefAttributes<RNText>>;
+diff --git a/lib/typescript/src/components/popover/popover.types.d.ts b/lib/typescript/src/components/popover/popover.types.d.ts
+index 64cd89c6bcac9ebe7566b5524087738c8997254e..e52fbcd6824a143d62ae06031b510cb68309f8f0 100644
+--- a/lib/typescript/src/components/popover/popover.types.d.ts	
++++ b/lib/typescript/src/components/popover/popover.types.d.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { StyleProp, TextProps, ViewStyle } from 'react-native';
+ import type { SharedValue } from 'react-native-reanimated';
+diff --git a/lib/typescript/src/components/select/select.d.ts b/lib/typescript/src/components/select/select.d.ts
+index 8084fa7ae3d47e63d1c08c8dfba97622c519bcd8..e05d7af16cbebbc773fa6c0d8ed740e57c354ad3 100644
+--- a/lib/typescript/src/components/select/select.d.ts	
++++ b/lib/typescript/src/components/select/select.d.ts
+@@ -66,7 +66,7 @@ declare const Select: typeof SelectRoot & {
+         displayName: "HeroUINative.Select.Portal";
+     };
+     Overlay: import("react").ForwardRefExoticComponent<SelectOverlayProps & import("react").RefAttributes<View>>;
+-    Content: import("react").ForwardRefExoticComponent<SelectContentProps & import("react").RefAttributes<View | import("@gorhom/bottom-sheet/lib/typescript/types").BottomSheetMethods>>;
++    Content: import("react").ForwardRefExoticComponent<SelectContentProps & import("react").RefAttributes<View | import("@expo/ui/community/bottom-sheet").BottomSheetMethods>>;
+     Item: import("react").ForwardRefExoticComponent<SelectItemProps & import("react").RefAttributes<View>>;
+     ItemLabel: import("react").ForwardRefExoticComponent<SelectItemLabelProps & import("react").RefAttributes<RNText>>;
+     ItemDescription: import("react").ForwardRefExoticComponent<SelectItemDescriptionProps & import("react").RefAttributes<RNText>>;
+diff --git a/lib/typescript/src/components/select/select.types.d.ts b/lib/typescript/src/components/select/select.types.d.ts
+index 2aefa2eaaeb3602096e102e6653eb0eb50e9e2a5..0976f8747a85606d97aa57898ad2766a222e518c 100644
+--- a/lib/typescript/src/components/select/select.types.d.ts	
++++ b/lib/typescript/src/components/select/select.types.d.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { TextProps, ViewStyle } from 'react-native';
+ import type { AnimatedProps, SharedValue, WithSpringConfig } from 'react-native-reanimated';
+diff --git a/lib/typescript/src/helpers/internal/components/bottom-sheet-content.d.ts b/lib/typescript/src/helpers/internal/components/bottom-sheet-content.d.ts
+index 2d74ef2adaebe02230b6574725d75c693778c70e..2a6451cd75431ec62df68ea074250f1239ccad53 100644
+--- a/lib/typescript/src/helpers/internal/components/bottom-sheet-content.d.ts	
++++ b/lib/typescript/src/helpers/internal/components/bottom-sheet-content.d.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import type { StyleProp, ViewStyle } from 'react-native';
+ import type { SharedValue } from 'react-native-reanimated';
+ import type { BaseBottomSheetContentProps } from '../types/bottom-sheet';
+@@ -51,5 +51,5 @@ export interface BottomSheetContentProps extends BaseBottomSheetContentProps, Pa
+  * </BottomSheetContent>
+  * ```
+  */
+-export declare const BottomSheetContent: import("react").ForwardRefExoticComponent<BottomSheetContentProps & import("react").RefAttributes<import("@gorhom/bottom-sheet/lib/typescript/types").BottomSheetMethods>>;
++export declare const BottomSheetContent: import("react").ForwardRefExoticComponent<BottomSheetContentProps & import("react").RefAttributes<import("@expo/ui/community/bottom-sheet").BottomSheetMethods>>;
+ //# sourceMappingURL=bottom-sheet-content.d.ts.map
+\ No newline at end of file
+diff --git a/lib/typescript/src/helpers/internal/hooks/use-bottom-sheet-gesture-handlers.d.ts b/lib/typescript/src/helpers/internal/hooks/use-bottom-sheet-gesture-handlers.d.ts
+index 6bbf265e4cf800896a86240e5eefca499a844354..13463ef3494040d75d1fd72cabb3a607e1412a6d 100644
+--- a/lib/typescript/src/helpers/internal/hooks/use-bottom-sheet-gesture-handlers.d.ts	
++++ b/lib/typescript/src/helpers/internal/hooks/use-bottom-sheet-gesture-handlers.d.ts
+@@ -1,3 +1,2 @@
+-import type { GestureEventsHandlersHookType } from '@gorhom/bottom-sheet';
+-export declare const useBottomSheetGestureHandlers: GestureEventsHandlersHookType;
++export declare const useBottomSheetGestureHandlers: () => any;
+ //# sourceMappingURL=use-bottom-sheet-gesture-handlers.d.ts.map
+\ No newline at end of file
+diff --git a/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts b/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts
+index f88f1777bccd8ea06a0b9c76401d558b49126894..746ab1fe45c175c1868de41b95c2f6ea1dacd6d1 100644
+--- a/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts	
++++ b/lib/typescript/src/helpers/internal/types/bottom-sheet.d.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetViewProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetView/types';
++import type { BottomSheetViewProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { SharedValue } from 'react-native-reanimated';
+ import type { AnimationDisabled } from './animation';
+@@ -97,5 +97,11 @@ export interface BaseBottomSheetContentProps {
+      * - `false` or `"disabled"`: Disable all animations
+      */
+     animation?: AnimationDisabled;
++    /**
++     * When true, renders children directly without wrapping in BottomSheetView.
++     * Required when using BottomSheetFlatList/BottomSheetScrollView as direct children,
++     * since BottomSheetView conflicts with their internal gesture handling.
++     */
++    disableContentView?: boolean;
+ }
+ //# sourceMappingURL=bottom-sheet.d.ts.map
+\ No newline at end of file
+diff --git a/package.json b/package.json
+index 274468eecef79b7d0fbafc9e6b67d98a2b0fda65..4b4a2090bb1403e7cce0ff8f93c6c53ce0f4014b 100644
+--- a/package.json	
++++ b/package.json
+@@ -308,7 +308,7 @@
+     "@eslint/eslintrc": "^3.3.0",
+     "@eslint/js": "^9.22.0",
+     "@evilmartians/lefthook": "^1.5.0",
+-    "@gorhom/bottom-sheet": "^5.2.14",
++    "@expo/ui": "*",
+     "@react-native-community/cli": "latest",
+     "@react-native/babel-preset": "0.78.2",
+     "@react-native/eslint-config": "^0.78.0",
+@@ -344,7 +344,7 @@
+     "uniwind": "^1.6.3"
+   },
+   "peerDependencies": {
+-    "@gorhom/bottom-sheet": "^5.2.9",
++    "@expo/ui": "*",
+     "react": ">=19.0.0",
+     "react-native": ">=0.81.0",
+     "react-native-gesture-handler": "^2.28.0",
+@@ -357,7 +357,7 @@
+     "tailwind-variants": "^3.2.2"
+   },
+   "peerDependenciesMeta": {
+-    "@gorhom/bottom-sheet": {
++    "@expo/ui": {
+       "optional": true
+     },
+     "react-native-screens": {
+diff --git a/src/components/avatar/avatar.tsx b/src/components/avatar/avatar.tsx
+index 3323c69b88ac94e20476db2456aabd8365e3d002..809ceade40ee545ab72edd1b50e169a247cbc75f 100644
+--- a/src/components/avatar/avatar.tsx	
++++ b/src/components/avatar/avatar.tsx
+@@ -1,6 +1,9 @@
+ import { forwardRef, useMemo } from 'react';
+ import type { ImageSourcePropType } from 'react-native';
+ import Animated from 'react-native-reanimated';
++import { Image as ExpoImage } from 'expo-image';
++
++const AnimatedExpoImage = Animated.createAnimatedComponent(ExpoImage);
+ import { useThemeColor } from '../../helpers/external/hooks';
+ import { HeroText } from '../../helpers/internal/components';
+ import { AnimationSettingsProvider } from '../../helpers/internal/contexts';
+@@ -109,6 +112,8 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+       ...restProps
+     } = props;
+ 
++    const { status } = useAvatar();
++
+     const animation = asChild
+       ? undefined
+       : 'animation' in props
+@@ -139,7 +144,7 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+           ref={ref}
+           source={source}
+           className={imageClassName}
+-          style={styleProp}
++          style={[styleProp, status === 'error' && { display: 'none' }]}
+           asChild
+           {...(restProps as Omit<ImageProps, 'source' | 'style' | 'asChild'>)}
+         />
+@@ -147,17 +152,15 @@ const AvatarImage = forwardRef<AvatarImageRef, AvatarImageProps>(
+     }
+ 
+     return (
+-      <AvatarPrimitives.Image
+-        ref={ref}
+-        source={source as ImageSourcePropType}
+-        asChild
+-      >
+-        <Animated.Image
+-          style={imageStyle}
++      <Animated.View style={[imageStyle, status === 'error' && { display: 'none' }]} className={imageClassName}>
++        <AvatarPrimitives.Image
++          ref={ref}
++          source={source as ImageSourcePropType}
+           className={imageClassName}
++          style={[{ flex: 1, width: '100%', height: '100%' }, styleProp]}
+           {...restProps}
+         />
+-      </AvatarPrimitives.Image>
++      </Animated.View>
+     );
+   }
+ );
+diff --git a/src/components/bottom-sheet/bottom-sheet.tsx b/src/components/bottom-sheet/bottom-sheet.tsx
+index 7ebdcaf4c1b8a5cbe68edaf2af1b0258c9d1288c..2e3ba82773efeb04364680a0eb3a52345b27c7a3 100644
+--- a/src/components/bottom-sheet/bottom-sheet.tsx	
++++ b/src/components/bottom-sheet/bottom-sheet.tsx
+@@ -1,4 +1,4 @@
+-import type GorhomBottomSheet from '@gorhom/bottom-sheet';
++import type BottomSheet from '@expo/ui/community/bottom-sheet';
+ import { forwardRef, useMemo } from 'react';
+ import {
+   StyleSheet,
+@@ -185,7 +185,7 @@ const BottomSheetOverlay = forwardRef<
+ // --------------------------------------------------
+ 
+ const BottomSheetContent = forwardRef<
+-  GorhomBottomSheet,
++  BottomSheet,
+   BottomSheetContentProps
+ >(
+   (
+diff --git a/src/components/bottom-sheet/bottom-sheet.types.ts b/src/components/bottom-sheet/bottom-sheet.types.ts
+index f29b870186643e0411f9533b79d5158748fb9013..9ba1d79c880fb1044b3ef35461c39dc2e37f4e3c 100644
+--- a/src/components/bottom-sheet/bottom-sheet.types.ts	
++++ b/src/components/bottom-sheet/bottom-sheet.types.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { TextProps } from 'react-native';
+ import type { SharedValue } from 'react-native-reanimated';
+@@ -119,7 +119,14 @@ export interface BottomSheetOverlayProps
+  */
+ export interface BottomSheetContentProps
+   extends Partial<BottomSheetProps>,
+-    BaseBottomSheetContentProps {}
++    BaseBottomSheetContentProps {
++  /**
++   * When true, renders children directly without wrapping in BottomSheetView.
++   * Required when using BottomSheetFlatList/BottomSheetScrollView as direct children,
++   * since BottomSheetView conflicts with their internal gesture handling.
++   */
++  disableContentView?: boolean;
++}
+ 
+ /**
+  * BottomSheet Close component props
+diff --git a/src/components/menu/menu.tsx b/src/components/menu/menu.tsx
+index 34e44be0faaf15a6711859fd17a9707d0e66cd17..d865264410001f266971a683f25313fc2286d7c0 100644
+--- a/src/components/menu/menu.tsx	
++++ b/src/components/menu/menu.tsx
+@@ -1,4 +1,4 @@
+-import type BottomSheet from '@gorhom/bottom-sheet';
++import type BottomSheet from '@expo/ui/community/bottom-sheet';
+ import { createContext, forwardRef, useMemo } from 'react';
+ import type { GestureResponderEvent, Text as RNText } from 'react-native';
+ import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+diff --git a/src/components/menu/menu.types.ts b/src/components/menu/menu.types.ts
+index fff5ba40f5b8e81be293188ad8e272de7131ea12..2028a135dd6f42309a1c92f898f77d83067269c4 100644
+--- a/src/components/menu/menu.types.ts	
++++ b/src/components/menu/menu.types.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { TextProps } from 'react-native';
+ import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
+diff --git a/src/components/popover/popover.tsx b/src/components/popover/popover.tsx
+index bf51ffc3d6840192f7c8cf8c65bb6b0e867f3e83..8546538819c364d33658ebc28aa27ffb7840c189 100644
+--- a/src/components/popover/popover.tsx	
++++ b/src/components/popover/popover.tsx
+@@ -1,4 +1,4 @@
+-import type BottomSheet from '@gorhom/bottom-sheet';
++import type BottomSheet from '@expo/ui/community/bottom-sheet';
+ import { createContext, forwardRef, use, useMemo } from 'react';
+ import type {
+   GestureResponderEvent,
+diff --git a/src/components/popover/popover.types.ts b/src/components/popover/popover.types.ts
+index c9d178b83827b7fe8be95ce003e53137e6289603..5d19700dee83afbd2a41f91fedb286ba4cf60560 100644
+--- a/src/components/popover/popover.types.ts	
++++ b/src/components/popover/popover.types.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { StyleProp, TextProps, ViewStyle } from 'react-native';
+ import type { SharedValue } from 'react-native-reanimated';
+diff --git a/src/components/select/select.tsx b/src/components/select/select.tsx
+index b58a0d039e1e6dc2122d67bee7fd23192e0bfb1b..da45b01296ade0aa385faad48a9b20ac12c69ff9 100644
+--- a/src/components/select/select.tsx	
++++ b/src/components/select/select.tsx
+@@ -1,4 +1,4 @@
+-import type BottomSheet from '@gorhom/bottom-sheet';
++import type BottomSheet from '@expo/ui/community/bottom-sheet';
+ import { forwardRef, useLayoutEffect, useMemo, useRef } from 'react';
+ import type { GestureResponderEvent, Text as RNText } from 'react-native';
+ import { StyleSheet, useWindowDimensions, View } from 'react-native';
+diff --git a/src/components/select/select.types.ts b/src/components/select/select.types.ts
+index 8aca25062023446bb0a73fc18912f439c913869b..1b371af95e84cc5c08a659e306c1f1d924ffda70 100644
+--- a/src/components/select/select.types.ts	
++++ b/src/components/select/select.types.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { TextProps, ViewStyle } from 'react-native';
+ import type {
+diff --git a/src/helpers/internal/components/bottom-sheet-content-container.tsx b/src/helpers/internal/components/bottom-sheet-content-container.tsx
+index 23de843229d5420194ae3e9eef5a19b94c22fe02..22e5c9dd157806efedca9652739f932d1e6e1774 100644
+--- a/src/helpers/internal/components/bottom-sheet-content-container.tsx	
++++ b/src/helpers/internal/components/bottom-sheet-content-container.tsx
+@@ -28,6 +28,7 @@ export function BottomSheetContentContainer({
+   contentContainerProps,
+   onOpenChange,
+   enablePanDownToClose,
++  disableContentView,
+ }: BottomSheetContentContainerProps) {
+   const { close, snapToIndex } = useBottomSheet();
+   const prevIsOpenRef = useRef(isOpen);
+@@ -90,6 +91,10 @@ export function BottomSheetContentContainer({
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [isOpen, initialIndex]);
+ 
++  if (disableContentView) {
++    return <>{children}</>;
++  }
++
+   return (
+     <BottomSheetView
+       className={contentContainerClassName}
+diff --git a/src/helpers/internal/components/bottom-sheet-content.tsx b/src/helpers/internal/components/bottom-sheet-content.tsx
+index ecc5a7d381f81aea4cc91eb47dbd6549c6e78567..0c501cfa9573dbbc59611f87406767cb21ad6879 100644
+--- a/src/helpers/internal/components/bottom-sheet-content.tsx	
++++ b/src/helpers/internal/components/bottom-sheet-content.tsx
+@@ -1,5 +1,5 @@
+-import type BottomSheet from '@gorhom/bottom-sheet';
+-import type { BottomSheetProps } from '@gorhom/bottom-sheet';
++import type BottomSheet from '@expo/ui/community/bottom-sheet';
++import type { BottomSheetProps } from '@expo/ui/community/bottom-sheet';
+ import { forwardRef, useMemo } from 'react';
+ import type { StyleProp, ViewStyle } from 'react-native';
+ import type { SharedValue } from 'react-native-reanimated';
+@@ -46,6 +46,11 @@ export interface BottomSheetContentProps
+    * Additional style for the background
+    */
+   backgroundStyle?: StyleProp<ViewStyle>;
++  /**
++   * When true, renders children directly without wrapping in BottomSheetView.
++   * Required when using BottomSheetFlatList/BottomSheetScrollView as children.
++   */
++  disableContentView?: boolean;
+ }
+ 
+ /**
+@@ -87,6 +92,7 @@ export const BottomSheetContent = forwardRef<
+       progress,
+       isDragging,
+       onOpenChange,
++      disableContentView,
+       ...restProps
+     },
+     ref
+@@ -149,6 +155,7 @@ export const BottomSheetContent = forwardRef<
+             contentContainerProps={contentContainerProps}
+             onOpenChange={onOpenChange}
+             enablePanDownToClose={restProps.enablePanDownToClose ?? true}
++            disableContentView={disableContentView}
+           >
+             {children}
+           </BottomSheetContentContainer>
+diff --git a/src/helpers/internal/hooks/use-bottom-sheet-gesture-handlers.ts b/src/helpers/internal/hooks/use-bottom-sheet-gesture-handlers.ts
+index 6bb9b8299f77444daa09758a5b1bd16fdef74cac..b386bece14127a6a448dd9983b77d0102e1a22f8 100644
+--- a/src/helpers/internal/hooks/use-bottom-sheet-gesture-handlers.ts	
++++ b/src/helpers/internal/hooks/use-bottom-sheet-gesture-handlers.ts
+@@ -1,7 +1,10 @@
+-import type {
+-  GestureEventHandlerCallbackType,
+-  GestureEventsHandlersHookType,
+-} from '@gorhom/bottom-sheet';
++type GestureEventHandlerCallbackType = (source: any, payload: any) => void;
++type GestureEventsHandlersHookType = () => {
++  handleOnStart: GestureEventHandlerCallbackType;
++  handleOnChange: GestureEventHandlerCallbackType;
++  handleOnEnd: GestureEventHandlerCallbackType;
++  handleOnFinalize: GestureEventHandlerCallbackType;
++};
+ import GorhomBottomSheetPackage from '../../../optional/gorhom-bottom-sheet';
+ import { useBottomSheetIsDragging } from '../contexts/bottom-sheet-is-dragging-context';
+ 
+@@ -10,7 +13,12 @@ export const useBottomSheetGestureHandlers: GestureEventsHandlersHookType =
+     const { isDragging } = useBottomSheetIsDragging();
+ 
+     const defaultHandlers =
+-      GorhomBottomSheetPackage.useGestureEventsHandlersDefault();
++      GorhomBottomSheetPackage?.useGestureEventsHandlersDefault?.() || {
++        handleOnStart: () => {},
++        handleOnChange: () => {},
++        handleOnEnd: () => {},
++        handleOnFinalize: () => {},
++      };
+ 
+     const handleOnStart: GestureEventHandlerCallbackType = (
+       source,
+diff --git a/src/helpers/internal/types/bottom-sheet.ts b/src/helpers/internal/types/bottom-sheet.ts
+index e763b4164ff924f23fb59fbc1813043a4fbde147..bc8133eb3fd4041d3e67d6cd32d21e2762084584 100644
+--- a/src/helpers/internal/types/bottom-sheet.ts	
++++ b/src/helpers/internal/types/bottom-sheet.ts
+@@ -1,4 +1,4 @@
+-import type { BottomSheetViewProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetView/types';
++import type { BottomSheetViewProps } from '@expo/ui/community/bottom-sheet';
+ import type { ReactNode } from 'react';
+ import type { SharedValue } from 'react-native-reanimated';
+ import type { AnimationDisabled } from './animation';
+@@ -56,6 +56,12 @@ export interface BottomSheetContentContainerProps {
+    * Whether the bottom sheet can be closed by panning down
+    */
+   enablePanDownToClose: boolean;
++  /**
++   * When true, renders children directly without wrapping in BottomSheetView.
++   * Required when using BottomSheetFlatList/BottomSheetScrollView as children,
++   * since BottomSheetView conflicts with their gesture handling.
++   */
++  disableContentView?: boolean;
+ }
+ 
+ /**
+diff --git a/src/optional/gorhom-bottom-sheet.ts b/src/optional/gorhom-bottom-sheet.ts
+index 36445127c02487aa72c4c6bb0a87ae02bbc4b09b..e6bacf509b08b14df8e58b7599e986d1e027215a 100644
+--- a/src/optional/gorhom-bottom-sheet.ts	
++++ b/src/optional/gorhom-bottom-sheet.ts
+@@ -1,7 +1,7 @@
+ let GorhomBottomSheetPackage: any;
+ 
+ try {
+-  GorhomBottomSheetPackage = require('@gorhom/bottom-sheet');
++  GorhomBottomSheetPackage = require('@expo/ui/community/bottom-sheet');
+ } catch (_error) {
+   /* @gorhom/bottom-sheet is an optional peer dependency */
+ }
+diff --git a/src/primitives/avatar/avatar.tsx b/src/primitives/avatar/avatar.tsx
+index f602d8d5047073e74a1deb707e48c06c8fbc1928..90a57de686d6bd033fdcdb64b35b79efe844f68e 100644
+--- a/src/primitives/avatar/avatar.tsx	
++++ b/src/primitives/avatar/avatar.tsx
+@@ -1,12 +1,9 @@
+ import * as React from 'react';
+ import { createContext, forwardRef, useEffect, useMemo, useState } from 'react';
+ import {
+-  type ImageErrorEventData,
+-  type ImageLoadEvent,
+-  type NativeSyntheticEvent,
+-  Image as RNImage,
+   View,
+ } from 'react-native';
++import { Image as ExpoImage, type ImageLoadEventData, type ImageErrorEventData } from 'expo-image';
+ import * as Slot from '../slot';
+ import type {
+   AvatarStatus,
+@@ -111,24 +108,24 @@ const Image = forwardRef<ImageRef, ImageProps>(
+     }, [props?.source, setStatus]);
+ 
+     const onLoad = React.useCallback(
+-      (e: ImageLoadEvent) => {
++      (e: ImageLoadEventData) => {
+         setStatus('loaded');
+         onLoadingStatusChange?.('loaded');
+-        onLoadProps?.(e);
++        onLoadProps?.(e as any);
+       },
+       [onLoadProps, setStatus, onLoadingStatusChange]
+     );
+ 
+     const onError = React.useCallback(
+-      (e: NativeSyntheticEvent<ImageErrorEventData>) => {
++      (e: ImageErrorEventData) => {
+         setStatus('error');
+         onLoadingStatusChange?.('error');
+-        onErrorProps?.(e);
++        onErrorProps?.(e as any);
+       },
+       [onErrorProps, setStatus, onLoadingStatusChange]
+     );
+ 
+-    const Component = asChild ? Slot.Image : RNImage;
++    const Component = asChild ? Slot.Image : ExpoImage;
+ 
+     if (status === 'error') {
+       return null;
+diff --git a/src/primitives/avatar/avatar.types.ts b/src/primitives/avatar/avatar.types.ts
+index fb373769aaa4eef4788aa29ca74edc9d02e9c3ba..bb0d1cbec7f6cb2c298ba03190f3588f66216dbe 100644
+--- a/src/primitives/avatar/avatar.types.ts	
++++ b/src/primitives/avatar/avatar.types.ts
+@@ -1,4 +1,5 @@
+-import type { Image, ImageProps as RNImageProps } from 'react-native';
++import type { ImageProps as RNImageProps } from 'react-native';
++import { Image } from 'expo-image';
+ import type {
+   ComponentPropsWithAsChild,
+   SlottableViewProps,
+diff --git a/src/primitives/avatar/avatar.utils.ts b/src/primitives/avatar/avatar.utils.ts
+index 01d3890e7aeb175a26da6b81af709e58b00f8abf..c8785d89ab99e79dd71232dbdde2c2b179046d0b 100644
+--- a/src/primitives/avatar/avatar.utils.ts	
++++ b/src/primitives/avatar/avatar.utils.ts
+@@ -20,17 +20,19 @@ import type { ImageSourcePropType } from 'react-native';
+  * isValidSource([{ uri: '' }, { uri: null }]); // false
+  * ```
+  */
+-export function isValidSource(source?: ImageSourcePropType) {
++export function isValidSource(source?: any) {
+   if (!source) {
+     return false;
+   }
+-  // Using require() for the source returns a number
++  if (typeof source === 'string') {
++    return true;
++  }
+   if (typeof source === 'number') {
+     return true;
+   }
+ 
+   if (Array.isArray(source)) {
+-    return source.some((s) => !!s.uri);
++    return source.some((s) => !!s || (s && typeof s === 'object' && !!s.uri));
+   }
+ 
+   return !!source.uri;
+@@ -57,8 +59,8 @@ export function isValidSource(source?: ImageSourcePropType) {
+  * ```
+  */
+ export function isSameSource(
+-  source1?: ImageSourcePropType,
+-  source2?: ImageSourcePropType
++  source1?: any,
++  source2?: any
+ ): boolean {
+   // Both undefined/null
+   if (!source1 && !source2) {
+@@ -70,13 +72,23 @@ export function isSameSource(
+     return false;
+   }
+ 
++  // Both are strings
++  if (typeof source1 === 'string' && typeof source2 === 'string') {
++    return source1 === source2;
++  }
++
+   // Both are numbers (require() statements)
+   if (typeof source1 === 'number' && typeof source2 === 'number') {
+     return source1 === source2;
+   }
+ 
+-  // One is a number, the other is not
+-  if (typeof source1 === 'number' || typeof source2 === 'number') {
++  // One is a number or string, the other is not
++  if (
++    typeof source1 === 'number' ||
++    typeof source2 === 'number' ||
++    typeof source1 === 'string' ||
++    typeof source2 === 'string'
++  ) {
+     return false;
+   }
+ 
+@@ -88,6 +100,9 @@ export function isSameSource(
+     // Compare each element's URI
+     return source1.every((s1, index) => {
+       const s2 = source2[index];
++      if (typeof s1 === 'string' && typeof s2 === 'string') {
++        return s1 === s2;
++      }
+       return s1?.uri === s2?.uri;
+     });
+   }

@@ -45,9 +45,10 @@ Sentry.init({
   // Enable Logs
   enableLogs: false,
 
-  spotlight: __DEV__,
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
 });
-global.fetch = nitroFetch;
+(globalThis as any).fetch = nitroFetch;
 
 GiphySDK.configure({ apiKey: process.env.EXPO_PUBLIC_GIPHY_API_KEY || '' });
 
@@ -58,7 +59,12 @@ Observe.configure({
   },
 });
 
+
+// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+
+// ─── StatusBarFade ─────────────────────────────────────────────────────────────
+// Pure UI sub-component: renders a gradient fade beneath the status bar.
 
 const StatusBarFade = () => {
   const { theme } = useThemeContext();
@@ -190,17 +196,17 @@ const RootContent = () => {
           <Stack.Screen name="video_player" />
           <Stack.Screen name="profile/[id]" />
           <Stack.Screen name="image_poster" />
-          <Stack.Screen
-            name="settings"
-          />
-          <Stack.Screen
-            name="bookmarks"
-          />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="bookmarks" />
           <Stack.Screen name="language-settings" />
           <Stack.Screen name="security-settings" />
+          <Stack.Screen name="fprofile" />
           <Stack.Screen name="search" />
           <Stack.Screen name="hashtag/[tag]" />
           <Stack.Screen name="hashtag-list" />
+          <Stack.Screen name="show_detail" />
+          <Stack.Screen name="show_list" />
+          <Stack.Screen name="watchlist" />
           <Stack.Screen name="create" />
           <Stack.Screen name="inapp_browser" />
           <Stack.Screen name="movie_detail" />
@@ -209,6 +215,7 @@ const RootContent = () => {
           <Stack.Screen name="movie_list" />
           <Stack.Screen name="search_movies" />
           <Stack.Screen name="webview" />
+          <Stack.Screen name="moviehub" />
           <Stack.Screen name="bulletinboard" />
         </Stack>
         <GlobalAudioPlayer />
