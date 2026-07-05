@@ -39,8 +39,6 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "./withGeminiNano",
-      "./withAndroidOrientationFix",
       "./withAndroidSvgFix",
       [
         "@bam.tech/react-native-app-security",

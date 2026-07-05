@@ -42,11 +42,6 @@ interface SettingsStore {
     setDisableAutoplay: (disable: boolean) => void;
     toggleDisableAutoplay: () => void;
 
-    // Gemini Nano support
-    isGeminiNanoAvailable: boolean;
-    setGeminiNanoAvailable: (available: boolean) => void;
-    checkGeminiNanoAvailability: () => Promise<boolean>;
-
     // Third-party upload keys and settings
     imgbbApiKey: string;
     setImgbbApiKey: (key: string) => void;
@@ -92,22 +87,6 @@ export const useSettingsStore = create<SettingsStore>()(
             setDisableAutoplay: (disable) => set({ disableAutoplay: disable }),
             toggleDisableAutoplay: () => set((state) => ({ disableAutoplay: !state.disableAutoplay })),
 
-            // Gemini Nano support
-            isGeminiNanoAvailable: false,
-            setGeminiNanoAvailable: (available) => set({ isGeminiNanoAvailable: available }),
-            checkGeminiNanoAvailability: async () => {
-                try {
-                    const { isAvailable } = require('react-native-gemini-nano');
-                    const available = await isAvailable();
-                    set({ isGeminiNanoAvailable: available });
-                    return available;
-                } catch (e) {
-                    console.warn('Error checking Gemini Nano availability:', e);
-                    set({ isGeminiNanoAvailable: false });
-                    return false;
-                }
-            },
-
             // Third-party upload settings
             imgbbApiKey: '',
             setImgbbApiKey: (key) => set({ imgbbApiKey: key }),
@@ -121,7 +100,6 @@ export const useSettingsStore = create<SettingsStore>()(
                 profileDesign: 'v3',
                 makeBottomBarCurve: false,
                 disableAutoplay: false,
-                isGeminiNanoAvailable: false,
                 imgbbApiKey: '',
                 x02ApiKey: '',
             }),
@@ -133,7 +111,6 @@ export const useSettingsStore = create<SettingsStore>()(
     )
 );
 
-// Trigger check on load asynchronously
-useSettingsStore.getState().checkGeminiNanoAvailability().catch(() => {});
+
 
 
