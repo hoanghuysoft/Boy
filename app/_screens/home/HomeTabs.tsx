@@ -1,5 +1,5 @@
 import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
-import React from "react";
+import React, { createContext, useContext, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import CustomTopTabBar from "./CustomTopTabBar";
@@ -7,39 +7,53 @@ import FeedTab from "./FeedTab";
 
 const Tab = createMaterialTopTabNavigator();
 
-// Tab screen components
-const FollowingTab = ({ onScroll, onOptionsPress, onLikeCountPress, onCommentPress, headerHeight }: any) => (
-    <FeedTab
-        feedType="latest"
-        onScroll={onScroll}
-        onOptionsPress={onOptionsPress}
-        onLikeCountPress={onLikeCountPress}
-        onCommentPress={onCommentPress}
-        headerHeight={headerHeight}
-    />
-);
+// Define a context to pass the ViewModel down to the tab screens statically.
+// This prevents unmounting & remounting the tabs on every parent render caused by inline functions.
+const HomeContext = createContext<any>(null);
+const useHomeContext = () => useContext(HomeContext);
 
-const LuckyTab = ({ onScroll, onOptionsPress, onLikeCountPress, onCommentPress, headerHeight }: any) => (
-    <FeedTab
-        feedType="lucky"
-        onScroll={onScroll}
-        onOptionsPress={onOptionsPress}
-        onLikeCountPress={onLikeCountPress}
-        onCommentPress={onCommentPress}
-        headerHeight={headerHeight}
-    />
-);
+// Tab screen components using Context
+const FollowingTab = () => {
+    const vm = useHomeContext();
+    return (
+        <FeedTab
+            feedType="latest"
+            onScroll={vm.onScroll}
+            onOptionsPress={vm.handlePostOptionsPress}
+            onLikeCountPress={vm.handleLikeCountPress}
+            onCommentPress={vm.handleCommentPress}
+            headerHeight={vm.totalHeaderHeight + vm.insets.top}
+        />
+    );
+};
 
-const ThisDayTab = ({ onScroll, onOptionsPress, onLikeCountPress, onCommentPress, headerHeight }: any) => (
-    <FeedTab
-        feedType="this_day"
-        onScroll={onScroll}
-        onOptionsPress={onOptionsPress}
-        onLikeCountPress={onLikeCountPress}
-        onCommentPress={onCommentPress}
-        headerHeight={headerHeight}
-    />
-);
+const LuckyTab = () => {
+    const vm = useHomeContext();
+    return (
+        <FeedTab
+            feedType="lucky"
+            onScroll={vm.onScroll}
+            onOptionsPress={vm.handlePostOptionsPress}
+            onLikeCountPress={vm.handleLikeCountPress}
+            onCommentPress={vm.handleCommentPress}
+            headerHeight={vm.totalHeaderHeight + vm.insets.top}
+        />
+    );
+};
+
+const ThisDayTab = () => {
+    const vm = useHomeContext();
+    return (
+        <FeedTab
+            feedType="this_day"
+            onScroll={vm.onScroll}
+            onOptionsPress={vm.handlePostOptionsPress}
+            onLikeCountPress={vm.handleLikeCountPress}
+            onCommentPress={vm.handleCommentPress}
+            headerHeight={vm.totalHeaderHeight + vm.insets.top}
+        />
+    );
+};
 
 interface HomeTabsProps {
     vm: any;
@@ -48,63 +62,51 @@ interface HomeTabsProps {
 const HomeTabs = ({ vm }: HomeTabsProps) => {
     const { t } = useTranslation();
 
+    // Memoize the custom tab bar render function to avoid recreating it on every render,
+    // which causes the MaterialTopTabNavigator to completely re-render its tab bar container.
+    const renderTabBar = useCallback((props: any) => (
+        <View style={{ position: 'absolute', top: vm.insets.top + vm.headerHeight, left: 0, right: 0, zIndex: 99 }}>
+            <CustomTopTabBar
+                {...props}
+                tabBgOpacity={vm.pillBgOpacity}
+                tabOpacity={vm.tabOpacity}
+                iconColor={vm.iconColor}
+            />
+        </View>
+    ), [vm.insets.top, vm.headerHeight, vm.pillBgOpacity, vm.tabOpacity, vm.iconColor]);
+
     return (
-        <Tab.Navigator
-            sceneContainerStyle={{ backgroundColor: 'transparent' }}
-            tabBar={(props : any) => (
-                <View style={{ position: 'absolute', top: vm.insets.top + vm.headerHeight, left: 0, right: 0, zIndex: 99 }}>
-                    <CustomTopTabBar
-                        {...props}
-                        tabBgOpacity={vm.pillBgOpacity}
-                        tabOpacity={vm.tabOpacity}
-                        iconColor={vm.iconColor}
-                    />
-                </View>
-            )}
-            screenOptions={{
-                swipeEnabled: true,
-                lazy: true,
-                lazyPreloadDistance: 0,
-                sceneStyle: { backgroundColor: 'transparent' },
-            }}
-            screenListeners={{
-                state: vm.handleTabStateChange,
-            }}
-        >
-            <Tab.Screen name="Following" options={{ title: t('home.tabs.following') }}>
-                {() => (
-                    <FollowingTab
-                        onScroll={vm.onScroll}
-                        onOptionsPress={vm.handlePostOptionsPress}
-                        onLikeCountPress={vm.handleLikeCountPress}
-                        onCommentPress={vm.handleCommentPress}
-                        headerHeight={vm.totalHeaderHeight + vm.insets.top}
-                    />
-                )}
-            </Tab.Screen>
-            <Tab.Screen name="Lucky" options={{ title: t('home.tabs.lucky') }}>
-                {() => (
-                    <LuckyTab
-                        onScroll={vm.onScroll}
-                        onOptionsPress={vm.handlePostOptionsPress}
-                        onLikeCountPress={vm.handleLikeCountPress}
-                        onCommentPress={vm.handleCommentPress}
-                        headerHeight={vm.totalHeaderHeight + vm.insets.top}
-                    />
-                )}
-            </Tab.Screen>
-            <Tab.Screen name="This Day" options={{ title: t('home.tabs.thisDay') }}>
-                {() => (
-                    <ThisDayTab
-                        onScroll={vm.onScroll}
-                        onOptionsPress={vm.handlePostOptionsPress}
-                        onLikeCountPress={vm.handleLikeCountPress}
-                        onCommentPress={vm.handleCommentPress}
-                        headerHeight={vm.totalHeaderHeight + vm.insets.top}
-                    />
-                )}
-            </Tab.Screen>
-        </Tab.Navigator>
+        <HomeContext.Provider value={vm}>
+            <Tab.Navigator
+                sceneContainerStyle={{ backgroundColor: 'transparent' }}
+                tabBar={renderTabBar}
+                screenOptions={{
+                    swipeEnabled: true,
+                    lazy: true,
+                    lazyPreloadDistance: 0,
+                    sceneStyle: { backgroundColor: 'transparent' },
+                }}
+                screenListeners={{
+                    state: vm.handleTabStateChange,
+                }}
+            >
+                <Tab.Screen
+                    name="Following"
+                    component={FollowingTab}
+                    options={{ title: t('home.tabs.following') }}
+                />
+                <Tab.Screen
+                    name="Lucky"
+                    component={LuckyTab}
+                    options={{ title: t('home.tabs.lucky') }}
+                />
+                <Tab.Screen
+                    name="This Day"
+                    component={ThisDayTab}
+                    options={{ title: t('home.tabs.thisDay') }}
+                />
+            </Tab.Navigator>
+        </HomeContext.Provider>
     );
 };
 

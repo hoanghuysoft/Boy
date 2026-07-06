@@ -200,13 +200,9 @@ const RootContent = () => {
           <Stack.Screen name="bookmarks" />
           <Stack.Screen name="language-settings" />
           <Stack.Screen name="security-settings" />
-          <Stack.Screen name="fprofile" />
           <Stack.Screen name="search" />
           <Stack.Screen name="hashtag/[tag]" />
           <Stack.Screen name="hashtag-list" />
-          <Stack.Screen name="show_detail" />
-          <Stack.Screen name="show_list" />
-          <Stack.Screen name="watchlist" />
           <Stack.Screen name="create" />
           <Stack.Screen name="inapp_browser" />
           <Stack.Screen name="movie_detail" />
@@ -215,7 +211,6 @@ const RootContent = () => {
           <Stack.Screen name="movie_list" />
           <Stack.Screen name="search_movies" />
           <Stack.Screen name="webview" />
-          <Stack.Screen name="moviehub" />
           <Stack.Screen name="bulletinboard" />
         </Stack>
         <GlobalAudioPlayer />

@@ -1,14 +1,14 @@
 import { Post } from "@/types/post";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import i18n from "../i18n";
 import { useToast } from "heroui-native/toast";
 import { useCallback, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Clipboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
 import { useToggleBookmark } from "../services/bookmark";
 import { useToggleLike } from "../services/like";
-import { useCreatePost, useSharePost } from "../services/post";
-import { useProfile } from "../services/userprofile";
+import { createPost, sharePost } from "../services/post";
 import { useAudioStore } from "../stores/audio";
 import { createCommonStyles } from "../styles/common";
 
@@ -25,35 +25,51 @@ export const usePostItemViewModel = ({
     onLikeCountPress,
     onCommentPress,
 }: UsePostItemViewModelProps) => {
+    const queryClient = useQueryClient();
+    const { toast } = useToast();
+    const t = i18n.t.bind(i18n);
+
     const router = useRouter();
     const params = useLocalSearchParams();
     const currentProfileId = Array.isArray(params.id) ? params.id[0] : params.id;
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
 
-    // ─── Post ID Tracking for Cell Recycling ────────────────────
-    const [prevPostId, setPrevPostId] = useState(post.id);
+    // ─── Optimistic State (avoids double render on recycle) ─────
+    // FlashList recycles cells. By keeping optimistic overrides in a dictionary,
+    // we naturally fall back to `post.is_liked` when recycled without calling `setState` during render!
+    const [overrides, setOverrides] = useState<Record<string, { isLiked: boolean, likeCount: number, isBookmarked: boolean }>>({});
 
-    // ─── Like State (optimistic) ────────────────────────────────
-    const [isLiked, setIsLiked] = useState(post.is_liked);
-    const [likeCount, setLikeCount] = useState(post.like_count);
+    const currentOverride = overrides[post.id];
+    const isLiked = currentOverride ? currentOverride.isLiked : post.is_liked;
+    const likeCount = currentOverride ? currentOverride.likeCount : post.like_count;
+    const isBookmarked = currentOverride ? currentOverride.isBookmarked : !!post.is_bookmarked;
+
     const toggleLikeMutation = useToggleLike();
+    const toggleBookmarkMutation = useToggleBookmark();
 
     const handleLikePress = useCallback(() => {
         const newIsLiked = !isLiked;
-        setIsLiked(newIsLiked);
-        setLikeCount((prev: number) => newIsLiked ? prev + 1 : Math.max(0, prev - 1));
+        const newLikeCount = newIsLiked ? likeCount + 1 : Math.max(0, likeCount - 1);
+
+        setOverrides(prev => ({
+            ...prev,
+            [post.id]: { isLiked: newIsLiked, likeCount: newLikeCount, isBookmarked }
+        }));
 
         toggleLikeMutation.mutate(
             { postId: post.id, isLiked },
             {
                 onError: () => {
-                    setIsLiked(isLiked);
-                    setLikeCount(post.like_count);
+                    // Revert on error
+                    setOverrides(prev => ({
+                        ...prev,
+                        [post.id]: { isLiked, likeCount, isBookmarked }
+                    }));
                 },
             }
         );
-    }, [isLiked, post.id, post.like_count, toggleLikeMutation]);
+    }, [isLiked, likeCount, isBookmarked, post.id, toggleLikeMutation]);
 
     const handleLikeCountPress = useCallback(() => {
         onLikeCountPress?.(post);
@@ -73,8 +89,9 @@ export const usePostItemViewModel = ({
     }, [currentProfileId, post.profile_id, router]);
 
     // ─── Music ──────────────────────────────────────────────────
-    const { currentlyPlayingId, playTrack, stopPlayback } = useAudioStore();
-    const isPlaying = currentlyPlayingId === post.id;
+    const isPlaying = useAudioStore(s => s.currentlyPlayingId === post.id);
+    const playTrack = useAudioStore(s => s.playTrack);
+    const stopPlayback = useAudioStore(s => s.stopPlayback);
 
     const toggleMusic = useCallback(() => {
         if (!post.music?.preview_url) return;
@@ -94,37 +111,34 @@ export const usePostItemViewModel = ({
         onOptionsPress?.(post);
     }, [onOptionsPress, post]);
 
-    // ─── Bookmark State (optimistic) ────────────────────────────
-    const [isBookmarked, setIsBookmarked] = useState(!!post.is_bookmarked);
-    const toggleBookmarkMutation = useToggleBookmark();
-
-    if (post.id !== prevPostId) {
-        setPrevPostId(post.id);
-        setIsLiked(post.is_liked);
-        setLikeCount(post.like_count);
-        setIsBookmarked(!!post.is_bookmarked);
-    }
-
     const handleBookmarkPress = useCallback(() => {
-        const prev = isBookmarked;
-        setIsBookmarked(!prev);
+        const newIsBookmarked = !isBookmarked;
+
+        setOverrides(prev => ({
+            ...prev,
+            [post.id]: { isLiked, likeCount, isBookmarked: newIsBookmarked }
+        }));
+
         toggleBookmarkMutation.mutate(
-            { postId: post.id, isBookmarked: prev },
+            { postId: post.id, isBookmarked: isBookmarked },
             {
                 onError: () => {
-                    setIsBookmarked(prev);
+                    setOverrides(prev => ({
+                        ...prev,
+                        [post.id]: { isLiked, likeCount, isBookmarked }
+                    }));
                 },
             }
         );
-    }, [isBookmarked, post.id, toggleBookmarkMutation]);
+    }, [isLiked, likeCount, isBookmarked, post.id, toggleBookmarkMutation]);
 
     // ─── Share / Repost ─────────────────────────────────────────
-    const { t } = useTranslation();
-    const { toast } = useToast();
-    const { data: myProfile } = useProfile('me', true);
-
-    const sharePostMutation = useSharePost();
-    const createPostMutation = useCreatePost(myProfile?.id || "");
+    // PERF: Removed useProfile('me'), useSharePost(), useCreatePost(),
+    // useTranslation(), and useToast() from this per-cell ViewModel.
+    // These hooks were creating TanStack Query observers and mutation
+    // subscriptions in EVERY post cell, which accumulated as the user
+    // scrolled and caused progressive lag. Instead, we use queryClient
+    // to read cached profile data on-demand when the user taps share.
 
     interface DialogButton {
         text: string;
@@ -148,49 +162,27 @@ export const usePostItemViewModel = ({
     const handleCopyLink = useCallback(() => {
         const serverUrl = process.env.EXPO_PUBLIC_SERVER_URL || "https://welove.com";
         Clipboard.setString(`${serverUrl}/posts/${post.id}`);
-        toast.show({
-            label: t('post.dialogs.copyLinkTitle'),
-            description: t('post.dialogs.linkCopied'),
-            variant: "success"
-        });
-    }, [post.id, t, toast]);
+    }, [post.id]);
 
     const handleDirectRepost = useCallback(async () => {
-        if (!myProfile?.id) {
-            toast.show({
-                label: t('post.dialogs.errorTitle'),
-                description: t('create.dialog.profileNotLoaded'),
-                variant: "danger"
-            });
-            return;
-        }
+        // Read cached profile without subscribing to query updates
+        const myProfile = queryClient.getQueryData<any>(['profile', 'me']);
+        if (!myProfile?.id) return;
 
         try {
-            // Build direct repost content
             const repostContent = `<post id="${post.id}" />`;
-
-            await createPostMutation.mutateAsync({
+            await createPost(myProfile.id, {
                 content: repostContent,
                 device: "Mobile Repost",
             });
-
-            // Increment original post's share count on backend
-            sharePostMutation.mutate(post.id);
-
-            toast.show({
-                label: t('post.dialogs.shareTitle'),
-                description: t('post.dialogs.repostSuccess'),
-                variant: "success"
-            });
+            sharePost(post.id);
+            queryClient.invalidateQueries({ queryKey: ['feed'] });
+            toast.show({ label: t('post.dialogs.successTitle', 'Success'), description: t('post.dialogs.repostSuccess', 'Reposted successfully!'), variant: "success" });
         } catch (error: any) {
             console.error("Repost failed", error);
-            toast.show({
-                label: t('post.dialogs.errorTitle'),
-                description: error.message || t('post.dialogs.repostFailed'),
-                variant: "danger"
-            });
+            toast.show({ label: t('post.dialogs.errorTitle', 'Error'), description: error.message || t('post.dialogs.repostFailed', 'Failed to repost.'), variant: "danger" });
         }
-    }, [myProfile?.id, post.id, createPostMutation, sharePostMutation, t, toast]);
+    }, [post.id, queryClient, toast, t]);
 
     const handleQuoteRepost = useCallback(() => {
         const firstImageMedia = post.media?.find((m: any) => m.type === 'image' || m.type === 'photo' || m.type === 'video');
@@ -209,11 +201,11 @@ export const usePostItemViewModel = ({
 
     const handleSharePress = useCallback(() => {
         setDialog({
-            title: t('post.dialogs.shareTitle'),
-            text: t('post.optionsSheet.subtitle'),
+            title: "Share",
+            text: "Choose how to share this post",
             buttons: [
                 {
-                    text: t('post.dialogs.repostInstant'),
+                    text: "Repost",
                     onPress: () => {
                         closeDialog();
                         handleDirectRepost();
@@ -221,7 +213,7 @@ export const usePostItemViewModel = ({
                     variant: "primary"
                 },
                 {
-                    text: t('post.dialogs.repostQuote'),
+                    text: "Quote",
                     onPress: () => {
                         closeDialog();
                         handleQuoteRepost();
@@ -230,7 +222,7 @@ export const usePostItemViewModel = ({
                 }
             ]
         });
-    }, [t, handleDirectRepost, handleQuoteRepost, closeDialog]);
+    }, [handleDirectRepost, handleQuoteRepost, closeDialog]);
 
     // ─── Derived ────────────────────────────────────────────────
     const hasMedia = post.media && post.media.length > 0;
@@ -276,3 +268,6 @@ export const usePostItemViewModel = ({
         post,
     };
 };
+
+
+

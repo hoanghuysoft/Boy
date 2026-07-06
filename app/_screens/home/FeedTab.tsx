@@ -12,7 +12,7 @@ import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { FlatList } from "react-native";
+import { type FlashListRef } from "@shopify/flash-list";
 import {
     RefreshControl,
     ScrollView,
@@ -74,7 +74,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const extraPadding = 20;
     const bottomPadding = bottomNavHeight + bottomNavMargin + insets.bottom + extraPadding;
 
-    const listRef = useRef<FlatList | null>(null);
+    const listRef = useRef<FlashListRef<any> | null>(null);
     const trigger = useScrollStore((state) => state.triggers['index']);
 
     useEffect(() => {
@@ -117,10 +117,25 @@ const FeedTab: React.FC<FeedTabProps> = ({
      *
      * Note: The List calls this via runOnJS so it already runs on the JS thread.
      */
+    const latestY = useRef(0);
+    const lastScrollCall = useRef(0);
+
+    const prefetchedUrls = useRef(new Set<string>());
+
     const handleScrollY = useCallback((y: number) => {
+        latestY.current = y;
         if (onScroll) {
-            // Synthesise a minimal scroll event compatible with vm.onScroll
-            onScroll({ nativeEvent: { contentOffset: { y, x: 0 } } });
+            const now = Date.now();
+            if (now - lastScrollCall.current > 80) { // throttle to ~12fps
+                lastScrollCall.current = now;
+                onScroll({ nativeEvent: { contentOffset: { y, x: 0 } } });
+            }
+        }
+    }, [onScroll]);
+
+    const handleScrollSettled = useCallback(() => {
+        if (onScroll) {
+            onScroll({ nativeEvent: { contentOffset: { y: latestY.current, x: 0 } } });
         }
     }, [onScroll]);
 
@@ -144,13 +159,23 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 const aheadPosts = posts.slice(maxVisible + 1, maxVisible + 1 + PREFETCH_AHEAD);
                 const urls: string[] = [];
                 for (const p of aheadPosts) {
-                    if (p.profile_avatar) urls.push(p.profile_avatar);
+                    if (p.profile_avatar && !prefetchedUrls.current.has(p.profile_avatar)) {
+                        urls.push(p.profile_avatar);
+                        prefetchedUrls.current.add(p.profile_avatar);
+                    }
                     for (const m of p.media ?? []) {
-                        if (m.type === 'video' && m.thumbnail_url) urls.push(m.thumbnail_url);
-                        else if (m.type === 'photo' && m.url) urls.push(m.url);
+                        const url = m.type === 'video' ? m.thumbnail_url : m.url;
+                        if (url && !prefetchedUrls.current.has(url)) {
+                            urls.push(url);
+                            prefetchedUrls.current.add(url);
+                        }
                     }
                 }
-                if (urls.length > 0) for (const url of urls) Image.prefetch(url);
+                if (urls.length > 0) {
+                    for (const url of urls) {
+                        Image.prefetch(url);
+                    }
+                }
             }
         },
         [posts],
@@ -176,6 +201,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
     ], []);
 
     const handleRefresh = useCallback(async () => {
+        prefetchedUrls.current.clear(); // Reset prefetch memory on pull-to-refresh
         queryClient.removeQueries({ queryKey: ['feed', feedType] });
         refetch();
     }, [feedType, refetch]);
@@ -189,7 +215,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
     // Row renderer
     const renderItem = useCallback(({ item }: { item: Post }) => {
         return (
-            <View style={{ marginBottom: 30 }}>
+            <View style={styles.cellWrapper}>
                 <PostItem
                     post={item}
                     onOptionsPress={stableOnOptionsPress}
@@ -246,6 +272,10 @@ const FeedTab: React.FC<FeedTabProps> = ({
         return <View style={{ height: bottomPadding }} />;
     }, [isFetchingNextPage, bottomPadding, renderPostSkeleton]);
 
+    const listContentContainerStyle = useMemo(() => ({
+        paddingTop: headerHeight + 10,
+    }), [headerHeight]);
+
     if (isLoading) {
         return (
             <ScrollView
@@ -291,13 +321,12 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{
-                    paddingTop: headerHeight + 10,
-                }}
+                contentContainerStyle={listContentContainerStyle}
                 // ─── Scroll events ──────────────────────────────────────
                 // onScrollY bridges the Reanimated handler to the ViewModel's
                 // Animated.Value header animation (runs on JS thread via runOnJS)
                 onScrollY={handleScrollY}
+                onScrollSettled={handleScrollSettled}
                 // ─── Pull-to-refresh ────────────────────────────────────
                 refreshing={isRefetching}
                 onRefresh={handleRefresh}
@@ -305,16 +334,11 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 progressBackgroundColor={colors.card}
                 // ─── Infinite scroll ────────────────────────────────────
                 onEndReached={handleEndReached}
-                onEndReachedThreshold={0.5}
+                onEndReachedThreshold={2}
                 ListFooterComponent={renderFooter}
                 // ─── Viewability (image prefetch + video index tracking) ─
                 viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
-                // ─── Performance (matching Bluesky's config) ────────────
-                removeClippedSubviews={true}
-                windowSize={9}
-                maxToRenderPerBatch={5}
-                updateCellsBatchingPeriod={40}
-                initialNumToRender={4}
+                // ─── Performance (FlashList) ────────────
             />
         </View>
     );
@@ -329,5 +353,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 60,
         paddingHorizontal: 24,
+    },
+    cellWrapper: {
+        marginBottom: 30,
     },
 });

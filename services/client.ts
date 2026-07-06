@@ -37,6 +37,7 @@ export const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 5, // lowered to 5 minutes to release heap memory quickly
       // staleTime: 1000 * 60 * 5, // 5 minutes
       networkMode: "offlineFirst",
+      refetchOnWindowFocus: false,
     },
     mutations: {
       networkMode: "offlineFirst",

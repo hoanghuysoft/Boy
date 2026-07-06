@@ -35,13 +35,11 @@ export const PostAudioWaveform = React.memo(({
 }: PostAudioWaveformProps) => {
     const trackId = `${TRACK_ID_PREFIX}${postId}`;
 
-    const currentlyPlayingId = useAudioStore(s => s.currentlyPlayingId);
-    const currentTime = useAudioStore(s => s.currentTime);
-    const duration = useAudioStore(s => s.duration);
+    const isPlaying = useAudioStore(s => s.currentlyPlayingId === trackId);
+    const currentTime = useAudioStore(s => s.currentlyPlayingId === trackId ? s.currentTime : 0);
+    const duration = useAudioStore(s => s.currentlyPlayingId === trackId ? s.duration : 0);
     const playTrack = useAudioStore(s => s.playTrack);
     const stopPlayback = useAudioStore(s => s.stopPlayback);
-
-    const isPlaying = currentlyPlayingId === trackId;
 
     // Only show live progress when THIS track is the one playing
     const liveCurrentTime = isPlaying ? currentTime : 0;

@@ -22,10 +22,9 @@ import { Dialog } from "heroui-native/dialog";
 import { PressableFeedback } from "heroui-native/pressable-feedback";
 import { Spinner } from "heroui-native/spinner";
 import React, { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { Dimensions, TouchableOpacity, View } from "react-native";
 import { Pressable, ScrollView } from 'react-native-gesture-handler';
-import { LANGUAGE_LABELS, SupportedLanguage } from "../i18n";
+import i18n, { LANGUAGE_LABELS, SupportedLanguage } from "../i18n";
 import { useLanguageStore } from "../stores/language";
 import { useTranslationStore } from "../stores/translation";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
@@ -37,6 +36,8 @@ import { PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 import { YouTubePostPlayer } from "./YouTubePostPlayer";
 
+const languageDetectionCache = new Map<string, boolean>();
+
 export interface PostItemProps {
     post: Post;
     onOptionsPress?: (post: Post) => void;
@@ -46,24 +47,35 @@ export interface PostItemProps {
 }
 
 export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, isBookmarked = false }: PostItemProps) => {
-    const { width: screenWidth } = useWindowDimensions();
-    const { t } = useTranslation();
+    const screenWidth = Dimensions.get('window').width;
+    const t = i18n.t.bind(i18n);
     const { translationLanguage } = useLanguageStore();
-    const { translations, translate, clearTranslation, setActivePost } = useTranslationStore();
-    const translation = translations[post.id];
+    const translation = useTranslationStore(s => s.translations[post.id]);
+    const translate = useTranslationStore(s => s.translate);
+    const clearTranslation = useTranslationStore(s => s.clearTranslation);
+    const setActivePost = useTranslationStore(s => s.setActivePost);
     const [needsTranslation, setNeedsTranslation] = useState(false);
 
     useEffect(() => {
-        if (!post.content) return;
+        if (!post.content) {
+            setNeedsTranslation(false);
+            return;
+        }
+
+        // Return cached result if we've already detected language for this post content
+        const cacheKey = `${post.id}:${translationLanguage}`;
+        if (languageDetectionCache.has(cacheKey)) {
+            setNeedsTranslation(languageDetectionCache.get(cacheKey) || false);
+            return;
+        }
+
         guessLanguageAsync(post.content).then((guessed: any) => {
             const detected = guessed?.[0]?.language;
-            if (detected && detected.split('-')[0] !== translationLanguage.split('-')[0]) {
-                setNeedsTranslation(true);
-            } else {
-                setNeedsTranslation(false);
-            }
+            const needs = !!(detected && detected.split('-')[0] !== translationLanguage.split('-')[0]);
+            languageDetectionCache.set(cacheKey, needs);
+            setNeedsTranslation(needs);
         }).catch(() => { });
-    }, [post.content, translationLanguage]);
+    }, [post.id, post.content, translationLanguage]);
 
     const isRepost = !!post.reposted_post;
     const originalPost = post.reposted_post;
@@ -122,7 +134,6 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
                 <PressableFeedback>
-                    <PressableFeedback.Highlight />
                     <PressableFeedback.Ripple />
                     <Pressable onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
                         <Avatar style={{ width: 40, height: 40 }}>
@@ -545,49 +556,70 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 </View>)
             )}
 
-            <Dialog isOpen={vm.dialog !== null} onOpenChange={(open) => !open && vm.closeDialog()}>
-                <Dialog.Portal>
-                    <Dialog.Overlay />
-                    <Dialog.Content>
-                        <Dialog.Close />
-                        <View style={{ marginBottom: 20, gap: 6 }}>
-                            <Dialog.Title>{vm.dialog?.title}</Dialog.Title>
-                            <Dialog.Description>{vm.dialog?.text}</Dialog.Description>
-                        </View>
-                        {vm.dialog?.buttons ? (
-                            <View style={{ flexDirection: 'row', gap: 8 }}>
-                                {vm.dialog.buttons.map((btn, idx) => (
+            {vm.dialog !== null && (
+                <Dialog isOpen={true} onOpenChange={(open) => !open && vm.closeDialog()}>
+                    <Dialog.Portal>
+                        <Dialog.Overlay />
+                        <Dialog.Content>
+                            <Dialog.Close />
+                            <View style={{ marginBottom: 20, gap: 6 }}>
+                                <Dialog.Title>{vm.dialog?.title}</Dialog.Title>
+                                <Dialog.Description>{vm.dialog?.text}</Dialog.Description>
+                            </View>
+                            {vm.dialog?.buttons ? (
+                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                    {vm.dialog.buttons.map((btn, idx) => (
+                                        <Button
+                                            key={idx}
+                                            variant={btn.variant ?? "primary"}
+                                            onPress={btn.onPress}
+                                            style={{ flex: 1 }}
+                                        >
+                                            {btn.text}
+                                        </Button>
+                                    ))}
+                                </View>
+                            ) : (
+                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                                    {vm.dialog?.dismissText && (
+                                        <Button variant="ghost" onPress={vm.closeDialog}>
+                                            {vm.dialog.dismissText}
+                                        </Button>
+                                    )}
                                     <Button
-                                        key={idx}
-                                        variant={btn.variant ?? "primary"}
-                                        onPress={btn.onPress}
-                                        style={{ flex: 1 }}
+                                        variant={vm.dialog?.isDestructive || vm.dialog?.onConfirm ? "danger" : "primary"}
+                                        onPress={() => vm.dialog?.onConfirm ? vm.dialog.onConfirm() : vm.closeDialog()}
                                     >
-                                        {btn.text}
+                                        {vm.dialog?.confirmText ?? t('post.dialogs.ok')}
                                     </Button>
-                                ))}
-                            </View>
-                        ) : (
-                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-                                {vm.dialog?.dismissText && (
-                                    <Button variant="ghost" onPress={vm.closeDialog}>
-                                        {vm.dialog.dismissText}
-                                    </Button>
-                                )}
-                                <Button
-                                    variant={vm.dialog?.isDestructive || vm.dialog?.onConfirm ? "danger" : "primary"}
-                                    onPress={() => vm.dialog?.onConfirm ? vm.dialog.onConfirm() : vm.closeDialog()}
-                                >
-                                    {vm.dialog?.confirmText ?? t('post.dialogs.ok')}
-                                </Button>
-                            </View>
-                        )}
-                    </Dialog.Content>
-                </Dialog.Portal>
-            </Dialog>
+                                </View>
+                            )}
+                        </Dialog.Content>
+                    </Dialog.Portal>
+                </Dialog>
+            )}
         </View>
     );
 }, (prev, next) => {
+    const prevRepost = prev.post.reposted_post;
+    const nextRepost = next.post.reposted_post;
+
+    const isRepostEqual = prevRepost === nextRepost || (
+        !!prevRepost && !!nextRepost &&
+        prevRepost.id === nextRepost.id &&
+        prevRepost.deleted === nextRepost.deleted &&
+        prevRepost.content === nextRepost.content &&
+        prevRepost.text === nextRepost.text &&
+        prevRepost.profile_id === nextRepost.profile_id &&
+        prevRepost.profile_name === nextRepost.profile_name &&
+        prevRepost.profile_avatar === nextRepost.profile_avatar &&
+        prevRepost.audio_url === nextRepost.audio_url &&
+        prevRepost.device === nextRepost.device &&
+        prevRepost.media?.length === nextRepost.media?.length &&
+        prevRepost.links?.length === nextRepost.links?.length &&
+        prevRepost.music?.preview_url === nextRepost.music?.preview_url
+    );
+
     return (
         prev.post.id === next.post.id &&
         prev.post.is_liked === next.post.is_liked &&
@@ -596,7 +628,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         prev.post.share_count === next.post.share_count &&
         prev.post.is_bookmarked === next.post.is_bookmarked &&
         prev.isBookmarked === next.isBookmarked &&
-        JSON.stringify(prev.post.reposted_post) === JSON.stringify(next.post.reposted_post)
+        isRepostEqual
     );
 });
 PostItem.displayName = "PostItem";

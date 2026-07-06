@@ -11,15 +11,13 @@ import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Platform, Pressable as RNPressable, Text, useWindowDimensions, View, ViewabilityConfig, ViewToken } from "react-native";
+import { ActivityIndicator, Dimensions, Platform, Pressable as RNPressable, Text, View, ViewabilityConfig, ViewToken } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
     interpolate,
     useAnimatedStyle,
-    useSharedValue,
-    withDelay,
-    withTiming
+    useSharedValue
 } from "react-native-reanimated";
 
 
@@ -164,8 +162,8 @@ const VideoCarouselItem = React.memo(({
                     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                     backgroundColor: 'transparent',
                     ...Platform.select({
-                        android: {display: showOverlay ? 'flex' : 'none'},
-                        ios: {zIndex: showOverlay ? 1 : -1},
+                        android: { display: showOverlay ? 'flex' : 'none' },
+                        ios: { zIndex: showOverlay ? 1 : -1 },
                     })
                 }}>
                     <ExpoImage
@@ -437,7 +435,7 @@ const ClassicMediaCarousel = React.memo(({
     media, postId, profileName, content, colors,
     isAdult = false, isVerified, musicUrl, musicTitle,
 }: PostMediaCarouselProps) => {
-    const { width: screenWidth } = useWindowDimensions();
+    const screenWidth = Dimensions.get('window').width;
     const mediaHeight = screenWidth / ASPECT_RATIO;
     const pressAnim = useSharedValue<number>(0);
     const pressAnimRef = useRef(pressAnim);
@@ -492,14 +490,7 @@ const ClassicMediaCarousel = React.memo(({
         },
     ], []);
 
-    // Prefetch all media for this post on first mount
-    useEffect(() => {
-        if (!media || media.length === 0) return;
-        const videoThumbnails = media.filter(m => m.type === 'video' && m.thumbnail_url).map(m => m.thumbnail_url as string);
-        const photoUrls = media.filter(m => m.type === 'photo' && m.url).map(m => m.url);
-        if (videoThumbnails.length > 0) ExpoImage.prefetch(videoThumbnails);
-        if (photoUrls.length > 0) ExpoImage.prefetch(photoUrls);
-    }, [media]);
+
 
     const keyExtractor = useCallback((item: Media) => item.id, []);
 
@@ -540,11 +531,11 @@ const ClassicMediaCarousel = React.memo(({
                 windowSize={3}
                 onScrollBeginDrag={() => {
                     isMomentumScrolling.current = false;
-                    pressAnimRef.current.value = withTiming(1, { duration: 150 });
+                    // pressAnimRef.current.value = withTiming(1, { duration: 150 });
                 }}
                 onScrollEndDrag={() => {
                     if (!isMomentumScrolling.current) {
-                        pressAnimRef.current.value = withDelay(1200, withTiming(0, { duration: 400 }));
+                        // pressAnimRef.current.value = withDelay(1200, withTiming(0, { duration: 400 }));
                     }
                 }}
                 onMomentumScrollBegin={() => {
@@ -552,7 +543,7 @@ const ClassicMediaCarousel = React.memo(({
                 }}
                 onMomentumScrollEnd={() => {
                     isMomentumScrolling.current = false;
-                    pressAnimRef.current.value = withDelay(120, withTiming(0, { duration: 400 }));
+                    // pressAnimRef.current.value = withDelay(120, withTiming(0, { duration: 400 }));
                 }}
                 getItemLayout={(_data, index) => ({
                     length: screenWidth,

@@ -144,4 +144,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default CustomTopTabBar;
+export default React.memo(CustomTopTabBar);

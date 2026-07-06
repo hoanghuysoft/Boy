@@ -6,8 +6,6 @@ import { Tabs } from "heroui-native/tabs";
 import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  FlatList,
-  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -375,31 +373,28 @@ const ProfileContent = () => {
     );
   }, [common, t, isPhotosLoading, isVideosLoading, isFeedLoading, colors.secondary]);
 
+  const renderPostItem = useCallback(({ item }: { item: Post }) => (
+    <PostItem
+      post={item}
+      onOptionsPress={handlePostOptionsPress}
+      onLikeCountPress={handleLikeCountPress}
+      onCommentPress={handleCommentPress}
+    />
+  ), [handlePostOptionsPress, handleLikeCountPress, handleCommentPress]);
+
   // ─── Feed tab renderer ────────────────────────────────────────────
   const renderFeedTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
     return (
       <List
-        ref={scrollElRef as React.RefObject<FlatList>}
+        ref={scrollElRef as any}
         data={feedPosts}
-        renderItem={({ item }: { item: Post }) => (
-          <PostItem
-            post={item}
-            key={item.id}
-            onOptionsPress={handlePostOptionsPress}
-            onLikeCountPress={handleLikeCountPress}
-            onCommentPress={handleCommentPress}
-          />
-        )}
+        renderItem={renderPostItem}
         keyExtractor={(item: Post) => item.id || String(Math.random())}
         headerOffset={headerHeight}
         progressBackgroundColor={colors.card}
-        initialNumToRender={6}
-        windowSize={5}
-        maxToRenderPerBatch={5}
-        removeClippedSubviews={Platform.OS === 'android'}
         refreshing={isProfileRefetching}
         onRefresh={onRefresh}
-        refreshTintColor={colors.text}
+        refreshTintColor={colors.onSurface}
         progressViewOffset={headerHeight}
         onEndReached={() => {
           if (activeTab === "Feed") handleEndReached();
@@ -418,16 +413,12 @@ const ProfileContent = () => {
   const renderImagesTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
     return (
       <List
-        ref={scrollElRef as React.RefObject<FlatList>}
+        ref={scrollElRef as any}
         data={imageChunkedRows}
         renderItem={({ item, index }: any) => renderImageChunkedRow({ item, index, separators: {} as any })}
         keyExtractor={(item: any, index: number) => imageChunkedKeyExtractor(item, index)}
         headerOffset={headerHeight}
-        initialNumToRender={6}
-        windowSize={5}
-        maxToRenderPerBatch={5}
         progressBackgroundColor={colors.card}
-        removeClippedSubviews={Platform.OS === 'android'}
         refreshing={isProfileRefetching}
         onRefresh={onRefresh}
         refreshTintColor={colors.text}
@@ -450,15 +441,11 @@ const ProfileContent = () => {
     return (
       <MediaViewerWrapper items={videoMediaViewerItems}>
         <List
-          ref={scrollElRef as React.RefObject<FlatList>}
+          ref={scrollElRef as any}
           data={videoChunkedRows}
           renderItem={({ item, index }: any) => renderVideoChunkedRow({ item, index, separators: {} as any })}
           keyExtractor={(item: any, index: number) => videoChunkedKeyExtractor(item, index)}
           headerOffset={headerHeight}
-          initialNumToRender={6}
-          windowSize={5}
-          maxToRenderPerBatch={5}
-          removeClippedSubviews={Platform.OS === 'android'}
           refreshing={isProfileRefetching}
           onRefresh={onRefresh}
           refreshTintColor={colors.text}

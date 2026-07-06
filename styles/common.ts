@@ -9,11 +9,20 @@ type TypographyType = ReturnType<typeof createTypography>;
  * Reusable, theme-aware styles for consistent screen layout and typography.
  * Uses Material Design typography system (M2/M3) for consistent text styles.
  */
+let lastColors: ThemeColors | null = null;
+let lastTypography: TypographyType | null = null;
+let cachedStyles: any = null;
+
 export const createCommonStyles = (
   colors: ThemeColors,
   typography: TypographyType
-) =>
-  StyleSheet.create({
+) => {
+  if (cachedStyles && colors === lastColors && typography === lastTypography) {
+    return cachedStyles;
+  }
+  lastColors = colors;
+  lastTypography = typography;
+  cachedStyles = StyleSheet.create({
     screen: {
       flex: 1,
       backgroundColor: colors.surface,
@@ -94,4 +103,6 @@ export const createCommonStyles = (
       marginVertical: 16,
     },
   });
+  return cachedStyles;
+};
 

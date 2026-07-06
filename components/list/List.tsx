@@ -28,12 +28,11 @@
 import { updateActiveVideoViewAsync } from '@bsky.app/video'
 import { forwardRef, memo, useMemo, type ReactElement } from 'react'
 import {
-  FlatList,
   Platform,
   RefreshControl,
-  type FlatListProps,
   type ViewToken
 } from 'react-native'
+import { FlashList, type FlashListProps, type FlashListRef } from '@shopify/flash-list'
 import Animated, {
   runOnJS,
   useAnimatedScrollHandler,
@@ -46,10 +45,10 @@ import { useNonReactiveCallback } from './useNonReactiveCallback'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type ListMethods = FlatList
+export type ListMethods = FlashListRef<any>
 
 export type ListProps<ItemT = any> = Omit<
-  FlatListProps<ItemT>,
+  FlashListProps<ItemT>,
   /**
    * Omitted because the List manages these internally via the animated scroll
    * handler. Use ScrollContext (see below) to receive scroll events instead,
@@ -134,7 +133,7 @@ export type ListProps<ItemT = any> = Omit<
   disableScrollsToTop?: boolean
 }
 
-export type ListRef = React.RefObject<FlatList | null>
+export type ListRef = React.RefObject<FlashListRef<any> | null>
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -146,10 +145,9 @@ const SCROLLED_DOWN_LIMIT = 200
 // ─── AnimatedFlatList ─────────────────────────────────────────────────────────
 
 /**
- * Animated.FlatList — the actual RN FlatList wrapped by Reanimated.
- * We memo it to avoid re-creating the Animated component on each render.
+ * AnimatedFlashList wrapped by Reanimated so it understands useAnimatedScrollHandler.
  */
-const AnimatedFlatList = memo(Animated.FlatList) as any
+const AnimatedFlashListMemoized = memo(Animated.createAnimatedComponent(FlashList)) as any
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
@@ -321,9 +319,9 @@ let List = forwardRef<ListMethods, ListProps>(
     }
 
     return (
-      <AnimatedFlatList
+      <AnimatedFlashListMemoized
         showsVerticalScrollIndicator
-        scrollEventThrottle={1}
+        scrollEventThrottle={16}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         {...props}
