@@ -27,6 +27,7 @@
     "@nandorojo/galeria": "3.0.3",
     "@novastera-oss/rn-google-signin": "^2.0.2",
     "@react-native-community/netinfo": "12.0.1",
+    "@react-native-community/slider": "5.2.0",
     "@react-native-google-signin/google-signin": "16.1.2",
     "@react-native-masked-view/masked-view": "^0.3.2",
     "@react-native-vector-icons/fontawesome": "^13.1.2",
@@ -144,7 +145,6 @@
     "@shopify/react-native-skia"
   ],
   "patchedDependencies": {
-    "@flixsrota/player@0.3.0": "patches/@flixsrota%2Fplayer@0.3.0.patch",
     "heroui-native@1.0.4": "patches/heroui-native@1.0.4.patch",
     "react-native-nitro-wallpaper@1.1.5": "patches/react-native-nitro-wallpaper@1.1.5.patch"
   },
