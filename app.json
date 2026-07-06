@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "26.56.7.0",
+    "version": "26.56.7.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -76,10 +76,30 @@
             "./assets/fonts/GoogleSansRounded-Thin.ttf",
             "./assets/fonts/GoogleSansRounded-Light.ttf",
             "./assets/fonts/GoogleSansRounded-ExtraLight.ttf",
-            "./assets/fonts/FluentEmojiColor.ttf"
+            "./assets/fonts/FluentEmojiColor.ttf",
+            "./assets/fonts/tdesign/tdesign.ttf",
+            "./assets/fonts/solar/solar.ttf"
           ],
           "android": {
             "fonts": [
+              {
+                "fontFamily": "solar",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/solar/solar.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "tdesign",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/tdesign/tdesign.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
               {
                 "fontFamily": "GoogleSansFlexRegular",
                 "fontDefinitions": [

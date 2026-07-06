@@ -124,7 +124,6 @@ const ProfileContent = () => {
     router,
     isMe,
     isOwner,
-    listRef,
     musicSheetRef,
     socialSheetRef,
     addressSheetRef,
@@ -136,9 +135,7 @@ const ProfileContent = () => {
     commentsSheetRef,
     blurTargetRef,
     profile,
-    isProfileLoading,
     isProfileRefetching,
-    isProfilePlaceholder,
     myProfile,
     selectedTab,
     activeTab,
@@ -166,10 +163,7 @@ const ProfileContent = () => {
     selectedLikePostId,
     selectedCommentPostId,
     scrollY,
-    showScrollTop,
     showHeaderAvatar,
-    scrollTopButtonOpacity,
-    onScroll,
     onScrollYChange,
     stableTabChange,
     handleVideoPress,
@@ -389,7 +383,16 @@ const ProfileContent = () => {
         ref={scrollElRef as any}
         data={feedPosts}
         renderItem={renderPostItem}
-        keyExtractor={(item: Post) => item.id || String(Math.random())}
+        keyExtractor={(item: Post) => item.id}
+        getItemType={(item: Post) => {
+          const content = item.reposted_post || item;
+          if (content.media?.length) return 'media';
+          if (content.audio_url) return 'audio';
+          if (content.links?.length) return 'link';
+          if (content.music) return 'music';
+          return 'text';
+        }}
+        drawDistance={500}
         headerOffset={headerHeight}
         progressBackgroundColor={colors.card}
         refreshing={isProfileRefetching}
@@ -432,6 +435,7 @@ const ProfileContent = () => {
         showsVerticalScrollIndicator={false}
         onScrollY={onScrollYChange}
         ListHeaderComponent={<View style={{ height: 12 }} />}
+        getItemType={() => 'image_row'}
       />
     );
   }, [colors.card, imageChunkedRows, renderImageChunkedRow, imageChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, windowHeight]);
@@ -460,6 +464,7 @@ const ProfileContent = () => {
           showsVerticalScrollIndicator={false}
           onScrollY={onScrollYChange}
           ListHeaderComponent={<View style={{ height: 12 }} />}
+          getItemType={() => 'video_row'}
         />
       </MediaViewerWrapper>
     );

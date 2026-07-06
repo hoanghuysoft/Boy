@@ -3,8 +3,7 @@ import { useHomeCarouselViewModel } from "@/viewmodels/HomeCarouselViewModel";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { memo, useCallback, useMemo } from "react";
-import { Animated, Easing, StyleSheet } from "react-native";
-import { easeGradient } from "react-native-easing-gradient";
+import { Animated, StyleSheet } from "react-native";
 
 interface CarouselImageProps {
     imageUrl: string | undefined;
@@ -30,24 +29,16 @@ const ColorGradientOverlay = memo(({ carouselHeight }: { carouselHeight: number 
     const { colors } = useThemeContext();
     const overlayHeight = carouselHeight * 0.8;
 
-    const { colors: fadeColors, locations: fadeLocations } = easeGradient({
-        colorStops: {
-            0: {
-                color: colors.surface + "00",
-                easing: Easing.linear,
-            },
-            1: {
-                color: colors.surface,
-            },
-        },
-        easing: Easing.ease,
-        extraColorStopsPerTransition: 16,
-    });
+    // Explicitly define the 0-opacity starting colors to prevent muddy gray banding
+    const transparentColor = colors.background + "00";
+    const midColor1 = colors.background + "59";
+    const midColor2 = colors.background + "CC";
+    const solidColor = colors.background;
 
     return (
         <LinearGradient
-            colors={fadeColors as [string, string, ...string[]]}
-            locations={fadeLocations as [number, number, ...number[]]}
+            colors={[transparentColor, midColor1, midColor2, solidColor]}
+            locations={[0, 0.4, 0.75, 1]}
             style={{
                 position: "absolute",
                 bottom: 0,
@@ -83,8 +74,22 @@ const HomeCarousel = memo(({ animatedVisibility }: HomeCarouselProps) => {
         if (!animatedVisibility) return {};
         return {
             opacity: animatedVisibility,
+            transform: [
+                {
+                    translateY: animatedVisibility.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-CAROUSEL_HEIGHT * 0.3, 0],
+                    }),
+                },
+                {
+                    scale: animatedVisibility.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.95, 1],
+                    }),
+                },
+            ],
         };
-    }, [animatedVisibility]);
+    }, [animatedVisibility, CAROUSEL_HEIGHT]);
 
     return (
         <Animated.View style={[{

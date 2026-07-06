@@ -143,7 +143,7 @@ const HomeScreen = () => {
               style={[
                 common.row,
                 {
-                  gap: 10,
+                  gap: 12,
                   padding: 8,
                   borderRadius: 100,
                   overflow: "hidden",

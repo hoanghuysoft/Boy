@@ -1,18 +1,22 @@
 import { FlexText } from "@/components/FlexText";
 import { List } from "@/components/list";
 import { useNonReactiveCallback } from "@/components/list/useNonReactiveCallback";
+import { PostItem } from "@/components/PostItem";
+import { useThemeContext } from "@/context/ThemeContext";
 import { queryClient } from "@/services/client";
 import { useFeed } from "@/services/feed";
 import { useFeedVideoStore } from "@/stores/feedVideo";
+import { useScrollStore } from "@/stores/scroll";
+import { createCommonStyles } from "@/styles/common";
 import { Post } from "@/types/post";
 import { updateActiveVideoViewAsync } from "@bsky.app/video";
+import { type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useFocusEffect } from "expo-router";
 import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { type FlashListRef } from "@shopify/flash-list";
 import {
     RefreshControl,
     ScrollView,
@@ -20,10 +24,6 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PostItem } from "../../../components/PostItem";
-import { useThemeContext } from "../../../context/ThemeContext";
-import { useScrollStore } from "../../../stores/scroll";
-import { createCommonStyles } from "../../../styles/common";
 
 // How many posts ahead to prefetch images for
 const PREFETCH_AHEAD = 3;
@@ -323,8 +323,6 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={listContentContainerStyle}
                 // ─── Scroll events ──────────────────────────────────────
-                // onScrollY bridges the Reanimated handler to the ViewModel's
-                // Animated.Value header animation (runs on JS thread via runOnJS)
                 onScrollY={handleScrollY}
                 onScrollSettled={handleScrollSettled}
                 // ─── Pull-to-refresh ────────────────────────────────────
@@ -339,6 +337,15 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 // ─── Viewability (image prefetch + video index tracking) ─
                 viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
                 // ─── Performance (FlashList) ────────────
+                drawDistance={500}
+                getItemType={(item: Post) => {
+                    const content = item.reposted_post || item;
+                    if (content.media?.length) return 'media';
+                    if (content.audio_url) return 'audio';
+                    if (content.links?.length) return 'link';
+                    if (content.music) return 'music';
+                    return 'text';
+                }}
             />
         </View>
     );
