@@ -8,6 +8,7 @@
 import { Media, MediaType } from '@/types/media';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { File as FSFile, UploadType } from 'expo-file-system';
+import { Blurhash } from 'react-native-blurhash';
 import { client } from './client';
 import { useSettingsStore } from '@/stores/settings';
 
@@ -19,6 +20,7 @@ export interface UploadMediaOptions {
     caption?: string;
     post_id?: string;
     type?: MediaType;
+    blurhash?: string;
 }
 
 export interface UploadMediaResponse {
@@ -45,6 +47,7 @@ export interface FileAsset {
     fileSize?: number;
     width?: number;
     height?: number;
+    blurhash?: string;
 }
 
 interface TinyVaultUploadResponse {
@@ -92,6 +95,27 @@ function getFileExtension(file: FileAsset): string {
     return 'jpg';
 }
 
+/**
+ * Generate a blurhash string for an image URI
+ * @param uri Local or remote image URI
+ * @param componentsX X component count (default: 4)
+ * @param componentsY Y component count (default: 3)
+ */
+export async function generateBlurhash(
+    uri: string,
+    componentsX: number = 4,
+    componentsY: number = 3
+): Promise<string | null> {
+    try {
+        if (!uri) return null;
+        const hash = await Blurhash.encode(uri, componentsX, componentsY);
+        return hash;
+    } catch (error) {
+        console.warn('[mediaUpload] Failed to generate blurhash:', error);
+        return null;
+    }
+}
+
 // ============================================================================
 // API Functions
 // ============================================================================
@@ -123,6 +147,12 @@ export const uploadMedia = async (
     if (options.type) formData.append('type', options.type);
     if (file.width) formData.append('width', String(file.width));
     if (file.height) formData.append('height', String(file.height));
+
+    let blurhash = options.blurhash || file.blurhash;
+    if (!blurhash && type === 'photo') {
+        blurhash = (await generateBlurhash(file.uri)) || undefined;
+    }
+    if (blurhash) formData.append('blurhash', blurhash);
 
     const response = await client.post<UploadMediaResponse>(
         `api/profiles/${profileId}/media/client`,
@@ -185,6 +215,9 @@ const uploadVideoViaX02 = async (
             return createMediaRecord(profileId, videoUrl, 'video', {
                 caption: options.caption,
                 post_id: options.post_id,
+                width: file.width || null,
+                height: file.height || null,
+                blurhash: options.blurhash || file.blurhash || null,
             });
         } catch (error) {
             lastError = error;
@@ -247,7 +280,14 @@ export const createMediaRecord = async (
     profileId: string,
     url: string,
     type: MediaType,
-    options: { caption?: string; post_id?: string; thumbnail_url?: string | null; width?: number | null; height?: number | null } = {}
+    options: {
+        caption?: string;
+        post_id?: string;
+        thumbnail_url?: string | null;
+        width?: number | null;
+        height?: number | null;
+        blurhash?: string | null;
+    } = {}
 ): Promise<UploadMediaResponse> => {
     const response = await client.post<UploadMediaResponse>(
         `/api/profiles/${profileId}/media/client/create`,
@@ -259,6 +299,7 @@ export const createMediaRecord = async (
             thumbnail_url: options.thumbnail_url,
             width: options.width,
             height: options.height,
+            blurhash: options.blurhash,
         }
     );
     return response.data;
@@ -280,6 +321,11 @@ export const uploadLargeMedia = async (
 
     const filename = file.name || `upload.${getFileExtension(file)}`;
 
+    let blurhash = options.blurhash || file.blurhash;
+    if (!blurhash && type === 'photo') {
+        blurhash = (await generateBlurhash(file.uri)) || undefined;
+    }
+
     const uploadInfo = await getUploadUrl(profileId, filename, type);
     await uploadWithPresignedUrl(uploadInfo.uploadUrl, file, onProgress);
 
@@ -292,6 +338,7 @@ export const uploadLargeMedia = async (
         post_id: options.post_id,
         width: file.width || null,
         height: file.height || null,
+        blurhash,
     });
 };
 
