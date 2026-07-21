@@ -114,6 +114,12 @@
       "sourceType": "github",
       "skillPath": "plugins/expo/skills/use-dom/SKILL.md",
       "computedHash": "690cda638c59e45661095e6e9acb12141b0a7873bec1fc4a368ef51657d57336"
+    },
+    "using-reacticx": {
+      "source": "rit3zh/reacticx",
+      "sourceType": "github",
+      "skillPath": "skills/using-reacticx/SKILL.md",
+      "computedHash": "11cca15ba5867851a8d204548009c1f8d8e1dcd50959a4ca5ff0360b3bc92326"
     }
   }
 }

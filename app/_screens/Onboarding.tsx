@@ -17,7 +17,7 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useObserve } from 'expo-observe';
-import { useOnboardingViewModel } from '../../viewmodels/OnboardingViewModel';
+import { useOnboardingViewModel } from '@/viewmodels/OnboardingViewModel';
 
 const OnboardingScreen = () => {
     const { colors, typography } = useThemeContext();

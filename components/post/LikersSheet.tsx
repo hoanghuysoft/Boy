@@ -1,6 +1,6 @@
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { Image as ExpoImage } from "expo-image";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { Spinner } from "heroui-native/spinner";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -140,12 +140,14 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
                 return (
                     <View style={{ paddingTop: 8 }}>
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <SkeletonGroup key={i} isLoading variant="shimmer" style={{ flexDirection: 'row', marginBottom: 20, gap: 16 }}>
-                                <SkeletonGroup.Item className="rounded-full" style={{ width: 48, height: 48 }} />
-                                <View style={{ gap: 4, flex: 1, justifyContent: 'center' }}>
-                                    <SkeletonGroup.Item className="rounded-lg" style={{ width: '40%', height: 16 }} />
+                            <ShimmerGroup key={i} isLoading preset="dark">
+                                <View style={{ flexDirection: 'row', marginBottom: 20, gap: 16 }}>
+                                    <Shimmer style={{ width: 48, height: 48, borderRadius: 24 }} />
+                                    <View style={{ gap: 4, flex: 1, justifyContent: 'center' }}>
+                                        <Shimmer style={{ width: '40%', height: 16, borderRadius: 8 }} />
+                                    </View>
                                 </View>
-                            </SkeletonGroup>
+                            </ShimmerGroup>
                         ))}
                     </View>
                 );

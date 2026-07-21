@@ -12,7 +12,7 @@ import { Canvas, ImageShader, LinearGradient, Rect, useImage, vec } from "@shopi
 import { BlurTargetView, BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     FlatList,
@@ -242,17 +242,17 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
     if (isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
-                <SkeletonGroup isLoading={true} variant="shimmer">
+                <ShimmerGroup isLoading={true} preset="dark">
                     <View style={{ gap: 16 }}>
-                        <SkeletonGroup.Item style={{ height: posterHeight, width: "100%" }} />
+                        <Shimmer style={{ height: posterHeight, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
-                            <SkeletonGroup.Item style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
-                            <SkeletonGroup.Item style={{ height: 16, width: "100%", borderRadius: 8 }} />
-                            <SkeletonGroup.Item style={{ height: 16, width: "80%", borderRadius: 8 }} />
-                            <SkeletonGroup.Item style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
+                            <Shimmer style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
+                            <Shimmer style={{ height: 16, width: "100%", borderRadius: 8 }} />
+                            <Shimmer style={{ height: 16, width: "80%", borderRadius: 8 }} />
+                            <Shimmer style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
                         </View>
                     </View>
-                </SkeletonGroup>
+                </ShimmerGroup>
             </View>
         );
     }

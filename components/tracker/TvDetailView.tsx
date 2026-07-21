@@ -7,7 +7,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { BlurTargetView, BlurView } from "expo-blur";
 import { router } from "expo-router";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,17 +39,17 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
     if (vm.isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: vm.darkDominant }]}>
-                <SkeletonGroup isLoading={true} variant="shimmer">
+                <ShimmerGroup isLoading={true} preset="dark">
                     <View style={{ gap: 16 }}>
-                        <SkeletonGroup.Item style={{ height: 500, width: "100%" }} />
+                        <Shimmer style={{ height: 500, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>
-                            <SkeletonGroup.Item style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
-                            <SkeletonGroup.Item style={{ height: 16, width: "100%", borderRadius: 8 }} />
-                            <SkeletonGroup.Item style={{ height: 16, width: "80%", borderRadius: 8 }} />
-                            <SkeletonGroup.Item style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
+                            <Shimmer style={{ height: 32, width: "60%", borderRadius: 8, alignSelf: "center" }} />
+                            <Shimmer style={{ height: 16, width: "100%", borderRadius: 8 }} />
+                            <Shimmer style={{ height: 16, width: "80%", borderRadius: 8 }} />
+                            <Shimmer style={{ height: 120, width: "100%", borderRadius: 12, marginTop: 24 }} />
                         </View>
                     </View>
-                </SkeletonGroup>
+                </ShimmerGroup>
             </View>
         );
     }

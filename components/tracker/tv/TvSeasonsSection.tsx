@@ -1,4 +1,4 @@
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { router } from "expo-router";
 import React from "react";
@@ -174,20 +174,20 @@ const EpisodeList = ({ episodes, tvId, tvName, seasonNumber, onEpisodePress }: E
 // ─── Episode List Skeleton ─────────────────────────────────────────────────────
 
 const EpisodeListSkeleton = () => (
-    <SkeletonGroup isLoading={true} variant="shimmer">
+    <ShimmerGroup isLoading={true} preset="dark">
         <View style={{ paddingHorizontal: 16, gap: 12 }}>
             {[1, 2, 3].map((i) => (
                 <View key={i} style={{ flexDirection: "row", gap: 12 }}>
-                    <SkeletonGroup.Item style={{ width: 130, height: 73, borderRadius: 10 }} />
+                    <Shimmer style={{ width: 130, height: 73, borderRadius: 10 }} />
                     <View style={{ flex: 1, gap: 8, justifyContent: "center" }}>
-                        <SkeletonGroup.Item style={{ height: 14, width: "80%", borderRadius: 6 }} />
-                        <SkeletonGroup.Item style={{ height: 12, width: "50%", borderRadius: 6 }} />
-                        <SkeletonGroup.Item style={{ height: 12, width: "90%", borderRadius: 6 }} />
+                        <Shimmer style={{ height: 14, width: "80%", borderRadius: 6 }} />
+                        <Shimmer style={{ height: 12, width: "50%", borderRadius: 6 }} />
+                        <Shimmer style={{ height: 12, width: "90%", borderRadius: 6 }} />
                     </View>
                 </View>
             ))}
         </View>
-    </SkeletonGroup>
+    </ShimmerGroup>
 );
 
 // ─── Empty State ──────────────────────────────────────────────────────────────

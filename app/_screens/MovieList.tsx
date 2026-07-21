@@ -1,5 +1,5 @@
 import { FlexText } from "@/components/FlexText";
-import { ShimmerEffect } from "@/components/shimmer/Shimmer";
+import { Shimmer, ShimmerEffect } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
 import {
@@ -32,8 +32,8 @@ import {
     View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeContext } from "../../context/ThemeContext";
-import { createCommonStyles } from "../../styles/common";
+import { useThemeContext } from "@/context/ThemeContext";
+import { createCommonStyles } from "@/styles/common";
 
 type ListMode = "similar" | "recommendations" | "tv_similar" | "tv_recommendations" | "now_playing" | "upcoming" | "popular" | "top_rated" | "popular_people" | "tv_airing_today" | "tv_on_the_air" | "tv_popular" | "tv_top_rated" | "tv_season_episodes";
 

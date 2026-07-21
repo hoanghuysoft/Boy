@@ -37,19 +37,19 @@ import {
     MediaSection,
     MusicSection,
     SelectedMedia,
-} from "../../components/create";
-import { ProfilePickerSheet } from "../../components/gallery/sheets/ProfilePickerSheet";
+} from "@/components/create";
+import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerSheet";
 
 // Context & Services
-import { useThemeContext } from "../../context/ThemeContext";
-import { DeezerTrack, useDeezerSearch } from "../../services/deezer";
-import { FileAsset, useUploadMultipleMedia } from "../../services/mediaUpload";
-import { CreatePostInput, sharePost, useCreatePost, useUpdatePost } from "../../services/post";
-import { useAdminCheck, useProfile } from "../../services/userprofile";
-import { useScrollStore } from "../../stores/scroll";
-import { createCommonStyles } from "../../styles/common";
-import { Link } from "../../types/post";
-import { Profile } from "../../types/profile";
+import { useThemeContext } from "@/context/ThemeContext";
+import { DeezerTrack, useDeezerSearch } from "@/services/deezer";
+import { FileAsset, useUploadMultipleMedia } from "@/services/mediaUpload";
+import { CreatePostInput, sharePost, useCreatePost, useUpdatePost } from "@/services/post";
+import { useAdminCheck, useProfile } from "@/services/userprofile";
+import { useScrollStore } from "@/stores/scroll";
+import { createCommonStyles } from "@/styles/common";
+import { Link } from "@/types/post";
+import { Profile } from "@/types/profile";
 
 // ============================================================================
 // Form Types & Validation Schema
@@ -491,7 +491,7 @@ const CreateScreen = () => {
                     width: asset.width,
                     height: asset.height,
                 }));
-                setFieldValue('selectedMedia', [...values.selectedMedia, ...newMedia].slice(0, 10));
+                await setFieldValue('selectedMedia', [...values.selectedMedia, ...newMedia].slice(0, 10));
             }
         } catch (error: any) {
             console.error("Error picking media:", error);
@@ -516,7 +516,7 @@ const CreateScreen = () => {
                             width: asset.width,
                             height: asset.height,
                         }));
-                        setFieldValue('selectedMedia', [...values.selectedMedia, ...newMedia].slice(0, 10));
+                        await setFieldValue('selectedMedia', [...values.selectedMedia, ...newMedia].slice(0, 10));
                     }
                 } catch {
                     setDialog({

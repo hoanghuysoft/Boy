@@ -1,8 +1,8 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { Spinner } from "heroui-native/spinner";
 import { Tabs } from "heroui-native/tabs";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -16,17 +16,17 @@ import {
 import { Snackbar } from 'react-native-paper';
 import Reanimated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PostItem } from '../../components/PostItem';
-import ProfileHeaderV3, { COVER_HEIGHT } from '../../components/profile/ProfileHeaderV3';
-import { AddressSheet } from "../../components/profile/sheets/AddressSheet";
-import { MusicSheet } from "../../components/profile/sheets/MusicSheet";
-import { SocialSheet } from "../../components/profile/sheets/SocialSheet";
-import { WorkplaceSheet } from "../../components/profile/sheets/WorkplaceSheet";
-import { MediaViewerWrapper, useImageGrid } from '../../components/profile/useImageGrid';
-import { useThemeContext } from "../../context/ThemeContext";
-import { createCommonStyles } from "../../styles/common";
-import { Post } from '../../types/post';
-import { useProfileViewModel } from "../../viewmodels/ProfileViewModel";
+import { PostItem } from '@/components/PostItem';
+import ProfileHeaderV3, { COVER_HEIGHT } from '@/components/profile/ProfileHeaderV3';
+import { AddressSheet } from "@/components/profile/sheets/AddressSheet";
+import { MusicSheet } from "@/components/profile/sheets/MusicSheet";
+import { SocialSheet } from "@/components/profile/sheets/SocialSheet";
+import { WorkplaceSheet } from "@/components/profile/sheets/WorkplaceSheet";
+import { MediaViewerWrapper, useImageGrid } from '@/components/profile/useImageGrid';
+import { useThemeContext } from "@/context/ThemeContext";
+import { createCommonStyles } from "@/styles/common";
+import { Post } from '@/types/post';
+import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 
 import { FlexText } from "@/components/FlexText";
 import { List } from "@/components/list";
@@ -36,69 +36,72 @@ import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { LikersSheet } from "@/components/post/LikersSheet";
 import { BriefInfoSheet } from "@/components/profile/sheets/BriefInfoSheet";
 import { RelationshipSheet } from "@/components/profile/sheets/RelationshipSheet";
+import { BioSheet } from "@/components/profile/sheets/BioSheet";
 import { BlurTargetView, BlurView } from "expo-blur";
-import { GalleryModal } from "../../components/gallery/GalleryModal";
-import { ProfileGalleryModal } from "../../components/gallery/ProfileGalleryModal";
-import { SpinningArtwork } from "../../components/profile/SpinningArtwork";
+import { GalleryModal } from "@/components/gallery/GalleryModal";
+import { ProfileGalleryModal } from "@/components/gallery/ProfileGalleryModal";
+import { SpinningArtwork } from "@/components/profile/SpinningArtwork";
 
 // ─── Static skeleton shown during navigation transition ────────────────────────
 const ProfileSkeletonInner = ({ insets }: { insets: any }) => {
   const { colors } = useThemeContext();
   return (
-    <View style={{ paddingHorizontal: 12, flex: 1 }}>
-      <SkeletonGroup isLoading variant="shimmer" isSkeletonOnly>
-        {/* Top Space */}
-        <View style={{ height: insets.top + 12 }} />
+    <View style={{ paddingHorizontal: 12, flex: 1, position: 'relative' }}>
+      <ShimmerGroup isLoading preset="dark">
+        {/* Cover Shimmer */}
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: COVER_HEIGHT }}>
+          <Shimmer style={{ width: '100%', height: '100%' }} />
+        </View>
 
-        {/* Cover */}
-        <SkeletonGroup.Item className="rounded-2xl" style={{ width: '100%', height: COVER_HEIGHT, marginBottom: 32 }} />
+        {/* Top Space pushing UI down */}
+        <View style={{ height: insets.top + 110 }} />
 
         {/* Avatar & Actions Row */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           {/* Avatar */}
-          <SkeletonGroup.Item className="rounded-full" style={{ width: 64, height: 64 }} />
+          <Shimmer style={{ width: 64, height: 64, borderRadius: 32 }} />
           {/* Actions */}
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <SkeletonGroup.Item className="rounded-xl" style={{ width: 44, height: 44 }} />
-            <SkeletonGroup.Item className="rounded-full" style={{ width: 120, height: 44 }} />
+            <Shimmer style={{ width: 44, height: 44, borderRadius: 12 }} />
+            <Shimmer style={{ width: 120, height: 44, borderRadius: 22 }} />
           </View>
         </View>
 
         {/* Name, Username, Bio */}
         <View style={{ gap: 8, marginBottom: 16 }}>
-          <SkeletonGroup.Item className="rounded-lg" style={{ width: 150, height: 24 }} />
-          <SkeletonGroup.Item className="rounded-lg" style={{ width: 100, height: 16 }} />
-          <SkeletonGroup.Item className="rounded-lg" style={{ width: '80%', height: 16 }} />
+          <Shimmer style={{ width: 150, height: 24, borderRadius: 8 }} />
+          <Shimmer style={{ width: 100, height: 16, borderRadius: 8 }} />
+          <Shimmer style={{ width: '80%', height: 16, borderRadius: 8 }} />
         </View>
 
         {/* Cards Scroll */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16, overflow: 'hidden' }}>
-          <SkeletonGroup.Item className="rounded-full" style={{ width: 150, height: 50 }} />
-          <SkeletonGroup.Item className="rounded-full" style={{ width: 150, height: 50 }} />
-          <SkeletonGroup.Item className="rounded-full" style={{ width: 150, height: 50 }} />
+          <Shimmer style={{ width: 150, height: 50, borderRadius: 25 }} />
+          <Shimmer style={{ width: 150, height: 50, borderRadius: 25 }} />
+          <Shimmer style={{ width: 150, height: 50, borderRadius: 25 }} />
         </View>
 
         {/* Counts */}
         <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
-          <SkeletonGroup.Item className="rounded-md" style={{ width: 60, height: 16 }} />
-          <SkeletonGroup.Item className="rounded-md" style={{ width: 60, height: 16 }} />
-          <SkeletonGroup.Item className="rounded-md" style={{ width: 60, height: 16 }} />
+          <Shimmer style={{ width: 60, height: 16, borderRadius: 6 }} />
+          <Shimmer style={{ width: 60, height: 16, borderRadius: 6 }} />
+          <Shimmer style={{ width: 60, height: 16, borderRadius: 6 }} />
         </View>
 
         {/* Tabs */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16, alignSelf: 'center', backgroundColor: colors.card, padding: 4, borderRadius: 16 }}>
-          <SkeletonGroup.Item className="rounded-lg" style={{ width: 80, height: 32 }} />
-          <SkeletonGroup.Item className="rounded-lg" style={{ width: 80, height: 32 }} />
-          <SkeletonGroup.Item className="rounded-lg" style={{ width: 80, height: 32 }} />
+          <Shimmer style={{ width: 80, height: 32, borderRadius: 8 }} />
+          <Shimmer style={{ width: 80, height: 32, borderRadius: 8 }} />
+          <Shimmer style={{ width: 80, height: 32, borderRadius: 8 }} />
         </View>
 
         {/* Grid */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {Array.from({ length: 9 }).map((_, i) => (
-            <SkeletonGroup.Item key={i} className="rounded-lg" style={{ width: '31%', aspectRatio: 1 }} />
+            <Shimmer key={i} style={{ width: '31%', aspectRatio: 1, borderRadius: 8 }} />
           ))}
         </View>
-      </SkeletonGroup>
+      </ShimmerGroup>
     </View>
   );
 };
@@ -130,6 +133,7 @@ const ProfileContent = () => {
     workplaceSheetRef,
     familySheetRef,
     briefSheetRef,
+    bioSheetRef,
     optionsSheetRef,
     likersSheetRef,
     commentsSheetRef,
@@ -291,6 +295,7 @@ const ProfileContent = () => {
         postCount={postCount}
         familySheetRef={familySheetRef}
         briefSheetRef={briefSheetRef}
+        bioSheetRef={bioSheetRef}
         onPresentSheet={safePresent}
       />
     );
@@ -693,6 +698,10 @@ const ProfileContent = () => {
           profile={profile}
           workplaces={workplaces}
           homeInfo={profile?.hometown || null}
+        />
+        <BioSheet
+          ref={bioSheetRef}
+          bio={profile?.bio}
         />
         <PostOptionsSheet
           ref={optionsSheetRef}

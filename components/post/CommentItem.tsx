@@ -62,8 +62,8 @@ export const CommentItem = memo(({
 
     useEffect(() => {
         if (!text) return;
-        // Ignore mentions/tags and check if there's any actual text to translate
-        const cleanText = text.replace(/@\w+/g, '').trim();
+        // Ignore mentions/tags/urls and check if there's any actual text to translate
+        const cleanText = text.replace(/(#[^\s#@!$%^&*()+,.;?]+|@[^\s#@!$%^&*()+,.;?]+|(?:https?:\/\/|www\.)[^\s]+)/gu, '').trim();
         if (!cleanText) {
             setNeedsTranslation(false);
             return;
@@ -127,7 +127,7 @@ export const CommentItem = memo(({
                                 style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}
                                 parse={[
                                     {
-                                        pattern: /@\w+/g,
+                                        pattern: /(#[^\s#@!$%^&*()+,.;?]+|@[^\s#@!$%^&*()+,.;?]+)/gu,
                                         style: { color: colors.primary, fontWeight: '600' }
                                     }
                                 ]}

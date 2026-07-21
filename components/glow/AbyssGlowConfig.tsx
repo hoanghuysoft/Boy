@@ -33,8 +33,6 @@ export const abyssalGlow: PresetConfig = {
                             4
                         ],
                         "speedMultiplier": 1,
-                        "scaleAmplitude": 0,
-                        "scaleFrequency": 2.5,
                         "glowPlacement": "behind",
                         "coverage": 0.7,
                         "relativeOffset": 0.15
@@ -52,8 +50,6 @@ export const abyssalGlow: PresetConfig = {
                             20
                         ],
                         "speedMultiplier": 1,
-                        "scaleAmplitude": 0,
-                        "scaleFrequency": 2.5,
                         "glowPlacement": "behind",
                         "coverage": 0.75,
                         "relativeOffset": 0.2

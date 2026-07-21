@@ -19,8 +19,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useQueries } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { Skeleton } from "heroui-native/skeleton";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Animated,
@@ -66,10 +65,10 @@ export const IMDbBadge = ({ score, style, textColor }: { score?: number, style?:
 
 /** Lightweight skeleton placeholder for a single horizontal section row */
 const SectionShimmer = ({ title }: { title: string }) => (
-    <SkeletonGroup isLoading={true} variant="shimmer">
+    <ShimmerGroup isLoading={true} preset="dark">
         <View style={{ gap: 16 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16 }}>
-                <SkeletonGroup.Item
+                <Shimmer
                     style={{
                         height: 22,
                         width: Math.min(title.length * 11, 200),
@@ -78,12 +77,12 @@ const SectionShimmer = ({ title }: { title: string }) => (
                 />
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                <SkeletonGroup.Item style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-                <SkeletonGroup.Item style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
-                <SkeletonGroup.Item style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
+                <Shimmer style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
+                <Shimmer style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
+                <Shimmer style={{ height: CARD_WIDTH * 1.5, width: CARD_WIDTH, borderRadius: 16 }} />
             </ScrollView>
         </View>
-    </SkeletonGroup>
+    </ShimmerGroup>
 );
 
 interface MediaCardProps {
@@ -410,7 +409,7 @@ export const MovieDBView = ({ headerScrollX, scrollY }: { headerScrollX: Animate
             >
                 {/* Hero skeleton — only blocks on the trending banner */}
                 {isLoading && (
-                    <Skeleton variant="shimmer" style={{ height: posterHeight, width: "100%" }} />
+                    <Shimmer isLoading style={{ height: posterHeight, width: "100%" }} />
                 )}
 
                 {!isLoading && (

@@ -8,10 +8,10 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlexText } from "../../components/FlexText";
-import { useThemeContext } from "../../context/ThemeContext";
-import { useNote } from "../../services/note";
-import { createCommonStyles } from "../../styles/common";
+import { FlexText } from "@/components/FlexText";
+import { useThemeContext } from "@/context/ThemeContext";
+import { useNote } from "@/services/note";
+import { createCommonStyles } from "@/styles/common";
 
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
@@ -19,15 +19,15 @@ import { SquircleView } from "expo-squircle-view";
 import { Spinner } from "heroui-native/spinner";
 
 
-const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>\]/i;
-const LINK_PATTERN = /\[<link\s+(.*?)\s*\/>\]/i;
-const TOKEN_PATTERN = /(\[<img\s+.*?\s*\/>\]|\[<link\s+.*?\s*\/>\])/gi;
+const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>]/i;
+const LINK_PATTERN = /\[<link\s+(.*?)\s*\/>]/i;
+const TOKEN_PATTERN = /(\[<img\s+.*?\s*\/>]|\[<link\s+.*?\s*\/>])/gi;
 
 function parseTokens(content: string) {
-    const titleMatch = content.match(/\[<title>(.*?)<\/title>\]/i);
+    const titleMatch = content.match(/\[<title>(.*?)<\/title>]/i);
     const title = titleMatch ? titleMatch[1] : null;
 
-    const strippedContent = content.replace(/\[<title>.*?<\/title>\]/gi, '');
+    const strippedContent = content.replace(/\[<title>.*?<\/title>]/gi, '');
 
     const parts = strippedContent.split(TOKEN_PATTERN);
     const elements: any[] = [];
@@ -176,7 +176,7 @@ const NoteDetailScreen = () => {
                                         return (
                                             <View key={index} style={{ marginBottom: 16 }}>
                                                 {renderItem(el.imageIndex, {
-                                                    frame: { width: '100%' as any, aspectRatio: 1 / 1, borderRadius: 16 },
+                                                    frame: { width: '100%' as any, aspectRatio: 1, borderRadius: 16 },
                                                 })}
                                             </View>
                                         );

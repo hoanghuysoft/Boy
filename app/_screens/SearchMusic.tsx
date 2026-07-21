@@ -214,7 +214,7 @@ const SearchMusicScreen = () => {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     // WebView Bridge state & refs
-    const webViewRef = useRef<WebView>(null);
+    const webViewRef = useRef<WebView<{}>>(null);
     const [isBridgeReady, setIsBridgeReady] = useState(false);
     const nextRequestId = useRef(1);
     const pendingRequests = useRef<Map<number, { resolve: (val: any) => void; reject: (err: any) => void }>>(new Map());

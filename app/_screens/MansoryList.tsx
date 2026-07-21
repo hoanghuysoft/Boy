@@ -9,7 +9,7 @@ import { useScrollStore } from "@/stores/scroll";
 import { createCommonStyles } from "@/styles/common";
 import { Media } from "@/types/media";
 import { Profile } from "@/types/profile";
-import { choosenMediaPath } from "@/utils/imageurl";
+import { chosenMediaPath } from "@/utils/imageurl";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList } from "@shopify/flash-list";
@@ -20,7 +20,7 @@ import { Image as ExpoImage } from "expo-image";
 import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
 import { Avatar } from "heroui-native/avatar";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -43,7 +43,7 @@ const prefetchPhotoDimensions = async (items: any[]) => {
     items.forEach((item) => {
         if (item.type !== "photo") return;
         if (!item.width || !item.height) return;
-        const url = choosenMediaPath(item);
+        const url = chosenMediaPath(item);
         if (!url) return;
         if (getCachedImageDimension(url)) return;
         setCachedImageDimension(url, item.width, item.height);
@@ -53,11 +53,11 @@ const prefetchPhotoDimensions = async (items: any[]) => {
     //    regardless of whether we already know dimensions.
     const allPhotoUrls = items
         .filter((item) => item.type === "photo")
-        .map((item) => choosenMediaPath(item))
+        .map((item) => chosenMediaPath(item))
         .filter(Boolean);
 
     if (allPhotoUrls.length > 0) {
-        for (const url of allPhotoUrls) ExpoImage.prefetch(url);
+        for (const url of allPhotoUrls) await ExpoImage.prefetch(url);
     }
 
     // 3) For items still missing dimensions (no server value AND no cache),
@@ -65,7 +65,7 @@ const prefetchPhotoDimensions = async (items: any[]) => {
     const pending = items.filter((item) => {
         if (item.type !== "photo") return false;
         if (item.width && item.height) return false;
-        const url = choosenMediaPath(item);
+        const url = chosenMediaPath(item);
         if (!url) return false;
         return !getCachedImageDimension(url);
     });
@@ -74,7 +74,7 @@ const prefetchPhotoDimensions = async (items: any[]) => {
 
     await Promise.all(
         pending.map((item) => {
-            const url = choosenMediaPath(item);
+            const url = chosenMediaPath(item);
             return new Promise<void>((resolve) => {
                 RNImage.getSize(
                     url,
@@ -112,7 +112,7 @@ const MediaFooter = React.memo(({ item, colors }: { item: Media; colors: any }) 
 MediaFooter.displayName = "MediaFooter";
 
 const PhotoCard = React.memo(({ item, colors, renderMediaItem }: { item: Media & { mediaIndex?: number }, colors: any, renderMediaItem: (index: number, options: any) => React.ReactNode }) => {
-    const sourceUrl = choosenMediaPath(item);
+    const sourceUrl = chosenMediaPath(item);
     const serverW = item.width;
     const serverH = item.height;
     const hasServerDims = !!(serverW && serverH);
@@ -190,7 +190,7 @@ const MansoryListScreen = () => {
         let idx = 0;
         const items: MediaViewerItem[] = [];
         const mapped = flat.map(item => {
-            const url = choosenMediaPath(item);
+            const url = chosenMediaPath(item);
             if (url) {
                 if (item.type === 'video') {
                     const thumbnailUrl = item.thumbnail_url || url;
@@ -381,7 +381,7 @@ const MansoryListScreen = () => {
                             {skeletonHeights
                                 .filter((_, i) => i % 2 === col)
                                 .map((h, i) => (
-                                    <SkeletonGroup key={i} isLoading variant="shimmer" className="rounded-2xl" style={{ height: h }} />
+                                    <Shimmer key={i} isLoading style={{ height: h, borderRadius: 16 }} />
                                 ))}
                         </View>
                     ))}
@@ -439,10 +439,12 @@ const MansoryListScreen = () => {
                         ListHeaderComponent={ListHeaderComponent}
                         ListFooterComponent={
                             isFetchingNextPage ? (
-                                <SkeletonGroup isLoading variant="shimmer" style={[styles.footer, { flexDirection: 'row', gap: 8, paddingHorizontal: 8 }]}>
-                                    <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
-                                    <SkeletonGroup.Item className="rounded-2xl" style={{ flex: 1, height: 130 }} />
-                                </SkeletonGroup>
+                                <ShimmerGroup isLoading preset="dark">
+                                    <View style={[styles.footer, { flexDirection: 'row', gap: 8, paddingHorizontal: 8 }]}>
+                                        <Shimmer style={{ flex: 1, height: 130, borderRadius: 16 }} />
+                                        <Shimmer style={{ flex: 1, height: 130, borderRadius: 16 }} />
+                                    </View>
+                                </ShimmerGroup>
                             ) : null
                         }
                         ListEmptyComponent={renderEmpty}

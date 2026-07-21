@@ -20,17 +20,17 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { AppLockOverlay } from "../components/AppLockOverlay";
-import { GlobalAudioPlayer } from "../components/GlobalAudioPlayer";
-import { SessionProvider } from "../context/SessionContext";
-import { StatusBarProvider, useStatusBar } from "../context/StatusBarContext";
-import { ThemeProvider, useThemeContext } from "../context/ThemeContext";
-import { VideoPlayerProvider } from "../context/VideoPlayerContext";
+import { AppLockOverlay } from "@/components/AppLockOverlay";
+import { GlobalAudioPlayer } from "@/components/GlobalAudioPlayer";
+import { SessionProvider } from "@/context/SessionContext";
+import { StatusBarProvider, useStatusBar } from "@/context/StatusBarContext";
+import { ThemeProvider, useThemeContext } from "@/context/ThemeContext";
+import { VideoPlayerProvider } from "@/context/VideoPlayerContext";
 import '../global.css';
-import { clientPersister, queryClient } from "../services/client";
-import { useAppLockStore } from "../stores/appLock";
-import { useAutoLanguageSync } from "../stores/language";
-import { useRootLayoutViewModel } from "../viewmodels/RootLayoutViewModel";
+import { clientPersister, queryClient } from "@/services/client";
+import { useAppLockStore } from "@/stores/appLock";
+import { useAutoLanguageSync } from "@/stores/language";
+import { useRootLayoutViewModel } from "@/viewmodels/RootLayoutViewModel";
 
 Sentry.init({
   dsn: 'https://1ef88f34edcb93fd745ae50c49114de5@o4511278698397696.ingest.de.sentry.io/4511278700494928',
@@ -174,7 +174,7 @@ const RootContent = () => {
 
   return (
     <SessionProvider session={session} hasProfile={hasProfile}>
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, backgroundColor: colors.surface }}>
         <StatusBar
           key={`${theme}-${isShots}`}
           animated={false}

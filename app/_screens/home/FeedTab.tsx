@@ -13,7 +13,7 @@ import { updateActiveVideoViewAsync } from "@bsky.app/video";
 import { type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useFocusEffect } from "expo-router";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { uniqBy } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -228,21 +228,22 @@ const FeedTab: React.FC<FeedTabProps> = ({
 
     const renderPostSkeleton = useCallback(() => {
         return (
-            <SkeletonGroup
+            <ShimmerGroup
                 isLoading={true}
-                variant="shimmer"
-                style={{ marginTop: 20 }}
+                preset="dark"
             >
-                <View style={[common.row, { gap: 10, marginBottom: 12, paddingHorizontal: 16 }]}>
-                    <SkeletonGroup.Item className="rounded-full" style={{ width: 30, height: 30 }} />
-                    <SkeletonGroup.Item className="rounded-lg" style={{ width: 120, height: 16 }} />
+                <View style={{ marginTop: 20 }}>
+                    <View style={[common.row, { gap: 10, marginBottom: 12, paddingHorizontal: 16 }]}>
+                        <Shimmer style={{ width: 30, height: 30, borderRadius: 15 }} />
+                        <Shimmer style={{ width: 120, height: 16, borderRadius: 8 }} />
+                    </View>
+                    <View style={{ gap: 8, marginBottom: 12, paddingHorizontal: 16 }}>
+                        <Shimmer style={{ width: '100%', height: 14, borderRadius: 6 }} />
+                        <Shimmer style={{ width: '80%', height: 14, borderRadius: 6 }} />
+                    </View>
+                    <Shimmer style={{ width: '100%', height: 200 }} />
                 </View>
-                <View style={{ gap: 8, marginBottom: 12, paddingHorizontal: 16 }}>
-                    <SkeletonGroup.Item className="rounded-md" style={{ width: '100%', height: 14 }} />
-                    <SkeletonGroup.Item className="rounded-md" style={{ width: '80%', height: 14 }} />
-                </View>
-                <SkeletonGroup.Item style={{ width: '100%', height: 200 }} />
-            </SkeletonGroup>
+            </ShimmerGroup>
         );
     }, [common.row]);
 

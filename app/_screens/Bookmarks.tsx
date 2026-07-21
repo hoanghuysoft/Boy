@@ -4,7 +4,7 @@ import { BookmarkedPost } from "@/types/bookmarkedpost";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useRouter } from "expo-router";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { Spinner } from "heroui-native/spinner";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,14 +16,13 @@ import {
     View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlexText } from "../../components/FlexText";
-import { CommentsSheet } from "../../components/post/CommentsSheet";
-import { LikersSheet } from "../../components/post/LikersSheet";
-import { PostItem } from "../../components/PostItem";
-import { useThemeContext } from "../../context/ThemeContext";
-import { createCommonStyles } from "../../styles/common";
-import { Post } from "../../types/post";
-import type { LikersSheetHandle } from "../../types/sheetHandles";
+import { FlexText } from "@/components/FlexText";
+import { CommentsSheet, LikersSheet } from "@/components/post";
+import { PostItem } from "@/components/PostItem";
+import { useThemeContext } from "@/context/ThemeContext";
+import { createCommonStyles } from "@/styles/common";
+import { Post } from "@/types/post";
+import type { LikersSheetHandle } from "@/types/sheetHandles";
 
 const BookmarksScreen = () => {
     const router = useRouter();
@@ -117,21 +116,23 @@ const BookmarksScreen = () => {
             return (
                 <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <SkeletonGroup key={i} isLoading variant="shimmer" style={{ marginBottom: 30 }}>
-                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-                                <SkeletonGroup.Item className="h-10 w-10 rounded-full" />
-                                <View style={{ marginLeft: 12, flex: 1, gap: 6 }}>
-                                    <SkeletonGroup.Item className="h-4 w-32 rounded-md" />
-                                    <SkeletonGroup.Item className="h-3 w-24 rounded-md" />
+                        <ShimmerGroup key={i} isLoading preset="dark">
+                            <View style={{ marginBottom: 30 }}>
+                                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                                    <Shimmer style={{ width: 40, height: 40, borderRadius: 20 }} />
+                                    <View style={{ marginLeft: 12, flex: 1, gap: 6 }}>
+                                        <Shimmer style={{ width: 128, height: 16, borderRadius: 6 }} />
+                                        <Shimmer style={{ width: 96, height: 12, borderRadius: 6 }} />
+                                    </View>
                                 </View>
+                                <View style={{ gap: 8, marginBottom: 12 }}>
+                                    <Shimmer style={{ width: '100%', height: 16, borderRadius: 6 }} />
+                                    <Shimmer style={{ width: '83%', height: 16, borderRadius: 6 }} />
+                                    <Shimmer style={{ width: '66%', height: 16, borderRadius: 6 }} />
+                                </View>
+                                <Shimmer style={{ width: '100%', height: 192, borderRadius: 12 }} />
                             </View>
-                            <View style={{ gap: 8, marginBottom: 12 }}>
-                                <SkeletonGroup.Item className="h-4 w-full rounded-md" />
-                                <SkeletonGroup.Item className="h-4 w-5/6 rounded-md" />
-                                <SkeletonGroup.Item className="h-4 w-2/3 rounded-md" />
-                            </View>
-                            <SkeletonGroup.Item className="h-48 w-full rounded-xl" />
-                        </SkeletonGroup>
+                        </ShimmerGroup>
                     ))}
                 </View>
             );

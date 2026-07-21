@@ -3,7 +3,7 @@ import { FlexText } from '@/components/FlexText';
 import { useTrendingHashtagsViewModel } from '@/viewmodels/TrendingHashtagsViewModel';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useRouter } from 'expo-router';
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,9 +14,9 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeContext } from '../../context/ThemeContext';
-import { createCommonStyles } from '../../styles/common';
-import { Hashtag } from '../../types/hashtag';
+import { useThemeContext } from '@/context/ThemeContext';
+import { createCommonStyles } from '@/styles/common';
+import { Hashtag } from '@/types/hashtag';
 
 const HashtagListScreen = () => {
     const router = useRouter();
@@ -76,18 +76,19 @@ const HashtagListScreen = () => {
                                     ? { borderBottomLeftRadius: 24, borderBottomRightRadius: 24, borderTopLeftRadius: 5, borderTopRightRadius: 5 }
                                     : { borderRadius: 5 };
                         return (
-                            <SkeletonGroup
+                            <ShimmerGroup
                                 key={i}
                                 isLoading
-                                variant="shimmer"
-                                style={[styles.tagRow, cardStyle, { backgroundColor: colors.containerContent }]}
+                                preset="dark"
                             >
-                                <View style={styles.tagRowLeft}>
-                                    <SkeletonGroup.Item className="h-5 w-32 rounded-md mb-2" />
-                                    <SkeletonGroup.Item className="h-4 w-16 rounded-md" />
+                                <View style={[styles.tagRow, cardStyle, { backgroundColor: colors.containerContent }]}>
+                                    <View style={styles.tagRowLeft}>
+                                        <Shimmer style={{ width: 128, height: 20, borderRadius: 6, marginBottom: 8 }} />
+                                        <Shimmer style={{ width: 64, height: 16, borderRadius: 6 }} />
+                                    </View>
+                                    <Shimmer style={{ width: 16, height: 16, borderRadius: 8 }} />
                                 </View>
-                                <SkeletonGroup.Item className="h-4 w-4 rounded-full" />
-                            </SkeletonGroup>
+                            </ShimmerGroup>
                         );
                     })}
                 </View>

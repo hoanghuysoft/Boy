@@ -1,7 +1,7 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
-import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
+import { buildFallbackUrls, chosenMediaPath } from "@/utils/imageurl";
 import { Image } from "expo-image";
 import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
@@ -14,13 +14,13 @@ import {
     ViewStyle,
 } from "react-native";
 import { Pressable } from "react-native-gesture-handler";
-import { Media } from "../../types/media";
+import { Media } from "@/types/media";
 import {
     GridItemType,
     UseImageGridViewModelOptions,
     useImageGridViewModel
-} from "../../viewmodels/ImageGridViewModel";
-import { ShimmerEffect } from "../shimmer/Shimmer";
+} from "@/viewmodels/ImageGridViewModel";
+import { ShimmerEffect } from "@/components/ui/molecules/Shimmer/Shimmer";
 import QuickPreviewModal from "./QuickPreviewModal";
 
 const MediaViewerContext = createContext<((index: number, options?: any) => React.ReactNode) | null>(null);
@@ -52,7 +52,7 @@ const VideoGridItem: React.FC<VideoGridItemProps> = React.memo(({
     );
 
     const mediaViewerItem: MediaViewerItem = useMemo(() => {
-        const sourceUrl = choosenMediaPath(mediaItem) || fallbackUrls[0];
+        const sourceUrl = chosenMediaPath(mediaItem) || fallbackUrls[0];
         const thumbnailUrl = mediaItem.thumbnail_url || fallbackUrls[0];
         return {
             id: mediaItem.id,
@@ -234,7 +234,7 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
 
         const mediaItem = item.item;
         const isVideo = mediaItem.type.toLowerCase().includes('video');
-        const mediaPath = choosenMediaPath(mediaItem);
+        const mediaPath = chosenMediaPath(mediaItem);
 
         if (isVideo) {
             return (
@@ -314,7 +314,7 @@ export const useImageGrid = (options: UseImageGridViewModelOptions = {}) => {
                 const mediaItem = item.item;
                 const isVideo = mediaItem?.type?.toLowerCase().includes('video');
                 const fallbackUrls = buildFallbackUrls(mediaItem, isVideo ? vm.placeholderImageVideo : vm.placeholderImage);
-                const sourceUrl = choosenMediaPath(mediaItem) || fallbackUrls[0];
+                const sourceUrl = chosenMediaPath(mediaItem) || fallbackUrls[0];
                 const thumbnailUrl = mediaItem.thumbnail_url || fallbackUrls[0];
                 const placeholderBlurhash = resolveBlurhash(mediaItem.blurhash, mediaItem.id);
 

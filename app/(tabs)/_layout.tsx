@@ -1,8 +1,8 @@
 import { Redirect, Tabs } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { CurvedTabBar } from "../../components/navigation/tab-bar";
-import { useSession } from "../../context/SessionContext";
+import { CurvedTabBar } from "@/components/navigation/tab-bar";
+import { useSession } from "@/context/SessionContext";
 
 export default function TabLayout() {
     const { session, hasProfile } = useSession();

@@ -7,8 +7,8 @@ import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { Image } from "expo-image";
 import { SquircleView } from "expo-squircle-view";
 import { Button } from "heroui-native/button";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { Spinner } from "heroui-native/spinner";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -144,13 +144,15 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const renderListFooter = useCallback(() => {
             if (vm.isFetchingNextPage) {
                 return (
-                    <SkeletonGroup isLoading variant="shimmer" style={[styles.footerLoader, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
-                        <SkeletonGroup.Item className="rounded-full" style={{ width: 38, height: 38 }} />
-                        <View style={{ flex: 1, gap: 6 }}>
-                            <SkeletonGroup.Item className="rounded-md" style={{ width: '55%', height: 12 }} />
-                            <SkeletonGroup.Item className="rounded-md" style={{ width: '80%', height: 10 }} />
+                    <ShimmerGroup isLoading preset="dark">
+                        <View style={[styles.footerLoader, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
+                            <Shimmer style={{ width: 38, height: 38, borderRadius: 19 }} />
+                            <View style={{ flex: 1, gap: 6 }}>
+                                <Shimmer style={{ width: '55%', height: 12, borderRadius: 6 }} />
+                                <Shimmer style={{ width: '80%', height: 10, borderRadius: 6 }} />
+                            </View>
                         </View>
-                    </SkeletonGroup>
+                    </ShimmerGroup>
                 );
             }
             return null;
@@ -182,14 +184,16 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 return (
                     <View style={{ paddingTop: 8 }}>
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <SkeletonGroup key={i} isLoading variant="shimmer" style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
-                                <SkeletonGroup.Item className="rounded-full" style={{ width: 38, height: 38 }} />
-                                <View style={{ flex: 1, gap: 6 }}>
-                                    <SkeletonGroup.Item className="rounded-md" style={{ width: '40%', height: 12 }} />
-                                    <SkeletonGroup.Item className="rounded-lg" style={{ width: '100%', height: 52 }} />
-                                    <SkeletonGroup.Item className="rounded-md" style={{ width: '20%', height: 10 }} />
+                            <ShimmerGroup key={i} isLoading preset="dark">
+                                <View style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
+                                    <Shimmer style={{ width: 38, height: 38, borderRadius: 19 }} />
+                                    <View style={{ flex: 1, gap: 6 }}>
+                                        <Shimmer style={{ width: '40%', height: 12, borderRadius: 6 }} />
+                                        <Shimmer style={{ width: '100%', height: 52, borderRadius: 8 }} />
+                                        <Shimmer style={{ width: '20%', height: 10, borderRadius: 6 }} />
+                                    </View>
                                 </View>
-                            </SkeletonGroup>
+                            </ShimmerGroup>
                         ))}
                     </View>
                 );

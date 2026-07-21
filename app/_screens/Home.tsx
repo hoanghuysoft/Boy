@@ -9,11 +9,8 @@ import { Image as ExpoImage } from "expo-image";
 import { useObserve } from "expo-observe";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
-import { GalleryModal } from "../../components/gallery/GalleryModal";
-import { CommentsSheet } from "../../components/post/CommentsSheet";
-import { LikersSheet } from "../../components/post/LikersSheet";
-import { PostOptionsSheet } from "../../components/post/PostOptionsSheet";
-import { TranslationLanguageSheet } from "../../components/post/TranslationLanguageSheet";
+import { GalleryModal } from "@/components/gallery/GalleryModal";
+import { CommentsSheet, LikersSheet, PostOptionsSheet, TranslationLanguageSheet } from "@/components/post";
 import HomeTabs from "./home/HomeTabs";
 
 const HomeScreen = () => {

@@ -5,6 +5,7 @@ import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from 'expo-image';
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import { Avatar } from "heroui-native/avatar";
@@ -14,7 +15,6 @@ import en from "i18n-iso-countries/langs/en.json";
 import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import CountryFlag from 'react-native-country-flag';
 import Reanimated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
 import { ProfileAddress } from '../../types/profileaddress';
 import { ProfileDetail } from '../../types/profiledetail';
@@ -36,7 +36,7 @@ const Notes = ({ size, color, ...props }: any) => <StickyNoteIcon width={size} h
 
 countries.registerLocale(en);
 
-export const COVER_HEIGHT = 150;
+export const COVER_HEIGHT = 260;
 
 interface ProfileHeaderV3Props {
     scrollY: Animated.Value;
@@ -51,6 +51,7 @@ interface ProfileHeaderV3Props {
     workplaceSheetRef?: React.RefObject<TrueSheet | null>;
     familySheetRef?: React.RefObject<TrueSheet | null>;
     briefSheetRef?: React.RefObject<any>;
+    bioSheetRef?: React.RefObject<TrueSheet | null>;
     onPresentSheet?: (ref: React.RefObject<any>) => void;
     workplaces?: Workplace[];
     music?: ProfileMusic[];
@@ -71,6 +72,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
     workplaceSheetRef,
     familySheetRef,
     briefSheetRef,
+    bioSheetRef,
     onPresentSheet,
     workplaces = [],
     socialLinks = [],
@@ -95,13 +97,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         music,
     });
 
-    const hometown = profile?.hometown;
-    const flagCode = useMemo(() => {
-        if (!hometown) return null;
-        const parts = hometown.split(',');
-        const potentialCountry = parts[parts.length - 1].trim();
-        return countries.getAlpha2Code(potentialCountry, "en");
-    }, [hometown]);
+
 
 
 
@@ -132,16 +128,19 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         };
     });
 
+    const transparentColor = vm.colors.background + "00";
+    const midColor1 = vm.colors.background + "59";
+    const midColor2 = vm.colors.background + "CC";
+    const solidColor = vm.colors.background;
+
     return (
         <Reanimated.View pointerEvents="box-none" style={[styles.headerContainer, animatedContentStyle]}>
-            {/* We omitted the top row containing back button and music pill since classic layout handles it */}
-            <View pointerEvents="none" style={{ height: vm.insets.top + 70 }} />
-
-            <SquircleView pointerEvents="none" borderRadius={36} cornerSmoothing={100} preserveSmoothing style={styles.coverContainer}>
+            {/* Absolute Cover Background with Fade Overlay */}
+            <View pointerEvents="none" style={styles.absoluteCoverContainer}>
                 {profile?.cover_url ? (
                     <ExpoImage
                         source={{ uri: profile.cover_url }}
-                        style={styles.coverImage}
+                        style={StyleSheet.absoluteFill}
                         contentFit="cover"
                     />
                 ) : (
@@ -153,11 +152,20 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                             colors={vm.gradientColors}
                             frequency={vm.meshGradientDefaults.frequency}
                             amplitude={vm.meshGradientDefaults.amplitude}
-                            style={styles.coverImage}
+                            style={StyleSheet.absoluteFill}
                         />
                     )
                 )}
-            </SquircleView>
+                <LinearGradient
+                    colors={[transparentColor, midColor1, midColor2, solidColor]}
+                    locations={[0, 0.4, 0.75, 1]}
+                    style={styles.gradientOverlay}
+                    pointerEvents="none"
+                />
+            </View>
+
+            {/* Top space pushing avatar below header controls */}
+            <View pointerEvents="none" style={{ height: vm.insets.top + 110 }} />
             <View pointerEvents="box-none" style={styles.avatarRow}>
                 <Avatar>
                     <Avatar.Image source={{ uri: profile?.avatar_url }} />
@@ -186,13 +194,28 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 </View>
             </View>
             <View pointerEvents="none" className="flex-row items-center gap-1 mb-1">
-                <FlexText style={[vm.common.headline, { fontWeight: 'bold' }]}>{profile?.name} {profile?.is_verified && <VerifiedIcon size={24} />} {flagCode && <CountryFlag isoCode={flagCode} size={14} style={{ borderRadius: 2 }} />}</FlexText>
+                <FlexText style={[vm.common.headline, { fontWeight: 'bold' }]}>{profile?.name} {profile?.is_verified && <VerifiedIcon size={24} />}</FlexText>
             </View>
             {!!profile?.username && (
                 <View pointerEvents="none"><FlexText style={[vm.common.body, { color: vm.colors.muted, marginBottom: 8 }]}>@{profile.username}</FlexText></View>
             )}
             {!!profile?.bio && (
-                <View pointerEvents="none"><FlexText style={[vm.common.body, { marginBottom: 8 }]}>{profile.bio}</FlexText></View>
+                <View style={{ marginBottom: 8 }}>
+                    <FlexText numberOfLines={2} style={[vm.common.body]}>
+                        {profile.bio}
+                    </FlexText>
+                    {(profile.bio.length > 70 || profile.bio.includes('\n')) && (
+                        <TouchableOpacity
+                            onPress={() => onPresentSheet?.(bioSheetRef as React.RefObject<any>)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            style={{ marginTop: 2, alignSelf: 'flex-start' }}
+                        >
+                            <FlexText style={{ color: vm.colors.primary, fontWeight: '600', fontSize: 13 }}>
+                                {t('common.readMore', 'Read more')}
+                            </FlexText>
+                        </TouchableOpacity>
+                    )}
+                </View>
             )}
 
             {profile && (
@@ -296,15 +319,22 @@ ProfileHeaderV3.displayName = "ProfileHeaderV3";
 const styles = StyleSheet.create({
     headerContainer: {
         paddingHorizontal: 12,
+        position: 'relative',
     },
-    coverContainer: {
+    absoluteCoverContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: COVER_HEIGHT,
         overflow: "hidden",
-        width: '100%',
-        marginBottom: 32,
     },
-    coverImage: {
-        height: 150,
-        width: '100%',
+    gradientOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '85%',
     },
     avatarRow: {
         flexDirection: 'row',

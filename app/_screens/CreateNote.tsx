@@ -20,10 +20,10 @@ import {
 import { KeyboardAvoidingView, KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlexText } from "../../components/FlexText";
-import { useThemeContext } from "../../context/ThemeContext";
-import { useCreateNote, useNote, useUpdateNote } from "../../services/note";
-import { createCommonStyles } from "../../styles/common";
+import { FlexText } from "@/components/FlexText";
+import { useThemeContext } from "@/context/ThemeContext";
+import { useCreateNote, useNote, useUpdateNote } from "@/services/note";
+import { createCommonStyles } from "@/styles/common";
 
 type Block =
     | { id: string; type: 'text'; text: string }
@@ -48,7 +48,7 @@ const CreateNoteScreen = () => {
     const [title, setTitle] = useState(() => {
         if (isEditMode && noteData?.data) {
             const content = noteData.data.content;
-            const titleMatch = content.match(/\[<title>(.*?)<\/title>\]/i);
+            const titleMatch = content.match(/\[<title>(.*?)<\/title>]/i);
             return titleMatch ? titleMatch[1] : "";
         }
         return "";
@@ -57,21 +57,21 @@ const CreateNoteScreen = () => {
     const [blocks, setBlocks] = useState<Block[]>(() => {
         if (isEditMode && noteData?.data) {
             const content = noteData.data.content;
-            const strippedContent = content.replace(/\[<title>.*?<\/title>\]/gi, '');
-            const parts = strippedContent.split(/(\[<img\s+.*?\s*\/>\]|\[<link\s+.*?\s*\/>\])/gi);
+            const strippedContent = content.replace(/\[<title>.*?<\/title>]/gi, '');
+            const parts = strippedContent.split(/(\[<img\s+.*?\s*\/>]|\[<link\s+.*?\s*\/>])/gi);
 
             const initialBlocks: Block[] = [];
 
             parts.forEach((part) => {
                 if (!part) return;
 
-                const imgMatch = part.match(/\[<img\s+(.*?)\s*\/>\]/i);
+                const imgMatch = part.match(/\[<img\s+(.*?)\s*\/>]/i);
                 if (imgMatch) {
                     initialBlocks.push({ id: Math.random().toString(), type: 'image', url: imgMatch[1] });
                     return;
                 }
 
-                const linkMatch = part.match(/\[<link\s+(.*?)\s*\/>\]/i);
+                const linkMatch = part.match(/\[<link\s+(.*?)\s*\/>]/i);
                 if (linkMatch) {
                     initialBlocks.push({ id: Math.random().toString(), type: 'link', url: linkMatch[1] });
                     return;

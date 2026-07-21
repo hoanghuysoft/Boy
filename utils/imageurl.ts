@@ -14,7 +14,7 @@ export const buildFallbackUrls = (mediaItem: MediaWithFallback, placeholder: str
     return urls;
 };
 
-export const choosenMediaPath = (video: MediaWithFallback): string => {
+export const chosenMediaPath = (video: MediaWithFallback): string => {
     const sources = [video.url, video.backup1].filter(Boolean) as string[];
 
 

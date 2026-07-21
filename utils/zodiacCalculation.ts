@@ -201,6 +201,7 @@ const getHistoricalEvent = async (month: number, day: number): Promise<string> =
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data: WikiOnThisDayResponse = await response.json();
         return data.events[0]?.text ?? "A quiet day in history.";
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
         return "History is still being written...";
     }

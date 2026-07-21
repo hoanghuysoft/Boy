@@ -1,14 +1,13 @@
 import { useThemeContext } from "@/context/ThemeContext";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { useFocusEffect } from "expo-router/react-navigation";
-import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useRef, useState, useEffect, useMemo } from "react";
-import { BackHandler, Linking, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type WebViewType from "react-native-webview";
-import WebView from "react-native-webview";
-import { Spinner } from "heroui-native/spinner";
 import { supabase } from "@/services/login";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { router, useLocalSearchParams } from "expo-router";
+import { useFocusEffect } from "expo-router/react-navigation";
+import { Spinner } from "heroui-native/spinner";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BackHandler, Linking, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import WebView from "react-native-webview";
 
 interface ReVideoProps {
     isUseSafeArea?: boolean;
@@ -26,7 +25,7 @@ const ReVideo = ({ isUseSafeArea = false, safeAreaColor = "transparent", urlWebv
     const { colors } = useThemeContext();
     const [isLoading, setIsLoading] = useState(true);
     const [canGoBack, setCanGoBack] = useState(false);
-    const webViewRef = useRef<WebViewType>(null);
+    const webViewRef = useRef<WebView<{}>>(null);
     const insets = useSafeAreaInsets();
 
     const [session, setSession] = useState<any>(null);
@@ -122,28 +121,29 @@ const ReVideo = ({ isUseSafeArea = false, safeAreaColor = "transparent", urlWebv
                     <Spinner size="lg" color={colors.text} />
                 </View>
             ) : (
-                <WebView
-                    ref={webViewRef}
-                    source={{ uri: urlFromParams || urlWebview || "https://google.com/" }}
-                    style={{ marginBottom: isUseSafeAreaFromParams ? insets.bottom : 0 }}
-                    onLoad={handleLoad}
-                    onNavigationStateChange={(navState) => setCanGoBack(navState.canGoBack)}
-                    onFileDownload={({ nativeEvent: { downloadUrl } }) => {
-                        if (downloadUrl) {
-                            Linking.openURL(downloadUrl)
-                        }
-                    }}
-                    allowsFullscreenVideo
-                    domStorageEnabled={true}
-                    javaScriptEnabled={true}
-                    injectedJavaScriptBeforeContentLoaded={injectedJS}
-                >
+                <View style={{ flex: 1 }}>
+                    <WebView
+                        ref={webViewRef}
+                        source={{ uri: urlFromParams || urlWebview || "https://google.com/" }}
+                        style={{ flex: 1, marginBottom: isUseSafeAreaFromParams ? insets.bottom : 0 }}
+                        onLoad={handleLoad}
+                        onNavigationStateChange={(navState: any) => setCanGoBack(navState.canGoBack)}
+                        onFileDownload={({ nativeEvent: { downloadUrl } }: { nativeEvent: { downloadUrl: any } }) => {
+                            if (downloadUrl) {
+                                Linking.openURL(downloadUrl);
+                            }
+                        }}
+                        allowsFullscreenVideo
+                        domStorageEnabled={true}
+                        javaScriptEnabled={true}
+                        injectedJavaScriptBeforeContentLoaded={injectedJS}
+                    />
                     {isLoading && (
-                        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                            <Spinner size="lg" color="white" />
+                        <View style={[StyleSheet.absoluteFill, { justifyContent: "center", alignItems: "center", backgroundColor: colors.background }]}>
+                            <Spinner size="lg" color={colors.onSurface} />
                         </View>
                     )}
-                </WebView>
+                </View>
             )}
         </View>
     )

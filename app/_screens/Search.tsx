@@ -27,9 +27,9 @@ import {
 } from "react-native";
 import AnimatedGlow from "react-native-animated-glow";
 import Animated from "react-native-reanimated";
-import { useThemeContext } from "../../context/ThemeContext";
-import { createCommonStyles } from "../../styles/common";
-import { useSearchViewModel } from "../../viewmodels/SearchViewModel";
+import { useThemeContext } from "@/context/ThemeContext";
+import { createCommonStyles } from "@/styles/common";
+import { useSearchViewModel } from "@/viewmodels/SearchViewModel";
 
 const FlashList = FlashListOriginal as any;
 

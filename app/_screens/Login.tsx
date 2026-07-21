@@ -7,7 +7,7 @@ import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useObserve } from "expo-observe";
 import React from "react";
-import { useLoginViewModel } from "../../viewmodels/LoginViewModel";
+import { useLoginViewModel } from "@/viewmodels/LoginViewModel";
 
 const LoginScreen = () => {
     const { colors, typography } = useThemeContext();

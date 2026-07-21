@@ -263,7 +263,7 @@ const DashboardScreen = () => {
                             alignItems: "center",
                         }}
                     >
-                        <Ionicons name="people" size={20} color={colors.text} />
+                        <Ionicons name="people" size={20} color={colors.onSurface} />
                     </TouchableOpacity>
                 </View>
             )}

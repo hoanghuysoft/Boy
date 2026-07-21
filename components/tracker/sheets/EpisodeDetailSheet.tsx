@@ -1,6 +1,6 @@
 import { FlexText } from '@/components/FlexText';
 import { GalleryModal } from '@/components/gallery/GalleryModal';
-import { ShimmerEffect } from '@/components/shimmer/Shimmer';
+import { ShimmerEffect } from '@/components/ui/molecules/Shimmer/Shimmer';
 import { useThemeContext } from '@/context/ThemeContext';
 import { useTvEpisodeDetails } from '@/hooks/useMovies';
 import { useGalleryStore } from '@/stores/gallery';

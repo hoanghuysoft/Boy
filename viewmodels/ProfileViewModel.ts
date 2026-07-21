@@ -1,7 +1,7 @@
 import type { PostOptionsSheetHandle } from "@/components/post/PostOptionsSheet";
 import type { LikersSheetHandle } from "@/types/sheetHandles";
 import type { BriefInfoSheetHandle } from "../components/profile/sheets/BriefInfoSheet";
-import { choosenMediaPath } from "@/utils/imageurl";
+import { chosenMediaPath } from "@/utils/imageurl";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -181,6 +181,7 @@ export const useProfileViewModel = () => {
     const workplaceSheetRef = useRef<TrueSheet>(null);
     const familySheetRef = useRef<TrueSheet>(null);
     const briefSheetRef = useRef<BriefInfoSheetHandle>(null);
+    const bioSheetRef = useRef<TrueSheet>(null);
 
     // ─── Scroll Animation ──────────────────────────────────────────
     const [scrollY] = useState(() => new Animated.Value(0));
@@ -330,7 +331,7 @@ export const useProfileViewModel = () => {
 
     // ─── Handlers ──────────────────────────────────────────────────
     const handleVideoPress = useCallback((video: Media) => {
-        const videoUrl = choosenMediaPath(video);
+        const videoUrl = chosenMediaPath(video);
         router.push({
             pathname: '/video_player',
             params: {
@@ -474,6 +475,7 @@ export const useProfileViewModel = () => {
         workplaceSheetRef,
         familySheetRef,
         briefSheetRef,
+        bioSheetRef,
         optionsSheetRef,
         likersSheetRef,
         commentsSheetRef,

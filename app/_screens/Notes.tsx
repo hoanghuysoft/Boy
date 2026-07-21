@@ -5,9 +5,9 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
 import { Spinner } from "heroui-native/spinner";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,19 +22,19 @@ import {
 } from "react-native";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlexText } from "../../components/FlexText";
-import { useThemeContext } from "../../context/ThemeContext";
-import { useDeleteNote, useNotes } from "../../services/note";
-import { createCommonStyles } from "../../styles/common";
-import { Note } from "../../types/note";
+import { FlexText } from "@/components/FlexText";
+import { useThemeContext } from "@/context/ThemeContext";
+import { useDeleteNote, useNotes } from "@/services/note";
+import { createCommonStyles } from "@/styles/common";
+import { Note } from "@/types/note";
 
 dayjs.extend(relativeTime);
 
-const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>\]/gi;
-const LINK_PATTERN = /\[<link\s+(.*?)\s*\/>\]/gi;
+const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>]/gi;
+const LINK_PATTERN = /\[<link\s+(.*?)\s*\/>]/gi;
 
 function parseNoteContent(content: string) {
-    const titleMatch = content.match(/\[<title>(.*?)<\/title>\]/i);
+    const titleMatch = content.match(/\[<title>(.*?)<\/title>]/i);
     const title = titleMatch ? titleMatch[1] : null;
 
     const imgMatches = [...content.matchAll(IMG_PATTERN)];
@@ -44,7 +44,7 @@ function parseNoteContent(content: string) {
     const linkUrls = linkMatches.map(m => m[1]);
 
     const text = content
-        .replace(/\[<title>.*?<\/title>\]/gi, '')
+        .replace(/\[<title>.*?<\/title>]/gi, '')
         .replace(IMG_PATTERN, '')
         .replace(LINK_PATTERN, '')
         .trim();
@@ -195,26 +195,26 @@ const NotesScreen = () => {
                                 }
                             ]}
                         >
-                            <SkeletonGroup isLoading variant="shimmer">
+                            <ShimmerGroup isLoading preset="dark">
                                 {/* Title placeholder */}
-                                <SkeletonGroup.Item className="h-5 w-1/3 rounded-md" style={{ marginBottom: 10 }} />
+                                <Shimmer style={{ width: '33%', height: 20, borderRadius: 6, marginBottom: 10 }} />
 
                                 {/* Body placeholders */}
                                 <View style={{ gap: 8, marginBottom: 14 }}>
-                                    <SkeletonGroup.Item className="h-4 w-full rounded-md" />
-                                    <SkeletonGroup.Item className="h-4 w-5/6 rounded-md" />
-                                    <SkeletonGroup.Item className="h-4 w-2/3 rounded-md" />
+                                    <Shimmer style={{ width: '100%', height: 16, borderRadius: 6 }} />
+                                    <Shimmer style={{ width: '83%', height: 16, borderRadius: 6 }} />
+                                    <Shimmer style={{ width: '66%', height: 16, borderRadius: 6 }} />
                                 </View>
 
                                 {/* Bottom row: date and actions */}
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <SkeletonGroup.Item className="h-3.5 w-16 rounded-md" />
+                                    <Shimmer style={{ width: 64, height: 14, borderRadius: 6 }} />
                                     <View style={{ flexDirection: 'row', gap: 16 }}>
-                                        <SkeletonGroup.Item className="h-3.5 w-10 rounded-md" />
-                                        <SkeletonGroup.Item className="h-3.5 w-12 rounded-md" />
+                                        <Shimmer style={{ width: 40, height: 14, borderRadius: 6 }} />
+                                        <Shimmer style={{ width: 48, height: 14, borderRadius: 6 }} />
                                     </View>
                                 </View>
-                            </SkeletonGroup>
+                            </ShimmerGroup>
                         </View>
                     ))}
                 </View>

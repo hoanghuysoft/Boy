@@ -7,7 +7,7 @@ import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
-import { buildFallbackUrls, choosenMediaPath } from "@/utils/imageurl";
+import { buildFallbackUrls, chosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -70,7 +70,7 @@ const VideoCarouselItem = React.memo(({
     const [status, setStatus] = useState<'playing' | 'paused' | 'pending'>('pending');
     const [timeRemaining, setTimeRemaining] = useState(0);
 
-    const videoUrl = choosenMediaPath(item);
+    const videoUrl = chosenMediaPath(item);
 
     const fallbackUrls = useMemo(() => buildFallbackUrls(item, placeholderImageVideo), [item, placeholderImageVideo]);
     const [prev, setPrev] = useState(0);
@@ -319,8 +319,8 @@ const PhotoCarouselItem = React.memo(({
                     overflow: 'hidden',
                 }}>
                     <ExpoImage
-                        source={{ uri: choosenMediaPath(item) }}
-                        recyclingKey={choosenMediaPath(item)}
+                        source={{ uri: chosenMediaPath(item) }}
+                        recyclingKey={chosenMediaPath(item)}
                         contentFit="cover"
                         style={{ width: '100%', height: '100%' }}
                     />

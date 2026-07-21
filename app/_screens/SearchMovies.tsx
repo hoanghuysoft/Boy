@@ -11,7 +11,7 @@ import {
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import { useRouter } from "expo-router";
-import { SkeletonGroup } from "heroui-native/skeleton-group";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { Spinner } from "heroui-native/spinner";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -28,8 +28,8 @@ import {
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeContext } from "../../context/ThemeContext";
-import { createCommonStyles } from "../../styles/common";
+import { useThemeContext } from "@/context/ThemeContext";
+import { createCommonStyles } from "@/styles/common";
 
 const SEARCH_BAR_HEIGHT = 58;
 
@@ -292,24 +292,24 @@ const SearchMoviesScreen = () => {
     if (isLoading && submittedQuery) {
       const isPerson = searchType === 'person';
       return (
-        <SkeletonGroup isLoading={true} variant="shimmer">
+        <ShimmerGroup isLoading={true} preset="dark">
           <View style={{ padding: 16, gap: 12 }}>
             {[1, 2, 3, 4, 5].map((key) => (
               <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>
-                <SkeletonGroup.Item
+                <Shimmer
                   style={[
                     styles.thumbnail,
                     !isPerson && { width: 70, height: 105, borderRadius: 8 }
                   ]}
                 />
                 <View style={{ flex: 1, gap: 8 }}>
-                  <SkeletonGroup.Item style={{ height: 16, width: '80%', borderRadius: 4 }} />
-                  <SkeletonGroup.Item style={{ height: 12, width: '60%', borderRadius: 4 }} />
+                  <Shimmer style={{ height: 16, width: '80%', borderRadius: 4 }} />
+                  <Shimmer style={{ height: 12, width: '60%', borderRadius: 4 }} />
                 </View>
               </View>
             ))}
           </View>
-        </SkeletonGroup>
+        </ShimmerGroup>
       );
     }
 
