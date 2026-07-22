@@ -1,3 +1,4 @@
+import ban from './zhHant/ban';
 import bookmarks from './zhHant/bookmarks';
 import create from './zhHant/create';
 import dashboard from './zhHant/dashboard';
@@ -18,6 +19,7 @@ import serviceSettings from './zhHant/serviceSettings';
 import wallpaperOverlay from './zhHant/wallpaperOverlay';
 
 const zhHant = {
+    ban,
     bookmarks,
     create,
     dashboard,

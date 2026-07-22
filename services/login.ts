@@ -45,8 +45,36 @@ export async function signInWithGoogle() {
                 token: userInfo.idToken,
             });
 
-            if (error) throw error;
-            console.log('Successfully signed in to Supabase');
+            if (error) {
+                // If user is banned, fetch custom ban reason via server-side endpoint.
+                // NOTE: Use plain fetch here — importing 'client' would create a circular
+                // dependency (login.ts → client.ts → login.ts).
+                const msg = error.message || '';
+                const isBanError =
+                    msg.toLowerCase().includes('banned') ||
+                    msg.toLowerCase().includes('suspended') ||
+                    (error as any).code === 'user_banned';
+
+                if (isBanError && userInfo.idToken) {
+                    try {
+                        const serverUrl = (process.env.EXPO_PUBLIC_SERVER_URL || '').replace(/\/$/, '');
+                        const resp = await fetch(`${serverUrl}/api/auth/ban-reason`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ idToken: userInfo.idToken }),
+                        });
+                        if (resp.ok) {
+                            const data = await resp.json() as { banReason?: string | null };
+                            if (data?.banReason) {
+                                (error as any).reason = data.banReason;
+                            }
+                        }
+                    } catch (apiErr) {
+                        console.warn('Could not fetch ban reason:', apiErr);
+                    }
+                }
+                throw error;
+            }
             return getCurrentSession();
         }
     } catch (error) {
@@ -54,6 +82,7 @@ export async function signInWithGoogle() {
         throw error;
     }
 }
+
 
 export async function signOut() {
     const { error } = await supabase.auth.signOut();

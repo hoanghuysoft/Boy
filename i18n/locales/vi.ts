@@ -1,5 +1,6 @@
 // ─── Add a new screen: create i18n/locales/vi/<screenName>.ts then import it here ───
 
+import ban from './vi/ban';
 import bookmarks from './vi/bookmarks';
 import create from './vi/create';
 import dashboard from './vi/dashboard';
@@ -20,6 +21,7 @@ import themeSettings from './vi/themeSettings';
 import wallpaperOverlay from './vi/wallpaperOverlay';
 
 const vi = {
+    ban,
     bookmarks,
     create,
     dashboard,

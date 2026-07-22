@@ -16,6 +16,12 @@ export const profileKeys = {
     adminCheck: ['admin-check'] as const,
 };
 
+// ─── Auth ────────────────────────────────────────────────────────────────────
+export const authKeys = {
+    all: ['auth'] as const,
+    banStatus: () => [...authKeys.all, 'ban-status'] as const,
+};
+
 // ─── Feed ─────────────────────────────────────────────────────────────────────
 export const feedKeys = {
     home: ['feed'] as const,

@@ -1,5 +1,6 @@
 // ─── Add a new screen: create i18n/locales/zh/<screenName>.ts then import it here ───
 
+import ban from './zh/ban';
 import bookmarks from './zh/bookmarks';
 import create from './zh/create';
 import dashboard from './zh/dashboard';
@@ -20,6 +21,7 @@ import serviceSettings from './zh/serviceSettings';
 import wallpaperOverlay from './zh/wallpaperOverlay';
 
 const zh = {
+    ban,
     bookmarks,
     create,
     dashboard,

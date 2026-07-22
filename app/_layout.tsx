@@ -23,6 +23,7 @@ import {
 import { AppLockOverlay } from "@/components/AppLockOverlay";
 import { GlobalAudioPlayer } from "@/components/GlobalAudioPlayer";
 import { SessionProvider } from "@/context/SessionContext";
+import { BanProvider } from "@/context/BanContext";
 import { StatusBarProvider, useStatusBar } from "@/context/StatusBarContext";
 import { ThemeProvider, useThemeContext } from "@/context/ThemeContext";
 import { VideoPlayerProvider } from "@/context/VideoPlayerContext";
@@ -142,10 +143,6 @@ const RootContent = () => {
   const { appLockEnabled, setLocked, setLastBackgroundTime } = useAppLockStore();
 
   useEffect(() => {
-    SplashScreen.hideAsync();
-  }, []);
-
-  useEffect(() => {
     if (!appLockEnabled) return;
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
@@ -174,48 +171,50 @@ const RootContent = () => {
 
   return (
     <SessionProvider session={session} hasProfile={hasProfile}>
-      <View style={{ flex: 1, backgroundColor: colors.surface }}>
-        <StatusBar
-          key={`${theme}-${isShots}`}
-          animated={false}
-          translucent
-          backgroundColor="transparent"
-          barStyle={
-            isShots
-              ? "light-content"
-              : theme === "light"
-                ? "dark-content"
-                : "light-content"
-          }
-        />
-        <StatusBarFade />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="onboarding" />
-          <Stack.Screen name="video_player" />
-          <Stack.Screen name="profile/[id]" />
-          <Stack.Screen name="image_poster" />
-          <Stack.Screen name="settings" />
-          <Stack.Screen name="bookmarks" />
-          <Stack.Screen name="language-settings" />
-          <Stack.Screen name="security-settings" />
-          <Stack.Screen name="search" />
-          <Stack.Screen name="hashtag/[tag]" />
-          <Stack.Screen name="hashtag-list" />
-          <Stack.Screen name="create" />
-          <Stack.Screen name="inapp_browser" />
-          <Stack.Screen name="movie_detail" />
-          <Stack.Screen name="tv_detail" />
-          <Stack.Screen name="person_detail" />
-          <Stack.Screen name="movie_list" />
-          <Stack.Screen name="search_movies" />
-          <Stack.Screen name="webview" />
-          <Stack.Screen name="bulletinboard" />
-        </Stack>
-        <GlobalAudioPlayer />
-        <AppLockOverlay />
-      </View>
+      <BanProvider>
+        <View style={{ flex: 1, backgroundColor: colors.surface }}>
+          <StatusBar
+            key={`${theme}-${isShots}`}
+            animated={false}
+            translucent
+            backgroundColor="transparent"
+            barStyle={
+              isShots
+                ? "light-content"
+                : theme === "light"
+                  ? "dark-content"
+                  : "light-content"
+            }
+          />
+          <StatusBarFade />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="onboarding" />
+            <Stack.Screen name="video_player" />
+            <Stack.Screen name="profile/[id]" />
+            <Stack.Screen name="image_poster" />
+            <Stack.Screen name="settings" />
+            <Stack.Screen name="bookmarks" />
+            <Stack.Screen name="language-settings" />
+            <Stack.Screen name="security-settings" />
+            <Stack.Screen name="search" />
+            <Stack.Screen name="hashtag/[tag]" />
+            <Stack.Screen name="hashtag-list" />
+            <Stack.Screen name="create" />
+            <Stack.Screen name="inapp_browser" />
+            <Stack.Screen name="movie_detail" />
+            <Stack.Screen name="tv_detail" />
+            <Stack.Screen name="person_detail" />
+            <Stack.Screen name="movie_list" />
+            <Stack.Screen name="search_movies" />
+            <Stack.Screen name="webview" />
+            <Stack.Screen name="bulletinboard" />
+          </Stack>
+          <GlobalAudioPlayer />
+          <AppLockOverlay />
+        </View>
+      </BanProvider>
     </SessionProvider>
   );
 };

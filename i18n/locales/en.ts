@@ -1,5 +1,6 @@
 // ─── Add a new screen: create i18n/locales/en/<screenName>.ts then import it here ───
 
+import ban from './en/ban';
 import bookmarks from './en/bookmarks';
 import create from './en/create';
 import dashboard from './en/dashboard';
@@ -19,6 +20,7 @@ import themeSettings from './en/themeSettings';
 import wallpaperOverlay from './en/wallpaperOverlay';
 
 const en = {
+    ban,
     bookmarks,
     create,
     dashboard,
