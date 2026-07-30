@@ -1,6 +1,7 @@
 import type { PostOptionsSheetHandle } from "@/components/post/PostOptionsSheet";
 import type { LikersSheetHandle } from "@/types/sheetHandles";
 import type { BriefInfoSheetHandle } from "../components/profile/sheets/BriefInfoSheet";
+import type { TriviaSheetHandle } from "../components/profile/sheets/TriviaSheet";
 import { chosenMediaPath } from "@/utils/imageurl";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -181,6 +182,7 @@ export const useProfileViewModel = () => {
     const workplaceSheetRef = useRef<TrueSheet>(null);
     const familySheetRef = useRef<TrueSheet>(null);
     const briefSheetRef = useRef<BriefInfoSheetHandle>(null);
+    const triviaSheetRef = useRef<TriviaSheetHandle>(null);
     const bioSheetRef = useRef<TrueSheet>(null);
 
     // ─── Scroll Animation ──────────────────────────────────────────
@@ -475,6 +477,7 @@ export const useProfileViewModel = () => {
         workplaceSheetRef,
         familySheetRef,
         briefSheetRef,
+        triviaSheetRef,
         bioSheetRef,
         optionsSheetRef,
         likersSheetRef,

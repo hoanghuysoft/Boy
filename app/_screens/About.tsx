@@ -1,13 +1,13 @@
+import { CustomSurface } from "@/components/CustomSurface";
 import { FlexText } from "@/components/FlexText";
 import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import * as Application from 'expo-application';
+import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import * as Updates from 'expo-updates';
-import { CustomSurface } from "@/components/CustomSurface";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { Image as ExpoImage } from "expo-image";
+import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const AboutScreen = () => {
@@ -20,7 +20,6 @@ const AboutScreen = () => {
 
     return (
         <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1, backgroundColor: colors.background, padding: 16 }}>
-            <ExpoImage style={[StyleSheet.absoluteFill, { opacity: 1 }]} source={require('../../assets/images/gradient.png')} contentFit="cover" />
             <View style={{ position: 'absolute', top: inset.top + 16, left: 16, zIndex: 1000 }}>
                 <TouchableOpacity
                     onPress={() => router.back()}
@@ -36,7 +35,23 @@ const AboutScreen = () => {
                     <Ionicons name="chevron-back" size={24} color={colors.text} />
                 </TouchableOpacity>
             </View>
-            <ExpoImage source={require('../../assets/images/logo_head.png')} style={{ width: 100, height: 100, marginBottom: 16 }} contentFit="contain" />
+            <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 16, width: 100, height: 100 }}>
+                <ExpoImage
+                    style={{
+                        position: 'absolute',
+                        width: 260,
+                        height: 260,
+                        opacity: 0.7
+                    }}
+                    source={{ uri: 'https://static.vecteezy.com/system/resources/thumbnails/078/720/341/small/cyan-and-aqua-grainy-gradient-circle-png.png' }}
+                    contentFit="contain"
+                />
+                <ExpoImage
+                    source={require('../../assets/images/logo_head.png')}
+                    style={{ width: 100, height: 100 }}
+                    contentFit="contain"
+                />
+            </View>
             <FlexText style={[common.headline, { marginBottom: 48 }]}>Welcome to WeLove!</FlexText>
             <View style={{ gap: 3, width: '100%' }}>
                 <CustomSurface

@@ -49,6 +49,8 @@ const profile = {
             hobby: 'Hobby',
             talent: 'Talent',
             lovedOnes: 'Loved Ones',
+            employeeCard: 'Employee Card',
+            trivia: 'Trivia',
         },
     },
     empty: {
@@ -84,12 +86,19 @@ const profile = {
         actions: {
             addLove: 'Add love',
             knowMe: 'Know me',
+            viewEmployeeCard: 'View employee card',
         },
         cards: {
             facebookProfile: 'Facebook Profile',
         },
     },
     sheets: {
+        trivia: {
+            title: 'Trivia',
+            subtitleWithName: 'Trivia & fun facts about {{name}}',
+            subtitleDefault: 'Personal notes & fun facts',
+            noInformation: 'No trivia added yet',
+        },
         address: {
             title: 'Locations',
             subtitle: 'Tap an address to open Maps',

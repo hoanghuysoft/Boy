@@ -46,9 +46,10 @@ const profile = {
             username: '使用者名稱',
             licensePlate: '車牌',
             marriedDate: '結婚紀念日',
-            hobby: '興趣',
+            hobby: '愛好',
             talent: '特長',
             lovedOnes: '親友',
+            employeeCard: '員工卡',
         },
     },
     empty: {
@@ -84,12 +85,20 @@ const profile = {
         actions: {
             addLove: '新增心動',
             knowMe: '了解我',
+            viewEmployeeCard: '查看員工卡',
         },
         cards: {
             facebookProfile: 'Facebook 主頁',
         },
     },
     sheets: {
+        trivia: {
+            title: '趣聞',
+            subtitleWithName: '關於 {{name}} 的趣聞',
+            subtitleDefault: '個人筆記與趣聞',
+            noInformation: '暫無趣事筆記',
+        },
+
         address: {
             title: '地點',
             subtitle: '點擊地址以在地圖中開啟',

@@ -1,19 +1,17 @@
 import Magnifier from "@/assets/images/svg/search.svg";
 import { MovieDBView } from "@/components/tracker/MovieDBView";
-import MaskedView from "@react-native-masked-view/masked-view";
-import { BlurTargetView, BlurView } from "expo-blur";
+import { MINIMIZE_SPRING, useTabBarMinimized } from "expo-glass-tabs";
 import { Image as ExpoImage } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
 
 const MovieScreen = () => {
   const { colors, typography } = useThemeContext();
-  const blurTargetRef = useRef<View | null>(null);
   const common = createCommonStyles(colors, typography);
   const inset = useSafeAreaInsets();
   const [headerScrollX] = useState(() => new Animated.Value(0));
@@ -25,11 +23,36 @@ const MovieScreen = () => {
     extrapolate: "clamp",
   });
 
+  const minimizedProgress = useTabBarMinimized();
+  const minimizedTarget = useSharedValue(0);
+  const previousY = useRef(0);
+
+  useEffect(() => {
+    const id = scrollY.addListener(({ value }) => {
+      const y = Math.max(value, 0);
+      const dy = y - previousY.current;
+      previousY.current = y;
+
+      let nextTarget = minimizedTarget.value;
+      if (y < 24) {
+        nextTarget = 0;
+      } else if (dy > 3) {
+        nextTarget = 1;
+      } else if (dy < -3) {
+        nextTarget = 0;
+      }
+
+      if (minimizedTarget.value !== nextTarget) {
+        minimizedTarget.value = nextTarget;
+        minimizedProgress.value = withSpring(nextTarget, MINIMIZE_SPRING);
+      }
+    });
+    return () => scrollY.removeListener(id);
+  }, [scrollY]);
+
   return (
     <View style={[common.screen, { backgroundColor: "#000000" }]}>
-      <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
-        <MovieDBView headerScrollX={headerScrollX} scrollY={scrollY} />
-      </BlurTargetView>
+      <MovieDBView headerScrollX={headerScrollX} scrollY={scrollY} />
       <View
         style={{
           position: "absolute",
@@ -42,28 +65,10 @@ const MovieScreen = () => {
         <Animated.View
           style={{
             ...StyleSheet.absoluteFill,
+            backgroundColor: "#000000",
             opacity: headerBgOpacity,
-            overflow: "hidden",
           }}
-        >
-          <MaskedView
-            style={StyleSheet.absoluteFill}
-            maskElement={
-              <LinearGradient
-                colors={["black", "transparent"]}
-                style={StyleSheet.absoluteFill}
-              />
-            }
-          >
-            <BlurView
-              blurTarget={blurTargetRef}
-              intensity={80}
-              tint="systemThickMaterialDark"
-              blurMethod="dimezisBlurViewSdk31Plus"
-              style={StyleSheet.absoluteFill}
-            />
-          </MaskedView>
-        </Animated.View>
+        />
         <View
           style={{
             paddingTop: inset.top + 6,

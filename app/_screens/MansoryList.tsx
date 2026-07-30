@@ -23,6 +23,8 @@ import { Avatar } from "heroui-native/avatar";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useMinimizeOnScroll } from "expo-glass-tabs";
+import Animated from "react-native-reanimated";
 import {
     Dimensions,
     Image as RNImage,
@@ -31,6 +33,8 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const COLUMN_WIDTH = (SCREEN_WIDTH - 24) / 2;
@@ -159,6 +163,8 @@ const MansoryListScreen = () => {
             listRef.current.scrollToOffset({ offset: 0, animated: true });
         }
     }, [scrollTrigger]);
+
+    const onScroll = useMinimizeOnScroll();
 
     const insets = useSafeAreaInsets();
     const { colors, typography, theme } = useThemeContext();
@@ -424,8 +430,10 @@ const MansoryListScreen = () => {
                     thumbnail: { fit: "cover", videoMode: "static" },
                 }}
                 renderLayout={({ renderItem: renderMediaItem }) => (
-                    <FlashList
+                    <AnimatedFlashList
                         ref={listRef}
+                        onScroll={onScroll}
+                        scrollEventThrottle={16}
                         data={media}
                         keyExtractor={(item: any, index: number) => item.id + index.toString()}
                         getItemType={(item: any) => item.type}

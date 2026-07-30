@@ -49,6 +49,7 @@ const profile = {
             hobby: '爱好',
             talent: '特长',
             lovedOnes: '亲友',
+            employeeCard: '员工卡',
         },
     },
     empty: {
@@ -84,12 +85,20 @@ const profile = {
         actions: {
             addLove: '添加心动',
             knowMe: '了解我',
+            viewEmployeeCard: '查看员工卡',
         },
         cards: {
             facebookProfile: 'Facebook 主页',
         },
     },
     sheets: {
+        trivia: {
+            title: '趣闻',
+            subtitleWithName: '关于 {{name}} 的趣闻',
+            subtitleDefault: '个人笔记与趣闻',
+            noInformation: '暂无趣事笔记',
+        },
+
         address: {
             title: '地点',
             subtitle: '点击地址在地图中打开',

@@ -1,13 +1,13 @@
 import { FlexText } from "@/components/FlexText";
 import { useThemeContext } from "@/context/ThemeContext";
 import { createCommonStyles } from "@/styles/common";
+import { useLoginViewModel } from "@/viewmodels/LoginViewModel";
 import { Image } from "expo-image";
+import { useObserve } from "expo-observe";
 import { Spinner } from "heroui-native/spinner";
+import React from "react";
 import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useObserve } from "expo-observe";
-import React from "react";
-import { useLoginViewModel } from "@/viewmodels/LoginViewModel";
 
 const LoginScreen = () => {
     const { colors, typography } = useThemeContext();
@@ -23,12 +23,12 @@ const LoginScreen = () => {
 
     return (
         <SafeAreaView style={[style.container, { backgroundColor: colors.background }]}>
-            <Image source={require("../../assets/images/bg.jpg")} style={[StyleSheet.absoluteFill, { opacity: 0.8 }]} contentFit="cover" />
+            <Image source={require("../../assets/images/bg.png")} style={[StyleSheet.absoluteFill, { opacity: 0.8 }]} contentFit="cover" />
             <View style={{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
-                <View style={{ alignItems: "center" }}>
+                {/* <View style={{ alignItems: "center" }}>
                     <Image source={require("../../assets/images/logo_head.png")} contentFit="contain" style={{ width: 85, height: 85 }} />
                     <FlexText style={[common.headline, { color: 'white', fontWeight: "bold" }]}>WeLove</FlexText>
-                </View>
+                </View> */}
             </View>
             <View style={style.bottomButtonContainer}>
                 <FlexText style={[common.heading, { color: 'white', textAlign: "center", fontWeight: "bold" }]}>Login to your account</FlexText>

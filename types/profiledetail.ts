@@ -24,6 +24,7 @@ export interface ProfileDetail {
     hobby: string | null;
     talent: string | null;
     username: string | null;
+    trivia: string | null;
     metadata: string | null;
     is_confidential: boolean;
 }

@@ -1,17 +1,20 @@
+import { BorderBeam } from '@/border-beam-native/src';
 import { FlexText } from "@/components/FlexText";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { SearchHistoryPills } from "@/components/search/SearchHistoryPills";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
-import { SearchType, useTypedSearchInfinite, useSearchSuggestions } from "@/hooks/useMovies";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
+import { useThemeContext } from "@/context/ThemeContext";
+import { SearchType, useSearchSuggestions, useTypedSearchInfinite } from "@/hooks/useMovies";
 import {
   addSearchQueryToHistory,
   getSearchQueryHistory,
   removeSearchQueryFromHistory,
 } from "@/stores/searchQueryHistory";
+import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import { useRouter } from "expo-router";
-import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { Spinner } from "heroui-native/spinner";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -28,8 +31,6 @@ import {
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeContext } from "@/context/ThemeContext";
-import { createCommonStyles } from "@/styles/common";
 
 const SEARCH_BAR_HEIGHT = 58;
 
@@ -499,49 +500,58 @@ const SearchMoviesScreen = () => {
           </View>
         )}
 
-        <View style={[styles.searchBar, { backgroundColor: colors.surfaceContainerHighest }]}>
-          <TextInput
-            ref={inputRef}
-            style={[styles.searchInput, { color: colors.onSurface }]}
-            placeholder={
-              searchType === 'all'
-                ? "Search movies, TV shows, people..."
-                : searchType === 'movie'
-                ? "Search movies..."
-                : searchType === 'tv'
-                ? "Search TV shows..."
-                : "Search people..."
-            }
-            placeholderTextColor={colors.onSurfaceVariant}
-            value={searchText}
-            onChangeText={setSearchText}
-            onSubmitEditing={handleSubmitEditing}
-            onFocus={() => {
-              setIsFocused(true);
-              setRecentQueries(getSearchQueryHistory("movies"));
-            }}
-            onBlur={handleBlur}
-            returnKeyType="search"
-            autoCorrect={false}
-            autoCapitalize="none"
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <View
-                style={[
-                  styles.clearButtonInner,
-                  { backgroundColor: colors.onTertiaryContainer + "20" },
-                ]}
-              >
-                <Ionicons
-                  name="close"
-                  size={16}
-                  color={colors.onTertiaryContainer}
-                />
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* Search Bar */}
+        <BorderBeam size="line" colorVariant="colorful" theme="auto" borderRadius={28}>
+          <View style={[styles.searchBar, { backgroundColor: colors.surfaceContainerHighest }]}>
+            <Ionicons
+              name="search"
+              size={20}
+              color={colors.onSurfaceVariant}
+              style={{ marginLeft: 10, marginRight: 4 }}
+            />
+            <TextInput
+              ref={inputRef}
+              style={[styles.searchInput, { color: colors.onSurface }]}
+              placeholder={
+                searchType === 'all'
+                  ? "Search or ask anything..."
+                  : searchType === 'movie'
+                    ? "Search or ask about movies..."
+                    : searchType === 'tv'
+                      ? "Search or ask about TV shows..."
+                      : "Search or ask about people..."
+              }
+              placeholderTextColor={colors.onSurfaceVariant}
+              value={searchText}
+              onChangeText={setSearchText}
+              onSubmitEditing={handleSubmitEditing}
+              onFocus={() => {
+                setIsFocused(true);
+                setRecentQueries(getSearchQueryHistory("movies"));
+              }}
+              onBlur={handleBlur}
+              returnKeyType="search"
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
+            {searchText.length > 0 && (
+              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                <View
+                  style={[
+                    styles.clearButtonInner,
+                    { backgroundColor: colors.onTertiaryContainer + "20" },
+                  ]}
+                >
+                  <Ionicons
+                    name="close"
+                    size={16}
+                    color={colors.onTertiaryContainer}
+                  />
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+        </BorderBeam>
 
         {isError && submittedQuery && (
           <View style={{ marginTop: 8 }}>

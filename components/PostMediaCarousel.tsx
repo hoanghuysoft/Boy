@@ -11,7 +11,7 @@ import { buildFallbackUrls, chosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Dimensions, Platform, Pressable as RNPressable, Text, View, ViewabilityConfig, ViewToken } from "react-native";
+import { ActivityIndicator, Dimensions, PixelRatio, Platform, Pressable as RNPressable, Text, View, ViewabilityConfig, ViewToken } from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
@@ -78,6 +78,9 @@ const VideoCarouselItem = React.memo(({
         () => resolveBlurhash(item.blurhash, item.id),
         [item.blurhash, item.id],
     );
+
+    const targetWidth = useMemo(() => Math.round(screenWidth * PixelRatio.get()), [screenWidth]);
+    const targetHeight = useMemo(() => Math.round(mediaHeight * PixelRatio.get()), [mediaHeight]);
 
     const handleThumbnailError = useCallback(() => {
         setPrev(p => (p < fallbackUrls.length - 1 ? p + 1 : p));
@@ -167,7 +170,11 @@ const VideoCarouselItem = React.memo(({
                     })
                 }}>
                     <ExpoImage
-                        source={{ uri: fallbackUrls[prev] }}
+                        source={{
+                            uri: fallbackUrls[prev],
+                            width: targetWidth,
+                            height: targetHeight,
+                        }}
                         recyclingKey={fallbackUrls[prev]}
                         style={{ width: screenWidth, height: mediaHeight }}
                         contentFit="cover"
@@ -309,6 +316,14 @@ const PhotoCarouselItem = React.memo(({
     screenWidth,
     onPress,
 }: PhotoCarouselItemProps) => {
+    const imageUri = chosenMediaPath(item);
+    const targetWidth = useMemo(() => Math.round(screenWidth * PixelRatio.get()), [screenWidth]);
+    const targetHeight = useMemo(() => Math.round(mediaHeight * PixelRatio.get()), [mediaHeight]);
+    const placeholderBlurhash = useMemo(
+        () => resolveBlurhash(item.blurhash, item.id),
+        [item.blurhash, item.id],
+    );
+
     return (
         <View style={{ width: screenWidth }}>
             <Pressable android_ripple={{ color: colors.divider, foreground: true }} onPress={onPress}>
@@ -319,10 +334,16 @@ const PhotoCarouselItem = React.memo(({
                     overflow: 'hidden',
                 }}>
                     <ExpoImage
-                        source={{ uri: chosenMediaPath(item) }}
-                        recyclingKey={chosenMediaPath(item)}
+                        source={{
+                            uri: imageUri,
+                            width: targetWidth,
+                            height: targetHeight,
+                        }}
+                        recyclingKey={imageUri}
                         contentFit="cover"
                         style={{ width: '100%', height: '100%' }}
+                        placeholder={{ blurhash: placeholderBlurhash }}
+                        cachePolicy="memory-disk"
                     />
                 </View>
             </Pressable>

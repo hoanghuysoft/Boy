@@ -2,8 +2,8 @@ import { FlexText } from '@/components/FlexText';
 import { useThemeContext } from '@/context/ThemeContext';
 import { useProfile, useUpdateProfile } from '@/services/userprofile';
 import { createCommonStyles } from '@/styles/common';
+import { formatToServerDate, parseServerDate } from '@/utils/date';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
-import { parseServerDate, formatToServerDate } from '@/utils/date';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from 'dayjs';
 import { Image as ExpoImage } from 'expo-image';
@@ -90,13 +90,13 @@ const FormInput = ({
                     backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                     borderColor: error ? '#ff4444' : 'transparent',
                     borderWidth: error ? 1 : 0,
-                    height: height ?? (multiline ? 90 : 48),
+                    height: height ?? (multiline ? 150 : 48),
                     borderRadius: multiline ? 16 : 999,
                     alignItems: multiline ? 'flex-start' : 'center',
-                    paddingVertical: multiline ? 12 : 0,
+                    paddingVertical: multiline ? 14 : 0,
                 }
             ]}>
-                <Ionicons name={icon as any} size={18} color={colors.muted} style={multiline ? { marginTop: 2 } : undefined} />
+                {icon !== "" ? <Ionicons name={icon as any} size={18} color={colors.muted} style={multiline ? { marginTop: 4 } : undefined} /> : null}
                 <TextInput
                     value={value}
                     onChangeText={onChangeText}
@@ -110,6 +110,8 @@ const FormInput = ({
                             color: colors.text,
                             textAlignVertical: multiline ? 'top' : 'center',
                             height: '100%',
+                            fontSize: 15,
+                            lineHeight: multiline ? 22 : undefined,
                         }
                     ]}
                     autoCorrect={false}
@@ -424,6 +426,14 @@ const MediaTab = () => {
                 placeholder="https://domain.com/emoji.png"
                 keyboardType="url"
             />
+            <FormInput
+                label="Employee Card URL"
+                icon="card-outline"
+                value={formData.metadata?.employee_card || ''}
+                onChangeText={(v) => setField('metadata.employee_card', v)}
+                placeholder="https://welove.com/employee-card.jpg"
+                keyboardType="url"
+            />
         </KeyboardAwareScrollView>
     );
 };
@@ -434,12 +444,21 @@ const AboutTab = () => {
         <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             <FormInput
                 label="Bio"
-                icon="document-text-outline"
+                icon=""
                 value={formData.bio || ''}
                 onChangeText={(v) => setField('bio', v)}
                 placeholder="Tell others about yourself..."
                 multiline
-                height={100}
+                height={150}
+            />
+            <FormInput
+                label="Trivia"
+                icon=""
+                value={formData.trivia || ''}
+                onChangeText={(v) => setField('trivia', v)}
+                placeholder="Personal notes to show to the world..."
+                multiline
+                height={150}
             />
             <FormInput
                 label="College"
@@ -532,91 +551,48 @@ const DetailsTab = () => {
     );
 };
 
-const FacebookAdminTab = () => {
+const AdminSystemTab = () => {
     const { formData, setField, isAdmin, colors } = useForm();
+    if (!isAdmin) return null;
     return (
         <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
-            <FlexText style={{ fontWeight: '600', fontSize: 16, marginBottom: 12, color: colors.text }}>Facebook Profile Urls</FlexText>
-            <FormInput
-                label="Highlight Reel URL"
-                icon="logo-facebook"
-                value={formData.metadata?.facebook?.highlight || ''}
-                onChangeText={(v) => setField('metadata.facebook.highlight', v)}
-                placeholder="Facebook Highlight URL"
-                keyboardType="url"
-            />
-            <FormInput
-                label="Posts Feed URL"
-                icon="logo-facebook"
-                value={formData.metadata?.facebook?.posts || ''}
-                onChangeText={(v) => setField('metadata.facebook.posts', v)}
-                placeholder="Facebook Posts Feed URL"
-                keyboardType="url"
-            />
-            <FormInput
-                label="Photos Album URL"
-                icon="logo-facebook"
-                value={formData.metadata?.facebook?.photos || ''}
-                onChangeText={(v) => setField('metadata.facebook.photos', v)}
-                placeholder="Facebook Photos URL"
-                keyboardType="url"
-            />
-            <FormInput
-                label="Videos Feed URL"
-                icon="logo-facebook"
-                value={formData.metadata?.facebook?.videos || ''}
-                onChangeText={(v) => setField('metadata.facebook.videos', v)}
-                placeholder="Facebook Videos URL"
-                keyboardType="url"
-            />
-            <FormInput
-                label="Joined Groups URL"
-                icon="logo-facebook"
-                value={formData.metadata?.facebook?.joined_groups || ''}
-                onChangeText={(v) => setField('metadata.facebook.joined_groups', v)}
-                placeholder="Facebook Groups URL"
-                keyboardType="url"
-            />
+            <View style={{ paddingTop: 8 }}>
+                <FlexText style={{ fontWeight: '700', fontSize: 16, color: '#ff4444', marginBottom: 4 }}>Admin System Overrides</FlexText>
+                <FlexText style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>These privileges are restricted to system administrators.</FlexText>
 
-            {isAdmin && (
-                <View style={{ marginTop: 24, borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: 16 }}>
-                    <FlexText style={{ fontWeight: '700', fontSize: 16, color: '#ff4444', marginBottom: 4 }}>Admin System Overrides</FlexText>
-                    <FlexText style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>These privileges are restricted to system administrators.</FlexText>
-
-                    <View style={[formStyles.toggleRow, { borderBottomColor: colors.divider }]}>
-                        <View style={{ flex: 1 }}>
-                            <FlexText style={{ fontWeight: '600', color: colors.text }}>Verified Badge</FlexText>
-                            <FlexText style={{ fontSize: 12, color: colors.muted }}>Display verified check badge on profile</FlexText>
-                        </View>
-                        <Switch
-                            isSelected={!!formData.is_verified}
-                            onSelectedChange={(checked: boolean) => setField('is_verified', checked)}
-                        />
+                <View style={[formStyles.toggleRow, { borderBottomColor: colors.divider }]}>
+                    <View style={{ flex: 1 }}>
+                        <FlexText style={{ fontWeight: '600', color: colors.text }}>Verified Badge</FlexText>
+                        <FlexText style={{ fontSize: 12, color: colors.muted }}>Display verified check badge on profile</FlexText>
                     </View>
-
-                    <View style={[formStyles.toggleRow, { borderBottomColor: colors.divider }]}>
-                        <View style={{ flex: 1 }}>
-                            <FlexText style={{ fontWeight: '600', color: colors.text }}>System Administrator</FlexText>
-                            <FlexText style={{ fontSize: 12, color: colors.muted }}>Grant full dashboard and edit access</FlexText>
-                        </View>
-                        <Switch
-                            isSelected={!!formData.is_admin}
-                            onSelectedChange={(checked: boolean) => setField('is_admin', checked)}
-                        />
-                    </View>
-
-                    <View style={[formStyles.toggleRow, { borderBottomColor: colors.divider }]}>
-                        <View style={{ flex: 1 }}>
-                            <FlexText style={{ fontWeight: '600', color: colors.text }}>Confidential Profile</FlexText>
-                            <FlexText style={{ fontSize: 12, color: colors.muted }}>Hide profile from lookups & listing pages</FlexText>
-                        </View>
-                        <Switch
-                            isSelected={!!formData.is_confidential}
-                            onSelectedChange={(checked: boolean) => setField('is_confidential', checked)}
-                        />
-                    </View>
+                    <Switch
+                        isSelected={!!formData.is_verified}
+                        onSelectedChange={(checked: boolean) => setField('is_verified', checked)}
+                    />
                 </View>
-            )}
+
+                <View style={[formStyles.toggleRow, { borderBottomColor: colors.divider }]}>
+                    <View style={{ flex: 1 }}>
+                        <FlexText style={{ fontWeight: '600', color: colors.text }}>System Administrator</FlexText>
+                        <FlexText style={{ fontSize: 12, color: colors.muted }}>Grant full dashboard and edit access</FlexText>
+                    </View>
+                    <Switch
+                        isSelected={!!formData.is_admin}
+                        onSelectedChange={(checked: boolean) => setField('is_admin', checked)}
+                    />
+                </View>
+
+                <View style={[formStyles.toggleRow, { borderBottomColor: colors.divider }]}>
+                    <View style={{ flex: 1 }}>
+                        <FlexText style={{ fontWeight: '600', color: colors.text }}>Confidential Profile</FlexText>
+                        <FlexText style={{ fontSize: 12, color: colors.muted }}>Hide profile from lookups & listing pages</FlexText>
+                    </View>
+                    <Switch
+                        isSelected={!!formData.is_confidential}
+                        onSelectedChange={(checked: boolean) => setField('is_confidential', checked)}
+                    />
+                </View>
+            </View>
         </KeyboardAwareScrollView>
     );
 };
@@ -651,6 +627,7 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
             height: '',
             weight: '',
             threed_emoji: '',
+            employee_card: '',
             banking: {},
             facebook: {
                 highlight: '',
@@ -679,6 +656,7 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
             avatar_url: targetProfile.avatar_url || '',
             cover_url: targetProfile.cover_url || '',
             bio: targetProfile.bio || '',
+            trivia: targetProfile.trivia || '',
             college: targetProfile.college || '',
             highschool: targetProfile.highschool || '',
             hometown: targetProfile.hometown || '',
@@ -866,7 +844,7 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
                     <Tab.Screen name="Media" component={MediaTab} />
                     <Tab.Screen name="About" component={AboutTab} />
                     <Tab.Screen name="Physical" component={DetailsTab} options={{ tabBarLabel: 'Physical' }} />
-                    <Tab.Screen name="Facebook" component={FacebookAdminTab} options={{ tabBarLabel: isAdmin ? 'System / FB' : 'Facebook' }} />
+                    {isAdmin && <Tab.Screen name="System" component={AdminSystemTab} options={{ tabBarLabel: 'System' }} />}
                 </Tab.Navigator>
             </View>
         </FormContext.Provider>

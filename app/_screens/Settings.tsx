@@ -10,6 +10,7 @@ import { CustomSurface } from "@/components/CustomSurface";
 import { useAppLockStore } from "@/stores/appLock";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Href, router } from "expo-router";
@@ -20,7 +21,7 @@ import { Input } from "heroui-native/input";
 import { Select } from "heroui-native/select";
 import { Spinner } from "heroui-native/spinner";
 import { TextField } from "heroui-native/text-field";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Easing, Keyboard, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
@@ -29,6 +30,20 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 
 
+
+interface SettingItem {
+    id: string;
+    title: string;
+    description?: string;
+    keywords?: string[];
+    render: (index: number, total: number) => React.ReactNode;
+}
+
+interface SettingSection {
+    id: string;
+    title: string;
+    items: SettingItem[];
+}
 
 const SettingsScreen = () => {
     const { colors, themePreference, typography } = useThemeContext();
@@ -51,6 +66,7 @@ const SettingsScreen = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [isFocused, setIsFocused] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const thirdPartySheetRef = useRef<TrueSheet>(null);
 
     // ─── Cache state ────────────────────────────────────────────
     const [cacheSize, setCacheSize] = useState(0);
@@ -140,30 +156,20 @@ const SettingsScreen = () => {
         extraColorStopsPerTransition: 16,
     });
 
-    return (
-        <View style={common.screen}>
-            <View style={{ position: 'absolute', top: inset.top + 16, left: 16, zIndex: 1000 }}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={{
-                        backgroundColor: colors.surfaceContainerHigh,
-                        borderRadius: 999,
-                        width: 40,
-                        height: 40,
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}
-                >
-                    <Ionicons name='chevron-back' size={24} color={colors.onSurface} />
-                </TouchableOpacity>
-            </View>
-            <KeyboardAvoidingView behavior="padding">
-                <ScrollView style={common.screenPadding}>
-                    <View style={{ marginTop: inset.top + 66 }}></View>
-                    <FlexText style={[styles.title]}>{t('settings.accountAndSecurity')}</FlexText>
-                    <View style={{ gap: 3 }}>
+    const sections = useMemo<SettingSection[]>(() => [
+        {
+            id: 'accountAndSecurity',
+            title: t('settings.accountAndSecurity'),
+            items: [
+                {
+                    id: 'security',
+                    title: t('settings.security'),
+                    description: appLockEnabled ? t('settings.securityEnabled') : t('settings.securityDisabled'),
+                    keywords: ['security', 'app lock', 'password', 'pin', 'lock', 'bảo mật', 'mật khẩu', 'khóa'],
+                    render: (index: number, total: number) => (
                         <CustomSurface
-                            position="single"
+                            index={index}
+                            total={total}
                             onPress={() => router.push('/security-settings')}
                             style={styles.option}
                         >
@@ -175,12 +181,23 @@ const SettingsScreen = () => {
                             </View>
                             <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
                         </CustomSurface>
-                    </View>
-
-                    <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.preferences')}</FlexText>
-                    <View style={{ gap: 3 }}>
+                    ),
+                },
+            ],
+        },
+        {
+            id: 'preferences',
+            title: t('settings.preferences'),
+            items: [
+                {
+                    id: 'theme',
+                    title: t('settings.theme'),
+                    description: themePreferenceLabels[themePreference],
+                    keywords: ['theme', 'dark', 'light', 'system', 'adaptive', 'material', 'appearance', 'mode', 'giao diện', 'tối', 'sáng'],
+                    render: (index: number, total: number) => (
                         <CustomSurface
-                            isFirst
+                            index={index}
+                            total={total}
                             onPress={() => router.push('/theme-settings')}
                             style={styles.option}
                         >
@@ -190,8 +207,17 @@ const SettingsScreen = () => {
                             </View>
                             <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
                         </CustomSurface>
+                    ),
+                },
+                {
+                    id: 'language',
+                    title: t('settings.language'),
+                    description: languageMode === 'auto' ? t('settings.languageAuto') : LANGUAGE_LABELS[language],
+                    keywords: ['language', 'locale', 'english', 'vietnamese', 'chinese', 'translate', 'ngôn ngữ', 'dịch'],
+                    render: (index: number, total: number) => (
                         <CustomSurface
-                            position="middle"
+                            index={index}
+                            total={total}
                             onPress={() => router.push('/language-settings' as Href)}
                             style={styles.option}
                         >
@@ -203,20 +229,15 @@ const SettingsScreen = () => {
                             </View>
                             <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
                         </CustomSurface>
-                        <CustomSurface position="middle" style={styles.option}>
-                            <ControlField
-                                isSelected={makeBottomBarCurve}
-                                onSelectedChange={toggleMakeBottomBarCurve}
-                                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-                            >
-                                <View style={{ flex: 1 }}>
-                                    <FlexText style={common.body}>{t('settings.curveBottomBar')}</FlexText>
-                                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>{makeBottomBarCurve ? t('settings.adultFilterOn') : t('settings.adultFilterOff')}</FlexText>
-                                </View>
-                                <ControlField.Indicator />
-                            </ControlField>
-                        </CustomSurface>
-                        <CustomSurface position="middle" style={styles.option}>
+                    ),
+                },
+                {
+                    id: 'adultFilter',
+                    title: t('settings.adultFilter'),
+                    description: showSensitiveContent ? t('settings.adultFilterOff') : t('settings.adultFilterOn'),
+                    keywords: ['adult', 'sensitive', 'filter', 'nsfw', '18+', 'nhạy cảm', 'lọc nội dung'],
+                    render: (index: number, total: number) => (
+                        <CustomSurface index={index} total={total} style={styles.option}>
                             <ControlField
                                 isSelected={!showSensitiveContent}
                                 onSelectedChange={toggleShowSensitiveContent}
@@ -229,7 +250,15 @@ const SettingsScreen = () => {
                                 <ControlField.Indicator />
                             </ControlField>
                         </CustomSurface>
-                        <CustomSurface position="middle" style={styles.option}>
+                    ),
+                },
+                {
+                    id: 'homeCarousel',
+                    title: t('settings.homeCarousel'),
+                    description: t('settings.homeCarouselDescription'),
+                    keywords: ['carousel', 'home', 'banner', 'slider', 'trang chủ', 'trình chiếu'],
+                    render: (index: number, total: number) => (
+                        <CustomSurface index={index} total={total} style={styles.option}>
                             <ControlField
                                 isSelected={showCarousel}
                                 onSelectedChange={toggleCarousel}
@@ -242,7 +271,15 @@ const SettingsScreen = () => {
                                 <ControlField.Indicator />
                             </ControlField>
                         </CustomSurface>
-                        <CustomSurface isLast style={styles.option}>
+                    ),
+                },
+                {
+                    id: 'autoplay',
+                    title: t('settings.autoplay'),
+                    description: t('settings.autoplayDescription'),
+                    keywords: ['autoplay', 'video', 'play', 'auto', 'tự động phát'],
+                    render: (index: number, total: number) => (
+                        <CustomSurface index={index} total={total} style={styles.option}>
                             <ControlField
                                 isSelected={!disableAutoplay}
                                 onSelectedChange={toggleDisableAutoplay}
@@ -255,64 +292,49 @@ const SettingsScreen = () => {
                                 <ControlField.Indicator />
                             </ControlField>
                         </CustomSurface>
-                    </View>
-
-                    {/* ─── Third-Party Storage ────────────────────────────────── */}
-                    <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.thirdPartyStorage', 'Third-Party Cloud')}</FlexText>
-                    <View style={{ gap: 3 }}>
-                        {/* ImgBB API Key Input */}
-                        <CustomSurface isFirst>
-                            <TextField>
-                                <FlexText style={[common.body, { marginBottom: 8 }]}>ImgBB API Key</FlexText>
-                                <Input value={imgbbApiKey}
-                                    onChangeText={setImgbbApiKey}
-                                    variant="secondary"
-                                    placeholder="Enter ImgBB API Key"
-                                    placeholderTextColor={colors.onSurfaceVariant}
-                                    secureTextEntry
-                                    style={{
-                                        backgroundColor: colors.surfaceContainerHighest,
-                                        color: colors.onSurfaceVariant,
-                                        fontSize: 14,
-                                        paddingHorizontal: 16,
-                                    }}
-                                />
-                            </TextField>
-                            <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: 6 }]}>
-                                Required for image uploads.
-                            </FlexText>
+                    ),
+                },
+            ],
+        },
+        {
+            id: 'thirdPartyStorage',
+            title: t('settings.thirdPartyStorage', 'Third-Party Cloud'),
+            items: [
+                {
+                    id: 'thirdPartyCloud',
+                    title: t('settings.thirdPartyStorage', 'Third-Party Cloud'),
+                    description: imgbbApiKey || x02ApiKey ? t('settings.configured', 'Configured') : t('settings.notConfigured', 'ImgBB & x02.me API Keys'),
+                    keywords: ['third party', 'cloud', 'imgbb', 'x02', 'api key', 'storage', 'upload', 'image', 'video', 'lưu trữ', 'đám mây'],
+                    render: (index: number, total: number) => (
+                        <CustomSurface
+                            index={index}
+                            total={total}
+                            onPress={() => thirdPartySheetRef.current?.present()}
+                            style={styles.option}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <FlexText style={[common.body]}>{t('settings.thirdPartyStorage', 'Third-Party Cloud')}</FlexText>
+                                <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant }]}>
+                                    {imgbbApiKey || x02ApiKey ? t('settings.configured', 'Configured') : t('settings.notConfigured', 'ImgBB & x02.me API Keys')}
+                                </FlexText>
+                            </View>
+                            <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
                         </CustomSurface>
-
-                        {/* x02.me API Key Input */}
-                        <CustomSurface isLast>
-                            <TextField>
-                                <FlexText style={[common.body, { marginBottom: 8 }]}>x02.me API Key (Optional)</FlexText>
-                                <Input
-                                    value={x02ApiKey}
-                                    onChangeText={setX02ApiKey}
-                                    variant="secondary"
-                                    placeholder="Enter x02.me API Key"
-                                    placeholderTextColor={colors.onSurfaceVariant}
-                                    secureTextEntry
-                                    style={{
-                                        backgroundColor: colors.surfaceContainerHighest,
-                                        color: colors.onSurface,
-                                        fontSize: 14,
-                                        paddingHorizontal: 16,
-                                    }}
-                                />
-                            </TextField>
-                            <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: 6 }]}>
-                                Optional for video uploads. Used for file deletion hooks.
-                            </FlexText>
-                        </CustomSurface>
-                    </View>
-
-                    {/* ─── Storage & Cache ──────────────────────────────────── */}
-                    <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.storageCache')}</FlexText>
-                    <View style={{ gap: 3 }}>
-                        {/* Cache usage bar */}
-                        <CustomSurface isFirst>
+                    ),
+                },
+            ],
+        },
+        {
+            id: 'storageCache',
+            title: t('settings.storageCache'),
+            items: [
+                {
+                    id: 'videoCacheInfo',
+                    title: t('settings.videoCache'),
+                    description: `${formatBytes(cacheSize)} / ${currentLimitLabel}`,
+                    keywords: ['cache', 'video', 'storage', 'bytes', 'size', 'usage', 'bộ nhớ đệm'],
+                    render: (index: number, total: number) => (
+                        <CustomSurface index={index} total={total}>
                             <View style={styles.cacheInfoRow}>
                                 <FlexText style={[common.body]}>{t('settings.videoCache')}</FlexText>
                                 <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant }]}>
@@ -334,9 +356,15 @@ const SettingsScreen = () => {
                                 />
                             </View>
                         </CustomSurface>
-
-                        {/* Cache size limit picker */}
-                        <CustomSurface position="middle" style={{ padding: 0 }}>
+                    ),
+                },
+                {
+                    id: 'maxCacheSize',
+                    title: t('settings.maxCacheSize'),
+                    description: currentLimitLabel,
+                    keywords: ['max cache', 'size limit', 'storage limit', 'giới hạn bộ nhớ'],
+                    render: (index: number, total: number) => (
+                        <CustomSurface index={index} total={total} style={{ padding: 0 }}>
                             <Select
                                 value={{ value: videoCacheSizeLimit.toString(), label: currentLimitLabel }}
                                 onValueChange={(opt: any) => handleSetCacheLimit(Number(opt.value))}
@@ -361,10 +389,16 @@ const SettingsScreen = () => {
                                 </Select.Portal>
                             </Select>
                         </CustomSurface>
-
-                        {/* Clear cache button */}
+                    ),
+                },
+                {
+                    id: 'clearCache',
+                    title: isClearing ? t('settings.clearCacheClearing') : t('settings.clearCacheIdle'),
+                    keywords: ['clear cache', 'clean', 'delete', 'remove cache', 'xóa bộ nhớ đệm'],
+                    render: (index: number, total: number) => (
                         <CustomSurface
-                            isLast
+                            index={index}
+                            total={total}
                             onPress={cacheSize === 0 ? undefined : handleClearCache}
                             style={styles.option}
                         >
@@ -373,26 +407,48 @@ const SettingsScreen = () => {
                             </FlexText>
                             {isClearing && <Spinner size="md" color={colors.onSurfaceVariant} />}
                         </CustomSurface>
-                    </View>
-
-
-                    <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.about')}</FlexText>
-                    <CustomSurface
-                        position="single"
-                        onPress={() => router.push('/about' as any)}
-                        style={styles.option}
-                    >
-                        <View>
-                            <FlexText style={[common.body]}>{t('settings.aboutApp')}</FlexText>
-                            <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant }]}>{t('settings.aboutAppDescription')}</FlexText>
-                        </View>
-                        <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
-                    </CustomSurface>
-
-                    <FlexText style={[styles.title, { marginTop: 24 }]}>{t('settings.account')}</FlexText>
-                    <View style={{ gap: 3 }}>
+                    ),
+                },
+            ],
+        },
+        {
+            id: 'about',
+            title: t('settings.about'),
+            items: [
+                {
+                    id: 'aboutApp',
+                    title: t('settings.aboutApp'),
+                    description: t('settings.aboutAppDescription'),
+                    keywords: ['about', 'app', 'version', 'info', 'runtime', 'giới thiệu', 'phiên bản'],
+                    render: (index: number, total: number) => (
                         <CustomSurface
-                            position="single"
+                            index={index}
+                            total={total}
+                            onPress={() => router.push('/about' as any)}
+                            style={styles.option}
+                        >
+                            <View>
+                                <FlexText style={[common.body]}>{t('settings.aboutApp')}</FlexText>
+                                <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant }]}>{t('settings.aboutAppDescription')}</FlexText>
+                            </View>
+                            <Ionicons name="chevron-forward" size={24} color={colors.onSurface} />
+                        </CustomSurface>
+                    ),
+                },
+            ],
+        },
+        {
+            id: 'account',
+            title: t('settings.account'),
+            items: [
+                {
+                    id: 'logout',
+                    title: t('settings.logout'),
+                    keywords: ['logout', 'sign out', 'exit', 'account', 'đăng xuất', 'tài khoản'],
+                    render: (index: number, total: number) => (
+                        <CustomSurface
+                            index={index}
+                            total={total}
                             onPress={async () => {
                                 try {
                                     setIsLoggingOut(true);
@@ -411,7 +467,82 @@ const SettingsScreen = () => {
                             <FlexText style={[common.body, { color: colors.onSurface }]}>{t('settings.logout')}</FlexText>
                             <Logout width={24} height={24} color={colors.onSurface} />
                         </CustomSurface>
-                    </View>
+                    ),
+                },
+            ],
+        },
+    ], [
+        t, appLockEnabled, themePreferenceLabels, themePreference, languageMode, language,
+        showSensitiveContent, toggleShowSensitiveContent, showCarousel, toggleCarousel,
+        disableAutoplay, toggleDisableAutoplay, imgbbApiKey, x02ApiKey, cacheSize,
+        currentLimitLabel, cacheCount, cacheUsagePercent, videoCacheSizeLimit,
+        handleSetCacheLimit, isClearing, handleClearCache
+    ]);
+
+    const filteredSections = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return sections;
+
+        return sections
+            .map((section) => {
+                const sectionTitleMatches = section.title.toLowerCase().includes(query);
+                const matchingItems = section.items.filter((item) => {
+                    if (sectionTitleMatches) return true;
+                    const titleMatch = item.title.toLowerCase().includes(query);
+                    const descMatch = item.description?.toLowerCase().includes(query);
+                    const keywordMatch = item.keywords?.some((k) => k.toLowerCase().includes(query));
+                    return titleMatch || descMatch || keywordMatch;
+                });
+
+                return {
+                    ...section,
+                    items: matchingItems,
+                };
+            })
+            .filter((section) => section.items.length > 0);
+    }, [sections, searchQuery]);
+
+    return (
+        <View style={common.screen}>
+            <View style={{ position: 'absolute', top: inset.top + 16, left: 16, zIndex: 1000 }}>
+                <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={{
+                        backgroundColor: colors.surfaceContainerHigh,
+                        borderRadius: 999,
+                        width: 40,
+                        height: 40,
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}
+                >
+                    <Ionicons name='chevron-back' size={24} color={colors.onSurface} />
+                </TouchableOpacity>
+            </View>
+            <KeyboardAvoidingView behavior="padding">
+                <ScrollView style={common.screenPadding}>
+                    <View style={{ marginTop: inset.top + 66 }}></View>
+                    {filteredSections.map((section, sIndex) => (
+                        <View key={section.id} style={{ marginTop: sIndex === 0 ? 0 : 24 }}>
+                            <FlexText style={[styles.title]}>{section.title}</FlexText>
+                            <View style={{ gap: 3 }}>
+                                {section.items.map((item, iIndex) => (
+                                    <React.Fragment key={item.id}>
+                                        {item.render(iIndex, section.items.length)}
+                                    </React.Fragment>
+                                ))}
+                            </View>
+                        </View>
+                    ))}
+
+                    {filteredSections.length === 0 && (
+                        <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 12 }}>
+                            <Ionicons name="search-outline" size={48} color={colors.onSurfaceVariant} />
+                            <FlexText style={[common.body, { color: colors.onSurfaceVariant, textAlign: 'center' }]}>
+                                {t('settings.noResults', 'No settings found matching "{{query}}"', { query: searchQuery })}
+                            </FlexText>
+                        </View>
+                    )}
 
                     {/* ─── Logging Out Modal ─────────────────────────────────── */}
                     <Modal
@@ -507,8 +638,86 @@ const SettingsScreen = () => {
                             <FlexText style={[common.body, { color: colors.onSurfaceVariant, marginLeft: 6 }]}>{t('settings.search')}</FlexText>
                         </View>
                     )}
+                    {!!searchQuery && (
+                        <TouchableOpacity
+                            onPress={() => setSearchQuery("")}
+                            style={{ position: 'absolute', right: 16, height: 48, justifyContent: 'center' }}
+                        >
+                            <Ionicons name="close-circle" size={20} color={colors.onSurfaceVariant} />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
+
+            {/* Third-Party Cloud Bottom Sheet */}
+            <TrueSheet
+                ref={thirdPartySheetRef}
+                name="third-party-cloud-sheet"
+                detents={['auto']}
+                backgroundColor={colors.surfaceContainer}
+                grabberOptions={{
+                    color: colors.onSurfaceVariant || "#C4C4C4",
+                    height: 5,
+                    width: 40,
+                }}
+                cornerRadius={32}
+            >
+                <View style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: inset.bottom + 24, gap: 16 }}>
+                    <FlexText style={[common.title]}>{t('settings.thirdPartyStorage', 'Third-Party Cloud')}</FlexText>
+
+                    {/* ImgBB API Key Input */}
+                    <TextField>
+                        <FlexText style={[common.body, { marginBottom: 8 }]}>ImgBB API Key</FlexText>
+                        <Input
+                            value={imgbbApiKey}
+                            onChangeText={setImgbbApiKey}
+                            variant="secondary"
+                            placeholder="Enter ImgBB API Key"
+                            placeholderTextColor={colors.onSurfaceVariant}
+                            secureTextEntry
+                            style={{
+                                backgroundColor: colors.surfaceContainerHighest,
+                                color: colors.onSurface,
+                                fontSize: 14,
+                                paddingHorizontal: 16,
+                            }}
+                        />
+                    </TextField>
+                    <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: -8 }]}>
+                        Required for image uploads.
+                    </FlexText>
+
+                    {/* x02.me API Key Input */}
+                    <TextField>
+                        <FlexText style={[common.body, { marginBottom: 8 }]}>x02.me API Key (Optional)</FlexText>
+                        <Input
+                            value={x02ApiKey}
+                            onChangeText={setX02ApiKey}
+                            variant="secondary"
+                            placeholder="Enter x02.me API Key"
+                            placeholderTextColor={colors.onSurfaceVariant}
+                            secureTextEntry
+                            style={{
+                                backgroundColor: colors.surfaceContainerHighest,
+                                color: colors.onSurface,
+                                fontSize: 14,
+                                paddingHorizontal: 16,
+                            }}
+                        />
+                    </TextField>
+                    <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: -8 }]}>
+                        Optional for video uploads. Used for file deletion hooks.
+                    </FlexText>
+
+                    <Button
+                        variant="primary"
+                        onPress={() => thirdPartySheetRef.current?.dismiss()}
+                        style={{ marginTop: 8 }}
+                    >
+                        {t('settings.done', 'Done')}
+                    </Button>
+                </View>
+            </TrueSheet>
         </View>
     );
 };

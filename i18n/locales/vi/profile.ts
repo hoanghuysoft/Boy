@@ -47,22 +47,23 @@ const profile = {
             licensePlate: 'Biển số xe',
             marriedDate: 'Ngày kết hôn',
             hobby: 'Sở thích',
-            talent: 'Tài năng',
-            lovedOnes: 'Người thân yêu',
+            talent: 'Sở trường',
+            lovedOnes: 'Người thân',
+            employeeCard: 'Thẻ nhân viên',
         },
     },
     empty: {
         images: {
             title: 'Chưa có ảnh',
-            message: 'Chưa có ảnh nào được tải lên.',
+            message: 'Chưa có hình ảnh nào được tải lên.',
         },
         videos: {
-            title: 'Chưa có shots',
-            message: 'Chưa có shot nào được tải lên.',
+            title: 'Chưa có video',
+            message: 'Chưa có video ngắn nào được tải lên.',
         },
         feed: {
             title: 'Chưa có bài viết',
-            message: 'Chưa có bài viết nào được đăng.',
+            message: 'Chưa có bài viết nào được chia sẻ.',
         },
     },
     header: {
@@ -82,14 +83,22 @@ const profile = {
         countWorkplaces_one: 'nơi làm việc',
         countWorkplaces_other: 'nơi làm việc',
         actions: {
-            addLove: 'Thêm tình yêu',
+            addLove: 'Tạo mối quan hệ',
             knowMe: 'Hiểu về tôi',
+            viewEmployeeCard: 'Xem thẻ nhân viên',
         },
         cards: {
             facebookProfile: 'Hồ sơ Facebook',
         },
     },
     sheets: {
+        trivia: {
+            title: 'Sự thật thú vị',
+            subtitleWithName: 'Sự thật thú vị về {{name}}',
+            subtitleDefault: 'Ghi chú & sự thật thú vị',
+            noInformation: 'Chưa có thông tin ghi chú',
+        },
+
         address: {
             title: 'Địa điểm',
             subtitle: 'Nhấn vào địa chỉ để mở bản đồ',

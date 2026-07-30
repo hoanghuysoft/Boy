@@ -35,6 +35,7 @@ import { PostOptionsSheet, TranslationLanguageSheet } from "@/components/post";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { LikersSheet } from "@/components/post/LikersSheet";
 import { BriefInfoSheet } from "@/components/profile/sheets/BriefInfoSheet";
+import { TriviaSheet } from "@/components/profile/sheets/TriviaSheet";
 import { RelationshipSheet } from "@/components/profile/sheets/RelationshipSheet";
 import { BioSheet } from "@/components/profile/sheets/BioSheet";
 import { BlurTargetView, BlurView } from "expo-blur";
@@ -133,6 +134,7 @@ const ProfileContent = () => {
     workplaceSheetRef,
     familySheetRef,
     briefSheetRef,
+    triviaSheetRef,
     bioSheetRef,
     optionsSheetRef,
     likersSheetRef,
@@ -698,6 +700,11 @@ const ProfileContent = () => {
           profile={profile}
           workplaces={workplaces}
           homeInfo={profile?.hometown || null}
+          onOpenTrivia={() => triviaSheetRef.current?.present()}
+        />
+        <TriviaSheet
+          ref={triviaSheetRef}
+          profile={profile}
         />
         <BioSheet
           ref={bioSheetRef}

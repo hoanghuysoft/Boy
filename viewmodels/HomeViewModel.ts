@@ -11,6 +11,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../context/ThemeContext";
 import { useProfile } from "../services/userprofile";
 import { createCommonStyles } from "../styles/common";
+import { useTabBarMinimized, MINIMIZE_SPRING } from "expo-glass-tabs";
+import { useSharedValue, withSpring } from "react-native-reanimated";
 
 const HEADER_HEIGHT = 75;
 const TABS_HEIGHT = 50;
@@ -96,6 +98,10 @@ export const useHomeViewModel = () => {
 
   const tabOpacity = tabVisibility;
 
+  const minimizedProgress = useTabBarMinimized();
+  const minimizedTarget = useSharedValue(0);
+  const minPreviousY = useRef(0);
+
   const headerBgOpacity = scrollY.interpolate({
     inputRange: [0, 50],
     outputRange: [1, 0],
@@ -126,8 +132,25 @@ export const useHomeViewModel = () => {
 
   const onScroll = useCallback(
     (event: any) => {
-      const currentScrollY = event.nativeEvent.contentOffset.y;
+      const currentScrollY = Math.max(event.nativeEvent.contentOffset.y, 0);
       const diff = currentScrollY - lastScrollY.current;
+
+      const dyMin = currentScrollY - minPreviousY.current;
+      minPreviousY.current = currentScrollY;
+      
+      let nextTarget = minimizedTarget.value;
+      if (currentScrollY < 24) {
+          nextTarget = 0;
+      } else if (dyMin > 3) {
+          nextTarget = 1;
+      } else if (dyMin < -3) {
+          nextTarget = 0;
+      }
+      
+      if (minimizedTarget.value !== nextTarget) {
+          minimizedTarget.value = nextTarget;
+          minimizedProgress.value = withSpring(nextTarget, MINIMIZE_SPRING);
+      }
 
       if (Math.abs(diff) > SCROLL_THRESHOLD) {
         if (diff > 0 && isTabVisible.current && currentScrollY > 50) {

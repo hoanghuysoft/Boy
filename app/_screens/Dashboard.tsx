@@ -21,7 +21,8 @@ import { SquircleView } from "expo-squircle-view";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
-import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import { useTabBarMinimized, MINIMIZE_SPRING } from "expo-glass-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // const DashboardScreenV1 = () => {
@@ -121,9 +122,33 @@ const DashboardScreen = () => {
     const activeProfile = selectedProfile ?? myProfile ?? null;
 
     const scrollY = useSharedValue(0);
+    const previousY = useSharedValue(0);
+    const minimizedProgress = useTabBarMinimized();
+    const minimizedTarget = useSharedValue(0);
+    
     const scrollHandler = useAnimatedScrollHandler((event) => {
         scrollY.value = event.contentOffset.y;
+
+        const maxY = Math.max(event.contentSize.height - event.layoutMeasurement.height, 0);
+        const y = Math.min(Math.max(event.contentOffset.y, 0), maxY);
+        const dy = y - previousY.value;
+        previousY.value = y;
+
+        let nextTarget = minimizedTarget.value;
+        if (y < 24) {
+            nextTarget = 0;
+        } else if (dy > 3) {
+            nextTarget = 1;
+        } else if (dy < -3) {
+            nextTarget = 0;
+        }
+
+        if (minimizedTarget.value !== nextTarget) {
+            minimizedTarget.value = nextTarget;
+            minimizedProgress.value = withSpring(nextTarget, MINIMIZE_SPRING);
+        }
     });
+
     const overlayStyle = useAnimatedStyle(() => {
         const opacity = interpolate(scrollY.value, [0, 200], [0, 0.5], Extrapolation.CLAMP);
         return {

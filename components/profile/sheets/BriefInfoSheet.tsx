@@ -17,7 +17,7 @@ import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { Image } from "expo-image";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
@@ -25,6 +25,7 @@ import { ProfileDetail } from "../../../types/profiledetail";
 import { Workplace } from "../../../types/profileworplace";
 import { getFamilyAvatarSource } from "../../../utils/familyAvatar";
 import { useSheetBackHandler } from "./useSheetBackHandler";
+import { TriviaSheet, TriviaSheetHandle } from "./TriviaSheet";
 
 const Calendar = ({ size, ...props }: any) => <CalendarIcon width={size} height={size} {...props} />;
 const Letter = ({ size, ...props }: any) => <LetterIcon width={size} height={size} {...props} />;
@@ -48,6 +49,7 @@ interface BriefInfoSheetProps {
     profile?: ProfileDetail | null;
     workplaces?: Workplace[];
     homeInfo?: string | null;
+    onOpenTrivia?: () => void;
 }
 
 export interface BriefInfoSheetHandle {
@@ -113,7 +115,7 @@ const InfoRow = memo(({ item, colors }: { item: InfoItem; colors: any }) => {
 
 InfoRow.displayName = 'InfoRow';
 
-export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoSheetProps>(({ profile, workplaces = [], homeInfo }, ref) => {
+export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoSheetProps>(({ profile, workplaces = [], homeInfo, onOpenTrivia }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { t } = useTranslation();
@@ -121,6 +123,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
 
     const [index, setIndex] = useState(0);
     const wasOpenRef = useRef(false);
+    const triviaSheetRef = useRef<TriviaSheetHandle>(null);
 
     const controllerRef = useRef<BriefInfoSheetHandle>({
         present: () => {
@@ -348,13 +351,39 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
             <ScrollView nestedScrollEnabled style={{ flex: 1, paddingHorizontal: 12, paddingTop: 4 }}>
 
                 {/* Header */}
-                <View style={{ marginBottom: 24 }}>
-                    <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.header.actions.knowMe')}</FlexText>
-                    {profile?.name && (
-                        <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-                            {t('profile.sheets.brief.getToKnow', { name: profile.name })}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                    <View style={{ flex: 1 }}>
+                        <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.header.actions.knowMe')}</FlexText>
+                        {profile?.name && (
+                            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                                {t('profile.sheets.brief.getToKnow', { name: profile.name })}
+                            </FlexText>
+                        )}
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => {
+                            if (onOpenTrivia) {
+                                onOpenTrivia();
+                            } else {
+                                triviaSheetRef.current?.present();
+                            }
+                        }}
+                        activeOpacity={0.7}
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                            backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                            paddingHorizontal: 14,
+                            paddingVertical: 8,
+                            borderRadius: 999,
+                        }}
+                    >
+                        <Ionicons name="sparkles" size={16} color={colors.primary || colors.text} />
+                        <FlexText style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
+                            trivi
                         </FlexText>
-                    )}
+                    </TouchableOpacity>
                 </View>
 
                 {/* Sections */}

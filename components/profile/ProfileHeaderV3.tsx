@@ -12,7 +12,7 @@ import { Avatar } from "heroui-native/avatar";
 import { Button } from "heroui-native/button";
 import countries from "i18n-iso-countries";
 import en from "i18n-iso-countries/langs/en.json";
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Reanimated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
@@ -128,10 +128,10 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         };
     });
 
-    const transparentColor = vm.colors.background + "00";
-    const midColor1 = vm.colors.background + "59";
-    const midColor2 = vm.colors.background + "CC";
-    const solidColor = vm.colors.background;
+    const transparentColor = vm.colors.surface + "00";
+    const midColor1 = vm.colors.surface + "59";
+    const midColor2 = vm.colors.surface + "CC";
+    const solidColor = vm.colors.surface;
 
     return (
         <Reanimated.View pointerEvents="box-none" style={[styles.headerContainer, animatedContentStyle]}>
@@ -173,7 +173,9 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 </Avatar>
                 <View pointerEvents="box-none" className="flex-row gap-2">
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
-                        <Notes color={vm.colors.text} size={28} />
+                        <ExpoImage source={require("@/assets/images/icons/info.png")} style={{ width: 36, height: 36 }} contentFit="contain"
+                            tintColor={vm.colors.onSurface}
+                        />
                     </Button>
                     <SquircleView borderRadius={999} cornerSmoothing={100} preserveSmoothing style={[styles.editButton, { backgroundColor: vm.colors.primary }]}>
                         <TouchableOpacity onPress={() => {
@@ -193,8 +195,9 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                     </SquircleView>
                 </View>
             </View>
-            <View pointerEvents="none" className="flex-row items-center gap-1 mb-1">
-                <FlexText style={[vm.common.headline, { fontWeight: 'bold' }]}>{profile?.name} {profile?.is_verified && <VerifiedIcon size={24} />}</FlexText>
+            <View pointerEvents="none" className="flex-row items-center gap-2 mb-1">
+                <FlexText style={[vm.common.headline, { fontWeight: 'bold' }]}>{profile?.name}</FlexText>
+                {profile?.is_verified && <VerifiedIcon size={24} />}
             </View>
             {!!profile?.username && (
                 <View pointerEvents="none"><FlexText style={[vm.common.body, { color: vm.colors.muted, marginBottom: 8 }]}>@{profile.username}</FlexText></View>
@@ -216,6 +219,35 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                         </TouchableOpacity>
                     )}
                 </View>
+            )}
+
+            {!!(profile as any)?.metadata?.employee_card && (
+                <TouchableOpacity
+                    onPress={() => {
+                        router.push({
+                            pathname: '/profile/employee-card',
+                            params: { url: (profile as any).metadata.employee_card }
+                        } as any);
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={{
+                        marginTop: 12,
+                        marginBottom: 4,
+                        alignSelf: 'flex-start',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: vm.colors.primary + '15',
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 100,
+                        gap: 6
+                    }}
+                >
+                    <Ionicons name="id-card-outline" size={16} color={vm.colors.primary} />
+                    <FlexText style={{ color: vm.colors.primary, fontWeight: '600', fontSize: 13 }}>
+                        {t('profile.header.actions.viewEmployeeCard')}
+                    </FlexText>
+                </TouchableOpacity>
             )}
 
             {profile && (

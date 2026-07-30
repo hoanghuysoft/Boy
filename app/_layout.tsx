@@ -1,4 +1,15 @@
+import { AppLockOverlay } from "@/components/AppLockOverlay";
+import { GlobalAudioPlayer } from "@/components/GlobalAudioPlayer";
+import { BanProvider } from "@/context/BanContext";
+import { SessionProvider } from "@/context/SessionContext";
+import { StatusBarProvider, useStatusBar } from "@/context/StatusBarContext";
+import { ThemeProvider, useThemeContext } from "@/context/ThemeContext";
+import { VideoPlayerProvider } from "@/context/VideoPlayerContext";
 import '@/i18n';
+import { clientPersister, queryClient } from "@/services/client";
+import { useAppLockStore } from "@/stores/appLock";
+import { useAutoLanguageSync } from "@/stores/language";
+import { useRootLayoutViewModel } from "@/viewmodels/RootLayoutViewModel";
 import { GiphySDK } from '@giphy/react-native-sdk';
 import * as Sentry from '@sentry/react-native';
 import { BottomSheetProvider } from "@swmansion/react-native-bottom-sheet";
@@ -20,18 +31,7 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { AppLockOverlay } from "@/components/AppLockOverlay";
-import { GlobalAudioPlayer } from "@/components/GlobalAudioPlayer";
-import { SessionProvider } from "@/context/SessionContext";
-import { BanProvider } from "@/context/BanContext";
-import { StatusBarProvider, useStatusBar } from "@/context/StatusBarContext";
-import { ThemeProvider, useThemeContext } from "@/context/ThemeContext";
-import { VideoPlayerProvider } from "@/context/VideoPlayerContext";
 import '../global.css';
-import { clientPersister, queryClient } from "@/services/client";
-import { useAppLockStore } from "@/stores/appLock";
-import { useAutoLanguageSync } from "@/stores/language";
-import { useRootLayoutViewModel } from "@/viewmodels/RootLayoutViewModel";
 
 Sentry.init({
   dsn: 'https://1ef88f34edcb93fd745ae50c49114de5@o4511278698397696.ingest.de.sentry.io/4511278700494928',
@@ -118,7 +118,7 @@ const FakeSplashScreen = () => {
   return (
     <View style={{ flex: 1 }}>
       <ExpoImage
-        source={require("../assets/images/bg.jpg")}
+        source={require("../assets/images/Splashart.png")}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
       />
@@ -141,6 +141,10 @@ const RootContent = () => {
   useAutoLanguageSync();
 
   const { appLockEnabled, setLocked, setLastBackgroundTime } = useAppLockStore();
+
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
 
   useEffect(() => {
     if (!appLockEnabled) return;
@@ -193,6 +197,7 @@ const RootContent = () => {
             <Stack.Screen name="onboarding" />
             <Stack.Screen name="video_player" />
             <Stack.Screen name="profile/[id]" />
+            <Stack.Screen name="profile/employee-card" options={{ presentation: 'transparentModal', animation: 'fade' }} />
             <Stack.Screen name="image_poster" />
             <Stack.Screen name="settings" />
             <Stack.Screen name="bookmarks" />
