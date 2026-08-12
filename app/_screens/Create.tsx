@@ -270,6 +270,7 @@ const CreateScreen = () => {
                                 fileSize: media.fileSize,
                                 width: media.width,
                                 height: media.height,
+                                blurhash: media.blurhash,
                             };
 
                             const uploadResult = await uploadToThirdParty(files, ({ bytesSent, totalBytes }) => {
@@ -282,6 +283,7 @@ const CreateScreen = () => {
                                 thumbnail_url: uploadResult.thumbnailUrl,
                                 width: uploadResult.width,
                                 height: uploadResult.height,
+                                blurhash: uploadResult.blurhash,
                             });
                             mediaIds.push(createdRecord.data.id);
                         }

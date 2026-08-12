@@ -283,9 +283,9 @@ const VideoPlayer = () => {
         : ScreenOrientation.OrientationLock.LANDSCAPE,
     );
     if (Platform.OS === "android") {
-      SystemNavigationBar.stickyImmersive();
+      SystemNavigationBar.setImmersive("sticky");
     } else {
-      SystemNavigationBar.fullScreen(true);
+      SystemNavigationBar.hide("both");
     }
     setShowStatusBarFade(false);
 
@@ -301,7 +301,7 @@ const VideoPlayer = () => {
       setShowStatusBarFade(true);
       subscription.remove();
       ScreenOrientation.unlockAsync();
-      SystemNavigationBar.fullScreen(false);
+      SystemNavigationBar.show("both");
     };
   }, [portrait, setShowStatusBarFade]);
 

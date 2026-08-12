@@ -1,12 +1,13 @@
 import { File as FSFile, UploadType } from 'expo-file-system';
 import { useSettingsStore } from '@/stores/settings';
-import { FileAsset } from './mediaUpload';
+import { FileAsset, generateBlurhash, getImageDimensions } from './mediaUpload';
 
 export interface ThirdPartyUploadResult {
     url: string;
     thumbnailUrl?: string | null;
     width?: number | null;
     height?: number | null;
+    blurhash?: string | null;
 }
 
 export const uploadToThirdParty = async (
@@ -19,6 +20,18 @@ export const uploadToThirdParty = async (
                     file.uri.toLowerCase().includes('.mp4') ||
                     file.uri.toLowerCase().includes('.mov') ||
                     file.uri.toLowerCase().includes('.webm');
+
+    // Calculate blurhash in parallel if missing for photos
+    const blurhashPromise = file.blurhash
+        ? Promise.resolve(file.blurhash)
+        : !isVideo && file.uri
+            ? generateBlurhash(file.uri)
+            : Promise.resolve(null);
+
+    // Calculate dimensions in parallel if missing for photos
+    const dimensionsPromise = (!file.width || !file.height) && !isVideo && file.uri
+        ? getImageDimensions(file.uri)
+        : Promise.resolve(null);
 
     if (isVideo) {
         // Videos go to x02.me
@@ -48,11 +61,17 @@ export const uploadToThirdParty = async (
             throw new Error(resData.error || 'x02.me upload failed');
         }
 
+        const calculatedDims = await dimensionsPromise;
+        const width = file.width || calculatedDims?.width || null;
+        const height = file.height || calculatedDims?.height || null;
+        const blurhash = await blurhashPromise;
+
         return {
             url: resData.data.url,
             thumbnailUrl: null,
-            width: file.width || null,
-            height: file.height || null,
+            width,
+            height,
+            blurhash,
         };
     } else {
         // Images go to ImgBB
@@ -81,11 +100,21 @@ export const uploadToThirdParty = async (
             throw new Error(resData.error?.message || 'ImgBB upload failed');
         }
 
+        const calculatedDims = await dimensionsPromise;
+        const width = resData.data.width
+            ? Number(resData.data.width)
+            : file.width || calculatedDims?.width || null;
+        const height = resData.data.height
+            ? Number(resData.data.height)
+            : file.height || calculatedDims?.height || null;
+        const blurhash = await blurhashPromise;
+
         return {
             url: resData.data.url,
             thumbnailUrl: resData.data.thumb?.url || null,
-            width: resData.data.width ? Number(resData.data.width) : file.width || null,
-            height: resData.data.height ? Number(resData.data.height) : file.height || null,
+            width,
+            height,
+            blurhash,
         };
     }
 };

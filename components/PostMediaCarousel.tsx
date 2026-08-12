@@ -113,7 +113,6 @@ const VideoCarouselItem = React.memo(({
     const showOverlay =
         !isActive ||
         isLoading ||
-        (status === 'paused' && !isActive) ||
         status === 'pending';
 
     return (
@@ -134,7 +133,7 @@ const VideoCarouselItem = React.memo(({
                             setIsActive(active);
                             if (active) {
                                 useFeedVideoStore.getState().setActiveVideo(postId, item.id, videoUrl);
-                            } else if (useFeedVideoStore.getState().activePostId === postId) {
+                            } else if (useFeedVideoStore.getState().activeMediaId === item.id) {
                                 useFeedVideoStore.getState().clearActiveVideo();
                             }
                         }}

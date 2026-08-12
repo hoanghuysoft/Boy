@@ -99,7 +99,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
     const vm = usePostItemViewModel({ post: displayPost, onOptionsPress, onLikeCountPress, onCommentPress });
 
     // Feed video state - optimally select ONLY boolean to prevent mass re-renders
-    const hasVideo = displayPost.media?.some((m: Media) => m.type === 'video');
+    const hasVideo = !!displayPost.media?.some((m: Media) => m.type === 'video');
 
     // Caption without any YouTube URLs — those are rendered by YouTubePostPlayer.
     const captionWithoutYouTube = React.useMemo(

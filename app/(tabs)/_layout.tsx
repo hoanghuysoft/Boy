@@ -72,7 +72,7 @@ export default function TabLayout() {
 
     return (
         <TabBarMinimizeProvider>
-            <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <View style={{ flex: 1, backgroundColor: colors.surface }}>
                 <Tabs>
                     <TabSlot style={{ height: '100%' }} renderFn={renderFadingTabScreen} />
                     <TabList asChild>

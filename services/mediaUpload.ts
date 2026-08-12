@@ -8,6 +8,7 @@
 import { Media, MediaType } from '@/types/media';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { File as FSFile, UploadType } from 'expo-file-system';
+import { Image as RNImage } from 'react-native';
 import { Blurhash } from 'react-native-blurhash';
 import { client } from './client';
 import { useSettingsStore } from '@/stores/settings';
@@ -116,6 +117,23 @@ export async function generateBlurhash(
     }
 }
 
+/**
+ * Get image dimensions for a local URI
+ */
+export function getImageDimensions(uri: string): Promise<{ width: number; height: number } | null> {
+    return new Promise((resolve) => {
+        if (!uri) return resolve(null);
+        RNImage.getSize(
+            uri,
+            (width, height) => resolve({ width, height }),
+            (error) => {
+                console.warn('[mediaUpload] Failed to get image dimensions:', error);
+                resolve(null);
+            }
+        );
+    });
+}
+
 // ============================================================================
 // API Functions
 // ============================================================================
@@ -145,8 +163,18 @@ export const uploadMedia = async (
     if (options.caption) formData.append('caption', options.caption);
     if (options.post_id) formData.append('post_id', options.post_id);
     if (options.type) formData.append('type', options.type);
-    if (file.width) formData.append('width', String(file.width));
-    if (file.height) formData.append('height', String(file.height));
+
+    let width = file.width;
+    let height = file.height;
+    if ((!width || !height) && type === 'photo' && file.uri) {
+        const dims = await getImageDimensions(file.uri);
+        if (dims) {
+            width = width || dims.width;
+            height = height || dims.height;
+        }
+    }
+    if (width) formData.append('width', String(width));
+    if (height) formData.append('height', String(height));
 
     let blurhash = options.blurhash || file.blurhash;
     if (!blurhash && type === 'photo') {
@@ -326,6 +354,16 @@ export const uploadLargeMedia = async (
         blurhash = (await generateBlurhash(file.uri)) || undefined;
     }
 
+    let width = file.width || null;
+    let height = file.height || null;
+    if ((!width || !height) && type === 'photo' && file.uri) {
+        const dims = await getImageDimensions(file.uri);
+        if (dims) {
+            width = width || dims.width;
+            height = height || dims.height;
+        }
+    }
+
     const uploadInfo = await getUploadUrl(profileId, filename, type);
     await uploadWithPresignedUrl(uploadInfo.uploadUrl, file, onProgress);
 
@@ -336,8 +374,8 @@ export const uploadLargeMedia = async (
     return createMediaRecord(profileId, uploadInfo.readUrl, type, {
         caption: options.caption,
         post_id: options.post_id,
-        width: file.width || null,
-        height: file.height || null,
+        width,
+        height,
         blurhash,
     });
 };

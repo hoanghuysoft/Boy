@@ -24,6 +24,7 @@ export interface SelectedMedia {
     isVideo: boolean;
     width?: number;
     height?: number;
+    blurhash?: string;
 }
 
 export interface CreateFormState {
