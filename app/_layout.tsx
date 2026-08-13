@@ -15,7 +15,6 @@ import * as Sentry from '@sentry/react-native';
 import { BottomSheetProvider } from "@swmansion/react-native-bottom-sheet";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Image as ExpoImage } from 'expo-image';
-import { LinearGradient } from "expo-linear-gradient";
 import { Observe, ObserveRoot } from 'expo-observe';
 import { usePathname } from 'expo-router';
 import { Stack } from 'expo-router/stack';
@@ -96,21 +95,22 @@ const StatusBarFade = () => {
   });
 
   return (
-    <LinearGradient
-      pointerEvents="none"
-      colors={colors as [string, string, ...string[]]}
-      locations={locations as [number, number, ...number[]]}
-      start={{ x: 0.5, y: 0 }}
-      end={{ x: 0.5, y: 1 }}
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        height: insets.top + 24,
-        zIndex: 10,
-      }}
-    />
+    // <LinearGradient
+    //   pointerEvents="none"
+    //   colors={colors as [string, string, ...string[]]}
+    //   locations={locations as [number, number, ...number[]]}
+    //   start={{ x: 0.5, y: 0 }}
+    //   end={{ x: 0.5, y: 1 }}
+    //   style={{
+    //     position: "absolute",
+    //     top: 0,
+    //     left: 0,
+    //     right: 0,
+    //     height: insets.top + 24,
+    //     zIndex: 10,
+    //   }}
+    // />
+    <></>
   );
 };
 

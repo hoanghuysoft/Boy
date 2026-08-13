@@ -1,5 +1,3 @@
-import ShareIcon from "@/assets/images/svg/share-1.svg";
-import CommentsIcon from "@/assets/images/svg/tips.svg";
 import { FlexText } from "@/components/FlexText";
 import { getCachedUri } from "@/services/videoCache";
 import { VideoItem } from "@/types/video";
@@ -468,9 +466,9 @@ export const ShotItem = React.memo(function ShotItem({
             <View style={[styles.rightActions, { bottom: insets.bottom + 140 }]}>
                 {/* Like */}
                 <TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10}>
-                    {isLiked
-                        ? <Image source={require('@/assets/images/svg/like11.png')} style={{ width: 36, height: 36 }} contentFit="cover" />
-                        : <Image source={require('@/assets/images/svg/like10.png')} style={{ width: 36, height: 36 }} contentFit="cover" />
+                    {!isLiked
+                        ? <Image source={{ uri: "https://ico.hugeicons.com/love-korean-finger-stroke-sharp@3x.webp?x=365593185" }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                        : <Image source={{ uri: "https://ico.hugeicons.com/love-korean-finger-solid-standard@3x.webp?x=365593185" }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
                     }
                     <FlexText style={[styles.actionText, isLiked && { color: 'white' }]}>
                         {likeCount > 0 ? likeCount : 0}
@@ -479,7 +477,21 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Comments */}
                 <TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10}>
-                    <CommentsIcon width={32} height={32} color="white" />
+                    <Image source={{ uri: 'https://ico.hugeicons.com/chat-favourite-01-solid-rounded@3x.webp?x=830623945' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                    <FlexText style={styles.actionText}>
+                        {item.comment_count > 0 ? item.comment_count : 0}
+                    </FlexText>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionButton}>
+                    <Image source={{ uri: 'https://ico.hugeicons.com/bookmark-02-solid-rounded@3x.webp?x=94312725' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                    <FlexText style={styles.actionText}>
+                        {item.comment_count > 0 ? item.comment_count : 0}
+                    </FlexText>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionButton}>
+                    <Image source={{ uri: 'https://ico.hugeicons.com/repost-solid-rounded@3x.webp?x=2071587840' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
                     <FlexText style={styles.actionText}>
                         {item.comment_count > 0 ? item.comment_count : 0}
                     </FlexText>
@@ -487,7 +499,10 @@ export const ShotItem = React.memo(function ShotItem({
 
                 {/* Share */}
                 <TouchableOpacity style={styles.actionButton}>
-                    <ShareIcon width={32} height={32} color="white" />
+                    <Image source={{ uri: 'https://ico.hugeicons.com/share-01-solid-rounded@3x.webp?x=731754750' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                    <FlexText style={styles.actionText}>
+                        {item.comment_count > 0 ? item.comment_count : 0}
+                    </FlexText>
                 </TouchableOpacity>
             </View>
         </View>

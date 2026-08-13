@@ -4,17 +4,18 @@ import { getOrDownloadFile } from '@/services/fileCacheUtils';
 import type { GalleryImage as GalleryImageMeta } from '@/stores/gallery';
 import { useGalleryStore } from '@/stores/gallery';
 import { Directory, Paths } from 'expo-file-system';
+import { Image as ExpoImage } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
+import { Album, Asset } from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, StatusBar, StyleSheet, View } from 'react-native';
 import { useToast } from "heroui-native/toast";
+import React, { useCallback, useRef, useState } from 'react';
+import { Modal, StatusBar, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Gallery, stackTransition, type GalleryRefType } from 'react-native-zoom-toolkit';
-import { Image as ExpoImage } from 'expo-image';
-import GalleryImage from './GalleryImage';
 import { resolveBlurhash } from './fallbackBlurhash';
+import GalleryImage from './GalleryImage';
 
 interface GalleryModalContentProps {
     imagesUrl: string[];
@@ -24,7 +25,6 @@ interface GalleryModalContentProps {
     showDownload?: boolean;
 }
 
-// Inner component that uses the Gallery from react-native-zoom-toolkit
 const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
     imagesUrl,
     galleryImages,
@@ -34,17 +34,10 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
 }) => {
     const ref = useRef<GalleryRefType>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
-    const [debouncedIndex, setDebouncedIndex] = useState(initialIndex);
     const [isWallpaperVisible, setIsWallpaperVisible] = useState(false);
     const destination = new Directory(Paths.cache, 'images');
     const { toast } = useToast();
 
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedIndex(currentIndex);
-        }, 150);
-        return () => clearTimeout(handler);
-    }, [currentIndex]);
 
     const currentImage = galleryImages[currentIndex];
 
@@ -74,7 +67,6 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
     }, []);
 
     const onTap = useCallback(() => {
-        // Single tap can toggle overlay visibility if needed
     }, []);
 
     const saveRemoteImage = async (remoteUrl: string) => {
@@ -86,9 +78,9 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
             }
 
             const localFile = await getOrDownloadFile(remoteUrl, destination, 'image.jpg');
-            const asset = await MediaLibrary.createAssetAsync(localFile.uri);
+            const asset = await Asset.create(localFile.uri);
 
-            await MediaLibrary.createAlbumAsync('MyApp Downloads', asset, false);
+            await Album.create('WeLove Downloads', [asset]);
 
             toast.show({ label: "Success", description: "Image saved to gallery!", variant: "success" });
         } catch (error) {
@@ -113,8 +105,8 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
         }
     };
 
-    const bgImage = galleryImages[debouncedIndex];
-    const bgImageUri = imagesUrl[debouncedIndex];
+    const bgImage = galleryImages[currentIndex];
+    const bgImageUri = imagesUrl[currentIndex];
     const bgBlurhash = resolveBlurhash(bgImage?.blurhash, bgImage?.uri);
 
     return (
@@ -126,7 +118,7 @@ const GalleryModalContent: React.FC<GalleryModalContentProps> = ({
                         source={{ blurhash: bgBlurhash }}
                         style={StyleSheet.absoluteFill}
                         contentFit="cover"
-                        transition={200}
+                        transition={450}
                     />
                     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.55)' }]} />
                 </View>

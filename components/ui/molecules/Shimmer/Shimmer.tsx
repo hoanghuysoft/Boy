@@ -8,6 +8,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { Easing } from "react-native-reanimated";
+import { useThemeContext } from "@/context/ThemeContext";
 import type { IShimmerEffect, IShimmerGroup } from "./Shimmer.types";
 import { SHIMMER_PRESETS } from "./const";
 
@@ -21,7 +22,7 @@ export const ShimmerEffect: React.FC<IShimmerEffect> &
     style,
     variant = "shimmer",
     direction = "leftToRight",
-    preset = "dark",
+    preset = "auto",
     opacity = 1,
     children,
   }: IShimmerEffect):
@@ -32,13 +33,32 @@ export const ShimmerEffect: React.FC<IShimmerEffect> &
     const pulseAnim = useRef<Animated.Value>(new Animated.Value(0.3)).current;
     const fadeAnim = useRef<Animated.Value>(new Animated.Value(0)).current;
 
+    let appTheme = "dark";
+    try {
+      const themeCtx = useThemeContext();
+      if (themeCtx?.theme) {
+        appTheme = themeCtx.theme;
+      }
+    } catch {
+      // Fallback if rendered outside ThemeProvider
+    }
+
+    const effectivePreset =
+      preset === "auto"
+        ? appTheme === "dark"
+          ? "dark"
+          : "neutral"
+        : preset;
+
     const themeColors =
-      preset === "custom" && shimmerColors
+      effectivePreset === "custom" && shimmerColors
         ? shimmerColors
-        : SHIMMER_PRESETS[preset].colors;
+        : SHIMMER_PRESETS[effectivePreset].colors;
 
     const backgroundColor =
-      preset !== "custom" ? SHIMMER_PRESETS[preset].backgroundColor : undefined;
+      effectivePreset !== "custom"
+        ? SHIMMER_PRESETS[effectivePreset].backgroundColor
+        : undefined;
 
     const onLayout = useCallback((e: LayoutChangeEvent) => {
       setLayout(e.nativeEvent.layout);
@@ -264,7 +284,7 @@ export const ShimmerGroup: React.FC<IShimmerGroup> &
   ({
     isLoading = true,
     children,
-    preset = "dark",
+    preset = "auto",
     duration = 1500,
     direction = "leftToRight",
     opacity = 1,

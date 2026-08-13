@@ -32,7 +32,7 @@ type ShimmerDirection =
   | "topToBottom"
   | "bottomToTop";
 
-type ShimmerPreset = "dark" | "light" | "twitter" | "neutral" | "custom";
+type ShimmerPreset = "auto" | "dark" | "light" | "twitter" | "neutral" | "custom";
 
 interface IShimmerColorTheme {
   colors: string[];

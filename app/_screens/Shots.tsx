@@ -21,6 +21,7 @@ const ShotsInner = () => {
     return (
         <Tab.Navigator
             initialRouteName="random"
+            backBehavior="none"
             tabBar={(props: any) => <ShotsTopTabBar {...props} insets={insets} t={t} />}
             screenOptions={{
                 sceneStyle: { backgroundColor: '#000' },

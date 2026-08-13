@@ -1,6 +1,6 @@
 import type { IShimmerColorTheme, ShimmerPreset } from "./Shimmer.types";
 
-const SHIMMER_PRESETS: Record<ShimmerPreset, IShimmerColorTheme> = {
+const SHIMMER_PRESETS: Record<Exclude<ShimmerPreset, "auto">, IShimmerColorTheme> = {
   dark: {
     colors: [
       "rgba(28, 28, 28, 1)",
