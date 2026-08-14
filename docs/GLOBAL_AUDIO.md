@@ -1,37 +1,40 @@
 # Global Audio Player System
 
-This project uses a centralized audio playback system managed via **Zustand** and **react-native-nitro-player**. It ensures that only one audio track plays at a time across the entire application (posts, profile headers, music sheets, etc.).
+This project uses a centralized audio playback system managed via **Zustand** and **`expo-audio`** (Expo SDK 56). It ensures that only one audio track plays at a time across the entire application (posts, profile headers, music sheets, etc.), with full background playback support and native lock screen / notification media controls.
 
 ## Key Components
 
 | File | Role |
 |------|------|
 | `stores/audio.ts` | Zustand store — single source of truth for playback state |
-| `components/GlobalAudioPlayer.tsx` | Invisible component at the root (`app/_layout.tsx`) that bridges the store to the nitro player |
+| `components/GlobalAudioPlayer.tsx` | Invisible component at root (`app/_layout.tsx`) that manages `expo-audio` player, background audio session, lock screen controls, and syncs status back to Zustand |
 
 ---
 
 ## How It Works Internally
 
-`GlobalAudioPlayer` maintains a **single persistent playlist** (`__global__`) inside `react-native-nitro-player`. Every call to `playTrack` swaps the one track in that playlist and calls `TrackPlayer.playSong()`. Progress and state events from nitro-player are pushed back into the Zustand store via hooks.
+`GlobalAudioPlayer` uses `useAudioPlayer` and `useAudioPlayerStatus` from `expo-audio`:
+
+1. **Audio Session Setup**: Configures `setAudioModeAsync` on mount with `playsInSilentMode: true`, `shouldPlayInBackground: true`, and `interruptionMode: 'doNotMix'`.
+2. **Lock Screen & Media Notification**: When `currentAudioUrl` is set, `player.setActiveForLockScreen(true, metadata, options)` is called. On Android, this binds to the Foreground Media Playback Service (`AudioControlsService`), ensuring **sustained background playback** beyond the 3-minute OS limit.
+3. **Playback Updates**: Status events update `currentTime`, `duration`, and `isPlaying` in the Zustand store.
+4. **Natural Completion & Teardown**: When a track finishes naturally (`status.didJustFinish`), lock screen controls are deactivated (`setActiveForLockScreen(false)`) and the store is reset.
 
 ```
 useAudioStore.playTrack()
       ↓
-GlobalAudioPlayer (useEffect detects URL change)
+GlobalAudioPlayer (useEffect detects audio URL & metadata change)
       ↓
-PlayerQueue.removeTrackFromPlaylist  ← remove old track
-PlayerQueue.addTrackToPlaylist       ← add new track (with optional artwork)
-PlayerQueue.loadPlaylist
-TrackPlayer.playSong
+player.setActiveForLockScreen(true, { title, artist, albumTitle, artworkUrl })
+player.play()  ← plays indefinitely in background with OS media controls
       ↓
-useOnPlaybackProgressChange  →  useAudioStore.setPlaybackStatus()
-useOnPlaybackStateChange     →  stopPlayback() on natural end
+useAudioPlayerStatus  →  useAudioStore.setPlaybackStatus(currentTime, duration, isPlaying)
+status.didJustFinish   →  player.setActiveForLockScreen(false) & stopPlayback()
 ```
 
 ---
 
-## Public API (unchanged for callers)
+## Public API (for callers)
 
 ### 1. Import the store
 
@@ -50,16 +53,17 @@ const isPlaying = currentlyPlayingId === trackId;
 
 ### 3. Play a track
 
-`artwork` / `coverUrl` is **optional** — the player works fine without an image.
+`artworkUrl` / `coverUrl` is **optional** — the player works fine without an image.
 
 ```tsx
 const { playTrack } = useAudioStore();
 
-// With artwork
+// With artwork & metadata
 playTrack(trackId, item.audio_url, {
   title: item.title,
   artist: item.artist,
-  coverUrl: item.cover_url,   // optional
+  albumTitle: item.album_title, // optional
+  artworkUrl: item.cover_url,   // optional (coverUrl also supported)
 });
 
 // Without artwork
@@ -68,7 +72,7 @@ playTrack(trackId, item.audio_url, {
   artist: item.artist,
 });
 
-// Minimal (no metadata at all)
+// Minimal
 playTrack(trackId, item.audio_url);
 ```
 
@@ -93,7 +97,7 @@ const toggleMusic = () => {
     playTrack(trackId, item.audio_url, {
       title: item.title,
       artist: item.artist,
-      coverUrl: item.cover_url,  // omit if unavailable
+      artworkUrl: item.cover_url,
     });
   }
 };
@@ -102,7 +106,7 @@ const toggleMusic = () => {
 ### 6. Read playback progress
 
 ```tsx
-const { currentTime, duration } = useAudioStore();
+const { currentTime, duration, isPlaying } = useAudioStore();
 const progress = duration > 0 ? currentTime / duration : 0;  // 0–1
 ```
 
@@ -111,42 +115,54 @@ const progress = duration > 0 ? currentTime / duration : 0;  // 0–1
 ## Zustand Store Shape
 
 ```ts
+export interface AudioMetadata {
+  title?: string;
+  artist?: string;
+  albumTitle?: string;
+  artworkUrl?: string;
+  coverUrl?: string;
+}
+
 interface AudioStore {
   // Identity
   currentlyPlayingId: string | null;
   currentAudioUrl: string | null;
-  metadata: { title?: string; artist?: string; coverUrl?: string } | null;
+  metadata: AudioMetadata | null;
 
   // Progress (updated by GlobalAudioPlayer)
   currentTime: number;   // seconds
   duration: number;      // seconds
+  isPlaying: boolean;
 
   // Actions
   playTrack(id: string, url: string, metadata?: AudioMetadata): void;
   stopPlayback(): void;
-  setPlaybackStatus(currentTime: number, duration: number): void;
-  // (lower-level setters also available if needed)
+  setPlaybackStatus(currentTime: number, duration: number, isPlaying?: boolean): void;
 }
 ```
 
 ---
 
-## Best Practices
+## Background Playback & Lock Screen Configuration
 
-- **Stable, namespaced IDs** — prefix by content type to avoid collisions:
-  - Posts: `post-${id}`
-  - Profile music: `profile-music-${id}`
-  - Music sheet: `music-sheet-${id}`
-- **Cleanup on dismiss** — call `stopPlayback()` when a sheet/modal that contains audio is closed.
-- **Always provide metadata** — even without artwork. The `title` and `artist` fields appear in the native OS notification/lock-screen controls.
-- **Artwork is optional** — `coverUrl` can be omitted; nitro-player accepts `artwork: null`.
+1. **Config Plugin (`app.json`)**:
+   ```json
+   "plugins": [
+     [
+       "expo-audio",
+       {
+         "enableBackgroundPlayback": true
+       }
+     ]
+   ]
+   ```
+2. **Android Permissions**:
+   - `android.permission.FOREGROUND_SERVICE`
+   - `android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK`
+   - `android.permission.POST_NOTIFICATIONS`
+3. **iOS Background Modes**:
+   - `audio` background mode (automatically set by `expo-audio` plugin when `enableBackgroundPlayback: true`)
+4. **Lock Screen Controls**:
+   - On **Android**, `setActiveForLockScreen(true, ...)` starts the foreground media service to prevent the 3-minute background kill limitation and renders the notification controls in the drawer.
+   - On **iOS**, `shouldPlayInBackground: true` enables audio in background, and `setActiveForLockScreen` provides lock screen & Control Center media controls.
 
----
-
-## Native Notification / Lock-Screen Controls
-
-Because `react-native-nitro-player` integrates with the OS media session, the metadata passed to `playTrack` is automatically shown in:
-- **Android** — notification player and lock-screen controls
-- **iOS** — Control Centre and lock-screen controls (CarPlay if configured)
-
-No extra configuration is needed for basic notification controls. To enable Android Auto or CarPlay, call `TrackPlayer.configure()` at app startup (see `nitro-player.md`).
