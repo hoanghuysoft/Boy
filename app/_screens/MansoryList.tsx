@@ -19,7 +19,6 @@ import dayjs from "dayjs";
 import { Image as ExpoImage } from "expo-image";
 import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
-import { Avatar } from "heroui-native/avatar";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -338,10 +337,12 @@ const MansoryListScreen = () => {
                             },
                         ]}
                     >
-                        <Avatar style={styles.headerAvatar}>
-                            <Avatar.Image source={{ uri: activeProfile.avatar_url }} />
-                            <Avatar.Fallback>{activeProfile?.name?.charAt(0).toUpperCase()}</Avatar.Fallback>
-                        </Avatar>
+                        <ExpoImage
+                            source={{ uri: activeProfile.avatar_url }}
+                            style={styles.headerAvatar}
+                            contentFit="cover"
+                            cachePolicy="memory-disk"
+                        />
                         <View
                             style={[
                                 styles.headerAvatarBadge,
@@ -447,7 +448,7 @@ const MansoryListScreen = () => {
                         ListHeaderComponent={ListHeaderComponent}
                         ListFooterComponent={
                             isFetchingNextPage ? (
-                                <ShimmerGroup isLoading preset="dark">
+                                <ShimmerGroup isLoading>
                                     <View style={[styles.footer, { flexDirection: 'row', gap: 8, paddingHorizontal: 8 }]}>
                                         <Shimmer style={{ flex: 1, height: 130, borderRadius: 16 }} />
                                         <Shimmer style={{ flex: 1, height: 130, borderRadius: 16 }} />

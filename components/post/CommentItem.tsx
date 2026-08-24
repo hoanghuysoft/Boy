@@ -1,7 +1,6 @@
 import VerifiedIcon from "@/icons/verified";
 import { Galeria } from "@nandorojo/galeria";
 import { Image } from "expo-image";
-import { Avatar } from "heroui-native/avatar";
 import { Spinner } from "heroui-native/spinner";
 import React, { memo, useState, useEffect } from "react";
 import {
@@ -102,10 +101,12 @@ export const CommentItem = memo(({
         <View style={[styles.commentItem, isReply && styles.replyCommentItem]}>
             {/* Avatar */}
             <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.avatarContainer}>
-                <Avatar style={[styles.avatar, isReply && styles.replyAvatar]}>
-                    <Avatar.Image source={{ uri: comment.profile_avatar }} />
-                    <Avatar.Fallback>{comment.profile_name?.[0] || 'U'}</Avatar.Fallback>
-                </Avatar>
+                <Image
+                    source={{ uri: comment.profile_avatar }}
+                    style={[styles.avatar, isReply && styles.replyAvatar]}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                />
             </TouchableOpacity>
 
             {/* Content Bubble */}

@@ -39,7 +39,7 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
     if (vm.isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: vm.darkDominant }]}>
-                <ShimmerGroup isLoading={true} preset="dark">
+                <ShimmerGroup isLoading={true}>
                     <View style={{ gap: 16 }}>
                         <Shimmer style={{ height: 500, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>

@@ -8,7 +8,7 @@ import { Profile } from "@/types/profile";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList } from "@shopify/flash-list";
-import { Avatar } from "heroui-native/avatar";
+import { Image as ExpoImage } from "expo-image";
 import { Spinner } from "heroui-native/spinner";
 import { debounce, flatMap } from "lodash";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
@@ -46,12 +46,12 @@ const ProfileRow = memo(
                 style={styles.row}
             >
                 <View style={styles.avatarContainer}>
-                    <Avatar style={styles.avatarContainer}>
-                        <Avatar.Image
-                            source={{ uri: item.avatar_url }}
-                        />
-                        <Avatar.Fallback>{item.name.charAt(0).toUpperCase()}</Avatar.Fallback>
-                    </Avatar>
+                    <ExpoImage
+                        source={{ uri: item.avatar_url }}
+                        style={styles.avatarContainer}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                    />
                 </View>
 
                 <View style={styles.info}>
@@ -284,6 +284,7 @@ const styles = StyleSheet.create({
     avatarContainer: {
         width: 48,
         height: 48,
+        borderRadius: 999,
     },
     avatar: {
         width: "100%",

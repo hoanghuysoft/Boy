@@ -3,6 +3,7 @@ import PlayIcon from "@/assets/images/svg/play.svg";
 import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
 import SoundIcon from "@/assets/images/svg/sound.svg";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
+import { useThrottledValue } from "@/hooks/useThrottledValue";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
@@ -11,7 +12,20 @@ import { buildFallbackUrls, chosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Dimensions, PixelRatio, Platform, Pressable as RNPressable, Text, View, ViewabilityConfig, ViewToken } from "react-native";
+import {
+    ActivityIndicator,
+    Dimensions,
+    PixelRatio,
+    Platform,
+    Pressable as RNPressable,
+    StyleProp,
+    StyleSheet,
+    Text,
+    View,
+    ViewStyle,
+    ViewToken,
+    ViewabilityConfig,
+} from "react-native";
 import { FlatList, Pressable } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
@@ -19,7 +33,6 @@ import Animated, {
     useAnimatedStyle,
     useSharedValue
 } from "react-native-reanimated";
-
 
 interface PostMediaCarouselProps {
     media: Media[];
@@ -37,6 +50,144 @@ const ASPECT_RATIO = 3 / 4;
 
 // Defined outside component so it's never recreated
 const PLACEHOLDER_IMAGE_VIDEO = 'https://placehold.net/3-600x800.png';
+
+// ─── TimeIndicator ────────────────────────────────────────────────────────────
+interface TimeIndicatorProps {
+    time: number;
+    style?: StyleProp<ViewStyle>;
+}
+
+const TimeIndicator = React.memo(({ time, style }: TimeIndicatorProps) => {
+    if (isNaN(time) || time < 0) return null;
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return (
+        <View
+            pointerEvents="none"
+            style={[
+                {
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    borderRadius: 6,
+                    paddingHorizontal: 6,
+                    paddingVertical: 3,
+                    height: 24,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                },
+                style,
+            ]}
+        >
+            <Text
+                style={{
+                    color: '#ffffff',
+                    fontSize: 12,
+                    fontWeight: '600',
+                    fontVariant: ['tabular-nums'],
+                    lineHeight: 14,
+                }}
+            >
+                {`${mins}:${secs.toString().padStart(2, '0')}`}
+            </Text>
+        </View>
+    );
+});
+TimeIndicator.displayName = "TimeIndicator";
+
+// ─── VideoPresentationControls ────────────────────────────────────────────────
+interface VideoPresentationControlsProps {
+    videoRef: React.RefObject<BlueskyVideoView | null>;
+    isPlaying: boolean;
+    timeRemaining: number;
+    isMuted: boolean;
+}
+
+const VideoPresentationControls = React.memo(({
+    videoRef,
+    isPlaying,
+    timeRemaining,
+    isMuted,
+}: VideoPresentationControlsProps) => {
+    const handleTogglePlayback = useCallback(() => {
+        videoRef.current?.togglePlayback();
+    }, [videoRef]);
+
+    const handleToggleMuted = useCallback(() => {
+        videoRef.current?.toggleMuted();
+    }, [videoRef]);
+
+    const handleEnterFullscreen = useCallback(() => {
+        videoRef.current?.enterFullscreen(true);
+    }, [videoRef]);
+
+    return (
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+            {/* Fullscreen tap area */}
+            <RNPressable
+                onPress={handleEnterFullscreen}
+                style={StyleSheet.absoluteFill}
+            />
+            {/* Play / Pause button */}
+            <RNPressable
+                onPress={handleTogglePlayback}
+                style={{
+                    position: 'absolute',
+                    left: 10,
+                    bottom: 10,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 10,
+                }}
+                hitSlop={10}
+            >
+                {isPlaying ? (
+                    <PauseIcon width={18} height={18} color="#ffffff" />
+                ) : (
+                    <PlayIcon width={18} height={18} color="#ffffff" />
+                )}
+            </RNPressable>
+
+            {/* Time remaining */}
+            <TimeIndicator
+                time={timeRemaining}
+                style={{
+                    position: 'absolute',
+                    left: 48,
+                    bottom: 14,
+                    zIndex: 10,
+                }}
+            />
+
+            {/* Mute / Unmute button */}
+            <RNPressable
+                onPress={handleToggleMuted}
+                style={{
+                    position: 'absolute',
+                    right: 10,
+                    bottom: 10,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 10,
+                }}
+                hitSlop={10}
+            >
+                {isMuted ? (
+                    <SoundMuteIcon width={16} height={16} color="#ffffff" />
+                ) : (
+                    <SoundIcon width={16} height={16} color="#ffffff" />
+                )}
+            </RNPressable>
+        </View>
+    );
+});
+VideoPresentationControls.displayName = "VideoPresentationControls";
 
 // ─── VideoCarouselItem ────────────────────────────────────────────────────────
 interface VideoCarouselItemProps {
@@ -64,14 +215,17 @@ const VideoCarouselItem = React.memo(({
     const isMuted = useFeedVideoStore(s => s.isMuted);
     const disableAutoplay = useSettingsStore(s => s.disableAutoplay);
 
+    const isStoreActive = useFeedVideoStore(s => s.activePostId === postId && (s.activeMediaId === item.id || !s.activeMediaId));
+
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isActive, setIsActive] = useState(false);
     const [status, setStatus] = useState<'playing' | 'paused' | 'pending'>('pending');
     const [timeRemaining, setTimeRemaining] = useState(0);
 
-    const videoUrl = chosenMediaPath(item);
+    const showSpinner = useThrottledValue(isActive && isLoading, 100);
 
+    const videoUrl = chosenMediaPath(item);
     const fallbackUrls = useMemo(() => buildFallbackUrls(item, placeholderImageVideo), [item, placeholderImageVideo]);
     const [prev, setPrev] = useState(0);
     const placeholderBlurhash = useMemo(
@@ -86,48 +240,26 @@ const VideoCarouselItem = React.memo(({
         setPrev(p => (p < fallbackUrls.length - 1 ? p + 1 : p));
     }, [fallbackUrls.length]);
 
-    const handleFullScreenPress = useCallback(() => {
-        videoRef.current?.enterFullscreen(true);
-    }, []);
-
-    const handleMiddlePress = useCallback(() => {
-        if (isPlaying) {
-            handleFullScreenPress();
-        } else {
-            videoRef.current?.togglePlayback();
-        }
-    }, [isPlaying, handleFullScreenPress]);
-
-    const formattedTime = useMemo(() => {
-        if (isNaN(timeRemaining) || timeRemaining < 0) return '0:00';
-        const mins = Math.floor(timeRemaining / 60);
-        const secs = Math.floor(timeRemaining % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }, [timeRemaining]);
-
     if (!isActive && status !== 'pending') {
         setStatus('pending');
     }
 
-    // Whether to show the thumbnail overlay (same logic as Bluesky's InnerWrapper)
     const showOverlay =
         !isActive ||
         isLoading ||
+        (status === 'paused' && !isActive) ||
         status === 'pending';
 
     return (
-        <View style={{ width: screenWidth }}>
-            <View style={{ width: '100%', aspectRatio: ASPECT_RATIO }}>
-                {/* BlueskyVideoView: the native module handles autoplay via
-                    updateActiveVideoViewAsync. Each mounted instance registers
-                    itself, and the native side activates only the most visible one. */}
+        <View style={{ width: screenWidth, height: mediaHeight, overflow: 'hidden' }}>
+            <View style={{ width: '100%', height: '100%', position: 'relative' }}>
                 {videoUrl ? (
                     <BlueskyVideoView
                         ref={videoRef}
                         url={videoUrl}
                         autoplay={!disableAutoplay}
                         beginMuted={isMuted}
-                        style={{ width: screenWidth, height: mediaHeight, borderRadius: 0 }}
+                        style={{ width: '100%', height: '100%' }}
                         onActiveChange={e => {
                             const active = e.nativeEvent.isActive;
                             setIsActive(active);
@@ -158,16 +290,20 @@ const VideoCarouselItem = React.memo(({
                     />
                 ) : null}
 
-                {/* Thumbnail overlay: visible when video is not active or loading.
-                    Uses display/zIndex pattern from Bluesky to avoid flicker. */}
-                <View style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'transparent',
-                    ...Platform.select({
-                        android: { display: showOverlay ? 'flex' : 'none' },
-                        ios: { zIndex: showOverlay ? 1 : -1 },
-                    })
-                }}>
+                {/* Thumbnail overlay: visible when video is inactive, loading, or pending */}
+                <View
+                    style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            backgroundColor: 'transparent',
+                            ...Platform.select({
+                                android: { display: showOverlay ? 'flex' : 'none' },
+                                ios: { zIndex: showOverlay ? 1 : -1 },
+                            }),
+                        },
+                    ]}
+                    pointerEvents={showOverlay ? 'auto' : 'none'}
+                >
                     <ExpoImage
                         source={{
                             uri: fallbackUrls[prev],
@@ -175,117 +311,48 @@ const VideoCarouselItem = React.memo(({
                             height: targetHeight,
                         }}
                         recyclingKey={fallbackUrls[prev]}
-                        style={{ width: screenWidth, height: mediaHeight }}
+                        style={{ width: '100%', height: '100%' }}
                         contentFit="cover"
                         onError={handleThumbnailError}
                         placeholder={{ blurhash: placeholderBlurhash }}
                         cachePolicy="memory-disk"
                     />
-                    {/* Play button on thumbnail */}
-                    <RNPressable
-                        onPress={() => videoRef.current?.togglePlayback()}
-                        style={{
-                            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                            alignItems: 'center', justifyContent: 'center',
-                            backgroundColor: 'rgba(0,0,0,0.1)',
-                        }}
-                    >
-                        {isActive && isLoading ? (
-                            <ActivityIndicator size="large" color="white" />
-                        ) : (
-                            <View style={{
-                                width: 56, height: 56, borderRadius: 28,
-                                backgroundColor: 'rgba(0,0,0,0.4)',
-                                justifyContent: 'center', alignItems: 'center',
-                            }}>
-                                <PlayIcon width={32} height={32} color="#ffffff" />
-                            </View>
-                        )}
-                    </RNPressable>
-                </View>
 
-                {/* Fullscreen tap zone when video is playing */}
-                {/* Controls overlay: visible when video is active and not loading. */}
-                {isActive && !isLoading && (
-                    <>
-                        {/* Fullscreen tap zone */}
-                        <RNPressable
-                            onPress={handleMiddlePress}
-                            style={{
-                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                            }}
-                        />
-                        {/* Play/Pause Button */}
+                    {showOverlay && (
                         <RNPressable
                             onPress={() => videoRef.current?.togglePlayback()}
-                            style={{
-                                position: 'absolute',
-                                left: 12,
-                                bottom: 12,
-                                width: 36,
-                                height: 36,
-                                borderRadius: 18,
-                                backgroundColor: 'rgba(0,0,0,0.5)',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                zIndex: 10,
-                            }}
+                            style={[
+                                StyleSheet.absoluteFill,
+                                {
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: 'rgba(0,0,0,0.15)',
+                                },
+                            ]}
                         >
-                            {isPlaying ? (
-                                <PauseIcon width={24} height={24} color="#ffffff" />
+                            {showSpinner ? (
+                                <ActivityIndicator size="large" color="white" />
                             ) : (
-                                <PlayIcon width={24} height={24} color="#ffffff" />
+                                <View style={{
+                                    width: 52, height: 52, borderRadius: 26,
+                                    backgroundColor: 'rgba(0,0,0,0.45)',
+                                    justifyContent: 'center', alignItems: 'center',
+                                }}>
+                                    <PlayIcon width={28} height={28} color="#ffffff" />
+                                </View>
                             )}
                         </RNPressable>
-                        {/* Time remaining badge */}
-                        <View
-                            style={{
-                                position: 'absolute',
-                                left: 56,
-                                bottom: 12,
-                                height: 36,
-                                paddingHorizontal: 12,
-                                borderRadius: 18,
-                                backgroundColor: 'rgba(0,0,0,0.5)',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                zIndex: 10,
-                            }}
-                        >
-                            <Text
-                                style={{
-                                    color: '#ffffff',
-                                    fontSize: 12,
-                                    fontWeight: '600',
-                                    fontVariant: ['tabular-nums'],
-                                }}
-                            >
-                                {formattedTime}
-                            </Text>
-                        </View>
-                        {/* Mute/Unmute Button */}
-                        <RNPressable
-                            onPress={() => videoRef.current?.toggleMuted()}
-                            style={{
-                                position: 'absolute',
-                                right: 12,
-                                bottom: 12,
-                                width: 36,
-                                height: 36,
-                                borderRadius: 18,
-                                backgroundColor: 'rgba(0,0,0,0.5)',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                zIndex: 10,
-                            }}
-                        >
-                            {isMuted ? (
-                                <SoundMuteIcon width={16} height={16} color="#ffffff" />
-                            ) : (
-                                <SoundIcon width={16} height={16} color="#ffffff" />
-                            )}
-                        </RNPressable>
-                    </>
+                    )}
+                </View>
+
+                {/* Presentation Controls: active & not loading */}
+                {isActive && !isLoading && (
+                    <VideoPresentationControls
+                        videoRef={videoRef}
+                        isPlaying={isPlaying}
+                        timeRemaining={timeRemaining}
+                        isMuted={isMuted}
+                    />
                 )}
             </View>
         </View>
@@ -294,7 +361,9 @@ const VideoCarouselItem = React.memo(({
     prev.item.id === next.item.id &&
     prev.postId === next.postId &&
     prev.profileName === next.profileName &&
-    prev.content === next.content,
+    prev.content === next.content &&
+    prev.mediaHeight === next.mediaHeight &&
+    prev.screenWidth === next.screenWidth,
 );
 VideoCarouselItem.displayName = "VideoCarouselItem";
 
@@ -324,7 +393,7 @@ const PhotoCarouselItem = React.memo(({
     );
 
     return (
-        <View style={{ width: screenWidth }}>
+        <View style={{ width: screenWidth, height: mediaHeight }}>
             <Pressable android_ripple={{ color: colors.divider, foreground: true }} onPress={onPress}>
                 <View style={{
                     width: screenWidth,
@@ -351,6 +420,8 @@ const PhotoCarouselItem = React.memo(({
 }, (prev, next) =>
     prev.item.id === next.item.id &&
     prev.photoIndex === next.photoIndex &&
+    prev.mediaHeight === next.mediaHeight &&
+    prev.screenWidth === next.screenWidth &&
     prev.onPress === next.onPress,
 );
 PhotoCarouselItem.displayName = "PhotoCarouselItem";
@@ -389,7 +460,6 @@ const MediaCarouselItem = React.memo(({
         [media, index]
     );
 
-    // Stable callback — avoids breaking React.memo on PhotoCarouselItem
     const handlePhotoPress = useCallback(() => {
         onPhotoPress(photoIndex);
     }, [onPhotoPress, photoIndex]);
@@ -425,6 +495,8 @@ const MediaCarouselItem = React.memo(({
     prev.postId === next.postId &&
     prev.profileName === next.profileName &&
     prev.content === next.content &&
+    prev.mediaHeight === next.mediaHeight &&
+    prev.screenWidth === next.screenWidth &&
     prev.onPhotoPress === next.onPhotoPress,
 );
 MediaCarouselItem.displayName = "MediaCarouselItem";
@@ -450,16 +522,68 @@ const AnimatedMediaWrapper = React.memo(({ pressAnim, children }: AnimatedMediaW
 });
 AnimatedMediaWrapper.displayName = "AnimatedMediaWrapper";
 
-// ─── ClassicMediaCarousel ─────────────────────────────────────────────────────
-const ClassicMediaCarousel = React.memo(({
+// ─── SingleMediaView (Fast path: avoids nested FlatList) ─────────────────────
+const SingleMediaView = React.memo(({
     media, postId, profileName, content, colors,
-    isAdult = false, isVerified, musicUrl, musicTitle,
+    isVerified, musicUrl, musicTitle,
+}: PostMediaCarouselProps) => {
+    const screenWidth = Dimensions.get('window').width;
+    const mediaHeight = screenWidth / ASPECT_RATIO;
+    const openGallery = useGalleryStore(state => state.openGallery);
+
+    const galleryImages = useMemo(() =>
+        media.filter(m => m.type === 'photo').map(m => ({
+            uri: m.url,
+            caption: content,
+            profileName,
+            isVerified,
+            musicUrl,
+            musicTitle,
+            blurhash: m.blurhash,
+        })),
+        [media, content, profileName, isVerified, musicUrl, musicTitle]);
+
+    const handlePhotoPress = useCallback((photoIndex: number) => {
+        openGallery(galleryImages, photoIndex);
+    }, [openGallery, galleryImages]);
+
+    return (
+        <View style={{ marginBottom: 16, width: screenWidth, height: mediaHeight }}>
+            <MediaCarouselItem
+                item={media[0]}
+                index={0}
+                media={media}
+                postId={postId}
+                profileName={profileName}
+                content={content}
+                colors={colors}
+                placeholderImageVideo={PLACEHOLDER_IMAGE_VIDEO}
+                mediaHeight={mediaHeight}
+                screenWidth={screenWidth}
+                onPhotoPress={handlePhotoPress}
+            />
+        </View>
+    );
+}, (prev, next) =>
+    prev.postId === next.postId &&
+    prev.media === next.media &&
+    prev.profileName === next.profileName &&
+    prev.content === next.content &&
+    prev.isAdult === next.isAdult &&
+    prev.isVerified === next.isVerified &&
+    prev.musicUrl === next.musicUrl &&
+    prev.musicTitle === next.musicTitle,
+);
+SingleMediaView.displayName = "SingleMediaView";
+
+// ─── MultiMediaCarousel (Horizontal paging FlatList) ──────────────────────────
+const MultiMediaCarousel = React.memo(({
+    media, postId, profileName, content, colors,
+    isVerified, musicUrl, musicTitle,
 }: PostMediaCarouselProps) => {
     const screenWidth = Dimensions.get('window').width;
     const mediaHeight = screenWidth / ASPECT_RATIO;
     const pressAnim = useSharedValue<number>(0);
-    const pressAnimRef = useRef(pressAnim);
-    const isMomentumScrolling = useRef(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const currentIndexRef = useRef(0);
     const openGallery = useGalleryStore(state => state.openGallery);
@@ -480,9 +604,6 @@ const ClassicMediaCarousel = React.memo(({
         openGallery(galleryImages, photoIndex);
     }, [openGallery, galleryImages]);
 
-    // ── Viewability (stable pair — never recreated) ──────────────────────────
-    // With @bsky.app/video, the native module handles video activation.
-    // This callback now only tracks the carousel active index for dot indicators.
     const handleViewableItemsChangedImpl = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
         if (viewableItems.length > 0) {
             const idx = viewableItems[0].index ?? 0;
@@ -498,7 +619,6 @@ const ClassicMediaCarousel = React.memo(({
         handleViewableItemsChangedRef.current = handleViewableItemsChangedImpl;
     }, [handleViewableItemsChangedImpl]);
 
-    // Stable pair — created once, never causes the "changing on the fly" warning
     const viewabilityConfigCallbackPairs = useMemo(() => [
         {
             viewabilityConfig: {
@@ -510,12 +630,8 @@ const ClassicMediaCarousel = React.memo(({
         },
     ], []);
 
-
-
     const keyExtractor = useCallback((item: Media) => item.id, []);
 
-    // renderItem is stable as long as the props it closes over don't change.
-    // media identity is stable (useMemo in FeedTab), so this rarely recreates.
     const renderMediaItem = useCallback(({ item, index }: { item: Media; index: number }) => (
         <AnimatedMediaWrapper pressAnim={pressAnim}>
             <MediaCarouselItem
@@ -534,8 +650,6 @@ const ClassicMediaCarousel = React.memo(({
         </AnimatedMediaWrapper>
     ), [pressAnim, media, postId, profileName, content, colors, mediaHeight, screenWidth, handlePhotoPress]);
 
-    if (!media || media.length === 0) return null;
-
     return (
         <View style={{ marginBottom: 16 }}>
             <FlatList
@@ -549,22 +663,6 @@ const ClassicMediaCarousel = React.memo(({
                 initialNumToRender={1}
                 maxToRenderPerBatch={2}
                 windowSize={3}
-                onScrollBeginDrag={() => {
-                    isMomentumScrolling.current = false;
-                    // pressAnimRef.current.value = withTiming(1, { duration: 150 });
-                }}
-                onScrollEndDrag={() => {
-                    if (!isMomentumScrolling.current) {
-                        // pressAnimRef.current.value = withDelay(1200, withTiming(0, { duration: 400 }));
-                    }
-                }}
-                onMomentumScrollBegin={() => {
-                    isMomentumScrolling.current = true;
-                }}
-                onMomentumScrollEnd={() => {
-                    isMomentumScrolling.current = false;
-                    // pressAnimRef.current.value = withDelay(120, withTiming(0, { duration: 400 }));
-                }}
                 getItemLayout={(_data, index) => ({
                     length: screenWidth,
                     offset: screenWidth * index,
@@ -572,25 +670,23 @@ const ClassicMediaCarousel = React.memo(({
                 })}
             />
 
-            {media.length > 1 && (
-                <View style={{ position: 'absolute', bottom: 12, flexDirection: 'row', width: '100%', justifyContent: 'center', gap: 6 }}>
-                    {media.map((_, i) => (
-                        <View
-                            key={i}
-                            style={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: 3,
-                                backgroundColor: i === activeIndex ? '#ffffff' : 'rgba(255,255,255,0.4)',
-                                shadowColor: "#000",
-                                shadowOffset: { width: 0, height: 1 },
-                                shadowOpacity: 0.3,
-                                shadowRadius: 2,
-                            }}
-                        />
-                    ))}
-                </View>
-            )}
+            <View style={{ position: 'absolute', bottom: 12, flexDirection: 'row', width: '100%', justifyContent: 'center', gap: 6 }}>
+                {media.map((_, i) => (
+                    <View
+                        key={i}
+                        style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: 3,
+                            backgroundColor: i === activeIndex ? '#ffffff' : 'rgba(255,255,255,0.4)',
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 2,
+                        }}
+                    />
+                ))}
+            </View>
         </View>
     );
 }, (prev, next) =>
@@ -603,8 +699,12 @@ const ClassicMediaCarousel = React.memo(({
     prev.musicUrl === next.musicUrl &&
     prev.musicTitle === next.musicTitle,
 );
-ClassicMediaCarousel.displayName = "ClassicMediaCarousel";
+MultiMediaCarousel.displayName = "MultiMediaCarousel";
 
 export const PostMediaCarousel = (props: PostMediaCarouselProps) => {
-    return <ClassicMediaCarousel {...props} />;
+    if (!props.media || props.media.length === 0) return null;
+    if (props.media.length === 1) {
+        return <SingleMediaView {...props} />;
+    }
+    return <MultiMediaCarousel {...props} />;
 };

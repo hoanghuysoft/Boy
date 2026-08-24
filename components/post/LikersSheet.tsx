@@ -140,7 +140,7 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
                 return (
                     <View style={{ paddingTop: 8 }}>
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <ShimmerGroup key={i} isLoading preset="dark">
+                            <ShimmerGroup key={i} isLoading>
                                 <View style={{ flexDirection: 'row', marginBottom: 20, gap: 16 }}>
                                     <Shimmer style={{ width: 48, height: 48, borderRadius: 24 }} />
                                     <View style={{ gap: 4, flex: 1, justifyContent: 'center' }}>

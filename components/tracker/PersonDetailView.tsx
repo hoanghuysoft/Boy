@@ -242,7 +242,7 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
     if (isLoading || !isReady) {
         return (
             <View style={[styles.screen, { backgroundColor: darkDominant }]}>
-                <ShimmerGroup isLoading={true} preset="dark">
+                <ShimmerGroup isLoading={true}>
                     <View style={{ gap: 16 }}>
                         <Shimmer style={{ height: posterHeight, width: "100%" }} />
                         <View style={{ paddingHorizontal: 16, gap: 12, marginTop: 16 }}>

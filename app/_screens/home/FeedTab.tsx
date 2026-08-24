@@ -1,7 +1,8 @@
 import { FlexText } from "@/components/FlexText";
-import { List } from "@/components/list";
+import { List, type ListMethods } from "@/components/list";
 import { useNonReactiveCallback } from "@/components/list/useNonReactiveCallback";
 import { PostItem } from "@/components/PostItem";
+import { usePrecacheProfileFromPost } from "@/services/profileCache";
 import { useThemeContext } from "@/context/ThemeContext";
 import { queryClient } from "@/services/client";
 import { useFeed } from "@/services/feed";
@@ -10,7 +11,6 @@ import { useScrollStore } from "@/stores/scroll";
 import { createCommonStyles } from "@/styles/common";
 import { Post } from "@/types/post";
 import { updateActiveVideoViewAsync } from "@bsky.app/video";
-import { type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useFocusEffect } from "expo-router";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
@@ -22,6 +22,7 @@ import {
     ScrollView,
     StyleSheet,
     View,
+    type ViewToken,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -74,7 +75,7 @@ const FeedTab: React.FC<FeedTabProps> = ({
     const extraPadding = 20;
     const bottomPadding = bottomNavHeight + bottomNavMargin + insets.bottom + extraPadding;
 
-    const listRef = useRef<FlashListRef<any> | null>(null);
+    const listRef = useRef<ListMethods | null>(null);
     const trigger = useScrollStore((state) => state.triggers['index']);
 
     useEffect(() => {
@@ -139,66 +140,46 @@ const FeedTab: React.FC<FeedTabProps> = ({
         }
     }, [onScroll]);
 
+    useEffect(() => {
+        if (!isLoading && posts.length > 0) {
+            const timer = setTimeout(() => {
+                updateActiveVideoViewAsync();
+            }, 150);
+            return () => clearTimeout(timer);
+        }
+    }, [isLoading, posts.length]);
+
+    const precacheProfile = usePrecacheProfileFromPost();
+
     /**
-     * viewabilityConfigCallbackPairs — tracks visible items for:
-     *   1. Prefetching upcoming posts' images
-     *   2. Passing indices to activateVideoFromIndices on settle
-     *
-     * The List's built-in onItemSeen uses 40%/500ms for impression tracking.
-     * This separate pair uses 60%/200ms for video activation — kept distinct
-     * so video logic doesn't interfere with impression analytics.
+     * onItemSeen — fires via List's unified 40%/500ms viewability tracking.
+     * Prefetches upcoming post images, avatars, and precaches profile stubs
+     * without stuttering scroll.
      */
-    const handleViewableItemsChanged = useCallback(
-        ({ viewableItems }: { viewableItems: { index: number | null; item: Post; isViewable: boolean }[] }) => {
-            const visibleIndices = viewableItems
-                .map(v => v.index)
-                .filter((i): i is number => i !== null);
-            // Prefetch images for posts just beyond the visible window
-            if (visibleIndices.length > 0) {
-                const maxVisible = Math.max(...visibleIndices);
-                const aheadPosts = posts.slice(maxVisible + 1, maxVisible + 1 + PREFETCH_AHEAD);
-                const urls: string[] = [];
-                for (const p of aheadPosts) {
-                    if (p.profile_avatar && !prefetchedUrls.current.has(p.profile_avatar)) {
-                        urls.push(p.profile_avatar);
-                        prefetchedUrls.current.add(p.profile_avatar);
-                    }
-                    for (const m of p.media ?? []) {
-                        const url = m.type === 'video' ? m.thumbnail_url : m.url;
-                        if (url && !prefetchedUrls.current.has(url)) {
-                            urls.push(url);
-                            prefetchedUrls.current.add(url);
-                        }
-                    }
+    const handleItemSeen = useCallback((item: Post) => {
+        precacheProfile(item);
+        if (item.reposted_post && !item.reposted_post.deleted) {
+            precacheProfile(item.reposted_post);
+        }
+
+        const itemIndex = posts.findIndex(p => p.id === item.id);
+        if (itemIndex >= 0) {
+            const aheadPosts = posts.slice(itemIndex + 1, itemIndex + 1 + PREFETCH_AHEAD);
+            for (const p of aheadPosts) {
+                if (p.profile_avatar && !prefetchedUrls.current.has(p.profile_avatar)) {
+                    prefetchedUrls.current.add(p.profile_avatar);
+                    Image.prefetch(p.profile_avatar);
                 }
-                if (urls.length > 0) {
-                    for (const url of urls) {
+                for (const m of p.media ?? []) {
+                    const url = m.type === 'video' ? m.thumbnail_url : m.url;
+                    if (url && !prefetchedUrls.current.has(url)) {
+                        prefetchedUrls.current.add(url);
                         Image.prefetch(url);
                     }
                 }
             }
-        },
-        [posts],
-    );
-
-    // Keep a ref so the stable viewabilityConfigCallbackPairs always calls the
-    // latest closure without needing to recreate the array
-    const handleViewableItemsChangedRef = useRef(handleViewableItemsChanged);
-    useEffect(() => {
-        handleViewableItemsChangedRef.current = handleViewableItemsChanged;
-    }, [handleViewableItemsChanged]);
-
-    const viewabilityConfigCallbackPairs = useMemo(() => [
-        {
-            viewabilityConfig: {
-                itemVisiblePercentThreshold: 60,
-                minimumViewTime: 200,
-            },
-            onViewableItemsChanged: ({ viewableItems }: any) => {
-                handleViewableItemsChangedRef.current({ viewableItems });
-            },
-        },
-    ], []);
+        }
+    }, [posts, precacheProfile]);
 
     const handleRefresh = useCallback(async () => {
         prefetchedUrls.current.clear(); // Reset prefetch memory on pull-to-refresh
@@ -230,7 +211,6 @@ const FeedTab: React.FC<FeedTabProps> = ({
         return (
             <ShimmerGroup
                 isLoading={true}
-                preset="dark"
             >
                 <View style={{ marginTop: 20 }}>
                     <View style={[common.row, { gap: 10, marginBottom: 12, paddingHorizontal: 16 }]}>
@@ -335,8 +315,8 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 onEndReached={handleEndReached}
                 onEndReachedThreshold={2}
                 ListFooterComponent={renderFooter}
-                // ─── Viewability (image prefetch + video index tracking) ─
-                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
+                // ─── Viewability (image prefetch) ───────────────────────
+                onItemSeen={handleItemSeen}
                 // ─── Performance (FlashList) ────────────
                 drawDistance={500}
                 getItemType={(item: Post) => {

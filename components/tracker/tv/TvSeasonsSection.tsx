@@ -174,7 +174,7 @@ const EpisodeList = ({ episodes, tvId, tvName, seasonNumber, onEpisodePress }: E
 // ─── Episode List Skeleton ─────────────────────────────────────────────────────
 
 const EpisodeListSkeleton = () => (
-    <ShimmerGroup isLoading={true} preset="dark">
+    <ShimmerGroup isLoading={true}>
         <View style={{ paddingHorizontal: 16, gap: 12 }}>
             {[1, 2, 3].map((i) => (
                 <View key={i} style={{ flexDirection: "row", gap: 12 }}>

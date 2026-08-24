@@ -65,7 +65,7 @@ export const IMDbBadge = ({ score, style, textColor }: { score?: number, style?:
 
 /** Lightweight skeleton placeholder for a single horizontal section row */
 const SectionShimmer = ({ title }: { title: string }) => (
-    <ShimmerGroup isLoading={true} preset="dark">
+    <ShimmerGroup isLoading={true}>
         <View style={{ gap: 16 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16 }}>
                 <Shimmer

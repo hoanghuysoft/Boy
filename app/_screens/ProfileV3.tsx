@@ -48,7 +48,7 @@ const ProfileSkeletonInner = ({ insets }: { insets: any }) => {
   const { colors } = useThemeContext();
   return (
     <View style={{ paddingHorizontal: 12, flex: 1, position: 'relative' }}>
-      <ShimmerGroup isLoading preset="dark">
+      <ShimmerGroup isLoading>
         {/* Cover Shimmer */}
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: COVER_HEIGHT }}>
           <Shimmer style={{ width: '100%', height: '100%' }} />

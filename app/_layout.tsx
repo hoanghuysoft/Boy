@@ -232,7 +232,7 @@ export default withSentry(function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <KeyboardProvider>
 
-          <HeroUINativeProvider>
+          <HeroUINativeProvider config={{ devInfo: { stylingPrinciples: false } }}>
             <BottomSheetProvider>
               <PersistQueryClientProvider
                 client={queryClient}

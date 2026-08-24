@@ -1,43 +1,45 @@
 /**
- * List — A high-performance Animated.FlatList wrapper
+ * List — A high-performance Animated LegendList wrapper
  *
- * Ported & adapted from Bluesky social-app:
- *   src/view/com/util/List.tsx         (native)
- *   src/view/com/util/Views.tsx        (FlatList_INTERNAL)
- *   src/lib/ScrollContext.tsx          (ScrollContext)
+ * Replaces FlatList & FlashList with @legendapp/list (Legend List)
+ * for superior performance with dynamically sized items, 100% TS JS-based
+ * virtualization, and smooth scroll handling with Reanimated & worklets.
  *
- * What this does vs. plain FlatList:
- *  ① Scroll context — publishes animated scroll events via ScrollContext so
+ * What this does:
+ *  ① LegendList Virtualization — zero-native-dependency ultra fast dynamic list.
+ *  ② Scroll context — publishes animated scroll events via ScrollContext so
  *    parent screens can react to scroll without extra prop drilling.
- *  ② onScrolledDownChange — fires (once) when user crosses the 200px threshold,
+ *  ③ onScrolledDownChange — fires (once) when user crosses the 200px threshold,
  *    used to show/hide "Load latest" buttons.
- *  ③ onItemSeen — viewability callback (40% visible, 500ms dwell) for analytics
+ *  ④ onItemSeen — viewability callback (40% visible, 500ms dwell) for analytics
  *    or "mark as read" patterns.
- *  ④ headerOffset — automatically applies contentOffset + paddingTop so content
+ *  ⑤ headerOffset — automatically applies contentOffset + paddingTop so content
  *    sits under transparent headers without manual calculation.
- *  ⑤ Autoplay video hook — calls `onScrollSettled` via the scroll handler so
- *    the feed can activate the correct video after scroll stops. Wire up your
- *    video store in `onScrollSettled`.
- *  ⑥ Pull-to-refresh — rendered internally with themed tint color; pass
- *    `refreshing` + `onRefresh` props (no need to build RefreshControl yourself).
- *  ⑦ iOS scrolls-to-top — automatically disabled when a lightbox/modal is open
- *    (pass `disableScrollsToTop` prop to force off).
- *  ⑧ memo + forwardRef — fully memoised; ref exposes the underlying FlatList.
+ *  ⑥ Autoplay video hook — calls `updateActiveVideoViewAsync` and `onScrollSettled`
+ *    via the worklet scroll handler so the feed can activate the correct video.
+ *  ⑦ Pull-to-refresh — rendered internally with themed tint color; pass
+ *    `refreshing` + `onRefresh` props.
+ *  ⑧ iOS scrolls-to-top — automatically disabled when a lightbox/modal is open.
+ *  ⑨ memo + forwardRef — fully memoised; ref exposes the underlying LegendList.
  */
 
 import { updateActiveVideoViewAsync } from '@bsky.app/video'
-import { forwardRef, memo, useMemo, type ReactElement } from 'react'
+import {
+  AnimatedLegendList,
+  type AnimatedLegendListProps,
+} from '@legendapp/list/reanimated'
+import type { LegendListRef } from '@legendapp/list/react-native'
+import { forwardRef, memo, useEffect, useMemo, useRef, type ReactElement } from 'react'
 import {
   Platform,
   RefreshControl,
   type ViewToken
 } from 'react-native'
-import { FlashList, type FlashListProps, type FlashListRef } from '@shopify/flash-list'
-import Animated, {
-  runOnJS,
+import {
   useAnimatedScrollHandler,
   useSharedValue,
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 
 import { useScrollHandlers } from './ScrollContext'
 import { useDedupe } from './useDedupe'
@@ -45,18 +47,18 @@ import { useNonReactiveCallback } from './useNonReactiveCallback'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type ListMethods = FlashListRef<any>
+export type ListMethods = LegendListRef
 
 export type ListProps<ItemT = any> = Omit<
-  FlashListProps<ItemT>,
+  AnimatedLegendListProps<ItemT>,
   /**
    * Omitted because the List manages these internally via the animated scroll
    * handler. Use ScrollContext (see below) to receive scroll events instead,
    * or use `onScrollSettled` for video autoplay.
    */
-  | 'onScroll'
   | 'onMomentumScrollBegin'
   | 'onMomentumScrollEnd'
+  | 'onScroll'
   | 'onScrollBeginDrag'
   | 'onScrollEndDrag'
   /**
@@ -95,28 +97,23 @@ export type ListProps<ItemT = any> = Omit<
 
   /**
    * Called when the list has stopped scrolling (momentum end or drag end).
-   * Ideal hook point for video autoplay: activate the topmost visible video
-   * after the user stops flicking.
-   *
-   * Runs on the JS thread (via `runOnJS`).
+   * Runs on the JS thread.
    */
   onScrollSettled?: () => void
 
   /**
    * Called on every scroll frame with the current Y offset.
-   * Runs on the JS thread; throttle with useDedupe if needed.
+   * Runs on the JS thread.
    */
   onScrollY?: (y: number) => void
 
   /**
    * tintColor for the pull-to-refresh spinner.
-   * Defaults to the app's primary text color — pass your theme color here.
    */
   refreshTintColor?: string
 
   /**
    * progressViewOffset for pull-to-refresh on Android.
-   * Useful when the list sits under a translucent status bar.
    */
   progressViewOffset?: number
 
@@ -127,13 +124,11 @@ export type ListProps<ItemT = any> = Omit<
 
   /**
    * Disable `scrollsToTop` (iOS only).
-   * Set to true when a modal/lightbox is open so the status-bar tap doesn't
-   * scroll the background list.
    */
   disableScrollsToTop?: boolean
 }
 
-export type ListRef = React.RefObject<FlashListRef<any> | null>
+export type ListRef = React.RefObject<LegendListRef | null>
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -141,13 +136,6 @@ const IS_IOS = Platform.OS === 'ios'
 
 /** Y offset in px that triggers onScrolledDownChange. */
 const SCROLLED_DOWN_LIMIT = 200
-
-// ─── AnimatedFlatList ─────────────────────────────────────────────────────────
-
-/**
- * AnimatedFlashList wrapped by Reanimated so it understands useAnimatedScrollHandler.
- */
-const AnimatedFlashListMemoized = memo(Animated.createAnimatedComponent(FlashList)) as any
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
@@ -167,6 +155,9 @@ let List = forwardRef<ListMethods, ListProps>(
       progressViewOffset,
       disableScrollsToTop = false,
       automaticallyAdjustsScrollIndicatorInsets = false,
+      estimatedItemSize = 100,
+      recycleItems = true,
+      maintainVisibleContentPosition = true,
       ...props
     },
     ref,
@@ -189,8 +180,6 @@ let List = forwardRef<ListMethods, ListProps>(
     })
 
     // ─── ScrollContext integration (PagerWithHeader uses this) ─────────
-    // Destructured outside the worklet closure, as per Bluesky's pattern:
-    // https://github.com/bluesky-social/social-app/pull/4108
     const {
       onBeginDrag: onBeginDragFromContext,
       onEndDrag: onEndDragFromContext,
@@ -212,7 +201,7 @@ let List = forwardRef<ListMethods, ListProps>(
 
         // Notify JS thread of raw Y offset if requested
         if (onScrollY) {
-          runOnJS(onScrollY)(y)
+          scheduleOnRN(onScrollY, y)
         }
 
         // Toggle "scrolled down" flag
@@ -220,41 +209,29 @@ let List = forwardRef<ListMethods, ListProps>(
         if (isScrolledDown.get() !== didScrollDown) {
           isScrolledDown.set(didScrollDown)
           if (onScrolledDownChange != null) {
-            runOnJS(handleScrolledDownChange)(didScrollDown)
+            scheduleOnRN(handleScrolledDownChange, didScrollDown)
           }
         }
 
-        // On iOS, also update video during scroll (throttled) for
-        // smoother activation — matches Bluesky's iOS behavior exactly.
-        // The definitive call happens at momentum/drag end below.
+        // On iOS, also update video during scroll (throttled)
         if (IS_IOS) {
-          runOnJS(dedupe)(updateActiveVideoViewAsync)
-        }
-
-        // Legacy settle callback for JS-side video logic
-        if (IS_IOS && onScrollSettled) {
-          runOnJS(dedupe)(handleScrollSettled)
+          scheduleOnRN(dedupe, updateActiveVideoViewAsync)
         }
       },
 
       onEndDrag(e, ctx) {
-        // Native video autoplay: tell @bsky.app/video to activate
-        // the most visible BlueskyVideoView (same as Bluesky's List.tsx)
-        runOnJS(updateActiveVideoViewAsync)()
+        scheduleOnRN(updateActiveVideoViewAsync)
         onEndDragFromContext?.(e, ctx)
-        // Drag released without momentum (slow drag) — settle immediately
         if (onScrollSettled) {
-          runOnJS(handleScrollSettled)()
+          scheduleOnRN(handleScrollSettled)
         }
       },
 
       onMomentumEnd(e, ctx) {
-        // Native video autoplay: activate most visible video after flick
-        runOnJS(updateActiveVideoViewAsync)()
+        scheduleOnRN(updateActiveVideoViewAsync)
         onMomentumEndFromContext?.(e, ctx)
-        // Flick finished — this is the primary fast-path for video autoplay
         if (onScrollSettled) {
-          runOnJS(handleScrollSettled)()
+          scheduleOnRN(handleScrollSettled)
         }
       },
     })
@@ -276,15 +253,7 @@ let List = forwardRef<ListMethods, ListProps>(
           }
         },
         {
-          /**
-           * Item must be ≥40% visible (Bluesky uses 40% here, our FeedTab used 60%).
-           * 40% works better for tall items that don't fully fit the viewport.
-           */
           itemVisiblePercentThreshold: 40,
-          /**
-           * 500ms dwell time before the item is considered "seen".
-           * Prevents rapid-scroll impressions from being counted.
-           */
           minimumViewTime: 500,
         },
       ]
@@ -306,8 +275,6 @@ let List = forwardRef<ListMethods, ListProps>(
     }
 
     // ─── Header offset ────────────────────────────────────────────────────
-    // contentOffset shifts the initial scroll position so the list starts
-    // below the header; paddingTop ensures items aren't hidden under it.
     let contentOffset: { x: number; y: number } | undefined
     let adjustedContentContainerStyle = props.contentContainerStyle
     if (headerOffset != null) {
@@ -319,12 +286,15 @@ let List = forwardRef<ListMethods, ListProps>(
     }
 
     return (
-      <AnimatedFlashListMemoized
+      <AnimatedLegendList
         showsVerticalScrollIndicator
-        scrollEventThrottle={16}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        {...props}
+        scrollEventThrottle={1}
+        recycleItems={recycleItems}
+        estimatedItemSize={estimatedItemSize}
+        maintainVisibleContentPosition={maintainVisibleContentPosition}
+        onViewableItemsChanged={(props as any).onViewableItemsChanged ?? onViewableItemsChanged}
+        viewabilityConfig={(props as any).viewabilityConfig ?? viewabilityConfig}
+        {...(props as any)}
         // iOS: disable tap-status-bar-to-scroll-top when modal is open
         scrollsToTop={IS_IOS ? !disableScrollsToTop : undefined}
         automaticallyAdjustsScrollIndicatorInsets={
@@ -338,10 +308,9 @@ let List = forwardRef<ListMethods, ListProps>(
         contentOffset={contentOffset}
         contentContainerStyle={adjustedContentContainerStyle}
         refreshControl={refreshControl}
-
         onScroll={scrollHandler as any}
         style={style}
-        ref={ref}
+        ref={ref as any}
       />
     )
   },
@@ -351,4 +320,3 @@ List.displayName = 'List'
 List = memo(List) as typeof List
 
 export { List }
-

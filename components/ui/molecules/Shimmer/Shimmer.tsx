@@ -47,17 +47,19 @@ export const ShimmerEffect: React.FC<IShimmerEffect> &
       preset === "auto"
         ? appTheme === "dark"
           ? "dark"
-          : "neutral"
+          : "light"
         : preset;
+
+    const presetConfig = SHIMMER_PRESETS[effectivePreset] || SHIMMER_PRESETS.dark;
 
     const themeColors =
       effectivePreset === "custom" && shimmerColors
         ? shimmerColors
-        : SHIMMER_PRESETS[effectivePreset].colors;
+        : presetConfig.colors;
 
     const backgroundColor =
       effectivePreset !== "custom"
-        ? SHIMMER_PRESETS[effectivePreset].backgroundColor
+        ? presetConfig.backgroundColor
         : undefined;
 
     const onLayout = useCallback((e: LayoutChangeEvent) => {
@@ -194,6 +196,9 @@ export const ShimmerEffect: React.FC<IShimmerEffect> &
     };
 
     const flattenedStyle = StyleSheet.flatten(style);
+    const finalBackgroundColor = isLoading
+      ? flattenedStyle?.backgroundColor || backgroundColor
+      : flattenedStyle?.backgroundColor || "transparent";
 
     return (
       <View
@@ -203,9 +208,7 @@ export const ShimmerEffect: React.FC<IShimmerEffect> &
           style,
           {
             overflow: "hidden",
-            backgroundColor: isLoading
-              ? backgroundColor || flattenedStyle?.backgroundColor
-              : flattenedStyle?.backgroundColor || "transparent",
+            backgroundColor: finalBackgroundColor,
             opacity,
           },
         ]}
@@ -267,7 +270,7 @@ export const ShimmerEffect: React.FC<IShimmerEffect> &
                 <View
                   style={{
                     flex: 1,
-                    backgroundColor: themeColors[1],
+                    backgroundColor: themeColors[2] || themeColors[1] || "rgba(255, 255, 255, 0.1)",
                   }}
                 />
               )}
@@ -297,19 +300,21 @@ export const ShimmerGroup: React.FC<IShimmerGroup> &
           return child;
         }
 
-        if (child.type === Shimmer || child.type === ShimmerEffect) {
-          return React.cloneElement(child as React.ReactElement<any>, {
+        const element = child as React.ReactElement<any>;
+
+        if (element.type === Shimmer || element.type === ShimmerEffect) {
+          return React.cloneElement(element, {
             isLoading,
-            preset: child.props.preset || preset,
-            duration: child.props.duration || duration,
-            direction: child.props.direction || direction,
-            opacity: child.props.opacity ?? opacity,
+            preset: element.props.preset || preset,
+            duration: element.props.duration || duration,
+            direction: element.props.direction || direction,
+            opacity: element.props.opacity ?? opacity,
           });
         }
 
-        if (child.props && child.props.children) {
-          return React.cloneElement(child as React.ReactElement<any>, {
-            children: propagateProps(child.props.children),
+        if (element.props && element.props.children) {
+          return React.cloneElement(element, {
+            children: propagateProps(element.props.children),
           });
         }
 

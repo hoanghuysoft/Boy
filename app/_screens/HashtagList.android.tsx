@@ -126,7 +126,6 @@ const HashtagListScreen = () => {
                                 <ShimmerGroup
                                     key={i}
                                     isLoading
-                                    preset="dark"
                                 >
                                     <View style={[styles.tagRow, cardStyle, { backgroundColor: colors.containerContent }]}>
                                         <View style={styles.tagRowLeft}>

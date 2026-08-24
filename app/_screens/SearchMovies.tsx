@@ -293,7 +293,7 @@ const SearchMoviesScreen = () => {
     if (isLoading && submittedQuery) {
       const isPerson = searchType === 'person';
       return (
-        <ShimmerGroup isLoading={true} preset="dark">
+        <ShimmerGroup isLoading={true}>
           <View style={{ padding: 16, gap: 12 }}>
             {[1, 2, 3, 4, 5].map((key) => (
               <View key={key} style={[styles.row, { padding: 0, marginBottom: 12 }]}>

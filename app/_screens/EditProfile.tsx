@@ -14,7 +14,7 @@ import { Chip } from "heroui-native/chip";
 import { Spinner } from "heroui-native/spinner";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
     Alert,
     Keyboard,
@@ -614,6 +614,57 @@ const isDeepEqual = (a: any, b: any): boolean => {
     return true;
 };
 
+const buildInitialFormData = (targetProfile: any) => {
+    if (!targetProfile) return null;
+    const defaultMetadata = {
+        height: '',
+        weight: '',
+        threed_emoji: '',
+        employee_card: '',
+        banking: {},
+        facebook: {
+            highlight: '',
+            posts: '',
+            photos: '',
+            videos: '',
+            joined_groups: ''
+        }
+    };
+    const mergedMetadata = {
+        ...defaultMetadata,
+        ...(targetProfile.metadata || {}),
+        facebook: {
+            ...defaultMetadata.facebook,
+            ...((targetProfile.metadata || {}).facebook || {})
+        }
+    };
+    return {
+        name: targetProfile.name || '',
+        username: targetProfile.username || '',
+        email: targetProfile.email || '',
+        phone: targetProfile.phone || '',
+        birthday: parseServerDate(targetProfile.birthday),
+        gender: targetProfile.gender || '',
+        pronouns: targetProfile.pronouns || '',
+        avatar_url: targetProfile.avatar_url || '',
+        cover_url: targetProfile.cover_url || '',
+        bio: targetProfile.bio || '',
+        trivia: targetProfile.trivia || '',
+        college: targetProfile.college || '',
+        highschool: targetProfile.highschool || '',
+        hometown: targetProfile.hometown || '',
+        website: targetProfile.website || '',
+        hobby: targetProfile.hobby || '',
+        talent: targetProfile.talent || '',
+        married_date: parseServerDate(targetProfile.married_date),
+        license_plate: targetProfile.license_plate || '',
+        is_verified: targetProfile.is_verified || false,
+        is_admin: targetProfile.is_admin || false,
+        is_confidential: targetProfile.is_confidential || false,
+        metadata: mergedMetadata
+    };
+};
+
 const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myProfile: any }) => {
     const router = useRouter();
     const { colors, typography, theme } = useThemeContext();
@@ -622,57 +673,18 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
 
     const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
 
-    const [formData, setFormData] = useState<any>(() => {
-        const defaultMetadata = {
-            height: '',
-            weight: '',
-            threed_emoji: '',
-            employee_card: '',
-            banking: {},
-            facebook: {
-                highlight: '',
-                posts: '',
-                photos: '',
-                videos: '',
-                joined_groups: ''
-            }
-        };
-        const mergedMetadata = {
-            ...defaultMetadata,
-            ...(targetProfile.metadata || {}),
-            facebook: {
-                ...defaultMetadata.facebook,
-                ...((targetProfile.metadata || {}).facebook || {})
-            }
-        };
-        return {
-            name: targetProfile.name || '',
-            username: targetProfile.username || '',
-            email: targetProfile.email || '',
-            phone: targetProfile.phone || '',
-            birthday: parseServerDate(targetProfile.birthday),
-            gender: targetProfile.gender || '',
-            pronouns: targetProfile.pronouns || '',
-            avatar_url: targetProfile.avatar_url || '',
-            cover_url: targetProfile.cover_url || '',
-            bio: targetProfile.bio || '',
-            trivia: targetProfile.trivia || '',
-            college: targetProfile.college || '',
-            highschool: targetProfile.highschool || '',
-            hometown: targetProfile.hometown || '',
-            website: targetProfile.website || '',
-            hobby: targetProfile.hobby || '',
-            talent: targetProfile.talent || '',
-            married_date: parseServerDate(targetProfile.married_date),
-            license_plate: targetProfile.license_plate || '',
-            is_verified: targetProfile.is_verified || false,
-            is_admin: targetProfile.is_admin || false,
-            is_confidential: targetProfile.is_confidential || false,
-            metadata: mergedMetadata
-        };
-    });
+    const [formData, setFormData] = useState<any>(() => buildInitialFormData(targetProfile));
+    const [initialFormData, setInitialFormData] = useState<any>(() => JSON.parse(JSON.stringify(formData)));
 
-    const [initialFormData] = useState<any>(() => JSON.parse(JSON.stringify(formData)));
+    // Re-sync form state whenever targetProfile changes or updates from server
+    useEffect(() => {
+        if (targetProfile) {
+            const next = buildInitialFormData(targetProfile);
+            setFormData(next);
+            setInitialFormData(JSON.parse(JSON.stringify(next)));
+        }
+    }, [targetProfile]);
+
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const isAdmin = !!myProfile?.is_admin;
@@ -854,11 +866,15 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
 const EditProfileScreen = () => {
     const params = useLocalSearchParams();
     const targetId = (params.id as string) || 'me';
+    const isMe = !params.id || targetId === 'me';
     const { colors } = useThemeContext();
-    const { data: myProfile } = useProfile('me', true);
-    const { data: targetProfile, isLoading: isProfileLoading } = useProfile(targetId, targetId === 'me');
+    const { data: myProfile, isLoading: isMyProfileLoading } = useProfile('me', true);
+    const { data: targetProfile, isLoading: isTargetLoading, isPlaceholderData } = useProfile(targetId, isMe);
 
-    if (isProfileLoading || !targetProfile || !myProfile) {
+    // Wait until real complete profile data is available (never render edit form with a partial placeholder stub)
+    const isWaitingForData = isMyProfileLoading || isTargetLoading || isPlaceholderData || !targetProfile || !myProfile;
+
+    if (isWaitingForData) {
         return (
             <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
                 <Spinner size="lg" color={colors.secondary} />
@@ -866,7 +882,13 @@ const EditProfileScreen = () => {
         );
     }
 
-    return <EditProfileForm targetProfile={targetProfile} myProfile={myProfile} />;
+    return (
+        <EditProfileForm
+            key={`${targetProfile.id}_${targetProfile.updated_at || ''}`}
+            targetProfile={targetProfile}
+            myProfile={myProfile}
+        />
+    );
 };
 
 // ============================================================================

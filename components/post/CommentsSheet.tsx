@@ -144,7 +144,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const renderListFooter = useCallback(() => {
             if (vm.isFetchingNextPage) {
                 return (
-                    <ShimmerGroup isLoading preset="dark">
+                    <ShimmerGroup isLoading>
                         <View style={[styles.footerLoader, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
                             <Shimmer style={{ width: 38, height: 38, borderRadius: 19 }} />
                             <View style={{ flex: 1, gap: 6 }}>
@@ -184,7 +184,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 return (
                     <View style={{ paddingTop: 8 }}>
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <ShimmerGroup key={i} isLoading preset="dark">
+                            <ShimmerGroup key={i} isLoading>
                                 <View style={{ flexDirection: 'row', marginBottom: 20, gap: 12 }}>
                                     <Shimmer style={{ width: 38, height: 38, borderRadius: 19 }} />
                                     <View style={{ flex: 1, gap: 6 }}>

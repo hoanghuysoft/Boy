@@ -26,7 +26,7 @@ interface AudioStore {
     currentTime: number;   // seconds
     duration: number;      // seconds
     isPlaying: boolean;
-    setPlaybackStatus: (currentTime: number, duration: number, isPlaying?: boolean) => void;
+    setPlaybackStatus: (currentTime: number, duration: number) => void;
 
     // Seeking
     seekTarget: number | null;
@@ -45,9 +45,10 @@ interface AudioStore {
     playNext: () => void;
     playPrev: () => void;
 
-    // Convenience action: play a track
+    // Convenience actions
     playTrack: (id: string, url: string, metadata?: AudioMetadata) => void;
-    // Convenience action: stop current playback
+    pausePlayback: () => void;
+    resumePlayback: () => void;
     stopPlayback: () => void;
 }
 
@@ -62,11 +63,18 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
     currentTime: 0,
     duration: 0,
     isPlaying: false,
-    setPlaybackStatus: (currentTime, duration, isPlaying) => set((state) => ({
-        currentTime,
-        duration,
-        isPlaying: isPlaying !== undefined ? isPlaying : state.isPlaying,
-    })),
+    setPlaybackStatus: (currentTime, duration) => set((state) => {
+        if (
+            Math.abs(state.currentTime - currentTime) < 0.25 &&
+            state.duration === duration
+        ) {
+            return state;
+        }
+        return {
+            currentTime,
+            duration,
+        };
+    }),
 
     seekTarget: null,
     seekTo: (seconds) => set({ seekTarget: seconds }),
@@ -78,7 +86,15 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
     toggleRepeat: () => set((state) => ({ isRepeat: !state.isRepeat })),
 
     playlist: [],
-    setPlaylist: (list) => set({ playlist: list }),
+    setPlaylist: (list) => set((state) => {
+        if (
+            state.playlist.length === list.length &&
+            state.playlist.every((item, i) => item.id === list[i]?.id)
+        ) {
+            return state;
+        }
+        return { playlist: list };
+    }),
 
     playNext: () => {
         const state = get();
@@ -133,6 +149,14 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
         duration: 0,
         isPlaying: true,
         seekTarget: null,
+    }),
+
+    pausePlayback: () => set({
+        isPlaying: false,
+    }),
+
+    resumePlayback: () => set({
+        isPlaying: true,
     }),
 
     stopPlayback: () => set({

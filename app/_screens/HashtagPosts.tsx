@@ -87,7 +87,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
             return (
                 <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <ShimmerGroup key={i} isLoading preset="dark">
+                        <ShimmerGroup key={i} isLoading>
                             <View style={{ marginBottom: 30 }}>
                                 <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
                                     <Shimmer style={{ width: 40, height: 40, borderRadius: 20 }} />

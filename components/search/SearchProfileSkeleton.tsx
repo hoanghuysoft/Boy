@@ -9,7 +9,7 @@ export const renderProfileSkeleton = ({ colors, styles, isFirst, isLast }: any) 
         isLast={isLast}
         style={styles.profileCard}
     >
-        <ShimmerGroup isLoading={true} preset="dark">
+        <ShimmerGroup isLoading={true}>
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                 <Shimmer
                     style={{

@@ -6,7 +6,6 @@ import { useEventListener } from "expo";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { Avatar } from "heroui-native/avatar";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     AppState,
@@ -448,10 +447,12 @@ export const ShotItem = React.memo(function ShotItem({
                     style={styles.profileRow}
                 >
                     {item.profile_avatar && (
-                        <Avatar style={styles.avatar}>
-                            <Avatar.Image source={{ uri: item.profile_avatar }}></Avatar.Image>
-                            <Avatar.Fallback>{item?.profile_name?.[0] || 'U'}</Avatar.Fallback>
-                        </Avatar>
+                        <Image
+                            source={{ uri: item.profile_avatar }}
+                            style={styles.avatar}
+                            contentFit="cover"
+                            cachePolicy="memory-disk"
+                        />
                     )}
                     <FlexText style={styles.profileName}>{item.profile_name}</FlexText>
                 </TouchableOpacity>

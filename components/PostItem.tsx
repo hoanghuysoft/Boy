@@ -7,7 +7,6 @@ import LikeIcon from "@/icons/like";
 import LikeSolidIcon from "@/icons/likedsolid";
 import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
-import { usePrecacheProfileFromPost } from "@/services/profileCache";
 import { Link, Media, Post } from "@/types/post";
 import { stripYouTubeUrls } from "@/utils/youtube";
 import { guessLanguageAsync } from "@bsky.app/expo-guess-language";
@@ -16,14 +15,12 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { Avatar } from "heroui-native/avatar";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
-import { PressableFeedback } from "heroui-native/pressable-feedback";
 import { Spinner } from "heroui-native/spinner";
 import React, { useEffect, useState } from "react";
 import { Dimensions, TouchableOpacity, View } from "react-native";
-import { Pressable, ScrollView } from 'react-native-gesture-handler';
+import { ScrollView } from 'react-native-gesture-handler';
 import i18n, { LANGUAGE_LABELS, SupportedLanguage } from "../i18n";
 import { useLanguageStore } from "../stores/language";
 import { useTranslationStore } from "../stores/translation";
@@ -114,45 +111,25 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         [originalPost?.profile_id]
     );
 
-    // ─── Pre-cache author profile for instant navigation ──────────────────────
-    // Mirrors Bluesky's precacheProfile call. Runs after paint (useEffect) so
-    // it never blocks render. Writes a partial Profile stub into TanStack Query's
-    // cache — when the user taps this post's author, the profile screen renders
-    // its header immediately using this cached data (0ms wait).
-    const precacheProfile = usePrecacheProfileFromPost();
-    useEffect(() => {
-        precacheProfile(post);
-        // Also cache the original author for reposts
-        if (post.reposted_post && !post.reposted_post.deleted) {
-            precacheProfile(post.reposted_post);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [post.profile_id]);
-
     return (
         <View style={{}}>
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <PressableFeedback>
-                    <PressableFeedback.Ripple />
-                    <Pressable onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
-                        <Avatar style={{ width: 40, height: 40 }}>
-                            <Avatar.Image
-                                source={{ uri: post.profile_avatar }}
-                            />
-                            <Avatar.Fallback>
-                                {post.profile_name?.charAt(0).toUpperCase()}
-                            </Avatar.Fallback>
-                        </Avatar>
-                        <View>
-                            <View style={[vm.common.row, { gap: 4 }]}>
-                                <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
-                                {post.profile_is_verified && <VerifiedIcon size={16} />}
-                            </View>
-                            <PostMetaInfo post={post} />
+                <TouchableOpacity activeOpacity={0.7} onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
+                    <ExpoImage
+                        source={{ uri: post.profile_avatar }}
+                        style={{ width: 40, height: 40, borderRadius: 20 }}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                    />
+                    <View>
+                        <View style={[vm.common.row, { gap: 4 }]}>
+                            <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
+                            {post.profile_is_verified && <VerifiedIcon size={16} />}
                         </View>
-                    </Pressable>
-                </PressableFeedback>
+                        <PostMetaInfo post={post} />
+                    </View>
+                </TouchableOpacity>
                 {!isBookmarked && (
                     <TouchableOpacity
                         hitSlop={10}
@@ -361,7 +338,8 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
 
                 {/* Music icon */}
                 {vm.hasMedia && vm.hasMusic && (
-                    <Pressable
+                    <TouchableOpacity
+                        activeOpacity={0.7}
                         onPress={vm.toggleMusic}
                         style={{
                             position: 'absolute',
@@ -378,7 +356,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         ) : (
                             <MusicIcon width={18} height={18} color="white" fill="none" />
                         )}
-                    </Pressable>
+                    </TouchableOpacity>
                 )}
             </View>
 
@@ -400,7 +378,8 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
             {/* Audio Button for No-Media Posts */}
             {!vm.hasMedia && vm.hasMusic && (
                 <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, marginBottom: 12 }}>
-                    <Pressable
+                    <TouchableOpacity
+                        activeOpacity={0.7}
                         onPress={vm.toggleMusic}
                         style={{
                             backgroundColor: vm.colors.surfaceContainerHigh,
@@ -418,7 +397,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         <FlexText style={[vm.common.label, { fontSize: 12 }]}>
                             {t('post.audioPreview')}
                         </FlexText>
-                    </Pressable>
+                    </TouchableOpacity>
                 </View>
             )}
 
@@ -478,81 +457,63 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 // Bookmarks screen: read-only stats, no bookmark button
                 (<View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 20 }]}>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                        <PressableFeedback>
-                            <PressableFeedback.Ripple />
-                            <Pressable hitSlop={10} onPress={vm.handleLikePress}>
-                                {vm.isLiked ? (
-                                    <LikeSolidIcon size={24} color={vm.colors.onSurface} />
-                                ) : (
-                                    <LikeIcon size={24} color={vm.colors.onSurface} />
-                                )}
-                            </Pressable>
-                        </PressableFeedback>
-                        <PressableFeedback>
-                            <PressableFeedback.Ripple />
-                            <Pressable hitSlop={10} onPress={vm.handleLikeCountPress}>
-                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
-                            </Pressable>
-                        </PressableFeedback>
+                        <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikePress}>
+                            {vm.isLiked ? (
+                                <LikeSolidIcon size={24} color={vm.colors.onSurface} />
+                            ) : (
+                                <LikeIcon size={24} color={vm.colors.onSurface} />
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikeCountPress}>
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
+                        </TouchableOpacity>
                     </View>
-                    <Pressable hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                    <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <CommentIcon size={24} color={vm.colors.onSurface} />
                         <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
-                    </Pressable>
-                    <Pressable hitSlop={10} onPress={vm.handleBookmarkPress}>
+                    </TouchableOpacity>
+                    <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
                             <BookmarkSolidIcon size={24} color={vm.colors.onSurface} />
                         ) : (
                             <BookmarkIcon size={24} color={vm.colors.onSurface} />
                         )}
-                    </Pressable>
+                    </TouchableOpacity>
                 </View>)
             ) : (
                 // Feed: full interactive action bar with bookmark toggle
                 (<View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
                     <View style={[vm.common.row, { gap: 20 }]}>
                         <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                            <PressableFeedback>
-                                <PressableFeedback.Ripple />
-                                <Pressable hitSlop={10} onPress={vm.handleLikePress}>
-                                    {vm.isLiked ? (
-                                        <LikeSolidIcon size={24} color={vm.colors.onSurface} />
-                                    ) : (
-                                        <LikeIcon size={24} color={vm.colors.onSurface} />
-                                    )}
-                                </Pressable>
-                            </PressableFeedback>
-                            <TouchableOpacity hitSlop={10} onPress={vm.handleLikeCountPress}>
+                            <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikePress}>
+                                {vm.isLiked ? (
+                                    <LikeSolidIcon size={24} color={vm.colors.onSurface} />
+                                ) : (
+                                    <LikeIcon size={24} color={vm.colors.onSurface} />
+                                )}
+                            </TouchableOpacity>
+                            <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikeCountPress}>
                                 <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
                             </TouchableOpacity>
                         </View>
-                        <PressableFeedback>
-                            <PressableFeedback.Ripple />
-                            <Pressable hitSlop={10} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                                <CommentIcon size={24} color={vm.colors.onSurface} />
-                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
-                            </Pressable>
-                        </PressableFeedback>
+                        <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                            <CommentIcon size={24} color={vm.colors.onSurface} />
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
+                        </TouchableOpacity>
                         {!isRepost && (
-                            <PressableFeedback>
-                                <PressableFeedback.Ripple />
-                                <Pressable hitSlop={10} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                                    <ShareIcon size={24} color={vm.colors.onSurface} />
-                                    <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.share_count}</FlexText>
-                                </Pressable>
-                            </PressableFeedback>
+                            <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                                <ShareIcon size={24} color={vm.colors.onSurface} />
+                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.share_count}</FlexText>
+                            </TouchableOpacity>
                         )}
                     </View>
-                    <PressableFeedback>
-                        <PressableFeedback.Ripple />
-                        <Pressable hitSlop={10} onPress={vm.handleBookmarkPress}>
-                            {vm.isBookmarked ? (
-                                <BookmarkSolidIcon size={24} color={vm.colors.onSurface} />
-                            ) : (
-                                <BookmarkIcon size={24} color={vm.colors.onSurface} />
-                            )}
-                        </Pressable>
-                    </PressableFeedback>
+                    <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleBookmarkPress}>
+                        {vm.isBookmarked ? (
+                            <BookmarkSolidIcon size={24} color={vm.colors.onSurface} />
+                        ) : (
+                            <BookmarkIcon size={24} color={vm.colors.onSurface} />
+                        )}
+                    </TouchableOpacity>
                 </View>)
             )}
 

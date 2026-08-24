@@ -7,8 +7,18 @@ import * as Application from 'expo-application';
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
 import * as Updates from 'expo-updates';
+import React, { useEffect } from 'react';
 import { TouchableOpacity, View } from "react-native";
+import Animated, {
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const AnimatedExpoImage = Animated.createAnimatedComponent(ExpoImage);
 
 const AboutScreen = () => {
     const { colors, typography } = useThemeContext();
@@ -17,6 +27,26 @@ const AboutScreen = () => {
     const buildVersion = Application.nativeBuildVersion;
     const inset = useSafeAreaInsets();
     const runtimeVersion = __DEV__ ? 'dev_environment' : (Updates.updateId ?? 'unknown');
+
+    const glowScale = useSharedValue(0.6);
+    const glowOpacity = useSharedValue(0);
+
+    useEffect(() => {
+        glowScale.value = withSpring(1, {
+            damping: 16,
+            stiffness: 90,
+            mass: 0.9,
+        });
+        glowOpacity.value = withTiming(0.7, {
+            duration: 650,
+            easing: Easing.out(Easing.quad),
+        });
+    }, [glowScale, glowOpacity]);
+
+    const animatedGlowStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: glowScale.value }],
+        opacity: glowOpacity.value,
+    }));
 
     return (
         <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1, backgroundColor: colors.background, padding: 16 }}>
@@ -36,13 +66,15 @@ const AboutScreen = () => {
                 </TouchableOpacity>
             </View>
             <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 16, width: 100, height: 100 }}>
-                <ExpoImage
-                    style={{
-                        position: 'absolute',
-                        width: 260,
-                        height: 260,
-                        opacity: 0.7
-                    }}
+                <AnimatedExpoImage
+                    style={[
+                        {
+                            position: 'absolute',
+                            width: 260,
+                            height: 260,
+                        },
+                        animatedGlowStyle,
+                    ]}
                     source={{ uri: 'https://static.vecteezy.com/system/resources/thumbnails/078/720/341/small/cyan-and-aqua-grainy-gradient-circle-png.png' }}
                     contentFit="contain"
                 />

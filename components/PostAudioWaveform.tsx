@@ -1,8 +1,8 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { SquircleView } from 'expo-squircle-view';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useAudioStore } from '../stores/audio';
+import { useSimpleAudio } from '../hooks/useSimpleAudio';
 import { FlexText } from './FlexText';
 
 interface PostAudioWaveformProps {
@@ -18,8 +18,6 @@ interface PostAudioWaveformProps {
     label?: string;
 }
 
-const TRACK_ID_PREFIX = 'post-audio-';
-
 function formatDuration(secs: number): string {
     if (!secs || secs <= 0) return '0:00';
     const m = Math.floor(secs / 60);
@@ -33,26 +31,9 @@ export const PostAudioWaveform = React.memo(({
     colors,
     label,
 }: PostAudioWaveformProps) => {
-    const trackId = `${TRACK_ID_PREFIX}${postId}`;
-
-    const isPlaying = useAudioStore(s => s.currentlyPlayingId === trackId);
-    const currentTime = useAudioStore(s => s.currentlyPlayingId === trackId ? s.currentTime : 0);
-    const duration = useAudioStore(s => s.currentlyPlayingId === trackId ? s.duration : 0);
-    const playTrack = useAudioStore(s => s.playTrack);
-    const stopPlayback = useAudioStore(s => s.stopPlayback);
-
-    // Only show live progress when THIS track is the one playing
-    const liveCurrentTime = isPlaying ? currentTime : 0;
-    const liveDuration = isPlaying ? duration : 0;
-    const progress = liveDuration > 0 ? Math.min(100, (liveCurrentTime / liveDuration) * 100) : 0;
-
-    const handleToggle = useCallback(() => {
-        if (isPlaying) {
-            stopPlayback();
-        } else {
-            playTrack(trackId, audioUrl, { title: label ?? 'Audio', artist: '' });
-        }
-    }, [isPlaying, trackId, audioUrl, label, playTrack, stopPlayback]);
+    const { isPlaying, currentTime, duration, progress, toggle } = useSimpleAudio(audioUrl, {
+        id: `post-audio-${postId}`,
+    });
 
     const waveBackgroundColor = colors.divider;
     const waveProgressColor = colors.secondary ?? '#4285F4';
@@ -61,7 +42,7 @@ export const PostAudioWaveform = React.memo(({
         <SquircleView cornerSmoothing={100} preserveSmoothing style={[styles.container, { backgroundColor: colors.card }]}>
             {/* Play / Pause Button */}
             <TouchableOpacity
-                onPress={handleToggle}
+                onPress={toggle}
                 activeOpacity={0.7}
                 style={[styles.playBtn, { backgroundColor: waveProgressColor }]}
             >
@@ -79,16 +60,16 @@ export const PostAudioWaveform = React.memo(({
                     <View
                         style={[
                             styles.iosFallbackFill,
-                            { width: `${progress}%` as any, backgroundColor: waveProgressColor },
+                            { width: `${progress * 100}%` as any, backgroundColor: waveProgressColor },
                         ]}
                     />
                 </View>
 
                 {/* Duration label */}
                 <FlexText style={[styles.timeLabel, { color: colors.muted }]}>
-                    {isPlaying && liveDuration > 0
-                        ? `${formatDuration(liveCurrentTime)} / ${formatDuration(liveDuration)}`
-                        : formatDuration(liveDuration > 0 ? liveDuration : 0)}
+                    {isPlaying && duration > 0
+                        ? `${formatDuration(currentTime)} / ${formatDuration(duration)}`
+                        : formatDuration(duration > 0 ? duration : 0)}
                 </FlexText>
             </View>
         </SquircleView>

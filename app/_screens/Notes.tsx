@@ -195,7 +195,7 @@ const NotesScreen = () => {
                                 }
                             ]}
                         >
-                            <ShimmerGroup isLoading preset="dark">
+                            <ShimmerGroup isLoading>
                                 {/* Title placeholder */}
                                 <Shimmer style={{ width: '33%', height: 20, borderRadius: 6, marginBottom: 10 }} />
 

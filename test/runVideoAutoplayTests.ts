@@ -59,6 +59,14 @@ mock.module('react-native-gesture-handler', () => ({
     ScrollView: 'ScrollView',
 }));
 
+mock.module('@legendapp/list/reanimated', () => ({
+    AnimatedLegendList: 'AnimatedLegendList',
+}));
+
+mock.module('@legendapp/list/react-native', () => ({
+    LegendList: 'LegendList',
+}));
+
 mock.module('react-native-reanimated', () => ({
     default: {
         View: 'AnimatedView',
@@ -93,7 +101,6 @@ mock.module('@react-native-vector-icons/ionicons/static', () => ({
     default: 'Ionicons',
 }));
 
-mock.module('heroui-native/avatar', () => ({ Avatar: 'Avatar' }));
 mock.module('heroui-native/button', () => ({ Button: 'Button' }));
 mock.module('heroui-native/dialog', () => ({ Dialog: 'Dialog' }));
 mock.module('heroui-native/pressable-feedback', () => ({ PressableFeedback: 'PressableFeedback' }));

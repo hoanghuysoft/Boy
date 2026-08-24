@@ -636,18 +636,19 @@ const MusicScreen = () => {
         };
     }, [navigation]);
 
-    const {
-        currentlyPlayingId,
-        playTrack,
-        stopPlayback,
-        currentTime,
-        duration,
-        currentAudioUrl,
-        setPlaylist,
-        playNext,
-        playPrev,
-    } = useAudioStore();
+    const currentlyPlayingId = useAudioStore((s) => s.currentlyPlayingId);
     const metadata = useAudioStore((s) => s.metadata);
+    const currentTime = useAudioStore((s) => s.currentTime);
+    const duration = useAudioStore((s) => s.duration);
+    const currentAudioUrl = useAudioStore((s) => s.currentAudioUrl);
+    const isPlaying = useAudioStore((s) => s.isPlaying);
+    const playTrack = useAudioStore((s) => s.playTrack);
+    const pausePlayback = useAudioStore((s) => s.pausePlayback);
+    const resumePlayback = useAudioStore((s) => s.resumePlayback);
+    const stopPlayback = useAudioStore((s) => s.stopPlayback);
+    const setPlaylist = useAudioStore((s) => s.setPlaylist);
+    const playNext = useAudioStore((s) => s.playNext);
+    const playPrev = useAudioStore((s) => s.playPrev);
 
     const [isAuthed, setIsAuthed] = useState(hasFBAuth);
     const [showAuth, setShowAuth] = useState(!hasFBAuth());
@@ -671,8 +672,6 @@ const MusicScreen = () => {
             highlightTimesMs: [],
         } as FBMusicTrack;
     }, [currentlyPlayingId, metadata, currentAudioUrl]);
-
-    const isPlaying = !!currentlyPlayingId && currentlyPlayingId === playingTrack?.id;
 
     // ── All Tracks for Next / Prev & Playlist Queue ────────────────────────────
 
@@ -964,7 +963,11 @@ const MusicScreen = () => {
     const handlePlay = useCallback(
         (track: FBMusicTrack) => {
             if (currentlyPlayingId === track.id) {
-                stopPlayback();
+                if (isPlaying) {
+                    pausePlayback();
+                } else {
+                    resumePlayback();
+                }
             } else {
                 playTrack(track.id, track.audioUrl, {
                     title: track.title,
@@ -974,22 +977,17 @@ const MusicScreen = () => {
                 });
             }
         },
-        [currentlyPlayingId, playTrack, stopPlayback]
+        [currentlyPlayingId, isPlaying, playTrack, pausePlayback, resumePlayback]
     );
 
     const handleMiniToggle = useCallback(() => {
-        if (!playingTrack || !currentAudioUrl) return;
+        if (!currentlyPlayingId) return;
         if (isPlaying) {
-            stopPlayback();
+            pausePlayback();
         } else {
-            playTrack(playingTrack.id, currentAudioUrl, {
-                title: playingTrack.title,
-                artist: playingTrack.artist,
-                coverUrl: playingTrack.coverUrl,
-                artworkUrl: playingTrack.coverUrl,
-            });
+            resumePlayback();
         }
-    }, [playingTrack, isPlaying, playTrack, stopPlayback, currentAudioUrl]);
+    }, [currentlyPlayingId, isPlaying, pausePlayback, resumePlayback]);
 
     const handleNextTrack = useCallback(() => {
         playNext();
@@ -1275,7 +1273,7 @@ const MusicScreen = () => {
                                 key={t.id}
                                 track={t}
                                 colors={colors}
-                                isPlaying={currentlyPlayingId === t.id}
+                                isPlaying={currentlyPlayingId === t.id && isPlaying}
                                 onPress={handlePlay}
                             />
                         ))}
@@ -1289,12 +1287,12 @@ const MusicScreen = () => {
                     track={track}
                     index={item.index}
                     colors={colors}
-                    isPlaying={currentlyPlayingId === track.id}
+                    isPlaying={currentlyPlayingId === track.id && isPlaying}
                     onPress={handlePlay}
                 />
             );
         },
-        [colors, currentlyPlayingId, handlePlay]
+        [colors, currentlyPlayingId, isPlaying, handlePlay]
     );
 
     return (

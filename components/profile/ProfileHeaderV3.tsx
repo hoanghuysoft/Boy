@@ -8,7 +8,6 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
-import { Avatar } from "heroui-native/avatar";
 import { Button } from "heroui-native/button";
 import countries from "i18n-iso-countries";
 import en from "i18n-iso-countries/langs/en.json";
@@ -167,10 +166,12 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
             {/* Top space pushing avatar below header controls */}
             <View pointerEvents="none" style={{ height: vm.insets.top + 110 }} />
             <View pointerEvents="box-none" style={styles.avatarRow}>
-                <Avatar>
-                    <Avatar.Image source={{ uri: profile?.avatar_url }} />
-                    <Avatar.Fallback>{profile?.name?.[0] || 'U'}</Avatar.Fallback>
-                </Avatar>
+                <ExpoImage
+                    source={{ uri: profile?.avatar_url }}
+                    style={{ width: 64, height: 64, borderRadius: 32 }}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                />
                 <View pointerEvents="box-none" className="flex-row gap-2">
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
                         <ExpoImage source={require("@/assets/images/icons/info.png")} style={{ width: 36, height: 36 }} contentFit="contain"

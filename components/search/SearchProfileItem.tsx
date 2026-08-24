@@ -1,7 +1,7 @@
 import VerifiedIcon from "@/icons/verified";
 import { Profile } from "@/types/profile";
 import { calculateAge } from "@/utils/timeandage";
-import { Avatar } from "heroui-native/avatar";
+import { Image as ExpoImage } from "expo-image";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
@@ -49,10 +49,12 @@ export const SearchProfileItem = React.memo(({
             onPress={handlePress}
             style={styles.profileCard}
         >
-            <Avatar style={styles.avatar}>
-                <Avatar.Image source={{ uri: item.avatar_url }} />
-                <Avatar.Fallback>{item.name?.[0] || 'U'}</Avatar.Fallback>
-            </Avatar>
+            <ExpoImage
+                source={{ uri: item.avatar_url }}
+                style={styles.avatar}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+            />
             <View style={styles.profileInfo}>
                 <View style={[common.row, { gap: 4 }]}>
                     <FlexText
