@@ -4,6 +4,7 @@ import VerifiedIcon from "@/icons/verified";
 import { FxPhoto, FxTwitterStatus, FxVideo } from "@/services/fxtwitter/types";
 import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { formatCompactNumber } from "@/utils/formatNumber";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Image as ExpoImage } from "expo-image";
@@ -27,12 +28,7 @@ export interface XPostCardProps {
   onAuthorPress?: (handle: string) => void;
 }
 
-function formatNumber(num?: number | null): string {
-  if (num === undefined || num === null) return "0";
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
-  return String(num);
-}
+const formatNumber = formatCompactNumber;
 
 function formatVideoDuration(seconds?: number): string {
   if (!seconds || seconds <= 0) return "";

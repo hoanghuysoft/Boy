@@ -1,6 +1,7 @@
 import { FlexText } from "@/components/FlexText";
 import { getCachedUri } from "@/services/videoCache";
 import { VideoItem } from "@/types/video";
+import { formatCompactNumber } from "@/utils/formatNumber";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useEventListener } from "expo";
 import { Image } from "expo-image";
@@ -472,7 +473,7 @@ export const ShotItem = React.memo(function ShotItem({
                         : <Image source={{ uri: "https://ico.hugeicons.com/love-korean-finger-solid-standard@3x.webp?x=365593185" }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
                     }
                     <FlexText style={[styles.actionText, isLiked && { color: 'white' }]}>
-                        {likeCount > 0 ? likeCount : 0}
+                        {formatCompactNumber(likeCount)}
                     </FlexText>
                 </TouchableOpacity>
 
@@ -480,21 +481,21 @@ export const ShotItem = React.memo(function ShotItem({
                 <TouchableOpacity style={styles.actionButton} onPress={onCommentPress} hitSlop={10}>
                     <Image source={{ uri: 'https://ico.hugeicons.com/chat-favourite-01-solid-rounded@3x.webp?x=830623945' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
                     <FlexText style={styles.actionText}>
-                        {item.comment_count > 0 ? item.comment_count : 0}
+                        {formatCompactNumber(item.comment_count)}
                     </FlexText>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.actionButton}>
                     <Image source={{ uri: 'https://ico.hugeicons.com/bookmark-02-solid-rounded@3x.webp?x=94312725' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
                     <FlexText style={styles.actionText}>
-                        {item.comment_count > 0 ? item.comment_count : 0}
+                        {formatCompactNumber(item.comment_count)}
                     </FlexText>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.actionButton}>
                     <Image source={{ uri: 'https://ico.hugeicons.com/repost-solid-rounded@3x.webp?x=2071587840' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
                     <FlexText style={styles.actionText}>
-                        {item.comment_count > 0 ? item.comment_count : 0}
+                        {formatCompactNumber(item.comment_count)}
                     </FlexText>
                 </TouchableOpacity>
 
@@ -502,7 +503,7 @@ export const ShotItem = React.memo(function ShotItem({
                 <TouchableOpacity style={styles.actionButton}>
                     <Image source={{ uri: 'https://ico.hugeicons.com/share-01-solid-rounded@3x.webp?x=731754750' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
                     <FlexText style={styles.actionText}>
-                        {item.comment_count > 0 ? item.comment_count : 0}
+                        {formatCompactNumber(item.comment_count)}
                     </FlexText>
                 </TouchableOpacity>
             </View>

@@ -8,6 +8,7 @@ import LikeSolidIcon from "@/icons/likedsolid";
 import ShareIcon from "@/icons/share";
 import VerifiedIcon from "@/icons/verified";
 import { Link, Media, Post } from "@/types/post";
+import { formatCompactNumber } from "@/utils/formatNumber";
 import { stripYouTubeUrls } from "@/utils/youtube";
 import { guessLanguageAsync } from "@bsky.app/expo-guess-language";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
@@ -460,11 +461,11 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 <View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 24 }]}>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <LikeIcon size={22} color={vm.colors.onSurfaceVariant} />
-                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.like_count || 0}</FlexText>
+                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{formatCompactNumber(post.like_count)}</FlexText>
                     </View>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <CommentIcon size={22} color={vm.colors.onSurfaceVariant} />
-                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.comment_count || 0}</FlexText>
+                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{formatCompactNumber(post.comment_count)}</FlexText>
                     </View>
                     {onCrossPostPress ? (
                         <TouchableOpacity
@@ -474,18 +475,18 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             style={[vm.common.row, { gap: 6, alignItems: 'center' }]}
                         >
                             <ShareIcon size={22} color={vm.colors.onSurface} />
-                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.share_count || 0}</FlexText>
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{formatCompactNumber(post.share_count)}</FlexText>
                         </TouchableOpacity>
                     ) : (
                         <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                             <ShareIcon size={22} color={vm.colors.onSurfaceVariant} />
-                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.share_count || 0}</FlexText>
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{formatCompactNumber(post.share_count)}</FlexText>
                         </View>
                     )}
                     {post.view_count > 0 && (
                         <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                             <Ionicons name="bar-chart-outline" size={18} color={vm.colors.onSurfaceVariant} />
-                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.view_count}</FlexText>
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{formatCompactNumber(post.view_count)}</FlexText>
                         </View>
                     )}
                 </View>
@@ -501,12 +502,12 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             )}
                         </TouchableOpacity>
                         <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikeCountPress}>
-                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{formatCompactNumber(vm.likeCount)}</FlexText>
                         </TouchableOpacity>
                     </View>
                     <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <CommentIcon size={24} color={vm.colors.onSurface} />
-                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
+                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{formatCompactNumber(post.comment_count)}</FlexText>
                     </TouchableOpacity>
                     <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
@@ -529,17 +530,17 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                 )}
                             </TouchableOpacity>
                             <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikeCountPress}>
-                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
+                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{formatCompactNumber(vm.likeCount)}</FlexText>
                             </TouchableOpacity>
                         </View>
                         <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                             <CommentIcon size={24} color={vm.colors.onSurface} />
-                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{formatCompactNumber(post.comment_count)}</FlexText>
                         </TouchableOpacity>
                         {!isRepost && (
                             <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                                 <ShareIcon size={24} color={vm.colors.onSurface} />
-                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.share_count}</FlexText>
+                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{formatCompactNumber(post.share_count)}</FlexText>
                             </TouchableOpacity>
                         )}
                     </View>

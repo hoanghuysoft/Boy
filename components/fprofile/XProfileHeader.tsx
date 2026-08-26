@@ -4,6 +4,7 @@ import { useThemeContext } from "@/context/ThemeContext";
 import VerifiedIcon from "@/icons/verified";
 import { FxTwitterUser } from "@/services/fxtwitter/types";
 import { createCommonStyles } from "@/styles/common";
+import { formatCompactNumber } from "@/utils/formatNumber";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import React, { memo } from "react";
@@ -23,12 +24,7 @@ export interface XProfileHeaderProps {
   isLoading?: boolean;
 }
 
-function formatStat(num?: number | null): string {
-  if (num === undefined || num === null) return "0";
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
-  return String(num);
-}
+const formatStat = formatCompactNumber;
 
 export const XProfileHeader = memo(({ user, postCount }: XProfileHeaderProps) => {
   const { colors, typography, theme } = useThemeContext();

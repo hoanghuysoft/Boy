@@ -8,6 +8,7 @@ import {
 } from '../services/localfb';
 import { createCommonStyles } from '../styles/common';
 import { Profile } from '../types/profile';
+import { formatCompactNumber } from '../utils/formatNumber';
 
 export function useFProfileViewModel() {
     const { colors, typography, theme } = useThemeContext();
@@ -113,9 +114,7 @@ export function useFProfileViewModel() {
 
     // Format member count
     const formatCount = useCallback((count: number) => {
-        if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-        if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-        return count.toString();
+        return formatCompactNumber(count);
     }, []);
 
     const goBack = useCallback(() => {

@@ -363,9 +363,17 @@ const FProfileScreen = () => {
         refreshTintColor={colors.text}
         progressBackgroundColor={colors.card}
         progressViewOffset={insets.top + 50}
-        contentContainerStyle={posts.length === 0 ? styles.emptyContainer : undefined}
+        getItemType={(item: Post) => {
+          const content = item.reposted_post || item;
+          if (content.media?.length) return "media";
+          if (content.audio_url) return "audio";
+          if (content.links?.length) return "link";
+          if (content.music) return "music";
+          return "text";
+        }}
+        estimatedItemSize={480}
         recycleItems={true}
-        drawDistance={600}
+        drawDistance={500}
         maintainVisibleContentPosition
       />
 
