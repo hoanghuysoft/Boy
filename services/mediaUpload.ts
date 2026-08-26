@@ -148,8 +148,14 @@ export const uploadMedia = async (
     options: UploadMediaOptions = {}
 ): Promise<UploadMediaResponse> => {
     const type = options.type || getMediaType(file);
-    if (type === 'video') {
-        return uploadVideoViaX02(profileId, file, options);
+    const { x02ApiKey } = useSettingsStore.getState();
+
+    if (type === 'video' && x02ApiKey) {
+        try {
+            return await uploadVideoViaX02(profileId, file, options);
+        } catch (e) {
+            console.warn('[mediaUpload] x02 video upload failed, falling back to direct upload:', e);
+        }
     }
 
     const formData = new FormData();
@@ -157,7 +163,7 @@ export const uploadMedia = async (
     formData.append('file', {
         uri: file.uri,
         name: file.name || `upload.${getFileExtension(file)}`,
-        type: file.type || 'image/jpeg',
+        type: file.type || (type === 'video' ? 'video/mp4' : 'image/jpeg'),
     } as any);
 
     if (options.caption) formData.append('caption', options.caption);
@@ -343,8 +349,14 @@ export const uploadLargeMedia = async (
     onProgress?: (data: { bytesSent: number; totalBytes: number }) => void
 ): Promise<UploadMediaResponse> => {
     const type = options.type || getMediaType(file);
-    if (type === 'video') {
-        return uploadVideoViaX02(profileId, file, options, onProgress);
+    const { x02ApiKey } = useSettingsStore.getState();
+
+    if (type === 'video' && x02ApiKey) {
+        try {
+            return await uploadVideoViaX02(profileId, file, options, onProgress);
+        } catch (e) {
+            console.warn('[mediaUpload] x02 video upload failed, falling back to WeLove direct storage:', e);
+        }
     }
 
     const filename = file.name || `upload.${getFileExtension(file)}`;

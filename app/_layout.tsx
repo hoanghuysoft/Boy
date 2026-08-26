@@ -215,6 +215,7 @@ const RootContent = () => {
             <Stack.Screen name="search_movies" />
             <Stack.Screen name="webview" />
             <Stack.Screen name="bulletinboard" />
+            <Stack.Screen name="fprofile" />
           </Stack>
           <GlobalAudioPlayer />
           <AppLockOverlay />

@@ -49,23 +49,23 @@ export const queryClient = new QueryClient({
 // Nitro Fetch Client Wrapper
 // ============================================================================
 
-interface ClientConfig {
+export interface ClientConfig {
   baseURL: string;
   headers?: Record<string, string>;
   timeout?: number;
 }
 
-interface RequestConfig {
+export interface RequestConfig {
   params?: Record<string, any>;
   headers?: Record<string, string>;
 }
 
-type RequestInterceptor = (config: {
+export type RequestInterceptor = (config: {
   url: string;
   headers: Record<string, string>;
 }) => Promise<{ url: string; headers: Record<string, string> }>;
 
-interface NitroClient {
+export interface NitroClient {
   get: <T = any>(url: string, config?: RequestConfig) => Promise<{ data: T }>;
   post: <T = any>(url: string, body?: any, config?: RequestConfig) => Promise<{ data: T }>;
   put: <T = any>(url: string, body?: any, config?: RequestConfig) => Promise<{ data: T }>;
@@ -92,7 +92,7 @@ function buildUrl(baseURL: string, path: string, params?: Record<string, any>): 
   return url;
 }
 
-function createClient(config: ClientConfig): NitroClient {
+export function createClient(config: ClientConfig): NitroClient {
   const defaultHeaders: Record<string, string> = { ...config.headers };
   const requestInterceptors: RequestInterceptor[] = [];
 
@@ -265,3 +265,15 @@ export const bulletinClient = createClient({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
   },
 });
+
+// ─── FxTwitter Client ─────────────────────────────────────────────────────────
+
+export const fxTwitterClient = createClient({
+  baseURL: "https://api.fxtwitter.com",
+  headers: {
+    "Accept": "application/json",
+    "User-Agent": "BoyApp/1.0 (Mobile; React-Native)",
+  },
+  timeout: 12000,
+});
+

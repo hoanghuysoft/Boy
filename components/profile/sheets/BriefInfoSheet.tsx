@@ -1,18 +1,18 @@
+import CalendarIcon from "@/assets/images/svg/calendar-1.svg";
+import CatIcon from "@/assets/images/svg/cat.svg";
+import EducationIcon from "@/assets/images/svg/education.svg";
+import WomenIcon from "@/assets/images/svg/gender-female.svg";
+import MenIcon from "@/assets/images/svg/gender-male.svg";
+import LocationIcon from "@/assets/images/svg/location.svg";
+import LetterIcon from "@/assets/images/svg/mail.svg";
+import MeasurementIcon from "@/assets/images/svg/measurement.svg";
+import MobileIcon from "@/assets/images/svg/mobile.svg";
+import TimeIcon from "@/assets/images/svg/time.svg";
+import VehicleIcon from "@/assets/images/svg/vehicle.svg";
 import { FlexText } from "@/components/FlexText";
 import { calculateBMI, enrichProfileData, getBMIStatus } from "@/utils/zodiacCalculation";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import CalendarIcon from "@/assets/images/svg/calendar-1.svg";
-import LetterIcon from "@/assets/images/svg/mail.svg";
-import MenIcon from "@/assets/images/svg/gender-male.svg";
-import WomenIcon from "@/assets/images/svg/gender-female.svg";
-import MobileIcon from "@/assets/images/svg/mobile.svg";
-import LocationIcon from "@/assets/images/svg/location.svg";
-import EducationIcon from "@/assets/images/svg/education.svg";
-import MeasurementIcon from "@/assets/images/svg/measurement.svg";
-import VehicleIcon from "@/assets/images/svg/vehicle.svg";
-import CatIcon from "@/assets/images/svg/cat.svg";
-import TimeIcon from "@/assets/images/svg/time.svg";
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { Image } from "expo-image";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
@@ -24,8 +24,8 @@ import { createCommonStyles } from "../../../styles/common";
 import { ProfileDetail } from "../../../types/profiledetail";
 import { Workplace } from "../../../types/profileworplace";
 import { getFamilyAvatarSource } from "../../../utils/familyAvatar";
+import { TriviaSheetHandle } from "./TriviaSheet";
 import { useSheetBackHandler } from "./useSheetBackHandler";
-import { TriviaSheet, TriviaSheetHandle } from "./TriviaSheet";
 
 const Calendar = ({ size, ...props }: any) => <CalendarIcon width={size} height={size} {...props} />;
 const Letter = ({ size, ...props }: any) => <LetterIcon width={size} height={size} {...props} />;
@@ -296,16 +296,26 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
         if (moreItems.length > 0) result.push({ title: t('profile.sheets.brief.sections.more'), items: moreItems });
 
         // Banking
-        if (bankinfo) {
-            result.push({
-                title: t('profile.sheets.brief.sections.banking'),
-                items: [{
-                    kind: 'bank',
-                    logo: bankinfo.logo,
-                    label: `${bankinfo.recipient} · ${bankinfo.banknumber}`,
-                    sublabel: bankinfo.bankname,
-                }],
-            });
+        if (bankinfo && typeof bankinfo === 'object') {
+            const recipient = bankinfo.recipient || (bankinfo as any).account_holder || (bankinfo as any).account_name || '';
+            const banknumber = bankinfo.banknumber || (bankinfo as any).account_number || (bankinfo as any).number || '';
+            const bankname = bankinfo.bankname || (bankinfo as any).bank_name || (bankinfo as any).bank || '';
+            const logo = bankinfo.logo || undefined;
+
+            const labelParts = [recipient, banknumber].filter(Boolean);
+            const label = labelParts.length > 0 ? labelParts.join(' · ') : bankname;
+
+            if (label || bankname || bankinfo.qrurl) {
+                result.push({
+                    title: t('profile.sheets.brief.sections.banking'),
+                    items: [{
+                        kind: 'bank',
+                        logo,
+                        label: label || t('profile.info.notSpecified'),
+                        sublabel: labelParts.length > 0 && bankname ? bankname : undefined,
+                    }],
+                });
+            }
         }
 
         // Family
@@ -381,7 +391,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
                     >
                         <Ionicons name="sparkles" size={16} color={colors.primary || colors.text} />
                         <FlexText style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
-                            trivi
+                            {t('profile.sheets.trivia.title')}
                         </FlexText>
                     </TouchableOpacity>
                 </View>

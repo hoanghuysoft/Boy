@@ -88,7 +88,7 @@ const profile = {
             viewEmployeeCard: 'Xem thẻ nhân viên',
         },
         cards: {
-            facebookProfile: 'Hồ sơ Facebook',
+            xProfile: 'Hồ sơ X',
         },
     },
     sheets: {

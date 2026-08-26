@@ -11,7 +11,7 @@ import { SquircleView } from 'expo-squircle-view';
 import { Button } from "heroui-native/button";
 import countries from "i18n-iso-countries";
 import en from "i18n-iso-countries/langs/en.json";
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Reanimated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
@@ -25,9 +25,10 @@ import { useProfileHeaderViewModel } from '../../viewmodels/ProfileHeaderViewMod
 import { FlexText } from '../FlexText';
 import { usePagerHeaderContext } from '../pager/PagerHeaderContext';
 import BirthdayCard from './BirthdayCard';
-import { SOCIAL_BG_URL } from './header/constants';
+import { ADDRESS_COVER, SOCIAL_BG_URL, WORK_COVER, X_COVER_URL } from './header/constants';
 import { FamilyStackSection, HeaderInfoCard } from './header/parts';
 import { headerStyles } from './header/styles';
+import { extractXProfileInfo } from './header/utils';
 
 const CaseMinimalistic = ({ size, ...props }: any) => <Ionicons name="briefcase" size={size} {...props} />;
 const PointOnMap = ({ size, ...props }: any) => <LocationIcon width={size} height={size} {...props} />;
@@ -96,9 +97,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         music,
     });
 
-
-
-
+    const xLinkInfo = useMemo(() => extractXProfileInfo(socialLinks, profile), [socialLinks, profile]);
 
     const headerCtx = usePagerHeaderContext();
     const topInset = vm.insets.top;
@@ -259,7 +258,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 />
             )}
 
-            {(isOwner || !!profile?.birthday || !!(profile as any)?.has_facebook || socialLinks.length > 0 || addresses.length > 0 || workplaces.length > 0) && (
+            {(isOwner || !!profile?.birthday || !!(profile as any)?.has_facebook || !!xLinkInfo || socialLinks.length > 0 || addresses.length > 0 || workplaces.length > 0) && (
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -268,19 +267,29 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 >
                     {profile?.birthday && <BirthdayCard birthday={profile.birthday} />}
 
-                    {(profile as any)?.has_facebook && (
+                    {!!xLinkInfo && (
                         <HeaderInfoCard
-                            onPress={() => router.push({ pathname: '/fprofile', params: { profile: JSON.stringify(profile) } })}
+                            onPress={() =>
+                                router.push({
+                                    pathname: '/fprofile',
+                                    params: {
+                                        handle: xLinkInfo.handle || '',
+                                        profile: profile ? JSON.stringify(profile) : '',
+                                        socialLinks: JSON.stringify(socialLinks),
+                                    },
+                                })
+                            }
                             backgroundColor="#1877F2"
+                            backgroundImageUri={X_COVER_URL}
                             textColor="#FFF"
                             labelStyle={vm.common.label}
                             leading={(
                                 <View style={headerStyles.facebookIconBubble}>
-                                    <Ionicons name="logo-facebook" size={28} color="#FFF" />
+                                    <Ionicons name="logo-x" size={28} color="#FFF" />
                                 </View>
                             )}
                         >
-                            {t('profile.header.cards.facebookProfile')}
+                            {xLinkInfo.handle ? `@${xLinkInfo.handle}` : t('profile.header.cards.xProfile')}
                         </HeaderInfoCard>
                     )}
 
@@ -304,7 +313,8 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                         <HeaderInfoCard
                             onPress={() => onPresentSheet?.(addressSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
-                            showTintOverlay={vm.colors.text}
+                            backgroundImageUri={ADDRESS_COVER}
+                            // showTintOverlay={vm.colors.onSurface}
                             labelStyle={vm.common.label}
                             leading={(
                                 <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>
@@ -322,7 +332,8 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                         <HeaderInfoCard
                             onPress={() => onPresentSheet?.(workplaceSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
-                            showTintOverlay={vm.colors.text}
+                            backgroundImageUri={WORK_COVER}
+                            // showTintOverlay={vm.colors.onSurface}
                             labelStyle={vm.common.label}
                             leading={(
                                 <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>

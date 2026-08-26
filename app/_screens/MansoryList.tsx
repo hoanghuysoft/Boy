@@ -16,14 +16,13 @@ import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 
 
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
+import { useMinimizeOnScroll } from "expo-glass-tabs";
 import { Image as ExpoImage } from "expo-image";
 import { MediaViewer, type MediaViewerItem } from "expo-media-viewer";
 import { SquircleView } from "expo-squircle-view";
-import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMinimizeOnScroll } from "expo-glass-tabs";
-import Animated from "react-native-reanimated";
 import {
     Dimensions,
     Image as RNImage,
@@ -31,6 +30,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
@@ -535,7 +535,8 @@ const styles = StyleSheet.create({
     },
     headerAvatar: {
         width: 46,
-        height: 46
+        height: 46,
+        borderRadius: 999
     },
     headerAvatarBadge: {
         position: "absolute",

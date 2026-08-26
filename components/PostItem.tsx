@@ -40,10 +40,12 @@ export interface PostItemProps {
     onOptionsPress?: (post: Post) => void;
     onLikeCountPress?: (post: Post) => void;
     onCommentPress?: (post: Post) => void;
+    onCrossPostPress?: (post: Post) => void;
     isBookmarked?: boolean;
+    metricsOnly?: boolean;
 }
 
-export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, isBookmarked = false }: PostItemProps) => {
+export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, onCrossPostPress, isBookmarked = false, metricsOnly = false }: PostItemProps) => {
     const screenWidth = Dimensions.get('window').width;
     const t = i18n.t.bind(i18n);
     const { translationLanguage } = useLanguageStore();
@@ -115,7 +117,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         <View style={{}}>
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <TouchableOpacity activeOpacity={0.7} onPress={vm.handleProfilePress} style={[vm.common.row, { gap: 12, flex: 1 }]}>
+                <TouchableOpacity activeOpacity={0.7} onPress={vm.handleProfilePress} disabled={metricsOnly} style={[vm.common.row, { gap: 12, flex: 1 }]}>
                     <ExpoImage
                         source={{ uri: post.profile_avatar }}
                         style={{ width: 40, height: 40, borderRadius: 20 }}
@@ -130,7 +132,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         <PostMetaInfo post={post} />
                     </View>
                 </TouchableOpacity>
-                {!isBookmarked && (
+                {!isBookmarked && !metricsOnly && (
                     <TouchableOpacity
                         hitSlop={10}
                         style={{ backgroundColor: vm.colors.surfaceContainerHigh, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
@@ -453,7 +455,41 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
             )}
 
             {/* Action Bar */}
-            {isBookmarked ? (
+            {metricsOnly ? (
+                // Metrics-only mode with interactive Share button for Cross-posting
+                <View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 24 }]}>
+                    <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                        <LikeIcon size={22} color={vm.colors.onSurfaceVariant} />
+                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.like_count || 0}</FlexText>
+                    </View>
+                    <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                        <CommentIcon size={22} color={vm.colors.onSurfaceVariant} />
+                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.comment_count || 0}</FlexText>
+                    </View>
+                    {onCrossPostPress ? (
+                        <TouchableOpacity
+                            hitSlop={10}
+                            activeOpacity={0.7}
+                            onPress={() => onCrossPostPress(post)}
+                            style={[vm.common.row, { gap: 6, alignItems: 'center' }]}
+                        >
+                            <ShareIcon size={22} color={vm.colors.onSurface} />
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.share_count || 0}</FlexText>
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                            <ShareIcon size={22} color={vm.colors.onSurfaceVariant} />
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.share_count || 0}</FlexText>
+                        </View>
+                    )}
+                    {post.view_count > 0 && (
+                        <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                            <Ionicons name="bar-chart-outline" size={18} color={vm.colors.onSurfaceVariant} />
+                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.view_count}</FlexText>
+                        </View>
+                    )}
+                </View>
+            ) : isBookmarked ? (
                 // Bookmarks screen: read-only stats, no bookmark button
                 (<View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 20 }]}>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>

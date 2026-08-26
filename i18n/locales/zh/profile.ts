@@ -88,7 +88,7 @@ const profile = {
             viewEmployeeCard: '查看员工卡',
         },
         cards: {
-            facebookProfile: 'Facebook 主页',
+            xProfile: 'X 主页',
         },
     },
     sheets: {

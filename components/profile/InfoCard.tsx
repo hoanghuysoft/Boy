@@ -106,7 +106,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                 </>
             )}
 
-            {bankinfo && (
+            {bankinfo && typeof bankinfo === 'object' && (bankinfo.bankname || bankinfo.recipient || bankinfo.banknumber || bankinfo.qrurl) && (
                 <>
                     <View style={common.divider} />
                     <TouchableOpacity onPress={() => {
@@ -114,14 +114,16 @@ const InfoCard: React.FC<InfoCardProps> = ({ profile }) => {
                         setSelectedImage(bankinfo.qrurl);
                         setIsModalVisible(true);
                     }}>
-                        <FlexText style={[common.muted]}>{bankinfo.bankname}</FlexText>
+                        {bankinfo.bankname ? <FlexText style={[common.muted]}>{bankinfo.bankname}</FlexText> : null}
                         <View style={[common.row, { gap: 8, justifyContent: 'space-between' }]}>
                             <FlexText style={[common.body, { flex: 1 }]}>
-                                {bankinfo.recipient} - {bankinfo.banknumber}
+                                {[bankinfo.recipient, bankinfo.banknumber].filter(Boolean).join(' - ') || bankinfo.bankname || ''}
                             </FlexText>
-                            <View style={{ width: 32, height: 32, justifyContent: 'center', alignItems: 'center', borderRadius: 999, overflow: 'hidden', backgroundColor: colors.card }}>
-                                <Image source={{ uri: bankinfo.logo || '' }} style={{ width: 24, height: 24 }} />
-                            </View>
+                            {bankinfo.logo && (
+                                <View style={{ width: 32, height: 32, justifyContent: 'center', alignItems: 'center', borderRadius: 999, overflow: 'hidden', backgroundColor: colors.card }}>
+                                    <Image source={{ uri: bankinfo.logo }} style={{ width: 24, height: 24 }} />
+                                </View>
+                            )}
                         </View>
                     </TouchableOpacity>
                 </>

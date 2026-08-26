@@ -34,14 +34,18 @@ export const uploadToThirdParty = async (
         : Promise.resolve(null);
 
     if (isVideo) {
+        if (!x02ApiKey) {
+            throw new Error(
+                'x02.me API Key is required for third-party video uploads. Please configure it in Settings or choose "WeLove Cloud" / "Use X Media URL".'
+            );
+        }
+
         // Videos go to x02.me
         const fsFile = new FSFile(file.uri);
         const headers: Record<string, string> = {
             'x-response-format': 'json',
+            'x-api-key': x02ApiKey,
         };
-        if (x02ApiKey) {
-            headers['x-api-key'] = x02ApiKey;
-        }
 
         const result = await fsFile.upload('https://up.x02.me/api/upload?format=json', {
             httpMethod: 'POST',

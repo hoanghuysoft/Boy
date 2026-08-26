@@ -97,3 +97,7 @@ export const cgvKeys = {
     movies: () => [...cgvKeys.all, 'movies'] as const,
     sneakShow: () => [...cgvKeys.movies(), 'sneakShow'] as const,
 };
+
+// ─── FxTwitter ───────────────────────────────────────────────────────────────
+export { fxTwitterKeys } from './fxtwitter/queryKeys';
+

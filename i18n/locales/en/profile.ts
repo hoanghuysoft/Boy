@@ -89,7 +89,7 @@ const profile = {
             viewEmployeeCard: 'View employee card',
         },
         cards: {
-            facebookProfile: 'Facebook Profile',
+            xProfile: 'X Profile',
         },
     },
     sheets: {
