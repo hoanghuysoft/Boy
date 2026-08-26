@@ -1,11 +1,15 @@
 import { FlexText } from "@/components/FlexText";
 import { PostItem } from "@/components/PostItem";
-import { CrossPostDialog } from "@/components/fprofile/CrossPostDialog";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { XProfileHeader } from "@/components/fprofile/XProfileHeader";
-import { transformFxTwitterStatusToPost } from "@/components/fprofile/transformFxPost";
-import { extractXProfileInfo } from "@/components/profile/header/utils";
+import {
+  CrossPostMode,
+  executeCrossPost,
+  showCrossPostAlertDialog,
+} from "@/components/fprofile/crossPostService";
+import { getCachedFxTwitterPost } from "@/components/fprofile/transformFxPost";
+import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { List } from "@/components/list/List";
+import { extractXProfileInfo } from "@/components/profile/header/utils";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useFxUserProfile, useFxUserStatuses } from "@/services/fxtwitter";
@@ -18,7 +22,8 @@ import { updateActiveVideoViewAsync } from "@bsky.app/video";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useToast } from "heroui-native/toast";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   StyleSheet,
@@ -59,7 +64,7 @@ const FProfileScreen = () => {
         return typeof params.socialLinks === "string"
           ? JSON.parse(params.socialLinks)
           : params.socialLinks;
-      } catch {}
+      } catch { }
     }
     if (parsedProfile) {
       return (
@@ -112,12 +117,12 @@ const FProfileScreen = () => {
     enabled: !!targetHandle,
   });
 
-  // Transform FxTwitter statuses to optimized Post model
+  // Transform FxTwitter statuses to optimized Post model with memoized post instances
   const posts: Post[] = useMemo(() => {
     const pages = statusesData?.pages;
     if (!pages) return [];
     const rawList = pages.flatMap((page) => page.results || []);
-    return rawList.map(transformFxTwitterStatusToPost);
+    return rawList.map(getCachedFxTwitterPost);
   }, [statusesData?.pages]);
 
   const isRefetching = isProfileRefetching || isStatusesRefetching;
@@ -154,14 +159,51 @@ const FProfileScreen = () => {
     }
   }, [posts.length]);
 
+  const { toast } = useToast();
   const { data: myProfile } = useProfile("me", true);
   const targetProfile = parsedProfile || myProfile;
 
-  const [crossPostTarget, setCrossPostTarget] = useState<Post | null>(null);
+  const handleCrossPostPress = useCallback(
+    (post: Post) => {
+      const targetProfileId = targetProfile?.id;
+      if (!targetProfileId) {
+        toast.show({
+          label: "Error",
+          description: "Target profile is not loaded yet.",
+          variant: "danger",
+        });
+        return;
+      }
 
-  const handleCrossPostPress = useCallback((post: Post) => {
-    setCrossPostTarget(post);
-  }, []);
+      showCrossPostAlertDialog(
+        post,
+        targetProfile?.name || "",
+        async (mode: CrossPostMode) => {
+          toast.show({
+            label: "Cross-posting...",
+            description: "Publishing post to WeLove...",
+          });
+
+          try {
+            await executeCrossPost(targetProfileId, post, mode);
+            toast.show({
+              label: "Cross-posted Successfully",
+              description: `Post published as ${targetProfile?.name || "profile"}.`,
+              variant: "success",
+            });
+          } catch (error: any) {
+            console.error("Cross-post failed:", error);
+            toast.show({
+              label: "Cross-post Failed",
+              description: error.message || "Failed to create post.",
+              variant: "danger",
+            });
+          }
+        }
+      );
+    },
+    [targetProfile, toast]
+  );
 
   const handleRefresh = useCallback(() => {
     refetchProfile();
@@ -322,19 +364,12 @@ const FProfileScreen = () => {
         progressBackgroundColor={colors.card}
         progressViewOffset={insets.top + 50}
         contentContainerStyle={posts.length === 0 ? styles.emptyContainer : undefined}
-        estimatedItemSize={250}
-        recycleItems={false}
+        recycleItems={true}
+        drawDistance={600}
         maintainVisibleContentPosition
       />
 
       <GalleryModal />
-
-      <CrossPostDialog
-        post={crossPostTarget}
-        targetProfile={targetProfile}
-        isOpen={crossPostTarget !== null}
-        onClose={() => setCrossPostTarget(null)}
-      />
     </View>
   );
 };

@@ -8,7 +8,7 @@
  */
 
 import { Directory, Paths } from "expo-file-system";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 import { getOrDownloadFile } from "@/services/fileCacheUtils";
 import {
   createMediaRecord,
@@ -26,6 +26,36 @@ export interface CrossPostProgress {
   total: number;
   progress: number;
   statusText: string;
+}
+
+export function showCrossPostAlertDialog(
+  post: Post,
+  targetProfileName: string,
+  onSelectMode: (mode: CrossPostMode) => void
+) {
+  Alert.alert(
+    "Cross-post",
+    `Choose how to share this post to ${targetProfileName ? `@${targetProfileName}` : "WeLove"}:`,
+    [
+      {
+        text: "Use media URL of X",
+        onPress: () => onSelectMode("x_url"),
+      },
+      {
+        text: "Upload media to third party",
+        onPress: () => onSelectMode("third_party"),
+      },
+      {
+        text: "Use WeLove Cloud",
+        onPress: () => onSelectMode("welove_cloud"),
+      },
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+    ],
+    { cancelable: true }
+  );
 }
 
 export async function executeCrossPost(

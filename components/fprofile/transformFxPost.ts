@@ -198,3 +198,13 @@ export function transformFxTwitterStatusToPost(status: FxTwitterStatus): Post {
     reposted_post: quotedPost,
   };
 }
+
+const postTransformCache = new Map<string, Post>();
+
+export function getCachedFxTwitterPost(status: FxTwitterStatus): Post {
+  const existing = postTransformCache.get(status.id);
+  if (existing) return existing;
+  const transformed = transformFxTwitterStatusToPost(status);
+  postTransformCache.set(status.id, transformed);
+  return transformed;
+}

@@ -56,7 +56,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
     const [needsTranslation, setNeedsTranslation] = useState(false);
 
     useEffect(() => {
-        if (!post.content) {
+        if (metricsOnly || !post.content) {
             setNeedsTranslation(false);
             return;
         }
