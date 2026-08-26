@@ -12,6 +12,7 @@ export interface OnboardingProfile {
     id: string;
     user_id: string;
     name: string;
+    username?: string | null;
     email: string | null;
     avatar_url: string | null;
     bio: string | null;
@@ -21,6 +22,7 @@ export interface OnboardingProfile {
 
 export interface CreateProfileData {
     name: string;
+    username?: string | null;
     birthday: string;
     avatar_url?: string | null;
     bio?: string | null;
