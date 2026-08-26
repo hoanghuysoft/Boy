@@ -117,6 +117,7 @@
     "react-native-pager-view": "8.0.2",
     "react-native-paper": "5.15.3",
     "react-native-parsed-text": "0.0.22",
+    "react-native-perf-monitor-tool": "^1.0.5",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screen-transitions": "^3.12.0",
