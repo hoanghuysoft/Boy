@@ -24,6 +24,7 @@ const ShotsInner = () => {
             backBehavior="none"
             tabBar={(props: any) => <ShotsTopTabBar {...props} insets={insets} t={t} />}
             screenOptions={{
+                lazy: true,
                 sceneStyle: { backgroundColor: '#000' },
             }}
         >

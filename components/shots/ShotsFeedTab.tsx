@@ -1,24 +1,23 @@
-/* eslint-disable react-hooks/refs */
 import { FlexText } from "@/components/FlexText";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { VideoFeedType, VideoItem } from "@/types/video";
 import { useShotsViewModel } from "@/viewmodels/ShotsViewModel";
+import { LegendList, LegendListRenderItemProps } from "@legendapp/list/react-native";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useIsFocused } from "expo-router/react-navigation";
 import { Spinner } from "heroui-native/spinner";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    FlatList,
     LayoutChangeEvent,
     Platform,
     RefreshControl,
     StatusBar,
     StyleSheet,
     TouchableOpacity,
+    useWindowDimensions,
     View,
-    ViewToken,
-    useWindowDimensions
+    ViewToken
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -27,19 +26,16 @@ import {
     DRAW_DISTANCE_MULTIPLIER,
     FALLBACK_ITEM_HEIGHT,
     ITEM_OVERLAP,
-    PRELOAD_AHEAD,
-    PRELOAD_BEHIND,
     SCROLL_EVENT_THROTTLE,
-    USE_PLACEHOLDER_OUTSIDE_PRELOAD,
 } from "./constants";
 import { ShotItem } from "./ShotItem";
 
 // ─── Feed Tab (adopting reference VideoFeedList pattern with LegendList) ─
 export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
     const { width: screenWidth } = useWindowDimensions();
-    const vm = useShotsViewModel(feedType);
     const insets = useSafeAreaInsets();
     const isFocused = useIsFocused();
+    const vm = useShotsViewModel(feedType, isFocused);
     const { t } = useTranslation();
 
     // ─── Ref-based active index + direction tracking (reference pattern) ──
@@ -70,7 +66,6 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
         [measuredHeight],
     );
     const listReady = useMemo(() => measuredHeight !== null, [measuredHeight]);
-    const listRef = useRef<FlatList | null>(null);
 
     // ─── Viewability config (reference pattern) ───────────────────────────
     const viewabilityConfig = useRef({
@@ -112,61 +107,28 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
         [vm.videos.length, vm.onViewableItemsChanged],
     );
 
-    // ─── renderItem — direction-aware preloading matching reference exactly ─
+    // ─── renderItem — 3-Player Pool Pattern matching Bluesky architecture ─
     const vmRef = useRef(vm);
     vmRef.current = vm;
 
     const renderItem = useCallback(
-        ({ item, index }: { item: VideoItem; index: number }) => {
+        ({ item, index }: LegendListRenderItemProps<VideoItem>) => {
             const currentIndex = currentIndexRef.current;
-            const direction = directionRef.current;
-            const isActive = index === currentIndex;
-            const distanceFromActive = index - currentIndex;
-            const isAhead =
-                direction === "down"
-                    ? distanceFromActive > 0
-                    : distanceFromActive < 0;
+            const isActive = isFocused && index === currentIndex;
+            const isAdjacent = index === currentIndex - 1 || index === currentIndex + 1;
+            const player = vmRef.current.players?.[index % 3];
 
-            const isNeighbor = Math.abs(distanceFromActive) <= 1;
-            const shouldPreloadAhead =
-                isAhead && Math.abs(distanceFromActive) <= PRELOAD_AHEAD;
-            const isBehind =
-                direction === "down"
-                    ? distanceFromActive < 0
-                    : distanceFromActive > 0;
-            const shouldPreloadBehind =
-                isBehind && Math.abs(distanceFromActive) <= PRELOAD_BEHIND;
-
-            const shouldPreload =
-                isActive ||
-                isNeighbor ||
-                shouldPreloadAhead ||
-                shouldPreloadBehind;
-
-            // Placeholder for items outside the preload window (reference pattern)
-            if (USE_PLACEHOLDER_OUTSIDE_PRELOAD && !shouldPreload && !isActive) {
-                return (
-                    <View
-                        style={[
-                            styles.placeholder,
-                            { width: screenWidth, height: itemHeight },
-                        ]}
-                    />
-                );
-            }
-
-            // Read live vm values via ref — avoids stale closure while still
-            // letting the memo comparator in ShotItem decide whether to re-render.
+            // Read live vm values via ref
             const { isLiked, likeCount } = vmRef.current.getLikeState(item);
 
             return (
                 <ShotItem
                     item={item}
+                    player={player}
                     isActive={isActive}
-                    shouldPreload={shouldPreload}
+                    isAdjacent={isAdjacent}
                     isFocused={isFocused}
                     itemHeight={itemHeight}
-                    isPaused={vmRef.current.isPaused}
                     isLiked={isLiked}
                     likeCount={likeCount}
                     onLikePress={() => vmRef.current.handleLikePress(item)}
@@ -183,16 +145,6 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
     );
 
     const keyExtractor = useCallback((item: VideoItem) => item.id, []);
-
-    // ─── FlatList performance helpers ────────────────────────────────────
-    const getItemLayout = useCallback(
-        (data: any, index: number) => ({
-            length: itemHeight,
-            offset: itemHeight * index,
-            index,
-        }),
-        [itemHeight],
-    );
 
     const handleVideoChangeRef = useRef(handleVideoChange);
     handleVideoChangeRef.current = handleVideoChange;
@@ -218,19 +170,9 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
     );
 
     // ─── Bump renderTrigger when isPaused, isCommentsOpen, or isFocused changes ───
-    const prevIsPaused = useRef(vm.isPaused);
-    const prevIsCommentsOpen = useRef(vm.isCommentsOpen);
-    const prevIsFocused = useRef(isFocused);
-    if (
-        prevIsPaused.current !== vm.isPaused ||
-        prevIsCommentsOpen.current !== vm.isCommentsOpen ||
-        prevIsFocused.current !== isFocused
-    ) {
-        prevIsPaused.current = vm.isPaused;
-        prevIsCommentsOpen.current = vm.isCommentsOpen;
-        prevIsFocused.current = isFocused;
+    useEffect(() => {
         setRenderTrigger(t => t + 1);
-    }
+    }, [vm.isPaused, vm.isCommentsOpen, isFocused, vm.activeIndex]);
 
     if (vm.isLoading) {
         return (
@@ -264,12 +206,18 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
             {listReady ? (
-                <FlatList
-                    ref={listRef as any}
+                <LegendList
+                    ref={vm.listRef}
                     data={vm.videos}
                     renderItem={renderItem}
                     keyExtractor={keyExtractor}
                     extraData={renderTrigger}
+                    getItemType={getItemType}
+                    getFixedItemSize={() => itemHeight}
+                    estimatedItemSize={itemHeight}
+                    estimatedListSize={{ height: itemHeight, width: screenWidth }}
+                    drawDistance={itemHeight}
+                    recycleItems={true}
                     scrollEnabled={!vm.isCommentsOpen && !seeking}
                     pagingEnabled={true}
                     showsVerticalScrollIndicator={false}
@@ -285,11 +233,6 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                     overScrollMode="never"
                     style={[styles.list, { width: screenWidth }]}
                     contentContainerStyle={styles.listContent}
-                    getItemLayout={getItemLayout}
-                    initialNumToRender={2}
-                    maxToRenderPerBatch={2}
-                    windowSize={5}
-                    removeClippedSubviews={false}
                     refreshControl={
                         <RefreshControl
                             refreshing={vm.isRefetching}

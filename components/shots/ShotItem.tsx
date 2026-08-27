@@ -1,33 +1,96 @@
 import { FlexText } from "@/components/FlexText";
-import { getCachedUri } from "@/services/videoCache";
 import { VideoItem } from "@/types/video";
 import { formatCompactNumber } from "@/utils/formatNumber";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useEventListener } from "expo";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { useVideoPlayer, VideoView } from "expo-video";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { VideoPlayer, VideoView } from "expo-video";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    AppState,
+    Platform,
     StyleSheet,
     TouchableOpacity,
     TouchableWithoutFeedback,
     useWindowDimensions,
-    View
+    View,
 } from "react-native";
-import Reanimated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FloatingHeart } from "./FloatingHeart";
 import { ShotSeekBar } from "./ShotSeekBar";
+
+const IS_ANDROID = Platform.OS === 'android';
+
+// ─── Thumbnail / Poster Placeholder (matches Bluesky VideoItemPlaceholder) ───
+function VideoItemPlaceholder({
+    thumbnailUrl,
+    mediaUrl,
+}: {
+    thumbnailUrl?: string | null;
+    mediaUrl?: string | null;
+}) {
+    const src = thumbnailUrl || mediaUrl;
+    if (!src) return null;
+
+    return (
+        <Image
+            source={{ uri: src }}
+            style={StyleSheet.absoluteFill}
+            contentFit="contain"
+            cachePolicy="disk"
+            accessibilityIgnoresInvertColors
+        />
+    );
+}
+
+// ─── Inner Video Component (matches Bluesky VideoItemInner) ──────────
+interface VideoItemInnerProps {
+    player: VideoPlayer;
+    isActive: boolean;
+}
+
+const VideoItemInner = React.memo(function VideoItemInner({
+    player,
+    isActive,
+}: VideoItemInnerProps) {
+    const [isReady, setIsReady] = useState(!IS_ANDROID);
+
+    useEventListener(player, "timeUpdate", (evt) => {
+        if (IS_ANDROID && !isReady && evt.currentTime >= 0.05) {
+            setIsReady(true);
+        }
+    });
+
+    useEventListener(player, "statusChange", ({ status }) => {
+        if (status === "readyToPlay" && isActive) {
+            setIsReady(true);
+        }
+    });
+
+    return (
+        <VideoView
+            player={player}
+            style={[
+                StyleSheet.absoluteFill,
+                !isReady && { opacity: 0 },
+            ]}
+            contentFit="contain"
+            surfaceType={IS_ANDROID ? 'textureView' : 'surfaceView'}
+            nativeControls={false}
+            onFirstFrameRender={() => {
+                setIsReady(true);
+            }}
+        />
+    );
+});
 
 // ─── Props ──────────────────────────────────────────────────────────
 export interface ShotItemProps {
     item: VideoItem;
+    player?: VideoPlayer;
     isActive: boolean;
-    shouldPreload: boolean;
+    isAdjacent: boolean;
     isFocused: boolean;
     itemHeight: number;
-    isPaused: boolean;
     isLiked: boolean;
     likeCount: number;
     onLikePress: () => void;
@@ -41,11 +104,11 @@ export interface ShotItemProps {
 // ─── Component ──────────────────────────────────────────────────────
 export const ShotItem = React.memo(function ShotItem({
     item,
+    player,
     isActive,
-    shouldPreload,
+    isAdjacent,
     isFocused,
     itemHeight,
-    isPaused: externalPaused,
     isLiked,
     likeCount,
     onLikePress,
@@ -56,297 +119,20 @@ export const ShotItem = React.memo(function ShotItem({
     isCommentsOpen,
 }: ShotItemProps) {
     const { width: screenWidth } = useWindowDimensions();
-    // ─── Per-item URI resolution ─────────────────────────────────
-    const [resolvedUri, setResolvedUri] = useState(item.media_url);
 
-    useEffect(() => {
-        let cancelled = false;
-        getCachedUri(item.media_url).then(uri => {
-            if (!cancelled) setResolvedUri(uri);
-        });
-        return () => { cancelled = true; };
-    }, [item.media_url]);
-
-    // ─── Local user-paused state (reference pattern: per-item toggle) ──
+    // Local user pause toggle
     const [userPaused, setUserPaused] = useState(false);
 
-    // ─── Thumbnail placeholder visibility state ───────────────────
-    const [readyToDisplay, setReadyToDisplay] = useState(false);
-
-    const placeholderOpacity = useSharedValue(1);
-    const placeholderStyle = useAnimatedStyle(() => {
-        return {
-            opacity: placeholderOpacity.value,
-        };
-    });
+    // Hardware surface optimization (Bluesky pattern):
+    // Android: render VideoView only for active item
+    // iOS: render for active and adjacent items
+    const shouldRenderVideo = (isActive || (!IS_ANDROID && isAdjacent)) && !!player;
 
     useEffect(() => {
-        placeholderOpacity.value = withTiming(readyToDisplay ? 0 : 1, { duration: 250 });
-    }, [readyToDisplay, placeholderOpacity]);
-
-    const isActiveRef = useRef(isActive);
-    isActiveRef.current = isActive;
-
-    const userPausedRef = useRef(userPaused);
-    userPausedRef.current = userPaused;
-
-    const externalPausedRef = useRef(externalPaused);
-    externalPausedRef.current = externalPaused;
-
-    const isFocusedRef = useRef(isFocused);
-    isFocusedRef.current = isFocused;
-
-    const playTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const sourceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-
-
-    // ─── Player setup ──────
-    const player = useVideoPlayer(resolvedUri || null, (p) => {
-        p.loop = true;
-        p.muted = true; // Always start muted; mute state applied via effect
-        // 4 updates/sec is more than enough for the seek bar — 0.05 (20/sec)
-        // was flooding the JS thread with events across multiple concurrent players,
-        // contributing to ANR when the user navigated to the VideoPlayer screen.
-        p.timeUpdateEventInterval = 0.25;
-    });
-
-    const playerRef = useRef(player);
-
-    useEffect(() => {
-        setReadyToDisplay(false);
-    }, [resolvedUri, player]);
-
-    // Pause & mute when the player instance changes or the component unmounts.
-    // NOTE: do NOT call player.release() here — useVideoPlayer already releases
-    // the previous player when the source changes or on unmount. Calling release()
-    // ourselves causes ERR_USING_RELEASED_SHARED_OBJECT when our cleanup effect
-    // runs after useVideoPlayer has already freed the native object.
-    useEffect(() => {
-        return () => {
-            if (player) {
-                try {
-                    if (player.muted !== true) player.muted = true;
-                    if (player.playing) player.pause();
-                } catch { /* player already released by useVideoPlayer — ignore */ }
-            }
-        };
-    }, [player]);
-
-
-    // ─── Immediately pause & mute when screen loses focus ─────────────────
-    // This fires as soon as the user navigates away (e.g. to VideoPlayer), ensuring
-    // no reel keeps playing or emitting timeUpdate events in the background.
-    useEffect(() => {
-        if (!isFocused && player) {
-            // Cancel any pending play-delay timeout
-            if (playTimeoutRef.current) {
-                clearTimeout(playTimeoutRef.current);
-                playTimeoutRef.current = null;
-            }
-            try {
-                if (player.muted !== true) player.muted = true;
-                if (player.playing) player.pause();
-            } catch { }
-        }
-    }, [isFocused, player]);
-
-    // ─── Track currently loaded URI ──────────────────────────────────────
-    const loadedUriRef = useRef<string | null>(null);
-
-    // ─── Source management & preloading ──────────────────────────────────
-    useEffect(() => {
-        if (!player) return;
-
-        if (sourceTimeoutRef.current) {
-            clearTimeout(sourceTimeoutRef.current);
-            sourceTimeoutRef.current = null;
-        }
-
-        const currentUri = loadedUriRef.current;
-
-        if (shouldPreload || isActive) {
-            if (!currentUri || currentUri !== resolvedUri) {
-                // Debounce source replacement by 100ms
-                sourceTimeoutRef.current = setTimeout(() => {
-                    player
-                        .replaceAsync(resolvedUri)
-                        .then(() => {
-                            loadedUriRef.current = resolvedUri;
-                        })
-                        .catch(() => { });
-                }, 100);
-            }
-        }
-
-        return () => {
-            if (sourceTimeoutRef.current) {
-                clearTimeout(sourceTimeoutRef.current);
-                sourceTimeoutRef.current = null;
-            }
-        };
-    }, [shouldPreload, isActive, player, resolvedUri]);
-
-    // ─── Active-state management ──────────────────────────────────────────
-    const wasActiveRef = useRef(isActive);
-    const videoIdRef = useRef(item.id);
-
-    useEffect(() => {
-        if (!player) return;
-
-        const wasActive = wasActiveRef.current;
-        wasActiveRef.current = isActive;
-
-        const playerChanged = player !== playerRef.current;
-        if (playerChanged) {
-            playerRef.current = player;
-        }
-
-        const videoChanged = item.id !== videoIdRef.current;
-        if (videoChanged) {
-            videoIdRef.current = item.id;
-        }
-
-        // Clear any existing play timeout
-        if (playTimeoutRef.current) {
-            clearTimeout(playTimeoutRef.current);
-            playTimeoutRef.current = null;
-        }
-
-        const becameActive = (isActive && !wasActive) || playerChanged || videoChanged;
-
-        if (becameActive) {
-            // Clear user-pause when a new video becomes active
+        if (isActive) {
             setUserPaused(false);
         }
-
-        // Compute overall shouldPlay for this render
-        const appState = AppState.currentState;
-        const shouldPlay = isActive && !userPaused && !externalPaused && appState === "active" && isFocused;
-
-        if (shouldPlay) {
-            // Delay play/unmute by 150ms during active transitions to prevent lag during fast swiping
-            const delay = (isActive && !wasActive) ? 150 : 0;
-
-            const startPlayback = () => {
-                if (player.status === "readyToPlay") {
-                    if (player.muted !== false) player.muted = false;
-                    if (!player.playing) {
-                        player.play();
-                    }
-                } else {
-                    // Not yet ready — seek to start so it plays from 0 when buffer arrives
-                    if (!player.playing && player.currentTime < 0.1) {
-                        player.currentTime = 0;
-                    }
-                }
-            };
-
-            if (delay > 0) {
-                playTimeoutRef.current = setTimeout(() => {
-                    startPlayback();
-                    playTimeoutRef.current = null;
-                }, delay);
-            } else {
-                startPlayback();
-            }
-        } else {
-            // Immediately mute and pause
-            if (player.muted !== true) player.muted = true;
-            if (player.playing) {
-                player.pause();
-            }
-            if (shouldPreload && !isActive && !userPaused) {
-                player.currentTime = 0;
-            }
-        }
-
-        return () => {
-            if (playTimeoutRef.current) {
-                clearTimeout(playTimeoutRef.current);
-                playTimeoutRef.current = null;
-            }
-        };
-    }, [isActive, userPaused, externalPaused, player, shouldPreload, item.id, isFocused, isCommentsOpen]);
-
-    // ─── AppState listener ────────────────────────────────────────────────
-    useEffect(() => {
-        const subscription = AppState.addEventListener("change", (state) => {
-            if (!player) return;
-            const currentIsActive = isActiveRef.current;
-            const currentUserPaused = userPausedRef.current;
-            const currentExternalPaused = externalPausedRef.current;
-            const currentIsFocused = isFocusedRef.current;
-
-            if (currentIsActive && state === "active" && !currentUserPaused && !currentExternalPaused && currentIsFocused) {
-                if (player.muted !== false) player.muted = false;
-                player.play();
-            } else {
-                if (player.muted !== true) player.muted = true;
-                player.pause();
-            }
-        });
-        return () => subscription.remove();
-    }, [player]);
-
-    // ─── Auto-play when readyToPlay fires ────────────────────────────────
-    const handleStatusChange = useCallback(() => {
-        const currentIsActive = isActiveRef.current;
-        const currentUserPaused = userPausedRef.current;
-        const currentExternalPaused = externalPausedRef.current;
-        const currentIsFocused = isFocusedRef.current;
-
-        const shouldPlay = currentIsActive && !currentUserPaused && !currentExternalPaused && AppState.currentState === "active" && currentIsFocused;
-
-        if (shouldPlay && player.status === "readyToPlay") {
-            if (player.muted !== false) player.muted = false;
-            if (!player.playing) {
-                player.play();
-            }
-        }
-    }, [player]);
-
-    useEventListener(player, "statusChange", ({ status }) => {
-        if (status === "readyToPlay") {
-            setReadyToDisplay(true);
-        }
-        handleStatusChange();
-    });
-
-    useEventListener(player, "volumeChange", () => {
-        // console.log(`[Volume/Mute changed: player.muted = ${player.muted}`);
-    });
-
-    // ─── Progress tracking ────────────────────────────────────────────────
-    const [progress, setProgress] = useState(0);
-
-    const handleProgress = useCallback(() => {
-        if (!isActiveRef.current) return;
-        const dur = player.duration;
-        const cur = player.currentTime;
-        if (dur > 0 && Number.isFinite(cur)) {
-            setProgress(Math.min(1, Math.max(0, cur / dur)));
-        }
-    }, [player]);
-
-    useEventListener(player, "timeUpdate", handleProgress);
-
-    const handleSeek = useCallback(
-        (p: number) => {
-            if (!isActive || !player) return;
-            const dur = player.duration;
-            if (dur > 0 && Number.isFinite(dur)) {
-                const t = Math.max(0, Math.min(1, p)) * dur;
-                player.currentTime = t;
-            }
-        },
-        [isActive, player],
-    );
-
-    const duration = useMemo(
-        () => player?.duration ?? 0,
-        [player?.duration],
-    );
+    }, [isActive, item.id]);
 
     // ─── Double-tap to like / single-tap to pause ─────────────────────────
     const [hearts, setHearts] = useState<{ id: number; x: number; y: number }[]>([]);
@@ -373,7 +159,17 @@ export const ShotItem = React.memo(function ShotItem({
         } else {
             lastTapTime.current = now;
             singleTapTimer.current = setTimeout(() => {
-                setUserPaused(prev => !prev);
+                if (player) {
+                    try {
+                        if (player.playing) {
+                            player.pause();
+                            setUserPaused(true);
+                        } else {
+                            player.play();
+                            setUserPaused(false);
+                        }
+                    } catch { }
+                }
                 singleTapTimer.current = null;
             }, DOUBLE_TAP_DELAY);
         }
@@ -385,27 +181,24 @@ export const ShotItem = React.memo(function ShotItem({
 
     return (
         <View style={[styles.itemContainer, { height: itemHeight, width: screenWidth }]}>
-            {/* Video area — covers full cell height (no shrink on comments open) */}
+            {/* Video area — pure black background */}
             <View style={[styles.videoArea, { height: itemHeight, width: screenWidth }]}>
-                <VideoView
-                    player={player}
-                    style={StyleSheet.absoluteFill}
-                    contentFit="contain"
-                    nativeControls={false}
-                    onFirstFrameRender={() => {
-                        setReadyToDisplay(true);
-                    }}
+                {/* Pure Black Canvas */}
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000000' }]} />
+
+                {/* Video Placeholder / Thumbnail (matches Bluesky VideoItemPlaceholder) */}
+                <VideoItemPlaceholder
+                    thumbnailUrl={item.thumbnail_url}
+                    mediaUrl={item.media_url}
                 />
 
-                {/* Gray Placeholder: displayed until first video frame is ready to render */}
-                <Reanimated.View
-                    style={[
-                        StyleSheet.absoluteFill,
-                        { backgroundColor: '#1C1C1E' },
-                        placeholderStyle
-                    ]}
-                    pointerEvents="none"
-                />
+                {/* Video View (matches Bluesky VideoItemInner) */}
+                {shouldRenderVideo && player && (
+                    <VideoItemInner
+                        player={player}
+                        isActive={isActive}
+                    />
+                )}
             </View>
 
             {/* Tap layer — covers full item for pause/like */}
@@ -424,20 +217,19 @@ export const ShotItem = React.memo(function ShotItem({
             ))}
 
             {/* Paused indicator */}
-            {(userPaused || externalPaused) && isActive && (
+            {userPaused && isActive && (
                 <View style={styles.pausedOverlay} pointerEvents="none">
                     <Ionicons name="play" size={64} color="rgba(255,255,255,0.8)" />
                 </View>
             )}
 
-            {/* Seek bar — only rendered for active item (matches reference) */}
-            {isActive && (
+            {/* Seek bar — only rendered for active item (Bluesky Scrubber pattern) */}
+            {isActive && player && (
                 <ShotSeekBar
-                    progress={progress}
-                    duration={duration}
-                    onSeek={handleSeek}
-                    onSeekingChange={onSeekingChange}
+                    player={player}
+                    isActive={isActive}
                     bottom={insets.bottom + 95}
+                    onSeekingChange={onSeekingChange}
                 />
             )}
 
@@ -452,7 +244,6 @@ export const ShotItem = React.memo(function ShotItem({
                             source={{ uri: item.profile_avatar }}
                             style={styles.avatar}
                             contentFit="cover"
-                            cachePolicy="memory-disk"
                         />
                     )}
                     <FlexText style={styles.profileName}>{item.profile_name}</FlexText>
@@ -511,9 +302,9 @@ export const ShotItem = React.memo(function ShotItem({
     );
 }, (prevProps, nextProps) => {
     return (
+        prevProps.player === nextProps.player &&
         prevProps.isActive === nextProps.isActive &&
-        prevProps.shouldPreload === nextProps.shouldPreload &&
-        prevProps.isPaused === nextProps.isPaused &&
+        prevProps.isAdjacent === nextProps.isAdjacent &&
         prevProps.isFocused === nextProps.isFocused &&
         prevProps.itemHeight === nextProps.itemHeight &&
         prevProps.item.id === nextProps.item.id &&
@@ -529,16 +320,14 @@ ShotItem.displayName = 'ShotItem';
 // ─── Styles ─────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
     itemContainer: {
-        backgroundColor: '#000',
+        backgroundColor: '#000000',
         overflow: "hidden",
     },
     videoArea: {
         overflow: 'hidden',
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    videoContent: {
-        height: '100%',
+        backgroundColor: '#000000',
     },
     pausedOverlay: {
         ...StyleSheet.absoluteFill,
@@ -560,6 +349,9 @@ const styles = StyleSheet.create({
     },
     avatar: {
         marginRight: 10,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
     },
     profileName: {
         color: '#fff',

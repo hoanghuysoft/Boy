@@ -1,10 +1,11 @@
-import { precacheVideos } from "@/services/videoCache";
+import { getCachedUri, precacheVideos } from "@/services/videoCache";
 import { useScrollStore } from "@/stores/scroll";
 import { VideoFeedType, VideoItem } from "@/types/video";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useQueryClient } from "@tanstack/react-query";
+import { createVideoPlayer, VideoPlayer } from "expo-video";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useWindowDimensions } from "react-native";
+import { AppState, Platform, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../context/ThemeContext";
 import { useToggleLike } from "../services/like";
@@ -15,18 +16,47 @@ const VIEWABILITY_CONFIG = {
     itemVisiblePercentThreshold: 50,
 };
 
+function createThreeVideoPlayers(
+    sources?: [string, string, string],
+): [VideoPlayer, VideoPlayer, VideoPlayer] {
+    const eventInterval = Platform.select({
+        ios: 0.2,
+        android: 0.25,
+        default: 0.2,
+    });
+    const p1 = createVideoPlayer(sources?.[0] ?? '');
+    p1.loop = true;
+    p1.muted = false;
+    p1.timeUpdateEventInterval = eventInterval;
+
+    const p2 = createVideoPlayer(sources?.[1] ?? '');
+    p2.loop = true;
+    p2.muted = false;
+    p2.timeUpdateEventInterval = eventInterval;
+
+    const p3 = createVideoPlayer(sources?.[2] ?? '');
+    p3.loop = true;
+    p3.muted = false;
+    p3.timeUpdateEventInterval = eventInterval;
+
+    return [p1, p2, p3];
+}
+
 /**
  * ViewModel for the Shots (TikTok-style) screen.
  *
- * Implements the ±1 pre-buffer strategy:
- * - Previous video: keep reference for instant swipe-back
- * - Current video: PLAYING
- * - Next video: pre-buffered
- *
- * Single decoder pattern — one video source is active at a time,
- * controlled via paused prop (not mount/unmount).
+ * Implements the fixed 3-Player Pool Pattern (Bluesky architecture):
+ * - Exactly 3 persistent VideoPlayer instances in memory (O(1) memory)
+ * - Each row indexes via modulo: player = players[index % 3]
+ * - On scroll to index:
+ *   - Active (index % 3): play()
+ *   - Previous ((index + 2) % 3): replaceAsync(prevVideo) & pause()
+ *   - Next ((index + 1) % 3): replaceAsync(nextVideo) & pause()
  */
-export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => {
+export const useShotsViewModel = (
+    initialFeedType: VideoFeedType = 'random',
+    isFocused: boolean = true,
+) => {
     const { colors, typography } = useThemeContext();
     const { height: screenHeight } = useWindowDimensions();
     const common = createCommonStyles(colors, typography);
@@ -53,7 +83,12 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
         return data?.pages?.flatMap(p => p.data) || [];
     }, [data]);
 
-    // ─── Player State ───────────────────────────────────────────
+    // ─── 3-Player Pool State ─────────────────────────────────────
+    const [players, setPlayers] = useState<[VideoPlayer, VideoPlayer, VideoPlayer] | null>(null);
+    const [currentSources, setCurrentSources] = useState<[string | null, string | null, string | null]>([null, null, null]);
+    const currentSourcesRef = useRef(currentSources);
+    currentSourcesRef.current = currentSources;
+
     const [activeIndex, setActiveIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
@@ -61,29 +96,172 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
     const [, setReadyIndices] = useState<Set<number>>(new Set());
     const readyIndicesRef = useRef<Set<number>>(new Set());
 
-    // ─── Pre-buffer Strategy ────────────────────────────────────
-    const preloadIndices = useMemo(() => {
-        const newIndices: number[] = [];
-        if (activeIndex > 0) newIndices.push(activeIndex - 1);
-        newIndices.push(activeIndex);
-        if (activeIndex < videos.length - 1) newIndices.push(activeIndex + 1);
-        return newIndices;
-    }, [activeIndex, videos.length]);
-
-    const activeVideo = videos[activeIndex] || null;
-
-    // ─── Video Cache ────────────────────────────────────────────
+    // ─── Video Cache Preload ────────────────────────────────────
     useEffect(() => {
-        if (videos.length === 0) return;
+        if (videos.length === 0 || !isFocused) return;
         const urlsToCache = videos
-            .slice(activeIndex, activeIndex + 3)
+            .slice(activeIndex, activeIndex + 2)
             .map(v => v.media_url);
         precacheVideos(urlsToCache);
-    }, [activeIndex, videos]);
+    }, [activeIndex, videos, isFocused]);
+
+    // ─── Update 3-Player Pool State ─────────────────────────────
+    const updateVideoState = useCallback(async (index: number) => {
+        if (!videos.length) return;
+
+        const prevVideo = videos[index - 1]?.media_url ?? null;
+        const currVideo = videos[index]?.media_url ?? null;
+        const nextVideo = videos[index + 1]?.media_url ?? null;
+
+        // Fetch cached local URIs if available
+        const [prevUri, currUri, nextUri] = await Promise.all([
+            prevVideo ? getCachedUri(prevVideo) : Promise.resolve(null),
+            currVideo ? getCachedUri(currVideo) : Promise.resolve(null),
+            nextVideo ? getCachedUri(nextVideo) : Promise.resolve(null),
+        ]);
+
+        const prevPlayerSource = currentSourcesRef.current[(index + 2) % 3];
+        const currPlayerSource = currentSourcesRef.current[index % 3];
+        const nextPlayerSource = currentSourcesRef.current[(index + 1) % 3];
+
+        const shouldPlay = isFocused && !isPaused && AppState.currentState === 'active';
+
+        if (!players) {
+            const args: [string, string, string] = ['', '', ''];
+            if (prevUri) args[(index + 2) % 3] = prevUri;
+            if (currUri) args[index % 3] = currUri;
+            if (nextUri) args[(index + 1) % 3] = nextUri;
+
+            const newPlayers = createThreeVideoPlayers(args);
+            setPlayers(newPlayers);
+
+            if (currUri) {
+                const currPlayer = newPlayers[index % 3];
+                if (shouldPlay) {
+                    try {
+                        currPlayer.play();
+                    } catch { }
+                }
+            }
+        } else {
+            const [player1, player2, player3] = players;
+            const prevPlayer = [player1, player2, player3][(index + 2) % 3];
+            const currPlayer = [player1, player2, player3][index % 3];
+            const nextPlayer = [player1, player2, player3][(index + 1) % 3];
+
+            if (prevUri && prevUri !== prevPlayerSource) {
+                try {
+                    prevPlayer.replaceAsync(prevUri).catch(() => { });
+                } catch { }
+            }
+            try {
+                prevPlayer.muted = true;
+                prevPlayer.pause();
+            } catch { }
+
+            if (currUri) {
+                if (currUri !== currPlayerSource) {
+                    try {
+                        currPlayer.replaceAsync(currUri).then(() => {
+                            currPlayer.currentTime = 0;
+                        }).catch(() => { });
+                    } catch { }
+                }
+                try {
+                    currPlayer.muted = !isFocused;
+                } catch { }
+
+                if (shouldPlay) {
+                    try {
+                        currPlayer.play();
+                    } catch { }
+                } else {
+                    try {
+                        currPlayer.pause();
+                    } catch { }
+                }
+            }
+
+            if (nextUri && nextUri !== nextPlayerSource) {
+                try {
+                    nextPlayer.replaceAsync(nextUri).catch(() => { });
+                } catch { }
+            }
+            try {
+                nextPlayer.muted = true;
+                nextPlayer.pause();
+            } catch { }
+        }
+
+        const updatedSources: [string | null, string | null, string | null] = [...currentSourcesRef.current];
+        if (prevUri) updatedSources[(index + 2) % 3] = prevUri;
+        if (currUri) updatedSources[index % 3] = currUri;
+        if (nextUri) updatedSources[(index + 1) % 3] = nextUri;
+        setCurrentSources(updatedSources);
+    }, [videos, players, isPaused, isFocused]);
+
+    // Initial update when videos first become available
+    useEffect(() => {
+        if (videos.length > 0 && !players) {
+            updateVideoState(activeIndex);
+        }
+    }, [videos.length, players, activeIndex, updateVideoState]);
+
+    // Focus & AppState listener to pause/resume active player
+    useEffect(() => {
+        if (!players) return;
+        const currPlayer = players[activeIndex % 3];
+        if (!currPlayer) return;
+
+        if (isFocused && !isPaused && AppState.currentState === 'active') {
+            try {
+                currPlayer.muted = false;
+                currPlayer.play();
+            } catch { }
+        } else {
+            try {
+                currPlayer.muted = true;
+                currPlayer.pause();
+            } catch { }
+        }
+    }, [isFocused, isPaused, activeIndex, players]);
+
+    // AppState listener
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', (state) => {
+            if (!players) return;
+            const currPlayer = players[activeIndex % 3];
+            if (!currPlayer) return;
+
+            if (isFocused && state === 'active' && !isPaused) {
+                try {
+                    currPlayer.muted = false;
+                    currPlayer.play();
+                } catch { }
+            } else {
+                try {
+                    currPlayer.muted = true;
+                    currPlayer.pause();
+                } catch { }
+            }
+        });
+        return () => subscription.remove();
+    }, [players, activeIndex, isPaused, isFocused]);
+
+    // Release 3 players on unmount
+    useEffect(() => {
+        return () => {
+            if (players) {
+                players.forEach(p => {
+                    try {
+                        p.release();
+                    } catch { }
+                });
+            }
+        };
+    }, [players]);
 
     // ─── Like State (optimistic, per video) ─────────────────────
-    // likeMap: videoId → { isLiked, likeCount }
-    // Initialized from server data on first render; toggled locally.
     const [prevVideos, setPrevVideos] = useState<VideoItem[]>(videos);
     const [likeMap, setLikeMap] = useState<Map<string, { isLiked: boolean; likeCount: number }>>(() => {
         const map = new Map<string, { isLiked: boolean; likeCount: number }>();
@@ -169,22 +347,31 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
     }, [feedType]);
 
     const togglePause = useCallback(() => {
-        setIsPaused(prev => !prev);
-    }, []);
+        setIsPaused(prev => {
+            const next = !prev;
+            if (players) {
+                const currPlayer = players[activeIndex % 3];
+                if (currPlayer) {
+                    if (next) {
+                        currPlayer.pause();
+                    } else {
+                        currPlayer.play();
+                    }
+                }
+            }
+            return next;
+        });
+    }, [players, activeIndex]);
 
-    const onViewableItemsChangedRef = useRef(({ viewableItems }: any) => {
-        if (viewableItems.length > 0) {
+    const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
+        if (viewableItems?.length > 0) {
             const newIndex = viewableItems[0].index ?? 0;
             setActiveIndex(newIndex);
             setIsPaused(false);
-            // Skip the buffering flash if the video was already preloaded and ready
             setIsBuffering(!readyIndicesRef.current.has(newIndex));
+            updateVideoState(newIndex);
         }
-    });
-
-    const onViewableItemsChanged = useCallback((info: any) => {
-        onViewableItemsChangedRef.current(info);
-    }, []);
+    }, [updateVideoState]);
 
     const viewabilityConfig = VIEWABILITY_CONFIG;
 
@@ -195,25 +382,6 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
             next.add(index);
             return next;
         });
-    }, []);
-
-    const onVideoLoad = useCallback(() => {
-        markReady(activeIndex);
-    }, [activeIndex, markReady]);
-
-    const onVideoProgress = useCallback(() => {
-        if (isBuffering) {
-            setIsBuffering(false);
-            markReady(activeIndex);
-        }
-    }, [isBuffering, activeIndex, markReady]);
-
-    const onVideoBuffer = useCallback(({ isBuffering: buffering }: { isBuffering: boolean }) => {
-        setIsBuffering(buffering);
-    }, []);
-
-    const onVideoEnd = useCallback(() => {
-        // Shots loop automatically — no-op
     }, []);
 
     // ─── Fetch More When Nearing End ────────────────────────────
@@ -277,12 +445,11 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
         isRefetching,
         loadMore,
 
-        // Player State
+        // Player Pool State
+        players,
         activeIndex,
-        activeVideo,
         isPaused,
         isBuffering,
-        preloadIndices,
 
         // Layout
         itemHeight,
@@ -304,9 +471,7 @@ export const useShotsViewModel = (initialFeedType: VideoFeedType = 'random') => 
         togglePause,
         onViewableItemsChanged,
         viewabilityConfig,
-        onVideoLoad,
-        onVideoProgress,
-        onVideoBuffer,
-        onVideoEnd,
+        markReady,
     };
 };
+

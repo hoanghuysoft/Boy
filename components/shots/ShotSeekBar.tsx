@@ -1,221 +1,179 @@
-import React, { useEffect, useRef } from "react";
+import { useEventListener } from "expo";
+import { VideoPlayer } from "expo-video";
+import React, { useCallback, useMemo, useState } from "react";
 import {
-    Animated,
-    PanResponder,
+    Platform,
     StyleSheet,
     Text,
+    useWindowDimensions,
     View,
 } from "react-native";
-import Reanimated, {
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+    clamp,
+    interpolate,
+    runOnJS,
+    useAnimatedReaction,
     useAnimatedStyle,
     useSharedValue,
+    withTiming,
 } from "react-native-reanimated";
 
-// ─── Constants (mirroring reference VideoOverlay exactly) ───────────
-const SEEK_BAR_HEIGHT = 3;
-const SEEK_BAR_HIT_SLOP = 14;
-const SEEK_BAR_AREA_HEIGHT = SEEK_BAR_HEIGHT + 2 * SEEK_BAR_HIT_SLOP;
-const SEEK_TRACK_SCALE_DRAG = 3;
-const SEEK_TRACK_ANIM_DURATION = 180;
-const SEEK_TIMER_ANIM_DURATION = 200;
-const SEEK_TIMER_OFFSET_ABOVE_BAR = 48;
-
-function formatSeekTime(seconds: number): string {
+function formatTime(seconds: number): string {
     if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-interface ShotSeekBarProps {
-    /** Playback progress 0–1 */
-    progress: number;
-    /** Total duration in seconds */
-    duration: number;
-    /** Called when user seeks to a new progress 0–1 */
-    onSeek?: (progress: number) => void;
-    /** Called when seeking state changes (to disable list scroll) */
-    onSeekingChange?: (seeking: boolean) => void;
-    /** Distance from the bottom of the container */
+export interface ShotSeekBarProps {
+    player: VideoPlayer;
+    isActive: boolean;
     bottom: number;
+    onSeekingChange?: (seeking: boolean) => void;
 }
 
-export const ShotSeekBar = React.memo(({
-    progress,
-    duration,
-    onSeek,
-    onSeekingChange,
+export const ShotSeekBar = React.memo(function ShotSeekBar({
+    player,
+    isActive,
     bottom,
-}: ShotSeekBarProps) => {
-    // ─── Reanimated shared value drives fill width on UI thread (zero lag) ──
-    const fillWidthPct = useSharedValue(progress * 100);
+    onSeekingChange,
+}: ShotSeekBarProps) {
+    const { width: screenWidth } = useWindowDimensions();
+    const currentTimeSV = useSharedValue(0);
+    const durationSV = useSharedValue(0);
+    const isSeekingSV = useSharedValue(false);
+    const seekProgressSV = useSharedValue(0);
+    const seekingAnimationSV = useSharedValue(0);
 
-    // ─── Seek timer display state — updated only on grant/move ──────────────
-    const seekTimerTextRef = useRef({ current: progress, duration });
-    const [seekTimerDisplay, setSeekTimerDisplay] = React.useState<{
-        current: number;
-        duration: number;
-    } | null>(null);
+    const [currentSeekTime, setCurrentSeekTime] = useState(0);
+    const [duration, setDuration] = useState(0);
 
-    // Sync Reanimated value when progress updates from player (not during drag)
-    const isDraggingRef = useRef(false);
-    useEffect(() => {
-        if (!isDraggingRef.current) {
-            fillWidthPct.value = Math.min(100, Math.max(0, progress * 100));
+    // Sync numeric seconds for floating bubble display
+    useAnimatedReaction(
+        () => Math.round(seekProgressSV.value),
+        (progress, prevProgress) => {
+            if (progress !== prevProgress) {
+                runOnJS(setCurrentSeekTime)(progress);
+            }
         }
-    }, [progress]);
+    );
 
-    const trackLayoutRef = useRef({ x: 0, width: 1 });
-    const seekTrackRef = useRef<View>(null);
-    const onSeekRef = useRef(onSeek);
-    const progressRef = useRef(progress);
-    const onSeekingChangeRef = useRef(onSeekingChange);
-    const durationRef = useRef(duration);
+    // Listen to timeUpdate directly from active player
+    useEventListener(player, "timeUpdate", (evt) => {
+        if (!isActive || !player) return;
+        const dur = player.duration;
+        if (dur > 0 && Number.isFinite(dur)) {
+            setDuration(Math.round(dur));
+            durationSV.value = dur;
+        }
+        if (!isSeekingSV.value) {
+            currentTimeSV.value = evt.currentTime;
+        }
+    });
 
-    onSeekRef.current = onSeek;
-    progressRef.current = progress;
-    onSeekingChangeRef.current = onSeekingChange;
-    durationRef.current = duration;
+    const handleSeekEnd = useCallback((newTime: number) => {
+        if (player) {
+            try {
+                player.currentTime = newTime;
+            } catch { }
+        }
+        setTimeout(() => {
+            isSeekingSV.value = false;
+            seekingAnimationSV.value = withTiming(0, { duration: 300 });
+        }, 50);
+        onSeekingChange?.(false);
+    }, [player, onSeekingChange, isSeekingSV, seekingAnimationSV]);
 
-    // ─── Animated (JS-thread) values for track scale and timer opacity ──────
-    const trackScaleY = useRef(new Animated.Value(1)).current;
-    const seekTimerOpacity = useRef(new Animated.Value(0)).current;
-
-    const hideSeekState = useRef(() => {
-        onSeekingChangeRef.current?.(false);
-        isDraggingRef.current = false;
-        Animated.parallel([
-            Animated.timing(trackScaleY, {
-                toValue: 1,
-                duration: SEEK_TRACK_ANIM_DURATION,
-                useNativeDriver: true,
-            }),
-            Animated.timing(seekTimerOpacity, {
-                toValue: 0,
-                duration: SEEK_TIMER_ANIM_DURATION,
-                useNativeDriver: true,
-            }),
-        ]).start(() => {
-            setSeekTimerDisplay(null);
-        });
-    }).current;
-
-    const panResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => !!onSeekRef.current,
-            onStartShouldSetPanResponderCapture: () => !!onSeekRef.current,
-            onMoveShouldSetPanResponder: () => !!onSeekRef.current,
-            onPanResponderGrant: (evt) => {
-                const seek = onSeekRef.current;
-                if (!seek) return;
-                isDraggingRef.current = false;
-                const { locationX } = evt.nativeEvent;
-                const { width: trackW } = trackLayoutRef.current;
-                const p =
-                    trackW > 0
-                        ? Math.max(0, Math.min(1, locationX / trackW))
-                        : progressRef.current;
-
-                // Update fill on UI thread immediately
-                fillWidthPct.value = p * 100;
-                seek(p);
-                onSeekingChangeRef.current?.(true);
-                seekTimerOpacity.setValue(1);
-                setSeekTimerDisplay({ current: p * durationRef.current, duration: durationRef.current });
-            },
-            onPanResponderMove: (evt) => {
-                const seek = onSeekRef.current;
-                if (!seek) return;
-                if (!isDraggingRef.current) {
-                    isDraggingRef.current = true;
-                    Animated.timing(trackScaleY, {
-                        toValue: SEEK_TRACK_SCALE_DRAG,
-                        duration: SEEK_TRACK_ANIM_DURATION,
-                        useNativeDriver: true,
-                    }).start();
+    const scrubPanGesture = useMemo(() => {
+        return Gesture.Pan()
+            .activeOffsetX([-10, 10])
+            .failOffsetY([-10, 10])
+            .onStart(() => {
+                'worklet';
+                seekProgressSV.value = currentTimeSV.value;
+                isSeekingSV.value = true;
+                seekingAnimationSV.value = withTiming(1, { duration: 200 });
+                if (onSeekingChange) {
+                    runOnJS(onSeekingChange)(true);
                 }
-                const moveX = evt.nativeEvent.pageX;
-                const { x: trackX, width: trackW } = trackLayoutRef.current;
-                const p =
-                    trackW > 0
-                        ? Math.max(0, Math.min(1, (moveX - trackX) / trackW))
-                        : progressRef.current;
+            })
+            .onUpdate((evt) => {
+                'worklet';
+                const progress = evt.x / screenWidth;
+                const dur = durationSV.value;
+                seekProgressSV.value = clamp(progress * dur, 0, dur);
+            })
+            .onEnd((evt) => {
+                'worklet';
+                const progress = evt.x / screenWidth;
+                const dur = durationSV.value;
+                const newTime = clamp(progress * dur, 0, dur);
+                seekProgressSV.value = newTime;
+                runOnJS(handleSeekEnd)(newTime);
+            });
+    }, [screenWidth, onSeekingChange, handleSeekEnd, currentTimeSV, durationSV, isSeekingSV, seekProgressSV, seekingAnimationSV]);
 
-                // Update fill on UI thread — NO JS setState, zero lag
-                fillWidthPct.value = p * 100;
-                seek(p);
-                setSeekTimerDisplay({ current: p * durationRef.current, duration: durationRef.current });
-            },
-            onPanResponderRelease: () => {
-                hideSeekState();
-            },
-            onPanResponderTerminate: () => {
-                hideSeekState();
-            },
-        }),
-    ).current;
+    // Center time preview bubble animation (smooth scale & fade)
+    const timePreviewStyle = useAnimatedStyle(() => {
+        return {
+            opacity: seekingAnimationSV.value,
+            transform: [
+                {
+                    scale: interpolate(seekingAnimationSV.value, [0, 1], [0.85, 1]),
+                },
+            ],
+        };
+    });
 
-    // ─── Animated style for fill — Reanimated drives width on UI thread ──────
-    const fillStyle = useAnimatedStyle(() => ({
-        width: `${fillWidthPct.value}%` as any,
-    }));
+    // Expanding track styles (1.5px default -> 4.5px when dragging)
+    const trackStyle = useAnimatedStyle(() => {
+        return {
+            height: interpolate(seekingAnimationSV.value, [0, 1], [1.5, 4.5]),
+        };
+    });
+
+    const progressBarStyle = useAnimatedStyle(() => {
+        const cur = isSeekingSV.value ? seekProgressSV.value : currentTimeSV.value;
+        const dur = durationSV.value;
+        const pct = dur > 0 ? clamp((cur / dur) * 100, 0, 100) : 0;
+        return {
+            width: `${pct}%`,
+            height: interpolate(seekingAnimationSV.value, [0, 1], [1.5, 4.5]),
+            opacity: interpolate(seekingAnimationSV.value, [0, 1], [0.85, 1]),
+        };
+    });
+
+    if (!isActive || !player) return null;
 
     return (
         <>
-            {/* Seek bar track */}
-            <View
-                ref={seekTrackRef}
-                pointerEvents="box-only"
-                style={[
-                    styles.seekBarHitArea,
-                    { bottom },
-                ]}
-                onLayout={(e) => {
-                    const { width } = e.nativeEvent.layout;
-                    if (width > 0) {
-                        trackLayoutRef.current.width = width;
-                    }
-                    seekTrackRef.current?.measureInWindow((x, _y, w) => {
-                        if (w > 0) {
-                            trackLayoutRef.current = { x, width: w };
-                        }
-                    });
-                }}
-                {...(onSeek ? panResponder.panHandlers : {})}
-            >
-                <Animated.View
-                    style={[
-                        styles.seekBarTrack,
-                        {
-                            transform: [{ scaleY: trackScaleY }],
-                        },
-                    ]}
-                >
-                    {/* Reanimated fill — updates on UI thread, no JS re-render lag */}
-                    <Reanimated.View style={[styles.seekBarFill, fillStyle]} />
-                </Animated.View>
-            </View>
-
-            {/* Seek timer bubble */}
+            {/* Big floating time preview pill in center of screen */}
             <Animated.View
-                pointerEvents="none"
                 style={[
-                    styles.seekTimer,
-                    {
-                        bottom:
-                            bottom +
-                            SEEK_BAR_AREA_HEIGHT +
-                            SEEK_TIMER_OFFSET_ABOVE_BAR,
-                        opacity: seekTimerOpacity,
-                    },
+                    styles.timePreviewContainer,
+                    timePreviewStyle,
                 ]}
+                pointerEvents="none"
             >
-                <Text style={styles.seekTimerText}>
-                    {formatSeekTime(seekTimerDisplay?.current ?? 0)}
-                    {" / "}
-                    {formatSeekTime(seekTimerDisplay?.duration ?? duration)}
-                </Text>
+                <View style={styles.timePreviewPill}>
+                    <Text style={styles.timeBold}>{formatTime(currentSeekTime)}</Text>
+                    <Text style={styles.timeDivider}> / </Text>
+                    <Text style={styles.timeDuration}>{formatTime(duration)}</Text>
+                </View>
             </Animated.View>
+
+            {/* Gesture-enabled Scrubber Bar at bottom */}
+            <GestureDetector gesture={scrubPanGesture}>
+                <View style={[styles.scrubberArea, { bottom }]}>
+                    <View style={styles.trackContainer}>
+                        {/* Background track */}
+                        <Animated.View style={[styles.trackBg, trackStyle]} />
+                        {/* Filled progress bar */}
+                        <Animated.View style={[styles.trackFill, progressBarStyle]} />
+                    </View>
+                </View>
+            </GestureDetector>
         </>
     );
 });
@@ -224,35 +182,64 @@ ShotSeekBar.displayName = 'ShotSeekBar';
 
 // ─── Styles ─────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-    seekBarHitArea: {
+    scrubberArea: {
         position: "absolute",
         left: 0,
         right: 0,
-        paddingVertical: SEEK_BAR_HIT_SLOP,
-        paddingHorizontal: 16,
+        paddingVertical: 14,
+        paddingHorizontal: 0,
+        zIndex: 1100,
+        justifyContent: "center",
     },
-    seekBarTrack: {
-        height: SEEK_BAR_HEIGHT,
-        backgroundColor: "rgba(255,255,255,0.3)",
-        borderRadius: SEEK_BAR_HEIGHT / 2,
-        overflow: "hidden",
+    trackContainer: {
+        width: "100%",
+        position: "relative",
+        justifyContent: "center",
     },
-    seekBarFill: {
-        height: "100%",
-        backgroundColor: "#fff",
-        borderRadius: SEEK_BAR_HEIGHT / 2,
+    trackBg: {
+        width: "100%",
+        backgroundColor: "rgba(255, 255, 255, 0.25)",
+        borderRadius: 2,
     },
-    seekTimer: {
+    trackFill: {
         position: "absolute",
-        alignSelf: "center",
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        backgroundColor: "rgba(0,0,0,0.65)",
-        borderRadius: 8,
+        left: 0,
+        top: 0,
+        backgroundColor: "#ffffff",
+        borderRadius: 2,
     },
-    seekTimerText: {
-        color: "#fff",
+    timePreviewContainer: {
+        position: "absolute",
+        top: "45%",
+        alignSelf: "center",
+        zIndex: 1200,
+    },
+    timePreviewPill: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        backgroundColor: "rgba(0, 0, 0, 0.75)",
+        borderRadius: 30,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: "rgba(255, 255, 255, 0.2)",
+    },
+    timeBold: {
+        color: "#ffffff",
+        fontSize: 24,
+        fontWeight: "700",
+        fontVariant: Platform.select({ ios: ["tabular-nums"], default: undefined }),
+    },
+    timeDivider: {
+        color: "rgba(255, 255, 255, 0.6)",
         fontSize: 20,
+        fontWeight: "400",
+        marginHorizontal: 4,
+    },
+    timeDuration: {
+        color: "rgba(255, 255, 255, 0.75)",
+        fontSize: 24,
         fontWeight: "600",
+        fontVariant: Platform.select({ ios: ["tabular-nums"], default: undefined }),
     },
 });
