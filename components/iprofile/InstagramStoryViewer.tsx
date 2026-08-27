@@ -4,7 +4,7 @@
  * Implements a high-fidelity Instagram Story Player:
  * - Animated multi-segment progress bars
  * - Tap left/right navigation & press-and-hold pause/resume
- * - Image & video playback
+ * - Image & Expo Video playback (expo-video)
  * - Author info & timestamp
  * - Native Cross-post button to share story to WeLove feed
  */
@@ -13,17 +13,15 @@ import { FlexText } from "@/components/FlexText";
 import { FALLBACK_AVATAR_URL } from "@/components/profile/header/constants";
 import { InstagramStoryItem, InstagramUser } from "@/services/instagram/types";
 import { Post } from "@/types/post";
-import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { useVideoPlayer, VideoView } from "expo-video";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
   Modal,
-  PanResponder,
-  Platform,
   StatusBar,
   StyleSheet,
   TouchableOpacity,
@@ -40,6 +38,37 @@ import { formatStoryTime } from "./utils";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const DEFAULT_PHOTO_DURATION = 5000; // 5 seconds per photo story
+
+interface StoryVideoPlayerProps {
+  url: string;
+  isPaused: boolean;
+}
+
+const StoryVideoPlayer: React.FC<StoryVideoPlayerProps> = ({ url, isPaused }) => {
+  const player = useVideoPlayer(url, (p) => {
+    p.loop = false;
+    p.muted = false;
+    p.play();
+  });
+
+  useEffect(() => {
+    if (isPaused) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  }, [isPaused, player]);
+
+  return (
+    <VideoView
+      player={player}
+      style={StyleSheet.absoluteFill}
+      contentFit="contain"
+      nativeControls={false}
+      surfaceType="textureView"
+    />
+  );
+};
 
 interface InstagramStoryViewerProps {
   isVisible: boolean;
@@ -102,17 +131,6 @@ export const InstagramStoryViewer: React.FC<InstagramStoryViewerProps> = ({
       : isVideo && rawStory?.videoDuration
       ? Math.max(rawStory.videoDuration * 1000, 3000)
       : DEFAULT_PHOTO_DURATION;
-
-  // Activate video view when opening or switching story
-  useEffect(() => {
-    if (isVisible && isVideo) {
-      updateActiveVideoViewAsync();
-      const timer = setTimeout(() => {
-        updateActiveVideoViewAsync();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, currentIndex, isVideo]);
 
   const nextStory = useCallback(() => {
     if (currentIndex < stories.length - 1) {
@@ -221,16 +239,12 @@ export const InstagramStoryViewer: React.FC<InstagramStoryViewerProps> = ({
               />
             ) : null}
 
-            {/* If video, render BlueskyVideoView on top */}
+            {/* If video, render Expo VideoView on top */}
             {isVideo && videoUrl ? (
-              <BlueskyVideoView
+              <StoryVideoPlayer
+                key={videoUrl}
                 url={videoUrl}
-                autoplay={!isPaused}
-                beginMuted={false}
-                style={StyleSheet.absoluteFill}
-                onActiveChange={() => {
-                  updateActiveVideoViewAsync();
-                }}
+                isPaused={isPaused}
               />
             ) : null}
           </View>
@@ -250,75 +264,92 @@ export const InstagramStoryViewer: React.FC<InstagramStoryViewerProps> = ({
           pointerEvents="none"
         />
 
-        {/* Progress Bar Segments */}
+        {/* Multi-Segment Progress Bars */}
         <View style={[styles.progressBarsContainer, { top: insets.top + 8 }]}>
-          {stories.map((s, i) => {
-            let widthInterpolation: any = "0%";
-            if (i < currentIndex) {
-              widthInterpolation = "100%";
-            } else if (i === currentIndex) {
-              widthInterpolation = progressAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: ["0%", "100%"],
-              });
-            } else {
-              widthInterpolation = "0%";
+          {stories.map((story, index) => {
+            let progress = 0;
+            if (index < currentIndex) {
+              progress = 1;
+            } else if (index === currentIndex) {
+              return (
+                <View key={story.id || index} style={styles.progressBarTrack}>
+                  <Animated.View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: progressAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ["0%", "100%"],
+                        }),
+                      },
+                    ]}
+                  />
+                </View>
+              );
             }
 
             return (
-              <View key={s.id || i} style={styles.progressBarTrack}>
-                <Animated.View
-                  style={[styles.progressBarFill, { width: widthInterpolation }]}
+              <View key={story.id || index} style={styles.progressBarTrack}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { width: progress === 1 ? "100%" : "0%" },
+                  ]}
                 />
               </View>
             );
           })}
         </View>
 
-        {/* Header: User Avatar, Name, Timestamp, Close Button */}
+        {/* Story Header (Author + Time + Close) */}
         <View style={[styles.header, { top: insets.top + 22 }]}>
           <View style={styles.userInfo}>
-            <ExpoImage source={{ uri: authorAvatar }} style={styles.avatar} />
+            <ExpoImage
+              source={{ uri: authorAvatar }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
             <FlexText style={styles.userName} numberOfLines={1}>
               {authorName}
             </FlexText>
-            {!!timeAgo && (
+            {timeAgo ? (
               <FlexText style={styles.timeAgo}>• {timeAgo}</FlexText>
-            )}
+            ) : null}
           </View>
 
           <TouchableOpacity
-            activeOpacity={0.8}
             onPress={onClose}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             style={styles.closeButton}
+            activeOpacity={0.7}
           >
-            <Ionicons name="close" size={26} color="#FFF" />
+            <Ionicons name="close" size={22} color="#FFF" />
           </TouchableOpacity>
         </View>
 
-        {/* Footer Actions: Caption & Cross-post Button */}
+        {/* Bottom Story Footer (Caption / CTA Link / Cross-post) */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-          {!!currentStory.caption && (
+          {currentStory?.caption ? (
             <FlexText style={styles.captionText} numberOfLines={3}>
               {typeof currentStory.caption === "string"
                 ? currentStory.caption
-                : currentStory.caption.text}
+                : currentStory.caption?.text || ""}
             </FlexText>
-          )}
+          ) : null}
 
           <View style={styles.footerRow}>
-            {/* Story CTA link indicator if available */}
-            {!!(currentStory.storyCtaUrl || currentStory.story_cta_url) && (
+            {/* Story CTA Link if present */}
+            {currentStory?.storyCtaUrl || currentStory?.story_cta_url ? (
               <View style={styles.linkBadge}>
-                <Ionicons name="link-outline" size={14} color="#FFF" />
+                <Ionicons name="link" size={14} color="#FFF" />
                 <FlexText style={styles.linkBadgeText}>See Link</FlexText>
               </View>
+            ) : (
+              <View />
             )}
 
-            <View style={{ flex: 1 }} />
-
-            {/* Cross-post Button */}
-            {!!onCrossPostPress && (
+            {/* Cross-post to WeLove Feed button */}
+            {onCrossPostPress && (
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={handleCrossPost}
