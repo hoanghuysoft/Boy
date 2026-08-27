@@ -13,6 +13,7 @@ const LEGACY_CACHE_DIR = new Directory(Paths.cache, 'video-cache');
 export const DEFAULT_MAX_CACHE_BYTES = 500 * 1024 * 1024;
 
 let currentMaxCacheBytes = DEFAULT_MAX_CACHE_BYTES;
+let lastAppliedNativeCacheBytes: number | null = null;
 
 /**
  * Configure the native video cache size in bytes.
@@ -20,9 +21,18 @@ let currentMaxCacheBytes = DEFAULT_MAX_CACHE_BYTES;
  */
 export const setMaxCacheSize = async (bytes: number): Promise<void> => {
     currentMaxCacheBytes = bytes;
+    if (lastAppliedNativeCacheBytes === bytes) return;
+
     try {
         await setVideoCacheSizeAsync(bytes);
-    } catch (err) {
+        lastAppliedNativeCacheBytes = bytes;
+    } catch (err: any) {
+        const msg = err?.message || String(err);
+        // If active video players are alive in another tab/screen, native module rejects resizing until players unmount
+        if (msg.includes('active players') || msg.includes('Cannot clear cache')) {
+            // Silently ignore or schedule for later - native module retains existing cache limit until players release
+            return;
+        }
         console.warn('[VideoCache] Failed to set native cache size:', err);
     }
 };
@@ -56,7 +66,12 @@ export const getCacheCount = async (): Promise<number> => {
 export const clearVideoCache = async (): Promise<void> => {
     try {
         await clearVideoCacheAsync();
-    } catch (err) {
+    } catch (err: any) {
+        const msg = err?.message || String(err);
+        if (msg.includes('active players') || msg.includes('Cannot clear cache')) {
+            // Can only clear cache when all video players are unmounted
+            return;
+        }
         console.warn('[VideoCache] Failed to clear native cache:', err);
     }
 

@@ -120,11 +120,6 @@ const SettingsScreen = () => {
         return () => clearTimeout(timer);
     }, [refreshCacheInfo]);
 
-    // Sync the cache limit on mount 
-    useEffect(() => {
-        setMaxCacheSize(videoCacheSizeLimit);
-    }, [videoCacheSizeLimit]);
-
 
 
     const handleClearCache = useCallback(() => {
