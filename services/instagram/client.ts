@@ -121,6 +121,33 @@ export function deduplicateRequest<T>(key: string, requestFn: () => Promise<T>):
 }
 
 // ============================================================================
+// Global Sequential Request Queue (Prevents Meta rate limit & account flags)
+// ============================================================================
+
+let sequentialQueuePromise: Promise<any> = Promise.resolve();
+const REQUEST_COOLDOWN_MS = 600; // 600ms gap between consecutive network requests
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function enqueueSequentialCall<T>(task: () => Promise<T>): Promise<T> {
+  const resultPromise = sequentialQueuePromise.then(async () => {
+    try {
+      const res = await task();
+      return res;
+    } finally {
+      await sleep(REQUEST_COOLDOWN_MS);
+    }
+  });
+
+  // Keep the queue chain active even if a previous request failed
+  sequentialQueuePromise = resultPromise.catch(() => {});
+
+  return resultPromise;
+}
+
+// ============================================================================
 // Core Relay Call Executor
 // ============================================================================
 
@@ -136,7 +163,7 @@ export async function socialAioCall<T = any>(
   const { clientId: customClientId, skipCache = false, ttlMs = 0 } = options;
   const cacheKey = generateInstagramCacheKey(apiname, apiparams);
 
-  // 1. Check local MMKV cache first
+  // 1. Check local MMKV cache first (instant response, no network/queue needed)
   if (!skipCache && ttlMs > 0) {
     const cached = getInstagramCache<T>(cacheKey);
     if (cached !== null) {
@@ -144,13 +171,15 @@ export async function socialAioCall<T = any>(
     }
   }
 
-  // 2. In-flight request deduplication
+  // 2. In-flight request deduplication & Sequential Execution
   return deduplicateRequest<T>(cacheKey, async () => {
     // Double check cache in case a concurrent request just resolved
     if (!skipCache && ttlMs > 0) {
       const cached = getInstagramCache<T>(cacheKey);
       if (cached !== null) return cached;
     }
+
+    return enqueueSequentialCall(async () => {
 
     // 3. Resolve CLIENT_ID
     const clientId = customClientId || getSocialAioClientId();
@@ -235,5 +264,6 @@ export async function socialAioCall<T = any>(
         err
       );
     }
+    });
   });
 }

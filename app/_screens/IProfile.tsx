@@ -102,27 +102,29 @@ const IProfileScreen = () => {
     return "";
   }, [params.url, params.handle, parsedSocialLinks, parsedProfile]);
 
-  // 1. Fetch Instagram User Profile
+  // 1. Fetch Instagram User Profile (Step 1)
   const {
     data: profileData,
     isLoading: isProfileLoading,
+    isFetched: isProfileFetched,
     refetch: refetchProfile,
     isRefetching: isProfileRefetching,
   } = useInstagramUserInfo(targetInput, {
     enabled: !!targetInput,
   });
 
-  // 2. Fetch Instagram User Stories
+  // 2. Fetch Instagram User Stories (Step 2 - Sequential: waits for Profile)
   const {
     data: storiesData,
     isLoading: isStoriesLoading,
+    isFetched: isStoriesFetched,
     refetch: refetchStories,
     isRefetching: isStoriesRefetching,
   } = useInstagramUserStories(targetInput, {
-    enabled: !!targetInput,
+    enabled: !!targetInput && isProfileFetched,
   });
 
-  // 3. Fetch Instagram User Posts (with infinite scroll pagination)
+  // 3. Fetch Instagram User Posts (Step 3 - Sequential: waits for Stories)
   const {
     data: postsData,
     isLoading: isPostsLoading,
@@ -132,7 +134,7 @@ const IProfileScreen = () => {
     refetch: refetchPosts,
     isRefetching: isPostsRefetching,
   } = useInstagramPosts(targetInput, {
-    enabled: !!targetInput,
+    enabled: !!targetInput && isProfileFetched && isStoriesFetched,
   });
 
   const instagramUser =
@@ -258,10 +260,10 @@ const IProfileScreen = () => {
     [targetProfile, toast]
   );
 
-  const handleRefresh = useCallback(() => {
-    refetchProfile();
-    refetchStories();
-    refetchPosts();
+  const handleRefresh = useCallback(async () => {
+    await refetchProfile();
+    await refetchStories();
+    await refetchPosts();
   }, [refetchProfile, refetchStories, refetchPosts]);
 
   const handleEndReached = useCallback(() => {
