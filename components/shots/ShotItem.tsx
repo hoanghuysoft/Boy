@@ -20,20 +20,19 @@ import { ShotSeekBar } from "./ShotSeekBar";
 
 const IS_ANDROID = Platform.OS === 'android';
 
-// ─── Thumbnail / Poster Placeholder (matches Bluesky VideoItemPlaceholder) ───
+// ─── Thumbnail / Poster Placeholder ───
 function VideoItemPlaceholder({
     thumbnailUrl,
-    mediaUrl,
 }: {
     thumbnailUrl?: string | null;
-    mediaUrl?: string | null;
 }) {
-    const src = thumbnailUrl || mediaUrl;
-    if (!src) return null;
+    if (!thumbnailUrl || thumbnailUrl.endsWith('.mp4') || thumbnailUrl.endsWith('.m3u8')) {
+        return null;
+    }
 
     return (
         <Image
-            source={{ uri: src }}
+            source={{ uri: thumbnailUrl }}
             style={StyleSheet.absoluteFill}
             contentFit="contain"
             cachePolicy="disk"
@@ -42,43 +41,21 @@ function VideoItemPlaceholder({
     );
 }
 
-// ─── Inner Video Component (matches Bluesky VideoItemInner) ──────────
+// ─── Inner Video Component ──────────────────────────────────────────
 interface VideoItemInnerProps {
     player: VideoPlayer;
-    isActive: boolean;
 }
 
 const VideoItemInner = React.memo(function VideoItemInner({
     player,
-    isActive,
 }: VideoItemInnerProps) {
-    const [isReady, setIsReady] = useState(!IS_ANDROID);
-
-    useEventListener(player, "timeUpdate", (evt) => {
-        if (IS_ANDROID && !isReady && evt.currentTime >= 0.05) {
-            setIsReady(true);
-        }
-    });
-
-    useEventListener(player, "statusChange", ({ status }) => {
-        if (status === "readyToPlay" && isActive) {
-            setIsReady(true);
-        }
-    });
-
     return (
         <VideoView
             player={player}
-            style={[
-                StyleSheet.absoluteFill,
-                !isReady && { opacity: 0 },
-            ]}
+            style={StyleSheet.absoluteFill}
             contentFit="contain"
             surfaceType={IS_ANDROID ? 'textureView' : 'surfaceView'}
             nativeControls={false}
-            onFirstFrameRender={() => {
-                setIsReady(true);
-            }}
         />
     );
 });
@@ -186,17 +163,15 @@ export const ShotItem = React.memo(function ShotItem({
                 {/* Pure Black Canvas */}
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000000' }]} />
 
-                {/* Video Placeholder / Thumbnail (matches Bluesky VideoItemPlaceholder) */}
+                {/* Video Placeholder / Thumbnail */}
                 <VideoItemPlaceholder
                     thumbnailUrl={item.thumbnail_url}
-                    mediaUrl={item.media_url}
                 />
 
-                {/* Video View (matches Bluesky VideoItemInner) */}
+                {/* Video View */}
                 {shouldRenderVideo && player && (
                     <VideoItemInner
                         player={player}
-                        isActive={isActive}
                     />
                 )}
             </View>

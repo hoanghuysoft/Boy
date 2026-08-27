@@ -58,6 +58,7 @@ const SettingsScreen = () => {
         videoCacheSizeLimit, setVideoCacheSizeLimit,
         imgbbApiKey, setImgbbApiKey,
         x02ApiKey, setX02ApiKey,
+        socialAioClientId, setSocialAioClientId,
         makeBottomBarCurve, toggleMakeBottomBarCurve,
         disableAutoplay, toggleDisableAutoplay,
     } = useSettingsStore();
@@ -707,6 +708,28 @@ const SettingsScreen = () => {
                     </TextField>
                     <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: -8 }]}>
                         Optional for video uploads. Used for file deletion hooks.
+                    </FlexText>
+
+                    {/* Social AIO Client ID Input */}
+                    <TextField>
+                        <FlexText style={[common.body, { marginBottom: 8 }]}>Social AIO (FB AIO) Client ID</FlexText>
+                        <Input
+                            value={socialAioClientId}
+                            onChangeText={setSocialAioClientId}
+                            variant="secondary"
+                            placeholder="Enter Social AIO Client ID"
+                            placeholderTextColor={colors.onSurfaceVariant}
+                            secureTextEntry
+                            style={{
+                                backgroundColor: colors.surfaceContainerHighest,
+                                color: colors.onSurface,
+                                fontSize: 14,
+                                paddingHorizontal: 16,
+                            }}
+                        />
+                    </TextField>
+                    <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: -8 }]}>
+                        Required for Instagram & social relay APIs. Get from Social AIO extension.
                     </FlexText>
 
                     <Button

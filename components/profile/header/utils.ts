@@ -124,3 +124,6 @@ export function extractXProfileInfo(
     rawUrl,
   };
 }
+
+export { extractInstagramProfileInfo, isInstagramPlatform } from '@/components/iprofile/utils';
+

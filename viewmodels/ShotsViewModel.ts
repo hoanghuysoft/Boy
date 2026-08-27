@@ -1,9 +1,8 @@
-import { getCachedUri, precacheVideos } from "@/services/videoCache";
 import { useScrollStore } from "@/stores/scroll";
 import { VideoFeedType, VideoItem } from "@/types/video";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useQueryClient } from "@tanstack/react-query";
-import { createVideoPlayer, VideoPlayer } from "expo-video";
+import { BufferOptions, createVideoPlayer, VideoPlayer } from "expo-video";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppState, Platform, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,6 +15,13 @@ const VIEWABILITY_CONFIG = {
     itemVisiblePercentThreshold: 50,
 };
 
+const BUFFER_OPTIONS: BufferOptions = {
+    preferredForwardBufferDuration: 6,
+    minBufferForPlayback: 0.5,
+    maxBufferBytes: 4 * 1024 * 1024, // 4MB buffer limit per player on Android (12MB total across all 3 players)
+    prioritizeTimeOverSizeThreshold: false,
+};
+
 function createThreeVideoPlayers(
     sources?: [string, string, string],
 ): [VideoPlayer, VideoPlayer, VideoPlayer] {
@@ -24,20 +30,23 @@ function createThreeVideoPlayers(
         android: 0.25,
         default: 0.2,
     });
-    const p1 = createVideoPlayer(sources?.[0] ?? '');
+    const p1 = createVideoPlayer(sources?.[0] ? { uri: sources[0], useCaching: true } : '');
     p1.loop = true;
     p1.muted = false;
     p1.timeUpdateEventInterval = eventInterval;
+    p1.bufferOptions = BUFFER_OPTIONS;
 
-    const p2 = createVideoPlayer(sources?.[1] ?? '');
+    const p2 = createVideoPlayer(sources?.[1] ? { uri: sources[1], useCaching: true } : '');
     p2.loop = true;
     p2.muted = false;
     p2.timeUpdateEventInterval = eventInterval;
+    p2.bufferOptions = BUFFER_OPTIONS;
 
-    const p3 = createVideoPlayer(sources?.[2] ?? '');
+    const p3 = createVideoPlayer(sources?.[2] ? { uri: sources[2], useCaching: true } : '');
     p3.loop = true;
     p3.muted = false;
     p3.timeUpdateEventInterval = eventInterval;
+    p3.bufferOptions = BUFFER_OPTIONS;
 
     return [p1, p2, p3];
 }
@@ -96,29 +105,13 @@ export const useShotsViewModel = (
     const [, setReadyIndices] = useState<Set<number>>(new Set());
     const readyIndicesRef = useRef<Set<number>>(new Set());
 
-    // ─── Video Cache Preload ────────────────────────────────────
-    useEffect(() => {
-        if (videos.length === 0 || !isFocused) return;
-        const urlsToCache = videos
-            .slice(activeIndex, activeIndex + 2)
-            .map(v => v.media_url);
-        precacheVideos(urlsToCache);
-    }, [activeIndex, videos, isFocused]);
-
     // ─── Update 3-Player Pool State ─────────────────────────────
     const updateVideoState = useCallback(async (index: number) => {
         if (!videos.length) return;
 
-        const prevVideo = videos[index - 1]?.media_url ?? null;
-        const currVideo = videos[index]?.media_url ?? null;
-        const nextVideo = videos[index + 1]?.media_url ?? null;
-
-        // Fetch cached local URIs if available
-        const [prevUri, currUri, nextUri] = await Promise.all([
-            prevVideo ? getCachedUri(prevVideo) : Promise.resolve(null),
-            currVideo ? getCachedUri(currVideo) : Promise.resolve(null),
-            nextVideo ? getCachedUri(nextVideo) : Promise.resolve(null),
-        ]);
+        const prevUri = videos[index - 1]?.media_url ?? null;
+        const currUri = videos[index]?.media_url ?? null;
+        const nextUri = videos[index + 1]?.media_url ?? null;
 
         const prevPlayerSource = currentSourcesRef.current[(index + 2) % 3];
         const currPlayerSource = currentSourcesRef.current[index % 3];
@@ -151,7 +144,7 @@ export const useShotsViewModel = (
 
             if (prevUri && prevUri !== prevPlayerSource) {
                 try {
-                    prevPlayer.replaceAsync(prevUri).catch(() => { });
+                    prevPlayer.replaceAsync({ uri: prevUri, useCaching: true }).catch(() => { });
                 } catch { }
             }
             try {
@@ -162,7 +155,7 @@ export const useShotsViewModel = (
             if (currUri) {
                 if (currUri !== currPlayerSource) {
                     try {
-                        currPlayer.replaceAsync(currUri).then(() => {
+                        currPlayer.replaceAsync({ uri: currUri, useCaching: true }).then(() => {
                             currPlayer.currentTime = 0;
                         }).catch(() => { });
                     } catch { }
@@ -184,7 +177,7 @@ export const useShotsViewModel = (
 
             if (nextUri && nextUri !== nextPlayerSource) {
                 try {
-                    nextPlayer.replaceAsync(nextUri).catch(() => { });
+                    nextPlayer.replaceAsync({ uri: nextUri, useCaching: true }).catch(() => { });
                 } catch { }
             }
             try {

@@ -277,3 +277,15 @@ export const fxTwitterClient = createClient({
   timeout: 12000,
 });
 
+// ─── Social AIO (FB AIO) Relay Client ─────────────────────────────────────────
+
+export const socialAioClient = createClient({
+  baseURL: "https://api.fbaio.org",
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+  timeout: 30000,
+});
+
+

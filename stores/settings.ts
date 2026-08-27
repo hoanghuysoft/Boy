@@ -47,6 +47,8 @@ interface SettingsStore {
     setImgbbApiKey: (key: string) => void;
     x02ApiKey: string;
     setX02ApiKey: (key: string) => void;
+    socialAioClientId: string;
+    setSocialAioClientId: (clientId: string) => void;
     reset: () => void;
 }
 
@@ -92,6 +94,8 @@ export const useSettingsStore = create<SettingsStore>()(
             setImgbbApiKey: (key) => set({ imgbbApiKey: key }),
             x02ApiKey: '',
             setX02ApiKey: (key) => set({ x02ApiKey: key }),
+            socialAioClientId: '',
+            setSocialAioClientId: (clientId) => set({ socialAioClientId: clientId }),
             reset: () => set({
                 showSensitiveContent: false,
                 showCarousel: true,
@@ -102,6 +106,7 @@ export const useSettingsStore = create<SettingsStore>()(
                 disableAutoplay: false,
                 imgbbApiKey: '',
                 x02ApiKey: '',
+                socialAioClientId: '',
             }),
         }),
         {

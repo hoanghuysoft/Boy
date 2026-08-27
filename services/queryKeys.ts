@@ -101,3 +101,6 @@ export const cgvKeys = {
 // ─── FxTwitter ───────────────────────────────────────────────────────────────
 export { fxTwitterKeys } from './fxtwitter/queryKeys';
 
+// ─── Instagram ───────────────────────────────────────────────────────────────
+export { instagramKeys } from './instagram/queryKeys';
+
