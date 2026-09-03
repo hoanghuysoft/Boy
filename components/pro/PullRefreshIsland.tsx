@@ -92,6 +92,8 @@ export function PullRefreshIsland({
   const scrollY = useSharedValue(0);
   const refreshing = useSharedValue(0);
   const spin = useSharedValue(0);
+  const onEndReachedCalled = useSharedValue(false);
+  const lastContentHeight = useSharedValue(0);
 
   const finish = useCallback(() => {
     refreshing.value = 0;
@@ -99,7 +101,9 @@ export function PullRefreshIsland({
     cancelAnimation(spin);
     // the drop gets absorbed back into the island
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, [pull, refreshing, spin]);
+    onEndReachedCalled.value = false;
+    lastContentHeight.value = 0;
+  }, [pull, refreshing, spin, onEndReachedCalled, lastContentHeight]);
 
   const start = useCallback(async () => {
     // the drop just detached from the island
@@ -119,12 +123,24 @@ export function PullRefreshIsland({
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
     if (onEndReached) {
+      if (e.contentSize.height > lastContentHeight.value) {
+        lastContentHeight.value = e.contentSize.height;
+        onEndReachedCalled.value = false;
+      }
+
       const paddingToBottom = onEndReachedThreshold * e.layoutMeasurement.height;
-      if (
+      const isAtEnd =
+        e.contentSize.height > e.layoutMeasurement.height &&
         e.contentOffset.y + e.layoutMeasurement.height >=
-        e.contentSize.height - paddingToBottom
-      ) {
-        runOnJS(onEndReached)();
+          e.contentSize.height - paddingToBottom;
+
+      if (isAtEnd) {
+        if (!onEndReachedCalled.value) {
+          onEndReachedCalled.value = true;
+          runOnJS(onEndReached)();
+        }
+      } else {
+        onEndReachedCalled.value = false;
       }
     }
   });

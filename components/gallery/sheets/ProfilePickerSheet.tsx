@@ -132,10 +132,10 @@ export const ProfilePickerSheet = memo(
         );
 
         const handleEndReached = useCallback(() => {
-            if (hasNextPage && !isFetchingNextPage) {
+            if (hasNextPage && !isFetchingNextPage && !isLoading) {
                 fetchNextPage();
             }
-        }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+        }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
         const handleSelect = useCallback(
             (profile: Profile) => {

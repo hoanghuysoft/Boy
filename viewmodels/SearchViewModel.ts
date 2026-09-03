@@ -1,4 +1,5 @@
 import { queryClient } from "@/services/client";
+import { profileKeys } from "@/services/queryKeys";
 import { ProfilesResponse, useAdminCheck, useInfiniteProfiles } from "@/services/userprofile";
 import { useScrollStore } from "@/stores/scroll";
 import { useSearchHistoryStore } from "@/stores/searchHistory";
@@ -207,14 +208,16 @@ export const useSearchViewModel = () => {
     // ─── Refresh ──────────────────────────────────────────────────
     const handleRefresh = useCallback(async () => {
         if (!isQueryEnabled) return;
-        queryClient.removeQueries({ queryKey: ["profiles"] });
+        queryClient.removeQueries({ queryKey: profileKeys.lists() });
         await refetch();
     }, [refetch, isQueryEnabled]);
 
     // ─── Pagination ───────────────────────────────────────────────
     const handleEndReached = useCallback(() => {
-        if (hasNextPage) fetchNextPage();
-    }, [hasNextPage, fetchNextPage]);
+        if (hasNextPage && !isFetchingNextPage && !isLoading) {
+            fetchNextPage();
+        }
+    }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
     // ─── Recent query selection ────────────────────────────────────
     const selectRecentQuery = useCallback((q: string) => {
