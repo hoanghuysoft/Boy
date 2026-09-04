@@ -34,13 +34,20 @@ export async function getCurrentSession() {
 }
 
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(options?: { isAddingAccount?: boolean }) {
     try {
+        if (options?.isAddingAccount) {
+            // Sign out of the Google Sign-In SDK so the native account picker appears
+            try {
+                await RnGoogleSignin.signOut();
+            } catch {}
+        }
+
         await RnGoogleSignin.hasPlayServices({});
         const userInfo = await RnGoogleSignin.signIn({});
 
         if (userInfo.idToken) {
-            const { error } = await supabase.auth.signInWithIdToken({
+            const { data, error } = await supabase.auth.signInWithIdToken({
                 provider: 'google',
                 token: userInfo.idToken,
             });
@@ -75,7 +82,14 @@ export async function signInWithGoogle() {
                 }
                 throw error;
             }
-            return getCurrentSession();
+
+            const session = data?.session ?? (await getCurrentSession());
+            if (session?.user) {
+                const { registerActiveSession } = await import("./accountManager");
+                registerActiveSession(session);
+            }
+
+            return session;
         }
     } catch (error) {
         console.warn('Sign-in error:', error);
@@ -85,36 +99,6 @@ export async function signInWithGoogle() {
 
 
 export async function signOut() {
-    const { error } = await supabase.auth.signOut();
-    await RnGoogleSignin.signOut();
-
-    // 1. MMKV: all user-specific keys (query cache, watchlists, history, etc.)
-    //    This now also covers Supabase auth tokens (sb-*-auth-token keys)
-    //    since the Supabase adapter writes to the same MMKV instance.
-    storage.clearAll();
-
-    // ─── Reset React Query client cache ─────────────────────────────────────
-    try {
-        const { queryClient } = await import("@/services/client");
-        queryClient.clear();
-    } catch (e) {
-        console.error("Failed to clear queryClient cache:", e);
-    }
-
-    // ─── Reset in-memory Zustand stores ─────────────────────────────────────
-    // MMKV clearAll() wipes the persistence layer but the running store keeps
-    // its last-hydrated state. Explicitly reset each store so the next user
-    // starts fresh without restarting the app.
-    useSearchHistoryStore.getState().clearHistory();
-    useMovieTrackerStore.getState().reset();
-
-    try {
-        const { useSettingsStore } = await import("@/stores/settings");
-        useSettingsStore.getState().reset();
-    } catch (e) {
-        console.error("Failed to reset settings store:", e);
-    }
-
     try {
         const { useAudioStore } = await import("@/stores/audio");
         useAudioStore.getState().stopPlayback();
@@ -122,7 +106,25 @@ export async function signOut() {
         console.error("Failed to stop audio playback:", e);
     }
 
-    if (error) {
-        throw error;
+    const { getActiveUserId } = await import("./storage");
+    const { removeAccount } = await import("./accountManager");
+
+    const currentId = getActiveUserId();
+    if (currentId) {
+        await removeAccount(currentId);
+    } else {
+        await supabase.auth.signOut().catch(() => {});
+        await RnGoogleSignin.signOut().catch(() => {});
+        storage.clearAll();
     }
+}
+
+export async function signOutAll() {
+    try {
+        const { useAudioStore } = await import("@/stores/audio");
+        useAudioStore.getState().stopPlayback();
+    } catch {}
+
+    const { signOutAllAccounts } = await import("./accountManager");
+    await signOutAllAccounts();
 }

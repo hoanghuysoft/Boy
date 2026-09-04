@@ -167,7 +167,7 @@ const AddEditAddressSheet = memo(
                     setCountry(editingAddress.country || '');
                 } else {
                     setAddressToEdit(null);
-                    setLabel('Home');
+                    setLabel(t('profile.sheets.address.defaultLabel', 'Home'));
                     setStreet('');
                     setCity('');
                     setState('');
@@ -182,7 +182,7 @@ const AddEditAddressSheet = memo(
                 isPresented.current = false;
                 return sheetRef.current?.dismiss(animated) || Promise.resolve();
             }
-        } as any), []);
+        } as any), [t]);
 
         const handleSave = useCallback(() => {
             const newErrors: Record<string, string> = {};
@@ -295,7 +295,7 @@ const AddEditAddressSheet = memo(
                             <TextInput
                                 value={label}
                                 onChangeText={setLabel}
-                                placeholder="e.g. Home, Work, Beach House"
+                                placeholder={t('profile.sheets.address.labelPlaceholder', 'e.g. Home, Work, Beach House')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}
@@ -330,7 +330,7 @@ const AddEditAddressSheet = memo(
                             <TextInput
                                 value={street}
                                 onChangeText={setStreet}
-                                placeholder="e.g. 123 Main Street"
+                                placeholder={t('profile.sheets.address.streetPlaceholder', 'e.g. 123 Main Street')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}
@@ -365,7 +365,7 @@ const AddEditAddressSheet = memo(
                             <TextInput
                                 value={city}
                                 onChangeText={setCity}
-                                placeholder="e.g. San Francisco"
+                                placeholder={t('profile.sheets.address.cityPlaceholder', 'e.g. San Francisco')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}
@@ -398,7 +398,7 @@ const AddEditAddressSheet = memo(
                             <TextInput
                                 value={state}
                                 onChangeText={setState}
-                                placeholder="e.g. California"
+                                placeholder={t('profile.sheets.address.statePlaceholder', 'e.g. California')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}
@@ -426,7 +426,7 @@ const AddEditAddressSheet = memo(
                             <TextInput
                                 value={postalCode}
                                 onChangeText={setPostalCode}
-                                placeholder="e.g. 94103"
+                                placeholder={t('profile.sheets.address.postalPlaceholder', 'e.g. 94103')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}
@@ -456,7 +456,7 @@ const AddEditAddressSheet = memo(
                             <TextInput
                                 value={country}
                                 onChangeText={setCountry}
-                                placeholder="e.g. United States"
+                                placeholder={t('profile.sheets.address.countryPlaceholder', 'e.g. United States')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}

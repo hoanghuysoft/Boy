@@ -322,7 +322,7 @@ const DashboardScreen = () => {
                         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
                             <View style={{ flex: 1, paddingRight: 10 }}>
                                 <FlexText style={{ fontSize: 16, fontWeight: "bold", color: colors.text }}>
-                                    Weather
+                                    {t('dashboard.weather.title', 'Weather')}
                                 </FlexText>
                                 <FlexText style={{ fontSize: 12, color: colors.text, opacity: 0.7, marginTop: 2 }}>
                                     {weatherCity}
@@ -330,24 +330,24 @@ const DashboardScreen = () => {
                             </View>
                             <TouchableOpacity onPress={() => refetchWeather()} style={{ borderRadius: 999, backgroundColor: `${colors.text}18`, paddingHorizontal: 10, paddingVertical: 6 }}>
                                 <FlexText style={{ fontSize: 12, color: colors.text, fontWeight: "600" }}>
-                                    {isWeatherFetching ? "Refreshing..." : "Refresh"}
+                                    {isWeatherFetching ? t('dashboard.weather.refreshing', 'Refreshing...') : t('dashboard.weather.refresh', 'Refresh')}
                                 </FlexText>
                             </TouchableOpacity>
                         </View>
                         <View style={{ marginTop: 10 }}>
-                            <FlexText style={{ fontSize: 34, fontWeight: "700", color: colors.text }}>
-                                {weather?.temperatureC !== undefined ? `${weather.temperatureC}°C` : "--°C"}
-                            </FlexText>
-                            <FlexText style={{ fontSize: 14, color: colors.text, opacity: 0.82 }}>
-                                {weather?.condition ?? (isWeatherFetching ? "Fetching..." : "Weather data will be available soon.")}
-                            </FlexText>
-                            <FlexText style={{ fontSize: 12, color: colors.text, opacity: 0.65, marginTop: 4 }}>
-                                {weather?.windSpeedKmh !== undefined ? `Wind ${weather.windSpeedKmh} km/h` : ""}
-                            </FlexText>
-                            <FlexText style={{ fontSize: 11, color: colors.text, opacity: 0.55, marginTop: 4 }}>
-                                {weather?.updatedAt ? `Updated ${new Date(weather.updatedAt).toLocaleTimeString()}` : ""}
-                            </FlexText>
-                        </View>
+                             <FlexText style={{ fontSize: 34, fontWeight: "700", color: colors.text }}>
+                                 {weather?.temperatureC !== undefined ? `${weather.temperatureC}°C` : "--°C"}
+                             </FlexText>
+                             <FlexText style={{ fontSize: 14, color: colors.text, opacity: 0.82 }}>
+                                 {weather?.condition ?? (isWeatherFetching ? t('dashboard.weather.fetching', 'Fetching...') : t('dashboard.weather.unavailable', 'Weather data will be available soon.'))}
+                             </FlexText>
+                             <FlexText style={{ fontSize: 12, color: colors.text, opacity: 0.65, marginTop: 4 }}>
+                                 {weather?.windSpeedKmh !== undefined ? t('dashboard.weather.wind', { speed: weather.windSpeedKmh, defaultValue: `Wind ${weather.windSpeedKmh} km/h` }) : ""}
+                             </FlexText>
+                             <FlexText style={{ fontSize: 11, color: colors.text, opacity: 0.55, marginTop: 4 }}>
+                                 {weather?.updatedAt ? t('dashboard.weather.updated', { time: new Date(weather.updatedAt).toLocaleTimeString(), defaultValue: `Updated ${new Date(weather.updatedAt).toLocaleTimeString()}` }) : ""}
+                             </FlexText>
+                         </View>
                     </BlurView>
                 </SquircleView>
                 <SquircleView cornerSmoothing={100} borderRadius={32} style={{ marginTop: 50, overflow: 'hidden' }}>
@@ -361,7 +361,7 @@ const DashboardScreen = () => {
                                 <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
                                     <Image source={{ uri: 'https://wsrv.nl/?url=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&w=256&h=undefined&q=75&ll=&default=https%3A%2F%2Fipfs.io%2Fipfs%2FQma91KiDAvy7QPj6c7a9nmNEUkTarx43vjnqJRYvu3VjU1&output=webp' }} style={{ width: 34, height: 34, borderRadius: 6 }} />
                                 </SquircleView>
-                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>ReClip</FlexText>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>{t('dashboard.services.reclip', 'ReClip')}</FlexText>
                             </TouchableOpacity>
 
                             {isAdmin && (
@@ -369,7 +369,7 @@ const DashboardScreen = () => {
                                     <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
                                         <Image source={require("../../assets/images/logo_head.png")} style={{ width: 34, height: 34 }} contentFit="contain" />
                                     </SquircleView>
-                                    <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>WeLove Admin</FlexText>
+                                    <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>{t('dashboard.services.weloveAdmin', 'WeLove Admin')}</FlexText>
                                 </TouchableOpacity>
                             )}
 
@@ -377,21 +377,28 @@ const DashboardScreen = () => {
                                 <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
                                     <Ionicons name="megaphone" size={26} color="#fff" />
                                 </SquircleView>
-                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }} numberOfLines={1}>Bulletin</FlexText>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }} numberOfLines={1}>{t('dashboard.services.bulletin', 'Bulletin')}</FlexText>
                             </TouchableOpacity>
 
                             <TouchableOpacity onPress={() => router.push("/notes")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
                                 <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: colors.secondary, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
                                     <Ionicons name="document-text" size={26} color="#fff" />
                                 </SquircleView>
-                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>Notes</FlexText>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>{t('dashboard.services.notes', 'Notes')}</FlexText>
                             </TouchableOpacity>
 
                             <TouchableOpacity onPress={() => router.push("/music")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
                                 <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: '#1DB954', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
                                     <Ionicons name="musical-notes" size={26} color="#fff" />
                                 </SquircleView>
-                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>Music</FlexText>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>{t('dashboard.services.music', 'Music')}</FlexText>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={() => router.push("/movies")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: '#E50914', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name="film" size={26} color="#fff" />
+                                </SquircleView>
+                                <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>{t('dashboard.services.movies', 'Movies')}</FlexText>
                             </TouchableOpacity>
                         </View>
                     </BlurView>

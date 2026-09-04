@@ -1,11 +1,10 @@
 import Magnifier from "@/assets/images/svg/search.svg";
 import { MovieDBView } from "@/components/tracker/MovieDBView";
-import { MINIMIZE_SPRING, useTabBarMinimized } from "expo-glass-tabs";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { createCommonStyles } from "../../styles/common";
@@ -22,33 +21,6 @@ const MovieScreen = () => {
     outputRange: [0, 1],
     extrapolate: "clamp",
   });
-
-  const minimizedProgress = useTabBarMinimized();
-  const minimizedTarget = useSharedValue(0);
-  const previousY = useRef(0);
-
-  useEffect(() => {
-    const id = scrollY.addListener(({ value }) => {
-      const y = Math.max(value, 0);
-      const dy = y - previousY.current;
-      previousY.current = y;
-
-      let nextTarget = minimizedTarget.value;
-      if (y < 24) {
-        nextTarget = 0;
-      } else if (dy > 3) {
-        nextTarget = 1;
-      } else if (dy < -3) {
-        nextTarget = 0;
-      }
-
-      if (minimizedTarget.value !== nextTarget) {
-        minimizedTarget.value = nextTarget;
-        minimizedProgress.value = withSpring(nextTarget, MINIMIZE_SPRING);
-      }
-    });
-    return () => scrollY.removeListener(id);
-  }, [scrollY]);
 
   return (
     <View style={[common.screen, { backgroundColor: "#000000" }]}>
@@ -80,6 +52,21 @@ const MovieScreen = () => {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {router.canGoBack() && (
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={{
+                  borderRadius: 999,
+                  width: 40,
+                  height: 40,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginRight: 2,
+                }}
+              >
+                <Ionicons name="chevron-back" size={26} color="white" />
+              </TouchableOpacity>
+            )}
             <ExpoImage source={require("../../assets/images/logo_head.png")} style={{ width: 50, height: 50 }} contentFit="contain" />
             <Text style={[styles.textStyle, { color: "white", fontSize: 42, fontWeight: "700" }]}>tv</Text>
           </View>

@@ -1,10 +1,19 @@
+import { PostItem } from '@/components/PostItem';
+import ProfileHeaderV3, { COVER_HEIGHT } from '@/components/profile/ProfileHeaderV3';
+import { AddressSheet } from "@/components/profile/sheets/AddressSheet";
+import { MusicSheet } from "@/components/profile/sheets/MusicSheet";
+import { SocialSheet } from "@/components/profile/sheets/SocialSheet";
+import { WorkplaceSheet } from "@/components/profile/sheets/WorkplaceSheet";
+import { MediaViewerWrapper, useImageGrid } from '@/components/profile/useImageGrid';
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
+import { useThemeContext } from "@/context/ThemeContext";
+import { createCommonStyles } from "@/styles/common";
+import { Post } from '@/types/post';
+import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
-import { useLocalSearchParams } from "expo-router";
-import Transition from "react-native-screen-transitions";
 import { Spinner } from "heroui-native/spinner";
 import { Tabs } from "heroui-native/tabs";
-import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,35 +27,24 @@ import {
 import { Snackbar } from 'react-native-paper';
 import Reanimated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PostItem } from '@/components/PostItem';
-import ProfileHeaderV3, { COVER_HEIGHT } from '@/components/profile/ProfileHeaderV3';
-import { AddressSheet } from "@/components/profile/sheets/AddressSheet";
-import { MusicSheet } from "@/components/profile/sheets/MusicSheet";
-import { SocialSheet } from "@/components/profile/sheets/SocialSheet";
-import { WorkplaceSheet } from "@/components/profile/sheets/WorkplaceSheet";
-import { MediaViewerWrapper, useImageGrid } from '@/components/profile/useImageGrid';
-import { useThemeContext } from "@/context/ThemeContext";
-import { createCommonStyles } from "@/styles/common";
-import { Post } from '@/types/post';
-import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 
 import { FlexText } from "@/components/FlexText";
+import { GalleryModal } from "@/components/gallery/GalleryModal";
+import { ProfileGalleryModal } from "@/components/gallery/ProfileGalleryModal";
 import { List } from "@/components/list";
 import { PagerWithHeader, type PagerWithHeaderChildParams } from "@/components/pager/PagerWithHeader";
 import { PostOptionsSheet, TranslationLanguageSheet } from "@/components/post";
 import { CommentsSheet } from "@/components/post/CommentsSheet";
 import { LikersSheet } from "@/components/post/LikersSheet";
-import { BriefInfoSheet } from "@/components/profile/sheets/BriefInfoSheet";
-import { TriviaSheet } from "@/components/profile/sheets/TriviaSheet";
-import { RelationshipSheet } from "@/components/profile/sheets/RelationshipSheet";
 import { BioSheet } from "@/components/profile/sheets/BioSheet";
-import { BlurTargetView, BlurView } from "expo-blur";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
-import { ProfileGalleryModal } from "@/components/gallery/ProfileGalleryModal";
+import { BriefInfoSheet } from "@/components/profile/sheets/BriefInfoSheet";
+import { RelationshipSheet } from "@/components/profile/sheets/RelationshipSheet";
+import { TriviaSheet } from "@/components/profile/sheets/TriviaSheet";
 import { SpinningArtwork } from "@/components/profile/SpinningArtwork";
+import { BlurTargetView, BlurView } from "expo-blur";
 
 // ─── Static skeleton shown during navigation transition ────────────────────────
-const ProfileSkeletonInner = ({ insets, id, avatar }: { insets: any; id?: string; avatar?: string }) => {
+const ProfileSkeletonInner = ({ insets }: { insets: any }) => {
   const { colors } = useThemeContext();
   return (
     <View style={{ paddingHorizontal: 12, flex: 1, position: 'relative' }}>
@@ -62,25 +60,7 @@ const ProfileSkeletonInner = ({ insets, id, avatar }: { insets: any; id?: string
         {/* Avatar & Actions Row */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           {/* Avatar */}
-          {id ? (
-            <Transition.Boundary
-              id={`avatar-${id}`}
-              style={{ width: 64, height: 64, borderRadius: 32, overflow: 'hidden' }}
-            >
-              {avatar ? (
-                <Image
-                  source={{ uri: avatar }}
-                  style={{ width: 64, height: 64, borderRadius: 32 }}
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                />
-              ) : (
-                <Shimmer style={{ width: 64, height: 64, borderRadius: 32 }} />
-              )}
-            </Transition.Boundary>
-          ) : (
-            <Shimmer style={{ width: 64, height: 64, borderRadius: 32 }} />
-          )}
+          <Shimmer style={{ width: 64, height: 64, borderRadius: 32 }} />
           {/* Actions */}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Shimmer style={{ width: 44, height: 44, borderRadius: 12 }} />
@@ -127,13 +107,13 @@ const ProfileSkeletonInner = ({ insets, id, avatar }: { insets: any; id?: string
   );
 };
 
-const ProfileSkeleton: React.FC<{ id?: string; avatar?: string }> = ({ id, avatar }) => {
+const ProfileSkeleton: React.FC = () => {
   const { colors, typography } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const insets = useSafeAreaInsets();
   return (
     <View style={common.screen}>
-      <ProfileSkeletonInner insets={insets} id={id} avatar={avatar} />
+      <ProfileSkeletonInner insets={insets} />
     </View>
   );
 };
@@ -498,10 +478,6 @@ const ProfileContent = () => {
   }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, videoMediaViewerItems, windowHeight]);
 
   // Loading / Error state
-  const params = useLocalSearchParams<{ id?: string; avatar?: string }>();
-  const rawId = Array.isArray(params.id) ? params.id[0] : params.id;
-  const rawAvatar = Array.isArray(params.avatar) ? params.avatar[0] : params.avatar;
-
   if (!profile) {
     return (
       <View style={common.screen}>
@@ -519,7 +495,7 @@ const ProfileContent = () => {
             />
           }
         >
-          <ProfileSkeletonInner insets={inset} id={rawId} avatar={rawAvatar} />
+          <ProfileSkeletonInner insets={inset} />
         </ScrollView>
         <Snackbar
           visible={snackbarVisible}
@@ -834,9 +810,6 @@ const styles = StyleSheet.create({
 // ─── ProfileScreen shell ──────────────────────────────────────────────────────
 const ProfileScreen = () => {
   const [isReady, setIsReady] = React.useState(false);
-  const params = useLocalSearchParams<{ id?: string; avatar?: string }>();
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  const avatar = Array.isArray(params.avatar) ? params.avatar[0] : params.avatar;
 
   useEffect(() => {
     const handle = requestIdleCallback(() => {
@@ -846,7 +819,7 @@ const ProfileScreen = () => {
   }, []);
 
   if (!isReady) {
-    return <ProfileSkeleton id={id} avatar={avatar} />;
+    return <ProfileSkeleton />;
   }
 
   return <ProfileContent />;

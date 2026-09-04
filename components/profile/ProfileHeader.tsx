@@ -184,7 +184,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = memo(({
                     </View>
                   )}
                 >
-                  {t('profile.header.cards.facebookProfile')}
+                  {t('profile.header.cards.facebookProfile' as any)}
                 </HeaderInfoCard>
               )}
 

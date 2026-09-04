@@ -46,7 +46,22 @@ export const getProfileDetail = async (id: string) => {
 
 export const getMyProfileDetail = async () => {
     const response = await client.get("/api/profiles/me");
-    return response.data.data;
+    const profile = response.data.data;
+    if (profile) {
+        try {
+            const { updateAccountProfile } = await import("./accountManager");
+            const { getActiveUserId } = await import("./storage");
+            const activeId = getActiveUserId();
+            if (activeId) {
+                updateAccountProfile(activeId, {
+                    name: profile.name,
+                    username: profile.username,
+                    avatarUrl: profile.avatar_url,
+                });
+            }
+        } catch {}
+    }
+    return profile;
 }
 
 export const useProfile = (id: string, isMe: boolean) => {

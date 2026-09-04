@@ -1,6 +1,6 @@
+import { sharedStorage as storage } from '@/services/storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { storage } from '../services/storage';
 
 interface AppLockStore {
     isLocked: boolean;

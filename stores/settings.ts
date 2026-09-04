@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { settingsStorage as mmkv } from '../services/storage';
+import { defaultLegacyStorage, settingsStorage as mmkv } from '../services/storage';
 
 export type ThemePreference = 'light' | 'dark' | 'system' | 'adaptive' | 'material-you';
 
@@ -53,7 +53,36 @@ interface SettingsStore {
 }
 
 const mmkvZustandStorage = createJSONStorage(() => ({
-    getItem: (name: string): string | null => mmkv.getString(name) ?? null,
+    getItem: (name: string): string | null => {
+        const val = mmkv.getString(name);
+        if (val) {
+            try {
+                const parsed = JSON.parse(val);
+                if (parsed?.state?.imgbbApiKey || parsed?.state?.x02ApiKey || parsed?.state?.socialAioClientId) {
+                    return val;
+                }
+            } catch {}
+        }
+
+        // Recovery: if sharedStorage is empty or has blank keys, check pre-multiuser legacy storage
+        const legacyVal = defaultLegacyStorage.getString(name);
+        if (legacyVal) {
+            try {
+                const parsedLegacy = JSON.parse(legacyVal);
+                if (parsedLegacy?.state?.imgbbApiKey || parsedLegacy?.state?.x02ApiKey || parsedLegacy?.state?.socialAioClientId) {
+                    mmkv.set(name, legacyVal);
+                    return legacyVal;
+                }
+            } catch {}
+        }
+
+        if (val) return val;
+        if (legacyVal) {
+            mmkv.set(name, legacyVal);
+            return legacyVal;
+        }
+        return null;
+    },
     setItem: (name: string, value: string): void => mmkv.set(name, value),
     removeItem: (name: string): boolean => mmkv.remove(name),
 }));

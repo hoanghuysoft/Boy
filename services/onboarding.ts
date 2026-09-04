@@ -50,8 +50,22 @@ export async function checkProfileFromServer(): Promise<boolean> {
     const response = await client.get<{ hasProfile: boolean; profile: OnboardingProfile | null }>(
         '/api/onboarding/profile'
     );
-    const { hasProfile } = response.data;
+    const { hasProfile, profile } = response.data;
     setLocalHasProfile(hasProfile);
+    if (profile) {
+        try {
+            const { updateAccountProfile } = await import("./accountManager");
+            const { getActiveUserId } = await import("./storage");
+            const activeId = getActiveUserId();
+            if (activeId) {
+                updateAccountProfile(activeId, {
+                    name: profile.name,
+                    username: profile.username,
+                    avatarUrl: profile.avatar_url,
+                });
+            }
+        } catch {}
+    }
     return hasProfile;
 }
 

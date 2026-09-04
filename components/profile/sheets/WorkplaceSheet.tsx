@@ -336,7 +336,7 @@ const AddEditWorkplaceSheet = memo(
                             <TextInput
                                 value={companyName}
                                 onChangeText={setCompanyName}
-                                placeholder="e.g. Google, Inc."
+                                placeholder={t('profile.sheets.work.companyPlaceholder', 'e.g. Google, Inc.')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}
@@ -371,7 +371,7 @@ const AddEditWorkplaceSheet = memo(
                             <TextInput
                                 value={position}
                                 onChangeText={setPosition}
-                                placeholder="e.g. Senior Software Engineer"
+                                placeholder={t('profile.sheets.work.positionPlaceholder', 'e.g. Senior Software Engineer')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}
@@ -406,7 +406,7 @@ const AddEditWorkplaceSheet = memo(
                             <TextInput
                                 value={location}
                                 onChangeText={setLocation}
-                                placeholder="e.g. Mountain View, CA"
+                                placeholder={t('profile.sheets.work.locationPlaceholder', 'e.g. Mountain View, CA')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}
@@ -589,7 +589,7 @@ const AddEditWorkplaceSheet = memo(
                             <TextInput
                                 value={description}
                                 onChangeText={setDescription}
-                                placeholder="e.g. Developed and scaled microservices..."
+                                placeholder={t('profile.sheets.work.descriptionPlaceholder', 'e.g. Developed and scaled microservices...')}
                                 placeholderTextColor={colors.muted}
                                 multiline
                                 numberOfLines={3}

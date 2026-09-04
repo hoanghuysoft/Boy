@@ -1,16 +1,16 @@
+import EarthIcon from "@/assets/images/svg/earth.svg";
 import { FlexText } from '@/components/FlexText';
 import { useAddSocialLink, useDeleteSocialLink, useUpdateSocialLink } from '@/services/sociallink';
 import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import EarthIcon from "@/assets/images/svg/earth.svg";
+import { Image as ExpoImage } from 'expo-image';
 import { Button } from "heroui-native/button";
 import { Chip } from "heroui-native/chip";
 import { Spinner } from "heroui-native/spinner";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, Keyboard, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import { Image as ExpoImage } from 'expo-image';
 import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
@@ -541,8 +541,8 @@ const AddEditSocialSheet = memo(
                                     value={customPlatform}
                                     onChangeText={setCustomPlatform}
                                     placeholder={t('profile.sheets.social.customPlatformPlaceholder', 'e.g. Medium, Substack')}
-                                    placeholderTextColor={colors.muted}
-                                    style={[formStyles.textInput, { color: colors.text }]}
+                                    placeholderTextColor={colors.onSurfaceVariant}
+                                    style={[formStyles.textInput, { color: colors.onSurface }]}
                                     autoCorrect={false}
                                 />
                                 {customPlatform.length > 0 && (
@@ -576,12 +576,13 @@ const AddEditSocialSheet = memo(
                             <TextInput
                                 value={url}
                                 onChangeText={setUrl}
-                                placeholder="https://facebook.com/username"
-                                placeholderTextColor={colors.muted}
+                                placeholder={t('profile.sheets.social.urlPlaceholder', 'https://welove.com/username')}
+                                placeholderTextColor={colors.onSurfaceVariant}
                                 autoCapitalize="none"
                                 keyboardType="url"
-                                style={[formStyles.textInput, { color: colors.text }]}
+                                style={[formStyles.textInput, { color: colors.onSurface }]}
                                 autoCorrect={false}
+                                autoComplete="url"
                             />
                             {url.length > 0 && (
                                 <TouchableOpacity onPress={() => setUrl("")}>
@@ -611,7 +612,7 @@ const AddEditSocialSheet = memo(
                             <TextInput
                                 value={label}
                                 onChangeText={setLabel}
-                                placeholder="e.g. @myusername or My page"
+                                placeholder={t('profile.sheets.social.labelPlaceholder', 'e.g. @myusername or My page')}
                                 placeholderTextColor={colors.muted}
                                 style={[formStyles.textInput, { color: colors.text }]}
                                 autoCorrect={false}

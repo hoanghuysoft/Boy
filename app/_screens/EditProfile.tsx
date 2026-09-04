@@ -14,6 +14,7 @@ import { Chip } from "heroui-native/chip";
 import { Spinner } from "heroui-native/spinner";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
+import { useTranslation } from 'react-i18next';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
     Alert,
@@ -285,73 +286,73 @@ const FormChipSelector = ({
 // ============================================================================
 
 const BasicTab = () => {
-    const { formData, setField, errors, colors } = useForm();
+    const { formData, setField, errors, colors, t } = useForm();
     return (
         <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             <FormInput
-                label="Full Name"
+                label={t('profile.edit.fields.name', 'Full Name')}
                 icon="person-outline"
                 value={formData.name || ''}
                 onChangeText={(v) => setField('name', v)}
-                placeholder="e.g. John Doe"
+                placeholder={t('profile.edit.fields.namePlaceholder', 'e.g. John Doe')}
                 error={errors.name}
             />
             <FormInput
-                label="Username"
+                label={t('profile.edit.fields.username', 'Username')}
                 icon="at-outline"
                 value={formData.username || ''}
                 onChangeText={(v) => setField('username', v)}
-                placeholder="unique_username"
+                placeholder={t('profile.edit.fields.usernamePlaceholder', 'unique_username')}
                 error={errors.username}
             />
             <FormInput
-                label="Email Address"
+                label={t('profile.edit.fields.email', 'Email Address')}
                 icon="mail-outline"
                 value={formData.email || ''}
                 onChangeText={(v) => setField('email', v)}
-                placeholder="e.g. john@example.com"
+                placeholder={t('profile.edit.fields.emailPlaceholder', 'e.g. john@example.com')}
                 keyboardType="email-address"
             />
             <FormInput
-                label="Phone Number"
+                label={t('profile.edit.fields.phone', 'Phone Number')}
                 icon="call-outline"
                 value={formData.phone || ''}
                 onChangeText={(v) => setField('phone', v)}
-                placeholder="e.g. +1234567890"
+                placeholder={t('profile.edit.fields.phonePlaceholder', 'e.g. +1234567890')}
                 keyboardType="phone-pad"
             />
             <FormDatePicker
-                label="Birthday"
+                label={t('profile.edit.fields.birthday', 'Birthday')}
                 icon="calendar-outline"
                 value={formData.birthday || ''}
                 onChange={(v) => setField('birthday', v)}
-                placeholder="Select birth date"
+                placeholder={t('profile.edit.fields.birthdayPlaceholder', 'Select birth date')}
             />
             <FormChipSelector
-                label="Gender"
+                label={t('profile.edit.fields.gender', 'Gender')}
                 icon="people-outline"
                 value={formData.gender || ''}
                 onSelect={(v) => setField('gender', v)}
                 options={[
-                    { value: 'male', label: 'Male' },
-                    { value: 'female', label: 'Female' },
-                    { value: 'non-binary', label: 'Non-binary' },
-                    { value: 'other', label: 'Other' }
+                    { value: 'male', label: t('profile.edit.fields.genderOptions.male', 'Male') },
+                    { value: 'female', label: t('profile.edit.fields.genderOptions.female', 'Female') },
+                    { value: 'non-binary', label: t('profile.edit.fields.genderOptions.nonBinary', 'Non-binary') },
+                    { value: 'other', label: t('profile.edit.fields.genderOptions.other', 'Other') }
                 ]}
             />
             <FormInput
-                label="Pronouns"
+                label={t('profile.edit.fields.pronouns', 'Pronouns')}
                 icon="chatbubbles-outline"
                 value={formData.pronouns || ''}
                 onChangeText={(v) => setField('pronouns', v)}
-                placeholder="e.g. he/him, she/her"
+                placeholder={t('profile.edit.fields.pronounsPlaceholder', 'e.g. he/him, she/her')}
             />
         </KeyboardAwareScrollView>
     );
 };
 
 const MediaTab = () => {
-    const { formData, setField, colors, theme } = useForm();
+    const { formData, setField, colors, theme, t } = useForm();
     const avatarUrl = formData.avatar_url;
     const coverUrl = formData.cover_url;
 
@@ -359,7 +360,7 @@ const MediaTab = () => {
         <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             {/* Real-time Previews */}
             <View style={{ marginBottom: 24, gap: 16 }}>
-                <FlexText style={{ fontWeight: '600', fontSize: 16, color: colors.text }}>Live Visual Preview</FlexText>
+                <FlexText style={{ fontWeight: '600', fontSize: 16, color: colors.text }}>{t('profile.edit.fields.livePreview', 'Live Visual Preview')}</FlexText>
 
                 {/* Simulated Header Preview */}
                 <View style={{
@@ -403,35 +404,35 @@ const MediaTab = () => {
             </View>
 
             <FormInput
-                label="Profile Picture URL"
+                label={t('profile.edit.fields.avatarUrl', 'Profile Picture URL')}
                 icon="image-outline"
                 value={formData.avatar_url || ''}
                 onChangeText={(v) => setField('avatar_url', v)}
-                placeholder="https://domain.com/avatar.jpg"
+                placeholder={t('profile.edit.fields.avatarUrlPlaceholder', 'https://domain.com/avatar.jpg')}
                 keyboardType="url"
             />
             <FormInput
-                label="Cover Image URL"
+                label={t('profile.edit.fields.coverUrl', 'Cover Image URL')}
                 icon="images-outline"
                 value={formData.cover_url || ''}
                 onChangeText={(v) => setField('cover_url', v)}
-                placeholder="https://domain.com/cover.jpg"
+                placeholder={t('profile.edit.fields.coverUrlPlaceholder', 'https://domain.com/cover.jpg')}
                 keyboardType="url"
             />
             <FormInput
-                label="3D Emoji Image URL"
+                label={t('profile.edit.fields.emojiUrl', '3D Emoji Image URL')}
                 icon="happy-outline"
                 value={formData.metadata?.threed_emoji || ''}
                 onChangeText={(v) => setField('metadata.threed_emoji', v)}
-                placeholder="https://domain.com/emoji.png"
+                placeholder={t('profile.edit.fields.emojiUrlPlaceholder', 'https://domain.com/emoji.png')}
                 keyboardType="url"
             />
             <FormInput
-                label="Employee Card URL"
+                label={t('profile.edit.fields.employeeCardUrl', 'Employee Card URL')}
                 icon="card-outline"
                 value={formData.metadata?.employee_card || ''}
                 onChangeText={(v) => setField('metadata.employee_card', v)}
-                placeholder="https://welove.com/employee-card.jpg"
+                placeholder={t('profile.edit.fields.employeeCardUrlPlaceholder', 'https://welove.com/employee-card.jpg')}
                 keyboardType="url"
             />
         </KeyboardAwareScrollView>
@@ -439,54 +440,54 @@ const MediaTab = () => {
 };
 
 const AboutTab = () => {
-    const { formData, setField, colors } = useForm();
+    const { formData, setField, colors, t } = useForm();
     return (
         <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             <FormInput
-                label="Bio"
+                label={t('profile.edit.fields.bio', 'Bio')}
                 icon=""
                 value={formData.bio || ''}
                 onChangeText={(v) => setField('bio', v)}
-                placeholder="Tell others about yourself..."
+                placeholder={t('profile.edit.fields.bioPlaceholder', 'Tell others about yourself...')}
                 multiline
                 height={150}
             />
             <FormInput
-                label="Trivia"
+                label={t('profile.edit.fields.trivia', 'Trivia')}
                 icon=""
                 value={formData.trivia || ''}
                 onChangeText={(v) => setField('trivia', v)}
-                placeholder="Personal notes to show to the world..."
+                placeholder={t('profile.edit.fields.triviaPlaceholder', 'Personal notes to show to the world...')}
                 multiline
                 height={150}
             />
             <FormInput
-                label="College"
+                label={t('profile.edit.fields.college', 'College')}
                 icon="school-outline"
                 value={formData.college || ''}
                 onChangeText={(v) => setField('college', v)}
-                placeholder="e.g. Stanford University"
+                placeholder={t('profile.edit.fields.collegePlaceholder', 'e.g. Stanford University')}
             />
             <FormInput
-                label="High School"
+                label={t('profile.edit.fields.highSchool', 'High School')}
                 icon="ribbon-outline"
                 value={formData.highschool || ''}
                 onChangeText={(v) => setField('highschool', v)}
-                placeholder="e.g. Central High School"
+                placeholder={t('profile.edit.fields.highSchoolPlaceholder', 'e.g. Central High School')}
             />
             <FormInput
-                label="Hometown / City & Country"
+                label={t('profile.edit.fields.hometown', 'Hometown / City & Country')}
                 icon="home-outline"
                 value={formData.hometown || ''}
                 onChangeText={(v) => setField('hometown', v)}
-                placeholder="e.g. Mountain View, California"
+                placeholder={t('profile.edit.fields.hometownPlaceholder', 'e.g. Mountain View, California')}
             />
             <FormInput
-                label="Website URL"
+                label={t('profile.edit.fields.website', 'Website URL')}
                 icon="globe-outline"
                 value={formData.website || ''}
                 onChangeText={(v) => setField('website', v)}
-                placeholder="https://yourwebsite.com"
+                placeholder={t('profile.edit.fields.websitePlaceholder', 'https://yourwebsite.com')}
                 keyboardType="url"
             />
         </KeyboardAwareScrollView>
@@ -494,76 +495,84 @@ const AboutTab = () => {
 };
 
 const DetailsTab = () => {
-    const { formData, setField, colors } = useForm();
+    const { formData, setField, colors, t } = useForm();
     return (
         <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1 }}>
                     <FormInput
-                        label="Height (cm)"
+                        label={t('profile.edit.fields.height', 'Height (cm)')}
                         icon="resize-outline"
                         value={formData.metadata?.height ? String(formData.metadata.height) : ''}
                         onChangeText={(v) => setField('metadata.height', v ? Number(v) : '')}
-                        placeholder="175"
+                        placeholder={t('profile.edit.fields.heightPlaceholder', '175')}
                         keyboardType="numeric"
                     />
                 </View>
                 <View style={{ flex: 1 }}>
                     <FormInput
-                        label="Weight (kg)"
+                        label={t('profile.edit.fields.weight', 'Weight (kg)')}
                         icon="speedometer-outline"
                         value={formData.metadata?.weight ? String(formData.metadata.weight) : ''}
                         onChangeText={(v) => setField('metadata.weight', v ? Number(v) : '')}
-                        placeholder="70"
+                        placeholder={t('profile.edit.fields.weightPlaceholder', '70')}
                         keyboardType="numeric"
                     />
                 </View>
             </View>
             <FormInput
-                label="Hobby"
+                label={t('profile.edit.fields.hobby', 'Hobby')}
                 icon="musical-notes-outline"
                 value={formData.hobby || ''}
                 onChangeText={(v) => setField('hobby', v)}
-                placeholder="e.g. Singing, Reading"
+                placeholder={t('profile.edit.fields.hobbyPlaceholder', 'e.g. Singing, Reading')}
             />
             <FormInput
-                label="Talent"
+                label={t('profile.edit.fields.talent', 'Talent')}
                 icon="color-palette-outline"
                 value={formData.talent || ''}
                 onChangeText={(v) => setField('talent', v)}
-                placeholder="e.g. Playing Piano, Painting"
+                placeholder={t('profile.edit.fields.talentPlaceholder', 'e.g. Playing Piano, Painting')}
             />
             <FormDatePicker
-                label="Married Date"
+                label={t('profile.edit.fields.marriedDate', 'Married Date')}
                 icon="heart-outline"
                 value={formData.married_date || ''}
                 onChange={(v) => setField('married_date', v)}
-                placeholder="Select date"
+                placeholder={t('profile.edit.fields.marriedDatePlaceholder', 'Select date')}
             />
             <FormInput
-                label="License Plate"
+                label={t('profile.edit.fields.licensePlate', 'License Plate')}
                 icon="car-outline"
                 value={formData.license_plate || ''}
                 onChangeText={(v) => setField('license_plate', v)}
-                placeholder="e.g. ABC-1234"
+                placeholder={t('profile.edit.fields.licensePlatePlaceholder', 'e.g. ABC-1234')}
             />
         </KeyboardAwareScrollView>
     );
 };
 
 const AdminSystemTab = () => {
-    const { formData, setField, isAdmin, colors } = useForm();
+    const { formData, setField, isAdmin, colors, t } = useForm();
     if (!isAdmin) return null;
     return (
         <KeyboardAwareScrollView style={[formStyles.tabScroll, { backgroundColor: colors.background }]} contentContainerStyle={formStyles.tabContent}>
             <View style={{ paddingTop: 8 }}>
-                <FlexText style={{ fontWeight: '700', fontSize: 16, color: '#ff4444', marginBottom: 4 }}>Admin System Overrides</FlexText>
-                <FlexText style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>These privileges are restricted to system administrators.</FlexText>
+                <FlexText style={{ fontWeight: '700', fontSize: 16, color: '#ff4444', marginBottom: 4 }}>
+                    {t('profile.edit.fields.adminOverrides', 'Admin System Overrides')}
+                </FlexText>
+                <FlexText style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>
+                    {t('profile.edit.fields.adminOverridesSubtitle', 'These privileges are restricted to system administrators.')}
+                </FlexText>
 
                 <View style={[formStyles.toggleRow, { borderBottomColor: colors.divider }]}>
                     <View style={{ flex: 1 }}>
-                        <FlexText style={{ fontWeight: '600', color: colors.text }}>Verified Badge</FlexText>
-                        <FlexText style={{ fontSize: 12, color: colors.muted }}>Display verified check badge on profile</FlexText>
+                        <FlexText style={{ fontWeight: '600', color: colors.text }}>
+                            {t('profile.edit.fields.verifiedBadge', 'Verified Badge')}
+                        </FlexText>
+                        <FlexText style={{ fontSize: 12, color: colors.muted }}>
+                            {t('profile.edit.fields.verifiedBadgeDesc', 'Display verified check badge on profile')}
+                        </FlexText>
                     </View>
                     <Switch
                         isSelected={!!formData.is_verified}
@@ -573,8 +582,12 @@ const AdminSystemTab = () => {
 
                 <View style={[formStyles.toggleRow, { borderBottomColor: colors.divider }]}>
                     <View style={{ flex: 1 }}>
-                        <FlexText style={{ fontWeight: '600', color: colors.text }}>System Administrator</FlexText>
-                        <FlexText style={{ fontSize: 12, color: colors.muted }}>Grant full dashboard and edit access</FlexText>
+                        <FlexText style={{ fontWeight: '600', color: colors.text }}>
+                            {t('profile.edit.fields.sysAdmin', 'System Administrator')}
+                        </FlexText>
+                        <FlexText style={{ fontSize: 12, color: colors.muted }}>
+                            {t('profile.edit.fields.sysAdminDesc', 'Grant full dashboard and edit access')}
+                        </FlexText>
                     </View>
                     <Switch
                         isSelected={!!formData.is_admin}
@@ -584,8 +597,12 @@ const AdminSystemTab = () => {
 
                 <View style={[formStyles.toggleRow, { borderBottomColor: colors.divider }]}>
                     <View style={{ flex: 1 }}>
-                        <FlexText style={{ fontWeight: '600', color: colors.text }}>Confidential Profile</FlexText>
-                        <FlexText style={{ fontSize: 12, color: colors.muted }}>Hide profile from lookups & listing pages</FlexText>
+                        <FlexText style={{ fontWeight: '600', color: colors.text }}>
+                            {t('profile.edit.fields.confidential', 'Confidential Profile')}
+                        </FlexText>
+                        <FlexText style={{ fontSize: 12, color: colors.muted }}>
+                            {t('profile.edit.fields.confidentialDesc', 'Hide profile from lookups & listing pages')}
+                        </FlexText>
                     </View>
                     <Switch
                         isSelected={!!formData.is_confidential}
@@ -670,6 +687,7 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
 
     const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
 
@@ -719,15 +737,18 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
         const newErrors: Record<string, string> = {};
 
         if (!formData.name?.trim()) {
-            newErrors.name = 'Full name is required';
+            newErrors.name = t('profile.edit.fields.nameRequired', 'Full name is required');
         }
         if (!formData.username?.trim()) {
-            newErrors.username = 'Username is required';
+            newErrors.username = t('profile.edit.fields.usernameRequired', 'Username is required');
         }
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
-            Alert.alert('Validation Error', 'Please fill in all required fields.');
+            Alert.alert(
+                t('profile.edit.alerts.validationErrorTitle', 'Validation Error'),
+                t('profile.edit.alerts.validationErrorMessage', 'Please fill in all required fields.')
+            );
             return;
         }
 
@@ -751,15 +772,22 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
             data: payload
         }, {
             onSuccess: () => {
-                Alert.alert('Success', 'Profile updated successfully!', [
-                    { text: 'OK', onPress: () => router.back() }
-                ]);
+                Alert.alert(
+                    t('profile.edit.alerts.successTitle', 'Success'),
+                    t('profile.edit.alerts.successMessage', 'Profile updated successfully!'),
+                    [
+                        { text: t('profile.edit.alerts.ok', 'OK'), onPress: () => router.back() }
+                    ]
+                );
             },
             onError: () => {
-                Alert.alert('Error', 'Failed to save changes. Please try again.');
+                Alert.alert(
+                    t('profile.edit.alerts.errorTitle', 'Error'),
+                    t('profile.edit.alerts.errorMessage', 'Failed to save changes. Please try again.')
+                );
             }
         });
-    }, [formData, targetProfile, updateProfile, router, isAdmin]);
+    }, [formData, targetProfile, updateProfile, router, isAdmin, t]);
 
     const contextValue = useMemo(() => ({
         formData,
@@ -768,9 +796,9 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
         colors,
         common,
         theme,
-        t: (key: string) => key,
+        t,
         isAdmin,
-    }), [formData, setField, errors, colors, common, theme, isAdmin]);
+    }), [formData, setField, errors, colors, common, theme, t, isAdmin]);
 
     return (
         <FormContext.Provider value={contextValue}>
@@ -799,8 +827,12 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
                             <Ionicons name="arrow-back" size={22} color={colors.text} />
                         </TouchableOpacity>
                         <View>
-                            <FlexText style={[common.heading, { fontSize: 24 }]}>Edit Profile</FlexText>
-                            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 1 }]}>Update your personal info</FlexText>
+                            <FlexText style={[common.heading, { fontSize: 24 }]}>
+                                {t('profile.edit.title', 'Edit Profile')}
+                            </FlexText>
+                            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 1 }]}>
+                                {t('profile.edit.subtitle', 'Update your personal info')}
+                            </FlexText>
                         </View>
                     </View>
 
@@ -815,7 +847,9 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
                             {isSaving ? (
                                 <Spinner color="#ffffff" size="sm" />
                             ) : (
-                                <Button.Label style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>Save</Button.Label>
+                                <Button.Label style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>
+                                    {t('profile.edit.save', 'Save')}
+                                </Button.Label>
                             )}
                         </Button>
                     )}
@@ -852,11 +886,11 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
                         );
                     }}
                 >
-                    <Tab.Screen name="General" component={BasicTab} />
-                    <Tab.Screen name="Media" component={MediaTab} />
-                    <Tab.Screen name="About" component={AboutTab} />
-                    <Tab.Screen name="Physical" component={DetailsTab} options={{ tabBarLabel: 'Physical' }} />
-                    {isAdmin && <Tab.Screen name="System" component={AdminSystemTab} options={{ tabBarLabel: 'System' }} />}
+                    <Tab.Screen name="General" component={BasicTab} options={{ tabBarLabel: t('profile.edit.tabs.general', 'General') }} />
+                    <Tab.Screen name="Media" component={MediaTab} options={{ tabBarLabel: t('profile.edit.tabs.media', 'Media') }} />
+                    <Tab.Screen name="About" component={AboutTab} options={{ tabBarLabel: t('profile.edit.tabs.about', 'About') }} />
+                    <Tab.Screen name="Physical" component={DetailsTab} options={{ tabBarLabel: t('profile.edit.tabs.physical', 'Physical') }} />
+                    {isAdmin && <Tab.Screen name="System" component={AdminSystemTab} options={{ tabBarLabel: t('profile.edit.tabs.system', 'System') }} />}
                 </Tab.Navigator>
             </View>
         </FormContext.Provider>

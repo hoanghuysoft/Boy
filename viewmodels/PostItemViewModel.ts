@@ -1,11 +1,11 @@
 import { Post } from "@/types/post";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import i18n from "../i18n";
 import { useToast } from "heroui-native/toast";
 import { useCallback, useState } from "react";
 import { Clipboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
+import i18n from "../i18n";
 import { useToggleBookmark } from "../services/bookmark";
 import { useToggleLike } from "../services/like";
 import { createPost, sharePost } from "../services/post";
@@ -84,12 +84,9 @@ export const usePostItemViewModel = ({
         if (currentProfileId && String(currentProfileId) === String(post.profile_id)) return;
         router.push({
             pathname: '/profile/[id]',
-            params: {
-                id: post.profile_id,
-                ...(post.profile_avatar ? { avatar: post.profile_avatar } : {}),
-            },
+            params: { id: post.profile_id },
         });
-    }, [currentProfileId, post.profile_id, post.profile_avatar, router]);
+    }, [currentProfileId, post.profile_id, router]);
 
     // ─── Music ──────────────────────────────────────────────────
     const isPlaying = useAudioStore(s => s.currentlyPlayingId === post.id);
@@ -271,6 +268,3 @@ export const usePostItemViewModel = ({
         post,
     };
 };
-
-
-

@@ -6,8 +6,7 @@ import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import Transition from 'react-native-screen-transitions';
+import { useRouter } from 'expo-router';
 import { SquircleView } from 'expo-squircle-view';
 import { Button } from "heroui-native/button";
 import countries from "i18n-iso-countries";
@@ -26,11 +25,10 @@ import { useProfileHeaderViewModel } from '../../viewmodels/ProfileHeaderViewMod
 import { FlexText } from '../FlexText';
 import { usePagerHeaderContext } from '../pager/PagerHeaderContext';
 import BirthdayCard from './BirthdayCard';
-import { useSettingsStore } from '@/stores/settings';
-import { ADDRESS_COVER, INSTAGRAM_COVER_URL, SOCIAL_BG_URL, WORK_COVER, X_COVER_URL } from './header/constants';
+import { ADDRESS_COVER, SOCIAL_BG_URL, WORK_COVER, X_COVER_URL } from './header/constants';
 import { FamilyStackSection, HeaderInfoCard } from './header/parts';
 import { headerStyles } from './header/styles';
-import { extractInstagramProfileInfo, extractXProfileInfo } from './header/utils';
+import { extractXProfileInfo } from './header/utils';
 
 const CaseMinimalistic = ({ size, ...props }: any) => <Ionicons name="briefcase" size={size} {...props} />;
 const PointOnMap = ({ size, ...props }: any) => <LocationIcon width={size} height={size} {...props} />;
@@ -88,8 +86,6 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
 }) => {
     const { t } = useTranslation();
     const router = useRouter();
-    const params = useLocalSearchParams<{ id?: string }>();
-    const effectiveId = profile?.id ?? params?.id;
 
     const vm = useProfileHeaderViewModel({
         scrollY,
@@ -101,12 +97,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         music,
     });
 
-    const socialAioClientId = useSettingsStore((s) => s.socialAioClientId);
     const xLinkInfo = useMemo(() => extractXProfileInfo(socialLinks, profile), [socialLinks, profile]);
-    const igLinkInfo = useMemo(() => {
-        if (!socialAioClientId) return null;
-        return extractInstagramProfileInfo(socialLinks, profile);
-    }, [socialLinks, profile, socialAioClientId]);
 
     const headerCtx = usePagerHeaderContext();
     const topInset = vm.insets.top;
@@ -174,17 +165,12 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
             {/* Top space pushing avatar below header controls */}
             <View pointerEvents="none" style={{ height: vm.insets.top + 110 }} />
             <View pointerEvents="box-none" style={styles.avatarRow}>
-                <Transition.Boundary
-                    id={`avatar-${effectiveId}`}
-                    style={{ width: 64, height: 64, borderRadius: 32, overflow: 'hidden' }}
-                >
-                    <ExpoImage
-                        source={{ uri: profile?.avatar_url }}
-                        style={{ width: 64, height: 64, borderRadius: 32 }}
-                        contentFit="cover"
-                        cachePolicy="memory-disk"
-                    />
-                </Transition.Boundary>
+                <ExpoImage
+                    source={{ uri: profile?.avatar_url }}
+                    style={{ width: 64, height: 64, borderRadius: 32 }}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                />
                 <View pointerEvents="box-none" className="flex-row gap-2">
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
                         <ExpoImage source={require("@/assets/images/icons/info.png")} style={{ width: 36, height: 36 }} contentFit="contain"
@@ -228,7 +214,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                             style={{ marginTop: 2, alignSelf: 'flex-start' }}
                         >
                             <FlexText style={{ color: vm.colors.primary, fontWeight: '600', fontSize: 13 }}>
-                                {t('common.readMore', 'Read more')}
+                                {t('profile.header.actions.readMore', 'Read more')}
                             </FlexText>
                         </TouchableOpacity>
                     )}
@@ -272,7 +258,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 />
             )}
 
-            {(isOwner || !!profile?.birthday || !!(profile as any)?.has_facebook || !!xLinkInfo || !!igLinkInfo || socialLinks.length > 0 || addresses.length > 0 || workplaces.length > 0) && (
+            {(isOwner || !!profile?.birthday || !!(profile as any)?.has_facebook || !!xLinkInfo || socialLinks.length > 0 || addresses.length > 0 || workplaces.length > 0) && (
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -304,33 +290,6 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                             )}
                         >
                             {xLinkInfo.handle ? `@${xLinkInfo.handle}` : t('profile.header.cards.xProfile')}
-                        </HeaderInfoCard>
-                    )}
-
-                    {!!igLinkInfo && (
-                        <HeaderInfoCard
-                            onPress={() =>
-                                router.push({
-                                    pathname: '/iprofile',
-                                    params: {
-                                        url: igLinkInfo.rawUrl || igLinkInfo.handle || '',
-                                        handle: igLinkInfo.handle || '',
-                                        profile: profile ? JSON.stringify(profile) : '',
-                                        socialLinks: JSON.stringify(socialLinks),
-                                    },
-                                })
-                            }
-                            backgroundColor="#E1306C"
-                            backgroundImageUri={INSTAGRAM_COVER_URL}
-                            textColor="#FFF"
-                            labelStyle={vm.common.label}
-                            leading={(
-                                <View style={headerStyles.facebookIconBubble}>
-                                    <Ionicons name="logo-instagram" size={28} color="#FFF" />
-                                </View>
-                            )}
-                        >
-                            {igLinkInfo.handle ? `@${igLinkInfo.handle}` : t('profile.header.cards.instagramProfile', 'Instagram')}
                         </HeaderInfoCard>
                     )}
 

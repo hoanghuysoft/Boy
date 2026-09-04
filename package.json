@@ -11,6 +11,7 @@
     "lint": "expo lint",
     "test:video": "bun test/runVideoAutoplayTests.ts",
     "test:list": "bun test/runListHardcoreTest.ts",
+    "test:multiuser": "bun test test/multiUserWorkflow.test.ts",
     "clean": "node -e \"const fs = require('fs'); fs.rmSync('node_modules', { recursive: true, force: true }); fs.rmSync('bun.lock', { force: true });\"",
     "clean:install": "node -e \"const fs = require('fs'); fs.rmSync('node_modules', { recursive: true, force: true });\" && bun install --force",
     "clean:install:full": "node -e \"const fs = require('fs'); fs.rmSync('node_modules', { recursive: true, force: true }); fs.rmSync('bun.lock', { force: true });\" && bun install --force"

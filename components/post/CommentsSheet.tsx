@@ -1,6 +1,7 @@
 import EditIcon from "@/assets/images/svg/edit-1.svg";
 import ImageAddIcon from "@/assets/images/svg/image-add.svg";
 import SendIcon from "@/assets/images/svg/send.svg";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
@@ -8,7 +9,6 @@ import { Image } from "expo-image";
 import { SquircleView } from "expo-squircle-view";
 import { Button } from "heroui-native/button";
 import { Spinner } from "heroui-native/spinner";
-import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -219,7 +219,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 styles.footerContainer,
                 {
                     backgroundColor: vm.colors.surfaceContainerLow,
-                    paddingBottom: Math.max(insets.bottom, 12),
+                    paddingBottom: isKeyboardVisible ? 0 : Math.max(insets.bottom, 12),
                 }
             ]}>
                 {/* Edit mode banner */}
@@ -551,6 +551,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-end',
         gap: 8,
+        paddingBottom: 10
     },
     input: {
         flex: 1,

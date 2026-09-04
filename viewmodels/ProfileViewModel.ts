@@ -1,13 +1,13 @@
 import type { PostOptionsSheetHandle } from "@/components/post/PostOptionsSheet";
 import type { LikersSheetHandle } from "@/types/sheetHandles";
-import type { BriefInfoSheetHandle } from "../components/profile/sheets/BriefInfoSheet";
-import type { TriviaSheetHandle } from "../components/profile/sheets/TriviaSheet";
 import { chosenMediaPath } from "@/utils/imageurl";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { BriefInfoSheetHandle } from "../components/profile/sheets/BriefInfoSheet";
+import type { TriviaSheetHandle } from "../components/profile/sheets/TriviaSheet";
 import { useThemeContext } from "../context/ThemeContext";
 import { useInfiniteAddresses } from "../services/address";
 import { useProfileFeed } from "../services/feed";

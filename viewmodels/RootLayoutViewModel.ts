@@ -87,6 +87,11 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
             setSession(session);
 
             if (session) {
+                try {
+                    const { registerActiveSession } = await import('@/services/accountManager');
+                    registerActiveSession(session);
+                } catch {}
+
                 // Read directly from MMKV here to avoid stale closure state
                 const local = getLocalHasProfile();
 
@@ -112,7 +117,22 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
             async (event, session) => {
                 setSession(session);
 
+                if (event === 'TOKEN_REFRESHED' && session) {
+                    try {
+                        const { updateAccountSession } = await import('@/services/accountManager');
+                        updateAccountSession(session.user.id, {
+                            access_token: session.access_token,
+                            refresh_token: session.refresh_token,
+                        });
+                    } catch {}
+                }
+
                 if (event === 'SIGNED_IN' && session) {
+                    try {
+                        const { registerActiveSession } = await import('@/services/accountManager');
+                        registerActiveSession(session);
+                    } catch {}
+
                     // Supabase fires SIGNED_IN both when manually logging in AND sometimes
                     // implicitly alongside getSession on startup.
                     if (!initialSessionCheckDoneRef.current) {

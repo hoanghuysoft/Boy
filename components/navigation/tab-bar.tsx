@@ -28,10 +28,6 @@ const tabs = [
     source: require("@/assets/images/tabIcons/shots.png"),
   },
   {
-    name: "movies",
-    source: require("@/assets/images/tabIcons/movies.png"),
-  },
-  {
     name: "mansory",
     source: require("@/assets/images/tabIcons/masory.png"),
   },

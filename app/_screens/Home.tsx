@@ -5,6 +5,8 @@ import { GalleryModal } from "@/components/gallery/GalleryModal";
 import HomeCarousel from "@/components/HomeCarousel";
 import OptionModal from "@/components/HomeOptionModal";
 import { CommentsSheet, LikersSheet, PostOptionsSheet, TranslationLanguageSheet } from "@/components/post";
+import { AccountSwitcherSheet } from "@/components/sheets/AccountSwitcherSheet";
+import type { AccountSwitcherSheetHandle } from "@/types/sheetHandles";
 import SettingsIcon from "@/icons/settings";
 import { useHomeViewModel } from "@/viewmodels/HomeViewModel";
 import { Image as ExpoImage } from "expo-image";
@@ -16,6 +18,7 @@ import HomeTabs from "./home/HomeTabs";
 const HomeScreen = () => {
   const vm = useHomeViewModel();
   const { markInteractive } = useObserve();
+  const accountSwitcherRef = React.useRef<AccountSwitcherSheetHandle>(null);
 
   React.useEffect(() => {
     markInteractive();
@@ -129,11 +132,17 @@ const HomeScreen = () => {
                   opacity: pillBgOpacity,
                 }}
               />
-              <ExpoImage
-                contentFit="contain"
-                source={require("../../assets/images/logo_head.png")}
-                style={{ width: 30, height: 30 }}
-              />
+              <TouchableOpacity
+                onLongPress={() => accountSwitcherRef.current?.present()}
+                delayLongPress={300}
+                activeOpacity={0.8}
+              >
+                <ExpoImage
+                  contentFit="contain"
+                  source={require("../../assets/images/logo_head.png")}
+                  style={{ width: 30, height: 30 }}
+                />
+              </TouchableOpacity>
             </Animated.View>
 
             <Animated.View
@@ -196,6 +205,7 @@ const HomeScreen = () => {
         onDismiss={handleCommentSheetDismiss}
       />
       <TranslationLanguageSheet />
+      <AccountSwitcherSheet ref={accountSwitcherRef} />
     </>
   );
 };

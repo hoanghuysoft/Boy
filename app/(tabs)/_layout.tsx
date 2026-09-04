@@ -51,12 +51,6 @@ export default function TabLayout() {
             renderIcon: ({ tint, size }) => <Image source={require("@/assets/images/tabIcons/shots.png")} style={{ width: size, height: size, tintColor: tint }} />
         },
         {
-            name: 'movies',
-            href: '/movies',
-            label: 'Movies',
-            renderIcon: ({ tint, size }) => <Image source={require("@/assets/images/tabIcons/movies.png")} style={{ width: size, height: size, tintColor: tint }} />
-        },
-        {
             name: 'mansory',
             href: '/mansory',
             label: 'Masonry',
@@ -72,7 +66,7 @@ export default function TabLayout() {
 
     return (
         <TabBarMinimizeProvider>
-            <View style={{ flex: 1, backgroundColor: colors.surface }}>
+            <View style={{ flex: 1, backgroundColor: colors.surface, paddingBottom: 20 }}>
                 <Tabs>
                     <TabSlot style={{ height: '100%' }} renderFn={renderFadingTabScreen} />
                     <TabList asChild>

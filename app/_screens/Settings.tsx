@@ -11,6 +11,8 @@ import { useAppLockStore } from "@/stores/appLock";
 import { CACHE_SIZE_OPTIONS, useSettingsStore } from "@/stores/settings";
 import { createCommonStyles } from "@/styles/common";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { AccountSwitcherSheet } from "@/components/sheets/AccountSwitcherSheet";
+import type { AccountSwitcherSheetHandle } from "@/types/sheetHandles";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Href, router } from "expo-router";
@@ -68,6 +70,7 @@ const SettingsScreen = () => {
     const [isFocused, setIsFocused] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const thirdPartySheetRef = useRef<TrueSheet>(null);
+    const accountSwitcherRef = useRef<AccountSwitcherSheetHandle>(null);
 
     // ─── Cache state ────────────────────────────────────────────
     const [cacheSize, setCacheSize] = useState(0);
@@ -440,6 +443,24 @@ const SettingsScreen = () => {
             title: t('settings.account'),
             items: [
                 {
+                    id: 'switch_account',
+                    title: t('settings.switchAccount', 'Switch / Manage Accounts'),
+                    keywords: ['switch', 'account', 'multi', 'user', 'chuyển tài khoản'],
+                    render: (index: number, total: number) => (
+                        <CustomSurface
+                            index={index}
+                            total={total}
+                            onPress={() => accountSwitcherRef.current?.present()}
+                            style={styles.option}
+                        >
+                            <FlexText style={[common.body, { color: colors.onSurface }]}>
+                                {t('settings.switchAccount', 'Switch / Manage Accounts')}
+                            </FlexText>
+                            <Ionicons name="people-outline" size={24} color={colors.onSurface} />
+                        </CustomSurface>
+                    ),
+                },
+                {
                     id: 'logout',
                     title: t('settings.logout'),
                     keywords: ['logout', 'sign out', 'exit', 'account', 'đăng xuất', 'tài khoản'],
@@ -672,7 +693,6 @@ const SettingsScreen = () => {
                             variant="secondary"
                             placeholder="Enter ImgBB API Key"
                             placeholderTextColor={colors.onSurfaceVariant}
-                            secureTextEntry
                             style={{
                                 backgroundColor: colors.surfaceContainerHighest,
                                 color: colors.onSurface,
@@ -694,7 +714,6 @@ const SettingsScreen = () => {
                             variant="secondary"
                             placeholder="Enter x02.me API Key"
                             placeholderTextColor={colors.onSurfaceVariant}
-                            secureTextEntry
                             style={{
                                 backgroundColor: colors.surfaceContainerHighest,
                                 color: colors.onSurface,
@@ -716,7 +735,6 @@ const SettingsScreen = () => {
                             variant="secondary"
                             placeholder="Enter Social AIO Client ID"
                             placeholderTextColor={colors.onSurfaceVariant}
-                            secureTextEntry
                             style={{
                                 backgroundColor: colors.surfaceContainerHighest,
                                 color: colors.onSurface,
@@ -738,6 +756,13 @@ const SettingsScreen = () => {
                     </Button>
                 </View>
             </TrueSheet>
+            <AccountSwitcherSheet
+                ref={accountSwitcherRef}
+                onAccountSwitched={() => {
+                    router.dismissAll();
+                    router.replace("/");
+                }}
+            />
         </View>
     );
 };

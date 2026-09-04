@@ -1,61 +1,130 @@
 /**
- * Centralized MMKV storage — ONE instance for the whole app.
+ * Centralized MMKV Storage — Multi-User Isolated & Shared Cache Architecture.
  *
- * Pattern: a single `storage` instance with namespaced key prefixes.
- * This means `storage.clearAll()` in `signOut()` wipes every piece of
- * user-specific data in one call.
+ * 1. 🌐 Shared Storage (`id: "app-shared"` & `id: "language-storage"`)
+ *    Persistent app-wide and device-level cache. Survives across all accounts and logouts.
+ *    - Accounts Registry (`accounts_registry`) & active user pointer (`active_user_id`)
+ *    - Language preferences (`language-storage`)
+ *    - Device app-lock configuration (`app-lock-storage`)
+ *    - Public media metadata: weather, image dimensions, dominant colors, carousel colors
  *
- * The ONLY exception is `languageStorage` — the user's language choice
- * should survive a logout/login cycle.
+ * 2. 👤 User-Scoped Storage (`id: "user-${userId}"`)
+ *    Dedicated isolated binary MMKV partition file per logged-in account.
+ *    - Supabase auth tokens (`sb-*-auth-token`)
+ *    - React Query offline cache (`REACT_QUERY_OFFLINE_CACHE`)
+ *    - Personal Zustand stores: search history, watch history, liked videos, movie tracker
+ *    - User-specific settings & API keys (`settings-storage`)
+ *    - Video resume positions (`video-resume:*`)
+ *    - Onboarding profile cache (`onboarding_has_profile`)
+ *    ⚠️ Wiped ONLY when that specific user account is removed.
  *
- * All named re-exports below are the same object as `storage`.
- * They exist purely for readability at the call-site; consumers can
- * also just import `storage` directly.
+ * 3. 🔀 Dynamic Proxy (`userStorage` / `storage`)
+ *    Routes calls dynamically to whichever user is currently active (`activeStorageInstance`).
+ *    Zustand stores, hooks, and adapters write transparently to the active account.
  *
- * ⚠️  Because everything shares one MMKV file, every key must be unique
- *     across the entire app. Key prefix conventions:
- *
- *  Consumer                     | Prefix
- *  -----------------------------|--------------------------------
- *  react-query offline cache    | REACT_QUERY_OFFLINE_CACHE
- *  onboarding                   | onboarding_*
- *  profile mesh gradient colors | mesh_colors_*
- *  weather service              | weather:*
- *  localfb cache                | localfb_* / localfb_url_*
- *  search history (zustand)     | search-history
- *  search query text history    | search-query-history:*
- *  show watchlist (zustand)     | show-watchlist
- *  movie tracker (zustand)      | movie-tracker-settings
- *  carousel luminance cache     | luminance:*
- *  video resume positions       | video-resume:*
- *  TV detail dominant color     | tv:darkDominant:*
- *  movie detail dominant color  | movie:darkDominant:*
- *  person detail dominant color | person:darkDominant:*
- *  show detail dominant color   | show:darkDominant:*
- *  gallery image dimensions     | dimension:v1:*
- *  settings (zustand)           | settings-storage
- *  fb music auth session        | fb_auth:*
+ * Storage Partition Map:
+ *  Scope       | Consumer / Data            | Storage Target
+ *  ------------|----------------------------|--------------------------
+ *  Shared      | accounts registry          | sharedStorage ("app-shared")
+ *  Shared      | language preference        | languageStorage ("language-storage")
+ *  Shared      | device app lock            | sharedStorage ("app-shared")
+ *  Shared      | image dimensions cache     | imageDimensionStorage ("app-shared")
+ *  Shared      | weather cache              | weatherStorage ("app-shared")
+ *  Shared      | media dominant colors      | tvDetail / movieDetail / personDetail ("app-shared")
+ *  Shared      | carousel luminance cache   | carouselColorStorage ("app-shared")
+ *  User-Scoped | supabase auth session      | userStorage ("user-<userId>")
+ *  User-Scoped | react-query offline cache  | userStorage ("user-<userId>")
+ *  User-Scoped | user settings & API keys   | settingsStorage ("user-<userId>")
+ *  User-Scoped | search history (zustand)   | searchHistoryStorage ("user-<userId>")
+ *  User-Scoped | watch history (zustand)    | userStorage ("user-<userId>")
+ *  User-Scoped | liked videos (zustand)     | userStorage ("user-<userId>")
+ *  User-Scoped | movie tracker / watchlist  | movieTrackerStorage ("user-<userId>")
+ *  User-Scoped | video resume positions     | videoResumeStorage ("user-<userId>")
+ *  User-Scoped | onboarding profile flag    | onboardingStorage ("user-<userId>")
  */
 
-import { createMMKV } from "react-native-mmkv";
+import { createMMKV, type MMKV } from "react-native-mmkv";
 
-// ─── The single app-wide storage instance ─────────────────────────────────────
-export const storage = createMMKV();
+// ─── The app-wide shared storage instance (device & universal caches) ────────
+export const sharedStorage = createMMKV({ id: "app-shared" });
 
-// ─── Language preference — persists across logout ─────────────────────────────
+// ─── Language preference — persists across all accounts/logout ────────────────
 export const languageStorage = createMMKV({ id: "language-storage" });
 
-// ─── Named aliases (same object — for readable imports at call-sites) ─────────
-export const onboardingStorage = storage;
-export const weatherStorage = storage;
-export const localFbStorage = storage;
-export const searchHistoryStorage = storage;
-export const movieTrackerStorage = storage;
-export const carouselColorStorage = storage;
-export const videoResumeStorage = storage;
-export const tvDetailStorage = storage;
-export const personDetailStorage = storage;
-export const movieDetailStorage = storage;
-export const imageDimensionStorage = storage;
-export const settingsStorage = storage;
+// ─── Shared Cache Aliases (never wiped on account switch/logout) ──────────────
+export const weatherStorage = sharedStorage;
+export const imageDimensionStorage = sharedStorage;
+export const carouselColorStorage = sharedStorage;
+export const tvDetailStorage = sharedStorage;
+export const movieDetailStorage = sharedStorage;
+export const personDetailStorage = sharedStorage;
+
+// ─── User Storage Pool ────────────────────────────────────────────────────────
+const userStorageInstances = new Map<string, MMKV>();
+
+/**
+ * Returns or creates the isolated MMKV storage instance for a specific user.
+ * Stored in a separate binary file on disk (e.g. user-<userId>.mmkv).
+ */
+export function getUserStorage(userId: string): MMKV {
+    let instance = userStorageInstances.get(userId);
+    if (!instance) {
+        instance = createMMKV({ id: `user-${userId}` });
+        userStorageInstances.set(userId, instance);
+    }
+    return instance;
+}
+
+// Fallback storage for guest / startup before an active account is identified
+export const defaultLegacyStorage = createMMKV(); // 'mmkv.default' - preserves pre-migration session
+const guestStorage = createMMKV({ id: "user-guest" });
+
+let activeUserId: string | null = sharedStorage.getString("active_user_id") ?? null;
+let activeStorageInstance: MMKV = activeUserId
+    ? getUserStorage(activeUserId)
+    : defaultLegacyStorage;
+
+export function getActiveUserId(): string | null {
+    return activeUserId;
+}
+
+export function setActiveUserId(userId: string | null): void {
+    activeUserId = userId;
+    if (userId) {
+        sharedStorage.set("active_user_id", userId);
+        activeStorageInstance = getUserStorage(userId);
+    } else {
+        sharedStorage.remove("active_user_id");
+        activeStorageInstance = guestStorage;
+    }
+}
+
+// ─── Dynamic User-Scoped Storage Proxy ─────────────────────────────────────────
+/**
+ * Dynamic MMKV proxy that always delegates to whichever user is currently active.
+ * Implements the full MMKV interface so it works seamlessly with react-native-mmkv
+ * hooks (useMMKVBoolean, useMMKVString, etc.), Zustand stores, and Supabase adapter.
+ */
+export const userStorage: MMKV = new Proxy({} as MMKV, {
+    get(_target, prop) {
+        const val = (activeStorageInstance as any)[prop];
+        if (typeof val === "function") {
+            return val.bind(activeStorageInstance);
+        }
+        return val;
+    },
+    set(_target, prop, value) {
+        (activeStorageInstance as any)[prop] = value;
+        return true;
+    },
+});
+
+// ─── User-Scoped Aliases ──────────────────────────────────────────────────────
+export const storage = userStorage; // backwards-compatible alias
+export const onboardingStorage = userStorage;
+export const localFbStorage = userStorage;
+export const searchHistoryStorage = userStorage;
+export const movieTrackerStorage = userStorage;
+export const videoResumeStorage = userStorage;
+export const settingsStorage = userStorage;
 
