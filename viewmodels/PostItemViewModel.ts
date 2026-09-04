@@ -84,9 +84,12 @@ export const usePostItemViewModel = ({
         if (currentProfileId && String(currentProfileId) === String(post.profile_id)) return;
         router.push({
             pathname: '/profile/[id]',
-            params: { id: post.profile_id },
+            params: {
+                id: post.profile_id,
+                ...(post.profile_avatar ? { avatar: post.profile_avatar } : {}),
+            },
         });
-    }, [currentProfileId, post.profile_id, router]);
+    }, [currentProfileId, post.profile_id, post.profile_avatar, router]);
 
     // ─── Music ──────────────────────────────────────────────────
     const isPlaying = useAudioStore(s => s.currentlyPlayingId === post.id);

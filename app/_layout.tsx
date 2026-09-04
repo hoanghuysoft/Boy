@@ -1,5 +1,6 @@
 import { AppLockOverlay } from "@/components/AppLockOverlay";
 import { GlobalAudioPlayer } from "@/components/GlobalAudioPlayer";
+import { getParallaxSlideTransition, getProfileZoomTransition, getScaleFadeTransition } from '@/components/stack/screen-options';
 import { BanProvider } from "@/context/BanContext";
 import { SessionProvider } from "@/context/SessionContext";
 import { StatusBarProvider, useStatusBar } from "@/context/StatusBarContext";
@@ -17,7 +18,6 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Image as ExpoImage } from 'expo-image';
 import { Observe, ObserveRoot } from 'expo-observe';
 import { usePathname } from 'expo-router';
-import { Stack } from 'expo-router/stack';
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native/provider";
 import React, { useEffect } from "react";
@@ -30,6 +30,7 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { BlankStack as Stack } from "react-native-screen-transitions/expo-router";
 import '../global.css';
 
 Sentry.init({
@@ -191,13 +192,13 @@ const RootContent = () => {
             }
           />
           <StatusBarFade />
-          <Stack screenOptions={{ headerShown: false }}>
+          <Stack screenOptions={getParallaxSlideTransition()}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="login" />
             <Stack.Screen name="onboarding" />
             <Stack.Screen name="video_player" />
-            <Stack.Screen name="profile/[id]" />
-            <Stack.Screen name="profile/employee-card" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+            <Stack.Screen name="profile/[id]" options={getProfileZoomTransition()} />
+            <Stack.Screen name="profile/employee-card" options={getScaleFadeTransition()} />
             <Stack.Screen name="image_poster" />
             <Stack.Screen name="settings" />
             <Stack.Screen name="bookmarks" />

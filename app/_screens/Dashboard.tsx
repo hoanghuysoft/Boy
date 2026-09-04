@@ -1,19 +1,20 @@
 import AssemblyText from "@/components/AssemblyText";
 import { FlexText } from "@/components/FlexText";
 import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerSheet";
-import { useThemeContext } from "@/context/ThemeContext";
-import { useCgvMoviesQuery } from "@/services/cgv";
-import { Category, CgvMovie } from "@/types/cgv";
 import { CgvCard } from "@/components/tracker/CgvCard";
 import { CgvDetailSheet } from "@/components/tracker/sheets/CgvDetailSheet";
+import { useThemeContext } from "@/context/ThemeContext";
+import { useCgvMoviesQuery } from "@/services/cgv";
 import { useInfiniteMedia } from "@/services/media";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
 import { useWeather } from "@/services/weather";
 import { createCommonStyles } from "@/styles/common";
+import { Category, CgvMovie } from "@/types/cgv";
 import { Profile } from "@/types/profile";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { BlurTargetView, BlurView } from "expo-blur";
+import { MINIMIZE_SPRING, useTabBarMinimized } from "expo-glass-tabs";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router/react-navigation";
@@ -22,7 +23,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
-import { useTabBarMinimized, MINIMIZE_SPRING } from "expo-glass-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // const DashboardScreenV1 = () => {
@@ -125,7 +125,7 @@ const DashboardScreen = () => {
     const previousY = useSharedValue(0);
     const minimizedProgress = useTabBarMinimized();
     const minimizedTarget = useSharedValue(0);
-    
+
     const scrollHandler = useAnimatedScrollHandler((event) => {
         scrollY.value = event.contentOffset.y;
 
@@ -226,12 +226,12 @@ const DashboardScreen = () => {
         if (!cgvMovies || cgvMovies.length === 0) return [];
         const showing = cgvMovies.filter(m => m.category === Category.NowShowing || m.category === "Phim Đang Chiếu");
         const upcoming = cgvMovies.filter(m => m.category === Category.ComingSoon || m.category === "Phim Sắp Chiếu");
-        
+
         const result: CgvMovie[] = [];
         if (showing.length > 0) result.push(showing[0]);
         if (showing.length > 1) result.push(showing[1]);
         if (upcoming.length > 0) result.push(upcoming[0]);
-        
+
         while (result.length < 3 && cgvMovies.length > result.length) {
             const next = cgvMovies.find(m => !result.includes(m));
             if (next) result.push(next);
@@ -438,6 +438,7 @@ const DashboardScreen = () => {
                                                 onPress={handleCgvPress}
                                                 showCategory={true}
                                                 style={{ flex: 1, marginRight: 0 }}
+                                                customTextColor={colors.onSurface}
                                             />
                                         );
                                     })}

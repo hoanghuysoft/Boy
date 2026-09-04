@@ -1,16 +1,16 @@
 import AddCircle from "@/assets/images/svg/add-circle.svg";
 import Magnifier from "@/assets/images/svg/ai-search.svg";
 import Collection from "@/assets/images/svg/collection.svg";
+import { GalleryModal } from "@/components/gallery/GalleryModal";
 import HomeCarousel from "@/components/HomeCarousel";
 import OptionModal from "@/components/HomeOptionModal";
+import { CommentsSheet, LikersSheet, PostOptionsSheet, TranslationLanguageSheet } from "@/components/post";
 import SettingsIcon from "@/icons/settings";
 import { useHomeViewModel } from "@/viewmodels/HomeViewModel";
 import { Image as ExpoImage } from "expo-image";
 import { useObserve } from "expo-observe";
 import React from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
-import { CommentsSheet, LikersSheet, PostOptionsSheet, TranslationLanguageSheet } from "@/components/post";
 import HomeTabs from "./home/HomeTabs";
 
 const HomeScreen = () => {
@@ -130,7 +130,7 @@ const HomeScreen = () => {
                 }}
               />
               <ExpoImage
-                contentFit="cover"
+                contentFit="contain"
                 source={require("../../assets/images/logo_head.png")}
                 style={{ width: 30, height: 30 }}
               />

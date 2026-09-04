@@ -1,5 +1,7 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
+import { useLocalSearchParams } from "expo-router";
+import Transition from "react-native-screen-transitions";
 import { Spinner } from "heroui-native/spinner";
 import { Tabs } from "heroui-native/tabs";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
@@ -44,7 +46,7 @@ import { ProfileGalleryModal } from "@/components/gallery/ProfileGalleryModal";
 import { SpinningArtwork } from "@/components/profile/SpinningArtwork";
 
 // ─── Static skeleton shown during navigation transition ────────────────────────
-const ProfileSkeletonInner = ({ insets }: { insets: any }) => {
+const ProfileSkeletonInner = ({ insets, id, avatar }: { insets: any; id?: string; avatar?: string }) => {
   const { colors } = useThemeContext();
   return (
     <View style={{ paddingHorizontal: 12, flex: 1, position: 'relative' }}>
@@ -60,7 +62,25 @@ const ProfileSkeletonInner = ({ insets }: { insets: any }) => {
         {/* Avatar & Actions Row */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           {/* Avatar */}
-          <Shimmer style={{ width: 64, height: 64, borderRadius: 32 }} />
+          {id ? (
+            <Transition.Boundary
+              id={`avatar-${id}`}
+              style={{ width: 64, height: 64, borderRadius: 32, overflow: 'hidden' }}
+            >
+              {avatar ? (
+                <Image
+                  source={{ uri: avatar }}
+                  style={{ width: 64, height: 64, borderRadius: 32 }}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <Shimmer style={{ width: 64, height: 64, borderRadius: 32 }} />
+              )}
+            </Transition.Boundary>
+          ) : (
+            <Shimmer style={{ width: 64, height: 64, borderRadius: 32 }} />
+          )}
           {/* Actions */}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Shimmer style={{ width: 44, height: 44, borderRadius: 12 }} />
@@ -107,13 +127,13 @@ const ProfileSkeletonInner = ({ insets }: { insets: any }) => {
   );
 };
 
-const ProfileSkeleton: React.FC = () => {
+const ProfileSkeleton: React.FC<{ id?: string; avatar?: string }> = ({ id, avatar }) => {
   const { colors, typography } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const insets = useSafeAreaInsets();
   return (
     <View style={common.screen}>
-      <ProfileSkeletonInner insets={insets} />
+      <ProfileSkeletonInner insets={insets} id={id} avatar={avatar} />
     </View>
   );
 };
@@ -478,6 +498,10 @@ const ProfileContent = () => {
   }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, videoMediaViewerItems, windowHeight]);
 
   // Loading / Error state
+  const params = useLocalSearchParams<{ id?: string; avatar?: string }>();
+  const rawId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const rawAvatar = Array.isArray(params.avatar) ? params.avatar[0] : params.avatar;
+
   if (!profile) {
     return (
       <View style={common.screen}>
@@ -495,7 +519,7 @@ const ProfileContent = () => {
             />
           }
         >
-          <ProfileSkeletonInner insets={inset} />
+          <ProfileSkeletonInner insets={inset} id={rawId} avatar={rawAvatar} />
         </ScrollView>
         <Snackbar
           visible={snackbarVisible}
@@ -810,6 +834,9 @@ const styles = StyleSheet.create({
 // ─── ProfileScreen shell ──────────────────────────────────────────────────────
 const ProfileScreen = () => {
   const [isReady, setIsReady] = React.useState(false);
+  const params = useLocalSearchParams<{ id?: string; avatar?: string }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const avatar = Array.isArray(params.avatar) ? params.avatar[0] : params.avatar;
 
   useEffect(() => {
     const handle = requestIdleCallback(() => {
@@ -819,7 +846,7 @@ const ProfileScreen = () => {
   }, []);
 
   if (!isReady) {
-    return <ProfileSkeleton />;
+    return <ProfileSkeleton id={id} avatar={avatar} />;
   }
 
   return <ProfileContent />;

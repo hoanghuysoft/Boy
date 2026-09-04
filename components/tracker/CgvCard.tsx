@@ -1,10 +1,10 @@
 import { FlexText } from "@/components/FlexText";
 import { CgvMovie } from "@/types/cgv";
+import dayjs from "dayjs";
+import { Image } from "expo-image";
 import React, { useCallback } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Pressable as GesturePressable } from "react-native-gesture-handler";
-import dayjs from "dayjs";
-import { Image } from "expo-image";
 
 const CARD_WIDTH = 140;
 
@@ -32,9 +32,10 @@ interface CgvCardProps {
     onPress: (movie: CgvMovie) => void;
     style?: any;
     showCategory?: boolean;
+    customTextColor?: string;
 }
 
-export const CgvCard = React.memo(({ movie, isUpcoming, onPress, style, showCategory }: CgvCardProps) => {
+export const CgvCard = React.memo(({ movie, isUpcoming, onPress, style, showCategory, customTextColor }: CgvCardProps) => {
     const daysLeft = isUpcoming ? getDaysLeft(movie.release_date) : null;
 
     const handlePress = useCallback(() => {
@@ -58,7 +59,7 @@ export const CgvCard = React.memo(({ movie, isUpcoming, onPress, style, showCate
                     }}
                     contentFit="cover"
                 />
-                
+
                 {/* Rating Badge Overlay */}
                 {movie.rating_code && movie.rating_code !== "No" && (
                     <View style={{
@@ -119,14 +120,14 @@ export const CgvCard = React.memo(({ movie, isUpcoming, onPress, style, showCate
             <FlexText
                 numberOfLines={2}
                 ellipsizeMode="tail"
-                style={[styles.textStyle, { color: "white", width: "100%", flexShrink: 1, marginBottom: 4, marginTop: 4 }]}
+                style={[styles.textStyle, { color: customTextColor || "white", width: "100%", flexShrink: 1, marginBottom: 4, marginTop: 4 }]}
             >
                 {movie.name}
             </FlexText>
 
             <FlexText
                 numberOfLines={1}
-                style={[styles.textStyle, { color: "rgba(255,255,255,0.5)", fontSize: 12 }]}
+                style={[styles.textStyle, { color: customTextColor || "rgba(255,255,255,0.5)", fontSize: 12 }]}
             >
                 {movie.movie_genre}
             </FlexText>

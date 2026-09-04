@@ -1,6 +1,7 @@
+import { Platform } from "react-native";
 import { interpolate, interpolateColor } from "react-native-reanimated";
-import { ScreenInterpolationProps } from "react-native-screen-transitions";
-import { BlankStackNavigationOptions } from "react-native-screen-transitions/blank-stack";
+import Transition, { ScreenInterpolationProps } from "react-native-screen-transitions";
+import { BlankStackNavigationOptions } from "react-native-screen-transitions/expo-router";
 
 const SNAPPY_OPEN_SPRING = {
     stiffness: 1000,
@@ -98,12 +99,15 @@ export const getParallaxSlideTransition = (): BlankStackNavigationOptions => {
     return {
         experimental_enableHighRefreshRate: true,
         gestureEnabled: true,
-        gestureDirection: "horizontal" as const,
+        gestureDirection: [{ gesture: "horizontal", area: 50 }],
         screenStyleInterpolator: ({
             layouts: {
                 screen: { width },
             },
             progress,
+            bounds,
+            current,
+            next,
         }: ScreenInterpolationProps) => {
             "worklet";
             const scale = interpolate(progress, [0, 1, 2], [1, 1, 0.95], "clamp");
@@ -147,15 +151,99 @@ export const getParallaxSlideTransition = (): BlankStackNavigationOptions => {
                 },
             };
         },
-        gestureResponseDistance: 20,
-        gestureVelocityImpact: 0.2,
-        gestureActivationArea: 'edge',
+        gestureVelocityImpact: 0.3,
         transitionSpec: {
             open: PARALLAX_SPRING_OPEN,
             close: PARALLAX_SPRING_CLOSE,
         }
     }
 }
+
+/**
+ * Zoom bounds transition for profile screens.
+ * Seamlessly expands and zooms directly from the tapped avatar boundary into full screen,
+ * and falls back to parallax slide when no source boundary was tapped.
+ */
+export const getProfileZoomTransition = (): BlankStackNavigationOptions => {
+    return {
+        experimental_enableHighRefreshRate: true,
+        navigationMaskEnabled: Platform.OS === 'ios',
+        gestureEnabled: true,
+        gestureDirection: [{ gesture: "horizontal", area: 50 }],
+
+        transitionSpec: Transition.Specs.Zoom,
+        screenStyleInterpolator: ({
+            layouts: {
+                screen: { width },
+            },
+            progress,
+            bounds,
+            current,
+            next,
+        }: ScreenInterpolationProps) => {
+            "worklet";
+            const targetId = (current.route?.params as Record<string, unknown> | undefined)?.id ??
+                (next?.route?.params as Record<string, unknown> | undefined)?.id;
+            const avatarTag = targetId ? `avatar-${targetId}` : null;
+
+            if (avatarTag && bounds) {
+                const scoped = bounds(avatarTag);
+                const link = scoped.link();
+                if (link?.source?.bounds) {
+                    return scoped.navigation.zoom({
+                        borderRadius: 32,
+                        target: "bound",
+                        backgroundScale: 0.96,
+                        backdropColor: "#000",
+                        backdropOpacity: 0.45,
+                    });
+                }
+            }
+
+            // Fallback to standard parallax slide if no source boundary was tapped (e.g. direct link or search)
+            const scale = interpolate(progress, [0, 1, 2], [1, 1, 0.95], "clamp");
+            const translateX = interpolate(
+                progress,
+                [0, 1, 2],
+                [width, 0, -width * 0.25],
+                "clamp",
+            );
+            const borderRadius = interpolate(
+                progress,
+                [0, 1, 2],
+                [0, 0, 24],
+                "clamp",
+            );
+            const opacity = interpolate(
+                progress,
+                [0, 1, 2],
+                [1, 1, 0.75],
+                "clamp",
+            );
+            const backdropColor = interpolateColor(
+                progress,
+                [0, 1, 2],
+                ["rgba(0,0,0,0)", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.4)"]
+            );
+
+            return {
+                content: {
+                    style: {
+                        transform: [{ scale }, { translateX }],
+                        borderRadius,
+                        opacity,
+                        overflow: 'hidden',
+                    },
+                },
+                backdrop: {
+                    style: {
+                        backgroundColor: backdropColor,
+                    },
+                },
+            };
+        },
+    };
+};
 
 /**
  * Smooth scale zoom and fade transition. 

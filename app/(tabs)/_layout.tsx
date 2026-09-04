@@ -10,8 +10,8 @@ import { Image } from "expo-image";
 import { Redirect, useRouter } from "expo-router";
 import { TabList, TabSlot, TabTrigger, Tabs } from "expo-router/ui";
 import React from "react";
-import { View } from "react-native";
 import { useTranslation } from "react-i18next";
+import { View } from "react-native";
 
 import { useThemeContext } from "@/context/ThemeContext";
 

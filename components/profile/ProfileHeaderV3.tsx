@@ -6,7 +6,8 @@ import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import Transition from 'react-native-screen-transitions';
 import { SquircleView } from 'expo-squircle-view';
 import { Button } from "heroui-native/button";
 import countries from "i18n-iso-countries";
@@ -87,6 +88,8 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
 }) => {
     const { t } = useTranslation();
     const router = useRouter();
+    const params = useLocalSearchParams<{ id?: string }>();
+    const effectiveId = profile?.id ?? params?.id;
 
     const vm = useProfileHeaderViewModel({
         scrollY,
@@ -171,12 +174,17 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
             {/* Top space pushing avatar below header controls */}
             <View pointerEvents="none" style={{ height: vm.insets.top + 110 }} />
             <View pointerEvents="box-none" style={styles.avatarRow}>
-                <ExpoImage
-                    source={{ uri: profile?.avatar_url }}
-                    style={{ width: 64, height: 64, borderRadius: 32 }}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                />
+                <Transition.Boundary
+                    id={`avatar-${effectiveId}`}
+                    style={{ width: 64, height: 64, borderRadius: 32, overflow: 'hidden' }}
+                >
+                    <ExpoImage
+                        source={{ uri: profile?.avatar_url }}
+                        style={{ width: 64, height: 64, borderRadius: 32 }}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                    />
+                </Transition.Boundary>
                 <View pointerEvents="box-none" className="flex-row gap-2">
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
                         <ExpoImage source={require("@/assets/images/icons/info.png")} style={{ width: 36, height: 36 }} contentFit="contain"

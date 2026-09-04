@@ -142,13 +142,15 @@ const SettingsScreen = () => {
         colorStops: {
             0: {
                 color: colors.surface,
-                easing: Easing.ease,
+            },
+            0.2: {
+                color: colors.surface,
+                easing: Easing.in(Easing.cubic),
             },
             1: {
-                color: 'transparent',
+                color: `${colors.surface}00`,
             },
         },
-        easing: Easing.linear,
         extraColorStopsPerTransition: 16,
     });
 
@@ -771,7 +773,7 @@ const style = (colors: ThemeColors, common: any) => StyleSheet.create({
         fontSize: 16,
         paddingHorizontal: 16,
         textAlign: 'center',
-        backgroundColor: colors.surfaceContainerHighest,
+        backgroundColor: colors.surfaceContainerHigh,
         borderRadius: 9999,
         height: 48,
         borderWidth: 0

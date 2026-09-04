@@ -15,6 +15,7 @@ import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import { router } from "expo-router";
+import Transition from "react-native-screen-transitions";
 import { SquircleView } from "expo-squircle-view";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
@@ -118,21 +119,32 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         <View style={{}}>
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <TouchableOpacity activeOpacity={0.7} onPress={vm.handleProfilePress} disabled={metricsOnly} style={[vm.common.row, { gap: 12, flex: 1 }]}>
-                    <ExpoImage
-                        source={{ uri: post.profile_avatar }}
-                        style={{ width: 40, height: 40, borderRadius: 20 }}
-                        contentFit="cover"
-                        cachePolicy="memory-disk"
-                    />
-                    <View>
+                <View style={[vm.common.row, { gap: 12, flex: 1 }]}>
+                    <Transition.Boundary
+                        id={`avatar-${post.profile_id}`}
+                        onPress={metricsOnly ? undefined : vm.handleProfilePress}
+                        style={{ width: 40, height: 40, borderRadius: 20, overflow: 'hidden' }}
+                    >
+                        <ExpoImage
+                            source={{ uri: post.profile_avatar }}
+                            style={{ width: 40, height: 40, borderRadius: 20 }}
+                            contentFit="cover"
+                            cachePolicy="memory-disk"
+                        />
+                    </Transition.Boundary>
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={vm.handleProfilePress}
+                        disabled={metricsOnly}
+                        style={{ flex: 1, justifyContent: 'center' }}
+                    >
                         <View style={[vm.common.row, { gap: 4 }]}>
                             <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
                             {post.profile_is_verified && <VerifiedIcon size={16} />}
                         </View>
                         <PostMetaInfo post={post} />
-                    </View>
-                </TouchableOpacity>
+                    </TouchableOpacity>
+                </View>
                 {!isBookmarked && !metricsOnly && (
                     <TouchableOpacity
                         hitSlop={10}
