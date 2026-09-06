@@ -219,7 +219,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 styles.footerContainer,
                 {
                     backgroundColor: vm.colors.surfaceContainerLow,
-                    paddingBottom: isKeyboardVisible ? 0 : Math.max(insets.bottom, 22),
+                    paddingBottom: isKeyboardVisible ? 8 : Math.max(insets.bottom, 22),
                 }
             ]}>
                 {/* Edit mode banner */}
@@ -551,6 +551,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-end',
         gap: 8,
+        paddingBottom: 8,
     },
     input: {
         flex: 1,

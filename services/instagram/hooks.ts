@@ -115,14 +115,26 @@ export function useInstagramPosts(
         clientId: options?.clientId,
       }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => {
-      // Handles cursor / nextCursor / next_cursor
+    getNextPageParam: (lastPage: any) => {
+      if (!lastPage) return undefined;
+      if (lastPage.hasMore === false || lastPage.has_more === false || lastPage.has_next_page === false) {
+        return undefined;
+      }
       const nextCursor =
-        lastPage?.cursor ||
-        lastPage?.nextCursor ||
-        lastPage?.next_cursor ||
-        undefined;
-      return nextCursor || undefined;
+        lastPage.cursor ||
+        lastPage.nextCursor ||
+        lastPage.next_cursor ||
+        lastPage.next_max_id ||
+        lastPage.nextMaxId ||
+        lastPage.paging?.cursors?.after ||
+        lastPage.page_info?.end_cursor ||
+        lastPage.pageInfo?.endCursor ||
+        lastPage.data?.cursor ||
+        lastPage.data?.next_cursor;
+
+      return typeof nextCursor === 'string' && nextCursor.trim().length > 0
+        ? nextCursor.trim()
+        : undefined;
     },
     enabled: isEnabled,
     staleTime: POSTS_STALE_TIME,
@@ -158,14 +170,28 @@ export function useInstagramUserReels(
         clientId: options?.clientId,
       }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => {
+    getNextPageParam: (lastPage: any) => {
+      if (!lastPage) return undefined;
+      if (lastPage.hasMore === false || lastPage.has_more === false || lastPage.has_next_page === false) {
+        return undefined;
+      }
       const nextCursor =
-        lastPage?.cursor ||
-        (lastPage as any)?.nextCursor ||
-        (lastPage as any)?.next_cursor ||
-        undefined;
-      return nextCursor || undefined;
+        lastPage.cursor ||
+        lastPage.nextCursor ||
+        lastPage.next_cursor ||
+        lastPage.next_max_id ||
+        lastPage.nextMaxId ||
+        lastPage.paging?.cursors?.after ||
+        lastPage.page_info?.end_cursor ||
+        lastPage.pageInfo?.endCursor ||
+        lastPage.data?.cursor ||
+        lastPage.data?.next_cursor;
+
+      return typeof nextCursor === 'string' && nextCursor.trim().length > 0
+        ? nextCursor.trim()
+        : undefined;
     },
+
     enabled: isEnabled,
     staleTime: POSTS_STALE_TIME,
     gcTime: GC_TIME,

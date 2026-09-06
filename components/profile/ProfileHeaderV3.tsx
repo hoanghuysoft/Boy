@@ -1,6 +1,7 @@
 import LocationIcon from "@/assets/images/svg/location.svg";
 import StickyNoteIcon from "@/assets/images/svg/sticky-note.svg";
 import VerifiedIcon from '@/icons/verified';
+import { useSettingsStore } from '@/stores/settings';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
@@ -25,10 +26,10 @@ import { useProfileHeaderViewModel } from '../../viewmodels/ProfileHeaderViewMod
 import { FlexText } from '../FlexText';
 import { usePagerHeaderContext } from '../pager/PagerHeaderContext';
 import BirthdayCard from './BirthdayCard';
-import { ADDRESS_COVER, SOCIAL_BG_URL, WORK_COVER, X_COVER_URL } from './header/constants';
+import { ADDRESS_COVER, INSTAGRAM_COVER_URL, SOCIAL_BG_URL, THREADS_COVER_URL, WORK_COVER, X_COVER_URL } from './header/constants';
 import { FamilyStackSection, HeaderInfoCard } from './header/parts';
 import { headerStyles } from './header/styles';
-import { extractXProfileInfo } from './header/utils';
+import { extractInstagramProfileInfo, extractThreadsProfileInfo, extractXProfileInfo } from './header/utils';
 
 const CaseMinimalistic = ({ size, ...props }: any) => <Ionicons name="briefcase" size={size} {...props} />;
 const PointOnMap = ({ size, ...props }: any) => <LocationIcon width={size} height={size} {...props} />;
@@ -97,7 +98,16 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         music,
     });
 
+    const socialAioClientId = useSettingsStore((s) => s.socialAioClientId);
     const xLinkInfo = useMemo(() => extractXProfileInfo(socialLinks, profile), [socialLinks, profile]);
+    const igLinkInfo = useMemo(() => {
+        if (!socialAioClientId) return null;
+        return extractInstagramProfileInfo(socialLinks, profile);
+    }, [socialLinks, profile, socialAioClientId]);
+    const threadsLinkInfo = useMemo(() => {
+        if (!socialAioClientId) return null;
+        return extractThreadsProfileInfo(socialLinks, profile);
+    }, [socialLinks, profile, socialAioClientId]);
 
     const headerCtx = usePagerHeaderContext();
     const topInset = vm.insets.top;
@@ -214,7 +224,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                             style={{ marginTop: 2, alignSelf: 'flex-start' }}
                         >
                             <FlexText style={{ color: vm.colors.primary, fontWeight: '600', fontSize: 13 }}>
-                                {t('profile.header.actions.readMore', 'Read more')}
+                                {t('common.readMore', 'Read more')}
                             </FlexText>
                         </TouchableOpacity>
                     )}
@@ -258,7 +268,7 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 />
             )}
 
-            {(isOwner || !!profile?.birthday || !!(profile as any)?.has_facebook || !!xLinkInfo || socialLinks.length > 0 || addresses.length > 0 || workplaces.length > 0) && (
+            {(isOwner || !!profile?.birthday || !!(profile as any)?.has_facebook || !!xLinkInfo || !!igLinkInfo || !!threadsLinkInfo || socialLinks.length > 0 || addresses.length > 0 || workplaces.length > 0) && (
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -290,6 +300,60 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                             )}
                         >
                             {xLinkInfo.handle ? `@${xLinkInfo.handle}` : t('profile.header.cards.xProfile')}
+                        </HeaderInfoCard>
+                    )}
+
+                    {!!igLinkInfo && (
+                        <HeaderInfoCard
+                            onPress={() =>
+                                router.push({
+                                    pathname: '/iprofile',
+                                    params: {
+                                        url: igLinkInfo.rawUrl || igLinkInfo.handle || '',
+                                        handle: igLinkInfo.handle || '',
+                                        profile: profile ? JSON.stringify(profile) : '',
+                                        socialLinks: JSON.stringify(socialLinks),
+                                    },
+                                })
+                            }
+                            backgroundColor="#E1306C"
+                            backgroundImageUri={INSTAGRAM_COVER_URL}
+                            textColor="#FFF"
+                            labelStyle={vm.common.label}
+                            leading={(
+                                <View style={headerStyles.facebookIconBubble}>
+                                    <Ionicons name="logo-instagram" size={28} color="#FFF" />
+                                </View>
+                            )}
+                        >
+                            {igLinkInfo.handle ? `@${igLinkInfo.handle}` : t('profile.header.cards.instagramProfile', 'Instagram')}
+                        </HeaderInfoCard>
+                    )}
+
+                    {!!threadsLinkInfo && (
+                        <HeaderInfoCard
+                            onPress={() =>
+                                router.push({
+                                    pathname: '/tprofile',
+                                    params: {
+                                        url: threadsLinkInfo.rawUrl || threadsLinkInfo.handle || '',
+                                        handle: threadsLinkInfo.handle || '',
+                                        profile: profile ? JSON.stringify(profile) : '',
+                                        socialLinks: JSON.stringify(socialLinks),
+                                    },
+                                })
+                            }
+                            backgroundColor="#000000"
+                            backgroundImageUri={THREADS_COVER_URL}
+                            textColor="#FFF"
+                            labelStyle={vm.common.label}
+                            leading={(
+                                <View style={headerStyles.facebookIconBubble}>
+                                    <Ionicons name="at" size={28} color="#FFF" />
+                                </View>
+                            )}
+                        >
+                            {threadsLinkInfo.handle ? `@${threadsLinkInfo.handle}` : t('profile.header.cards.threadsProfile', 'Threads')}
                         </HeaderInfoCard>
                     )}
 

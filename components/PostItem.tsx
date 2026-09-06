@@ -25,6 +25,7 @@ import i18n, { LANGUAGE_LABELS, SupportedLanguage } from "../i18n";
 import { useLanguageStore } from "../stores/language";
 import { useTranslationStore } from "../stores/translation";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
+import { checkPostDownloadStatus, useDownloadedMediaStore } from "@/services/downloadedMediaDatabase";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
 import { PostAudioWaveform } from "./PostAudioWaveform";
@@ -113,6 +114,25 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         [originalPost?.profile_id]
     );
 
+    const downloadVersion = useDownloadedMediaStore((s) => s.version);
+    const isExternalPost = React.useMemo(() => {
+        return (
+            displayPost.device === 'Instagram for Mobile' ||
+            displayPost.device === 'Instagram Story' ||
+            displayPost.device === 'Threads for Mobile' ||
+            displayPost.device === 'X for Mobile' ||
+            displayPost.device?.includes('Instagram') ||
+            displayPost.device?.includes('Threads') ||
+            displayPost.device?.includes('Twitter') ||
+            displayPost.device?.includes('fxtwitter')
+        );
+    }, [displayPost.device]);
+
+    const isFullySaved = React.useMemo(() => {
+        if (!isExternalPost || !displayPost.media || displayPost.media.length === 0) return false;
+        return checkPostDownloadStatus(displayPost).isFullyDownloaded;
+    }, [displayPost, isExternalPost, downloadVersion]);
+
     return (
         <View style={{}}>
             {/* Header */}
@@ -132,13 +152,32 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         <PostMetaInfo post={post} />
                     </View>
                 </TouchableOpacity>
-                {!isBookmarked && !metricsOnly && (
+                {!isBookmarked && (!metricsOnly || !!onOptionsPress) && (
                     <TouchableOpacity
                         hitSlop={10}
                         style={{ backgroundColor: vm.colors.surfaceContainerHigh, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
                         onPress={vm.handleOptionsPress}
                     >
                         <Ionicons name="ellipsis-horizontal" size={20} color={vm.colors.onSurface} />
+                        {isFullySaved && (
+                            <View
+                                style={{
+                                    position: 'absolute',
+                                    top: -1,
+                                    right: -1,
+                                    backgroundColor: '#10B981',
+                                    borderRadius: 999,
+                                    width: 14,
+                                    height: 14,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderWidth: 1.5,
+                                    borderColor: vm.colors.surface,
+                                }}
+                            >
+                                <Ionicons name="checkmark" size={9} color="#FFFFFF" />
+                            </View>
+                        )}
                     </TouchableOpacity>
                 )}
             </View>

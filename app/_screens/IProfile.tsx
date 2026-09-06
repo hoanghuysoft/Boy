@@ -12,6 +12,7 @@ import {
   extractInstagramProfileInfo,
   getCachedInstagramPost,
 } from "@/components/iprofile";
+import { PostOptionsSheet } from "@/components/post";
 import { List } from "@/components/list/List";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { useThemeContext } from "@/context/ThemeContext";
@@ -30,7 +31,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   StyleSheet,
@@ -272,6 +273,15 @@ const IProfileScreen = () => {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // ─── Post Options Sheet State ─────────────────────────────────
+  const optionsSheetRef = useRef<any>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+
+  const handleOptionsPress = useCallback((post: Post) => {
+    setSelectedPost(post);
+    optionsSheetRef.current?.present();
+  }, []);
+
   const renderItem = useCallback(
     ({ item }: { item: Post }) => (
       <View style={{ marginBottom: 30 }}>
@@ -279,10 +289,11 @@ const IProfileScreen = () => {
           post={item}
           metricsOnly={true}
           onCrossPostPress={handleCrossPostPress}
+          onOptionsPress={handleOptionsPress}
         />
       </View>
     ),
-    [handleCrossPostPress]
+    [handleCrossPostPress, handleOptionsPress]
   );
 
   const renderFooter = useCallback(() => {
@@ -443,6 +454,13 @@ const IProfileScreen = () => {
         initialIndex={selectedStoryIndex}
         onClose={handleCloseStoryViewer}
         onCrossPostPress={handleCrossPostPress}
+      />
+
+      {/* Post Options Sheet with Save to Gallery */}
+      <PostOptionsSheet
+        ref={optionsSheetRef}
+        post={selectedPost}
+        isExternal={true}
       />
 
       <GalleryModal />
