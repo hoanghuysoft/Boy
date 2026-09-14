@@ -101,10 +101,11 @@ export const useCommentsSheetViewModel = (
         if (ref?.current) {
             ref.current.dismiss();
         }
-        if (comment.profile_id) {
+        const target = comment.profile_username || comment.profile_id;
+        if (target) {
             router.push({
                 pathname: '/profile/[id]',
-                params: { id: comment.profile_id },
+                params: { id: target },
             });
         }
     }, [ref, router]);
@@ -172,10 +173,11 @@ export const useCommentsSheetViewModel = (
 
     // Start editing a comment — pre-fill the input with its current content
     const handleEditComment = useCallback((comment: Comment) => {
-        const parsed = parseCommentContent(comment.content);
+        const text = comment.text !== undefined ? comment.text : parseCommentContent(comment.content).text;
+        const imageUrl = comment.image_url !== undefined ? comment.image_url : parseCommentContent(comment.content).imageUrl;
         setEditingComment(comment);
-        setCommentText(parsed.text);
-        setSelectedImageUrl(parsed.imageUrl);
+        setCommentText(text);
+        setSelectedImageUrl(imageUrl);
         setReplyingToComment(null); // Cancel reply when starting edit
     }, []);
 

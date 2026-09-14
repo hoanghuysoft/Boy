@@ -225,8 +225,8 @@ export const usePostItemViewModel = ({
     }, [handleDirectRepost, handleQuoteRepost, closeDialog]);
 
     // ─── Derived ────────────────────────────────────────────────
-    const hasMedia = post.media && post.media.length > 0;
-    const hasMusic = !!post.music?.preview_url;
+    const hasMedia = post.has_media !== undefined ? post.has_media : Boolean(post.media && post.media.length > 0);
+    const hasMusic = post.has_music !== undefined ? post.has_music : Boolean(post.music?.preview_url);
 
     return {
         // Theme

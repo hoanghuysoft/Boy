@@ -16,7 +16,6 @@ export interface RepliesSectionProps {
     colors: any;
     common: any;
     theme: any;
-    currentProfileId: string | null;
     onUserPress: (comment: Comment) => void;
     onDeleteComment: (comment: Comment) => void;
     onEditComment: (comment: Comment) => void;
@@ -37,7 +36,6 @@ export const RepliesSection = memo(({
     colors,
     common,
     theme,
-    currentProfileId,
     onUserPress,
     onDeleteComment,
     onEditComment,
@@ -87,7 +85,6 @@ export const RepliesSection = memo(({
                                 colors={colors}
                                 common={common}
                                 theme={theme}
-                                isOwn={!!currentProfileId && String(currentProfileId) === String(reply.profile_id)}
                                 onPress={() => onUserPress(reply)}
                                 onDelete={() => onDeleteComment(reply)}
                                 onEdit={() => onEditComment(reply)}

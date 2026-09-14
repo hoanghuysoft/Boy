@@ -200,7 +200,10 @@ export const useCreateComment = (postId: string) => {
                 reply_to_name: null,
                 reply_to_username: null,
                 reply_to_profile_id: null,
-                reply_count: 0
+                reply_count: 0,
+                is_owner: true,
+                can_delete: true,
+                can_edit: true,
             };
 
             // Resolve parent comment info if this is a reply to reply/comment

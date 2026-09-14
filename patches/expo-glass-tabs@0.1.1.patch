@@ -1,0 +1,93 @@
+diff --git a/build/glass-tab-bar.d.ts b/build/glass-tab-bar.d.ts
+index c6195ea..74b9340 100644
+--- a/build/glass-tab-bar.d.ts
++++ b/build/glass-tab-bar.d.ts
+@@ -28,6 +28,8 @@ export type GlassTabBarProps = TabListProps & {
+     theme?: Partial<GlassTabBarTheme>;
+     /** Haptic tick while the scrub crosses tab boundaries (iOS). */
+     haptics?: boolean;
++    /** Disable the progressive blur dark overlay under the bar. */
++    disableOverlay?: boolean;
+ };
+ /**
+  * Floating liquid-glass tab bar with Revolut-style minimize-on-scroll,
+@@ -34,6 +36,6 @@ export type GlassTabBarProps = TabListProps & {
+  * with expo-router's headless tabs.
+  */
+-export declare function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics, ...props }: GlassTabBarProps): import("react").JSX.Element;
++export declare function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics, disableOverlay, ...props }: GlassTabBarProps): import("react").JSX.Element;
+ /** One tab trigger: icon + label that fades when minimized. */
+ export declare function GlassTabButton({ item, index, isFocused, onPress, ...props }: TabTriggerSlotProps & {
+     item: GlassTabItem;
+diff --git a/build/glass-tab-bar.js b/build/glass-tab-bar.js
+index 474a005..f442f49 100644
+--- a/build/glass-tab-bar.js
++++ b/build/glass-tab-bar.js
+@@ -49,7 +49,7 @@ const BarContext = createContext(null);
+  * a sliding highlight, and finger scrubbing. Use via `TabList asChild`
+  * with expo-router's headless tabs.
+  */
+-export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics = true, ...props }) {
++export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics = true, disableOverlay = false, ...props }) {
+     const insets = useSafeAreaInsets();
+     const { width: windowWidth } = useWindowDimensions();
+     const minimized = useMinimizeState();
+@@ -160,7 +160,7 @@ export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides,
+     });
+     const bottomOffset = Math.max(insets.bottom - 16, 12);
+     const barContext = useMemo(() => ({ slideIndex, isDragging, theme }), [slideIndex, isDragging, theme]);
+-    return (_jsxs(View, { ...props, pointerEvents: "box-none", style: { position: 'absolute', left: 0, right: 0, bottom: 0 }, children: [_jsx(ProgressiveBlur, { direction: "bottom", style: {
++    return (_jsxs(View, { ...props, pointerEvents: "box-none", style: { position: 'absolute', left: 0, right: 0, bottom: 0 }, children: [!disableOverlay && _jsx(ProgressiveBlur, { direction: "bottom", style: {
+                     position: 'absolute',
+                     left: 0,
+                     right: 0,
+diff --git a/src/glass-tab-bar.tsx b/src/glass-tab-bar.tsx
+index dc9056d..f80f1d0 100644
+--- a/src/glass-tab-bar.tsx
++++ b/src/glass-tab-bar.tsx
+@@ -100,6 +100,8 @@ export type GlassTabBarProps = TabListProps & {
+   theme?: Partial<GlassTabBarTheme>;
+   /** Haptic tick while the scrub crosses tab boundaries (iOS). */
+   haptics?: boolean;
++  /** Disable the progressive blur dark overlay under the bar. */
++  disableOverlay?: boolean;
+ };
+ 
+ /**
+@@ -111,6 +113,7 @@ export function GlassTabBar({
+   onIndexSelected,
+   theme: themeOverrides,
+   haptics = true,
++  disableOverlay = false,
+   ...props
+ }: GlassTabBarProps) {
+   const insets = useSafeAreaInsets();
+@@ -273,16 +276,18 @@ export function GlassTabBar({
+       pointerEvents="box-none"
+       style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+       {/* Progressive blur rising from the screen's bottom edge behind the pill. */}
+-      <ProgressiveBlur
+-        direction="bottom"
+-        style={{
+-          position: 'absolute',
+-          left: 0,
+-          right: 0,
+-          bottom: 0,
+-          height: bottomOffset + EXPANDED_HEIGHT + BLUR_BLEED,
+-        }}
+-      />
++      {!disableOverlay && (
++        <ProgressiveBlur
++          direction="bottom"
++          style={{
++            position: 'absolute',
++            left: 0,
++            right: 0,
++            bottom: 0,
++            height: bottomOffset + EXPANDED_HEIGHT + BLUR_BLEED,
++          }}
++        />
++      )}
+       <View
+         pointerEvents="box-none"
+         style={{ marginHorizontal: BAR_MARGIN, marginBottom: bottomOffset }}>

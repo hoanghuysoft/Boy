@@ -54,18 +54,24 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
     const translate = useTranslationStore(s => s.translate);
     const clearTranslation = useTranslationStore(s => s.clearTranslation);
     const setActivePost = useTranslationStore(s => s.setActivePost);
-    const [needsTranslation, setNeedsTranslation] = useState(false);
+
+    // If server provides post.lang, check translation need synchronously without async promises
+    const hasServerLang = post.lang !== undefined;
+    const [clientNeedsTranslation, setClientNeedsTranslation] = useState(false);
+    const needsTranslation = hasServerLang
+        ? Boolean(post.content && post.lang && post.lang.split('-')[0] !== translationLanguage.split('-')[0])
+        : clientNeedsTranslation;
 
     useEffect(() => {
-        if (!post.content) {
-            setNeedsTranslation(false);
+        if (hasServerLang || !post.content) {
+            setClientNeedsTranslation(false);
             return;
         }
 
         // Return cached result if we've already detected language for this post content
         const cacheKey = `${post.id}:${translationLanguage}`;
         if (languageDetectionCache.has(cacheKey)) {
-            setNeedsTranslation(languageDetectionCache.get(cacheKey) || false);
+            setClientNeedsTranslation(languageDetectionCache.get(cacheKey) || false);
             return;
         }
 
@@ -73,16 +79,26 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
             const detected = guessed?.[0]?.language;
             const needs = !!(detected && detected.split('-')[0] !== translationLanguage.split('-')[0]);
             languageDetectionCache.set(cacheKey, needs);
-            setNeedsTranslation(needs);
+            setClientNeedsTranslation(needs);
         }).catch(() => { });
-    }, [post.id, post.content, translationLanguage]);
+    }, [hasServerLang, post.id, post.content, translationLanguage]);
 
     const isRepost = !!post.reposted_post;
     const originalPost = post.reposted_post;
     const isRepostDeleted = isRepost && originalPost.deleted;
 
-    // Merge original post's assets (media, music, links, audio, device) into a displayPost object
+    // Use server pre-merged display assets if available; otherwise merge client-side
     const displayPost = React.useMemo(() => {
+        if (post.display_media !== undefined) {
+            return {
+                ...post,
+                media: post.display_media,
+                music: post.display_music ?? post.music,
+                links: post.display_links ?? post.links,
+                audio_url: post.display_audio_url ?? post.audio_url,
+                device: post.display_device ?? post.device,
+            };
+        }
         if (isRepost && !isRepostDeleted) {
             return {
                 ...post,
@@ -98,13 +114,15 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
 
     const vm = usePostItemViewModel({ post: displayPost, onOptionsPress, onLikeCountPress, onCommentPress });
 
-    // Feed video state - optimally select ONLY boolean to prevent mass re-renders
-    const hasVideo = !!displayPost.media?.some((m: Media) => m.type === 'video');
+    // Feed video state - prefer server has_video flag over array scan
+    const hasVideo = post.has_video !== undefined
+        ? post.has_video
+        : !!displayPost.media?.some((m: Media) => m.type === 'video');
 
-    // Caption without any YouTube URLs — those are rendered by YouTubePostPlayer.
+    // Caption without any YouTube URLs — prefer server pre-cleaned content over regex
     const captionWithoutYouTube = React.useMemo(
-        () => (post.content ? stripYouTubeUrls(post.content) : ''),
-        [post.content]
+        () => post.clean_content ?? (post.content ? stripYouTubeUrls(post.content) : ''),
+        [post.clean_content, post.content]
     );
 
 
@@ -187,7 +205,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 {isRepost ? (
                     isRepostDeleted ? (
                         <View style={{ gap: 8 }}>
-                            {!!captionWithoutYouTube && <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />}
+                            {!!captionWithoutYouTube && <CaptionText caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />}
                             <View style={[vm.common.row, {
                                 borderLeftWidth: 3,
                                 borderLeftColor: vm.colors.error,
@@ -206,7 +224,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         <View style={{ gap: 8 }}>
                             {/* Reposter's quote caption (if it exists) */}
                             {!!captionWithoutYouTube && (
-                                <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />
+                                <CaptionText caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
                             )}
 
                             {/* Quoted Original Post with author info right under it */}
@@ -218,7 +236,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                             }}>
                                 {!!originalPost.content && (
                                     <FlexText style={[vm.common.body, { fontStyle: 'italic', fontSize: 14, color: vm.colors.onSurface }]} numberOfLines={4}>
-                                        {originalPost.content}
+                                        {originalPost.clean_content || originalPost.content}
                                     </FlexText>
                                 )}
                                 <TouchableOpacity
@@ -245,7 +263,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     )
                 ) : (
                     captionWithoutYouTube ? (
-                        <CaptionText caption={captionWithoutYouTube} colors={vm.colors} common={vm.common} />
+                        <CaptionText caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
                     ) : null
                 )}
 
@@ -358,9 +376,17 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
 
             {/* YouTube links detected in the caption — single player or carousel */}
             {isRepost && !isRepostDeleted && originalPost.content ? (
-                <YouTubePostPlayer postId={originalPost.id} caption={originalPost.content} />
+                <YouTubePostPlayer
+                    postId={originalPost.id}
+                    caption={originalPost.content}
+                    videoIds={originalPost.youtube_ids}
+                />
             ) : (post.content ? (
-                <YouTubePostPlayer postId={post.id} caption={post.content} />
+                <YouTubePostPlayer
+                    postId={post.id}
+                    caption={post.content}
+                    videoIds={post.youtube_ids}
+                />
             ) : null)}
 
             {/* Media & Audio Overlay */}

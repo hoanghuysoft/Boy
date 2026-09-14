@@ -5,11 +5,31 @@ export interface PostResponse {
     pagination: Pagination
 }
 
+export interface CaptionPart {
+    type: 'text' | 'tag' | 'mention' | 'link';
+    text: string;
+}
+
 export interface Post {
     id: string
     profile_id: string
     created_at: string
     content: string
+    clean_content?: string
+    caption_parts?: CaptionPart[]
+    youtube_ids?: string[]
+    lang?: string | null
+    is_owner?: boolean
+    can_delete?: boolean
+    is_repost?: boolean
+    display_media?: Media[]
+    display_music?: Music | null
+    display_links?: Link[]
+    display_audio_url?: string | null
+    display_device?: string | null
+    has_video?: boolean
+    has_media?: boolean
+    has_music?: boolean
     location: any
     device: string
     deezer_id: string

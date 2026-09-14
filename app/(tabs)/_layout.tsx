@@ -70,7 +70,7 @@ export default function TabLayout() {
                 <Tabs>
                     <TabSlot style={{ height: '100%' }} renderFn={renderFadingTabScreen} />
                     <TabList asChild>
-                        <GlassTabBar theme={tabTheme} onIndexSelected={(i) => router.navigate(ITEMS[i].href)}>
+                        <GlassTabBar disableOverlay theme={tabTheme} onIndexSelected={(i) => router.navigate(ITEMS[i].href)}>
                             {ITEMS.map(({ href, ...item }, index) => (
                                 <TabTrigger key={item.name} name={item.name} href={href} asChild>
                                     <GlassTabButton item={item} index={index} />

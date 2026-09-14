@@ -129,7 +129,7 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
             post?.device?.includes('fxtwitter')
         );
 
-        const isOwner = post?.profile_id === currentProfileId;
+        const isOwner = post?.is_owner ?? (post?.profile_id === currentProfileId);
         const { data: adminData } = useAdminCheck();
         const deletePostMutation = useDeletePost(currentProfileId || "");
         const { data: myProfile } = useProfile('me', true);

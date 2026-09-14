@@ -24,6 +24,7 @@ const BUNDLE_ID =
 interface YouTubePostPlayerProps {
     postId: string;
     caption?: string;
+    videoIds?: string[];
 }
 
 interface YouTubeSlotProps {
@@ -91,10 +92,13 @@ const YouTubeSlot: React.FC<YouTubeSlotProps> = React.memo(
 );
 YouTubeSlot.displayName = 'YouTubeSlot';
 
-export const YouTubePostPlayer: React.FC<YouTubePostPlayerProps> = ({ postId, caption }) => {
+export const YouTubePostPlayer: React.FC<YouTubePostPlayerProps> = ({ postId, caption, videoIds: propVideoIds }) => {
     const { width: screenWidth } = useWindowDimensions();
     const playerHeight = screenWidth / ASPECT_RATIO;
-    const videoIds = useMemo(() => extractYouTubeIds(caption), [caption]);
+    const videoIds = useMemo(() => {
+        if (propVideoIds !== undefined) return propVideoIds;
+        return extractYouTubeIds(caption);
+    }, [propVideoIds, caption]);
     const activeKey = useActiveYouTubeStore((s) => s.activeKey);
     const setActive = useActiveYouTubeStore((s) => s.setActive);
 

@@ -3,6 +3,7 @@ import { Galeria } from "@nandorojo/galeria";
 import { Image } from "expo-image";
 import { Spinner } from "heroui-native/spinner";
 import React, { memo, useState, useEffect } from "react";
+import { useContentNavigation } from "@/hooks/useContentNavigation";
 import {
     StyleSheet,
     TouchableOpacity,
@@ -22,7 +23,7 @@ export interface CommentItemProps {
     colors: any;
     common: any;
     theme: any;
-    isOwn: boolean;
+    isOwn?: boolean;
     onPress: () => void;
     onDelete: () => void;
     onEdit: () => void;
@@ -52,31 +53,44 @@ export const CommentItem = memo(({
     isReply = false,
     onReply
 }: CommentItemProps) => {
-    const { text, imageUrl } = parseCommentContent(comment.content);
+    const text = comment.text !== undefined ? comment.text : parseCommentContent(comment.content).text;
+    const imageUrl = comment.image_url !== undefined ? comment.image_url : parseCommentContent(comment.content).imageUrl;
     const { t } = useTranslation();
+    const { handleMentionPress, handleHashtagPress } = useContentNavigation();
+
     const { translationLanguage } = useLanguageStore();
     const { translations, translate, clearTranslation } = useTranslationStore();
     const translation = translations[comment.id];
-    const [needsTranslation, setNeedsTranslation] = useState(false);
+
+    // If server provides comment.lang, evaluate synchronously and skip async guessing
+    const hasServerLang = comment.lang !== undefined;
+    const [clientNeedsTranslation, setClientNeedsTranslation] = useState(false);
+    const needsTranslation = hasServerLang
+        ? Boolean(text && comment.lang && comment.lang.split('-')[0] !== translationLanguage.split('-')[0])
+        : clientNeedsTranslation;
 
     useEffect(() => {
-        if (!text) return;
+        if (hasServerLang || !text) {
+            setClientNeedsTranslation(false);
+            return;
+        }
+
         // Ignore mentions/tags/urls and check if there's any actual text to translate
         const cleanText = text.replace(/(#[^\s#@!$%^&*()+,.;?]+|@[^\s#@!$%^&*()+,.;?]+|(?:https?:\/\/|www\.)[^\s]+)/gu, '').trim();
         if (!cleanText) {
-            setNeedsTranslation(false);
+            setClientNeedsTranslation(false);
             return;
         }
 
         guessLanguageAsync(text).then((guessed: any) => {
             const detected = guessed?.[0]?.language;
             if (detected && detected.split('-')[0] !== translationLanguage.split('-')[0]) {
-                setNeedsTranslation(true);
+                setClientNeedsTranslation(true);
             } else {
-                setNeedsTranslation(false);
+                setClientNeedsTranslation(false);
             }
         }).catch(() => { });
-    }, [text, translationLanguage]);
+    }, [hasServerLang, text, translationLanguage]);
 
     const handleTranslationPress = () => {
         if (translation?.translatedText || translation?.translationError) {
@@ -86,9 +100,8 @@ export const CommentItem = memo(({
         }
     };
 
-    const displayedText = (translation?.translatedText && !translation.isTranslating) 
-        ? translation.translatedText 
-        : text;
+    const isShowingTranslation = Boolean(translation?.translatedText && !translation.isTranslating);
+    const displayedText = isShowingTranslation ? translation!.translatedText! : text;
 
     let translateLabel: string = t('post.translate', 'Translate');
     if (translation?.isTranslating) {
@@ -96,6 +109,10 @@ export const CommentItem = memo(({
     } else if (translation?.translatedText) {
         translateLabel = t('post.showOriginal', 'Show Original');
     }
+
+    const isOwner = comment.is_owner ?? isOwn ?? false;
+    const canEdit = comment.can_edit ?? isOwner;
+    const canDelete = comment.can_delete ?? isOwner;
 
     return (
         <View style={[styles.commentItem, isReply && styles.replyCommentItem]}>
@@ -118,23 +135,66 @@ export const CommentItem = memo(({
                                 {comment.profile_name}
                             </FlexText>
                             {comment.profile_is_verified && <VerifiedIcon size={12} />}
+                            {comment.is_op && (
+                                <View style={[styles.opBadge, { backgroundColor: colors.primaryContainer || colors.surfaceVariant }]}>
+                                    <FlexText style={{ color: colors.primary, fontSize: 10, fontWeight: '700' }}>
+                                        {t('post.author', 'Author')}
+                                    </FlexText>
+                                </View>
+                            )}
                         </TouchableOpacity>
                     </View>
 
-                    {/* Text content (with image tags stripped) */}
+                    {/* Text content */}
                     {text.length > 0 && (
                         <View>
-                            <FlexText
-                                style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}
-                                parse={[
-                                    {
-                                        pattern: /(#[^\s#@!$%^&*()+,.;?]+|@[^\s#@!$%^&*()+,.;?]+)/gu,
-                                        style: { color: colors.primary, fontWeight: '600' }
-                                    }
-                                ]}
-                            >
-                                {displayedText}
-                            </FlexText>
+                            {!isShowingTranslation && comment.caption_parts && comment.caption_parts.length > 0 ? (
+                                <FlexText style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
+                                    {comment.caption_parts.map((part, index) => {
+                                        if (part.type === 'tag') {
+                                            return (
+                                                <FlexText
+                                                    key={index}
+                                                    style={{ color: colors.primary, fontWeight: '600' }}
+                                                    onPress={() => handleHashtagPress(part.text)}
+                                                >
+                                                    {part.text}
+                                                </FlexText>
+                                            );
+                                        }
+                                        if (part.type === 'mention') {
+                                            return (
+                                                <FlexText
+                                                    key={index}
+                                                    style={{ color: colors.primary, fontWeight: '600' }}
+                                                    onPress={() => handleMentionPress(part.text)}
+                                                >
+                                                    {part.text}
+                                                </FlexText>
+                                            );
+                                        }
+                                        return part.text;
+                                    })}
+                                </FlexText>
+                            ) : (
+                                <FlexText
+                                    style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}
+                                    parse={[
+                                        {
+                                            pattern: /#[^\s#@!$%^&*()+,.;?]+/gu,
+                                            style: { color: colors.primary, fontWeight: '600' },
+                                            onPress: handleHashtagPress,
+                                        },
+                                        {
+                                            pattern: /@[^\s#@!$%^&*()+,.;?]+/gu,
+                                            style: { color: colors.primary, fontWeight: '600' },
+                                            onPress: handleMentionPress,
+                                        }
+                                    ]}
+                                >
+                                    {displayedText}
+                                </FlexText>
+                            )}
                             {translation?.translationError && (
                                 <FlexText style={{ color: colors.error || '#ff0000', fontSize: 12, marginTop: 4 }}>
                                     {translation.translationError}
@@ -202,7 +262,7 @@ export const CommentItem = memo(({
                         </>
                     )}
 
-                    {isOwn && (
+                    {canEdit && (
                         <>
                             <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
                             <TouchableOpacity
@@ -214,6 +274,11 @@ export const CommentItem = memo(({
                                     {editLabel}
                                 </FlexText>
                             </TouchableOpacity>
+                        </>
+                    )}
+
+                    {canDelete && (
+                        <>
                             <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
                             <TouchableOpacity
                                 onPress={onDelete}
@@ -264,6 +329,13 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+    },
+    opBadge: {
+        paddingHorizontal: 6,
+        paddingVertical: 1,
+        borderRadius: 4,
+        alignSelf: 'center',
+        marginLeft: 2,
     },
     commentImage: {
         height: 240,

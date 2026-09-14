@@ -1,19 +1,22 @@
-import { useRouter } from "expo-router";
+import { useContentNavigation } from "@/hooks/useContentNavigation";
 import React, { useCallback, useState } from "react";
 import { View } from "react-native";
 import { FlexText } from "./FlexText";
 
+import { CaptionPart } from "@/types/post";
+
 interface CaptionTextProps {
   caption: string;
+  captionParts?: CaptionPart[];
   colors: any;
   common: any;
   maxLines?: number;
 }
 
 // Simple text parsing for hashtags, mentions, and links
-const parseCaption = (text: string) => {
+const parseCaption = (text: string): CaptionPart[] => {
   const regex = /(#[^\s]+|@[^\s]+|https?:\/\/[^\s]+)/gu;
-  const parts: { type: 'text' | 'tag' | 'mention' | 'link'; text: string }[] = [];
+  const parts: CaptionPart[] = [];
   let lastIndex = 0;
   let match;
 
@@ -41,29 +44,50 @@ const parseCaption = (text: string) => {
     parts.push({ type: 'text', text: text.slice(lastIndex) });
   }
 
-  return parts.length > 0 ? parts : [{ type: 'text' as const, text }];
+  return parts.length > 0 ? parts : [{ type: 'text', text }];
 };
 
-const CaptionText = ({ caption, colors, common, maxLines = 3 }: CaptionTextProps) => {
+const sliceCaptionParts = (parts: CaptionPart[], maxLength: number): CaptionPart[] => {
+  const result: CaptionPart[] = [];
+  let currentLength = 0;
+
+  for (const part of parts) {
+    if (currentLength + part.text.length <= maxLength) {
+      result.push(part);
+      currentLength += part.text.length;
+    } else {
+      const remaining = maxLength - currentLength;
+      if (remaining > 0) {
+        result.push({ type: part.type, text: part.text.slice(0, remaining) });
+      }
+      break;
+    }
+  }
+
+  return result;
+};
+
+const CaptionText = ({ caption, captionParts, colors, common, maxLines = 3 }: CaptionTextProps) => {
   const [expanded, setExpanded] = useState(false);
-  const router = useRouter();
+  const { handleMentionPress, handleHashtagPress } = useContentNavigation();
 
   const CHARACTER_THRESHOLD = 150;
   // Add a 20 character buffer so we don't show "Read more" to reveal just 1 or 2 extra characters
   const needsReadMore = caption.length > CHARACTER_THRESHOLD + 20;
-  const parsedParts = parseCaption(caption);
+  const resolvedParts = captionParts || parseCaption(caption);
 
   const handlePartPress = useCallback((part: { type: string; text: string }) => {
     if (part.type === 'tag') {
-      const tag = part.text.slice(1); // remove the leading #
-      router.push(`/hashtag/${encodeURIComponent(tag)}`);
+      handleHashtagPress(part.text);
+    } else if (part.type === 'mention') {
+      handleMentionPress(part.text);
     }
-  }, [router]);
+  }, [handleHashtagPress, handleMentionPress]);
 
-  const renderParts = (parts: ReturnType<typeof parseCaption>) => {
+  const renderParts = (parts: CaptionPart[]) => {
     return parts.map((part, index) => {
       const isHighlight = part.type !== 'text';
-      const isTappable = part.type === 'tag';
+      const isTappable = part.type === 'tag' || part.type === 'mention';
       return (
         <FlexText
           key={index}
@@ -79,10 +103,13 @@ const CaptionText = ({ caption, colors, common, maxLines = 3 }: CaptionTextProps
 
   const renderTruncatedText = () => {
     if (!expanded && needsReadMore) {
+      if (captionParts) {
+        return renderParts(sliceCaptionParts(captionParts, CHARACTER_THRESHOLD));
+      }
       const truncatedCaption = caption.slice(0, CHARACTER_THRESHOLD);
       return renderParts(parseCaption(truncatedCaption));
     }
-    return renderParts(parsedParts);
+    return renderParts(resolvedParts);
   };
 
   return (

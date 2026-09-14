@@ -30,7 +30,8 @@ export const useProfileViewModel = () => {
 
     // Fetch current user's profile to robustly check if viewing own profile
     const { data: myProfile } = useProfile('me', true);
-    const isMe = params.isMe === 'true' || id === 'me' || !id || (!!myProfile?.id && id === myProfile.id);
+    const cleanParamId = typeof id === 'string' ? id.replace(/^@/, '').toLowerCase() : '';
+    const isMe = params.isMe === 'true' || id === 'me' || !id || (!!myProfile?.id && id === myProfile.id) || (!!myProfile?.username && cleanParamId === myProfile.username.toLowerCase());
     const isOwner = isMe || !!myProfile?.is_admin;
 
     const blurTargetRef = useRef<View | null>(null);

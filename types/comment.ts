@@ -1,8 +1,18 @@
+import { CaptionPart } from './post';
+
 export interface Comment {
     id: string;
     post_id: string;
     user_id: string;
     content: string;
+    text?: string;
+    image_url?: string | null;
+    lang?: string | null;
+    is_owner?: boolean;
+    is_op?: boolean;
+    can_delete?: boolean;
+    can_edit?: boolean;
+    caption_parts?: CaptionPart[];
     created_at: string;
     updated_at: string;
     profile_name: string;

@@ -23,7 +23,6 @@ export const CommentBlock = memo(({ item, vm, t }: CommentBlockProps) => {
                 colors={vm.colors}
                 common={vm.common}
                 theme={vm.theme}
-                isOwn={!!vm.currentProfileId && String(vm.currentProfileId) === String(item.profile_id)}
                 onPress={() => vm.handleUserPress(item)}
                 onDelete={() => vm.handleDeleteComment(item)}
                 onEdit={() => vm.handleEditComment(item)}
@@ -41,7 +40,6 @@ export const CommentBlock = memo(({ item, vm, t }: CommentBlockProps) => {
                     colors={vm.colors}
                     common={vm.common}
                     theme={vm.theme}
-                    currentProfileId={vm.currentProfileId}
                     onUserPress={vm.handleUserPress}
                     onDeleteComment={vm.handleDeleteComment}
                     onEditComment={vm.handleEditComment}
