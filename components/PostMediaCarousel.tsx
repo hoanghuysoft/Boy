@@ -94,19 +94,29 @@ const TimeIndicator = React.memo(({ time, style }: TimeIndicatorProps) => {
 TimeIndicator.displayName = "TimeIndicator";
 
 // ─── VideoPresentationControls ────────────────────────────────────────────────
+export interface VideoPresentationControlsHandle {
+    setTimeRemaining: (time: number) => void;
+}
+
 interface VideoPresentationControlsProps {
     videoRef: React.RefObject<BlueskyVideoView | null>;
     isPlaying: boolean;
-    timeRemaining: number;
     isMuted: boolean;
 }
 
-const VideoPresentationControls = React.memo(({
+const VideoPresentationControls = React.memo(React.forwardRef<VideoPresentationControlsHandle, VideoPresentationControlsProps>(({
     videoRef,
     isPlaying,
-    timeRemaining,
     isMuted,
-}: VideoPresentationControlsProps) => {
+}, ref) => {
+    const [timeRemaining, setTimeRemaining] = useState(0);
+
+    React.useImperativeHandle(ref, () => ({
+        setTimeRemaining: (time: number) => {
+            setTimeRemaining(time);
+        },
+    }), []);
+
     const handleTogglePlayback = useCallback(() => {
         videoRef.current?.togglePlayback();
     }, [videoRef]);
@@ -186,7 +196,7 @@ const VideoPresentationControls = React.memo(({
             </RNPressable>
         </View>
     );
-});
+}));
 VideoPresentationControls.displayName = "VideoPresentationControls";
 
 // ─── VideoCarouselItem ────────────────────────────────────────────────────────
@@ -199,6 +209,7 @@ interface VideoCarouselItemProps {
     placeholderImageVideo: string;
     mediaHeight: number;
     screenWidth: number;
+    isItemActive?: boolean;
 }
 
 const VideoCarouselItem = React.memo(({
@@ -210,8 +221,10 @@ const VideoCarouselItem = React.memo(({
     placeholderImageVideo,
     mediaHeight,
     screenWidth,
+    isItemActive = true,
 }: VideoCarouselItemProps) => {
     const videoRef = useRef<BlueskyVideoView>(null);
+    const controlsRef = useRef<VideoPresentationControlsHandle>(null);
     const isMuted = useFeedVideoStore(s => s.isMuted);
     const disableAutoplay = useSettingsStore(s => s.disableAutoplay);
 
@@ -221,7 +234,6 @@ const VideoCarouselItem = React.memo(({
     const [isLoading, setIsLoading] = useState(false);
     const [isActive, setIsActive] = useState(false);
     const [status, setStatus] = useState<'playing' | 'paused' | 'pending'>('pending');
-    const [timeRemaining, setTimeRemaining] = useState(0);
 
     const showSpinner = useThrottledValue(isActive && isLoading, 100);
 
@@ -257,7 +269,7 @@ const VideoCarouselItem = React.memo(({
                     <BlueskyVideoView
                         ref={videoRef}
                         url={videoUrl}
-                        autoplay={!disableAutoplay}
+                        autoplay={!disableAutoplay && isItemActive}
                         beginMuted={isMuted}
                         style={{ width: '100%', height: '100%' }}
                         onActiveChange={e => {
@@ -280,7 +292,7 @@ const VideoCarouselItem = React.memo(({
                             setIsPlaying(e.nativeEvent.status === 'playing');
                         }}
                         onTimeRemainingChange={e => {
-                            setTimeRemaining(e.nativeEvent.timeRemaining);
+                            controlsRef.current?.setTimeRemaining(e.nativeEvent.timeRemaining);
                         }}
                         onError={e => {
                             console.warn('[VideoCarousel] Error:', e.nativeEvent.error);
@@ -348,9 +360,9 @@ const VideoCarouselItem = React.memo(({
                 {/* Presentation Controls: active & not loading */}
                 {isActive && !isLoading && (
                     <VideoPresentationControls
+                        ref={controlsRef}
                         videoRef={videoRef}
                         isPlaying={isPlaying}
-                        timeRemaining={timeRemaining}
                         isMuted={isMuted}
                     />
                 )}
@@ -363,7 +375,8 @@ const VideoCarouselItem = React.memo(({
     prev.profileName === next.profileName &&
     prev.content === next.content &&
     prev.mediaHeight === next.mediaHeight &&
-    prev.screenWidth === next.screenWidth,
+    prev.screenWidth === next.screenWidth &&
+    prev.isItemActive === next.isItemActive,
 );
 VideoCarouselItem.displayName = "VideoCarouselItem";
 
@@ -438,6 +451,7 @@ interface MediaCarouselItemProps {
     placeholderImageVideo: string;
     mediaHeight: number;
     screenWidth: number;
+    isItemActive?: boolean;
     onPhotoPress: (photoIndex: number) => void;
 }
 
@@ -452,6 +466,7 @@ const MediaCarouselItem = React.memo(({
     placeholderImageVideo,
     mediaHeight,
     screenWidth,
+    isItemActive = true,
     onPhotoPress,
 }: MediaCarouselItemProps) => {
     // Photo index: how many photos came before this slot
@@ -475,6 +490,7 @@ const MediaCarouselItem = React.memo(({
                 placeholderImageVideo={placeholderImageVideo}
                 mediaHeight={mediaHeight}
                 screenWidth={screenWidth}
+                isItemActive={isItemActive}
             />
         );
     }
@@ -497,6 +513,7 @@ const MediaCarouselItem = React.memo(({
     prev.content === next.content &&
     prev.mediaHeight === next.mediaHeight &&
     prev.screenWidth === next.screenWidth &&
+    prev.isItemActive === next.isItemActive &&
     prev.onPhotoPress === next.onPhotoPress,
 );
 MediaCarouselItem.displayName = "MediaCarouselItem";
@@ -604,7 +621,7 @@ const MultiMediaCarousel = React.memo(({
         openGallery(galleryImages, photoIndex);
     }, [openGallery, galleryImages]);
 
-    const handleViewableItemsChangedImpl = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
         if (viewableItems.length > 0) {
             const idx = viewableItems[0].index ?? 0;
             setActiveIndex(idx);
@@ -612,23 +629,11 @@ const MultiMediaCarousel = React.memo(({
             // Native autoplay: scan for active video when horizontal slide changes
             updateActiveVideoViewAsync();
         }
-    }, []);
+    }).current;
 
-    const handleViewableItemsChangedRef = useRef(handleViewableItemsChangedImpl);
-    useEffect(() => {
-        handleViewableItemsChangedRef.current = handleViewableItemsChangedImpl;
-    }, [handleViewableItemsChangedImpl]);
-
-    const viewabilityConfigCallbackPairs = useMemo(() => [
-        {
-            viewabilityConfig: {
-                itemVisiblePercentThreshold: 50,
-            } as ViewabilityConfig,
-            onViewableItemsChanged: ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-                handleViewableItemsChangedRef.current({ viewableItems });
-            },
-        },
-    ], []);
+    const viewabilityConfig = useRef<ViewabilityConfig>({
+        itemVisiblePercentThreshold: 50,
+    }).current;
 
     const keyExtractor = useCallback((item: Media) => item.id, []);
 
@@ -645,10 +650,11 @@ const MultiMediaCarousel = React.memo(({
                 placeholderImageVideo={PLACEHOLDER_IMAGE_VIDEO}
                 mediaHeight={mediaHeight}
                 screenWidth={screenWidth}
+                isItemActive={index === activeIndex}
                 onPhotoPress={handlePhotoPress}
             />
         </AnimatedMediaWrapper>
-    ), [pressAnim, media, postId, profileName, content, colors, mediaHeight, screenWidth, handlePhotoPress]);
+    ), [pressAnim, media, postId, profileName, content, colors, mediaHeight, screenWidth, activeIndex, handlePhotoPress]);
 
     return (
         <View style={{ marginBottom: 16 }}>
@@ -658,7 +664,8 @@ const MultiMediaCarousel = React.memo(({
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 keyExtractor={keyExtractor}
-                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
+                viewabilityConfig={viewabilityConfig}
+                onViewableItemsChanged={onViewableItemsChanged}
                 renderItem={renderMediaItem}
                 initialNumToRender={1}
                 maxToRenderPerBatch={2}

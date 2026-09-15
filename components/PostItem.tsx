@@ -46,10 +46,54 @@ export interface PostItemProps {
     metricsOnly?: boolean;
 }
 
+const SavedPostBadge = React.memo(({ post, borderColor }: { post: Post; borderColor: string }) => {
+    const isExternalPost = React.useMemo(() => {
+        return (
+            post.device === 'Instagram for Mobile' ||
+            post.device === 'Instagram Story' ||
+            post.device === 'Threads for Mobile' ||
+            post.device === 'X for Mobile' ||
+            post.device?.includes('Instagram') ||
+            post.device?.includes('Threads') ||
+            post.device?.includes('Twitter') ||
+            post.device?.includes('fxtwitter')
+        );
+    }, [post.device]);
+
+    const downloadVersion = useDownloadedMediaStore((s) => s.version);
+    const isFullySaved = React.useMemo(() => {
+        if (!isExternalPost || !post.media || post.media.length === 0) return false;
+        return checkPostDownloadStatus(post).isFullyDownloaded;
+    }, [post, isExternalPost, downloadVersion]);
+
+    if (!isFullySaved) return null;
+
+    return (
+        <View
+            style={{
+                position: 'absolute',
+                top: -1,
+                right: -1,
+                backgroundColor: '#10B981',
+                borderRadius: 999,
+                width: 14,
+                height: 14,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 1.5,
+                borderColor: borderColor,
+            }}
+        >
+            <Ionicons name="checkmark" size={9} color="#FFFFFF" />
+        </View>
+    );
+});
+SavedPostBadge.displayName = "SavedPostBadge";
+
 export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, onCrossPostPress, isBookmarked = false, metricsOnly = false }: PostItemProps) => {
     const screenWidth = Dimensions.get('window').width;
     const t = i18n.t.bind(i18n);
-    const { translationLanguage } = useLanguageStore();
+    const translationLanguage = useLanguageStore(s => s.translationLanguage);
     const translation = useTranslationStore(s => s.translations[post.id]);
     const translate = useTranslationStore(s => s.translate);
     const clearTranslation = useTranslationStore(s => s.clearTranslation);
@@ -132,25 +176,6 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         [originalPost?.profile_id]
     );
 
-    const downloadVersion = useDownloadedMediaStore((s) => s.version);
-    const isExternalPost = React.useMemo(() => {
-        return (
-            displayPost.device === 'Instagram for Mobile' ||
-            displayPost.device === 'Instagram Story' ||
-            displayPost.device === 'Threads for Mobile' ||
-            displayPost.device === 'X for Mobile' ||
-            displayPost.device?.includes('Instagram') ||
-            displayPost.device?.includes('Threads') ||
-            displayPost.device?.includes('Twitter') ||
-            displayPost.device?.includes('fxtwitter')
-        );
-    }, [displayPost.device]);
-
-    const isFullySaved = React.useMemo(() => {
-        if (!isExternalPost || !displayPost.media || displayPost.media.length === 0) return false;
-        return checkPostDownloadStatus(displayPost).isFullyDownloaded;
-    }, [displayPost, isExternalPost, downloadVersion]);
-
     return (
         <View style={{}}>
             {/* Header */}
@@ -177,25 +202,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         onPress={vm.handleOptionsPress}
                     >
                         <Ionicons name="ellipsis-horizontal" size={20} color={vm.colors.onSurface} />
-                        {isFullySaved && (
-                            <View
-                                style={{
-                                    position: 'absolute',
-                                    top: -1,
-                                    right: -1,
-                                    backgroundColor: '#10B981',
-                                    borderRadius: 999,
-                                    width: 14,
-                                    height: 14,
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderWidth: 1.5,
-                                    borderColor: vm.colors.surface,
-                                }}
-                            >
-                                <Ionicons name="checkmark" size={9} color="#FFFFFF" />
-                            </View>
-                        )}
+                        <SavedPostBadge post={displayPost} borderColor={vm.colors.surface} />
                     </TouchableOpacity>
                 )}
             </View>

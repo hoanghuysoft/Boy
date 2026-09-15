@@ -106,7 +106,6 @@ const FeedTab: React.FC<FeedTabProps> = ({
             updateActiveVideoViewAsync();
             return () => {
                 clearActiveVideo();
-                updateActiveVideoViewAsync();
             };
         }, [clearActiveVideo])
     );
@@ -317,7 +316,8 @@ const FeedTab: React.FC<FeedTabProps> = ({
                 ListFooterComponent={renderFooter}
                 // ─── Viewability (image prefetch) ───────────────────────
                 onItemSeen={handleItemSeen}
-                // ─── Performance (FlashList) ────────────
+                // ─── Performance (LegendList) ────────────
+                estimatedItemSize={480}
                 drawDistance={500}
                 getItemType={(item: Post) => {
                     const content = item.reposted_post || item;

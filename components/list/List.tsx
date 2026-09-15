@@ -155,7 +155,7 @@ let List = forwardRef<ListMethods, ListProps>(
       progressViewOffset,
       disableScrollsToTop = false,
       automaticallyAdjustsScrollIndicatorInsets = false,
-      estimatedItemSize = 100,
+      estimatedItemSize = 350,
       recycleItems = true,
       maintainVisibleContentPosition = true,
       ...props

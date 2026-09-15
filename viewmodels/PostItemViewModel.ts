@@ -1,8 +1,8 @@
 import { Post } from "@/types/post";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useToast } from "heroui-native/toast";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Clipboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
 import i18n from "../i18n";
@@ -30,10 +30,8 @@ export const usePostItemViewModel = ({
     const t = i18n.t.bind(i18n);
 
     const router = useRouter();
-    const params = useLocalSearchParams();
-    const currentProfileId = Array.isArray(params.id) ? params.id[0] : params.id;
     const { colors, typography } = useThemeContext();
-    const common = createCommonStyles(colors, typography);
+    const common = useMemo(() => createCommonStyles(colors, typography), [colors, typography]);
 
     // ─── Optimistic State (avoids double render on recycle) ─────
     // FlashList recycles cells. By keeping optimistic overrides in a dictionary,
@@ -81,12 +79,11 @@ export const usePostItemViewModel = ({
 
     // ─── Profile Navigation ─────────────────────────────────────
     const handleProfilePress = useCallback(() => {
-        if (currentProfileId && String(currentProfileId) === String(post.profile_id)) return;
         router.push({
             pathname: '/profile/[id]',
             params: { id: post.profile_id },
         });
-    }, [currentProfileId, post.profile_id, router]);
+    }, [post.profile_id, router]);
 
     // ─── Music ──────────────────────────────────────────────────
     const isPlaying = useAudioStore(s => s.currentlyPlayingId === post.id);

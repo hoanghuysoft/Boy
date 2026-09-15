@@ -1,0 +1,95 @@
+diff --git a/android/src/main/java/expo/modules/blueskyvideo/BlueskyVideoView.kt b/android/src/main/java/expo/modules/blueskyvideo/BlueskyVideoView.kt
+index f2aa71a..659551e 100644
+--- a/android/src/main/java/expo/modules/blueskyvideo/BlueskyVideoView.kt
++++ b/android/src/main/java/expo/modules/blueskyvideo/BlueskyVideoView.kt
+@@ -355,22 +355,37 @@ class BlueskyVideoView(
+         if (!this.isShown) {
+             return null
+         }
++        val globalRect = Rect()
++        val isVisible = this.getGlobalVisibleRect(globalRect)
++        if (!isVisible) {
++            return null
++        }
++        return globalRect
++    }
+ 
+-        val screenPosition = intArrayOf(0, 0)
+-        this.getLocationInWindow(screenPosition)
+-        return Rect(
+-            screenPosition[0],
+-            screenPosition[1],
+-            screenPosition[0] + this.width,
+-            screenPosition[1] + this.height,
+-        )
++    fun calculateVisibilityPercentage(): Float {
++        if (!this.isShown || this.width <= 0 || this.height <= 0) {
++            return 0f
++        }
++
++        val visibleRect = Rect()
++        val isVisible = this.getGlobalVisibleRect(visibleRect)
++        if (!isVisible) {
++            return 0f
++        }
++
++        val visibleArea = visibleRect.width().toLong() * visibleRect.height().toLong()
++        val totalArea = this.width.toLong() * this.height.toLong()
++
++        return if (totalArea > 0L) {
++            (visibleArea.toFloat() / totalArea.toFloat()).coerceIn(0f, 1f)
++        } else {
++            0f
++        }
+     }
+ 
+     fun isViewableEnough(): Boolean {
+-        val positionOnScreen = this.getPositionOnScreen() ?: return false
+-        val visibleArea = positionOnScreen.width() * positionOnScreen.height()
+-        val totalArea = this.width * this.height
+-        return visibleArea >= 0.5 * totalArea
++        return calculateVisibilityPercentage() >= 0.5f
+     }
+ 
+     // Setup helpers
+diff --git a/android/src/main/java/expo/modules/blueskyvideo/ViewManager.kt b/android/src/main/java/expo/modules/blueskyvideo/ViewManager.kt
+index 19baa08..f80e851 100644
+--- a/android/src/main/java/expo/modules/blueskyvideo/ViewManager.kt
++++ b/android/src/main/java/expo/modules/blueskyvideo/ViewManager.kt
+@@ -34,24 +34,21 @@ class ViewManager {
+                 }
+             } else if (count > 1) {
+                 var mostVisibleView: BlueskyVideoView? = null
+-                var mostVisiblePosition: Rect? = null
++                var highestVisibilityPercentage = 0f
++                var topMostPosition = Float.MAX_VALUE
+ 
+                 views.forEach { view ->
+-                    if (!view.isViewableEnough()) {
+-                        return
+-                    }
+-
+-                    val position = view.getPositionOnScreen() ?: return@forEach
+-                    val topY = position.centerY() - (position.height() / 2)
+-
+-                    if (topY >= 150) {
+-                        if (mostVisiblePosition == null) {
+-                            mostVisiblePosition = position
+-                        }
+-
+-                        if (position.centerY() <= mostVisiblePosition!!.centerY()) {
++                    val visibilityPercentage = view.calculateVisibilityPercentage()
++                    if (visibilityPercentage >= 0.5f) {
++                        val position = view.getPositionOnScreen()
++                        val topY = position?.top?.toFloat() ?: Float.MAX_VALUE
++
++                        if (visibilityPercentage > highestVisibilityPercentage ||
++                            (visibilityPercentage == highestVisibilityPercentage && topY < topMostPosition)
++                        ) {
+                             mostVisibleView = view
+-                            mostVisiblePosition = position
++                            highestVisibilityPercentage = visibilityPercentage
++                            topMostPosition = topY
+                         }
+                     }
+                 }

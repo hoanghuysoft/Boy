@@ -169,7 +169,6 @@ const TProfileScreen = () => {
       updateActiveVideoViewAsync();
       return () => {
         clearActiveVideo();
-        updateActiveVideoViewAsync();
       };
     }, [clearActiveVideo])
   );

@@ -6,6 +6,13 @@
     "heroui-native": {
       "command": "npx",
       "args": ["-y", "@heroui/native-mcp@latest"]
+    },
+    "argent": {
+      "command": "node",
+      "args": [
+        "node_modules/@swmansion/argent/dist/cli.js",
+        "mcp"
+      ]
     }
   }
 }

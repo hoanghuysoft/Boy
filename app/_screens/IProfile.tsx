@@ -200,7 +200,6 @@ const IProfileScreen = () => {
       updateActiveVideoViewAsync();
       return () => {
         clearActiveVideo();
-        updateActiveVideoViewAsync();
       };
     }, [clearActiveVideo])
   );

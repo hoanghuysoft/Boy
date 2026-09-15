@@ -145,7 +145,6 @@ const FProfileScreen = () => {
       updateActiveVideoViewAsync();
       return () => {
         clearActiveVideo();
-        updateActiveVideoViewAsync();
       };
     }, [clearActiveVideo])
   );

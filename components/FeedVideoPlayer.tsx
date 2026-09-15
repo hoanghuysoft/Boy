@@ -3,6 +3,7 @@ import PlayIcon from "@/assets/images/svg/play.svg";
 import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
 import SoundIcon from "@/assets/images/svg/sound.svg";
 import { useFeedVideoStore } from '@/stores/feedVideo';
+import { useSettingsStore } from '@/stores/settings';
 import { BlueskyVideoView } from '@bsky.app/video';
 import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -32,6 +33,7 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
     const videoHeight = screenWidth / ASPECT_RATIO;
     const isMuted = useFeedVideoStore(s => s.isMuted);
     const setEnded = useFeedVideoStore(s => s.setEnded);
+    const disableAutoplay = useSettingsStore(s => s.disableAutoplay);
     const videoRef = useRef<BlueskyVideoView>(null);
 
     const [isPlaying, setIsPlaying] = useState(false);
@@ -63,7 +65,7 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
             <BlueskyVideoView
                 ref={videoRef}
                 url={videoUrl}
-                autoplay={true}
+                autoplay={!disableAutoplay}
                 beginMuted={isMuted}
                 style={styles.video}
                 onActiveChange={e => {
