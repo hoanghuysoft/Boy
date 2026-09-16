@@ -221,10 +221,10 @@ export const ShotItem = React.memo(function ShotItem({
                             contentFit="cover"
                         />
                     )}
-                    <FlexText style={styles.profileName}>{item.profile_name}</FlexText>
+                    <FlexText lite={false} style={styles.profileName}>{item.profile_name}</FlexText>
                 </TouchableOpacity>
                 {item.caption && (
-                    <FlexText style={styles.caption} numberOfLines={2}>
+                    <FlexText lite={false} style={styles.caption} numberOfLines={2}>
                         {item.caption}
                     </FlexText>
                 )}

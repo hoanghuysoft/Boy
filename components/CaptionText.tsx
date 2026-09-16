@@ -90,6 +90,7 @@ const CaptionText = ({ caption, captionParts, colors, common, maxLines = 3 }: Ca
       const isTappable = part.type === 'tag' || part.type === 'mention';
       return (
         <FlexText
+          lite={false}
           key={index}
           style={isHighlight ? { color: colors.verify, fontWeight: '500' } : undefined}
           onPress={isTappable ? () => handlePartPress(part) : undefined}
@@ -115,11 +116,13 @@ const CaptionText = ({ caption, captionParts, colors, common, maxLines = 3 }: Ca
   return (
     <View>
       <FlexText
+        lite={false}
         style={[common.body, { color: colors.text, marginTop: 10, marginBottom: 10, fontSize: 14 }]}
       >
         {renderTruncatedText()}
         {!expanded && needsReadMore && (
           <FlexText
+            lite={false}
             onPress={() => setExpanded(true)}
             style={{ color: colors.verify, fontWeight: '600' }}
             suppressHighlighting={true}

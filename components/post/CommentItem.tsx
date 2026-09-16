@@ -131,7 +131,7 @@ export const CommentItem = memo(({
                 <View>
                     <View style={styles.commentHeader}>
                         <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
-                            <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 13, fontWeight: '600' }]} numberOfLines={1}>
+                            <FlexText lite={false} style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 13, fontWeight: '600' }]} numberOfLines={1}>
                                 {comment.profile_name}
                             </FlexText>
                             {comment.profile_is_verified && <VerifiedIcon size={12} />}
@@ -149,11 +149,12 @@ export const CommentItem = memo(({
                     {text.length > 0 && (
                         <View>
                             {!isShowingTranslation && comment.caption_parts && comment.caption_parts.length > 0 ? (
-                                <FlexText style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
+                                <FlexText lite={false} style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
                                     {comment.caption_parts.map((part, index) => {
                                         if (part.type === 'tag') {
                                             return (
                                                 <FlexText
+                                                    lite={false}
                                                     key={index}
                                                     style={{ color: colors.primary, fontWeight: '600' }}
                                                     onPress={() => handleHashtagPress(part.text)}
@@ -165,6 +166,7 @@ export const CommentItem = memo(({
                                         if (part.type === 'mention') {
                                             return (
                                                 <FlexText
+                                                    lite={false}
                                                     key={index}
                                                     style={{ color: colors.primary, fontWeight: '600' }}
                                                     onPress={() => handleMentionPress(part.text)}
@@ -178,6 +180,7 @@ export const CommentItem = memo(({
                                 </FlexText>
                             ) : (
                                 <FlexText
+                                    lite={false}
                                     style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}
                                     parse={[
                                         {

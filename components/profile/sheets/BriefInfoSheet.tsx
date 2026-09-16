@@ -122,11 +122,13 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
     const inset = useSafeAreaInsets();
 
     const [index, setIndex] = useState(0);
+    const [hasOpened, setHasOpened] = useState(false);
     const wasOpenRef = useRef(false);
     const triviaSheetRef = useRef<TriviaSheetHandle>(null);
 
     const controllerRef = useRef<BriefInfoSheetHandle>({
         present: () => {
+            setHasOpened(true);
             wasOpenRef.current = true;
             setIndex(1);
         },
@@ -152,6 +154,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
 
     const handleIndexChange = useCallback((newIndex: number) => {
         if (newIndex > 0) {
+            setHasOpened(true);
             wasOpenRef.current = true;
         }
         setIndex(newIndex);
@@ -165,7 +168,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
 
     const metadata = profile?.metadata;
     const parsedMetadata = useMemo(() => {
-        if (!metadata) return null;
+        if (!hasOpened || !metadata) return null;
         try {
             return typeof metadata === 'string'
                 ? JSON.parse(metadata)
@@ -173,16 +176,17 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
         } catch {
             return null;
         }
-    }, [metadata]);
+    }, [hasOpened, metadata]);
 
     const height = parsedMetadata?.height;
     const weight = parsedMetadata?.weight;
     const bankinfo = parsedMetadata?.banking;
     const [profileInfo, setProfileInfo] = useState<Awaited<ReturnType<typeof enrichProfileData>>>(null);
-    const BMI = useMemo(() => calculateBMI(height || 0, weight || 0), [height, weight]);
-    const BMIStatus = useMemo(() => getBMIStatus(BMI), [BMI]);
+    const BMI = useMemo(() => hasOpened ? calculateBMI(height || 0, weight || 0) : 0, [hasOpened, height, weight]);
+    const BMIStatus = useMemo(() => hasOpened ? getBMIStatus(BMI) : null, [hasOpened, BMI]);
 
     useEffect(() => {
+        if (!hasOpened) return;
         let cancelled = false;
 
         const birthday = profile?.birthday;
@@ -204,7 +208,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
         return () => {
             cancelled = true;
         };
-    }, [profile?.birthday]);
+    }, [hasOpened, profile?.birthday]);
 
     const formatDate = (dateString: string | null | undefined) => {
         if (!dateString) return null;
@@ -215,6 +219,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
     };
 
     const sections = useMemo<Section[]>(() => {
+        if (!hasOpened) return [];
         const result: Section[] = [];
 
         // Work
@@ -272,11 +277,11 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
         }
         if (height) personalItems.push({ kind: 'material', name: 'height', label: `${height} cm`, sublabel: t('profile.info.fields.height') });
         if (weight) personalItems.push({ kind: 'solar', icon: Weigher, label: `${weight} kg`, sublabel: t('profile.info.fields.weight') });
-        if (height && weight) personalItems.push({ kind: 'solar', icon: ClipboardHeart, label: `${BMI} BMI`, sublabel: t(`profile.sheets.brief.bmiStatusValue.${BMIStatus}` as const) });
-        if (profileInfo?.zodiacSign) personalItems.push({ kind: 'solar', icon: StarsMinimalistic, label: t(`profile.sheets.brief.zodiacValue.${profileInfo.zodiacSign}` as const), sublabel: t('profile.sheets.brief.zodiacSign') });
-        if (profileInfo?.chineseZodiac) personalItems.push({ kind: 'solar', icon: Cat, label: t(`profile.sheets.brief.chineseZodiacValue.${profileInfo.chineseZodiac}` as const), sublabel: t('profile.sheets.brief.chineseZodiac') });
+        if (height && weight) personalItems.push({ kind: 'solar', icon: ClipboardHeart, label: `${BMI} BMI`, sublabel: t(`profile.sheets.brief.bmiStatusValue.${BMIStatus}` as any) });
+        if (profileInfo?.zodiacSign) personalItems.push({ kind: 'solar', icon: StarsMinimalistic, label: t(`profile.sheets.brief.zodiacValue.${profileInfo.zodiacSign}` as any), sublabel: t('profile.sheets.brief.zodiacSign') });
+        if (profileInfo?.chineseZodiac) personalItems.push({ kind: 'solar', icon: Cat, label: t(`profile.sheets.brief.chineseZodiacValue.${profileInfo.chineseZodiac}` as any), sublabel: t('profile.sheets.brief.chineseZodiac') });
         if (profileInfo?.lifePathNumber) personalItems.push({ kind: 'solar', icon: Calculator, label: profileInfo.lifePathNumber.toString(), sublabel: t('profile.sheets.brief.lifePathNumber') });
-        if (profileInfo?.generation) personalItems.push({ kind: 'solar', icon: DumbbellLargeMinimalistic, label: t(`profile.sheets.brief.generationValue.${profileInfo.generation}` as const), sublabel: t('profile.sheets.brief.generation') });
+        if (profileInfo?.generation) personalItems.push({ kind: 'solar', icon: DumbbellLargeMinimalistic, label: t(`profile.sheets.brief.generationValue.${profileInfo.generation}` as any), sublabel: t('profile.sheets.brief.generation') });
         if (profileInfo?.historicalEvent) personalItems.push({ kind: 'solar', icon: History, label: profileInfo.historicalEvent, sublabel: t('profile.sheets.brief.historicalEventOnBirthday') });
         if (personalItems.length > 0) result.push({ title: t('profile.sheets.brief.sections.personal'), items: personalItems });
         // Contact
@@ -332,7 +337,7 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
         }
 
         return result;
-    }, [profile, workplaces, homeInfo, height, weight, bankinfo, profileInfo, t, BMI, BMIStatus]);
+    }, [hasOpened, profile, workplaces, homeInfo, height, weight, bankinfo, profileInfo, t, BMI, BMIStatus]);
 
     return (
         <ModalBottomSheet
@@ -358,66 +363,68 @@ export const BriefInfoSheet = memo(forwardRef<BriefInfoSheetHandle, BriefInfoShe
             }
         >
             <View style={[styles.grabber, { backgroundColor: colors.onSurfaceVariant, marginTop: inset.top + 12 }]} />
-            <ScrollView nestedScrollEnabled style={{ flex: 1, paddingHorizontal: 12, paddingTop: 4 }}>
+            {hasOpened ? (
+                <ScrollView nestedScrollEnabled style={{ flex: 1, paddingHorizontal: 12, paddingTop: 4 }}>
 
-                {/* Header */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-                    <View style={{ flex: 1 }}>
-                        <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.header.actions.knowMe')}</FlexText>
-                        {profile?.name && (
-                            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
-                                {t('profile.sheets.brief.getToKnow', { name: profile.name })}
-                            </FlexText>
-                        )}
-                    </View>
-                    <TouchableOpacity
-                        onPress={() => {
-                            if (onOpenTrivia) {
-                                onOpenTrivia();
-                            } else {
-                                triviaSheetRef.current?.present();
-                            }
-                        }}
-                        activeOpacity={0.7}
-                        style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 6,
-                            backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                            paddingHorizontal: 14,
-                            paddingVertical: 8,
-                            borderRadius: 999,
-                        }}
-                    >
-                        <Ionicons name="sparkles" size={16} color={colors.primary || colors.text} />
-                        <FlexText style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
-                            {t('profile.sheets.trivia.title')}
-                        </FlexText>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Sections */}
-                {sections.map((section) => (
-                    <View key={section.title} style={{ marginBottom: 24 }}>
-                        <FlexText style={[common.bodySmall, styles.sectionTitle]}>
-                            {section.title}
-                        </FlexText>
-                        <View style={{ gap: 4 }}>
-                            {section.items.map((item, i) => (
-                                <InfoRow key={i} item={item} colors={colors} />
-                            ))}
+                    {/* Header */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                        <View style={{ flex: 1 }}>
+                            <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.header.actions.knowMe')}</FlexText>
+                            {profile?.name && (
+                                <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 4 }]}>
+                                    {t('profile.sheets.brief.getToKnow', { name: profile.name })}
+                                </FlexText>
+                            )}
                         </View>
+                        <TouchableOpacity
+                            onPress={() => {
+                                if (onOpenTrivia) {
+                                    onOpenTrivia();
+                                } else {
+                                    triviaSheetRef.current?.present();
+                                }
+                            }}
+                            activeOpacity={0.7}
+                            style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 6,
+                                backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                                paddingHorizontal: 14,
+                                paddingVertical: 8,
+                                borderRadius: 999,
+                            }}
+                        >
+                            <Ionicons name="sparkles" size={16} color={colors.primary || colors.text} />
+                            <FlexText style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>
+                                {t('profile.sheets.trivia.title')}
+                            </FlexText>
+                        </TouchableOpacity>
                     </View>
-                ))}
 
-                {sections.length === 0 && (
-                    <FlexText style={[common.bodySmall, { color: colors.muted, textAlign: 'center' }]}>
-                        {t('profile.sheets.brief.noInformation')}
-                    </FlexText>
-                )}
+                    {/* Sections */}
+                    {sections.map((section) => (
+                        <View key={section.title} style={{ marginBottom: 24 }}>
+                            <FlexText style={[common.bodySmall, styles.sectionTitle]}>
+                                {section.title}
+                            </FlexText>
+                            <View style={{ gap: 4 }}>
+                                {section.items.map((item, i) => (
+                                    <InfoRow key={i} item={item} colors={colors} />
+                                ))}
+                            </View>
+                        </View>
+                    ))}
 
-                <View style={{ height: inset.bottom + 20 }} />
-            </ScrollView>
+                    {sections.length === 0 && (
+                        <FlexText style={[common.bodySmall, { color: colors.muted, textAlign: 'center' }]}>
+                            {t('profile.sheets.brief.noInformation')}
+                        </FlexText>
+                    )}
+
+                    <View style={{ height: inset.bottom + 20 }} />
+                </ScrollView>
+            ) : null}
         </ModalBottomSheet>
     );
 }));

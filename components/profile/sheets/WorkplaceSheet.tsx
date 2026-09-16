@@ -640,6 +640,8 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(
 
         const sheetRef = useRef<TrueSheet>(null);
         const isPresented = useRef(false);
+        const [hasPresented, setHasPresented] = useState(false);
+        const [hasOpenedAddEdit, setHasOpenedAddEdit] = useState(false);
         const backHandler = useSheetBackHandler(sheetRef);
 
         const addEditSheetRef = useRef<TrueSheet>(null);
@@ -648,6 +650,7 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(
 
         useImperativeHandle(ref, () => ({
             present: (index?: number, animated?: boolean) => {
+                setHasPresented(true);
                 if (isPresented.current) return Promise.resolve();
                 isPresented.current = true;
                 return sheetRef.current?.present(index, animated) || Promise.resolve();
@@ -683,7 +686,10 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(
         }, [deleteWorkplace, t]);
 
         const handleOpenAddEditSheet = useCallback((editingWorkplace?: Workplace) => {
-            (addEditSheetRef.current as any)?.present(editingWorkplace);
+            setHasOpenedAddEdit(true);
+            setTimeout(() => {
+                (addEditSheetRef.current as any)?.present(editingWorkplace);
+            }, 10);
         }, []);
 
         if ((!data || data.length === 0) && !isOwner) return null;
@@ -726,6 +732,7 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(
                     cornerRadius={32}
                     detents={[0.7, 1]}
                     onDidPresent={() => {
+                        setHasPresented(true);
                         isPresented.current = true;
                         backHandler.onDidPresent();
                     }}
@@ -734,46 +741,48 @@ export const WorkplaceSheet = memo(forwardRef<TrueSheet, WorkplaceSheetProps>(
                         backHandler.onDidDismiss();
                     }}
                 >
-                    <FlatList
-                        nestedScrollEnabled
-                        showsVerticalScrollIndicator={false}
-                        onEndReached={onEndReached}
-                        onEndReachedThreshold={0.5}
-                        data={data}
-                        keyExtractor={(item) => item.id}
-                        ListHeaderComponent={listHeader}
-                        ListEmptyComponent={
-                            <View style={styles.emptyState}>
-                                <Ionicons name="briefcase-outline" size={48} color={colors.muted} />
-                                <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
-                                    {t('profile.sheets.work.emptyList', 'No work history connected')}
-                                </FlexText>
-                            </View>
-                        }
-                        renderItem={({ item }) => (
-                            <View style={{ paddingHorizontal: 24 }}>
-                                <WorkplaceItem
-                                    item={item}
-                                    colors={colors}
-                                    common={common}
-                                    isOwner={isOwner}
-                                    onEdit={isOwner ? () => handleOpenAddEditSheet(item) : undefined}
-                                    onDelete={isOwner ? () => handleDelete(item.id) : undefined}
-                                />
-                            </View>
-                        )}
-                        contentContainerStyle={{ paddingBottom: 40 + inset.bottom }}
-                    />
+                    {hasPresented ? (
+                        <FlatList
+                            nestedScrollEnabled
+                            showsVerticalScrollIndicator={false}
+                            onEndReached={onEndReached}
+                            onEndReachedThreshold={0.5}
+                            data={data}
+                            keyExtractor={(item) => item.id}
+                            ListHeaderComponent={listHeader}
+                            ListEmptyComponent={
+                                <View style={styles.emptyState}>
+                                    <Ionicons name="briefcase-outline" size={48} color={colors.muted} />
+                                    <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
+                                        {t('profile.sheets.work.emptyList', 'No work history connected')}
+                                    </FlexText>
+                                </View>
+                            }
+                            renderItem={({ item }) => (
+                                <View style={{ paddingHorizontal: 24 }}>
+                                    <WorkplaceItem
+                                        item={item}
+                                        colors={colors}
+                                        common={common}
+                                        isOwner={isOwner}
+                                        onEdit={isOwner ? () => handleOpenAddEditSheet(item) : undefined}
+                                        onDelete={isOwner ? () => handleDelete(item.id) : undefined}
+                                    />
+                                </View>
+                            )}
+                            contentContainerStyle={{ paddingBottom: 40 + inset.bottom }}
+                        />
+                    ) : null}
                 </TrueSheet>
 
                 {/* Stacked Add/Edit Workplace Sheet */}
-                {isOwner && profileId && (
+                {isOwner && profileId && hasOpenedAddEdit ? (
                     <AddEditWorkplaceSheet
                         ref={addEditSheetRef}
                         profileId={profileId}
                         onSuccess={() => { }}
                     />
-                )}
+                ) : null}
             </>
         );
     }

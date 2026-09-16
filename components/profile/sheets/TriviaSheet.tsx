@@ -26,10 +26,12 @@ export const TriviaSheet = memo(forwardRef<TriviaSheetHandle, TriviaSheetProps>(
     const inset = useSafeAreaInsets();
 
     const [index, setIndex] = useState(0);
+    const [hasOpened, setHasOpened] = useState(false);
     const wasOpenRef = useRef(false);
 
     const controllerRef = useRef<TriviaSheetHandle>({
         present: () => {
+            setHasOpened(true);
             wasOpenRef.current = true;
             setIndex(1);
         },
@@ -55,6 +57,7 @@ export const TriviaSheet = memo(forwardRef<TriviaSheetHandle, TriviaSheetProps>(
 
     const handleIndexChange = useCallback((newIndex: number) => {
         if (newIndex > 0) {
+            setHasOpened(true);
             wasOpenRef.current = true;
         }
         setIndex(newIndex);
@@ -92,37 +95,39 @@ export const TriviaSheet = memo(forwardRef<TriviaSheetHandle, TriviaSheetProps>(
             }
         >
             <View style={[styles.grabber, { backgroundColor: colors.onSurfaceVariant, marginTop: inset.top + 12 }]} />
-            <ScrollView nestedScrollEnabled style={{ flex: 1, paddingHorizontal: 12, paddingTop: 4 }}>
+            {hasOpened ? (
+                <ScrollView nestedScrollEnabled style={{ flex: 1, paddingHorizontal: 12, paddingTop: 4 }}>
 
-                {/* Header */}
-                <View style={{ marginBottom: 24 }}>
-                    <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.sheets.trivia.title', 'Trivia')}</FlexText>
-                    {profile?.name ? (
-                        <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
-                            {t('profile.sheets.trivia.subtitleWithName', { name: profile.name, defaultValue: `Trivia & fun facts about ${profile.name}` })}
-                        </FlexText>
+                    {/* Header */}
+                    <View style={{ marginBottom: 24 }}>
+                        <FlexText style={[common.heading, { fontSize: 24 }]}>{t('profile.sheets.trivia.title', 'Trivia')}</FlexText>
+                        {profile?.name ? (
+                            <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
+                                {t('profile.sheets.trivia.subtitleWithName', { name: profile.name, defaultValue: `Trivia & fun facts about ${profile.name}` })}
+                            </FlexText>
+                        ) : (
+                            <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
+                                {t('profile.sheets.trivia.subtitleDefault', 'Personal notes & fun facts')}
+                            </FlexText>
+                        )}
+                    </View>
+
+                    {/* Content */}
+                    {triviaText && triviaText.trim() ? (
+                        <View style={{ marginBottom: 24 }}>
+                            <FlexText style={[common.body, { color: colors.text, fontSize: 16, lineHeight: 24 }]}>
+                                {triviaText}
+                            </FlexText>
+                        </View>
                     ) : (
-                        <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 4 }]}>
-                            {t('profile.sheets.trivia.subtitleDefault', 'Personal notes & fun facts')}
+                        <FlexText style={[common.bodySmall, { color: colors.muted, textAlign: 'center', marginVertical: 24 }]}>
+                            {t('profile.sheets.trivia.noInformation', 'No trivia added yet')}
                         </FlexText>
                     )}
-                </View>
 
-                {/* Content */}
-                {triviaText && triviaText.trim() ? (
-                    <View style={{ marginBottom: 24 }}>
-                        <FlexText style={[common.body, { color: colors.text, fontSize: 16, lineHeight: 24 }]}>
-                            {triviaText}
-                        </FlexText>
-                    </View>
-                ) : (
-                    <FlexText style={[common.bodySmall, { color: colors.muted, textAlign: 'center', marginVertical: 24 }]}>
-                        {t('profile.sheets.trivia.noInformation', 'No trivia added yet')}
-                    </FlexText>
-                )}
-
-                <View style={{ height: inset.bottom + 20 }} />
-            </ScrollView>
+                    <View style={{ height: inset.bottom + 20 }} />
+                </ScrollView>
+            ) : null}
         </ModalBottomSheet>
     );
 }));

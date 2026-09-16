@@ -56,8 +56,6 @@ export const useProfileViewModel = () => {
 
     const [selectedTab, setSelectedTab] = useState<TabType>(defaultTab);
     const [activeTab, setActiveTab] = useState<TabType>(defaultTab);
-    const [showScrollTop, setShowScrollTop] = useState(false);
-    const [showHeaderAvatar, setShowHeaderAvatar] = useState(false);
     const [galleryVisible, setGalleryVisible] = useState(false);
     const [galleryIndex, setGalleryIndex] = useState(0);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
@@ -227,14 +225,17 @@ export const useProfileViewModel = () => {
     }, [activeTab, scrollY]);
 
     // ─── Scroll Handler ────────────────────────────────────────────
+    const showHeaderAvatarRef = useRef(false);
+    const showScrollTopRef = useRef(false);
+
     const scrollListenerRef = useRef<(event: any) => void>(undefined as any);
     useEffect(() => {
         scrollListenerRef.current = (event: any) => {
-            const offsetY = event.nativeEvent.contentOffset.y;
+            const offsetY = event?.nativeEvent?.contentOffset?.y ?? 0;
             currentScrollY.current = offsetY;
             const shouldShow = offsetY > 300;
-            if (shouldShow !== showScrollTop) {
-                setShowScrollTop(shouldShow);
+            if (shouldShow !== showScrollTopRef.current) {
+                showScrollTopRef.current = shouldShow;
                 Animated.timing(scrollTopButtonOpacity, {
                     toValue: shouldShow ? 1 : 0,
                     duration: 200,
@@ -242,11 +243,11 @@ export const useProfileViewModel = () => {
                 }).start();
             }
             const shouldShowAvatar = offsetY > 160;
-            if (shouldShowAvatar !== showHeaderAvatar) {
-                setShowHeaderAvatar(shouldShowAvatar);
+            if (shouldShowAvatar !== showHeaderAvatarRef.current) {
+                showHeaderAvatarRef.current = shouldShowAvatar;
             }
         };
-    }, [showScrollTop, showHeaderAvatar, scrollTopButtonOpacity]);
+    }, [scrollTopButtonOpacity]);
 
     const onScrollEventRef = useRef<any>(null);
     useEffect(() => {
@@ -267,30 +268,19 @@ export const useProfileViewModel = () => {
 
     // ─── PagerWithHeader Scroll Handler ─────────────────────────────
     // When using PagerWithHeader, the List component calls onScrollY instead
-    // of Animated.event. This lightweight callback updates showHeaderAvatar
-    // and showScrollTop from the raw Y offset.
-    const showHeaderAvatarRef = useRef(showHeaderAvatar);
-    const showScrollTopRef = useRef(showScrollTop);
-
-    useEffect(() => {
-        showHeaderAvatarRef.current = showHeaderAvatar;
-    }, [showHeaderAvatar]);
-
-    useEffect(() => {
-        showScrollTopRef.current = showScrollTop;
-    }, [showScrollTop]);
-
+    // of Animated.event. This lightweight callback tracks raw Y offset
+    // without triggering React state re-renders.
     const onScrollYChange = useCallback((y: number) => {
         currentScrollY.current = y;
 
         const shouldShowAvatar = y > 160;
         if (shouldShowAvatar !== showHeaderAvatarRef.current) {
-            setShowHeaderAvatar(shouldShowAvatar);
+            showHeaderAvatarRef.current = shouldShowAvatar;
         }
 
         const shouldShow = y > 300;
         if (shouldShow !== showScrollTopRef.current) {
-            setShowScrollTop(shouldShow);
+            showScrollTopRef.current = shouldShow;
             Animated.timing(scrollTopButtonOpacity, {
                 toValue: shouldShow ? 1 : 0,
                 duration: 200,
@@ -531,8 +521,8 @@ export const useProfileViewModel = () => {
 
         // Scroll
         scrollY,
-        showScrollTop,
-        showHeaderAvatar,
+        showScrollTop: showScrollTopRef.current,
+        showHeaderAvatar: showHeaderAvatarRef.current,
         scrollTopButtonOpacity,
         onScroll,
         onScrollYChange,

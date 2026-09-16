@@ -661,6 +661,8 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
 
         const sheetRef = useRef<TrueSheet>(null);
         const isPresented = useRef(false);
+        const [hasPresented, setHasPresented] = useState(false);
+        const [hasOpenedAddEdit, setHasOpenedAddEdit] = useState(false);
         const backHandler = useSheetBackHandler(sheetRef);
 
         const addEditSheetRef = useRef<TrueSheet>(null);
@@ -669,6 +671,7 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
 
         useImperativeHandle(ref, () => ({
             present: (index?: number, animated?: boolean) => {
+                setHasPresented(true);
                 if (isPresented.current) return Promise.resolve();
                 isPresented.current = true;
                 return sheetRef.current?.present(index, animated) || Promise.resolve();
@@ -704,7 +707,10 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
         }, [deleteSocialLink, t]);
 
         const handleOpenAddEditSheet = useCallback((editingLink?: ProfileLink) => {
-            (addEditSheetRef.current as any)?.present(editingLink);
+            setHasOpenedAddEdit(true);
+            setTimeout(() => {
+                (addEditSheetRef.current as any)?.present(editingLink);
+            }, 10);
         }, []);
 
         if ((!data || data.length === 0) && !isOwner) return null;
@@ -747,6 +753,7 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
                     cornerRadius={32}
                     detents={[0.7, 1]}
                     onDidPresent={() => {
+                        setHasPresented(true);
                         isPresented.current = true;
                         backHandler.onDidPresent();
                     }}
@@ -755,47 +762,49 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
                         backHandler.onDidDismiss();
                     }}
                 >
-                    <FlatList
-                        nestedScrollEnabled
-                        showsVerticalScrollIndicator={false}
-                        onEndReached={onEndReached}
-                        onEndReachedThreshold={0.5}
-                        data={data}
-                        keyExtractor={(item) => item.id}
-                        ListHeaderComponent={listHeader}
-                        ListEmptyComponent={
-                            <View style={styles.emptyState}>
-                                <Ionicons name="link-outline" size={48} color={colors.muted} />
-                                <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
-                                    {t('profile.sheets.social.emptyList', 'No social links connected')}
-                                </FlexText>
-                            </View>
-                        }
-                        renderItem={({ item }) => (
-                            <View style={{ paddingHorizontal: 24 }}>
-                                <SocialLinkItem
-                                    item={item}
-                                    colors={colors}
-                                    common={common}
-                                    theme={theme}
-                                    isOwner={isOwner}
-                                    onEdit={isOwner ? () => handleOpenAddEditSheet(item) : undefined}
-                                    onDelete={isOwner ? () => handleDelete(item.id) : undefined}
-                                />
-                            </View>
-                        )}
-                        contentContainerStyle={{ paddingBottom: 40 + inset.bottom }}
-                    />
+                    {hasPresented ? (
+                        <FlatList
+                            nestedScrollEnabled
+                            showsVerticalScrollIndicator={false}
+                            onEndReached={onEndReached}
+                            onEndReachedThreshold={0.5}
+                            data={data}
+                            keyExtractor={(item) => item.id}
+                            ListHeaderComponent={listHeader}
+                            ListEmptyComponent={
+                                <View style={styles.emptyState}>
+                                    <Ionicons name="link-outline" size={48} color={colors.muted} />
+                                    <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
+                                        {t('profile.sheets.social.emptyList', 'No social links connected')}
+                                    </FlexText>
+                                </View>
+                            }
+                            renderItem={({ item }) => (
+                                <View style={{ paddingHorizontal: 24 }}>
+                                    <SocialLinkItem
+                                        item={item}
+                                        colors={colors}
+                                        common={common}
+                                        theme={theme}
+                                        isOwner={isOwner}
+                                        onEdit={isOwner ? () => handleOpenAddEditSheet(item) : undefined}
+                                        onDelete={isOwner ? () => handleDelete(item.id) : undefined}
+                                    />
+                                </View>
+                            )}
+                            contentContainerStyle={{ paddingBottom: 40 + inset.bottom }}
+                        />
+                    ) : null}
                 </TrueSheet>
 
                 {/* Stacked Add/Edit Social Link Sheet */}
-                {isOwner && profileId && (
+                {isOwner && profileId && hasOpenedAddEdit ? (
                     <AddEditSocialSheet
                         ref={addEditSheetRef}
                         profileId={profileId}
                         onSuccess={() => { }}
                     />
-                )}
+                ) : null}
             </>
         );
     }

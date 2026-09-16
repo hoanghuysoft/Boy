@@ -66,11 +66,13 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
     ({ postId, onDismiss }, ref) => {
         const insets = useSafeAreaInsets();
         const [index, setIndex] = useState(0);
+        const [hasEverOpened, setHasEverOpened] = useState(false);
         const wasOpenRef = useRef(false);
 
         const controllerRef = useRef<LikersSheetHandle>({
             present: () => {
                 wasOpenRef.current = true;
+                setHasEverOpened(true);
                 setIndex(1);
             },
             dismiss: () => {
@@ -94,6 +96,7 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
 
         useImperativeHandle(ref, () => ({
             present: () => {
+                setHasEverOpened(true);
                 controllerRef.current.present();
             },
             dismiss: () => {
@@ -104,6 +107,7 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
         const handleIndexChange = useCallback((newIndex: number) => {
             if (newIndex > 0) {
                 wasOpenRef.current = true;
+                setHasEverOpened(true);
             }
             setIndex(newIndex);
         }, []);
@@ -200,19 +204,23 @@ export const LikersSheet = memo(forwardRef<LikersSheetHandle, LikersSheetProps>(
             >
                 <View style={[styles.grabber, { backgroundColor: colors.onSurfaceVariant, marginTop: insets.top + 12 }]} />
                 <View style={[styles.container, { paddingBottom: insets.bottom + 12 }]}>
-                    <FlatList
-                        nestedScrollEnabled
-                        data={likers}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderItem}
-                        onEndReached={handleEndReached}
-                        onEndReachedThreshold={0.5}
-                        ListHeaderComponent={renderHeader}
-                        ListFooterComponent={renderFooter}
-                        ListEmptyComponent={renderEmpty}
-                        contentContainerStyle={styles.listContent}
-                        showsVerticalScrollIndicator={true}
-                    />
+                    {hasEverOpened ? (
+                        <FlatList
+                            nestedScrollEnabled
+                            data={likers}
+                            keyExtractor={(item) => item.id}
+                            renderItem={renderItem}
+                            onEndReached={handleEndReached}
+                            onEndReachedThreshold={0.5}
+                            ListHeaderComponent={renderHeader}
+                            ListFooterComponent={renderFooter}
+                            ListEmptyComponent={renderEmpty}
+                            contentContainerStyle={styles.listContent}
+                            showsVerticalScrollIndicator={true}
+                        />
+                    ) : (
+                        <View style={{ minHeight: 80 }} />
+                    )}
                 </View>
             </ModalBottomSheet>
         );

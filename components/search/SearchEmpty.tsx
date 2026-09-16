@@ -15,6 +15,7 @@ interface SearchEmptyProps {
 export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin = false, t }: SearchEmptyProps) => (
     <View style={styles.emptyState}>
         <FlexText
+            lite
             style={[
                 common.heading,
                 { color: colors.onSurfaceVariant, textAlign: "center", marginTop: 16 },
@@ -27,6 +28,7 @@ export const renderEmptyState = ({ colors, styles, common, searchQuery, isAdmin 
                     : t('search.empty.titleSearchPeople')}
         </FlexText>
         <FlexText
+            lite
             style={[
                 common.bodySmall,
                 {

@@ -160,6 +160,7 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
 
         const sheetRef = useRef<TrueSheet>(null);
         const isPresented = useRef(false);
+        const [hasEverOpened, setHasEverOpened] = useState(false);
         const backHandler = useSheetBackHandler(sheetRef);
 
         const { translations, translate, clearTranslation } = useTranslationStore();
@@ -174,6 +175,7 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
 
         useImperativeHandle(ref, () => ({
             present: () => {
+                setHasEverOpened(true);
                 isPresented.current = true;
                 sheetRef.current?.present();
             },
@@ -518,6 +520,7 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                     detents={['auto']}
                     onDidPresent={() => {
                         isPresented.current = true;
+                        setHasEverOpened(true);
                         backHandler.onDidPresent();
                     }}
                     onDidDismiss={() => {
@@ -525,141 +528,147 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                         backHandler.onDidDismiss();
                     }}
                 >
-                    <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 20 }}>
-                        {/* Header */}
-                        <View className="mb-4">
-                            <FlexText style={[common.heading]}>
-                                {isExternalPost ? t('post.optionsSheet.externalTitle', 'Post Options') : t('post.optionsSheet.title')}
-                            </FlexText>
-                            <FlexText style={common.bodySmall}>
-                                {isExternalPost ? t('post.optionsSheet.externalSubtitle', 'Manage media from this post') : t('post.optionsSheet.subtitle')}
-                            </FlexText>
-                        </View>
+                    {hasEverOpened && post ? (
+                        <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 20 }}>
+                            {/* Header */}
+                            <View className="mb-4">
+                                <FlexText style={[common.heading]}>
+                                    {isExternalPost ? t('post.optionsSheet.externalTitle', 'Post Options') : t('post.optionsSheet.title')}
+                                </FlexText>
+                                <FlexText style={common.bodySmall}>
+                                    {isExternalPost ? t('post.optionsSheet.externalSubtitle', 'Manage media from this post') : t('post.optionsSheet.subtitle')}
+                                </FlexText>
+                            </View>
 
-                        {/* Options List */}
-                        <View>
-                            {isExternalPost ? (
-                                <OptionItem
-                                    icon={downloadStatus.isFullyDownloaded ? SavedCheckIcon : DownloadIcon}
-                                    label={
-                                        downloadStatus.isFullyDownloaded
-                                            ? t('post.optionsSheet.alreadySaved', 'Saved to Gallery')
-                                            : downloadStatus.isPartiallyDownloaded
-                                            ? t('post.optionsSheet.saveRemaining', `Save to Gallery (${downloadStatus.unDownloadedMedia.length} new)`)
-                                            : t('post.optionsSheet.saveToGallery', 'Save to Gallery')
-                                    }
-                                    onPress={() => handleSaveToGallery(false)}
-                                    colors={colors}
-                                    common={common}
-                                />
-                            ) : (
-                                <>
-                                    {!post?.reposted_post && (
-                                        <OptionItem
-                                            icon={Share}
-                                            label={t('post.optionsSheet.share')}
-                                            onPress={handleShare}
-                                            colors={colors}
-                                            common={common}
-                                        />
-                                    )}
-
+                            {/* Options List */}
+                            <View>
+                                {isExternalPost ? (
                                     <OptionItem
-                                        icon={Copy}
-                                        label={t('post.optionsSheet.copyLink')}
-                                        onPress={handleCopyLink}
+                                        icon={downloadStatus.isFullyDownloaded ? SavedCheckIcon : DownloadIcon}
+                                        label={
+                                            downloadStatus.isFullyDownloaded
+                                                ? t('post.optionsSheet.alreadySaved', 'Saved to Gallery')
+                                                : downloadStatus.isPartiallyDownloaded
+                                                ? t('post.optionsSheet.saveRemaining', `Save to Gallery (${downloadStatus.unDownloadedMedia.length} new)`)
+                                                : t('post.optionsSheet.saveToGallery', 'Save to Gallery')
+                                        }
+                                        onPress={() => handleSaveToGallery(false)}
                                         colors={colors}
                                         common={common}
                                     />
+                                ) : (
+                                    <>
+                                        {!post?.reposted_post && (
+                                            <OptionItem
+                                                icon={Share}
+                                                label={t('post.optionsSheet.share')}
+                                                onPress={handleShare}
+                                                colors={colors}
+                                                common={common}
+                                            />
+                                        )}
 
-                                    {post?.content && (
                                         <OptionItem
-                                            icon={TranslateIcon}
-                                            label={isTranslated ? t('post.optionsSheet.hideTranslation', 'Hide Translation') : t('post.optionsSheet.translate', 'Translate')}
-                                            onPress={handleTranslatePress}
+                                            icon={Copy}
+                                            label={t('post.optionsSheet.copyLink')}
+                                            onPress={handleCopyLink}
                                             colors={colors}
                                             common={common}
                                         />
-                                    )}
 
-                                    {!isOwner && !isAdmin && (
-                                        <OptionItem
-                                            icon={Danger}
-                                            label={t('post.optionsSheet.report')}
-                                            onPress={handleReport}
-                                            colors={colors}
-                                            common={common}
-                                        />
-                                    )}
+                                        {post?.content && (
+                                            <OptionItem
+                                                icon={TranslateIcon}
+                                                label={isTranslated ? t('post.optionsSheet.hideTranslation', 'Hide Translation') : t('post.optionsSheet.translate', 'Translate')}
+                                                onPress={handleTranslatePress}
+                                                colors={colors}
+                                                common={common}
+                                            />
+                                        )}
 
-                                    {(isOwner || isAdmin) && !post?.reposted_post && (
-                                        <OptionItem
-                                            icon={PenNewRound}
-                                            label={t('post.optionsSheet.editPost')}
-                                            onPress={handleEdit}
-                                            colors={colors}
-                                            common={common}
-                                        />
-                                    )}
+                                        {!isOwner && !isAdmin && (
+                                            <OptionItem
+                                                icon={Danger}
+                                                label={t('post.optionsSheet.report')}
+                                                onPress={handleReport}
+                                                colors={colors}
+                                                common={common}
+                                            />
+                                        )}
 
-                                    {(isOwner || isAdmin) && (
-                                        <OptionItem
-                                            icon={TrashBinTrash}
-                                            label={t('post.optionsSheet.deletePost')}
-                                            onPress={handleDelete}
-                                            destructive
-                                            colors={colors}
-                                            common={common}
-                                        />
-                                    )}
-                                </>
-                            )}
+                                        {(isOwner || isAdmin) && !post?.reposted_post && (
+                                            <OptionItem
+                                                icon={PenNewRound}
+                                                label={t('post.optionsSheet.editPost')}
+                                                onPress={handleEdit}
+                                                colors={colors}
+                                                common={common}
+                                            />
+                                        )}
+
+                                        {(isOwner || isAdmin) && (
+                                            <OptionItem
+                                                icon={TrashBinTrash}
+                                                label={t('post.optionsSheet.deletePost')}
+                                                onPress={handleDelete}
+                                                destructive
+                                                colors={colors}
+                                                common={common}
+                                            />
+                                        )}
+                                    </>
+                                )}
+                            </View>
                         </View>
-                    </View>
+                    ) : (
+                        <View style={{ minHeight: 80 }} />
+                    )}
                 </TrueSheet>
 
 
 
-                <Dialog isOpen={dialog !== null} onOpenChange={(open) => !open && closeDialog()}>
-                    <Dialog.Portal>
-                        <Dialog.Overlay />
-                        <Dialog.Content>
-                            <Dialog.Close />
-                            <View style={{ marginBottom: 20, gap: 6 }}>
-                                <Dialog.Title>{dialog?.title}</Dialog.Title>
-                                <Dialog.Description>{dialog?.text}</Dialog.Description>
-                            </View>
-                            {dialog?.buttons ? (
-                                <View style={{ flexDirection: 'row', gap: 8 }}>
-                                    {dialog.buttons.map((btn, idx) => (
+                {dialog !== null && (
+                    <Dialog isOpen={dialog !== null} onOpenChange={(open) => !open && closeDialog()}>
+                        <Dialog.Portal>
+                            <Dialog.Overlay />
+                            <Dialog.Content>
+                                <Dialog.Close />
+                                <View style={{ marginBottom: 20, gap: 6 }}>
+                                    <Dialog.Title>{dialog?.title}</Dialog.Title>
+                                    <Dialog.Description>{dialog?.text}</Dialog.Description>
+                                </View>
+                                {dialog?.buttons ? (
+                                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                                        {dialog.buttons.map((btn, idx) => (
+                                            <Button
+                                                key={idx}
+                                                variant={btn.variant ?? "primary"}
+                                                onPress={btn.onPress}
+                                                style={{ flex: 1 }}
+                                            >
+                                                {btn.text}
+                                            </Button>
+                                        ))}
+                                    </View>
+                                ) : (
+                                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                                        {dialog?.dismissText && (
+                                            <Button variant="ghost" onPress={closeDialog}>
+                                                {dialog.dismissText}
+                                            </Button>
+                                        )}
                                         <Button
-                                            key={idx}
-                                            variant={btn.variant ?? "primary"}
-                                            onPress={btn.onPress}
-                                            style={{ flex: 1 }}
+                                            variant={dialog?.isDestructive || dialog?.onConfirm ? "danger" : "primary"}
+                                            onPress={() => dialog?.onConfirm ? dialog.onConfirm() : closeDialog()}
                                         >
-                                            {btn.text}
+                                            {dialog?.confirmText ?? t('post.dialogs.ok')}
                                         </Button>
-                                    ))}
-                                </View>
-                            ) : (
-                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-                                    {dialog?.dismissText && (
-                                        <Button variant="ghost" onPress={closeDialog}>
-                                            {dialog.dismissText}
-                                        </Button>
-                                    )}
-                                    <Button
-                                        variant={dialog?.isDestructive || dialog?.onConfirm ? "danger" : "primary"}
-                                        onPress={() => dialog?.onConfirm ? dialog.onConfirm() : closeDialog()}
-                                    >
-                                        {dialog?.confirmText ?? t('post.dialogs.ok')}
-                                    </Button>
-                                </View>
-                            )}
-                        </Dialog.Content>
-                    </Dialog.Portal>
-                </Dialog>
+                                    </View>
+                                )}
+                            </Dialog.Content>
+                        </Dialog.Portal>
+                    </Dialog>
+                )}
             </>
         );
     }

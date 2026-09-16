@@ -1,6 +1,6 @@
 import emojiRegex from 'emoji-regex-xs';
 import React from 'react';
-import { StyleSheet, TextProps } from 'react-native';
+import { StyleSheet, Text, TextProps } from 'react-native';
 import ParsedText from 'react-native-parsed-text';
 
 const EMOJI_PATTERN = emojiRegex();
@@ -12,6 +12,7 @@ interface FlexTextProps extends TextProps {
   thin?: boolean;
   extraLight?: boolean;
   parse?: any[];
+  lite?: boolean;
 }
 
 const FONT_MAP: Record<string, string> = {
@@ -27,7 +28,7 @@ const FONT_MAP: Record<string, string> = {
 };
 
 export function FlexText(props: FlexTextProps) {
-  const { style, children, bold, medium, light, thin, extraLight, parse, ...rest } = props;
+  const { style, children, bold, medium, light, thin, extraLight, parse, lite = true, ...rest } = props;
 
   let selectedFont = '';
   if (bold) selectedFont = 'GoogleSansFlexBold';
@@ -40,6 +41,19 @@ export function FlexText(props: FlexTextProps) {
     const flattenedStyle = StyleSheet.flatten(style) || {};
     const weight = flattenedStyle.fontWeight?.toString() || 'normal';
     selectedFont = FONT_MAP[weight] || 'GoogleSansFlexRegular';
+  }
+
+  const isLite = lite && !parse;
+
+  if (isLite) {
+    return (
+      <Text
+        {...rest}
+        style={[style, { fontFamily: selectedFont }]}
+      >
+        {children}
+      </Text>
+    );
   }
 
   const defaultParse = [

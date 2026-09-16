@@ -164,8 +164,8 @@ const SearchContent = () => {
         style={{ flex: 1, backgroundColor: colors.surface }}
       >
         <View style={[styles.header, { marginTop: 54 }]}>
-          <FlexText style={[common.heading, { fontSize: 28 }]}>{t('search.header.title')}</FlexText>
-          <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
+          <FlexText lite style={[common.heading, { fontSize: 28 }]}>{t('search.header.title')}</FlexText>
+          <FlexText lite style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
             {searchQuery
               ? t('search.header.resultsCount', { count: totalResults })
               : isAdmin

@@ -56,6 +56,7 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
             <View style={styles.textBlock}>
                 <View style={styles.nameRow}>
                     <FlexText
+                        lite
                         style={[common.label, { color: colors.onSurface, fontWeight: '600', flexShrink: 1 }]}
                         numberOfLines={1}
                     >
@@ -67,6 +68,7 @@ const MostSearchedCard = React.memo(({ profile, onPress, colors, common }: MostS
                 </View>
                 {profile.username ? (
                     <FlexText
+                        lite
                         style={[common.caption, { color: colors.onSurfaceVariant }]}
                         numberOfLines={1}
                     >
@@ -97,7 +99,7 @@ export const MostSearchedSection = () => {
 
     return (
         <View style={styles.container}>
-            <FlexText style={[common.subheading, { fontSize: 15, marginBottom: 12 }]}>
+            <FlexText lite style={[common.subheading, { fontSize: 15, marginBottom: 12 }]}>
                 {t('search.sections.mostSearched')}
             </FlexText>
 

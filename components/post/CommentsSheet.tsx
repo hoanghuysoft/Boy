@@ -55,10 +55,12 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const sheetRef = useRef<TrueSheet>(null);
         const emojiSheetRef = useRef<TrueSheet>(null);
         const isPresentedRef = useRef(false);
+        const [hasEverOpened, setHasEverOpened] = useState(false);
         const inputRef = useRef<TextInput>(null);
 
         useImperativeHandle(ref, () => ({
             present: () => {
+                setHasEverOpened(true);
                 if (isPresentedRef.current) return;
                 isPresentedRef.current = true;
                 sheetRef.current?.present();
@@ -252,6 +254,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     ]}>
                         <MaterialIcons name="reply" size={14} color={vm.colors.onSurfaceVariant} style={{ marginRight: 6 }} />
                         <FlexText
+                            lite={false}
                             style={[vm.common.bodySmall, { color: vm.colors.onSurfaceVariant, flex: 1, fontSize: 12 }]}
                             numberOfLines={1}
                         >
@@ -397,9 +400,10 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             },
             cornerRadius: 32,
             detents,
-            footer: commentInputFooter,
+            footer: hasEverOpened ? commentInputFooter : undefined,
             onDidPresent: () => {
                 isPresentedRef.current = true;
+                setHasEverOpened(true);
                 backHandler.onDidPresent();
             },
             onDidDismiss: () => {
@@ -438,20 +442,22 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         return (
             <>
                 <TrueSheet {...sharedProps}>
-                    {sheetContent}
+                    {hasEverOpened ? sheetContent : <View style={{ minHeight: 80 }} />}
                 </TrueSheet>
-                <EmojiSelectorSheet
-                    ref={emojiSheetRef}
-                    theme={vm.theme}
-                    colors={vm.colors}
-                    onSelect={(emoji) => {
-                        vm.setSelectedImageUrl(emoji);
-                        emojiSheetRef.current?.dismiss();
-                    }}
-                    onDismiss={() => {
-                        inputRef.current?.focus();
-                    }}
-                />
+                {hasEverOpened && (
+                    <EmojiSelectorSheet
+                        ref={emojiSheetRef}
+                        theme={vm.theme}
+                        colors={vm.colors}
+                        onSelect={(emoji) => {
+                            vm.setSelectedImageUrl(emoji);
+                            emojiSheetRef.current?.dismiss();
+                        }}
+                        onDismiss={() => {
+                            inputRef.current?.focus();
+                        }}
+                    />
+                )}
             </>
         );
     }

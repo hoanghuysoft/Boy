@@ -14,7 +14,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
 import { Spinner } from "heroui-native/spinner";
 import { Tabs } from "heroui-native/tabs";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   RefreshControl,
@@ -198,14 +198,24 @@ const ProfileContent = () => {
 
   // ─── Header avatar spring animation (native thread via Reanimated) ───
   const headerAvatarProgress = useSharedValue(0);
+  const showHeaderAvatarRef = useRef(false);
 
-  useEffect(() => {
-    headerAvatarProgress.value = withSpring(showHeaderAvatar ? 1 : 0, {
-      damping: 18,
-      stiffness: 220,
-      mass: 0.6,
-    });
-  }, [showHeaderAvatar, headerAvatarProgress]);
+  const handleScrollY = useCallback((y: number) => {
+    onScrollYChange(y);
+    const shouldShow = y > 160;
+    if (shouldShow !== showHeaderAvatarRef.current) {
+      showHeaderAvatarRef.current = shouldShow;
+      headerAvatarProgress.value = withSpring(shouldShow ? 1 : 0, {
+        damping: 18,
+        stiffness: 220,
+        mass: 0.6,
+      });
+    }
+  }, [onScrollYChange, headerAvatarProgress]);
+
+  const handleOpenTrivia = useCallback(() => {
+    triviaSheetRef.current?.present();
+  }, [triviaSheetRef]);
 
   const headerAvatarContainerStyle = useAnimatedStyle(() => {
     const progress = headerAvatarProgress.value;
@@ -413,11 +423,11 @@ const ProfileContent = () => {
         ListEmptyComponent={makeEmptyComponent("Feed")}
         contentContainerStyle={{ minHeight: windowHeight + headerHeight, paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
         showsVerticalScrollIndicator={false}
-        onScrollY={onScrollYChange}
+        onScrollY={handleScrollY}
         ListHeaderComponent={<View style={{ height: 12 }} />}
       />
     );
-  }, [colors.card, feedPosts, handlePostOptionsPress, handleLikeCountPress, handleCommentPress, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, windowHeight]);
+  }, [colors.card, feedPosts, handlePostOptionsPress, handleLikeCountPress, handleCommentPress, isProfileRefetching, onRefresh, colors.onSurface, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, handleScrollY, windowHeight]);
 
   // ─── Images tab renderer ──────────────────────────────────────────
   const renderImagesTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
@@ -440,12 +450,12 @@ const ProfileContent = () => {
         ListEmptyComponent={makeEmptyComponent("Images")}
         contentContainerStyle={{ minHeight: windowHeight + headerHeight, paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
         showsVerticalScrollIndicator={false}
-        onScrollY={onScrollYChange}
+        onScrollY={handleScrollY}
         ListHeaderComponent={<View style={{ height: 12 }} />}
         getItemType={() => 'image_row'}
       />
     );
-  }, [colors.card, imageChunkedRows, renderImageChunkedRow, imageChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, windowHeight]);
+  }, [colors.card, imageChunkedRows, renderImageChunkedRow, imageChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, handleScrollY, windowHeight]);
 
   // ─── Videos tab renderer ──────────────────────────────────────────
   const renderVideosTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
@@ -469,13 +479,13 @@ const ProfileContent = () => {
           ListEmptyComponent={makeEmptyComponent("Videos")}
           contentContainerStyle={{ minHeight: windowHeight + headerHeight, paddingBottom: isMe ? 100 + inset.bottom : inset.bottom + 10 }}
           showsVerticalScrollIndicator={false}
-          onScrollY={onScrollYChange}
+          onScrollY={handleScrollY}
           ListHeaderComponent={<View style={{ height: 12 }} />}
           getItemType={() => 'video_row'}
         />
       </MediaViewerWrapper>
     );
-  }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, onScrollYChange, videoMediaViewerItems, windowHeight]);
+  }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, handleScrollY, videoMediaViewerItems, windowHeight]);
 
   // Loading / Error state
   if (!profile) {
@@ -700,7 +710,7 @@ const ProfileContent = () => {
           profile={profile}
           workplaces={workplaces}
           homeInfo={profile?.hometown || null}
-          onOpenTrivia={() => triviaSheetRef.current?.present()}
+          onOpenTrivia={handleOpenTrivia}
         />
         <TriviaSheet
           ref={triviaSheetRef}

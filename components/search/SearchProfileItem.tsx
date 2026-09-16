@@ -58,6 +58,7 @@ export const SearchProfileItem = React.memo(({
             <View style={styles.profileInfo}>
                 <View style={[common.row, { gap: 4 }]}>
                     <FlexText
+                        lite
                         style={[common.subheading, { color: colors.text }]}
                         numberOfLines={1}
                     >
@@ -69,6 +70,7 @@ export const SearchProfileItem = React.memo(({
                 </View>
                 {item.username ? (
                     <FlexText
+                        lite
                         style={[common.caption, { color: colors.muted, marginTop: 2 }]}
                         numberOfLines={1}
                     >
@@ -76,6 +78,7 @@ export const SearchProfileItem = React.memo(({
                     </FlexText>
                 ) : item.bio ? (
                     <FlexText
+                        lite
                         style={[common.caption, { color: colors.muted, marginTop: 2 }]}
                         numberOfLines={1}
                     >
@@ -84,6 +87,7 @@ export const SearchProfileItem = React.memo(({
                 ) : null}
                 {item.birthday && (
                     <FlexText
+                        lite
                         style={[common.caption, { color: colors.muted, marginTop: 2 }]}
                         numberOfLines={1}
                     >
@@ -92,7 +96,7 @@ export const SearchProfileItem = React.memo(({
                 )}
             </View>
             <View style={[styles.viewButton, { backgroundColor: colors.card }]}>
-                <FlexText style={[common.label, { color: colors.text, fontSize: 12 }]}>
+                <FlexText lite style={[common.label, { color: colors.text, fontSize: 12 }]}>
                     {t('search.profile.view')}
                 </FlexText>
             </View>

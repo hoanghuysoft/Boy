@@ -22,10 +22,10 @@ export const TrendingHashtagsSection = () => {
     return (
         <View style={styles.container}>
             <View style={styles.headerRow}>
-                <FlexText style={[common.subheading, { fontSize: 15 }]}>{t('search.sections.trending')}</FlexText>
+                <FlexText lite style={[common.subheading, { fontSize: 15 }]}>{t('search.sections.trending')}</FlexText>
                 {vm.hasMoreTags && (
                     <TouchableOpacity onPress={vm.navigateToAllTags} hitSlop={8}>
-                        <FlexText style={[common.bodySmall, { color: colors.primary }]}>
+                        <FlexText lite style={[common.bodySmall, { color: colors.primary }]}>
                             {t('search.sections.seeAll')}
                         </FlexText>
                     </TouchableOpacity>
@@ -63,6 +63,7 @@ export const TrendingHashtagsSection = () => {
                                 ]}
                               >
                                 <FlexText
+                                    lite
                                     style={[
                                         common.bodySmall,
                                         { color: colors.primary, fontWeight: '600' },
@@ -73,6 +74,7 @@ export const TrendingHashtagsSection = () => {
                                 </FlexText>
                                 {hashtag.count != null && (
                                     <FlexText
+                                        lite
                                         style={[
                                             common.caption,
                                             { color: colors.onSurfaceVariant, marginTop: 2 },

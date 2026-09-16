@@ -189,7 +189,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     />
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>
-                            <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
+                            <FlexText lite={false} style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
                             {post.profile_is_verified && <VerifiedIcon size={16} />}
                         </View>
                         <PostMetaInfo post={post} />
@@ -222,7 +222,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                 alignItems: 'center'
                             }]}>
                                 <Ionicons name="alert-circle-outline" size={16} color={vm.colors.onSurfaceVariant} />
-                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.onSurfaceVariant, fontStyle: 'italic' }]}>
+                                <FlexText lite={false} style={[vm.common.bodySmall, { color: vm.colors.onSurfaceVariant, fontStyle: 'italic' }]}>
                                     {originalPost.text || t('post.dialogs.repostFailed')}
                                 </FlexText>
                             </View>
@@ -242,7 +242,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                 paddingVertical: 2,
                             }}>
                                 {!!originalPost.content && (
-                                    <FlexText style={[vm.common.body, { fontStyle: 'italic', fontSize: 14, color: vm.colors.onSurface }]} numberOfLines={4}>
+                                    <FlexText lite={false} style={[vm.common.body, { fontStyle: 'italic', fontSize: 14, color: vm.colors.onSurface }]} numberOfLines={4}>
                                         {originalPost.clean_content || originalPost.content}
                                     </FlexText>
                                 )}
@@ -261,7 +261,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                         contentFit="cover"
                                         placeholder={{ blurhash: originalAvatarPlaceholder }}
                                     />
-                                    <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11, fontWeight: '600' }]}>
+                                    <FlexText lite={false} style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11, fontWeight: '600' }]}>
                                         Reposted from {originalPost.profile_name}
                                     </FlexText>
                                 </TouchableOpacity>
@@ -342,7 +342,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                         </FlexText>
                                     </TouchableOpacity>
                                 </View>
-                                <FlexText selectable style={[vm.common.body, { fontSize: 14, color: vm.colors.onSurface, marginTop: 2 }]}>
+                                <FlexText lite={false} selectable style={[vm.common.body, { fontSize: 14, color: vm.colors.onSurface, marginTop: 2 }]}>
                                     {translation.translatedText}
                                 </FlexText>
                                 <TouchableOpacity
