@@ -12,9 +12,9 @@
     "test:video": "bun test/runVideoAutoplayTests.ts",
     "test:list": "bun test/runListHardcoreTest.ts",
     "test:multiuser": "bun test test/multiUserWorkflow.test.ts",
-    "clean": "node -e \"const fs = require('fs'); fs.rmSync('node_modules', { recursive: true, force: true }); fs.rmSync('bun.lock', { force: true });\"",
-    "clean:install": "node -e \"const fs = require('fs'); fs.rmSync('node_modules', { recursive: true, force: true });\" && bun install --force",
-    "clean:install:full": "node -e \"const fs = require('fs'); fs.rmSync('node_modules', { recursive: true, force: true }); fs.rmSync('bun.lock', { force: true });\" && bun install --force"
+    "clean": "node -e \"const fs = require('fs'); fs.rmSync('node_modules', { recursive: true, force: true, maxRetries: 10, retryDelay: 500 }); fs.rmSync('bun.lock', { force: true });\"",
+    "clean:install": "node -e \"const fs = require('fs'); fs.rmSync('node_modules', { recursive: true, force: true, maxRetries: 10, retryDelay: 500 });\" && bun install --force",
+    "clean:install:full": "node -e \"const fs = require('fs'); fs.rmSync('node_modules', { recursive: true, force: true, maxRetries: 10, retryDelay: 500 }); fs.rmSync('bun.lock', { force: true });\" && bun install --force"
   },
   "dependencies": {
     "@bam.tech/react-native-app-security": "1.0.0",
