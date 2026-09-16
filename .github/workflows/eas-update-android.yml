@@ -1,0 +1,109 @@
+name: EAS Update Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch / Channel"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - preview
+          - development
+      environment:
+        description: "Environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - preview
+          - development
+      message:
+        description: "Update message"
+        required: false
+        default: ""
+        type: string
+      clear_cache:
+        description: "Clear bundler cache (--clear-cache)"
+        required: false
+        default: true
+        type: boolean
+  push:
+    tags:
+      - 'ota-*'       # e.g., ota-1.0.0, ota-v1.2.0 (triggers production update)
+      - 'update-*'    # e.g., update-1.0.0, update-prod (triggers production update)
+      - 'ota-dev-*'   # e.g., ota-dev-1.0.0 (triggers development update)
+      - 'ota-prev-*'  # e.g., ota-prev-1.0.0 (triggers preview update)
+
+jobs:
+  update:
+    name: EAS Update Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Setup EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Resolve Update Parameters
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "branch=${{ inputs.branch }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "clear_cache=${{ inputs.clear_cache }}" >> $GITHUB_OUTPUT
+            MSG="${{ inputs.message }}"
+            if [ -z "$MSG" ]; then
+              MSG="Manual update from GitHub Actions (${GITHUB_SHA::7})"
+            fi
+            echo "message=$MSG" >> $GITHUB_OUTPUT
+          else
+            TAG_NAME="${{ github.ref_name }}"
+            if [[ "$TAG_NAME" == ota-dev-* ]]; then
+              echo "branch=development" >> $GITHUB_OUTPUT
+              echo "environment=development" >> $GITHUB_OUTPUT
+            elif [[ "$TAG_NAME" == ota-prev-* ]]; then
+              echo "branch=preview" >> $GITHUB_OUTPUT
+              echo "environment=preview" >> $GITHUB_OUTPUT
+            else
+              echo "branch=production" >> $GITHUB_OUTPUT
+              echo "environment=production" >> $GITHUB_OUTPUT
+            fi
+            echo "clear_cache=true" >> $GITHUB_OUTPUT
+            echo "message=OTA Update triggered by tag: $TAG_NAME" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish EAS Update
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          BRANCH="${{ steps.params.outputs.branch }}"
+          ENV="${{ steps.params.outputs.environment }}"
+          MSG="${{ steps.params.outputs.message }}"
+          CLEAR_CACHE="${{ steps.params.outputs.clear_cache }}"
+
+          ARGS="--platform android --branch $BRANCH --environment $ENV --message \"$MSG\" --non-interactive"
+
+          if [ "$CLEAR_CACHE" = "true" ]; then
+            ARGS="$ARGS --clear-cache"
+          fi
+
+          eval "eas update $ARGS"
