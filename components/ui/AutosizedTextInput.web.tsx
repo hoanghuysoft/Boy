@@ -28,6 +28,14 @@ export const AutosizedTextInput = forwardRef<any, AutosizedTextInputProps>(
         ref
     ) => {
         const flattenedStyle = (StyleSheet.flatten(style) || {}) as TextStyle;
+        const {
+            lineHeight: rawLineHeight,
+            fontSize: rawFontSize,
+            fontWeight: rawFontWeight,
+            fontFamily: rawFontFamily,
+            color: rawColor,
+            ...restStyle
+        } = flattenedStyle;
 
         const cssStyle: React.CSSProperties = {
             boxSizing: 'border-box',
@@ -36,14 +44,16 @@ export const AutosizedTextInput = forwardRef<any, AutosizedTextInputProps>(
             border: 'none',
             outline: 'none',
             backgroundColor: 'transparent',
-            fontFamily: flattenedStyle.fontFamily || 'inherit',
-            fontSize: flattenedStyle.fontSize || 16,
-            fontWeight: (flattenedStyle.fontWeight as any) || 'normal',
-            lineHeight: flattenedStyle.lineHeight ? `${flattenedStyle.lineHeight}px` : 'inherit',
-            color: (flattenedStyle.color as string) || 'inherit',
+            fontFamily: rawFontFamily || 'inherit',
+            fontSize: rawFontSize || 16,
+            fontWeight: (rawFontWeight as any) || 'normal',
+            lineHeight: rawLineHeight
+                ? (typeof rawLineHeight === 'number' ? `${rawLineHeight}px` : rawLineHeight)
+                : 'normal',
+            color: (rawColor as string) || 'inherit',
             padding: 0,
             margin: 0,
-            ...(flattenedStyle as any),
+            ...(restStyle as any),
         };
 
         return (

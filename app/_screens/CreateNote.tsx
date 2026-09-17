@@ -18,7 +18,6 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { AutosizedTextInput } from "@/components/ui/AutosizedTextInput";
 import {
     EnrichedMarkdownText,
     EnrichedMarkdownTextInput,
@@ -26,13 +25,13 @@ import {
     type MarkdownTextInputStyle,
     type StyleState,
 } from "react-native-enriched-markdown";
-import { KeyboardAvoidingView, KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlexText } from "@/components/FlexText";
 import { useThemeContext } from "@/context/ThemeContext";
-import { useCreateNote, useNote, useUpdateNote } from "@/services/note";
+import { useCreateNote, useUpdateNote } from "@/services/note";
 import { createCommonStyles } from "@/styles/common";
-import { buildNoteMarkdown, parseNoteTitleAndBody } from "@/utils/noteMarkdown";
+import { toggleTaskInMarkdown } from "@/utils/noteMarkdown";
 
 const CreateNoteScreen = () => {
     const { colors, typography, theme } = useThemeContext();
@@ -41,39 +40,25 @@ const CreateNoteScreen = () => {
     const insets = useSafeAreaInsets();
     const { toast } = useToast();
 
-    const { id } = useLocalSearchParams();
+    const { id, initialContent } = useLocalSearchParams<{ id?: string; initialContent?: string }>();
     const noteId = id ? Number(id) : null;
     const isEditMode = noteId !== null;
 
-    const { data: noteData, isLoading: isLoadingNote } = useNote(noteId || 0);
     const updateNoteMutation = useUpdateNote();
     const createNoteMutation = useCreateNote();
 
     const editorRef = useRef<EnrichedMarkdownTextInputInstance>(null);
 
-    // Initial parsing for edit mode
-    const initialParsed = useMemo(() => {
-        if (isEditMode && noteData?.data?.content) {
-            return parseNoteTitleAndBody(noteData.data.content);
-        }
-        return { title: "", body: "" };
-    }, [isEditMode, noteData?.data?.content]);
-
-    const [title, setTitle] = useState(initialParsed.title);
-    const [bodyMarkdown, setBodyMarkdown] = useState(initialParsed.body);
+    const [content, setContent] = useState(initialContent || "");
     const [viewMode, setViewMode] = useState<"editor" | "preview">("editor");
 
-    // Sync when noteData loads asynchronously in edit mode
-    const hasInitializedRef = useRef(false);
+    // Sync when initialContent route param changes
     useEffect(() => {
-        if (isEditMode && noteData?.data?.content && !hasInitializedRef.current) {
-            const parsed = parseNoteTitleAndBody(noteData.data.content);
-            setTitle(parsed.title);
-            setBodyMarkdown(parsed.body);
-            editorRef.current?.setValue(parsed.body);
-            hasInitializedRef.current = true;
+        if (initialContent !== undefined) {
+            setContent(initialContent);
+            editorRef.current?.setValue(initialContent);
         }
-    }, [isEditMode, noteData?.data?.content]);
+    }, [initialContent]);
 
     // Active formatting states from editor
     const [styleState, setStyleState] = useState<StyleState | null>(null);
@@ -104,7 +89,7 @@ const CreateNoteScreen = () => {
             if (gifUrl) {
                 const gifMarkdown = `\n\n![GIF](${gifUrl})\n\n`;
                 editorRef.current?.insertText(gifMarkdown);
-                setBodyMarkdown((prev) => prev + gifMarkdown);
+                setContent((prev) => prev + gifMarkdown);
             }
             GiphyDialog.hide();
         });
@@ -146,25 +131,61 @@ const CreateNoteScreen = () => {
     }, []);
 
     const handleInsertTaskList = useCallback(() => {
-        editorRef.current?.insertText("\n- [ ] ");
+        const template = "\n- [ ] Task 1\n- [ ] Task 2\n";
+        editorRef.current?.insertText(template);
+        setContent((prev) => prev + template);
     }, []);
 
     const handleInsertQuote = useCallback(() => {
-        editorRef.current?.insertText("\n> ");
+        const template = "\n> Quote text here\n\n";
+        editorRef.current?.insertText(template);
+        setContent((prev) => prev + template);
     }, []);
 
     const handleInsertCodeBlock = useCallback(() => {
-        editorRef.current?.insertText("\n```\n\n```\n");
+        const template = "\n```\n// code block\n```\n";
+        editorRef.current?.insertText(template);
+        setContent((prev) => prev + template);
     }, []);
 
     const handleInsertTable = useCallback(() => {
-        const tableTemplate = "\n| Header 1 | Header 2 |\n| --- | --- |\n| Item 1 | Item 2 |\n";
+        const tableTemplate = "\n| Header 1 | Header 2 |\n| --- | --- |\n| Item 1 | Item 2 |\n\n";
         editorRef.current?.insertText(tableTemplate);
+        setContent((prev) => prev + tableTemplate);
     }, []);
 
     const handleInsertDivider = useCallback(() => {
-        editorRef.current?.insertText("\n---\n");
+        const dividerTemplate = "\n---\n\n";
+        editorRef.current?.insertText(dividerTemplate);
+        setContent((prev) => prev + dividerTemplate);
     }, []);
+
+    // Toggle Preview / Editor with fresh markdown sync
+    const handleToggleViewMode = useCallback(async () => {
+        if (viewMode === "editor") {
+            try {
+                const currentMd = await editorRef.current?.getMarkdown();
+                if (currentMd !== undefined) {
+                    setContent(currentMd);
+                }
+            } catch {}
+            setViewMode("preview");
+        } else {
+            setViewMode("editor");
+        }
+    }, [viewMode]);
+
+    // Interactive task checkbox toggle in Preview mode
+    const handleTaskListItemPress = useCallback(
+        ({ index, checked }: { index: number; checked: boolean }) => {
+            setContent((prev) => {
+                const updated = toggleTaskInMarkdown(prev, index, checked);
+                editorRef.current?.setValue(updated);
+                return updated;
+            });
+        },
+        []
+    );
 
     // Link insertion
     const handleOpenLinkDialog = useCallback(() => {
@@ -217,27 +238,35 @@ const CreateNoteScreen = () => {
         const caption = imageCaption.trim() || "image";
         const imageMarkdown = `\n\n![${caption}](${formattedUrl})\n\n`;
         editorRef.current?.insertText(imageMarkdown);
-        setBodyMarkdown((prev) => prev + imageMarkdown);
+        setContent((prev) => prev + imageMarkdown);
         setIsImageDialogOpen(false);
     }, [imageCaption, imageUrl]);
 
     // Clear note
     const handleConfirmClear = useCallback(() => {
-        setTitle("");
-        setBodyMarkdown("");
+        setContent("");
         editorRef.current?.setValue("");
         setIsClearDialogOpen(false);
     }, []);
 
     // Save note
-    const handleSave = useCallback(() => {
-        const fullMarkdown = buildNoteMarkdown(title, bodyMarkdown);
-        if (!fullMarkdown.trim()) return;
+    const handleSave = useCallback(async () => {
+        let latestContent = content;
+        try {
+            const md = await editorRef.current?.getMarkdown();
+            if (md !== undefined) {
+                latestContent = md;
+                setContent(md);
+            }
+        } catch {}
+
+        const trimmed = latestContent.trim();
+        if (!trimmed) return;
 
         if (isEditMode && noteId) {
             if (updateNoteMutation.isPending) return;
             updateNoteMutation.mutate(
-                { id: noteId, data: { content: fullMarkdown } },
+                { id: noteId, data: { content: trimmed } },
                 {
                     onSuccess: () => {
                         Keyboard.dismiss();
@@ -248,7 +277,7 @@ const CreateNoteScreen = () => {
         } else {
             if (createNoteMutation.isPending) return;
             createNoteMutation.mutate(
-                { content: fullMarkdown },
+                { content: trimmed },
                 {
                     onSuccess: () => {
                         Keyboard.dismiss();
@@ -257,10 +286,10 @@ const CreateNoteScreen = () => {
                 }
             );
         }
-    }, [title, bodyMarkdown, isEditMode, noteId, updateNoteMutation, createNoteMutation]);
+    }, [content, isEditMode, noteId, updateNoteMutation, createNoteMutation]);
 
     const isSubmitting = createNoteMutation.isPending || updateNoteMutation.isPending;
-    const canSubmit = (title.trim().length > 0 || bodyMarkdown.trim().length > 0) && !isSubmitting && !isLoadingNote;
+    const canSubmit = content.trim().length > 0 && !isSubmitting;
 
     // Editor styling configurations
     const editorMarkdownStyle = useMemo<MarkdownTextInputStyle>(
@@ -341,14 +370,6 @@ const CreateNoteScreen = () => {
         [colors, theme]
     );
 
-    if (isEditMode && isLoadingNote) {
-        return (
-            <View style={{ flex: 1, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center" }}>
-                <Spinner size="lg" color={colors.secondary} />
-            </View>
-        );
-    }
-
     return (
         <KeyboardAvoidingView
             style={[common.screen, { backgroundColor: colors.surface }]}
@@ -378,7 +399,7 @@ const CreateNoteScreen = () => {
                 {/* Title & Preview Toggle */}
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                     <TouchableOpacity
-                        onPress={() => setViewMode(viewMode === "editor" ? "preview" : "editor")}
+                        onPress={handleToggleViewMode}
                         style={[
                             styles.viewModeButton,
                             {
@@ -440,60 +461,63 @@ const CreateNoteScreen = () => {
                 >
                     <EnrichedMarkdownText
                         flavor="github"
-                        markdown={buildNoteMarkdown(title, bodyMarkdown) || `*${t("notes.list.emptyDescription")}*`}
+                        markdown={content || `*${t("notes.list.emptyDescription")}*`}
                         markdownStyle={previewMarkdownStyle}
+                        onTaskListItemPress={handleTaskListItemPress}
+                        enableTaskListItemToggle={true}
+                        selectable={true}
                     />
                 </ScrollView>
             ) : (
-                <KeyboardAwareScrollView
-                    style={{ flex: 1 }}
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                        paddingHorizontal: 18,
+                <View
+                    style={{
+                        flex: 1,
+                        paddingHorizontal: 16,
                         paddingTop: Math.max(insets.top, 16) + 72,
-                        paddingBottom: Math.max(insets.bottom, 16) + 120,
+                        paddingBottom: Math.max(insets.bottom, 16) + 80,
                     }}
-                    bottomOffset={100}
-                    keyboardShouldPersistTaps="handled"
                 >
-                    {/* Note Title Input (Autosized) */}
-                    <AutosizedTextInput
-                        minRows={1}
-                        maxRows={3}
-                        style={[
-                            styles.titleInput,
-                            {
-                                color: colors.onSurface,
-                                borderBottomColor: colors.outlineVariant,
-                            },
-                        ]}
-                        placeholder={t("notes.editor.noteTitlePlaceholder")}
-                        placeholderTextColor={colors.onSurfaceVariant}
-                        value={title}
-                        onChangeText={setTitle}
-                        returnKeyType="next"
-                        onSubmitEditing={() => editorRef.current?.focus()}
-                    />
-
-                    {/* Enriched Markdown Body Input */}
                     <EnrichedMarkdownTextInput
                         ref={editorRef}
-                        defaultValue={initialParsed.body}
+                        defaultValue={initialContent || ""}
                         placeholder={t("notes.editor.contentPlaceholder")}
                         placeholderTextColor={colors.onSurfaceVariant}
                         multiline
-                        scrollEnabled={false}
+                        scrollEnabled
                         markdownStyle={editorMarkdownStyle}
-                        onChangeMarkdown={setBodyMarkdown}
+                        onChangeMarkdown={setContent}
                         onChangeState={setStyleState}
-                        style={StyleSheet.flatten([
+                        cursorColor={colors.secondary}
+                        selectionColor={colors.secondaryContainer}
+                        linkRegex={/https?:\/\/[^\s]+/i}
+                        selectionMenuConfig={{
+                            format: true,
+                            formatLabel: "Format",
+                            copyAsMarkdown: true,
+                            copyAsMarkdownLabel: "Copy as Markdown",
+                        }}
+                        formatMenuConfig={{
+                            bold: true,
+                            boldLabel: t("notes.editor.bold"),
+                            italic: true,
+                            italicLabel: t("notes.editor.italic"),
+                            underline: true,
+                            underlineLabel: t("notes.editor.underline"),
+                            strikethrough: true,
+                            strikethroughLabel: t("notes.editor.strikethrough"),
+                            spoiler: true,
+                            spoilerLabel: t("notes.editor.spoiler"),
+                            link: true,
+                            linkLabel: t("notes.editor.link"),
+                        }}
+                        style={[
                             styles.editorInput,
                             {
                                 color: colors.onSurface,
                             },
-                        ])}
+                        ]}
                     />
-                </KeyboardAwareScrollView>
+                </View>
             )}
 
             {/* Floating Rich Formatting Toolbar (Visible in Editor Mode) */}
@@ -650,9 +674,7 @@ const CreateNoteScreen = () => {
                                 onPress={handleToggleStrikethrough}
                                 style={[
                                     styles.toolbarBtn,
-                                    styleState?.strikethrough.isActive && {
-                                        backgroundColor: colors.secondaryContainer,
-                                    },
+                                    styleState?.strikethrough.isActive && { backgroundColor: colors.secondaryContainer },
                                 ]}
                             >
                                 <MaterialIcons
@@ -684,9 +706,7 @@ const CreateNoteScreen = () => {
                                 onPress={handleToggleUnorderedList}
                                 style={[
                                     styles.toolbarBtn,
-                                    styleState?.unorderedList.isActive && {
-                                        backgroundColor: colors.secondaryContainer,
-                                    },
+                                    styleState?.unorderedList.isActive && { backgroundColor: colors.secondaryContainer },
                                 ]}
                             >
                                 <MaterialIcons
@@ -701,9 +721,7 @@ const CreateNoteScreen = () => {
                                 onPress={handleToggleOrderedList}
                                 style={[
                                     styles.toolbarBtn,
-                                    styleState?.orderedList.isActive && {
-                                        backgroundColor: colors.secondaryContainer,
-                                    },
+                                    styleState?.orderedList.isActive && { backgroundColor: colors.secondaryContainer },
                                 ]}
                             >
                                 <MaterialIcons
@@ -713,12 +731,12 @@ const CreateNoteScreen = () => {
                                 />
                             </TouchableOpacity>
 
-                            {/* Task List Item */}
+                            {/* Task List */}
                             <TouchableOpacity onPress={handleInsertTaskList} style={styles.toolbarBtn}>
-                                <MaterialIcons name="check-box" size={18} color={colors.onSurface} />
+                                <MaterialIcons name="check-box" size={19} color={colors.onSurface} />
                             </TouchableOpacity>
 
-                            {/* Blockquote */}
+                            {/* Quote */}
                             <TouchableOpacity onPress={handleInsertQuote} style={styles.toolbarBtn}>
                                 <MaterialIcons name="format-quote" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
@@ -730,10 +748,10 @@ const CreateNoteScreen = () => {
 
                             {/* Table */}
                             <TouchableOpacity onPress={handleInsertTable} style={styles.toolbarBtn}>
-                                <MaterialIcons name="grid-on" size={18} color={colors.onSurface} />
+                                <MaterialIcons name="table-chart" size={19} color={colors.onSurface} />
                             </TouchableOpacity>
 
-                            {/* Divider */}
+                            {/* Divider Line */}
                             <TouchableOpacity onPress={handleInsertDivider} style={styles.toolbarBtn}>
                                 <MaterialIcons name="horizontal-rule" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
@@ -742,31 +760,31 @@ const CreateNoteScreen = () => {
 
                             {/* Insert Link */}
                             <TouchableOpacity onPress={handleOpenLinkDialog} style={styles.toolbarBtn}>
-                                <MaterialIcons name="link" size={20} color={colors.secondary} />
+                                <MaterialIcons name="link" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
 
                             {/* Insert Image URL */}
                             <TouchableOpacity onPress={handleOpenImageDialog} style={styles.toolbarBtn}>
-                                <MaterialIcons name="image" size={20} color={colors.secondary} />
+                                <MaterialIcons name="image" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
 
-                            {/* Giphy GIF */}
+                            {/* Giphy GIF Picker */}
                             <TouchableOpacity onPress={() => GiphyDialog.show()} style={styles.toolbarBtn}>
-                                <MaterialIcons name="gif" size={24} color={colors.secondary} />
+                                <MaterialIcons name="gif" size={26} color={colors.onSurface} />
                             </TouchableOpacity>
 
                             <View style={[styles.toolbarDivider, { backgroundColor: colors.outlineVariant }]} />
 
                             {/* Clear All */}
                             <TouchableOpacity onPress={() => setIsClearDialogOpen(true)} style={styles.toolbarBtn}>
-                                <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                                <MaterialIcons name="delete-outline" size={20} color="#ef4444" />
                             </TouchableOpacity>
                         </ScrollView>
                     </SquircleView>
                 </View>
             )}
 
-            {/* Insert Link Dialog */}
+            {/* Link Dialog */}
             <Dialog isOpen={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
                 <Dialog.Portal>
                     <Dialog.Overlay />
@@ -775,25 +793,39 @@ const CreateNoteScreen = () => {
                         <View style={{ marginBottom: 16 }}>
                             <Dialog.Title>{t("notes.editor.insertLinkTitle")}</Dialog.Title>
                         </View>
-                        <View style={{ gap: 12, marginBottom: 20 }}>
-                            <View>
-                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurfaceVariant, marginBottom: 6 }}>
+                        <View style={{ gap: 14, marginBottom: 20 }}>
+                            <View style={{ gap: 6 }}>
+                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurface }}>
                                     {t("notes.editor.linkTextLabel")}
                                 </FlexText>
                                 <TextInput
-                                    style={[styles.dialogInput, { color: colors.onSurface, borderColor: colors.outlineVariant }]}
+                                    style={[
+                                        styles.dialogInput,
+                                        {
+                                            color: colors.onSurface,
+                                            borderColor: colors.outlineVariant,
+                                            backgroundColor: colors.surfaceContainerHigh,
+                                        },
+                                    ]}
                                     placeholder={t("notes.editor.linkTextPlaceholder")}
                                     placeholderTextColor={colors.onSurfaceVariant}
                                     value={linkText}
                                     onChangeText={setLinkText}
                                 />
                             </View>
-                            <View>
-                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurfaceVariant, marginBottom: 6 }}>
+                            <View style={{ gap: 6 }}>
+                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurface }}>
                                     {t("notes.editor.linkUrlLabel")}
                                 </FlexText>
                                 <TextInput
-                                    style={[styles.dialogInput, { color: colors.onSurface, borderColor: colors.outlineVariant }]}
+                                    style={[
+                                        styles.dialogInput,
+                                        {
+                                            color: colors.onSurface,
+                                            borderColor: colors.outlineVariant,
+                                            backgroundColor: colors.surfaceContainerHigh,
+                                        },
+                                    ]}
                                     placeholder={t("notes.editor.linkUrlPlaceholder")}
                                     placeholderTextColor={colors.onSurfaceVariant}
                                     value={linkUrl}
@@ -815,7 +847,7 @@ const CreateNoteScreen = () => {
                 </Dialog.Portal>
             </Dialog>
 
-            {/* Insert Image Dialog */}
+            {/* Image URL Dialog */}
             <Dialog isOpen={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
                 <Dialog.Portal>
                     <Dialog.Overlay />
@@ -824,25 +856,39 @@ const CreateNoteScreen = () => {
                         <View style={{ marginBottom: 16 }}>
                             <Dialog.Title>{t("notes.editor.insertImageTitle")}</Dialog.Title>
                         </View>
-                        <View style={{ gap: 12, marginBottom: 20 }}>
-                            <View>
-                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurfaceVariant, marginBottom: 6 }}>
+                        <View style={{ gap: 14, marginBottom: 20 }}>
+                            <View style={{ gap: 6 }}>
+                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurface }}>
                                     {t("notes.editor.imageCaptionLabel")}
                                 </FlexText>
                                 <TextInput
-                                    style={[styles.dialogInput, { color: colors.onSurface, borderColor: colors.outlineVariant }]}
+                                    style={[
+                                        styles.dialogInput,
+                                        {
+                                            color: colors.onSurface,
+                                            borderColor: colors.outlineVariant,
+                                            backgroundColor: colors.surfaceContainerHigh,
+                                        },
+                                    ]}
                                     placeholder={t("notes.editor.imageCaptionPlaceholder")}
                                     placeholderTextColor={colors.onSurfaceVariant}
                                     value={imageCaption}
                                     onChangeText={setImageCaption}
                                 />
                             </View>
-                            <View>
-                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurfaceVariant, marginBottom: 6 }}>
+                            <View style={{ gap: 6 }}>
+                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurface }}>
                                     {t("notes.editor.imageUrlLabel")}
                                 </FlexText>
                                 <TextInput
-                                    style={[styles.dialogInput, { color: colors.onSurface, borderColor: colors.outlineVariant }]}
+                                    style={[
+                                        styles.dialogInput,
+                                        {
+                                            color: colors.onSurface,
+                                            borderColor: colors.outlineVariant,
+                                            backgroundColor: colors.surfaceContainerHigh,
+                                        },
+                                    ]}
                                     placeholder={t("notes.editor.imageUrlPlaceholder")}
                                     placeholderTextColor={colors.onSurfaceVariant}
                                     value={imageUrl}
@@ -931,20 +977,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    titleInput: {
-        fontSize: 24,
-        fontWeight: "bold",
-        paddingVertical: 10,
-        paddingHorizontal: 4,
-        marginBottom: 8,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-    },
     editorInput: {
+        flex: 1,
         fontSize: 16,
-        lineHeight: 24,
-        minHeight: 260,
-        paddingTop: 12,
         paddingHorizontal: 4,
+        paddingTop: 8,
     },
     toolbarContainer: {
         position: "absolute",

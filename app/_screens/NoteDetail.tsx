@@ -273,7 +273,7 @@ const NoteDetailScreen = () => {
                     ]}
                 >
                     <TouchableOpacity
-                        onPress={() => router.push({ pathname: "/create-note", params: { id: note.id } })}
+                        onPress={() => router.push({ pathname: "/create-note", params: { id: note.id.toString(), initialContent: note.content } })}
                         style={styles.iconButton}
                     >
                         <Ionicons name="pencil" size={20} color={colors.onSurface} />

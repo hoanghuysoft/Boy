@@ -50,6 +50,4 @@ android.keystore
 .heroui-docs/
 
 pnpm-lock.yaml
-pnpm-workspace.yaml
-
-bun.lock
+pnpm-workspace.yaml

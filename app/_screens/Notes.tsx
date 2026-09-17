@@ -1,5 +1,6 @@
 import { PostLinkPreview } from "@/components/PostLinkPreview";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Image } from "expo-image";
@@ -12,8 +13,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Dimensions,
-    FlatList,
-    type ListRenderItemInfo,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
@@ -35,11 +34,164 @@ import {
 
 dayjs.extend(relativeTime);
 
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const MASONRY_CARD_WIDTH = (SCREEN_WIDTH - 36) / 2;
+
+const NoteCard = React.memo(
+    ({
+        item,
+        colors,
+        common,
+        deletingId,
+        onPressNote,
+        onEditNote,
+        onDeleteNote,
+        t,
+    }: {
+        item: Note;
+        colors: any;
+        common: any;
+        deletingId: number | null;
+        onPressNote: (id: number) => void;
+        onEditNote: (note: Note) => void;
+        onDeleteNote: (note: Note) => void;
+        t: any;
+    }) => {
+        const { title } = parseNoteTitleAndBody(item.content);
+        const previewText = stripMarkdown(item.content);
+        const imageUrl = extractFirstImage(item.content);
+        const linkUrls = extractAllLinks(item.content);
+        const isDeleting = deletingId === item.id;
+
+        return (
+            <TouchableOpacity
+                activeOpacity={0.82}
+                onPress={() => onPressNote(item.id)}
+                style={styles.cardTouchable}
+            >
+                <SquircleView
+                    cornerSmoothing={100}
+                    preserveSmoothing
+                    style={[
+                        styles.noteCard,
+                        {
+                            backgroundColor: colors.surfaceContainer,
+                            shadowColor: "#000",
+                        },
+                    ]}
+                >
+                    {/* Image Thumbnail */}
+                    {imageUrl ? (
+                        <View style={styles.imageWrapper}>
+                            <Image
+                                source={{ uri: imageUrl }}
+                                style={styles.noteImage}
+                                contentFit="cover"
+                                transition={200}
+                            />
+                        </View>
+                    ) : null}
+
+                    {/* Note Title */}
+                    {title ? (
+                        <FlexText
+                            numberOfLines={2}
+                            style={[
+                                common.heading,
+                                {
+                                    fontSize: 16,
+                                    fontWeight: "700",
+                                    marginBottom: 6,
+                                    color: colors.onSurface,
+                                    lineHeight: 22,
+                                },
+                            ]}
+                        >
+                            {title}
+                        </FlexText>
+                    ) : null}
+
+                    {/* Note Preview Body */}
+                    {previewText.length > 0 ? (
+                        <FlexText
+                            numberOfLines={imageUrl ? 3 : 6}
+                            style={[
+                                common.body,
+                                {
+                                    fontSize: 13.5,
+                                    lineHeight: 19,
+                                    color: title ? colors.onSurfaceVariant : colors.onSurface,
+                                    marginBottom: linkUrls.length > 0 ? 8 : 10,
+                                },
+                            ]}
+                        >
+                            {previewText}
+                        </FlexText>
+                    ) : null}
+
+                    {/* First Link Preview */}
+                    {linkUrls.length > 0 && !imageUrl ? (
+                        <View style={styles.linkWrapper} pointerEvents="none">
+                            <PostLinkPreview
+                                url={linkUrls[0]}
+                                label=""
+                                colors={colors}
+                                cardWidth={MASONRY_CARD_WIDTH - 20}
+                            />
+                        </View>
+                    ) : null}
+
+                    {/* Bottom Row: Timestamp and Actions */}
+                    <View style={styles.footerRow}>
+                        <FlexText
+                            style={{
+                                color: colors.onSurfaceVariant,
+                                fontSize: 11,
+                                flex: 1,
+                            }}
+                            numberOfLines={1}
+                        >
+                            {dayjs(item.created_at).fromNow(true)}
+                        </FlexText>
+
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                            <TouchableOpacity
+                                onPress={() => onEditNote(item)}
+                                disabled={isDeleting}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <FlexText style={{ color: colors.secondary, fontSize: 12, fontWeight: "700" }}>
+                                    {t("notes.list.editAction")}
+                                </FlexText>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                onPress={() => onDeleteNote(item)}
+                                disabled={isDeleting}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                {isDeleting ? (
+                                    <Spinner size="sm" color={colors.onSurfaceVariant} />
+                                ) : (
+                                    <FlexText style={{ color: "#ef4444", fontSize: 12, fontWeight: "700" }}>
+                                        {t("notes.list.deleteAction")}
+                                    </FlexText>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </SquircleView>
+            </TouchableOpacity>
+        );
+    }
+);
+NoteCard.displayName = "NoteCard";
+
 const NotesScreen = () => {
     const router = useRouter();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
-    const { colors, typography, theme } = useThemeContext();
+    const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
 
     // Fetch Notes
@@ -70,6 +222,23 @@ const NotesScreen = () => {
         }
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+    const handlePressNote = useCallback(
+        (id: number) => {
+            router.push(`/note/${id}`);
+        },
+        [router]
+    );
+
+    const handleEditNote = useCallback(
+        (note: Note) => {
+            router.push({
+                pathname: "/create-note",
+                params: { id: note.id.toString(), initialContent: note.content },
+            });
+        },
+        [router]
+    );
+
     const handleDeleteNote = useCallback(
         (note: Note) => {
             if (deletingId === note.id || deleteNoteMutation.isPending) return;
@@ -80,118 +249,19 @@ const NotesScreen = () => {
     );
 
     const renderItem = useCallback(
-        ({ item }: ListRenderItemInfo<Note>) => {
-            const { title } = parseNoteTitleAndBody(item.content);
-            const previewText = stripMarkdown(item.content);
-            const imageUrl = extractFirstImage(item.content);
-            const linkUrls = extractAllLinks(item.content);
-            const isDeleting = deletingId === item.id;
-
-            return (
-                <TouchableOpacity
-                    activeOpacity={0.82}
-                    onPress={() => router.push(`/note/${item.id}`)}
-                >
-                    <SquircleView
-                        cornerSmoothing={100}
-                        preserveSmoothing
-                        style={[
-                            styles.noteCard,
-                            {
-                                backgroundColor: colors.surfaceContainer,
-                                shadowColor: "#000",
-                            },
-                        ]}
-                    >
-                        {/* Note Title */}
-                        {title ? (
-                            <FlexText
-                                numberOfLines={2}
-                                style={[
-                                    common.heading,
-                                    { fontSize: 18, marginBottom: 6, color: colors.onSurface },
-                                ]}
-                            >
-                                {title}
-                            </FlexText>
-                        ) : null}
-
-                        {/* Note Preview Body */}
-                        {previewText.length > 0 ? (
-                            <FlexText
-                                numberOfLines={3}
-                                style={[
-                                    common.body,
-                                    {
-                                        fontSize: 15,
-                                        lineHeight: 22,
-                                        color: title ? colors.onSurfaceVariant : colors.onSurface,
-                                        marginBottom: imageUrl || linkUrls.length > 0 ? 12 : 0,
-                                    },
-                                ]}
-                            >
-                                {previewText}
-                            </FlexText>
-                        ) : null}
-
-                        {/* Image Thumbnail */}
-                        {imageUrl ? (
-                            <View style={styles.imageWrapper}>
-                                <Image
-                                    source={{ uri: imageUrl }}
-                                    style={styles.noteImage}
-                                    contentFit="cover"
-                                    transition={200}
-                                />
-                            </View>
-                        ) : linkUrls.length > 0 ? (
-                            <View style={styles.linkWrapper} pointerEvents="none">
-                                <PostLinkPreview
-                                    url={linkUrls[0]}
-                                    label=""
-                                    colors={colors}
-                                    cardWidth={Dimensions.get("window").width - 64}
-                                />
-                            </View>
-                        ) : null}
-
-                        {/* Bottom Row: Timestamp and Actions */}
-                        <View style={[common.row, styles.footerRow]}>
-                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12 }}>
-                                {dayjs(item.created_at).fromNow()}
-                            </FlexText>
-
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-                                <TouchableOpacity
-                                    onPress={() => router.push({ pathname: "/create-note", params: { id: item.id } })}
-                                    disabled={isDeleting}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                >
-                                    <FlexText style={{ color: colors.secondary, fontSize: 13, fontWeight: "700" }}>
-                                        {t("notes.list.editAction")}
-                                    </FlexText>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    onPress={() => handleDeleteNote(item)}
-                                    disabled={isDeleting}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                >
-                                    {isDeleting ? (
-                                        <Spinner size="sm" color={colors.onSurfaceVariant} />
-                                    ) : (
-                                        <FlexText style={{ color: "#ef4444", fontSize: 13, fontWeight: "700" }}>
-                                            {t("notes.list.deleteAction")}
-                                        </FlexText>
-                                    )}
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </SquircleView>
-                </TouchableOpacity>
-            );
-        },
-        [colors, common, deletingId, handleDeleteNote, router, t]
+        ({ item }: ListRenderItemInfo<Note>) => (
+            <NoteCard
+                item={item}
+                colors={colors}
+                common={common}
+                deletingId={deletingId}
+                onPressNote={handlePressNote}
+                onEditNote={handleEditNote}
+                onDeleteNote={handleDeleteNote}
+                t={t}
+            />
+        ),
+        [colors, common, deletingId, handlePressNote, handleEditNote, handleDeleteNote, t]
     );
 
     const renderFooter = useCallback(() => {
@@ -202,40 +272,40 @@ const NotesScreen = () => {
                 </View>
             );
         }
-        return <View style={{ height: 100 }} />;
+        return <View style={{ height: 90 }} />;
     }, [isFetchingNextPage, colors.onSurface]);
 
     const renderEmpty = useCallback(() => {
         if (isLoading) {
+            const skeletonHeights = [160, 220, 190, 140, 180, 210];
             return (
-                <View style={{ paddingTop: 16 }}>
-                    {Array.from({ length: 3 }).map((_, i) => (
-                        <SquircleView
-                            key={i}
-                            cornerSmoothing={100}
-                            style={[
-                                styles.noteCard,
-                                {
-                                    backgroundColor: colors.surfaceContainer,
-                                },
-                            ]}
-                        >
-                            <ShimmerGroup isLoading>
-                                <Shimmer style={{ width: "40%", height: 20, borderRadius: 6, marginBottom: 12 }} />
-                                <View style={{ gap: 8, marginBottom: 14 }}>
-                                    <Shimmer style={{ width: "100%", height: 16, borderRadius: 6 }} />
-                                    <Shimmer style={{ width: "85%", height: 16, borderRadius: 6 }} />
-                                    <Shimmer style={{ width: "65%", height: 16, borderRadius: 6 }} />
-                                </View>
-                                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                                    <Shimmer style={{ width: 64, height: 14, borderRadius: 6 }} />
-                                    <View style={{ flexDirection: "row", gap: 16 }}>
-                                        <Shimmer style={{ width: 40, height: 14, borderRadius: 6 }} />
-                                        <Shimmer style={{ width: 48, height: 14, borderRadius: 6 }} />
-                                    </View>
-                                </View>
-                            </ShimmerGroup>
-                        </SquircleView>
+                <View style={{ flexDirection: "row", paddingHorizontal: 4, gap: 10, paddingTop: 4 }}>
+                    {[0, 1].map((col) => (
+                        <View key={col} style={{ flex: 1, gap: 10 }}>
+                            {skeletonHeights
+                                .filter((_, i) => i % 2 === col)
+                                .map((h, i) => (
+                                    <SquircleView
+                                        key={i}
+                                        cornerSmoothing={100}
+                                        style={[
+                                            styles.noteCard,
+                                            {
+                                                margin: 0,
+                                                height: h,
+                                                backgroundColor: colors.surfaceContainer,
+                                            },
+                                        ]}
+                                    >
+                                        <ShimmerGroup isLoading>
+                                            <Shimmer style={{ width: "70%", height: 16, borderRadius: 6, marginBottom: 10 }} />
+                                            <Shimmer style={{ width: "100%", height: 12, borderRadius: 4, marginBottom: 6 }} />
+                                            <Shimmer style={{ width: "85%", height: 12, borderRadius: 4, marginBottom: 6 }} />
+                                            <Shimmer style={{ width: "60%", height: 12, borderRadius: 4 }} />
+                                        </ShimmerGroup>
+                                    </SquircleView>
+                                ))}
+                        </View>
                     ))}
                 </View>
             );
@@ -264,7 +334,7 @@ const NotesScreen = () => {
 
     const ListHeaderComponent = useCallback(
         () => (
-            <View style={{ marginTop: insets.top + 60, paddingHorizontal: 4, marginBottom: 16 }}>
+            <View style={{ marginTop: insets.top + 60, paddingHorizontal: 6, marginBottom: 14 }}>
                 <FlexText style={[common.heading, { fontSize: 30, color: colors.onSurface }]}>
                     {t("notes.list.title")}
                 </FlexText>
@@ -300,10 +370,13 @@ const NotesScreen = () => {
                 </SquircleView>
             </View>
 
-            <FlatList
+            {/* Masonry FlashList */}
+            <FlashList
                 data={notes}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderItem}
+                numColumns={2}
+                masonry={true}
                 onEndReached={handleEndReached}
                 onEndReachedThreshold={0.5}
                 ListHeaderComponent={ListHeaderComponent}
@@ -312,10 +385,11 @@ const NotesScreen = () => {
                 showsVerticalScrollIndicator={false}
                 onRefresh={refetch}
                 refreshing={isRefetching}
-                contentContainerStyle={[
-                    { paddingHorizontal: 16 },
-                    notes.length === 0 ? styles.emptyContainer : undefined,
-                ]}
+                contentContainerStyle={{
+                    paddingHorizontal: 8,
+                    paddingTop: 8,
+                    paddingBottom: insets.bottom + 80,
+                }}
                 refreshControl={
                     <RefreshControl
                         refreshing={isRefetching}
@@ -384,35 +458,38 @@ const NotesScreen = () => {
 export default NotesScreen;
 
 const styles = StyleSheet.create({
+    cardTouchable: {
+        flex: 1,
+        margin: 5,
+    },
     noteCard: {
-        borderRadius: 20,
-        paddingHorizontal: 18,
-        paddingVertical: 16,
-        marginBottom: 14,
+        borderRadius: 18,
+        paddingHorizontal: 14,
+        paddingVertical: 14,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
         shadowRadius: 8,
         elevation: 3,
+        overflow: "hidden",
     },
     imageWrapper: {
-        marginTop: 6,
-        marginBottom: 12,
-        borderRadius: 14,
+        marginBottom: 10,
+        borderRadius: 12,
         overflow: "hidden",
     },
     noteImage: {
-        height: 180,
+        height: 130,
         width: "100%",
-        borderRadius: 14,
+        borderRadius: 12,
     },
     linkWrapper: {
-        marginTop: 6,
-        marginBottom: 12,
+        marginBottom: 10,
     },
     footerRow: {
+        flexDirection: "row",
         alignItems: "center",
-        marginTop: 10,
         justifyContent: "space-between",
+        marginTop: 4,
     },
     footerLoader: {
         paddingVertical: 24,
@@ -423,9 +500,6 @@ const styles = StyleSheet.create({
         paddingVertical: 80,
         alignItems: "center",
         paddingHorizontal: 40,
-    },
-    emptyContainer: {
-        flex: 1,
     },
     emptyIconContainer: {
         width: 76,
