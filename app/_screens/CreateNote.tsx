@@ -1,34 +1,38 @@
-import { LinkPreview } from '@flyerhq/react-native-link-preview';
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
-import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
+import { Button } from "heroui-native/button";
+import { Dialog } from "heroui-native/dialog";
 import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Keyboard,
     Platform,
     ScrollView,
+    StyleSheet,
     TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
+import { AutosizedTextInput } from "@/components/ui/AutosizedTextInput";
+import {
+    EnrichedMarkdownText,
+    EnrichedMarkdownTextInput,
+    type EnrichedMarkdownTextInputInstance,
+    type MarkdownTextInputStyle,
+    type StyleState,
+} from "react-native-enriched-markdown";
 import { KeyboardAvoidingView, KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlexText } from "@/components/FlexText";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useCreateNote, useNote, useUpdateNote } from "@/services/note";
 import { createCommonStyles } from "@/styles/common";
-
-type Block =
-    | { id: string; type: 'text'; text: string }
-    | { id: string; type: 'image'; url: string }
-    | { id: string; type: 'link'; url: string };
+import { buildNoteMarkdown, parseNoteTitleAndBody } from "@/utils/noteMarkdown";
 
 const CreateNoteScreen = () => {
     const { colors, typography, theme } = useThemeContext();
@@ -45,176 +49,301 @@ const CreateNoteScreen = () => {
     const updateNoteMutation = useUpdateNote();
     const createNoteMutation = useCreateNote();
 
-    const [title, setTitle] = useState(() => {
-        if (isEditMode && noteData?.data) {
-            const content = noteData.data.content;
-            const titleMatch = content.match(/\[<title>(.*?)<\/title>]/i);
-            return titleMatch ? titleMatch[1] : "";
+    const editorRef = useRef<EnrichedMarkdownTextInputInstance>(null);
+
+    // Initial parsing for edit mode
+    const initialParsed = useMemo(() => {
+        if (isEditMode && noteData?.data?.content) {
+            return parseNoteTitleAndBody(noteData.data.content);
         }
-        return "";
-    });
+        return { title: "", body: "" };
+    }, [isEditMode, noteData?.data?.content]);
 
-    const [blocks, setBlocks] = useState<Block[]>(() => {
-        if (isEditMode && noteData?.data) {
-            const content = noteData.data.content;
-            const strippedContent = content.replace(/\[<title>.*?<\/title>]/gi, '');
-            const parts = strippedContent.split(/(\[<img\s+.*?\s*\/>]|\[<link\s+.*?\s*\/>])/gi);
+    const [title, setTitle] = useState(initialParsed.title);
+    const [bodyMarkdown, setBodyMarkdown] = useState(initialParsed.body);
+    const [viewMode, setViewMode] = useState<"editor" | "preview">("editor");
 
-            const initialBlocks: Block[] = [];
-
-            parts.forEach((part) => {
-                if (!part) return;
-
-                const imgMatch = part.match(/\[<img\s+(.*?)\s*\/>]/i);
-                if (imgMatch) {
-                    initialBlocks.push({ id: Math.random().toString(), type: 'image', url: imgMatch[1] });
-                    return;
-                }
-
-                const linkMatch = part.match(/\[<link\s+(.*?)\s*\/>]/i);
-                if (linkMatch) {
-                    initialBlocks.push({ id: Math.random().toString(), type: 'link', url: linkMatch[1] });
-                    return;
-                }
-
-                if (part) {
-                    initialBlocks.push({ id: Math.random().toString(), type: 'text', text: part });
-                }
-            });
-
-            if (initialBlocks.length === 0) {
-                initialBlocks.push({ id: 'init', type: 'text', text: '' });
-            }
-            return initialBlocks;
+    // Sync when noteData loads asynchronously in edit mode
+    const hasInitializedRef = useRef(false);
+    useEffect(() => {
+        if (isEditMode && noteData?.data?.content && !hasInitializedRef.current) {
+            const parsed = parseNoteTitleAndBody(noteData.data.content);
+            setTitle(parsed.title);
+            setBodyMarkdown(parsed.body);
+            editorRef.current?.setValue(parsed.body);
+            hasInitializedRef.current = true;
         }
-        return [{ id: 'init', type: 'text', text: '' }];
-    });
+    }, [isEditMode, noteData?.data?.content]);
 
-    const [urlInput, setUrlInput] = useState("");
-    const [inputType, setInputType] = useState<'image' | 'link' | null>(null);
+    // Active formatting states from editor
+    const [styleState, setStyleState] = useState<StyleState | null>(null);
 
+    // Dialog States
+    const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+    const [linkText, setLinkText] = useState("");
+    const [linkUrl, setLinkUrl] = useState("");
 
+    const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+    const [imageCaption, setImageCaption] = useState("");
+    const [imageUrl, setImageUrl] = useState("");
 
+    const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+
+    // Setup Giphy Dialog listener
     useEffect(() => {
         GiphyDialog.configure({
-            theme: theme === 'dark' ? 'dark' : 'light',
+            theme: theme === "dark" ? "dark" : "light",
             rating: GiphyRating.R,
         });
 
-        const listener = GiphyDialog.addListener('onMediaSelect', (e) => {
+        const listener = GiphyDialog.addListener("onMediaSelect", (e) => {
             const media = e.media;
             const images = media?.data?.images || (media as any)?.images;
+            const gifUrl = images?.original?.url || images?.fixed_height?.url;
 
-            if (images && images.original && images.original.url) {
-                const imageUrl = images.original.url;
-                setBlocks(prev => [
-                    ...prev,
-                    { id: Math.random().toString(), type: 'image', url: imageUrl },
-                    { id: Math.random().toString(), type: 'text', text: '' } // add new empty text block after media
-                ]);
+            if (gifUrl) {
+                const gifMarkdown = `\n\n![GIF](${gifUrl})\n\n`;
+                editorRef.current?.insertText(gifMarkdown);
+                setBodyMarkdown((prev) => prev + gifMarkdown);
             }
             GiphyDialog.hide();
         });
+
         return () => listener.remove();
     }, [theme]);
 
-    const handleAddUrl = useCallback(() => {
-        const urlStr = urlInput.trim();
-        if (urlStr) {
-            // Ensure the URL has a valid domain (e.g., containing a dot like .com) or is localhost
-            const urlRegex = /^(https?:\/\/)?(localhost|[\w\-]+(\.[\w\-]+)+)(:\d+)?(\/.*)?$/i;
-            if (!urlRegex.test(urlStr)) {
-                toast.show({
-                    variant: 'danger',
-                    label: t("notes.editor.invalidUrlTitle"),
-                    description: t("notes.editor.invalidUrlMessage"),
-                });
-                return;
-            }
+    // Format actions
+    const handleToggleBold = useCallback(() => {
+        editorRef.current?.toggleBold();
+    }, []);
 
-            let formattedUrl = urlStr;
-            // Prepend https:// if no protocol is found to ensure valid URL object
-            if (!/^https?:\/\//i.test(formattedUrl)) {
-                formattedUrl = 'https://' + formattedUrl;
-            }
+    const handleToggleItalic = useCallback(() => {
+        editorRef.current?.toggleItalic();
+    }, []);
 
-            try {
-                new URL(formattedUrl);
-            } catch {
-                toast.show({
-                    variant: 'danger',
-                    label: t("notes.editor.invalidUrlTitle"),
-                    description: t("notes.editor.invalidUrlMalformedMessage"),
-                });
-                return;
-            }
+    const handleToggleUnderline = useCallback(() => {
+        editorRef.current?.toggleUnderline();
+    }, []);
 
-            if (!inputType) return;
+    const handleToggleStrikethrough = useCallback(() => {
+        editorRef.current?.toggleStrikethrough();
+    }, []);
 
-            const newBlock: Block = { id: Math.random().toString(), type: inputType, url: formattedUrl };
-            setBlocks(prev => [
-                ...prev,
-                newBlock,
-                { id: Math.random().toString(), type: 'text', text: '' } // auto add text block after
-            ]);
+    const handleToggleSpoiler = useCallback(() => {
+        editorRef.current?.toggleSpoiler();
+    }, []);
 
-            setUrlInput("");
-            setInputType(null);
+    const handleToggleHeading = useCallback((level: 1 | 2 | 3) => {
+        editorRef.current?.toggleHeading(level);
+    }, []);
+
+    const handleToggleUnorderedList = useCallback(() => {
+        editorRef.current?.toggleUnorderedList();
+    }, []);
+
+    const handleToggleOrderedList = useCallback(() => {
+        editorRef.current?.toggleOrderedList();
+    }, []);
+
+    const handleInsertTaskList = useCallback(() => {
+        editorRef.current?.insertText("\n- [ ] ");
+    }, []);
+
+    const handleInsertQuote = useCallback(() => {
+        editorRef.current?.insertText("\n> ");
+    }, []);
+
+    const handleInsertCodeBlock = useCallback(() => {
+        editorRef.current?.insertText("\n```\n\n```\n");
+    }, []);
+
+    const handleInsertTable = useCallback(() => {
+        const tableTemplate = "\n| Header 1 | Header 2 |\n| --- | --- |\n| Item 1 | Item 2 |\n";
+        editorRef.current?.insertText(tableTemplate);
+    }, []);
+
+    const handleInsertDivider = useCallback(() => {
+        editorRef.current?.insertText("\n---\n");
+    }, []);
+
+    // Link insertion
+    const handleOpenLinkDialog = useCallback(() => {
+        setLinkText("");
+        setLinkUrl("");
+        setIsLinkDialogOpen(true);
+    }, []);
+
+    const handleConfirmInsertLink = useCallback(() => {
+        const trimmedUrl = linkUrl.trim();
+        if (!trimmedUrl) return;
+
+        let formattedUrl = trimmedUrl;
+        if (!/^https?:\/\//i.test(formattedUrl)) {
+            formattedUrl = `https://${formattedUrl}`;
         }
-    }, [urlInput, inputType, t, toast]);
 
+        try {
+            new URL(formattedUrl);
+        } catch {
+            toast.show({
+                variant: "danger",
+                label: t("notes.editor.invalidUrlTitle"),
+                description: t("notes.editor.invalidUrlMalformedMessage"),
+            });
+            return;
+        }
+
+        const text = linkText.trim() || formattedUrl;
+        editorRef.current?.insertLink(text, formattedUrl);
+        setIsLinkDialogOpen(false);
+    }, [linkText, linkUrl, t, toast]);
+
+    // Image URL insertion
+    const handleOpenImageDialog = useCallback(() => {
+        setImageCaption("");
+        setImageUrl("");
+        setIsImageDialogOpen(true);
+    }, []);
+
+    const handleConfirmInsertImage = useCallback(() => {
+        const trimmedUrl = imageUrl.trim();
+        if (!trimmedUrl) return;
+
+        let formattedUrl = trimmedUrl;
+        if (!/^https?:\/\//i.test(formattedUrl)) {
+            formattedUrl = `https://${formattedUrl}`;
+        }
+
+        const caption = imageCaption.trim() || "image";
+        const imageMarkdown = `\n\n![${caption}](${formattedUrl})\n\n`;
+        editorRef.current?.insertText(imageMarkdown);
+        setBodyMarkdown((prev) => prev + imageMarkdown);
+        setIsImageDialogOpen(false);
+    }, [imageCaption, imageUrl]);
+
+    // Clear note
+    const handleConfirmClear = useCallback(() => {
+        setTitle("");
+        setBodyMarkdown("");
+        editorRef.current?.setValue("");
+        setIsClearDialogOpen(false);
+    }, []);
+
+    // Save note
     const handleSave = useCallback(() => {
-        const fullContent = [
-            title.trim() ? `[<title>${title.trim()}</title>]` : '',
-            ...blocks.map(b => {
-                if (b.type === 'text') return b.text;
-                if (b.type === 'image') return `[<img ${b.url} />]`;
-                if (b.type === 'link') return `[<link ${b.url} />]`;
-                return '';
-            })
-        ].filter(Boolean).join('\n');
-
-        if (!fullContent) return;
+        const fullMarkdown = buildNoteMarkdown(title, bodyMarkdown);
+        if (!fullMarkdown.trim()) return;
 
         if (isEditMode && noteId) {
             if (updateNoteMutation.isPending) return;
             updateNoteMutation.mutate(
-                { id: noteId, data: { content: fullContent } },
+                { id: noteId, data: { content: fullMarkdown } },
                 {
                     onSuccess: () => {
                         Keyboard.dismiss();
                         router.back();
-                    }
+                    },
                 }
             );
         } else {
             if (createNoteMutation.isPending) return;
             createNoteMutation.mutate(
-                { content: fullContent },
+                { content: fullMarkdown },
                 {
                     onSuccess: () => {
                         Keyboard.dismiss();
                         router.back();
-                    }
+                    },
                 }
             );
         }
-    }, [title, blocks, createNoteMutation, updateNoteMutation, isEditMode, noteId]);
+    }, [title, bodyMarkdown, isEditMode, noteId, updateNoteMutation, createNoteMutation]);
 
     const isSubmitting = createNoteMutation.isPending || updateNoteMutation.isPending;
+    const canSubmit = (title.trim().length > 0 || bodyMarkdown.trim().length > 0) && !isSubmitting && !isLoadingNote;
 
-    // Check if there is any meaningful content
-    const hasContent = blocks.some(b => (b.type === 'text' && b.text.trim().length > 0) || b.type !== 'text');
-    const canSubmit = (title.trim().length > 0 || hasContent) && !isSubmitting && !isLoadingNote;
+    // Editor styling configurations
+    const editorMarkdownStyle = useMemo<MarkdownTextInputStyle>(
+        () => ({
+            strong: { color: colors.onSurface },
+            em: { color: colors.onSurface },
+            link: { color: colors.secondary, underline: true },
+            spoiler: {
+                color: theme === "dark" ? "#1e293b" : "#e2e8f0",
+                backgroundColor: theme === "dark" ? "#334155" : "#cbd5e1",
+            },
+            h1: { fontSize: 26, fontWeight: "bold", color: colors.onSurface },
+            h2: { fontSize: 22, fontWeight: "bold", color: colors.onSurface },
+            h3: { fontSize: 18, fontWeight: "bold", color: colors.onSurface },
+            list: { itemSpacing: 4 },
+        }),
+        [colors, theme]
+    );
 
-    const handleClearAll = useCallback(() => {
-        setTitle("");
-        setBlocks([{ id: 'init', type: 'text', text: '' }]);
-    }, []);
+    // Readonly preview styling configurations
+    const previewMarkdownStyle = useMemo(
+        () => ({
+            paragraph: {
+                fontSize: 16,
+                lineHeight: 24,
+                color: colors.onSurface,
+                marginBottom: 12,
+            },
+            h1: { fontSize: 26, fontWeight: "bold", color: colors.onSurface, marginBottom: 12, marginTop: 16 },
+            h2: { fontSize: 22, fontWeight: "bold", color: colors.onSurface, marginBottom: 10, marginTop: 14 },
+            h3: { fontSize: 18, fontWeight: "bold", color: colors.onSurface, marginBottom: 8, marginTop: 12 },
+            strong: { color: colors.onSurface },
+            em: { color: colors.onSurface },
+            link: { color: colors.secondary, underline: true },
+            code: {
+                fontSize: 14,
+                color: colors.onSurface,
+                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                borderColor: colors.outlineVariant,
+            },
+            codeBlock: {
+                fontSize: 14,
+                color: colors.onSurface,
+                backgroundColor: theme === "dark" ? "#1e1e24" : "#f1f5f9",
+                borderColor: colors.outlineVariant,
+                borderRadius: 12,
+                padding: 12,
+            },
+            blockquote: {
+                borderColor: colors.secondary,
+                borderWidth: 3,
+                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                padding: 10,
+                borderRadius: 6,
+                color: colors.onSurfaceVariant,
+            },
+            table: {
+                fontSize: 14,
+                borderColor: colors.outlineVariant,
+                borderRadius: 10,
+                headerBackgroundColor: theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                cellPaddingHorizontal: 10,
+                cellPaddingVertical: 6,
+            },
+            taskList: {
+                checkedColor: colors.secondary,
+                checkmarkColor: "#ffffff",
+            },
+            spoiler: {
+                color: colors.onSurface,
+            },
+            image: {
+                borderRadius: 12,
+                marginTop: 8,
+                marginBottom: 12,
+            },
+        }),
+        [colors, theme]
+    );
 
     if (isEditMode && isLoadingNote) {
         return (
-            <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ flex: 1, backgroundColor: colors.surface, justifyContent: "center", alignItems: "center" }}>
                 <Spinner size="lg" color={colors.secondary} />
             </View>
         );
@@ -222,272 +351,644 @@ const CreateNoteScreen = () => {
 
     return (
         <KeyboardAvoidingView
-            style={common.screen}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={[common.screen, { backgroundColor: colors.surface }]}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-            {/* Header (Floating) */}
+            {/* Header (Floating Squircle) */}
             <SquircleView
                 cornerSmoothing={100}
                 preserveSmoothing
-                style={{
-                    position: 'absolute',
-                    top: Math.max(insets.top, 16),
-                    left: 16,
-                    right: 16,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    borderRadius: 24,
-                    padding: 12,
-                    zIndex: 100
-                }}>
+                style={[
+                    styles.headerContainer,
+                    {
+                        top: Math.max(insets.top, 16),
+                        backgroundColor: colors.surfaceContainer,
+                        shadowColor: "#000",
+                    },
+                ]}
+            >
+                {/* Back Button */}
                 <TouchableOpacity
                     onPress={() => router.back()}
-                    style={{
-                        backgroundColor: colors.surfaceContainerHigh,
-                        borderRadius: 999,
-                        width: 40,
-                        height: 40,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                    }}
+                    style={[styles.headerIconButton, { backgroundColor: colors.surfaceContainerHigh }]}
                 >
-                    <Ionicons name="close" size={24} color={colors.onSurface} />
+                    <Ionicons name="close" size={22} color={colors.onSurface} />
                 </TouchableOpacity>
-                <SquircleView
-                    cornerSmoothing={100}
-                    preserveSmoothing
-                    style={{
-                        backgroundColor: colors.surfaceContainerHigh,
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: 20,
-                    }}>
-                    <FlexText style={[common.heading, { fontSize: 20, color: colors.onSurface }]}>{isEditMode ? t("notes.editor.titleEdit") : t("notes.editor.titleNew")}</FlexText>
-                </SquircleView>
+
+                {/* Title & Preview Toggle */}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <TouchableOpacity
+                        onPress={() => setViewMode(viewMode === "editor" ? "preview" : "editor")}
+                        style={[
+                            styles.viewModeButton,
+                            {
+                                backgroundColor:
+                                    viewMode === "preview" ? colors.secondaryContainer : colors.surfaceContainerHigh,
+                            },
+                        ]}
+                    >
+                        <MaterialIcons
+                            name={viewMode === "preview" ? "visibility" : "edit"}
+                            size={16}
+                            color={viewMode === "preview" ? colors.secondary : colors.onSurface}
+                        />
+                        <FlexText
+                            style={{
+                                fontSize: 13,
+                                fontWeight: "700",
+                                color: viewMode === "preview" ? colors.secondary : colors.onSurface,
+                            }}
+                        >
+                            {viewMode === "preview" ? t("notes.editor.preview") : t("notes.editor.edit")}
+                        </FlexText>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Save Button */}
                 <TouchableOpacity
                     onPress={handleSave}
                     disabled={!canSubmit}
-                    style={{
-                        backgroundColor: canSubmit ? colors.onPrimary : colors.onSurfaceVariant,
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: 20,
-                    }}
+                    style={[
+                        styles.saveButton,
+                        {
+                            backgroundColor: canSubmit ? colors.secondary : colors.surfaceContainerHighest,
+                            opacity: canSubmit ? 1 : 0.6,
+                        },
+                    ]}
                 >
                     {isSubmitting ? (
-                        <Spinner size="sm" color={colors.onPrimary} />
+                        <Spinner size="sm" color="#ffffff" />
                     ) : (
-                        <FlexText style={{ color: colors.onPrimary, fontWeight: 'bold' }}>{t("notes.editor.save")}</FlexText>
+                        <FlexText style={{ color: canSubmit ? "#ffffff" : colors.onSurfaceVariant, fontWeight: "bold", fontSize: 14 }}>
+                            {t("notes.editor.save")}
+                        </FlexText>
                     )}
                 </TouchableOpacity>
             </SquircleView>
 
-            <KeyboardAwareScrollView
-                style={{ flex: 1 }}
-                contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingTop: Math.max(insets.top, 16) + 80, paddingBottom: 160 }}
-                bottomOffset={140}
-            >
-                <TextInput
-                    style={{
-                        color: colors.text,
-                        fontSize: 24,
-                        fontWeight: 'bold',
-                        marginBottom: 16,
+            {/* Content Area */}
+            {viewMode === "preview" ? (
+                <ScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{
+                        flexGrow: 1,
+                        paddingHorizontal: 20,
+                        paddingTop: Math.max(insets.top, 16) + 72,
+                        paddingBottom: Math.max(insets.bottom, 16) + 40,
                     }}
-                    placeholder={t("notes.editor.noteTitlePlaceholder")}
-                    placeholderTextColor={colors.muted}
-                    value={title}
-                    onChangeText={setTitle}
-                />
+                    showsVerticalScrollIndicator={false}
+                >
+                    <EnrichedMarkdownText
+                        flavor="github"
+                        markdown={buildNoteMarkdown(title, bodyMarkdown) || `*${t("notes.list.emptyDescription")}*`}
+                        markdownStyle={previewMarkdownStyle}
+                    />
+                </ScrollView>
+            ) : (
+                <KeyboardAwareScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{
+                        flexGrow: 1,
+                        paddingHorizontal: 18,
+                        paddingTop: Math.max(insets.top, 16) + 72,
+                        paddingBottom: Math.max(insets.bottom, 16) + 120,
+                    }}
+                    bottomOffset={100}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Note Title Input (Autosized) */}
+                    <AutosizedTextInput
+                        minRows={1}
+                        maxRows={3}
+                        style={[
+                            styles.titleInput,
+                            {
+                                color: colors.onSurface,
+                                borderBottomColor: colors.outlineVariant,
+                            },
+                        ]}
+                        placeholder={t("notes.editor.noteTitlePlaceholder")}
+                        placeholderTextColor={colors.onSurfaceVariant}
+                        value={title}
+                        onChangeText={setTitle}
+                        returnKeyType="next"
+                        onSubmitEditing={() => editorRef.current?.focus()}
+                    />
 
-                {blocks.map((block, index) => {
-                    if (block.type === 'text') {
-                        return (
-                            <TextInput
-                                key={block.id}
-                                style={{
-                                    color: colors.text,
-                                    fontSize: 18,
-                                    textAlignVertical: 'top',
-                                    minHeight: blocks.length === 1 ? 120 : undefined,
-                                }}
-                                placeholder={index === 0 ? t("notes.editor.contentPlaceholder") : undefined}
-                                placeholderTextColor={colors.muted}
-                                multiline
-                                value={block.text}
-                                onChangeText={(val) => {
-                                    setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, text: val } : b));
-                                }}
-                            />
-                        );
-                    }
+                    {/* Enriched Markdown Body Input */}
+                    <EnrichedMarkdownTextInput
+                        ref={editorRef}
+                        defaultValue={initialParsed.body}
+                        placeholder={t("notes.editor.contentPlaceholder")}
+                        placeholderTextColor={colors.onSurfaceVariant}
+                        multiline
+                        scrollEnabled={false}
+                        markdownStyle={editorMarkdownStyle}
+                        onChangeMarkdown={setBodyMarkdown}
+                        onChangeState={setStyleState}
+                        style={StyleSheet.flatten([
+                            styles.editorInput,
+                            {
+                                color: colors.onSurface,
+                            },
+                        ])}
+                    />
+                </KeyboardAwareScrollView>
+            )}
 
-                    if (block.type === 'image') {
-                        return (
-                            <View key={block.id} style={{ marginTop: 12, marginBottom: 12, position: 'relative' }}>
-                                <Image source={{ uri: block.url }} style={{ width: '100%', height: 180, borderRadius: 12 }} contentFit="cover" />
-                                <TouchableOpacity
-                                    onPress={() => setBlocks(prev => prev.filter(b => b.id !== block.id))}
-                                    style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 16, padding: 4 }}
+            {/* Floating Rich Formatting Toolbar (Visible in Editor Mode) */}
+            {viewMode === "editor" && (
+                <View
+                    style={[
+                        styles.toolbarContainer,
+                        {
+                            bottom: Math.max(insets.bottom, 12),
+                        },
+                    ]}
+                >
+                    <SquircleView
+                        cornerSmoothing={100}
+                        preserveSmoothing
+                        style={[
+                            styles.toolbarSquircle,
+                            {
+                                backgroundColor: colors.surfaceContainer,
+                                shadowColor: "#000",
+                            },
+                        ]}
+                    >
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.toolbarScrollContent}
+                            keyboardShouldPersistTaps="always"
+                        >
+                            {/* H1 Heading */}
+                            <TouchableOpacity
+                                onPress={() => handleToggleHeading(1)}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.heading.isActive && styleState?.heading.level === 1 && {
+                                        backgroundColor: colors.secondaryContainer,
+                                    },
+                                ]}
+                            >
+                                <FlexText
+                                    style={[
+                                        styles.headingBtnText,
+                                        {
+                                            color:
+                                                styleState?.heading.isActive && styleState?.heading.level === 1
+                                                    ? colors.secondary
+                                                    : colors.onSurface,
+                                        },
+                                    ]}
                                 >
-                                    <Ionicons name="close" size={20} color="#fff" />
-                                </TouchableOpacity>
-                            </View>
-                        );
-                    }
+                                    H1
+                                </FlexText>
+                            </TouchableOpacity>
 
-                    if (block.type === 'link') {
-                        return (
-                            <View key={block.id} style={{ marginTop: 12, marginBottom: 12, position: 'relative' }}>
-                                <LinkPreview
-                                    text={block.url}
-                                    renderText={() => <FlexText style={{ color: colors.muted, fontSize: 12 }} numberOfLines={2}>{t("notes.common.linkPreviewHint")}</FlexText>}
-                                    renderTitle={(title) => <FlexText style={{ color: colors.text, fontWeight: 'bold', fontSize: 15 }} numberOfLines={2}>{title}</FlexText>}
-                                    renderDescription={(desc) => <FlexText style={{ color: colors.muted, fontSize: 13, marginTop: 4 }} numberOfLines={3}>{desc}</FlexText>}
-                                    containerStyle={{ borderRadius: 12, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', overflow: 'hidden' }}
+                            {/* H2 Heading */}
+                            <TouchableOpacity
+                                onPress={() => handleToggleHeading(2)}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.heading.isActive && styleState?.heading.level === 2 && {
+                                        backgroundColor: colors.secondaryContainer,
+                                    },
+                                ]}
+                            >
+                                <FlexText
+                                    style={[
+                                        styles.headingBtnText,
+                                        {
+                                            color:
+                                                styleState?.heading.isActive && styleState?.heading.level === 2
+                                                    ? colors.secondary
+                                                    : colors.onSurface,
+                                        },
+                                    ]}
+                                >
+                                    H2
+                                </FlexText>
+                            </TouchableOpacity>
+
+                            {/* H3 Heading */}
+                            <TouchableOpacity
+                                onPress={() => handleToggleHeading(3)}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.heading.isActive && styleState?.heading.level === 3 && {
+                                        backgroundColor: colors.secondaryContainer,
+                                    },
+                                ]}
+                            >
+                                <FlexText
+                                    style={[
+                                        styles.headingBtnText,
+                                        {
+                                            color:
+                                                styleState?.heading.isActive && styleState?.heading.level === 3
+                                                    ? colors.secondary
+                                                    : colors.onSurface,
+                                        },
+                                    ]}
+                                >
+                                    H3
+                                </FlexText>
+                            </TouchableOpacity>
+
+                            <View style={[styles.toolbarDivider, { backgroundColor: colors.outlineVariant }]} />
+
+                            {/* Bold */}
+                            <TouchableOpacity
+                                onPress={handleToggleBold}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.bold.isActive && { backgroundColor: colors.secondaryContainer },
+                                ]}
+                            >
+                                <MaterialIcons
+                                    name="format-bold"
+                                    size={20}
+                                    color={styleState?.bold.isActive ? colors.secondary : colors.onSurface}
                                 />
-                                <TouchableOpacity
-                                    onPress={() => setBlocks(prev => prev.filter(b => b.id !== block.id))}
-                                    style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 16, padding: 4, zIndex: 10 }}
-                                >
-                                    <Ionicons name="close" size={20} color="#fff" />
-                                </TouchableOpacity>
-                            </View>
-                        );
-                    }
-                    return null;
-                })}
-            </KeyboardAwareScrollView>
+                            </TouchableOpacity>
 
-            {/* Bottom Action Bar (Floating) */}
-            <View style={{ position: 'absolute', bottom: Math.max(insets.bottom, 16), left: 16, right: 16 }}>
-                {inputType !== null ? (
-                    <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
-                        <SquircleView
-                            cornerSmoothing={100}
-                            preserveSmoothing
-                            style={{
-                                backgroundColor: colors.containerContent,
-                                borderRadius: 24,
-                                paddingVertical: 12,
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 4 },
-                                shadowOpacity: 0.1,
-                                shadowRadius: 12,
-                                elevation: 8,
-                            }}>
-                            <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, marginBottom: 12, marginHorizontal: 16 }}>
-                                <MaterialIcons name="link" size={18} color={colors.muted} />
+                            {/* Italic */}
+                            <TouchableOpacity
+                                onPress={handleToggleItalic}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.italic.isActive && { backgroundColor: colors.secondaryContainer },
+                                ]}
+                            >
+                                <MaterialIcons
+                                    name="format-italic"
+                                    size={20}
+                                    color={styleState?.italic.isActive ? colors.secondary : colors.onSurface}
+                                />
+                            </TouchableOpacity>
+
+                            {/* Underline */}
+                            <TouchableOpacity
+                                onPress={handleToggleUnderline}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.underline.isActive && { backgroundColor: colors.secondaryContainer },
+                                ]}
+                            >
+                                <MaterialIcons
+                                    name="format-underlined"
+                                    size={20}
+                                    color={styleState?.underline.isActive ? colors.secondary : colors.onSurface}
+                                />
+                            </TouchableOpacity>
+
+                            {/* Strikethrough */}
+                            <TouchableOpacity
+                                onPress={handleToggleStrikethrough}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.strikethrough.isActive && {
+                                        backgroundColor: colors.secondaryContainer,
+                                    },
+                                ]}
+                            >
+                                <MaterialIcons
+                                    name="format-strikethrough"
+                                    size={20}
+                                    color={styleState?.strikethrough.isActive ? colors.secondary : colors.onSurface}
+                                />
+                            </TouchableOpacity>
+
+                            {/* Spoiler */}
+                            <TouchableOpacity
+                                onPress={handleToggleSpoiler}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.spoiler.isActive && { backgroundColor: colors.secondaryContainer },
+                                ]}
+                            >
+                                <MaterialIcons
+                                    name="visibility-off"
+                                    size={18}
+                                    color={styleState?.spoiler.isActive ? colors.secondary : colors.onSurface}
+                                />
+                            </TouchableOpacity>
+
+                            <View style={[styles.toolbarDivider, { backgroundColor: colors.outlineVariant }]} />
+
+                            {/* Bullet List */}
+                            <TouchableOpacity
+                                onPress={handleToggleUnorderedList}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.unorderedList.isActive && {
+                                        backgroundColor: colors.secondaryContainer,
+                                    },
+                                ]}
+                            >
+                                <MaterialIcons
+                                    name="format-list-bulleted"
+                                    size={20}
+                                    color={styleState?.unorderedList.isActive ? colors.secondary : colors.onSurface}
+                                />
+                            </TouchableOpacity>
+
+                            {/* Numbered List */}
+                            <TouchableOpacity
+                                onPress={handleToggleOrderedList}
+                                style={[
+                                    styles.toolbarBtn,
+                                    styleState?.orderedList.isActive && {
+                                        backgroundColor: colors.secondaryContainer,
+                                    },
+                                ]}
+                            >
+                                <MaterialIcons
+                                    name="format-list-numbered"
+                                    size={20}
+                                    color={styleState?.orderedList.isActive ? colors.secondary : colors.onSurface}
+                                />
+                            </TouchableOpacity>
+
+                            {/* Task List Item */}
+                            <TouchableOpacity onPress={handleInsertTaskList} style={styles.toolbarBtn}>
+                                <MaterialIcons name="check-box" size={18} color={colors.onSurface} />
+                            </TouchableOpacity>
+
+                            {/* Blockquote */}
+                            <TouchableOpacity onPress={handleInsertQuote} style={styles.toolbarBtn}>
+                                <MaterialIcons name="format-quote" size={20} color={colors.onSurface} />
+                            </TouchableOpacity>
+
+                            {/* Code Block */}
+                            <TouchableOpacity onPress={handleInsertCodeBlock} style={styles.toolbarBtn}>
+                                <MaterialIcons name="code" size={20} color={colors.onSurface} />
+                            </TouchableOpacity>
+
+                            {/* Table */}
+                            <TouchableOpacity onPress={handleInsertTable} style={styles.toolbarBtn}>
+                                <MaterialIcons name="grid-on" size={18} color={colors.onSurface} />
+                            </TouchableOpacity>
+
+                            {/* Divider */}
+                            <TouchableOpacity onPress={handleInsertDivider} style={styles.toolbarBtn}>
+                                <MaterialIcons name="horizontal-rule" size={20} color={colors.onSurface} />
+                            </TouchableOpacity>
+
+                            <View style={[styles.toolbarDivider, { backgroundColor: colors.outlineVariant }]} />
+
+                            {/* Insert Link */}
+                            <TouchableOpacity onPress={handleOpenLinkDialog} style={styles.toolbarBtn}>
+                                <MaterialIcons name="link" size={20} color={colors.secondary} />
+                            </TouchableOpacity>
+
+                            {/* Insert Image URL */}
+                            <TouchableOpacity onPress={handleOpenImageDialog} style={styles.toolbarBtn}>
+                                <MaterialIcons name="image" size={20} color={colors.secondary} />
+                            </TouchableOpacity>
+
+                            {/* Giphy GIF */}
+                            <TouchableOpacity onPress={() => GiphyDialog.show()} style={styles.toolbarBtn}>
+                                <MaterialIcons name="gif" size={24} color={colors.secondary} />
+                            </TouchableOpacity>
+
+                            <View style={[styles.toolbarDivider, { backgroundColor: colors.outlineVariant }]} />
+
+                            {/* Clear All */}
+                            <TouchableOpacity onPress={() => setIsClearDialogOpen(true)} style={styles.toolbarBtn}>
+                                <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                            </TouchableOpacity>
+                        </ScrollView>
+                    </SquircleView>
+                </View>
+            )}
+
+            {/* Insert Link Dialog */}
+            <Dialog isOpen={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+                <Dialog.Portal>
+                    <Dialog.Overlay />
+                    <Dialog.Content>
+                        <Dialog.Close />
+                        <View style={{ marginBottom: 16 }}>
+                            <Dialog.Title>{t("notes.editor.insertLinkTitle")}</Dialog.Title>
+                        </View>
+                        <View style={{ gap: 12, marginBottom: 20 }}>
+                            <View>
+                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurfaceVariant, marginBottom: 6 }}>
+                                    {t("notes.editor.linkTextLabel")}
+                                </FlexText>
                                 <TextInput
-                                    style={{ flex: 1, fontSize: 14, marginLeft: 8, color: colors.text }}
-                                    placeholder={inputType === 'image' ? t("notes.editor.imageUrlPlaceholder") : t("notes.editor.linkUrlPlaceholder")}
-                                    placeholderTextColor={colors.muted}
-                                    value={urlInput}
-                                    onChangeText={setUrlInput}
-                                    autoFocus
+                                    style={[styles.dialogInput, { color: colors.onSurface, borderColor: colors.outlineVariant }]}
+                                    placeholder={t("notes.editor.linkTextPlaceholder")}
+                                    placeholderTextColor={colors.onSurfaceVariant}
+                                    value={linkText}
+                                    onChangeText={setLinkText}
+                                />
+                            </View>
+                            <View>
+                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurfaceVariant, marginBottom: 6 }}>
+                                    {t("notes.editor.linkUrlLabel")}
+                                </FlexText>
+                                <TextInput
+                                    style={[styles.dialogInput, { color: colors.onSurface, borderColor: colors.outlineVariant }]}
+                                    placeholder={t("notes.editor.linkUrlPlaceholder")}
+                                    placeholderTextColor={colors.onSurfaceVariant}
+                                    value={linkUrl}
+                                    onChangeText={setLinkUrl}
                                     autoCapitalize="none"
                                     keyboardType="url"
-                                    onSubmitEditing={handleAddUrl}
                                 />
-                                {urlInput.trim().length > 0 && (
-                                    <TouchableOpacity onPress={handleAddUrl} style={{ marginLeft: 8 }}>
-                                        <MaterialIcons name="check-circle" size={24} color={colors.verify || colors.text} />
-                                    </TouchableOpacity>
-                                )}
-                            </SquircleView>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ gap: 12, paddingLeft: 16, paddingRight: 8 }}>
-                                    <TouchableOpacity onPress={() => setInputType(inputType === 'image' ? null : 'image')}>
-                                        <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
-                                            <MaterialIcons name="image" size={20} color={colors.text} />
-                                            <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.imageUrlAction")}</FlexText>
-                                        </SquircleView>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setInputType(inputType === 'link' ? null : 'link')}>
-                                        <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
-                                            <MaterialIcons name="public" size={20} color={colors.text} />
-                                            <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.linkAction")}</FlexText>
-                                        </SquircleView>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => GiphyDialog.show()}>
-                                        <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
-                                            <MaterialIcons name="gif" size={20} color={colors.text} />
-                                            <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.gifAction")}</FlexText>
-                                        </SquircleView>
-                                    </TouchableOpacity>
-                                </ScrollView>
-
-                                <View style={{ width: 1, height: 24, backgroundColor: colors.muted, opacity: 0.3, marginHorizontal: 8 }} />
-                                <TouchableOpacity onPress={handleClearAll} style={{ padding: 8, paddingRight: 16 }}>
-                                    <Ionicons name="trash-outline" size={22} color="#ff4444" />
-                                </TouchableOpacity>
                             </View>
-                        </SquircleView>
-                    </Animated.View>
-                ) : (
-                    <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                        <SquircleView
-                            cornerSmoothing={100}
-                            preserveSmoothing
-                            style={{
-                                flex: 1,
-                                backgroundColor: colors.containerContent,
-                                borderRadius: 24,
-                                paddingVertical: 12,
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 4 },
-                                shadowOpacity: 0.1,
-                                shadowRadius: 12,
-                                elevation: 8,
-                            }}>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}>
-                                <TouchableOpacity onPress={() => setInputType(inputType === 'image' ? null : 'image')}>
-                                    <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
-                                        <MaterialIcons name="image" size={20} color={colors.text} />
-                                        <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.imageUrlAction")}</FlexText>
-                                    </SquircleView>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => setInputType(inputType === 'link' ? null : 'link')}>
-                                    <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
-                                        <MaterialIcons name="public" size={20} color={colors.text} />
-                                        <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.linkAction")}</FlexText>
-                                    </SquircleView>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => GiphyDialog.show()}>
-                                    <SquircleView cornerSmoothing={100} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, gap: 6 }}>
-                                        <MaterialIcons name="gif" size={20} color={colors.text} />
-                                        <FlexText style={{ color: colors.text, fontWeight: '600' }}>{t("notes.editor.gifAction")}</FlexText>
-                                    </SquircleView>
-                                </TouchableOpacity>
-                            </ScrollView>
-                        </SquircleView>
+                        </View>
+                        <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10 }}>
+                            <Button variant="ghost" onPress={() => setIsLinkDialogOpen(false)}>
+                                {t("notes.editor.cancel")}
+                            </Button>
+                            <Button variant="primary" onPress={handleConfirmInsertLink} isDisabled={!linkUrl.trim()}>
+                                {t("notes.editor.insert")}
+                            </Button>
+                        </View>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
 
-                        <SquircleView
-                            cornerSmoothing={100}
-                            preserveSmoothing
-                            style={{
-                                width: 56,
-                                height: 56,
-                                backgroundColor: colors.containerContent,
-                                borderRadius: 28,
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 4 },
-                                shadowOpacity: 0.1,
-                                shadowRadius: 12,
-                                elevation: 8,
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                            }}>
-                            <TouchableOpacity onPress={handleClearAll} style={{ width: 56, height: 56, justifyContent: 'center', alignItems: 'center' }}>
-                                <Ionicons name="trash-outline" size={24} color="#ff4444" />
-                            </TouchableOpacity>
-                        </SquircleView>
-                    </Animated.View>
-                )}
-            </View>
+            {/* Insert Image Dialog */}
+            <Dialog isOpen={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+                <Dialog.Portal>
+                    <Dialog.Overlay />
+                    <Dialog.Content>
+                        <Dialog.Close />
+                        <View style={{ marginBottom: 16 }}>
+                            <Dialog.Title>{t("notes.editor.insertImageTitle")}</Dialog.Title>
+                        </View>
+                        <View style={{ gap: 12, marginBottom: 20 }}>
+                            <View>
+                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurfaceVariant, marginBottom: 6 }}>
+                                    {t("notes.editor.imageCaptionLabel")}
+                                </FlexText>
+                                <TextInput
+                                    style={[styles.dialogInput, { color: colors.onSurface, borderColor: colors.outlineVariant }]}
+                                    placeholder={t("notes.editor.imageCaptionPlaceholder")}
+                                    placeholderTextColor={colors.onSurfaceVariant}
+                                    value={imageCaption}
+                                    onChangeText={setImageCaption}
+                                />
+                            </View>
+                            <View>
+                                <FlexText style={{ fontSize: 13, fontWeight: "600", color: colors.onSurfaceVariant, marginBottom: 6 }}>
+                                    {t("notes.editor.imageUrlLabel")}
+                                </FlexText>
+                                <TextInput
+                                    style={[styles.dialogInput, { color: colors.onSurface, borderColor: colors.outlineVariant }]}
+                                    placeholder={t("notes.editor.imageUrlPlaceholder")}
+                                    placeholderTextColor={colors.onSurfaceVariant}
+                                    value={imageUrl}
+                                    onChangeText={setImageUrl}
+                                    autoCapitalize="none"
+                                    keyboardType="url"
+                                />
+                            </View>
+                        </View>
+                        <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10 }}>
+                            <Button variant="ghost" onPress={() => setIsImageDialogOpen(false)}>
+                                {t("notes.editor.cancel")}
+                            </Button>
+                            <Button variant="primary" onPress={handleConfirmInsertImage} isDisabled={!imageUrl.trim()}>
+                                {t("notes.editor.insert")}
+                            </Button>
+                        </View>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
+
+            {/* Clear All Confirmation Dialog */}
+            <Dialog isOpen={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                <Dialog.Portal>
+                    <Dialog.Overlay />
+                    <Dialog.Content>
+                        <Dialog.Close />
+                        <View style={{ marginBottom: 16 }}>
+                            <Dialog.Title>{t("notes.editor.clearAllTitle")}</Dialog.Title>
+                            <Dialog.Description>{t("notes.editor.clearAllMessage")}</Dialog.Description>
+                        </View>
+                        <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10 }}>
+                            <Button variant="ghost" onPress={() => setIsClearDialogOpen(false)}>
+                                {t("notes.editor.cancel")}
+                            </Button>
+                            <Button variant="danger" onPress={handleConfirmClear}>
+                                {t("notes.editor.clear")}
+                            </Button>
+                        </View>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog>
         </KeyboardAvoidingView>
     );
 };
 
 export default CreateNoteScreen;
+
+const styles = StyleSheet.create({
+    headerContainer: {
+        position: "absolute",
+        left: 16,
+        right: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderRadius: 24,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        zIndex: 100,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+    headerIconButton: {
+        borderRadius: 999,
+        width: 38,
+        height: 38,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    viewModeButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+        borderRadius: 16,
+    },
+    saveButton: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 18,
+        minWidth: 64,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    titleInput: {
+        fontSize: 24,
+        fontWeight: "bold",
+        paddingVertical: 10,
+        paddingHorizontal: 4,
+        marginBottom: 8,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    editorInput: {
+        fontSize: 16,
+        lineHeight: 24,
+        minHeight: 260,
+        paddingTop: 12,
+        paddingHorizontal: 4,
+    },
+    toolbarContainer: {
+        position: "absolute",
+        left: 12,
+        right: 12,
+        zIndex: 100,
+    },
+    toolbarSquircle: {
+        borderRadius: 22,
+        paddingVertical: 6,
+        paddingHorizontal: 6,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        elevation: 8,
+    },
+    toolbarScrollContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 4,
+    },
+    toolbarBtn: {
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    headingBtnText: {
+        fontSize: 14,
+        fontWeight: "bold",
+    },
+    toolbarDivider: {
+        width: 1,
+        height: 20,
+        marginHorizontal: 4,
+        opacity: 0.5,
+    },
+    dialogInput: {
+        borderWidth: 1,
+        borderRadius: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        fontSize: 15,
+    },
+});

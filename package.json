@@ -44,8 +44,8 @@
     "@shopify/react-native-skia": "2.6.2",
     "@supabase/supabase-js": "2.116.0",
     "@swmansion/react-native-bottom-sheet": "^0.16.2",
-    "@tanstack/react-query": "^5.103.0",
-    "@tanstack/react-query-persist-client": "^5.103.0",
+    "@tanstack/react-query": "^5.103.1",
+    "@tanstack/react-query-persist-client": "^5.103.1",
     "@types/node": "^26.6.1",
     "dayjs": "1.11.23",
     "emoji-regex-xs": "2.0.1",
@@ -105,6 +105,7 @@
     "react-native-country-flag": "2.0.2",
     "react-native-device-info": "15.0.2",
     "react-native-easing-gradient": "1.1.1",
+    "react-native-enriched-markdown": "^1.0.2",
     "react-native-gesture-handler": "~2.32.0",
     "react-native-image-colors": "2.6.0",
     "react-native-keyboard-controller": "1.21.9",
@@ -151,8 +152,14 @@
     "typescript": "~6.0.3"
   },
   "trustedDependencies": [
-    "@shopify/react-native-skia"
+    "@shopify/react-native-skia",
+    "react-native-enriched-markdown"
   ],
+  "enriched-markdown": {
+    "enableCodeHighlight": true,
+    "enableMath": true,
+    "enableVideo": true
+  },
   "patchedDependencies": {
     "@bsky.app/video@0.3.6": "patches/@bsky.app@video@0.3.6.patch",
     "expo-glass-tabs@0.1.1": "patches/expo-glass-tabs@0.1.1.patch",

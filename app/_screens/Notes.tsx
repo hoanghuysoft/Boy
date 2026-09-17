@@ -1,11 +1,10 @@
-
 import { PostLinkPreview } from "@/components/PostLinkPreview";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
+import { SquircleView } from "expo-squircle-view";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
 import { Spinner } from "heroui-native/spinner";
@@ -14,42 +13,27 @@ import { useTranslation } from "react-i18next";
 import {
     Dimensions,
     FlatList,
-    ListRenderItemInfo,
+    type ListRenderItemInfo,
     RefreshControl,
     StyleSheet,
     TouchableOpacity,
-    View
+    View,
 } from "react-native";
-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlexText } from "@/components/FlexText";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useDeleteNote, useNotes } from "@/services/note";
 import { createCommonStyles } from "@/styles/common";
-import { Note } from "@/types/note";
+import { type Note } from "@/types/note";
+import {
+    extractAllLinks,
+    extractFirstImage,
+    parseNoteTitleAndBody,
+    stripMarkdown,
+} from "@/utils/noteMarkdown";
 
 dayjs.extend(relativeTime);
-
-const IMG_PATTERN = /\[<img\s+(.*?)\s*\/>]/gi;
-const LINK_PATTERN = /\[<link\s+(.*?)\s*\/>]/gi;
-
-function parseNoteContent(content: string) {
-    const titleMatch = content.match(/\[<title>(.*?)<\/title>]/i);
-    const title = titleMatch ? titleMatch[1] : null;
-
-    const imgMatches = [...content.matchAll(IMG_PATTERN)];
-    const imageUrl = imgMatches.length > 0 ? imgMatches[0][1] : null;
-
-    const linkMatches = [...content.matchAll(LINK_PATTERN)];
-    const linkUrls = linkMatches.map(m => m[1]);
-
-    const text = content
-        .replace(/\[<title>.*?<\/title>]/gi, '')
-        .replace(IMG_PATTERN, '')
-        .replace(LINK_PATTERN, '')
-        .trim();
-    return { title, text, imageUrl, linkUrls };
-}
 
 const NotesScreen = () => {
     const router = useRouter();
@@ -86,136 +70,172 @@ const NotesScreen = () => {
         }
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    const handleDeleteNote = useCallback((note: Note) => {
-        if (deletingId === note.id || deleteNoteMutation.isPending) return;
-        setNoteToDelete(note);
-        setIsDeleteDialogOpen(true);
-    }, [deleteNoteMutation, deletingId]);
+    const handleDeleteNote = useCallback(
+        (note: Note) => {
+            if (deletingId === note.id || deleteNoteMutation.isPending) return;
+            setNoteToDelete(note);
+            setIsDeleteDialogOpen(true);
+        },
+        [deleteNoteMutation, deletingId]
+    );
 
-    const renderItem = useCallback(({ item }: ListRenderItemInfo<Note>) => {
-        const { title, text, imageUrl, linkUrls } = parseNoteContent(item.content);
-        const isDeleting = deletingId === item.id;
+    const renderItem = useCallback(
+        ({ item }: ListRenderItemInfo<Note>) => {
+            const { title } = parseNoteTitleAndBody(item.content);
+            const previewText = stripMarkdown(item.content);
+            const imageUrl = extractFirstImage(item.content);
+            const linkUrls = extractAllLinks(item.content);
+            const isDeleting = deletingId === item.id;
 
-        return (
-            <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => router.push(`/note/${item.id}`)}
-                style={[styles.noteItem, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }]}
-            >
-                {title && (
-                    <FlexText style={[common.heading, { fontSize: 18, marginBottom: 8 }]}>
-                        {title}
-                    </FlexText>
-                )}
-
-                {text.length > 0 && (
-                    <FlexText numberOfLines={3} style={[common.body, { fontSize: 15, lineHeight: 22 }]}>
-                        {text}
-                    </FlexText>
-                )}
-
-                {imageUrl ? (
-                    <View style={{ marginTop: text.length > 0 ? 12 : 0 }}>
-                        <Image
-                            source={{ uri: imageUrl }}
-                            style={styles.noteImage}
-                            contentFit="cover"
-                        />
-                    </View>
-                ) : linkUrls.length > 0 ? (
-                    <View style={{ marginTop: text.length > 0 ? 12 : 0 }} pointerEvents="none">
-                        <PostLinkPreview
-                            url={linkUrls[0]}
-                            label=""
-                            colors={colors}
-                            cardWidth={Dimensions.get('window').width - 64}
-                        />
-                    </View>
-                ) : null}
-
-                <View style={[common.row, { alignItems: 'center', marginTop: 12, justifyContent: 'space-between' }]}>
-                    <FlexText style={[common.bodySmall, { color: colors.muted, fontSize: 12 }]}>
-                        {dayjs(item.created_at).fromNow()}
-                    </FlexText>
-
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                        <TouchableOpacity
-                            onPress={() => router.push({ pathname: '/create-note', params: { id: item.id } })}
-                            disabled={isDeleting}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
-                        >
-                            <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
-                                {t("notes.list.editAction")}
+            return (
+                <TouchableOpacity
+                    activeOpacity={0.82}
+                    onPress={() => router.push(`/note/${item.id}`)}
+                >
+                    <SquircleView
+                        cornerSmoothing={100}
+                        preserveSmoothing
+                        style={[
+                            styles.noteCard,
+                            {
+                                backgroundColor: colors.surfaceContainer,
+                                shadowColor: "#000",
+                            },
+                        ]}
+                    >
+                        {/* Note Title */}
+                        {title ? (
+                            <FlexText
+                                numberOfLines={2}
+                                style={[
+                                    common.heading,
+                                    { fontSize: 18, marginBottom: 6, color: colors.onSurface },
+                                ]}
+                            >
+                                {title}
                             </FlexText>
-                        </TouchableOpacity>
+                        ) : null}
 
-                        <TouchableOpacity
-                            onPress={() => handleDeleteNote(item)}
-                            disabled={isDeleting}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
-                        >
-                            {isDeleting ? (
-                                <Spinner size="md" color={colors.muted} style={{ transform: [{ scale: 0.8 }] }} />
-                            ) : (
-                                <FlexText style={{ color: colors.muted, fontSize: 13, fontWeight: '700' }}>
-                                    {t("notes.list.deleteAction")}
-                                </FlexText>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </TouchableOpacity>
-        );
-    }, [theme, common.body, common.row, common.bodySmall, common.heading, colors, deletingId, handleDeleteNote, t, router]);
+                        {/* Note Preview Body */}
+                        {previewText.length > 0 ? (
+                            <FlexText
+                                numberOfLines={3}
+                                style={[
+                                    common.body,
+                                    {
+                                        fontSize: 15,
+                                        lineHeight: 22,
+                                        color: title ? colors.onSurfaceVariant : colors.onSurface,
+                                        marginBottom: imageUrl || linkUrls.length > 0 ? 12 : 0,
+                                    },
+                                ]}
+                            >
+                                {previewText}
+                            </FlexText>
+                        ) : null}
+
+                        {/* Image Thumbnail */}
+                        {imageUrl ? (
+                            <View style={styles.imageWrapper}>
+                                <Image
+                                    source={{ uri: imageUrl }}
+                                    style={styles.noteImage}
+                                    contentFit="cover"
+                                    transition={200}
+                                />
+                            </View>
+                        ) : linkUrls.length > 0 ? (
+                            <View style={styles.linkWrapper} pointerEvents="none">
+                                <PostLinkPreview
+                                    url={linkUrls[0]}
+                                    label=""
+                                    colors={colors}
+                                    cardWidth={Dimensions.get("window").width - 64}
+                                />
+                            </View>
+                        ) : null}
+
+                        {/* Bottom Row: Timestamp and Actions */}
+                        <View style={[common.row, styles.footerRow]}>
+                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12 }}>
+                                {dayjs(item.created_at).fromNow()}
+                            </FlexText>
+
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                                <TouchableOpacity
+                                    onPress={() => router.push({ pathname: "/create-note", params: { id: item.id } })}
+                                    disabled={isDeleting}
+                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                >
+                                    <FlexText style={{ color: colors.secondary, fontSize: 13, fontWeight: "700" }}>
+                                        {t("notes.list.editAction")}
+                                    </FlexText>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    onPress={() => handleDeleteNote(item)}
+                                    disabled={isDeleting}
+                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                >
+                                    {isDeleting ? (
+                                        <Spinner size="sm" color={colors.onSurfaceVariant} />
+                                    ) : (
+                                        <FlexText style={{ color: "#ef4444", fontSize: 13, fontWeight: "700" }}>
+                                            {t("notes.list.deleteAction")}
+                                        </FlexText>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </SquircleView>
+                </TouchableOpacity>
+            );
+        },
+        [colors, common, deletingId, handleDeleteNote, router, t]
+    );
 
     const renderFooter = useCallback(() => {
         if (isFetchingNextPage) {
             return (
                 <View style={styles.footerLoader}>
-                    <Spinner size="md" color={colors.text} />
+                    <Spinner size="md" color={colors.onSurface} />
                 </View>
             );
         }
-        return <View style={{ height: 100 }} />; // Padding for FAB
-    }, [isFetchingNextPage, colors.text]);
+        return <View style={{ height: 100 }} />;
+    }, [isFetchingNextPage, colors.onSurface]);
 
     const renderEmpty = useCallback(() => {
         if (isLoading) {
             return (
                 <View style={{ paddingTop: 16 }}>
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <View
+                        <SquircleView
                             key={i}
+                            cornerSmoothing={100}
                             style={[
-                                styles.noteItem,
+                                styles.noteCard,
                                 {
-                                    backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'
-                                }
+                                    backgroundColor: colors.surfaceContainer,
+                                },
                             ]}
                         >
                             <ShimmerGroup isLoading>
-                                {/* Title placeholder */}
-                                <Shimmer style={{ width: '33%', height: 20, borderRadius: 6, marginBottom: 10 }} />
-
-                                {/* Body placeholders */}
+                                <Shimmer style={{ width: "40%", height: 20, borderRadius: 6, marginBottom: 12 }} />
                                 <View style={{ gap: 8, marginBottom: 14 }}>
-                                    <Shimmer style={{ width: '100%', height: 16, borderRadius: 6 }} />
-                                    <Shimmer style={{ width: '83%', height: 16, borderRadius: 6 }} />
-                                    <Shimmer style={{ width: '66%', height: 16, borderRadius: 6 }} />
+                                    <Shimmer style={{ width: "100%", height: 16, borderRadius: 6 }} />
+                                    <Shimmer style={{ width: "85%", height: 16, borderRadius: 6 }} />
+                                    <Shimmer style={{ width: "65%", height: 16, borderRadius: 6 }} />
                                 </View>
-
-                                {/* Bottom row: date and actions */}
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                                     <Shimmer style={{ width: 64, height: 14, borderRadius: 6 }} />
-                                    <View style={{ flexDirection: 'row', gap: 16 }}>
+                                    <View style={{ flexDirection: "row", gap: 16 }}>
                                         <Shimmer style={{ width: 40, height: 14, borderRadius: 6 }} />
                                         <Shimmer style={{ width: 48, height: 14, borderRadius: 6 }} />
                                     </View>
                                 </View>
                             </ShimmerGroup>
-                        </View>
+                        </SquircleView>
                     ))}
                 </View>
             );
@@ -226,50 +246,58 @@ const NotesScreen = () => {
                     style={[
                         styles.emptyIconContainer,
                         {
-                            backgroundColor: theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                            backgroundColor: colors.surfaceContainerHigh,
                         },
                     ]}
                 >
-                    <Ionicons name="document-text" size={32} color={colors.muted} />
+                    <Ionicons name="document-text-outline" size={36} color={colors.onSurfaceVariant} />
                 </View>
-                <FlexText style={[common.heading, { fontSize: 20, marginTop: 20, marginBottom: 8 }]}>
+                <FlexText style={[common.heading, { fontSize: 20, marginTop: 20, marginBottom: 8, color: colors.onSurface }]}>
                     {t("notes.list.emptyTitle")}
                 </FlexText>
-                <FlexText style={[common.body, { color: colors.muted, textAlign: "center", lineHeight: 22 }]}>
+                <FlexText style={[common.body, { color: colors.onSurfaceVariant, textAlign: "center", lineHeight: 22 }]}>
                     {t("notes.list.emptyDescription")}
                 </FlexText>
             </View>
         );
-    }, [isLoading, colors, common, theme, t]);
+    }, [isLoading, colors, common, t]);
 
-    const ListHeaderComponent = useCallback(() => (
-        <View style={{ marginTop: insets.top + 66, paddingHorizontal: 16, marginBottom: 16 }}>
-            <FlexText style={[common.heading, { fontSize: 28 }]}>
-                {t("notes.list.title")}
-            </FlexText>
-            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 2 }]}>
-                {t("notes.list.subtitle")}
-            </FlexText>
-        </View>
-    ), [insets.top, common, colors.muted, t]);
+    const ListHeaderComponent = useCallback(
+        () => (
+            <View style={{ marginTop: insets.top + 60, paddingHorizontal: 4, marginBottom: 16 }}>
+                <FlexText style={[common.heading, { fontSize: 30, color: colors.onSurface }]}>
+                    {t("notes.list.title")}
+                </FlexText>
+                <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 4, fontSize: 14 }]}>
+                    {t("notes.list.subtitle")}
+                </FlexText>
+            </View>
+        ),
+        [insets.top, common, colors.onSurface, colors.onSurfaceVariant, t]
+    );
 
     return (
-        <View style={common.screen}>
-            {/* Floating back button */}
-            <View style={{ position: 'absolute', top: insets.top + 16, left: 16, zIndex: 1000 }}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={{
-                        backgroundColor: colors.containerContent,
-                        borderRadius: 999,
-                        width: 40,
-                        height: 40,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                    }}
+        <View style={[common.screen, { backgroundColor: colors.surface }]}>
+            {/* Floating Back Button */}
+            <View style={{ position: "absolute", top: insets.top + 12, left: 16, zIndex: 1000 }}>
+                <SquircleView
+                    cornerSmoothing={100}
+                    preserveSmoothing
+                    style={[
+                        styles.backButtonSquircle,
+                        {
+                            backgroundColor: colors.surfaceContainer,
+                            shadowColor: "#000",
+                        },
+                    ]}
                 >
-                    <Ionicons name="chevron-back" size={24} color={colors.text} />
-                </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={styles.backButton}
+                    >
+                        <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
+                    </TouchableOpacity>
+                </SquircleView>
             </View>
 
             <FlatList
@@ -286,31 +314,33 @@ const NotesScreen = () => {
                 refreshing={isRefetching}
                 contentContainerStyle={[
                     { paddingHorizontal: 16 },
-                    notes.length === 0 ? styles.emptyContainer : undefined
+                    notes.length === 0 ? styles.emptyContainer : undefined,
                 ]}
                 refreshControl={
                     <RefreshControl
                         refreshing={isRefetching}
                         onRefresh={refetch}
-                        tintColor={colors.text}
-                        colors={[colors.text]}
-                        progressBackgroundColor={colors.card}
+                        tintColor={colors.secondary}
+                        colors={[colors.secondary]}
+                        progressBackgroundColor={colors.surfaceContainer}
                         progressViewOffset={insets.top}
-                    />}
+                    />
+                }
             />
 
+            {/* Floating Action Button (+ New Note) */}
             <TouchableOpacity
-                activeOpacity={0.8}
+                activeOpacity={0.85}
                 onPress={() => router.push("/create-note")}
                 style={[
                     styles.fab,
                     {
-                        backgroundColor: colors.text,
+                        backgroundColor: colors.secondary,
                         bottom: insets.bottom + 20,
-                    }
+                    },
                 ]}
             >
-                <Ionicons name="add" size={32} color={colors.background} />
+                <Ionicons name="add" size={30} color="#ffffff" />
             </TouchableOpacity>
 
             {/* Delete Confirmation Dialog */}
@@ -319,15 +349,15 @@ const NotesScreen = () => {
                     <Dialog.Overlay />
                     <Dialog.Content>
                         <Dialog.Close />
-                        <View style={{ marginBottom: 20, gap: 6 }}>
-                            <Dialog.Title>{t('notes.list.deleteDialogTitle')}</Dialog.Title>
+                        <View style={{ marginBottom: 16, gap: 6 }}>
+                            <Dialog.Title>{t("notes.list.deleteDialogTitle")}</Dialog.Title>
                             <Dialog.Description>
-                                {t('notes.list.deleteDialogMessage')}
+                                {t("notes.list.deleteDialogMessage")}
                             </Dialog.Description>
                         </View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                        <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 12 }}>
                             <Button variant="ghost" onPress={() => setIsDeleteDialogOpen(false)}>
-                                {t('notes.list.cancelAction')}
+                                {t("notes.list.cancelAction")}
                             </Button>
                             <Button
                                 variant="danger"
@@ -336,12 +366,12 @@ const NotesScreen = () => {
                                     if (noteToDelete) {
                                         setDeletingId(noteToDelete.id);
                                         deleteNoteMutation.mutate(noteToDelete.id, {
-                                            onSettled: () => setDeletingId(null)
+                                            onSettled: () => setDeletingId(null),
                                         });
                                     }
                                 }}
                             >
-                                {t('notes.list.deleteAction')}
+                                {t("notes.list.deleteAction")}
                             </Button>
                         </View>
                     </Dialog.Content>
@@ -354,18 +384,35 @@ const NotesScreen = () => {
 export default NotesScreen;
 
 const styles = StyleSheet.create({
-    noteItem: {
-        borderRadius: 18,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        marginBottom: 16,
+    noteCard: {
+        borderRadius: 20,
+        paddingHorizontal: 18,
+        paddingVertical: 16,
+        marginBottom: 14,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    imageWrapper: {
+        marginTop: 6,
+        marginBottom: 12,
+        borderRadius: 14,
+        overflow: "hidden",
     },
     noteImage: {
         height: 180,
-        borderRadius: 12,
-        width: '100%',
+        width: "100%",
+        borderRadius: 14,
     },
-    actionButton: {
+    linkWrapper: {
+        marginTop: 6,
+        marginBottom: 12,
+    },
+    footerRow: {
+        alignItems: "center",
+        marginTop: 10,
+        justifyContent: "space-between",
     },
     footerLoader: {
         paddingVertical: 24,
@@ -381,24 +428,41 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     emptyIconContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
+        width: 76,
+        height: 76,
+        borderRadius: 38,
         alignItems: "center",
         justifyContent: "center",
     },
+    backButtonSquircle: {
+        borderRadius: 999,
+        width: 42,
+        height: 42,
+        justifyContent: "center",
+        alignItems: "center",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    backButton: {
+        width: 42,
+        height: 42,
+        justifyContent: "center",
+        alignItems: "center",
+    },
     fab: {
-        position: 'absolute',
+        position: "absolute",
         right: 20,
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
+        width: 58,
+        height: 58,
+        borderRadius: 29,
+        justifyContent: "center",
+        alignItems: "center",
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
         elevation: 8,
         zIndex: 1000,
     },
