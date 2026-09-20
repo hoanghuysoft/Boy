@@ -22,6 +22,7 @@ import { useThemeContext } from "@/context/ThemeContext";
 import { useNote, useUpdateNote } from "@/services/note";
 import { createCommonStyles } from "@/styles/common";
 import {
+    getNoteMarkdownStyle,
     legacyToMarkdown,
     parseNoteTitleAndBody,
     toggleTaskInMarkdown,
@@ -94,89 +95,7 @@ const NoteDetailScreen = () => {
 
     // Theme-aware markdown styling for reading view
     const markdownStyle = useMemo<MarkdownStyle>(
-        () => ({
-            paragraph: {
-                fontSize: 17,
-                lineHeight: 26,
-                color: colors.onSurface,
-                marginBottom: 14,
-            },
-            h1: {
-                fontSize: 26,
-                fontWeight: "bold",
-                color: colors.onSurface,
-                marginTop: 18,
-                marginBottom: 12,
-            },
-            h2: {
-                fontSize: 22,
-                fontWeight: "bold",
-                color: colors.onSurface,
-                marginTop: 16,
-                marginBottom: 10,
-            },
-            h3: {
-                fontSize: 18,
-                fontWeight: "bold",
-                color: colors.onSurface,
-                marginTop: 14,
-                marginBottom: 8,
-            },
-            strong: { color: colors.onSurface },
-            em: { color: colors.onSurface },
-            link: { color: colors.secondary, underline: true },
-            code: {
-                fontSize: 14,
-                color: colors.onSurface,
-                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-                borderColor: colors.outlineVariant,
-            },
-            codeBlock: {
-                fontSize: 14,
-                color: colors.onSurface,
-                backgroundColor: theme === "dark" ? "#1e1e24" : "#f1f5f9",
-                borderColor: colors.outlineVariant,
-                borderRadius: 14,
-                padding: 14,
-                marginBottom: 14,
-            },
-            blockquote: {
-                borderColor: colors.secondary,
-                borderWidth: 4,
-                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
-                padding: 12,
-                borderRadius: 8,
-                color: colors.onSurfaceVariant,
-                marginBottom: 14,
-            },
-            list: {
-                itemSpacing: 6,
-                bulletColor: colors.secondary,
-                markerColor: colors.secondary,
-            },
-            table: {
-                fontSize: 14,
-                borderColor: colors.outlineVariant,
-                borderRadius: 12,
-                headerBackgroundColor: theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-                cellPaddingHorizontal: 12,
-                cellPaddingVertical: 8,
-                marginBottom: 14,
-            },
-            taskList: {
-                checkedColor: colors.secondary,
-                checkmarkColor: "#ffffff",
-                checkboxBorderRadius: 6,
-            },
-            spoiler: {
-                color: colors.onSurface,
-            },
-            image: {
-                borderRadius: 14,
-                marginTop: 10,
-                marginBottom: 14,
-            },
-        }),
+        () => getNoteMarkdownStyle(colors, theme, true),
         [colors, theme]
     );
 
@@ -295,6 +214,7 @@ const NoteDetailScreen = () => {
                     flavor="github"
                     markdown={normalizedMarkdown}
                     markdownStyle={markdownStyle}
+                    md4cFlags={{ hardSoftBreaks: true }}
                     onLinkPress={handleLinkPress}
                     onTaskListItemPress={handleTaskListItemPress}
                     onCopyPress={handleCopyCodePress}

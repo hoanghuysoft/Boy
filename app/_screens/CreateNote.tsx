@@ -1,3 +1,13 @@
+import { FlexText } from "@/components/FlexText";
+import { useThemeContext } from "@/context/ThemeContext";
+import { useCreateNote, useUpdateNote } from "@/services/note";
+import { createCommonStyles } from "@/styles/common";
+import {
+    buildNoteMarkdown,
+    getNoteMarkdownStyle,
+    parseNoteTitleAndBody,
+    toggleTaskInMarkdown,
+} from "@/utils/noteMarkdown";
 import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
@@ -20,18 +30,9 @@ import {
 } from "react-native";
 import {
     EnrichedMarkdownText,
-    EnrichedMarkdownTextInput,
-    type EnrichedMarkdownTextInputInstance,
-    type MarkdownTextInputStyle,
-    type StyleState,
 } from "react-native-enriched-markdown";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlexText } from "@/components/FlexText";
-import { useThemeContext } from "@/context/ThemeContext";
-import { useCreateNote, useUpdateNote } from "@/services/note";
-import { createCommonStyles } from "@/styles/common";
-import { toggleTaskInMarkdown } from "@/utils/noteMarkdown";
 
 const CreateNoteScreen = () => {
     const { colors, typography, theme } = useThemeContext();
@@ -47,21 +48,26 @@ const CreateNoteScreen = () => {
     const updateNoteMutation = useUpdateNote();
     const createNoteMutation = useCreateNote();
 
-    const editorRef = useRef<EnrichedMarkdownTextInputInstance>(null);
+    const titleInputRef = useRef<TextInput>(null);
+    const inputRef = useRef<TextInput>(null);
 
-    const [content, setContent] = useState(initialContent || "");
+    const initialParsed = useMemo(() => {
+        return parseNoteTitleAndBody(initialContent || "");
+    }, [initialContent]);
+
+    const [title, setTitle] = useState(initialParsed.title);
+    const [content, setContent] = useState(initialParsed.body);
+    const [selection, setSelection] = useState({ start: 0, end: 0 });
     const [viewMode, setViewMode] = useState<"editor" | "preview">("editor");
 
     // Sync when initialContent route param changes
     useEffect(() => {
         if (initialContent !== undefined) {
-            setContent(initialContent);
-            editorRef.current?.setValue(initialContent);
+            const { title: parsedTitle, body: parsedBody } = parseNoteTitleAndBody(initialContent);
+            setTitle(parsedTitle);
+            setContent(parsedBody);
         }
     }, [initialContent]);
-
-    // Active formatting states from editor
-    const [styleState, setStyleState] = useState<StyleState | null>(null);
 
     // Dialog States
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
@@ -87,9 +93,7 @@ const CreateNoteScreen = () => {
             const gifUrl = images?.original?.url || images?.fixed_height?.url;
 
             if (gifUrl) {
-                const gifMarkdown = `\n\n![GIF](${gifUrl})\n\n`;
-                editorRef.current?.insertText(gifMarkdown);
-                setContent((prev) => prev + gifMarkdown);
+                insertTemplateAtCursor(`![GIF](${gifUrl})`);
             }
             GiphyDialog.hide();
         });
@@ -97,92 +101,138 @@ const CreateNoteScreen = () => {
         return () => listener.remove();
     }, [theme]);
 
+    // Helper: Wrap currently selected text with markdown delimiters
+    const wrapSelection = useCallback(
+        (prefix: string, suffix: string = prefix, placeholder: string = "") => {
+            const { start, end } = selection;
+            const selectedText = content.substring(start, end) || placeholder;
+            const replacement = `${prefix}${selectedText}${suffix}`;
+            const newContent = content.substring(0, start) + replacement + content.substring(end);
+            setContent(newContent);
+            const newPos = start + prefix.length + selectedText.length;
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 50);
+        },
+        [content, selection]
+    );
+
+    // Helper: Prefix lines (headings, lists, blockquotes)
+    const prefixLines = useCallback(
+        (prefix: string) => {
+            const { start, end } = selection;
+            const beforeSelection = content.substring(0, start);
+            const lastNewline = beforeSelection.lastIndexOf("\n");
+            const lineStart = lastNewline === -1 ? 0 : lastNewline + 1;
+
+            const afterSelection = content.substring(end);
+            const nextNewline = afterSelection.indexOf("\n");
+            const lineEnd = nextNewline === -1 ? content.length : end + nextNewline;
+
+            const affectedText = content.substring(lineStart, lineEnd);
+            const lines = affectedText.split("\n");
+            const updatedLines = lines.map((line) => {
+                if (line.startsWith(prefix)) {
+                    return line.substring(prefix.length);
+                }
+                // Strip existing heading/list prefix if applying a new one
+                const cleanLine = line.replace(/^(#{1,6}\s+|[-*+]\s+(\[[ xX]\]\s+)?|\d+\.\s+|> \s*)/, "");
+                return `${prefix}${cleanLine}`;
+            });
+            const replacement = updatedLines.join("\n");
+            const newContent = content.substring(0, lineStart) + replacement + content.substring(lineEnd);
+            setContent(newContent);
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 50);
+        },
+        [content, selection]
+    );
+
+    // Helper: Insert a block template at cursor position
+    const insertTemplateAtCursor = useCallback(
+        (template: string) => {
+            const { start, end } = selection;
+            const before = content.substring(0, start);
+            const after = content.substring(end);
+            const needLeadingNewline = before.length > 0 && !before.endsWith("\n");
+            const needTrailingNewline = after.length > 0 && !after.startsWith("\n");
+            const formattedTemplate = `${needLeadingNewline ? "\n" : ""}${template}${needTrailingNewline ? "\n" : ""}`;
+            const newContent = before + formattedTemplate + after;
+            setContent(newContent);
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 50);
+        },
+        [content, selection]
+    );
+
     // Format actions
     const handleToggleBold = useCallback(() => {
-        editorRef.current?.toggleBold();
-    }, []);
+        wrapSelection("**", "**", "bold");
+    }, [wrapSelection]);
 
     const handleToggleItalic = useCallback(() => {
-        editorRef.current?.toggleItalic();
-    }, []);
+        wrapSelection("*", "*", "italic");
+    }, [wrapSelection]);
 
     const handleToggleUnderline = useCallback(() => {
-        editorRef.current?.toggleUnderline();
-    }, []);
+        wrapSelection("<u>", "</u>", "underline");
+    }, [wrapSelection]);
 
     const handleToggleStrikethrough = useCallback(() => {
-        editorRef.current?.toggleStrikethrough();
-    }, []);
+        wrapSelection("~~", "~~", "strikethrough");
+    }, [wrapSelection]);
 
     const handleToggleSpoiler = useCallback(() => {
-        editorRef.current?.toggleSpoiler();
-    }, []);
+        wrapSelection("||", "||", "spoiler");
+    }, [wrapSelection]);
 
-    const handleToggleHeading = useCallback((level: 1 | 2 | 3) => {
-        editorRef.current?.toggleHeading(level);
-    }, []);
+    const handleToggleHeading = useCallback(
+        (level: 1 | 2 | 3) => {
+            const prefix = `${"#".repeat(level)} `;
+            prefixLines(prefix);
+        },
+        [prefixLines]
+    );
 
     const handleToggleUnorderedList = useCallback(() => {
-        editorRef.current?.toggleUnorderedList();
-    }, []);
+        prefixLines("- ");
+    }, [prefixLines]);
 
     const handleToggleOrderedList = useCallback(() => {
-        editorRef.current?.toggleOrderedList();
-    }, []);
+        prefixLines("1. ");
+    }, [prefixLines]);
 
     const handleInsertTaskList = useCallback(() => {
-        const template = "\n- [ ] Task 1\n- [ ] Task 2\n";
-        editorRef.current?.insertText(template);
-        setContent((prev) => prev + template);
-    }, []);
+        insertTemplateAtCursor("- [ ] Task 1\n- [ ] Task 2");
+    }, [insertTemplateAtCursor]);
 
     const handleInsertQuote = useCallback(() => {
-        const template = "\n> Quote text here\n\n";
-        editorRef.current?.insertText(template);
-        setContent((prev) => prev + template);
-    }, []);
+        prefixLines("> ");
+    }, [prefixLines]);
 
     const handleInsertCodeBlock = useCallback(() => {
-        const template = "\n```\n// code block\n```\n";
-        editorRef.current?.insertText(template);
-        setContent((prev) => prev + template);
-    }, []);
+        insertTemplateAtCursor("```\n// code block\n```");
+    }, [insertTemplateAtCursor]);
 
     const handleInsertTable = useCallback(() => {
-        const tableTemplate = "\n| Header 1 | Header 2 |\n| --- | --- |\n| Item 1 | Item 2 |\n\n";
-        editorRef.current?.insertText(tableTemplate);
-        setContent((prev) => prev + tableTemplate);
-    }, []);
+        insertTemplateAtCursor("| Header 1 | Header 2 |\n| --- | --- |\n| Item 1 | Item 2 |");
+    }, [insertTemplateAtCursor]);
 
     const handleInsertDivider = useCallback(() => {
-        const dividerTemplate = "\n---\n\n";
-        editorRef.current?.insertText(dividerTemplate);
-        setContent((prev) => prev + dividerTemplate);
-    }, []);
+        insertTemplateAtCursor("---");
+    }, [insertTemplateAtCursor]);
 
-    // Toggle Preview / Editor with fresh markdown sync
-    const handleToggleViewMode = useCallback(async () => {
-        if (viewMode === "editor") {
-            try {
-                const currentMd = await editorRef.current?.getMarkdown();
-                if (currentMd !== undefined) {
-                    setContent(currentMd);
-                }
-            } catch {}
-            setViewMode("preview");
-        } else {
-            setViewMode("editor");
-        }
-    }, [viewMode]);
+    // Toggle Preview / Editor
+    const handleToggleViewMode = useCallback(() => {
+        setViewMode((prev) => (prev === "editor" ? "preview" : "editor"));
+    }, []);
 
     // Interactive task checkbox toggle in Preview mode
     const handleTaskListItemPress = useCallback(
         ({ index, checked }: { index: number; checked: boolean }) => {
-            setContent((prev) => {
-                const updated = toggleTaskInMarkdown(prev, index, checked);
-                editorRef.current?.setValue(updated);
-                return updated;
-            });
+            setContent((prev) => toggleTaskInMarkdown(prev, index, checked));
         },
         []
     );
@@ -215,9 +265,9 @@ const CreateNoteScreen = () => {
         }
 
         const text = linkText.trim() || formattedUrl;
-        editorRef.current?.insertLink(text, formattedUrl);
+        insertTemplateAtCursor(`[${text}](${formattedUrl})`);
         setIsLinkDialogOpen(false);
-    }, [linkText, linkUrl, t, toast]);
+    }, [linkText, linkUrl, insertTemplateAtCursor, t, toast]);
 
     // Image URL insertion
     const handleOpenImageDialog = useCallback(() => {
@@ -236,37 +286,26 @@ const CreateNoteScreen = () => {
         }
 
         const caption = imageCaption.trim() || "image";
-        const imageMarkdown = `\n\n![${caption}](${formattedUrl})\n\n`;
-        editorRef.current?.insertText(imageMarkdown);
-        setContent((prev) => prev + imageMarkdown);
+        insertTemplateAtCursor(`![${caption}](${formattedUrl})`);
         setIsImageDialogOpen(false);
-    }, [imageCaption, imageUrl]);
+    }, [imageCaption, imageUrl, insertTemplateAtCursor]);
 
     // Clear note
     const handleConfirmClear = useCallback(() => {
+        setTitle("");
         setContent("");
-        editorRef.current?.setValue("");
         setIsClearDialogOpen(false);
     }, []);
 
     // Save note
     const handleSave = useCallback(async () => {
-        let latestContent = content;
-        try {
-            const md = await editorRef.current?.getMarkdown();
-            if (md !== undefined) {
-                latestContent = md;
-                setContent(md);
-            }
-        } catch {}
-
-        const trimmed = latestContent.trim();
-        if (!trimmed) return;
+        const fullContent = buildNoteMarkdown(title, content).trim();
+        if (!fullContent) return;
 
         if (isEditMode && noteId) {
             if (updateNoteMutation.isPending) return;
             updateNoteMutation.mutate(
-                { id: noteId, data: { content: trimmed } },
+                { id: noteId, data: { content: fullContent } },
                 {
                     onSuccess: () => {
                         Keyboard.dismiss();
@@ -277,7 +316,7 @@ const CreateNoteScreen = () => {
         } else {
             if (createNoteMutation.isPending) return;
             createNoteMutation.mutate(
-                { content: trimmed },
+                { content: fullContent },
                 {
                     onSuccess: () => {
                         Keyboard.dismiss();
@@ -286,89 +325,20 @@ const CreateNoteScreen = () => {
                 }
             );
         }
-    }, [content, isEditMode, noteId, updateNoteMutation, createNoteMutation]);
+    }, [title, content, isEditMode, noteId, updateNoteMutation, createNoteMutation]);
 
     const isSubmitting = createNoteMutation.isPending || updateNoteMutation.isPending;
-    const canSubmit = content.trim().length > 0 && !isSubmitting;
-
-    // Editor styling configurations
-    const editorMarkdownStyle = useMemo<MarkdownTextInputStyle>(
-        () => ({
-            strong: { color: colors.onSurface },
-            em: { color: colors.onSurface },
-            link: { color: colors.secondary, underline: true },
-            spoiler: {
-                color: theme === "dark" ? "#1e293b" : "#e2e8f0",
-                backgroundColor: theme === "dark" ? "#334155" : "#cbd5e1",
-            },
-            h1: { fontSize: 26, fontWeight: "bold", color: colors.onSurface },
-            h2: { fontSize: 22, fontWeight: "bold", color: colors.onSurface },
-            h3: { fontSize: 18, fontWeight: "bold", color: colors.onSurface },
-            list: { itemSpacing: 4 },
-        }),
-        [colors, theme]
-    );
+    const canSubmit = (title.trim().length > 0 || content.trim().length > 0) && !isSubmitting;
 
     // Readonly preview styling configurations
     const previewMarkdownStyle = useMemo(
-        () => ({
-            paragraph: {
-                fontSize: 16,
-                lineHeight: 24,
-                color: colors.onSurface,
-                marginBottom: 12,
-            },
-            h1: { fontSize: 26, fontWeight: "bold", color: colors.onSurface, marginBottom: 12, marginTop: 16 },
-            h2: { fontSize: 22, fontWeight: "bold", color: colors.onSurface, marginBottom: 10, marginTop: 14 },
-            h3: { fontSize: 18, fontWeight: "bold", color: colors.onSurface, marginBottom: 8, marginTop: 12 },
-            strong: { color: colors.onSurface },
-            em: { color: colors.onSurface },
-            link: { color: colors.secondary, underline: true },
-            code: {
-                fontSize: 14,
-                color: colors.onSurface,
-                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-                borderColor: colors.outlineVariant,
-            },
-            codeBlock: {
-                fontSize: 14,
-                color: colors.onSurface,
-                backgroundColor: theme === "dark" ? "#1e1e24" : "#f1f5f9",
-                borderColor: colors.outlineVariant,
-                borderRadius: 12,
-                padding: 12,
-            },
-            blockquote: {
-                borderColor: colors.secondary,
-                borderWidth: 3,
-                backgroundColor: theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
-                padding: 10,
-                borderRadius: 6,
-                color: colors.onSurfaceVariant,
-            },
-            table: {
-                fontSize: 14,
-                borderColor: colors.outlineVariant,
-                borderRadius: 10,
-                headerBackgroundColor: theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-                cellPaddingHorizontal: 10,
-                cellPaddingVertical: 6,
-            },
-            taskList: {
-                checkedColor: colors.secondary,
-                checkmarkColor: "#ffffff",
-            },
-            spoiler: {
-                color: colors.onSurface,
-            },
-            image: {
-                borderRadius: 12,
-                marginTop: 8,
-                marginBottom: 12,
-            },
-        }),
+        () => getNoteMarkdownStyle(colors, theme, false),
         [colors, theme]
     );
+
+    const previewMarkdown = useMemo(() => {
+        return buildNoteMarkdown(title, content);
+    }, [title, content]);
 
     return (
         <KeyboardAvoidingView
@@ -461,55 +431,62 @@ const CreateNoteScreen = () => {
                 >
                     <EnrichedMarkdownText
                         flavor="github"
-                        markdown={content || `*${t("notes.list.emptyDescription")}*`}
+                        markdown={previewMarkdown || `*${t("notes.list.emptyDescription")}*`}
                         markdownStyle={previewMarkdownStyle}
+                        md4cFlags={{ hardSoftBreaks: true }}
                         onTaskListItemPress={handleTaskListItemPress}
                         enableTaskListItemToggle={true}
                         selectable={true}
                     />
                 </ScrollView>
             ) : (
-                <View
-                    style={{
-                        flex: 1,
+                <ScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{
+                        flexGrow: 1,
                         paddingHorizontal: 16,
                         paddingTop: Math.max(insets.top, 16) + 72,
                         paddingBottom: Math.max(insets.bottom, 16) + 80,
                     }}
+                    keyboardShouldPersistTaps="always"
+                    showsVerticalScrollIndicator={false}
                 >
-                    <EnrichedMarkdownTextInput
-                        ref={editorRef}
-                        defaultValue={initialContent || ""}
+                    {/* Title Input */}
+                    <TextInput
+                        ref={titleInputRef}
+                        value={title}
+                        onChangeText={setTitle}
+                        placeholder={t("notes.editor.noteTitlePlaceholder")}
+                        placeholderTextColor={colors.onSurfaceVariant}
+                        returnKeyType="next"
+                        onSubmitEditing={() => inputRef.current?.focus()}
+                        blurOnSubmit={false}
+                        cursorColor={colors.secondary}
+                        selectionColor={colors.secondaryContainer}
+                        style={[
+                            styles.titleInput,
+                            {
+                                color: colors.onSurface,
+                            },
+                        ]}
+                    />
+
+                    {/* Subtle divider between title and body */}
+                    <View style={[styles.editorDivider, { backgroundColor: colors.outlineVariant }]} />
+
+                    {/* Body Content Input */}
+                    <TextInput
+                        ref={inputRef}
+                        value={content}
+                        onChangeText={setContent}
+                        onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
                         placeholder={t("notes.editor.contentPlaceholder")}
                         placeholderTextColor={colors.onSurfaceVariant}
                         multiline
-                        scrollEnabled
-                        markdownStyle={editorMarkdownStyle}
-                        onChangeMarkdown={setContent}
-                        onChangeState={setStyleState}
+                        scrollEnabled={false}
                         cursorColor={colors.secondary}
                         selectionColor={colors.secondaryContainer}
-                        linkRegex={/https?:\/\/[^\s]+/i}
-                        selectionMenuConfig={{
-                            format: true,
-                            formatLabel: "Format",
-                            copyAsMarkdown: true,
-                            copyAsMarkdownLabel: "Copy as Markdown",
-                        }}
-                        formatMenuConfig={{
-                            bold: true,
-                            boldLabel: t("notes.editor.bold"),
-                            italic: true,
-                            italicLabel: t("notes.editor.italic"),
-                            underline: true,
-                            underlineLabel: t("notes.editor.underline"),
-                            strikethrough: true,
-                            strikethroughLabel: t("notes.editor.strikethrough"),
-                            spoiler: true,
-                            spoilerLabel: t("notes.editor.spoiler"),
-                            link: true,
-                            linkLabel: t("notes.editor.link"),
-                        }}
+                        textAlignVertical="top"
                         style={[
                             styles.editorInput,
                             {
@@ -517,7 +494,7 @@ const CreateNoteScreen = () => {
                             },
                         ]}
                     />
-                </View>
+                </ScrollView>
             )}
 
             {/* Floating Rich Formatting Toolbar (Visible in Editor Mode) */}
@@ -550,24 +527,9 @@ const CreateNoteScreen = () => {
                             {/* H1 Heading */}
                             <TouchableOpacity
                                 onPress={() => handleToggleHeading(1)}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.heading.isActive && styleState?.heading.level === 1 && {
-                                        backgroundColor: colors.secondaryContainer,
-                                    },
-                                ]}
+                                style={styles.toolbarBtn}
                             >
-                                <FlexText
-                                    style={[
-                                        styles.headingBtnText,
-                                        {
-                                            color:
-                                                styleState?.heading.isActive && styleState?.heading.level === 1
-                                                    ? colors.secondary
-                                                    : colors.onSurface,
-                                        },
-                                    ]}
-                                >
+                                <FlexText style={[styles.headingBtnText, { color: colors.onSurface }]}>
                                     H1
                                 </FlexText>
                             </TouchableOpacity>
@@ -575,24 +537,9 @@ const CreateNoteScreen = () => {
                             {/* H2 Heading */}
                             <TouchableOpacity
                                 onPress={() => handleToggleHeading(2)}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.heading.isActive && styleState?.heading.level === 2 && {
-                                        backgroundColor: colors.secondaryContainer,
-                                    },
-                                ]}
+                                style={styles.toolbarBtn}
                             >
-                                <FlexText
-                                    style={[
-                                        styles.headingBtnText,
-                                        {
-                                            color:
-                                                styleState?.heading.isActive && styleState?.heading.level === 2
-                                                    ? colors.secondary
-                                                    : colors.onSurface,
-                                        },
-                                    ]}
-                                >
+                                <FlexText style={[styles.headingBtnText, { color: colors.onSurface }]}>
                                     H2
                                 </FlexText>
                             </TouchableOpacity>
@@ -600,24 +547,9 @@ const CreateNoteScreen = () => {
                             {/* H3 Heading */}
                             <TouchableOpacity
                                 onPress={() => handleToggleHeading(3)}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.heading.isActive && styleState?.heading.level === 3 && {
-                                        backgroundColor: colors.secondaryContainer,
-                                    },
-                                ]}
+                                style={styles.toolbarBtn}
                             >
-                                <FlexText
-                                    style={[
-                                        styles.headingBtnText,
-                                        {
-                                            color:
-                                                styleState?.heading.isActive && styleState?.heading.level === 3
-                                                    ? colors.secondary
-                                                    : colors.onSurface,
-                                        },
-                                    ]}
-                                >
+                                <FlexText style={[styles.headingBtnText, { color: colors.onSurface }]}>
                                     H3
                                 </FlexText>
                             </TouchableOpacity>
@@ -625,110 +557,40 @@ const CreateNoteScreen = () => {
                             <View style={[styles.toolbarDivider, { backgroundColor: colors.outlineVariant }]} />
 
                             {/* Bold */}
-                            <TouchableOpacity
-                                onPress={handleToggleBold}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.bold.isActive && { backgroundColor: colors.secondaryContainer },
-                                ]}
-                            >
-                                <MaterialIcons
-                                    name="format-bold"
-                                    size={20}
-                                    color={styleState?.bold.isActive ? colors.secondary : colors.onSurface}
-                                />
+                            <TouchableOpacity onPress={handleToggleBold} style={styles.toolbarBtn}>
+                                <MaterialIcons name="format-bold" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
 
                             {/* Italic */}
-                            <TouchableOpacity
-                                onPress={handleToggleItalic}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.italic.isActive && { backgroundColor: colors.secondaryContainer },
-                                ]}
-                            >
-                                <MaterialIcons
-                                    name="format-italic"
-                                    size={20}
-                                    color={styleState?.italic.isActive ? colors.secondary : colors.onSurface}
-                                />
+                            <TouchableOpacity onPress={handleToggleItalic} style={styles.toolbarBtn}>
+                                <MaterialIcons name="format-italic" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
 
                             {/* Underline */}
-                            <TouchableOpacity
-                                onPress={handleToggleUnderline}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.underline.isActive && { backgroundColor: colors.secondaryContainer },
-                                ]}
-                            >
-                                <MaterialIcons
-                                    name="format-underlined"
-                                    size={20}
-                                    color={styleState?.underline.isActive ? colors.secondary : colors.onSurface}
-                                />
+                            <TouchableOpacity onPress={handleToggleUnderline} style={styles.toolbarBtn}>
+                                <MaterialIcons name="format-underlined" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
 
                             {/* Strikethrough */}
-                            <TouchableOpacity
-                                onPress={handleToggleStrikethrough}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.strikethrough.isActive && { backgroundColor: colors.secondaryContainer },
-                                ]}
-                            >
-                                <MaterialIcons
-                                    name="format-strikethrough"
-                                    size={20}
-                                    color={styleState?.strikethrough.isActive ? colors.secondary : colors.onSurface}
-                                />
+                            <TouchableOpacity onPress={handleToggleStrikethrough} style={styles.toolbarBtn}>
+                                <MaterialIcons name="format-strikethrough" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
 
                             {/* Spoiler */}
-                            <TouchableOpacity
-                                onPress={handleToggleSpoiler}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.spoiler.isActive && { backgroundColor: colors.secondaryContainer },
-                                ]}
-                            >
-                                <MaterialIcons
-                                    name="visibility-off"
-                                    size={18}
-                                    color={styleState?.spoiler.isActive ? colors.secondary : colors.onSurface}
-                                />
+                            <TouchableOpacity onPress={handleToggleSpoiler} style={styles.toolbarBtn}>
+                                <MaterialIcons name="visibility-off" size={18} color={colors.onSurface} />
                             </TouchableOpacity>
 
                             <View style={[styles.toolbarDivider, { backgroundColor: colors.outlineVariant }]} />
 
                             {/* Bullet List */}
-                            <TouchableOpacity
-                                onPress={handleToggleUnorderedList}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.unorderedList.isActive && { backgroundColor: colors.secondaryContainer },
-                                ]}
-                            >
-                                <MaterialIcons
-                                    name="format-list-bulleted"
-                                    size={20}
-                                    color={styleState?.unorderedList.isActive ? colors.secondary : colors.onSurface}
-                                />
+                            <TouchableOpacity onPress={handleToggleUnorderedList} style={styles.toolbarBtn}>
+                                <MaterialIcons name="format-list-bulleted" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
 
                             {/* Numbered List */}
-                            <TouchableOpacity
-                                onPress={handleToggleOrderedList}
-                                style={[
-                                    styles.toolbarBtn,
-                                    styleState?.orderedList.isActive && { backgroundColor: colors.secondaryContainer },
-                                ]}
-                            >
-                                <MaterialIcons
-                                    name="format-list-numbered"
-                                    size={20}
-                                    color={styleState?.orderedList.isActive ? colors.secondary : colors.onSurface}
-                                />
+                            <TouchableOpacity onPress={handleToggleOrderedList} style={styles.toolbarBtn}>
+                                <MaterialIcons name="format-list-numbered" size={20} color={colors.onSurface} />
                             </TouchableOpacity>
 
                             {/* Task List */}
@@ -977,11 +839,26 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
+    titleInput: {
+        fontSize: 22,
+        fontWeight: "bold",
+        paddingHorizontal: 4,
+        paddingTop: 8,
+        paddingBottom: 6,
+    },
+    editorDivider: {
+        height: StyleSheet.hairlineWidth,
+        marginHorizontal: 4,
+        marginVertical: 8,
+        opacity: 0.6,
+    },
     editorInput: {
         flex: 1,
         fontSize: 16,
+        lineHeight: 24,
         paddingHorizontal: 4,
-        paddingTop: 8,
+        paddingTop: 4,
+        minHeight: 240,
     },
     toolbarContainer: {
         position: "absolute",

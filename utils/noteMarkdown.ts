@@ -204,12 +204,171 @@ export function stripMarkdown(rawContent: string): string {
  */
 export function toggleTaskInMarkdown(markdown: string, targetIndex: number, newChecked: boolean): string {
     let currentIndex = 0;
-    return markdown.replace(/(- \[[ xX]\])/g, (match) => {
+    return markdown.replace(/((?:[-*+]|\d+\.)\s+\[[ xX]\])/g, (match) => {
         if (currentIndex === targetIndex) {
             currentIndex++;
-            return newChecked ? '- [x]' : '- [ ]';
+            return match.replace(/\[[ xX]\]/, newChecked ? '[x]' : '[ ]');
         }
         currentIndex++;
         return match;
     });
 }
+
+/**
+ * Returns comprehensive, theme-aware MarkdownStyle for EnrichedMarkdownText
+ * covering paragraphs, headings, lists, tasks, blockquotes, code, tables, dividers, etc.
+ */
+export function getNoteMarkdownStyle(
+    colors: any,
+    theme: string,
+    isDetail: boolean = false
+): any {
+    const isDark = theme === 'dark';
+    const baseFontSize = isDetail ? 17 : 16;
+    const baseLineHeight = isDetail ? 26 : 24;
+
+    return {
+        paragraph: {
+            fontSize: baseFontSize,
+            lineHeight: baseLineHeight,
+            color: colors.onSurface,
+            marginBottom: isDetail ? 14 : 12,
+        },
+        h1: {
+            fontSize: 26,
+            fontWeight: 'bold',
+            color: colors.onSurface,
+            marginTop: isDetail ? 18 : 16,
+            marginBottom: 12,
+        },
+        h2: {
+            fontSize: 22,
+            fontWeight: 'bold',
+            color: colors.onSurface,
+            marginTop: isDetail ? 16 : 14,
+            marginBottom: 10,
+        },
+        h3: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: colors.onSurface,
+            marginTop: isDetail ? 14 : 12,
+            marginBottom: 8,
+        },
+        h4: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: colors.onSurface,
+            marginTop: 10,
+            marginBottom: 6,
+        },
+        h5: {
+            fontSize: 15,
+            fontWeight: 'bold',
+            color: colors.onSurface,
+            marginTop: 8,
+            marginBottom: 6,
+        },
+        h6: {
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: colors.onSurfaceVariant,
+            marginTop: 8,
+            marginBottom: 4,
+        },
+        strong: {
+            fontWeight: 'bold',
+            color: colors.onSurface,
+        },
+        em: {
+            color: colors.onSurface,
+        },
+        link: {
+            color: colors.secondary,
+            underline: true,
+        },
+        list: {
+            fontSize: baseFontSize,
+            lineHeight: baseLineHeight,
+            color: colors.onSurface,
+            bulletColor: colors.secondary,
+            markerColor: colors.secondary,
+            itemSpacing: 6,
+        },
+        taskList: {
+            borderColor: isDark ? colors.outline : colors.outlineVariant,
+            checkedColor: colors.secondary,
+            checkmarkColor: '#ffffff',
+            checkedTextColor: isDark ? 'rgba(229, 231, 235, 0.6)' : 'rgba(15, 23, 42, 0.6)',
+            checkedStrikethrough: false,
+            checkboxBorderRadius: 6,
+        },
+        blockquote: {
+            fontSize: isDetail ? 16 : 15,
+            lineHeight: baseLineHeight,
+            color: colors.onSurfaceVariant,
+            borderColor: colors.secondary,
+            borderWidth: 3,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            borderRadius: 8,
+            padding: 10,
+            marginBottom: isDetail ? 14 : 12,
+        },
+        code: {
+            fontSize: 14,
+            color: colors.onSurface,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            borderColor: colors.outlineVariant,
+        },
+        codeBlock: {
+            fontSize: 14,
+            color: isDark ? '#f3f4f6' : colors.onSurface,
+            backgroundColor: isDark ? '#1e1e24' : '#f1f5f9',
+            borderColor: colors.outlineVariant,
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: isDetail ? 14 : 12,
+        },
+        table: {
+            fontSize: 14,
+            color: colors.onSurface,
+            headerTextColor: colors.onSurface,
+            headerBackgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            rowEvenBackgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
+            rowOddBackgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+            borderColor: colors.outlineVariant,
+            borderRadius: 10,
+            cellPaddingHorizontal: 10,
+            cellPaddingVertical: 6,
+            marginBottom: isDetail ? 14 : 12,
+        },
+        thematicBreak: {
+            color: colors.outlineVariant,
+            height: 1,
+            marginTop: 16,
+            marginBottom: 16,
+        },
+        spoiler: {
+            color: colors.onSurface,
+        },
+        highlight: {
+            color: colors.onSurface,
+            backgroundColor: isDark ? 'rgba(234, 179, 8, 0.35)' : 'rgba(254, 240, 138, 0.8)',
+        },
+        math: {
+            fontSize: 18,
+            color: colors.onSurface,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            marginBottom: isDetail ? 14 : 12,
+        },
+        inlineMath: {
+            color: colors.onSurface,
+        },
+        image: {
+            borderRadius: 12,
+            marginTop: 8,
+            marginBottom: isDetail ? 14 : 12,
+        },
+    };
+}
+
