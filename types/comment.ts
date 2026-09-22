@@ -25,7 +25,15 @@ export interface Comment {
     reply_to_username: string | null;
     reply_to_profile_id: string | null;
     reply_count?: number;
+    like_count?: number;
+    is_liked?: boolean;
+    author_reply?: Comment | null;
+    author_reply_prev_count?: number;
+    author_reply_next_count?: number;
 }
+
+export type CommentSortFilter = 'recent' | 'most_liked';
+export type ReplyDirection = 'forward' | 'backward';
 
 export interface CommentResponse {
     data: Comment[];
@@ -35,6 +43,11 @@ export interface CommentResponse {
         hasNextPage: boolean;
         nextCursor: string | null;
     };
+}
+
+export interface ToggleCommentLikeResponse {
+    liked: boolean;
+    like_count: number;
 }
 
 export interface CreateCommentInput {

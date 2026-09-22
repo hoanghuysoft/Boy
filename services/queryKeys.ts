@@ -54,7 +54,9 @@ export const postKeys = {
 
 // ─── Comment ──────────────────────────────────────────────────────────────────
 export const commentKeys = {
-    list: (postId: string) => ['comments', postId] as const,
+    all: ['comments'] as const,
+    post: (postId: string) => ['comments', postId] as const,
+    list: (postId: string, sort: 'recent' | 'most_liked' = 'recent') => ['comments', postId, 'list', sort] as const,
     replies: (postId: string, commentId: string) => ['comments', postId, commentId, 'replies'] as const,
 };
 

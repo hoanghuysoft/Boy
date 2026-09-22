@@ -1,18 +1,28 @@
-import emojiRegex from 'emoji-regex-xs';
 import React from 'react';
-import { StyleSheet, Text, TextProps } from 'react-native';
+import { StyleProp, StyleSheet, Text, TextProps, TextStyle } from 'react-native';
 import ParsedText from 'react-native-parsed-text';
+import RNShowMoreText from './RNShowMoreText';
 
-const EMOJI_PATTERN = emojiRegex();
-
-interface FlexTextProps extends TextProps {
+export interface FlexTextProps extends TextProps {
   bold?: boolean;
   medium?: boolean;
   light?: boolean;
   thin?: boolean;
   extraLight?: boolean;
   parse?: any[];
+  /** @deprecated lite is now the default mode. Standard Text is returned unless `parse` or `isExpanded` is provided. */
   lite?: boolean;
+  /** When true, uses RNShowMoreText for intelligent read more / read less truncation */
+  isExpanded?: boolean;
+  readMoreStyle?: StyleProp<TextStyle>;
+  readMoreText?: string;
+  readLessText?: string;
+  readMoreTextProps?: TextProps;
+  compensationSpaceIos?: number;
+  compensationSpaceAndroid?: number;
+  isMonospaced?: boolean;
+  shortWidthCharacters?: string[];
+  longWidthCharacters?: string[];
 }
 
 const FONT_MAP: Record<string, string> = {
@@ -28,7 +38,29 @@ const FONT_MAP: Record<string, string> = {
 };
 
 export function FlexText(props: FlexTextProps) {
-  const { style, children, bold, medium, light, thin, extraLight, parse, lite = true, ...rest } = props;
+  const {
+    style,
+    children,
+    bold,
+    medium,
+    light,
+    thin,
+    extraLight,
+    parse,
+    lite,
+    isExpanded,
+    readMoreStyle,
+    readMoreText,
+    readLessText,
+    readMoreTextProps,
+    compensationSpaceIos,
+    compensationSpaceAndroid,
+    isMonospaced,
+    shortWidthCharacters,
+    longWidthCharacters,
+    numberOfLines,
+    ...rest
+  } = props;
 
   let selectedFont = '';
   if (bold) selectedFont = 'GoogleSansFlexBold';
@@ -43,42 +75,47 @@ export function FlexText(props: FlexTextProps) {
     selectedFont = FONT_MAP[weight] || 'GoogleSansFlexRegular';
   }
 
-  const isLite = lite && !parse;
-
-  if (isLite) {
+  if (isExpanded && typeof children === 'string') {
     return (
-      <Text
+      <RNShowMoreText
+        numberOfLines={numberOfLines ?? 3}
+        readMoreStyle={readMoreStyle}
+        readMoreText={readMoreText}
+        readLessText={readLessText}
+        readMoreTextProps={readMoreTextProps}
+        compensationSpaceIos={compensationSpaceIos}
+        compensationSpaceAndroid={compensationSpaceAndroid}
+        isMonospaced={isMonospaced}
+        shortWidthCharacters={shortWidthCharacters}
+        longWidthCharacters={longWidthCharacters}
         {...rest}
         style={[style, { fontFamily: selectedFont }]}
       >
         {children}
-      </Text>
+      </RNShowMoreText>
     );
   }
 
-  const defaultParse = [
-    {
-      pattern: EMOJI_PATTERN,
-      style: styles.emojiFont, 
-    },
-  ];
-
-  const mergedParse = parse ? [...defaultParse, ...parse] : defaultParse;
+  if (parse && parse.length > 0) {
+    return (
+      <ParsedText
+        numberOfLines={numberOfLines}
+        {...rest}
+        style={[style, { fontFamily: selectedFont }]}
+        parse={parse}
+      >
+        {children}
+      </ParsedText>
+    );
+  }
 
   return (
-    <ParsedText
+    <Text
+      numberOfLines={numberOfLines}
       {...rest}
       style={[style, { fontFamily: selectedFont }]}
-      parse={mergedParse}
     >
       {children}
-    </ParsedText>
+    </Text>
   );
 }
-
-const styles = StyleSheet.create({
-  emojiFont: {
-    fontFamily: "FluentEmoji",
-    fontWeight: 'normal', 
-  },
-});

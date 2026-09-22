@@ -1,14 +1,21 @@
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { RefObject, useCallback, useEffect, useMemo, useState } from "react";
-import { Keyboard, Alert } from "react-native";
+import { Alert, Keyboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
-import { useComments, useCreateComment, useDeleteComment, useUpdateComment } from "../services/comment";
+import {
+    useComments,
+    useCreateComment,
+    useDeleteComment,
+    useToggleCommentLike,
+    useUpdateComment,
+} from "../services/comment";
 import { useProfile } from "../services/userprofile";
 import { createCommonStyles } from "../styles/common";
-import { Comment } from "../types/comment";
+import { Comment, CommentSortFilter } from "../types/comment";
 
 dayjs.extend(relativeTime);
 
@@ -29,6 +36,7 @@ export const useCommentsSheetViewModel = (
     const common = createCommonStyles(colors, typography);
     const router = useRouter();
 
+    const [filterSort, setFilterSort] = useState<CommentSortFilter>('recent');
     const [commentText, setCommentText] = useState("");
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [imageUrlInput, setImageUrlInput] = useState("");
@@ -57,11 +65,12 @@ export const useCommentsSheetViewModel = (
         hasNextPage,
         isFetchingNextPage,
         refetch,
-    } = useComments(postId || undefined);
+    } = useComments(postId || undefined, filterSort);
 
     const createCommentMutation = useCreateComment(postId || "");
     const deleteCommentMutation = useDeleteComment(postId || "");
     const updateCommentMutation = useUpdateComment(postId || "");
+    const toggleLikeMutation = useToggleCommentLike(postId || "");
 
     const pages = data?.pages;
 
@@ -109,6 +118,11 @@ export const useCommentsSheetViewModel = (
             });
         }
     }, [ref, router]);
+
+    const handleToggleCommentLike = useCallback((comment: Comment) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        toggleLikeMutation.mutate(comment.id);
+    }, [toggleLikeMutation]);
 
     const handleSubmitComment = useCallback(() => {
         const trimmed = commentText.trim();
@@ -282,6 +296,10 @@ export const useCommentsSheetViewModel = (
         isFetchingNextPage,
         currentProfileId,
 
+        // Filter / Sorting
+        filterSort,
+        setFilterSort,
+
         // Input states
         commentText,
         setCommentText,
@@ -317,15 +335,12 @@ export const useCommentsSheetViewModel = (
         // Handlers
         handleEndReached,
         handleUserPress,
+        handleToggleCommentLike,
         handleSubmitComment,
         handleDeleteComment,
         handleEditComment,
         handleCancelEdit,
         handleSaveEdit,
         formatTimeAgo,
-        
-        // Delete Dialog
-        // Replaced by native Alert
-
     };
 };

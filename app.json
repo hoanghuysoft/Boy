@@ -83,7 +83,6 @@
             "./assets/fonts/GoogleSansRounded-Thin.ttf",
             "./assets/fonts/GoogleSansRounded-Light.ttf",
             "./assets/fonts/GoogleSansRounded-ExtraLight.ttf",
-            "./assets/fonts/FluentEmojiColor.ttf",
             "./assets/fonts/tdesign/tdesign.ttf",
             "./assets/fonts/solar/solar.ttf"
           ],
@@ -158,15 +157,6 @@
                   {
                     "path": "./assets/fonts/GoogleSansRounded-ExtraLight.ttf",
                     "weight": 200
-                  }
-                ]
-              },
-              {
-                "fontFamily": "FluentEmoji",
-                "fontDefinitions": [
-                  {
-                    "path": "./assets/fonts/FluentEmojiColor.ttf",
-                    "weight": 400
                   }
                 ]
               }

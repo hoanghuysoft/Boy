@@ -1,22 +1,24 @@
+import LikeIcon from "@/icons/like";
+import LikeSolidIcon from "@/icons/likedsolid";
 import VerifiedIcon from "@/icons/verified";
+import { guessLanguageAsync } from "@bsky.app/expo-guess-language";
+import { useContentNavigation } from "@/hooks/useContentNavigation";
 import { Galeria } from "@nandorojo/galeria";
 import { Image } from "expo-image";
 import { Spinner } from "heroui-native/spinner";
-import React, { memo, useState, useEffect } from "react";
-import { useContentNavigation } from "@/hooks/useContentNavigation";
+import React, { memo, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
     StyleSheet,
     TouchableOpacity,
     View
 } from "react-native";
+import { useLanguageStore } from "../../stores/language";
+import { useTranslationStore } from "../../stores/translation";
 import { Comment } from "../../types/comment";
 import { EMOJI_ASSETS } from "../../utils/emojiResolver";
 import { parseCommentContent } from "../../viewmodels/CommentsSheetViewModel";
 import { FlexText } from "../FlexText";
-import { useTranslation } from "react-i18next";
-import { guessLanguageAsync } from "@bsky.app/expo-guess-language";
-import { useLanguageStore } from "../../stores/language";
-import { useTranslationStore } from "../../stores/translation";
 
 export interface CommentItemProps {
     comment: Comment;
@@ -27,6 +29,7 @@ export interface CommentItemProps {
     onPress: () => void;
     onDelete: () => void;
     onEdit: () => void;
+    onToggleLike?: () => void;
     formatTimeAgo: (dateString: string) => string;
     editLabel: string;
     deleteLabel: string;
@@ -44,7 +47,8 @@ export const CommentItem = memo(({
     isOwn, 
     onPress, 
     onDelete, 
-    onEdit, 
+    onEdit,
+    onToggleLike,
     formatTimeAgo, 
     editLabel, 
     deleteLabel, 
@@ -126,110 +130,144 @@ export const CommentItem = memo(({
                 />
             </TouchableOpacity>
 
-            {/* Content Bubble */}
+            {/* Content & Action Area */}
             <View style={styles.contentWrapper}>
-                <View>
-                    <View style={styles.commentHeader}>
-                        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
-                            <FlexText lite={false} style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 13, fontWeight: '600' }]} numberOfLines={1}>
-                                {comment.profile_name}
-                            </FlexText>
-                            {comment.profile_is_verified && <VerifiedIcon size={12} />}
-                            {comment.is_op && (
-                                <View style={[styles.opBadge, { backgroundColor: colors.primaryContainer || colors.surfaceVariant }]}>
-                                    <FlexText style={{ color: colors.primary, fontSize: 10, fontWeight: '700' }}>
-                                        {t('post.author', 'Author')}
+                <View style={styles.contentAndLikeRow}>
+                    <View style={{ flex: 1 }}>
+                        <View style={styles.commentHeader}>
+                            <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.authorHeaderTouch}>
+                                <FlexText lite={false} style={[common.bodySmall, { color: colors.onSurface, fontSize: 13, fontWeight: '700' }]} numberOfLines={1}>
+                                    {comment.profile_name}
+                                </FlexText>
+                                {comment.profile_is_verified && <VerifiedIcon size={12} />}
+                                {comment.is_op && (
+                                    <View style={[styles.opBadge, { backgroundColor: (colors.primaryContainer || colors.primary) + '22' }]}>
+                                        <FlexText style={{ color: colors.primary, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                                            {t('post.author', 'Author')}
+                                        </FlexText>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Text content */}
+                        {text.length > 0 && (
+                            <View>
+                                {!isShowingTranslation && comment.caption_parts && comment.caption_parts.length > 0 ? (
+                                    <FlexText lite={false} style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
+                                        {comment.caption_parts.map((part, index) => {
+                                            if (part.type === 'tag') {
+                                                return (
+                                                    <FlexText
+                                                        lite={false}
+                                                        key={index}
+                                                        style={{ color: colors.primary, fontWeight: '600' }}
+                                                        onPress={() => handleHashtagPress(part.text)}
+                                                    >
+                                                        {part.text}
+                                                    </FlexText>
+                                                );
+                                            }
+                                            if (part.type === 'mention') {
+                                                return (
+                                                    <FlexText
+                                                        lite={false}
+                                                        key={index}
+                                                        style={{ color: colors.primary, fontWeight: '600' }}
+                                                        onPress={() => handleMentionPress(part.text)}
+                                                    >
+                                                        {part.text}
+                                                    </FlexText>
+                                                );
+                                            }
+                                            return part.text;
+                                        })}
                                     </FlexText>
-                                </View>
-                            )}
-                        </TouchableOpacity>
+                                ) : (
+                                    <FlexText
+                                        lite={false}
+                                        style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}
+                                        parse={[
+                                            {
+                                                pattern: /#[^\s#@!$%^&*()+,.;?]+/gu,
+                                                style: { color: colors.primary, fontWeight: '600' },
+                                                onPress: handleHashtagPress,
+                                            },
+                                            {
+                                                pattern: /@[^\s#@!$%^&*()+,.;?]+/gu,
+                                                style: { color: colors.primary, fontWeight: '600' },
+                                                onPress: handleMentionPress,
+                                            }
+                                        ]}
+                                    >
+                                        {displayedText}
+                                    </FlexText>
+                                )}
+                                {translation?.translationError && (
+                                    <FlexText style={{ color: colors.error || '#ff0000', fontSize: 12, marginTop: 4 }}>
+                                        {translation.translationError}
+                                    </FlexText>
+                                )}
+                            </View>
+                        )}
+
+                        {imageUrl && (
+                            <View style={{ marginTop: 8, position: 'relative' }}>
+                                {EMOJI_ASSETS[imageUrl] ? (
+                                    <Image
+                                        source={EMOJI_ASSETS[imageUrl]}
+                                        style={{ width: 120, height: 120 }}
+                                        contentFit="contain"
+                                    />
+                                ) : (
+                                    <Galeria urls={[imageUrl]} theme={theme}>
+                                        <Galeria.Image>
+                                            <Image
+                                                source={{ uri: imageUrl }}
+                                                style={[styles.commentImage, { width: '100%' }]}
+                                                contentFit="cover"
+                                            />
+                                        </Galeria.Image>
+                                    </Galeria>
+                                )}
+                            </View>
+                        )}
                     </View>
 
-                    {/* Text content */}
-                    {text.length > 0 && (
-                        <View>
-                            {!isShowingTranslation && comment.caption_parts && comment.caption_parts.length > 0 ? (
-                                <FlexText lite={false} style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
-                                    {comment.caption_parts.map((part, index) => {
-                                        if (part.type === 'tag') {
-                                            return (
-                                                <FlexText
-                                                    lite={false}
-                                                    key={index}
-                                                    style={{ color: colors.primary, fontWeight: '600' }}
-                                                    onPress={() => handleHashtagPress(part.text)}
-                                                >
-                                                    {part.text}
-                                                </FlexText>
-                                            );
-                                        }
-                                        if (part.type === 'mention') {
-                                            return (
-                                                <FlexText
-                                                    lite={false}
-                                                    key={index}
-                                                    style={{ color: colors.primary, fontWeight: '600' }}
-                                                    onPress={() => handleMentionPress(part.text)}
-                                                >
-                                                    {part.text}
-                                                </FlexText>
-                                            );
-                                        }
-                                        return part.text;
-                                    })}
-                                </FlexText>
+                    {/* Like button on right side */}
+                    {onToggleLike && (
+                        <TouchableOpacity
+                            onPress={onToggleLike}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={styles.likeButtonContainer}
+                            activeOpacity={0.6}
+                        >
+                            {comment.is_liked ? (
+                                <LikeSolidIcon size={16} color={colors.primary} />
                             ) : (
+                                <LikeIcon size={16} color={colors.onSurfaceVariant} />
+                            )}
+                            {(comment.like_count || 0) > 0 && (
                                 <FlexText
-                                    lite={false}
-                                    style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}
-                                    parse={[
+                                    style={[
+                                        common.label,
                                         {
-                                            pattern: /#[^\s#@!$%^&*()+,.;?]+/gu,
-                                            style: { color: colors.primary, fontWeight: '600' },
-                                            onPress: handleHashtagPress,
-                                        },
-                                        {
-                                            pattern: /@[^\s#@!$%^&*()+,.;?]+/gu,
-                                            style: { color: colors.primary, fontWeight: '600' },
-                                            onPress: handleMentionPress,
+                                            fontSize: 11,
+                                            color: comment.is_liked ? colors.primary : colors.onSurfaceVariant,
+                                            fontWeight: '700',
+                                            marginTop: 2,
                                         }
                                     ]}
                                 >
-                                    {displayedText}
+                                    {comment.like_count}
                                 </FlexText>
                             )}
-                            {translation?.translationError && (
-                                <FlexText style={{ color: colors.error || '#ff0000', fontSize: 12, marginTop: 4 }}>
-                                    {translation.translationError}
-                                </FlexText>
-                            )}
-                        </View>
-                    )}
-
-                    {imageUrl && (
-                        <View style={{ marginTop: 8, position: 'relative' }}>
-                            {EMOJI_ASSETS[imageUrl] ? (
-                                <Image
-                                    source={EMOJI_ASSETS[imageUrl]}
-                                    style={{ width: 120, height: 120 }}
-                                    contentFit="contain"
-                                />
-                            ) : (
-                                <Galeria urls={[imageUrl]} theme={theme}>
-                                    <Galeria.Image>
-                                        <Image
-                                            source={{ uri: imageUrl }}
-                                            style={[styles.commentImage, { width: '100%' }]}
-                                            contentFit="cover"
-                                        />
-                                    </Galeria.Image>
-                                </Galeria>
-                            )}
-                        </View>
+                        </TouchableOpacity>
                     )}
                 </View>
 
-                <View style={[common.row, { alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }]}>
+                {/* Bottom Action Row (Timestamp, Reply, Translate, Edit, Delete) */}
+                <View style={[common.row, { alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }]}>
                     <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 12 }]}>
                         {formatTimeAgo(comment.created_at)}
                     </FlexText>
@@ -310,7 +348,7 @@ CommentItem.displayName = "CommentItem";
 const styles = StyleSheet.create({
     commentItem: {
         flexDirection: "row",
-        marginBottom: 20,
+        marginBottom: 16,
         gap: 12,
     },
     avatarContainer: {
@@ -328,21 +366,41 @@ const styles = StyleSheet.create({
     contentWrapper: {
         flex: 1,
     },
+    contentAndLikeRow: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 8,
+    },
     commentHeader: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+        marginBottom: 2,
+    },
+    authorHeaderTouch: {
+        flexShrink: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 4,
     },
     opBadge: {
         paddingHorizontal: 6,
-        paddingVertical: 1,
-        borderRadius: 4,
+        paddingVertical: 1.5,
+        borderRadius: 5,
         alignSelf: 'center',
-        marginLeft: 2,
+        marginLeft: 4,
     },
     commentImage: {
         height: 240,
         borderRadius: 12,
+    },
+    likeButtonContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: 2,
+        paddingLeft: 4,
+        minWidth: 28,
     },
     actionButton: {
     },

@@ -154,7 +154,7 @@ const VideoCard = React.memo(({ item, colors, renderMediaItem }: { item: Media &
 VideoCard.displayName = "VideoCard";
 
 const MansoryListScreen = () => {
-    const scrollTrigger = useScrollStore((state) => state.triggers["profile"]);
+    const scrollTrigger = useScrollStore((state) => state.triggers["mansory"] ?? state.triggers["profile"]);
     const listRef = useRef<any>(null);
 
     useEffect(() => {

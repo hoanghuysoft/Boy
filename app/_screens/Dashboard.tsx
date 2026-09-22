@@ -4,6 +4,7 @@ import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerShe
 import { CgvCard } from "@/components/tracker/CgvCard";
 import { CgvDetailSheet } from "@/components/tracker/sheets/CgvDetailSheet";
 import { useThemeContext } from "@/context/ThemeContext";
+import { useScrollStore } from "@/stores/scroll";
 import { useCgvMoviesQuery } from "@/services/cgv";
 import { useInfiniteMedia } from "@/services/media";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
@@ -115,6 +116,15 @@ const DashboardScreen = () => {
     const { t } = useTranslation();
     const blurTargetRef = useRef<View | null>(null);
     const pickerSheetRef = useRef<TrueSheet>(null);
+    const scrollRef = useRef<any>(null);
+    const scrollTrigger = useScrollStore((state) => state.triggers["profile"]);
+
+    useEffect(() => {
+        if (scrollTrigger && scrollTrigger > 0) {
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+        }
+    }, [scrollTrigger]);
+
     const [focusTrigger, setFocusTrigger] = useState(0);
     const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
     const { data: adminData } = useAdminCheck();
@@ -292,7 +302,7 @@ const DashboardScreen = () => {
                     </TouchableOpacity>
                 </View>
             )}
-            <Animated.ScrollView onScroll={scrollHandler} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 250 + insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 99 }}>
+            <Animated.ScrollView ref={scrollRef} onScroll={scrollHandler} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 250 + insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 99 }}>
                 <Pressable onPress={() => activeProfile?.id && router.push(`/profile/${activeProfile.id}`)}>
                     <AssemblyText
                         text={activeProfile?.name ?? ""}

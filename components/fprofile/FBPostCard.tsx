@@ -22,25 +22,45 @@ const FBCaptionText: React.FC<{ text: string; colors: any; common: any }> = ({
     common,
 }) => {
     const [expanded, setExpanded] = useState(false);
-    const needsReadMore = text.length > CHARACTER_THRESHOLD;
-    const displayText = !expanded && needsReadMore
-        ? text.slice(0, CHARACTER_THRESHOLD) + '...'
-        : text;
+    const [hasOverflow, setHasOverflow] = useState(false);
 
     return (
-        <View style={{ paddingHorizontal: 16 }}>
-            <FlexText style={[common.body, { color: colors.text, marginTop: 10, marginBottom: 10, fontSize: 14 }]}>
-                {displayText}
-                {needsReadMore && (
+        <View style={{ paddingHorizontal: 16, marginVertical: 4 }}>
+            {!hasOverflow && (
+                <View style={{ position: 'absolute', top: 0, left: 16, right: 16, opacity: 0 }} pointerEvents="none" aria-hidden>
                     <FlexText
-                        onPress={() => setExpanded(!expanded)}
-                        style={{ color: colors.verify, fontWeight: '600' }}
+                        onTextLayout={(e) => {
+                            if (e.nativeEvent.lines.length > 3) {
+                                setHasOverflow(true);
+                            }
+                        }}
+                        style={[common.body, { fontSize: 14 }]}
+                    >
+                        {text}
+                    </FlexText>
+                </View>
+            )}
+            <FlexText
+                numberOfLines={expanded ? undefined : 3}
+                style={[common.body, { color: colors.text, fontSize: 14 }]}
+            >
+                {text}
+            </FlexText>
+            {hasOverflow && (
+                <TouchableOpacity
+                    onPress={() => setExpanded(!expanded)}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={{ marginTop: 4, alignSelf: 'flex-start' }}
+                >
+                    <FlexText
+                        style={{ color: colors.primary || colors.verify, fontWeight: '700', fontSize: 13 }}
                         suppressHighlighting
                     >
-                        {expanded ? ' Read less' : ' Read more'}
+                        {expanded ? 'Read less' : 'Read more'}
                     </FlexText>
-                )}
-            </FlexText>
+                </TouchableOpacity>
+            )}
         </View>
     );
 };

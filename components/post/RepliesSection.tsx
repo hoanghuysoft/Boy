@@ -19,6 +19,7 @@ export interface RepliesSectionProps {
     onUserPress: (comment: Comment) => void;
     onDeleteComment: (comment: Comment) => void;
     onEditComment: (comment: Comment) => void;
+    onToggleCommentLike: (comment: Comment) => void;
     onReplyComment: (comment: Comment) => void;
     formatTimeAgo: (dateString: string) => string;
     deletingId: string | null;
@@ -39,6 +40,7 @@ export const RepliesSection = memo(({
     onUserPress,
     onDeleteComment,
     onEditComment,
+    onToggleCommentLike,
     onReplyComment,
     formatTimeAgo,
     deletingId,
@@ -63,19 +65,66 @@ export const RepliesSection = memo(({
     }, [data]);
 
     const replyCount = parentComment.reply_count || 0;
+    const authorReply = parentComment.author_reply;
+    const prevCount = parentComment.author_reply_prev_count || 0;
+    const nextCount = parentComment.author_reply_next_count || 0;
 
     if (replyCount === 0) return null;
 
     return (
         <View style={styles.repliesSectionContainer}>
             {!isExpanded ? (
-                <TouchableOpacity onPress={onToggleExpand} style={styles.expandRepliesButton}>
-                    <View style={[styles.replyLine, { backgroundColor: colors.outlineVariant || "#e0e0e0" }]} />
-                    <FlexText style={[common.bodySmall, { color: colors.primary, fontWeight: '600', fontSize: 13 }]}>
-                        {t('post.commentsSheet.viewReply', { count: replyCount })}
-                    </FlexText>
-                </TouchableOpacity>
+                // Collapsed state: auto-preview author reply if present
+                authorReply ? (
+                    <View style={{ gap: 4 }}>
+                        {prevCount > 0 && (
+                            <TouchableOpacity onPress={onToggleExpand} style={styles.expandRepliesButton} activeOpacity={0.7}>
+                                <View style={[styles.replyLine, { backgroundColor: colors.outlineVariant || "#e0e0e0" }]} />
+                                <FlexText style={[common.bodySmall, { color: colors.primary, fontWeight: '600', fontSize: 13 }]}>
+                                    {t('post.commentsSheet.viewPreviousReplies', { count: prevCount, defaultValue: `View ${prevCount} previous replies` })}
+                                </FlexText>
+                            </TouchableOpacity>
+                        )}
+
+                        <View style={{ marginTop: 2, marginBottom: 2 }}>
+                            <CommentItem
+                                comment={authorReply}
+                                colors={colors}
+                                common={common}
+                                theme={theme}
+                                onPress={() => onUserPress(authorReply)}
+                                onDelete={() => onDeleteComment(authorReply)}
+                                onEdit={() => onEditComment(authorReply)}
+                                onToggleLike={() => onToggleCommentLike(authorReply)}
+                                formatTimeAgo={formatTimeAgo}
+                                editLabel={editLabel}
+                                deleteLabel={deleteLabel}
+                                replyLabel={replyLabel}
+                                isDeleting={deletingId === authorReply.id}
+                                isReply
+                                onReply={() => onReplyComment(authorReply)}
+                            />
+                        </View>
+
+                        {nextCount > 0 && (
+                            <TouchableOpacity onPress={onToggleExpand} style={styles.expandRepliesButton} activeOpacity={0.7}>
+                                <View style={[styles.replyLine, { backgroundColor: colors.outlineVariant || "#e0e0e0" }]} />
+                                <FlexText style={[common.bodySmall, { color: colors.primary, fontWeight: '600', fontSize: 13 }]}>
+                                    {t('post.commentsSheet.viewNextReplies', { count: nextCount, defaultValue: `View ${nextCount} more replies` })}
+                                </FlexText>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                ) : (
+                    <TouchableOpacity onPress={onToggleExpand} style={styles.expandRepliesButton} activeOpacity={0.7}>
+                        <View style={[styles.replyLine, { backgroundColor: colors.outlineVariant || "#e0e0e0" }]} />
+                        <FlexText style={[common.bodySmall, { color: colors.primary, fontWeight: '600', fontSize: 13 }]}>
+                            {t('post.commentsSheet.viewReply', { count: replyCount })}
+                        </FlexText>
+                    </TouchableOpacity>
+                )
             ) : (
+                // Expanded state: full list of replies with pagination
                 <View>
                     <View style={styles.repliesList}>
                         {replies.map((reply: Comment) => (
@@ -88,6 +137,7 @@ export const RepliesSection = memo(({
                                 onPress={() => onUserPress(reply)}
                                 onDelete={() => onDeleteComment(reply)}
                                 onEdit={() => onEditComment(reply)}
+                                onToggleLike={() => onToggleCommentLike(reply)}
                                 formatTimeAgo={formatTimeAgo}
                                 editLabel={editLabel}
                                 deleteLabel={deleteLabel}
@@ -105,7 +155,7 @@ export const RepliesSection = memo(({
                         </View>
                     ) : (
                         hasNextPage && (
-                            <TouchableOpacity onPress={() => fetchNextPage()} style={styles.loadMoreRepliesButton}>
+                            <TouchableOpacity onPress={() => fetchNextPage()} style={styles.loadMoreRepliesButton} activeOpacity={0.7}>
                                 <FlexText style={[common.bodySmall, { color: colors.primary, fontWeight: '600', fontSize: 13, marginLeft: 40 }]}>
                                     {t('post.commentsSheet.loadMoreReplies', 'Load more replies')}
                                 </FlexText>
@@ -113,7 +163,7 @@ export const RepliesSection = memo(({
                         )
                     )}
 
-                    <TouchableOpacity onPress={onToggleExpand} style={styles.expandRepliesButton}>
+                    <TouchableOpacity onPress={onToggleExpand} style={styles.expandRepliesButton} activeOpacity={0.7}>
                         <View style={[styles.replyLine, { backgroundColor: colors.outlineVariant || "#e0e0e0" }]} />
                         <FlexText style={[common.bodySmall, { color: colors.primary, fontWeight: '600', fontSize: 13 }]}>
                             {t('post.commentsSheet.hideReplies', 'Hide replies')}
@@ -130,7 +180,7 @@ RepliesSection.displayName = "RepliesSection";
 const styles = StyleSheet.create({
     repliesSectionContainer: {
         marginLeft: 50,
-        marginBottom: 16,
+        marginBottom: 12,
     },
     expandRepliesButton: {
         flexDirection: 'row',
@@ -143,7 +193,7 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     repliesList: {
-        marginTop: 8,
+        marginTop: 4,
     },
     repliesLoader: {
         paddingVertical: 8,

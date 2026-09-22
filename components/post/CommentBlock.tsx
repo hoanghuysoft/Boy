@@ -26,6 +26,7 @@ export const CommentBlock = memo(({ item, vm, t }: CommentBlockProps) => {
                 onPress={() => vm.handleUserPress(item)}
                 onDelete={() => vm.handleDeleteComment(item)}
                 onEdit={() => vm.handleEditComment(item)}
+                onToggleLike={() => vm.handleToggleCommentLike(item)}
                 formatTimeAgo={vm.formatTimeAgo}
                 editLabel={t('post.commentsSheet.actionEdit')}
                 deleteLabel={t('post.commentsSheet.actionDelete')}
@@ -43,6 +44,7 @@ export const CommentBlock = memo(({ item, vm, t }: CommentBlockProps) => {
                     onUserPress={vm.handleUserPress}
                     onDeleteComment={vm.handleDeleteComment}
                     onEditComment={vm.handleEditComment}
+                    onToggleCommentLike={vm.handleToggleCommentLike}
                     onReplyComment={vm.handleReplyToComment}
                     formatTimeAgo={vm.formatTimeAgo}
                     deletingId={vm.deletingId}

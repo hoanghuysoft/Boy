@@ -1,4 +1,6 @@
 import { useSession } from "@/context/SessionContext";
+import { useThemeContext } from "@/context/ThemeContext";
+import { useScrollStore } from "@/stores/scroll";
 import {
     GlassTabBar,
     GlassTabButton,
@@ -7,19 +9,21 @@ import {
     type GlassTabItem,
 } from "expo-glass-tabs";
 import { Image } from "expo-image";
-import { Redirect, useRouter } from "expo-router";
+import { Redirect, usePathname, useRouter, useSegments } from "expo-router";
 import { TabList, TabSlot, TabTrigger, Tabs } from "expo-router/ui";
-import React from "react";
+import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 
-import { useThemeContext } from "@/context/ThemeContext";
+type TabItemConfig = GlassTabItem & { href: any };
 
 export default function TabLayout() {
     const { session, hasProfile } = useSession();
     const { colors, theme } = useThemeContext();
     const { t } = useTranslation();
     const router = useRouter();
+    const segments = useSegments();
+    const pathname = usePathname();
 
     if (!session) {
         return <Redirect href="/login" />;
@@ -37,7 +41,7 @@ export default function TabLayout() {
         solidFallback: colors.surfaceContainerLow,
     };
 
-    const ITEMS: (GlassTabItem & { href: any })[] = [
+    const ITEMS: TabItemConfig[] = [
         {
             name: 'index',
             href: '/',
@@ -64,13 +68,43 @@ export default function TabLayout() {
         },
     ];
 
+    const handleIndexSelected = useCallback(
+        (index: number) => {
+            const targetItem = ITEMS[index];
+            if (!targetItem) return;
+
+            const activeTabSegment = (segments as string[])[1] || 'index';
+            const isCurrentTab =
+                targetItem.name === activeTabSegment ||
+                (targetItem.name === 'index' && (pathname === '/' || pathname === '')) ||
+                (targetItem.name === 'shots' && pathname.startsWith('/shots')) ||
+                (targetItem.name === 'mansory' && pathname.startsWith('/mansory')) ||
+                (targetItem.name === 'profile' && pathname.startsWith('/profile'));
+
+            if (isCurrentTab) {
+                // Trigger scroll-to-top across registered scrollable screens
+                useScrollStore.getState().triggerScrollToTop(targetItem.name);
+                if (targetItem.name === "mansory") {
+                    useScrollStore.getState().triggerScrollToTop("profile");
+                }
+            } else {
+                router.navigate(targetItem.href);
+            }
+        },
+        [segments, pathname, router]
+    );
+
     return (
         <TabBarMinimizeProvider>
             <View style={{ flex: 1, backgroundColor: colors.surface, paddingBottom: 0 }}>
                 <Tabs>
                     <TabSlot style={{ height: '100%' }} renderFn={renderFadingTabScreen} />
                     <TabList asChild>
-                        <GlassTabBar disableOverlay theme={tabTheme} onIndexSelected={(i) => router.navigate(ITEMS[i].href)}>
+                        <GlassTabBar
+                            disableOverlay
+                            theme={tabTheme}
+                            onIndexSelected={handleIndexSelected}
+                        >
                             {ITEMS.map(({ href, ...item }, index) => (
                                 <TabTrigger key={item.name} name={item.name} href={href} asChild>
                                     <GlassTabButton item={item} index={index} />
@@ -83,3 +117,5 @@ export default function TabLayout() {
         </TabBarMinimizeProvider>
     );
 }
+
+

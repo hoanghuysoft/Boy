@@ -417,7 +417,69 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             <>
                 {/* Header */}
                 <View style={styles.header}>
-                    <FlexText style={[vm.common.heading, { fontSize: 20 }]}>{t('post.commentsSheet.title')}</FlexText>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <FlexText style={[vm.common.heading, { fontSize: 20 }]}>{t('post.commentsSheet.title')}</FlexText>
+                        {vm.totalComments > 0 && (
+                            <View style={[styles.countBadge, { backgroundColor: vm.colors.surfaceContainerHigh }]}>
+                                <FlexText style={{ color: vm.colors.onSurfaceVariant, fontSize: 12, fontWeight: '700' }}>
+                                    {vm.totalComments}
+                                </FlexText>
+                            </View>
+                        )}
+                    </View>
+
+                    {/* Filter Pills */}
+                    <View style={[styles.filterContainer, { backgroundColor: vm.colors.surfaceContainerHigh }]}>
+                        <TouchableOpacity
+                            onPress={() => vm.setFilterSort('recent')}
+                            style={[
+                                styles.filterTab,
+                                vm.filterSort === 'recent' && [
+                                    styles.filterTabActive,
+                                    { backgroundColor: vm.colors.surface }
+                                ]
+                            ]}
+                            activeOpacity={0.7}
+                        >
+                            <FlexText
+                                style={[
+                                    vm.common.label,
+                                    {
+                                        fontSize: 12,
+                                        fontWeight: vm.filterSort === 'recent' ? '700' : '500',
+                                        color: vm.filterSort === 'recent' ? vm.colors.onSurface : vm.colors.onSurfaceVariant,
+                                    }
+                                ]}
+                            >
+                                {t('post.commentsSheet.filterRecent', 'Recent')}
+                            </FlexText>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => vm.setFilterSort('most_liked')}
+                            style={[
+                                styles.filterTab,
+                                vm.filterSort === 'most_liked' && [
+                                    styles.filterTabActive,
+                                    { backgroundColor: vm.colors.surface }
+                                ]
+                            ]}
+                            activeOpacity={0.7}
+                        >
+                            <FlexText
+                                style={[
+                                    vm.common.label,
+                                    {
+                                        fontSize: 12,
+                                        fontWeight: vm.filterSort === 'most_liked' ? '700' : '500',
+                                        color: vm.filterSort === 'most_liked' ? vm.colors.onSurface : vm.colors.onSurfaceVariant,
+                                    }
+                                ]}
+                            >
+                                {t('post.commentsSheet.filterLiked', 'Top')}
+                            </FlexText>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Comments List */}
@@ -435,6 +497,10 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={10}
+                    windowSize={5}
+                    removeClippedSubviews={true}
                 />
             </>
         );
@@ -473,10 +539,33 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingTop: 24,
-        paddingBottom: 20,
-        gap: 10,
+        paddingBottom: 16,
+    },
+    countBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
+    },
+    filterContainer: {
+        flexDirection: 'row',
+        borderRadius: 20,
+        padding: 3,
+        alignItems: 'center',
+    },
+    filterTab: {
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 16,
+    },
+    filterTabActive: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 1,
     },
     listContent: {
         paddingBottom: 100,

@@ -4,10 +4,8 @@ import LocationIcon from "@/assets/images/svg/location.svg";
 import MusicLibraryIcon from "@/assets/images/svg/music-rectangle-add.svg";
 import React, { memo, useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
-import AnimatedGlow from 'react-native-animated-glow';
 import { ThemeColors } from "../../context/ThemeContext";
 import { DeezerTrack } from "../../services/deezer";
-import { abyssalGlow } from '../glow/AbyssGlowConfig';
 
 // ============================================================================
 // ActionButton Component
@@ -121,48 +119,43 @@ export const CreateActionBar = memo(({
             ]}
             pointerEvents={visible ? "auto" : "none"}
         >
-            <AnimatedGlow
-                preset={abyssalGlow}
-                style={{ borderRadius: 999 }}
+            <View
+                style={[
+                    styles.pillBar,
+                    {
+                        backgroundColor: colors.surfaceContainer,
+                        borderColor: colors.outlineVariant,
+                    },
+                ]}
             >
-                <View
-                    style={[
-                        styles.pillBar,
-                        {
-                            backgroundColor: colors.surfaceContainer,
-                            borderColor: colors.outlineVariant,
-                        },
-                    ]}
-                >
-                    {!hideMediaOption && (
-                        <ActionButton
-                            icon={GalleryIcon}
-                            isActive={selectedMediaCount > 0}
-                            onPress={onPickMedia}
-                            disabled={selectedMediaCount >= 10}
-                            colors={colors}
-                        />
-                    )}
+                {!hideMediaOption && (
                     <ActionButton
-                        icon={LocationIcon}
-                        isActive={showLocationInput || hasLocation}
-                        onPress={onToggleLocation}
+                        icon={GalleryIcon}
+                        isActive={selectedMediaCount > 0}
+                        onPress={onPickMedia}
+                        disabled={selectedMediaCount >= 10}
                         colors={colors}
                     />
-                    <ActionButton
-                        icon={MusicLibraryIcon}
-                        isActive={showMusicSearch || selectedTrack !== null}
-                        onPress={onToggleMusic}
-                        colors={colors}
-                    />
-                    <ActionButton
-                        icon={LinkIcon}
-                        isActive={linksCount > 0}
-                        onPress={onAddLink}
-                        colors={colors}
-                    />
-                </View>
-            </AnimatedGlow>
+                )}
+                <ActionButton
+                    icon={LocationIcon}
+                    isActive={showLocationInput || hasLocation}
+                    onPress={onToggleLocation}
+                    colors={colors}
+                />
+                <ActionButton
+                    icon={MusicLibraryIcon}
+                    isActive={showMusicSearch || selectedTrack !== null}
+                    onPress={onToggleMusic}
+                    colors={colors}
+                />
+                <ActionButton
+                    icon={LinkIcon}
+                    isActive={linksCount > 0}
+                    onPress={onAddLink}
+                    colors={colors}
+                />
+            </View>
         </Animated.View>
     );
 });

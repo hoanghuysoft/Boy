@@ -1,5 +1,5 @@
+import { BorderBeam } from '@/border-beam-native/src';
 import { FlexText } from "@/components/FlexText";
-import { appleIntelli } from "@/components/glow/AppleIntelliConfig";
 import { PullRefreshIsland } from "@/components/pro/PullRefreshIsland";
 import { MostSearchedSection } from "@/components/search/MostSearchedSection";
 import { renderEmptyState } from "@/components/search/SearchEmpty";
@@ -14,6 +14,7 @@ import { Profile } from "@/types/profile";
 import { useSearchViewModel } from "@/viewmodels/SearchViewModel";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList as FlashListOriginal } from "@shopify/flash-list";
+import { BlurTargetView, BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -28,14 +29,13 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import AnimatedGlow from "react-native-animated-glow";
 import Animated from "react-native-reanimated";
 
 const FlashList = FlashListOriginal as any;
 
 const SearchContent = () => {
   const navigation = useRouter();
-  const { colors, typography } = useThemeContext();
+  const { colors, typography, theme } = useThemeContext();
   const common = createCommonStyles(colors, typography);
   const { t } = useTranslation();
 
@@ -52,6 +52,7 @@ const SearchContent = () => {
     inputRef,
     listRef,
     insets,
+    blurTargetRef,
     baseSearchBarBottom,
     contentBottomPadding,
     animatedSearchBarStyle,
@@ -157,66 +158,68 @@ const SearchContent = () => {
         </TouchableOpacity>
       </View>
 
-      <PullRefreshIsland
-        onRefresh={handleRefresh}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.5}
-        style={{ flex: 1, backgroundColor: colors.surface }}
-      >
-        <View style={[styles.header, { marginTop: 54 }]}>
-          <FlexText lite style={[common.heading, { fontSize: 28 }]}>{t('search.header.title')}</FlexText>
-          <FlexText lite style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
-            {searchQuery
-              ? t('search.header.resultsCount', { count: totalResults })
-              : isAdmin
-                ? t('search.header.peopleCount', { count: totalResults })
-                : t('search.header.exploreSubtitle')}
-          </FlexText>
-        </View>
+      <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+        <PullRefreshIsland
+          onRefresh={handleRefresh}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          style={{ flex: 1, backgroundColor: colors.surface }}
+        >
+          <View style={[styles.header, { marginTop: 54 }]}>
+            <FlexText lite style={[common.heading, { fontSize: 28 }]}>{t('search.header.title')}</FlexText>
+            <FlexText lite style={[common.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 }]}>
+              {searchQuery
+                ? t('search.header.resultsCount', { count: totalResults })
+                : isAdmin
+                  ? t('search.header.peopleCount', { count: totalResults })
+                  : t('search.header.exploreSubtitle')}
+            </FlexText>
+          </View>
 
-        {/* Content */}
-        {isLoading ? (
-          <FlashList
-            data={[1, 2, 3, 4, 5, 6, 7, 8]}
-            renderItem={({ index }: any) => renderProfileSkeleton({
-              colors,
-              styles,
-              isFirst: index === 0,
-              isLast: index === 7,
-            })}
-            keyExtractor={(item: any) => item.toString()}
-            contentContainerStyle={[
-              styles.listContent,
-              { gap: 3 },
-              { paddingBottom: contentBottomPadding },
-            ]}
-            ListHeaderComponent={ListHeaderComponent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            estimatedItemSize={80}
-            scrollEnabled={false}
-          />
-        ) : (
-          <FlatList
-            ref={listRef as any}
-            data={profiles}
-            renderItem={renderItem}
-            keyExtractor={(item: Profile) => item.id}
-            contentContainerStyle={[
-              styles.listContent,
-              { gap: 3 },
-              { paddingBottom: contentBottomPadding },
-              profiles.length === 0 && styles.emptyListContent,
-            ]}
-            ListHeaderComponent={ListHeaderComponent}
-            ListEmptyComponent={ListEmptyComponent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            ListFooterComponent={ListFooterComponent}
-            scrollEnabled={false}
-          />
-        )}
-      </PullRefreshIsland>
+          {/* Content */}
+          {isLoading ? (
+            <FlashList
+              data={[1, 2, 3, 4, 5, 6, 7, 8]}
+              renderItem={({ index }: any) => renderProfileSkeleton({
+                colors,
+                styles,
+                isFirst: index === 0,
+                isLast: index === 7,
+              })}
+              keyExtractor={(item: any) => item.toString()}
+              contentContainerStyle={[
+                styles.listContent,
+                { gap: 3 },
+                { paddingBottom: contentBottomPadding },
+              ]}
+              ListHeaderComponent={ListHeaderComponent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              estimatedItemSize={80}
+              scrollEnabled={false}
+            />
+          ) : (
+            <FlatList
+              ref={listRef as any}
+              data={profiles}
+              renderItem={renderItem}
+              keyExtractor={(item: Profile) => item.id}
+              contentContainerStyle={[
+                styles.listContent,
+                { gap: 3 },
+                { paddingBottom: contentBottomPadding },
+                profiles.length === 0 && styles.emptyListContent,
+              ]}
+              ListHeaderComponent={ListHeaderComponent}
+              ListEmptyComponent={ListEmptyComponent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              ListFooterComponent={ListFooterComponent}
+              scrollEnabled={false}
+            />
+          )}
+        </PullRefreshIsland>
+      </BlurTargetView>
 
       {/* Floating Search Bar */}
       <Animated.View
@@ -234,12 +237,14 @@ const SearchContent = () => {
             onRemove={removeRecentQuery}
           />
         )}
-        <AnimatedGlow
-          preset={appleIntelli}
-          activeState={isFocused ? "press" : "default"}
-          style={{ borderRadius: 999 }}
-        >
-          <View style={[styles.searchBar]}>
+        <BorderBeam size={isFocused ? "pulse-inner" : "line"} colorVariant="colorful" theme="auto" borderRadius={28}>
+          <BlurView
+            blurMethod="dimezisBlurViewSdk31Plus"
+            tint={theme === "dark" ? "systemThickMaterialDark" : "systemThickMaterialLight"}
+            intensity={80}
+            blurTarget={blurTargetRef}
+            style={[styles.searchBar]}
+          >
             <TextInput
               ref={inputRef}
               style={[styles.searchInput, { color: "white", marginLeft: 12 }]}
@@ -272,10 +277,10 @@ const SearchContent = () => {
                 </View>
               </TouchableOpacity>
             )}
-          </View>
-        </AnimatedGlow>
+          </BlurView>
+        </BorderBeam>
       </Animated.View>
-    </KeyboardAvoidingView>
+    </KeyboardAvoidingView >
   );
 };
 
@@ -344,6 +349,7 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 999,
     paddingHorizontal: 6,
+    overflow: 'hidden'
   },
   searchInput: {
     flex: 1,
