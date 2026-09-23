@@ -39,6 +39,7 @@ export interface Post {
     is_adult: boolean
     is_liked: boolean
     is_bookmarked: boolean
+    bookmark_count?: number
     profile_name: string
     profile_avatar: string
     profile_is_verified: boolean
@@ -47,6 +48,8 @@ export interface Post {
     comment_count: number
     view_count: number
     share_count: number
+    repost_count?: number
+    is_reposted?: boolean
     music: Music
     reposted_post?: any
 }

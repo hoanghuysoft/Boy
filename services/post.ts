@@ -4,7 +4,7 @@
  */
 
 import { Link, Post } from '@/types/post';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
 import { feedKeys, postKeys, profileKeys } from './queryKeys';
 
@@ -39,7 +39,7 @@ export interface DeletePostResponse {
 type QC = ReturnType<typeof useQueryClient>;
 
 /**
- * Patch a single post's field across every paginated feed cache.
+ * Patch a single post's field across every paginated feed cache and single post detail cache.
  * Returns the previous snapshots so they can be rolled back.
  */
 const patchPostInFeeds = (
@@ -53,8 +53,8 @@ const patchPostInFeeds = (
             ...oldData,
             pages: oldData.pages.map((page: any) => ({
                 ...page,
-                data: page.data.map((p: Post) =>
-                    p.id === postId ? { ...p, ...patch } : p
+                data: page.data.map((p: any) =>
+                    (p.id === postId || p.post_id === postId) ? { ...p, ...patch } : p
                 ),
             })),
         };
@@ -65,6 +65,12 @@ const patchPostInFeeds = (
     queryClient.setQueriesData({ queryKey: feedKeys.video, exact: false }, updater);
     // profileFeed matched via prefix (profileId omitted)
     queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, updater);
+
+    // Apply to single post detail query
+    queryClient.setQueryData(postKeys.single(postId), (old: any) => {
+        if (!old) return old;
+        return { ...old, ...patch };
+    });
 };
 
 /**
@@ -124,7 +130,7 @@ export const deletePost = async (
     return response.data;
 };
 
-/** Get a single post */
+/** Get a single post by profile and postId */
 export const getPost = async (
     profileId: string,
     postId: string
@@ -133,6 +139,22 @@ export const getPost = async (
         `/api/profiles/${profileId}/posts/client/${postId}`
     );
     return response.data;
+};
+
+/** Get a single post by ID */
+export const getPostById = async (postId: string): Promise<{ data: Post }> => {
+    const response = await client.get<{ data: Post }>(`/api/posts/${postId}`);
+    return response.data;
+};
+
+/** React Query hook to get a single post by ID */
+export const usePost = (postId: string | undefined, initialData?: Post) => {
+    return useQuery({
+        queryKey: postKeys.single(postId || ''),
+        queryFn: () => getPostById(postId!).then((res) => res.data),
+        initialData,
+        enabled: Boolean(postId),
+    });
 };
 
 /** Update a post (excludes media changes) */
@@ -151,6 +173,18 @@ export const updatePost = async (
 /** Share a post (increments share_count on the backend) */
 export const sharePost = async (postId: string): Promise<any> => {
     const response = await client.post(`/api/posts/${postId}/share`);
+    return response.data;
+};
+
+/** Repost a post */
+export const repostPost = async (postId: string): Promise<any> => {
+    const response = await client.post(`/api/posts/${postId}/repost`);
+    return response.data;
+};
+
+/** Undo repost a post */
+export const undoRepostPost = async (postId: string): Promise<any> => {
+    const response = await client.delete(`/api/posts/${postId}/repost`);
     return response.data;
 };
 
@@ -301,6 +335,10 @@ export const useSharePost = () => {
             queryClient.setQueriesData({ queryKey: feedKeys.home, exact: false }, shareUpdater);
             queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, shareUpdater);
             queryClient.setQueriesData({ queryKey: feedKeys.video, exact: false }, shareUpdater);
+            queryClient.setQueryData(postKeys.single(postId), (old: any) => {
+                if (!old) return old;
+                return { ...old, share_count: Math.max(0, (old.share_count ?? 0) + 1) };
+            });
 
             return { snapshot, postId };
         },
@@ -309,9 +347,71 @@ export const useSharePost = () => {
             if (context?.snapshot) restoreFeeds(queryClient, context.snapshot);
         },
 
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: feedKeys.home, exact: false });
-            queryClient.invalidateQueries({ queryKey: ['profileFeed'], exact: false });
+        onSettled: (_data, _err, postId) => {
+            if (postId) queryClient.invalidateQueries({ queryKey: postKeys.single(postId) });
+        },
+    });
+};
+
+/**
+ * Toggle a repost.
+ * Optimistically increments/decrements repost_count and toggles is_reposted; rolls back on error.
+ */
+export const useToggleRepost = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ postId, isReposted }: { postId: string; isReposted: boolean }) => {
+            if (isReposted) {
+                return undoRepostPost(postId);
+            } else {
+                return repostPost(postId);
+            }
+        },
+        onMutate: async ({ postId, isReposted }) => {
+            await queryClient.cancelQueries({ queryKey: feedKeys.home, exact: false });
+            await queryClient.cancelQueries({ queryKey: ['profileFeed'], exact: false });
+            await queryClient.cancelQueries({ queryKey: feedKeys.video, exact: false });
+            const snapshot = snapshotFeeds(queryClient);
+
+            const optimisticUpdater = (oldData: any): any => {
+                if (!oldData?.pages) return oldData;
+                return {
+                    ...oldData,
+                    pages: oldData.pages.map((page: any) => ({
+                        ...page,
+                        data: page.data.map((p: any) =>
+                            (p.id === postId || p.post_id === postId)
+                                ? { 
+                                    ...p, 
+                                    is_reposted: !isReposted, 
+                                    repost_count: Math.max(0, (p.repost_count ?? 0) + (isReposted ? -1 : 1)) 
+                                  }
+                                : p
+                        ),
+                    })),
+                };
+            };
+
+            queryClient.setQueriesData({ queryKey: feedKeys.home, exact: false }, optimisticUpdater);
+            queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, optimisticUpdater);
+            queryClient.setQueriesData({ queryKey: feedKeys.video, exact: false }, optimisticUpdater);
+            queryClient.setQueryData(postKeys.single(postId), (old: any) => {
+                if (!old) return old;
+                return { 
+                    ...old, 
+                    is_reposted: !isReposted, 
+                    repost_count: Math.max(0, (old.repost_count ?? 0) + (isReposted ? -1 : 1)) 
+                };
+            });
+
+            return { snapshot, postId };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.snapshot) restoreFeeds(queryClient, context.snapshot);
+        },
+        onSettled: (_data, _err, { postId }) => {
+            if (postId) queryClient.invalidateQueries({ queryKey: postKeys.single(postId) });
         },
     });
 };

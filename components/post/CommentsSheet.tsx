@@ -2,7 +2,7 @@ import EditIcon from "@/assets/images/svg/edit-1.svg";
 import ImageAddIcon from "@/assets/images/svg/image-add.svg";
 import SendIcon from "@/assets/images/svg/send.svg";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
-import { GiphyDialog, GiphyRating } from "@giphy/react-native-sdk";
+import { GiphyDialog, GiphyRating, GiphyThemePreset } from "@giphy/react-native-sdk";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { Image } from "expo-image";
@@ -99,7 +99,43 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             }, 150);
         }, []);
 
-        const vm = useCommentsSheetViewModel(postId, sheetRef, onCommentSent);
+        const onCommentReply = useCallback((comment: Comment) => {
+            inputRef.current?.focus();
+            const targetId = comment.parent_id || comment.id;
+            setTimeout(() => {
+                const index = commentsRef.current.findIndex(c => c.id === targetId);
+                if (index !== -1) {
+                    try {
+                        flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.2 });
+                    } catch (e) {
+                        console.warn("scrollToIndex failed", e);
+                    }
+                }
+            }, 120);
+        }, []);
+
+        const onCommentEdit = useCallback((comment: Comment) => {
+            inputRef.current?.focus();
+            const targetId = comment.parent_id || comment.id;
+            setTimeout(() => {
+                const index = commentsRef.current.findIndex(c => c.id === targetId);
+                if (index !== -1) {
+                    try {
+                        flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.2 });
+                    } catch (e) {
+                        console.warn("scrollToIndex failed", e);
+                    }
+                }
+            }, 120);
+        }, []);
+
+        const vm = useCommentsSheetViewModel(
+            postId,
+            sheetRef,
+            onCommentSent,
+            onCommentReply,
+            onCommentEdit
+        );
 
         useEffect(() => {
             commentsRef.current = vm.comments;
@@ -162,7 +198,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
 
         useEffect(() => {
             GiphyDialog.configure({
-                theme: vm.theme,
+                theme: vm.theme === 'dark' ? GiphyThemePreset.Dark : GiphyThemePreset.Light,
                 rating: GiphyRating.R,
             });
         }, [vm.theme, t]);
@@ -487,6 +523,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                     ref={flatListRef}
                     nestedScrollEnabled
                     data={vm.comments}
+                    extraData={vm.expandedCommentIds}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     onEndReached={vm.handleEndReached}

@@ -11,6 +11,7 @@ import { useAppLockStore } from "@/stores/appLock";
 import { useAutoLanguageSync } from "@/stores/language";
 import { useRootLayoutViewModel } from "@/viewmodels/RootLayoutViewModel";
 import { GiphySDK } from '@giphy/react-native-sdk';
+import { GlassProvider } from '@rbayuokt/expo-adaptive-glass';
 import * as Sentry from '@sentry/react-native';
 import { BottomSheetProvider } from "@swmansion/react-native-bottom-sheet";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -20,6 +21,7 @@ import { usePathname } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native/provider";
+import { PanelUIProvider } from 'panelui-native';
 import React, { useEffect } from "react";
 import { AppState, AppStateStatus, Easing, StatusBar, StyleSheet, View } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
@@ -191,33 +193,36 @@ const RootContent = () => {
             }
           />
           <StatusBarFade />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="login" />
-            <Stack.Screen name="onboarding" />
-            <Stack.Screen name="video_player" />
-            <Stack.Screen name="profile/[id]" />
-            <Stack.Screen name="profile/employee-card" options={{ presentation: 'transparentModal', animation: 'fade' }} />
-            <Stack.Screen name="image_poster" />
-            <Stack.Screen name="settings" />
-            <Stack.Screen name="bookmarks" />
-            <Stack.Screen name="language-settings" />
-            <Stack.Screen name="security-settings" />
-            <Stack.Screen name="search" />
-            <Stack.Screen name="hashtag/[tag]" />
-            <Stack.Screen name="hashtag-list" />
-            <Stack.Screen name="create" />
-            <Stack.Screen name="inapp_browser" />
-            <Stack.Screen name="movie_detail" />
-            <Stack.Screen name="tv_detail" />
-            <Stack.Screen name="person_detail" />
-            <Stack.Screen name="movie_list" />
-            <Stack.Screen name="search_movies" />
-            <Stack.Screen name="movies" />
-            <Stack.Screen name="webview" />
-            <Stack.Screen name="bulletinboard" />
-            <Stack.Screen name="fprofile" />
-          </Stack>
+          <GlassProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="login" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="video_player" />
+              <Stack.Screen name="profile/[id]" />
+              <Stack.Screen name="profile/employee-card" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+              <Stack.Screen name="image_poster" />
+              <Stack.Screen name="settings" />
+              <Stack.Screen name="bookmarks" />
+              <Stack.Screen name="language-settings" />
+              <Stack.Screen name="security-settings" />
+              <Stack.Screen name="search" />
+              <Stack.Screen name="hashtag/[tag]" />
+              <Stack.Screen name="hashtag-list" />
+              <Stack.Screen name="create" />
+              <Stack.Screen name="inapp_browser" />
+              <Stack.Screen name="movie_detail" />
+              <Stack.Screen name="tv_detail" />
+              <Stack.Screen name="person_detail" />
+              <Stack.Screen name="movie_list" />
+              <Stack.Screen name="search_movies" />
+              <Stack.Screen name="movies" />
+              <Stack.Screen name="webview" />
+              <Stack.Screen name="bulletinboard" />
+              <Stack.Screen name="fprofile" />
+              <Stack.Screen name="post/[id]" />
+            </Stack>
+          </GlassProvider>
           <GlobalAudioPlayer />
           <AppLockOverlay />
         </View>
@@ -233,29 +238,30 @@ export default withSentry(function RootLayout() {
     <ObserveRoot>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <KeyboardProvider>
-
-          <HeroUINativeProvider config={{ devInfo: { stylingPrinciples: false } }}>
-            <BottomSheetProvider>
-              <PersistQueryClientProvider
-                client={queryClient}
-                persistOptions={{
-                  persister: clientPersister,
-                  maxAge: 1000 * 60 * 60, // 1 hour max cache age allowed on boot
-                  buster: "v1.1", // cache buster to invalidate stale layouts
-                }}
-              >
-                <SafeAreaProvider>
-                  <ThemeProvider>
-                    <StatusBarProvider>
-                      <VideoPlayerProvider>
-                        <RootContent />
-                      </VideoPlayerProvider>
-                    </StatusBarProvider>
-                  </ThemeProvider>
-                </SafeAreaProvider>
-              </PersistQueryClientProvider>
-            </BottomSheetProvider>
-          </HeroUINativeProvider>
+          <PanelUIProvider background={false}>
+            <HeroUINativeProvider config={{ devInfo: { stylingPrinciples: false } }}>
+              <BottomSheetProvider>
+                <PersistQueryClientProvider
+                  client={queryClient}
+                  persistOptions={{
+                    persister: clientPersister,
+                    maxAge: 1000 * 60 * 60, // 1 hour max cache age allowed on boot
+                    buster: "v1.1", // cache buster to invalidate stale layouts
+                  }}
+                >
+                  <SafeAreaProvider>
+                    <ThemeProvider>
+                      <StatusBarProvider>
+                        <VideoPlayerProvider>
+                          <RootContent />
+                        </VideoPlayerProvider>
+                      </StatusBarProvider>
+                    </ThemeProvider>
+                  </SafeAreaProvider>
+                </PersistQueryClientProvider>
+              </BottomSheetProvider>
+            </HeroUINativeProvider>
+          </PanelUIProvider>
         </KeyboardProvider>
       </GestureHandlerRootView>
     </ObserveRoot>

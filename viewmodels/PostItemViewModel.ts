@@ -173,7 +173,6 @@ export const usePostItemViewModel = ({
                 device: "Mobile Repost",
             });
             sharePost(post.id);
-            queryClient.invalidateQueries({ queryKey: ['feed'] });
             toast.show({ label: t('post.dialogs.successTitle', 'Success'), description: t('post.dialogs.repostSuccess', 'Reposted successfully!'), variant: "success" });
         } catch (error: any) {
             console.error("Repost failed", error);

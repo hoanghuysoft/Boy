@@ -36,6 +36,9 @@ interface SettingsStore {
     makeBottomBarCurve: boolean;
     setMakeBottomBarCurve: (curve: boolean) => void;
     toggleMakeBottomBarCurve: () => void;
+    switchToGlass: boolean;
+    setSwitchToGlass: (value: boolean) => void;
+    toggleSwitchToGlass: () => void;
 
     // Autoplay setting
     disableAutoplay: boolean;
@@ -112,6 +115,9 @@ export const useSettingsStore = create<SettingsStore>()(
             makeBottomBarCurve: false,
             setMakeBottomBarCurve: (curve) => set({ makeBottomBarCurve: curve }),
             toggleMakeBottomBarCurve: () => set((state) => ({ makeBottomBarCurve: !state.makeBottomBarCurve })),
+            switchToGlass: true,
+            setSwitchToGlass: (value) => set({ switchToGlass: value }),
+            toggleSwitchToGlass: () => set((state) => ({ switchToGlass: !state.switchToGlass })),
 
             // Autoplay setting
             disableAutoplay: false, // Default is false (autoplay is active)
@@ -132,6 +138,7 @@ export const useSettingsStore = create<SettingsStore>()(
                 videoCacheSizeLimit: 500 * 1024 * 1024,
                 profileDesign: 'v3',
                 makeBottomBarCurve: false,
+                switchToGlass: true,
                 disableAutoplay: false,
                 imgbbApiKey: '',
                 x02ApiKey: '',

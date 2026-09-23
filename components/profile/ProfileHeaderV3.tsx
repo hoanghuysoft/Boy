@@ -12,6 +12,7 @@ import { SquircleView } from 'expo-squircle-view';
 import { Button } from "heroui-native/button";
 import countries from "i18n-iso-countries";
 import en from "i18n-iso-countries/langs/en.json";
+import { ImageViewer } from "panelui-native";
 import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -175,12 +176,14 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
             {/* Top space pushing avatar below header controls */}
             <View pointerEvents="none" style={{ height: vm.insets.top + 110 }} />
             <View pointerEvents="box-none" style={styles.avatarRow}>
-                <ExpoImage
-                    source={{ uri: profile?.avatar_url }}
-                    style={{ width: 64, height: 64, borderRadius: 32 }}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                />
+                <ImageViewer>
+                    <ImageViewer.Trigger
+                        source={{ uri: profile?.avatar_url }}
+                        alt="Avatar"
+                        radius={999}
+                        className="h-18 w-18"
+                    />
+                </ImageViewer>
                 <View pointerEvents="box-none" className="flex-row gap-2">
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
                         <ExpoImage source={require("@/assets/images/icons/info.png")} style={{ width: 36, height: 36 }} contentFit="contain"

@@ -6,7 +6,7 @@
 import { LikeResponse, LikeStatusResponse } from '@/types/like';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
-import { feedKeys, likeKeys } from './queryKeys';
+import { feedKeys, likeKeys, postKeys } from './queryKeys';
 // ============================================================================
 // API Functions
 // ============================================================================
@@ -48,7 +48,7 @@ export const unlikePost = async (postId: string): Promise<{ success: boolean }> 
 // ============================================================================
 
 /**
- * Patches a single post's like fields across all feed caches (home + profile).
+ * Patches a single post's like fields across all feed caches (home + profile) and single post cache.
  * This avoids refetching the entire feed — same pattern as Instagram/Twitter.
  */
 const patchPostInFeedCaches = (
@@ -80,6 +80,16 @@ const patchPostInFeedCaches = (
     queryClient.setQueriesData({ queryKey: feedKeys.home, exact: false }, updater);
     // Update ALL profile feed variants
     queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, updater);
+
+    // Update single post cache
+    queryClient.setQueryData(postKeys.single(postId), (old: any) => {
+        if (!old) return old;
+        return {
+            ...old,
+            is_liked: patch.is_liked,
+            like_count: Math.max(0, (old.like_count || 0) + patch.like_count_delta),
+        };
+    });
 };
 
 /**

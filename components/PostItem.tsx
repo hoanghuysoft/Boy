@@ -42,8 +42,10 @@ export interface PostItemProps {
     onLikeCountPress?: (post: Post) => void;
     onCommentPress?: (post: Post) => void;
     onCrossPostPress?: (post: Post) => void;
+    onCaptionPress?: (post: Post) => void;
     isBookmarked?: boolean;
     metricsOnly?: boolean;
+    isDetail?: boolean;
 }
 
 const SavedPostBadge = React.memo(({ post, borderColor }: { post: Post; borderColor: string }) => {
@@ -90,7 +92,7 @@ const SavedPostBadge = React.memo(({ post, borderColor }: { post: Post; borderCo
 });
 SavedPostBadge.displayName = "SavedPostBadge";
 
-export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, onCrossPostPress, isBookmarked = false, metricsOnly = false }: PostItemProps) => {
+export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, onCommentPress, onCrossPostPress, onCaptionPress, isBookmarked = false, metricsOnly = false, isDetail = false }: PostItemProps) => {
     const screenWidth = Dimensions.get('window').width;
     const t = i18n.t.bind(i18n);
     const translationLanguage = useLanguageStore(s => s.translationLanguage);
@@ -98,6 +100,18 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
     const translate = useTranslationStore(s => s.translate);
     const clearTranslation = useTranslationStore(s => s.clearTranslation);
     const setActivePost = useTranslationStore(s => s.setActivePost);
+
+    const handleCaptionPress = React.useCallback(() => {
+        if (isDetail) return;
+        if (onCaptionPress) {
+            onCaptionPress(post);
+        } else {
+            router.push({
+                pathname: '/post/[id]',
+                params: { id: post.id },
+            });
+        }
+    }, [isDetail, onCaptionPress, post]);
 
     // If server provides post.lang, check translation need synchronously without async promises
     const hasServerLang = post.lang !== undefined;
@@ -195,7 +209,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         <PostMetaInfo post={post} />
                     </View>
                 </TouchableOpacity>
-                {!isBookmarked && (!metricsOnly || !!onOptionsPress) && (
+                {!isBookmarked && !isDetail && (!metricsOnly || !!onOptionsPress) && (
                     <TouchableOpacity
                         hitSlop={10}
                         style={{ backgroundColor: vm.colors.surfaceContainerHigh, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
@@ -212,7 +226,15 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 {isRepost ? (
                     isRepostDeleted ? (
                         <View style={{ gap: 8 }}>
-                            {!!captionWithoutYouTube && <CaptionText caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />}
+                            {!!captionWithoutYouTube && (
+                                <TouchableOpacity
+                                    activeOpacity={isDetail ? 1 : 0.7}
+                                    disabled={isDetail}
+                                    onPress={handleCaptionPress}
+                                >
+                                    <CaptionText maxLines={isDetail ? undefined : 3} caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
+                                </TouchableOpacity>
+                            )}
                             <View style={[vm.common.row, {
                                 borderLeftWidth: 3,
                                 borderLeftColor: vm.colors.error,
@@ -231,7 +253,13 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         <View style={{ gap: 8 }}>
                             {/* Reposter's quote caption (if it exists) */}
                             {!!captionWithoutYouTube && (
-                                <CaptionText caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
+                                <TouchableOpacity
+                                    activeOpacity={isDetail ? 1 : 0.7}
+                                    disabled={isDetail}
+                                    onPress={handleCaptionPress}
+                                >
+                                    <CaptionText maxLines={isDetail ? undefined : 3} caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
+                                </TouchableOpacity>
                             )}
 
                             {/* Quoted Original Post with author info right under it */}
@@ -242,9 +270,15 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                                 paddingVertical: 2,
                             }}>
                                 {!!originalPost.content && (
-                                    <FlexText lite={false} style={[vm.common.body, { fontStyle: 'italic', fontSize: 14, color: vm.colors.onSurface }]} numberOfLines={4}>
-                                        {originalPost.clean_content || originalPost.content}
-                                    </FlexText>
+                                    <TouchableOpacity
+                                        activeOpacity={isDetail ? 1 : 0.7}
+                                        disabled={isDetail}
+                                        onPress={handleCaptionPress}
+                                    >
+                                        <FlexText lite={false} style={[vm.common.body, { fontStyle: 'italic', fontSize: 14, color: vm.colors.onSurface }]} numberOfLines={isDetail ? undefined : 4}>
+                                            {originalPost.clean_content || originalPost.content}
+                                        </FlexText>
+                                    </TouchableOpacity>
                                 )}
                                 <TouchableOpacity
                                     onPress={() => {
@@ -270,7 +304,13 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     )
                 ) : (
                     captionWithoutYouTube ? (
-                        <CaptionText caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
+                        <TouchableOpacity
+                            activeOpacity={isDetail ? 1 : 0.7}
+                            disabled={isDetail}
+                            onPress={handleCaptionPress}
+                        >
+                            <CaptionText maxLines={isDetail ? undefined : 3} caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
+                        </TouchableOpacity>
                     ) : null
                 )}
 
@@ -697,6 +737,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         prev.post.share_count === next.post.share_count &&
         prev.post.is_bookmarked === next.post.is_bookmarked &&
         prev.isBookmarked === next.isBookmarked &&
+        prev.isDetail === next.isDetail &&
         isRepostEqual
     );
 });

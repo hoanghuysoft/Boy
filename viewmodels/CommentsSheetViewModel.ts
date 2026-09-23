@@ -29,8 +29,10 @@ export function parseCommentContent(content: string): { text: string; imageUrl: 
 
 export const useCommentsSheetViewModel = (
     postId: string | null,
-    ref: RefObject<TrueSheet | null>,
-    onCommentSent?: (comment: Comment) => void
+    ref?: RefObject<TrueSheet | null> | null,
+    onCommentSent?: (comment: Comment) => void,
+    onCommentReply?: (comment: Comment) => void,
+    onCommentEdit?: (comment: Comment) => void
 ) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
@@ -92,13 +94,6 @@ export const useCommentsSheetViewModel = (
         setReplyingToComment(null);
         setExpandedCommentIds({});
     }
-
-    // When postId changes, trigger refetch for the new post
-    useEffect(() => {
-        if (postId) {
-            refetch();
-        }
-    }, [postId, refetch]);
 
     const handleEndReached = useCallback(() => {
         if (hasNextPage && !isFetchingNextPage) {
@@ -193,7 +188,8 @@ export const useCommentsSheetViewModel = (
         setCommentText(text);
         setSelectedImageUrl(imageUrl);
         setReplyingToComment(null); // Cancel reply when starting edit
-    }, []);
+        onCommentEdit?.(comment);
+    }, [onCommentEdit]);
 
     // Cancel editing and reset the input
     const handleCancelEdit = useCallback(() => {
@@ -250,7 +246,9 @@ export const useCommentsSheetViewModel = (
         } else {
             setCommentText("");
         }
-    }, []);
+
+        onCommentReply?.(comment);
+    }, [onCommentReply]);
 
     const handleCancelReply = useCallback(() => {
         setReplyingToComment(null);

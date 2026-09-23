@@ -267,75 +267,63 @@ export const CommentItem = memo(({
                 </View>
 
                 {/* Bottom Action Row (Timestamp, Reply, Translate, Edit, Delete) */}
-                <View style={[common.row, { alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, flexWrap: 'wrap', columnGap: 14, rowGap: 4 }}>
                     <FlexText style={[common.bodySmall, { color: colors.onSurfaceVariant, fontSize: 12 }]}>
                         {formatTimeAgo(comment.created_at)}
                     </FlexText>
 
                     {onReply && (
-                        <>
-                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
-                            <TouchableOpacity
-                                onPress={onReply}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                style={styles.actionButton}
-                            >
-                                <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
-                                    {replyLabel}
-                                </FlexText>
-                            </TouchableOpacity>
-                        </>
+                        <TouchableOpacity
+                            onPress={onReply}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={styles.actionButton}
+                        >
+                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
+                                {replyLabel}
+                            </FlexText>
+                        </TouchableOpacity>
                     )}
 
                     {(needsTranslation || !!translation) && (
-                        <>
-                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
-                            <TouchableOpacity
-                                onPress={handleTranslationPress}
-                                disabled={translation?.isTranslating}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                style={styles.actionButton}
-                            >
-                                <FlexText style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>
-                                    {translateLabel}
-                                </FlexText>
-                            </TouchableOpacity>
-                        </>
+                        <TouchableOpacity
+                            onPress={handleTranslationPress}
+                            disabled={translation?.isTranslating}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={styles.actionButton}
+                        >
+                            <FlexText style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>
+                                {translateLabel}
+                            </FlexText>
+                        </TouchableOpacity>
                     )}
 
                     {canEdit && (
-                        <>
-                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
-                            <TouchableOpacity
-                                onPress={onEdit}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                style={styles.actionButton}
-                            >
-                                <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
-                                    {editLabel}
-                                </FlexText>
-                            </TouchableOpacity>
-                        </>
+                        <TouchableOpacity
+                            onPress={onEdit}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={styles.actionButton}
+                        >
+                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
+                                {editLabel}
+                            </FlexText>
+                        </TouchableOpacity>
                     )}
 
                     {canDelete && (
-                        <>
-                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, marginHorizontal: 8 }}>•</FlexText>
-                            <TouchableOpacity
-                                onPress={onDelete}
-                                disabled={isDeleting}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
-                            >
-                                {isDeleting ? (
-                                    <Spinner size="md" color={colors.onSurfaceVariant} style={{ transform: [{ scale: 0.8 }] }} />
-                                ) : (
-                                    <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
-                                        {deleteLabel}
-                                    </FlexText>
-                                )}
-                            </TouchableOpacity>
-                        </>
+                        <TouchableOpacity
+                            onPress={onDelete}
+                            disabled={isDeleting}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={[styles.actionButton, { minWidth: 32, alignItems: 'center' }]}
+                        >
+                            {isDeleting ? (
+                                <Spinner size="md" color={colors.onSurfaceVariant} style={{ transform: [{ scale: 0.8 }] }} />
+                            ) : (
+                                <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
+                                    {deleteLabel}
+                                </FlexText>
+                            )}
+                        </TouchableOpacity>
                     )}
                 </View>
             </View>

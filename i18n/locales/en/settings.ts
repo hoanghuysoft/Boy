@@ -16,6 +16,8 @@ const settings = {
     adultFilterOn: 'On',
     adultFilterOff: 'Off',
     curveBottomBar: 'Curve bottom bar',
+    switchToGlass: 'Switch to Glass',
+    switchToGlassDescription: 'Use adaptive native glass navigation tab bar.',
     homeCarousel: 'Home carousel',
     homeCarouselDescription: 'The carousel may contain sensitive media.',
     autoplay: 'Autoplay videos',

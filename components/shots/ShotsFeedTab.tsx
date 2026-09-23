@@ -120,6 +120,8 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
 
             // Read live vm values via ref
             const { isLiked, likeCount } = vmRef.current.getLikeState(item);
+            const { isBookmarked, bookmarkCount } = vmRef.current.getBookmarkState(item);
+            const { isReposted, repostCount } = vmRef.current.getRepostState(item);
 
             return (
                 <ShotItem
@@ -128,11 +130,19 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                     isActive={isActive}
                     isAdjacent={isAdjacent}
                     isFocused={isFocused}
+                    isPaused={isActive ? vmRef.current.isPaused : false}
                     itemHeight={itemHeight}
                     isLiked={isLiked}
                     likeCount={likeCount}
+                    isBookmarked={isBookmarked}
+                    bookmarkCount={bookmarkCount}
+                    isReposted={isReposted}
+                    repostCount={repostCount}
                     onLikePress={() => vmRef.current.handleLikePress(item)}
                     onCommentPress={() => vmRef.current.handleCommentPress(item)}
+                    onBookmarkPress={() => vmRef.current.handleBookmarkPress(item)}
+                    onRepostPress={() => vmRef.current.handleRepostPress(item)}
+                    onTogglePause={vmRef.current.togglePause}
                     onSeekingChange={handleSeekingChange}
                     colors={vmRef.current.colors}
                     insets={insets}
@@ -169,10 +179,10 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
         [itemHeight],
     );
 
-    // ─── Bump renderTrigger when isPaused, isCommentsOpen, or isFocused changes ───
+    // ─── Bump renderTrigger when isPaused, isCommentsOpen, isFocused, activeIndex or interaction maps change ───
     useEffect(() => {
         setRenderTrigger(t => t + 1);
-    }, [vm.isPaused, vm.isCommentsOpen, isFocused, vm.activeIndex]);
+    }, [vm.isPaused, vm.isCommentsOpen, isFocused, vm.activeIndex, vm.likeMap, vm.bookmarkMap, vm.repostMap]);
 
     if (vm.isLoading) {
         return (

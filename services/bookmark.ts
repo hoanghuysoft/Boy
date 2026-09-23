@@ -8,7 +8,7 @@
 import { BookmarksResponse, BookmarkStatusResponse, CreateBookmarkResponse } from '@/types/bookmarkedpost';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
-import { bookmarkKeys, feedKeys } from './queryKeys';
+import { bookmarkKeys, feedKeys, postKeys } from './queryKeys';
 
 // ============================================================================
 // API Functions
@@ -96,6 +96,7 @@ export const useBookmarkPost = () => {
         onSuccess: (_, postId) => {
             queryClient.setQueryData(bookmarkKeys.status(postId), { bookmarked: true });
             queryClient.invalidateQueries({ queryKey: bookmarkKeys.all });
+            queryClient.invalidateQueries({ queryKey: postKeys.single(postId) });
         },
     });
 };
@@ -111,6 +112,7 @@ export const useRemoveBookmark = () => {
         onSuccess: (_, postId) => {
             queryClient.setQueryData(bookmarkKeys.status(postId), { bookmarked: false, bookmark_id: null });
             queryClient.invalidateQueries({ queryKey: bookmarkKeys.all });
+            queryClient.invalidateQueries({ queryKey: postKeys.single(postId) });
         },
     });
 };
@@ -140,7 +142,7 @@ export const useToggleBookmark = () => {
                 bookmark_id: null,
             });
 
-            // Optimistically patch is_bookmarked in ALL feed caches
+            // Optimistically patch is_bookmarked & bookmark_count in ALL feed caches & single post cache
             const feedUpdater = (oldData: any) => {
                 if (!oldData?.pages) return oldData;
                 return {
@@ -148,8 +150,12 @@ export const useToggleBookmark = () => {
                     pages: oldData.pages.map((page: any) => ({
                         ...page,
                         data: page.data.map((post: any) =>
-                            post.id === postId
-                                ? { ...post, is_bookmarked: !isBookmarked }
+                            (post.id === postId || post.post_id === postId)
+                                ? {
+                                    ...post,
+                                    is_bookmarked: !isBookmarked,
+                                    bookmark_count: Math.max(0, (post.bookmark_count ?? 0) + (isBookmarked ? -1 : 1))
+                                }
                                 : post
                         ),
                     })),
@@ -157,6 +163,15 @@ export const useToggleBookmark = () => {
             };
             queryClient.setQueriesData({ queryKey: feedKeys.home, exact: false }, feedUpdater);
             queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, feedUpdater);
+            queryClient.setQueriesData({ queryKey: feedKeys.video, exact: false }, feedUpdater);
+            queryClient.setQueryData(postKeys.single(postId), (old: any) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    is_bookmarked: !isBookmarked,
+                    bookmark_count: Math.max(0, (old.bookmark_count ?? 0) + (isBookmarked ? -1 : 1))
+                };
+            });
 
             return { previousStatus, postId, wasBookmarked: isBookmarked };
         },
@@ -171,8 +186,12 @@ export const useToggleBookmark = () => {
                         pages: oldData.pages.map((page: any) => ({
                             ...page,
                             data: page.data.map((post: any) =>
-                                post.id === context.postId
-                                    ? { ...post, is_bookmarked: context.wasBookmarked }
+                                (post.id === context.postId || post.post_id === context.postId)
+                                    ? {
+                                        ...post,
+                                        is_bookmarked: context.wasBookmarked,
+                                        bookmark_count: Math.max(0, (post.bookmark_count ?? 0) + (context.wasBookmarked ? 1 : -1))
+                                    }
                                     : post
                             ),
                         })),
@@ -180,11 +199,21 @@ export const useToggleBookmark = () => {
                 };
                 queryClient.setQueriesData({ queryKey: feedKeys.home, exact: false }, rollbackUpdater);
                 queryClient.setQueriesData({ queryKey: ['profileFeed'], exact: false }, rollbackUpdater);
+                queryClient.setQueriesData({ queryKey: feedKeys.video, exact: false }, rollbackUpdater);
+                queryClient.setQueryData(postKeys.single(context.postId), (old: any) => {
+                    if (!old) return old;
+                    return {
+                        ...old,
+                        is_bookmarked: context.wasBookmarked,
+                        bookmark_count: Math.max(0, (old.bookmark_count ?? 0) + (context.wasBookmarked ? 1 : -1))
+                    };
+                });
             }
         },
         onSettled: (_, __, { postId }) => {
             queryClient.invalidateQueries({ queryKey: bookmarkKeys.status(postId) });
             queryClient.invalidateQueries({ queryKey: bookmarkKeys.all });
+            queryClient.invalidateQueries({ queryKey: postKeys.single(postId) });
         },
     });
 };

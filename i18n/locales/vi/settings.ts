@@ -16,6 +16,8 @@ const settings = {
     adultFilterOn: 'Bật',
     adultFilterOff: 'Tắt',
     curveBottomBar: 'Làm cong thanh điều hướng',
+    switchToGlass: 'Chuyển sang Glass',
+    switchToGlassDescription: 'Sử dụng thanh điều hướng kính thích ứng (Adaptive Glass).',
     homeCarousel: 'Carousel trang chủ',
     homeCarouselDescription: 'Carousel có thể chứa nội dung nhạy cảm.',
     autoplay: 'Tự động phát video',

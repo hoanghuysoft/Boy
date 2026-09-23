@@ -12,6 +12,11 @@ export interface VideoItem {
     like_count: number;
     is_liked: boolean;
     comment_count: number;
+    bookmark_count: number;
+    is_bookmarked: boolean;
+    repost_count: number;
+    is_reposted: boolean;
+    share_count: number;
 }
 
 export interface VideoPagination {

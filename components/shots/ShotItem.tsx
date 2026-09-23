@@ -67,11 +67,19 @@ export interface ShotItemProps {
     isActive: boolean;
     isAdjacent: boolean;
     isFocused: boolean;
+    isPaused: boolean;
     itemHeight: number;
     isLiked: boolean;
     likeCount: number;
+    isBookmarked: boolean;
+    bookmarkCount: number;
+    isReposted: boolean;
+    repostCount: number;
     onLikePress: () => void;
     onCommentPress: () => void;
+    onBookmarkPress: () => void;
+    onRepostPress: () => void;
+    onTogglePause: () => void;
     onSeekingChange?: (seeking: boolean) => void;
     colors: any;
     insets: any;
@@ -85,11 +93,19 @@ export const ShotItem = React.memo(function ShotItem({
     isActive,
     isAdjacent,
     isFocused,
+    isPaused,
     itemHeight,
     isLiked,
     likeCount,
+    isBookmarked,
+    bookmarkCount,
+    isReposted,
+    repostCount,
     onLikePress,
     onCommentPress,
+    onBookmarkPress,
+    onRepostPress,
+    onTogglePause,
     onSeekingChange,
     colors,
     insets,
@@ -97,19 +113,10 @@ export const ShotItem = React.memo(function ShotItem({
 }: ShotItemProps) {
     const { width: screenWidth } = useWindowDimensions();
 
-    // Local user pause toggle
-    const [userPaused, setUserPaused] = useState(false);
-
     // Hardware surface optimization (Bluesky pattern):
     // Android: render VideoView only for active item
     // iOS: render for active and adjacent items
     const shouldRenderVideo = (isActive || (!IS_ANDROID && isAdjacent)) && !!player;
-
-    useEffect(() => {
-        if (isActive) {
-            setUserPaused(false);
-        }
-    }, [isActive, item.id]);
 
     // ─── Double-tap to like / single-tap to pause ─────────────────────────
     const [hearts, setHearts] = useState<{ id: number; x: number; y: number }[]>([]);
@@ -136,17 +143,7 @@ export const ShotItem = React.memo(function ShotItem({
         } else {
             lastTapTime.current = now;
             singleTapTimer.current = setTimeout(() => {
-                if (player) {
-                    try {
-                        if (player.playing) {
-                            player.pause();
-                            setUserPaused(true);
-                        } else {
-                            player.play();
-                            setUserPaused(false);
-                        }
-                    } catch { }
-                }
+                onTogglePause();
                 singleTapTimer.current = null;
             }, DOUBLE_TAP_DELAY);
         }
@@ -171,6 +168,7 @@ export const ShotItem = React.memo(function ShotItem({
                 {/* Video View */}
                 {shouldRenderVideo && player && (
                     <VideoItemInner
+                        key={item.id}
                         player={player}
                     />
                 )}
@@ -185,14 +183,15 @@ export const ShotItem = React.memo(function ShotItem({
             {hearts.map(heart => (
                 <FloatingHeart
                     key={heart.id}
+                    id={heart.id}
                     x={heart.x}
                     y={heart.y}
-                    onComplete={() => removeHeart(heart.id)}
+                    onComplete={removeHeart}
                 />
             ))}
 
             {/* Paused indicator */}
-            {userPaused && isActive && (
+            {isPaused && isActive && (
                 <View style={styles.pausedOverlay} pointerEvents="none">
                     <Ionicons name="play" size={64} color="rgba(255,255,255,0.8)" />
                 </View>
@@ -203,13 +202,13 @@ export const ShotItem = React.memo(function ShotItem({
                 <ShotSeekBar
                     player={player}
                     isActive={isActive}
-                    bottom={insets.bottom + 95}
+                    bottom={insets.bottom + 60}
                     onSeekingChange={onSeekingChange}
                 />
             )}
 
             {/* Bottom info — username & caption */}
-            <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 130 }]} pointerEvents="box-none">
+            <View style={[styles.bottomInfo, { paddingBottom: insets.bottom + 95 }]} pointerEvents="box-none">
                 <TouchableOpacity
                     onPress={() => router.push(`/profile/${item.profile_id}`)}
                     style={styles.profileRow}
@@ -231,7 +230,7 @@ export const ShotItem = React.memo(function ShotItem({
             </View>
 
             {/* Right side actions */}
-            <View style={[styles.rightActions, { bottom: insets.bottom + 140 }]}>
+            <View style={[styles.rightActions, { bottom: insets.bottom + 105 }]}>
                 {/* Like */}
                 <TouchableOpacity style={styles.actionButton} onPress={onLikePress} hitSlop={10}>
                     {!isLiked
@@ -251,17 +250,23 @@ export const ShotItem = React.memo(function ShotItem({
                     </FlexText>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionButton}>
-                    <Image source={{ uri: 'https://ico.hugeicons.com/bookmark-02-solid-rounded@3x.webp?x=94312725' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                <TouchableOpacity style={styles.actionButton} onPress={onBookmarkPress} hitSlop={10}>
+                    {!isBookmarked 
+                        ? <Image source={{ uri: 'https://ico.hugeicons.com/bookmark-02-stroke-rounded@3x.webp?x=2071587840' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                        : <Image source={{ uri: 'https://ico.hugeicons.com/bookmark-02-solid-rounded@3x.webp?x=94312725' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                    }
                     <FlexText style={styles.actionText}>
-                        {formatCompactNumber(item.comment_count)}
+                        {formatCompactNumber(bookmarkCount)}
                     </FlexText>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionButton}>
-                    <Image source={{ uri: 'https://ico.hugeicons.com/repost-solid-rounded@3x.webp?x=2071587840' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                <TouchableOpacity style={styles.actionButton} onPress={onRepostPress} hitSlop={10}>
+                    {!isReposted
+                        ? <Image source={{ uri: 'https://ico.hugeicons.com/repost-stroke-rounded@3x.webp?x=2071587840' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                        : <Image source={{ uri: 'https://ico.hugeicons.com/repost-solid-rounded@3x.webp?x=2071587840' }} style={{ width: 36, height: 36 }} contentFit="cover" tintColor={'white'} />
+                    }
                     <FlexText style={styles.actionText}>
-                        {formatCompactNumber(item.comment_count)}
+                        {formatCompactNumber(repostCount)}
                     </FlexText>
                 </TouchableOpacity>
 
@@ -281,11 +286,16 @@ export const ShotItem = React.memo(function ShotItem({
         prevProps.isActive === nextProps.isActive &&
         prevProps.isAdjacent === nextProps.isAdjacent &&
         prevProps.isFocused === nextProps.isFocused &&
+        prevProps.isPaused === nextProps.isPaused &&
         prevProps.itemHeight === nextProps.itemHeight &&
         prevProps.item.id === nextProps.item.id &&
         prevProps.item.comment_count === nextProps.item.comment_count &&
         prevProps.isLiked === nextProps.isLiked &&
         prevProps.likeCount === nextProps.likeCount &&
+        prevProps.isBookmarked === nextProps.isBookmarked &&
+        prevProps.bookmarkCount === nextProps.bookmarkCount &&
+        prevProps.isReposted === nextProps.isReposted &&
+        prevProps.repostCount === nextProps.repostCount &&
         prevProps.isCommentsOpen === nextProps.isCommentsOpen
     );
 });

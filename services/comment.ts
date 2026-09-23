@@ -15,9 +15,9 @@ import {
     ToggleCommentLikeResponse,
     UpdateCommentInput,
 } from '@/types/comment';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
-import { commentKeys, feedKeys } from './queryKeys';
+import { commentKeys, feedKeys, postKeys } from './queryKeys';
 
 // ============================================================================
 // API Functions
@@ -111,7 +111,7 @@ export const toggleCommentLike = async (
 // ============================================================================
 
 /**
- * Patches a single post's comment_count across all feed caches.
+ * Patches a single post's comment_count across all feed caches and single post cache.
  */
 const patchCommentCountInFeedCaches = (
     queryClient: ReturnType<typeof useQueryClient>,
@@ -154,6 +154,14 @@ const patchCommentCountInFeedCaches = (
         };
     };
     queryClient.setQueriesData({ queryKey: feedKeys.video, exact: false }, videoUpdater);
+
+    queryClient.setQueryData(postKeys.single(postId), (old: any) => {
+        if (!old) return old;
+        return {
+            ...old,
+            comment_count: Math.max(0, (old.comment_count ?? 0) + delta),
+        };
+    });
 };
 
 /**
@@ -168,6 +176,7 @@ export const useComments = (postId: string | undefined, sort: CommentSortFilter 
         initialPageParam: undefined as string | undefined,
         enabled: !!postId,
         staleTime: 30 * 1000,
+        placeholderData: keepPreviousData,
     });
 };
 
@@ -367,6 +376,10 @@ export const useCreateComment = (postId: string) => {
                             if (idx === 0) {
                                 return {
                                     ...page,
+                                    pagination: page.pagination ? {
+                                        ...page.pagination,
+                                        total: (page.pagination.total ?? 0) + 1
+                                    } : page.pagination,
                                     data: [optimisticComment, ...page.data]
                                 };
                             }
@@ -420,6 +433,7 @@ export const useCreateComment = (postId: string) => {
         onSettled: (_data, _err, variables) => {
             queryClient.invalidateQueries({ queryKey: commentKeys.list(postId, 'recent') });
             queryClient.invalidateQueries({ queryKey: commentKeys.list(postId, 'most_liked') });
+            queryClient.invalidateQueries({ queryKey: postKeys.single(postId) });
             if (variables.parent_id) {
                 queryClient.invalidateQueries({ queryKey: commentKeys.replies(postId, variables.parent_id) });
             }
@@ -512,8 +526,12 @@ export const useDeleteComment = (postId: string) => {
                 if (!old?.pages) return old;
                 return {
                     ...old,
-                    pages: old.pages.map((page: any) => ({
+                    pages: old.pages.map((page: any, idx: number) => ({
                         ...page,
+                        pagination: idx === 0 && page.pagination ? {
+                            ...page.pagination,
+                            total: Math.max(0, (page.pagination.total ?? 1) - 1)
+                        } : page.pagination,
                         data: page.data.filter((c: Comment) => c.id !== commentId),
                     })),
                 };
@@ -564,6 +582,7 @@ export const useDeleteComment = (postId: string) => {
         onSettled: (_data, _err, variables) => {
             queryClient.invalidateQueries({ queryKey: commentKeys.list(postId, 'recent') });
             queryClient.invalidateQueries({ queryKey: commentKeys.list(postId, 'most_liked') });
+            queryClient.invalidateQueries({ queryKey: postKeys.single(postId) });
             if (variables.parentId) {
                 queryClient.invalidateQueries({ queryKey: commentKeys.replies(postId, variables.parentId) });
             }

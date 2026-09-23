@@ -25,7 +25,7 @@ export const CaptionText = memo(({
   return (
     <View style={styles.container}>
       <FlexText
-        isExpanded
+        isExpanded={maxLines !== undefined && maxLines > 0}
         numberOfLines={maxLines}
         readMoreText={t('post.readMore', 'Read more')}
         readLessText={t('post.readLess', 'Read less')}

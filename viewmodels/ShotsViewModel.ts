@@ -7,7 +7,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppState, Platform, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../context/ThemeContext";
+import { useToggleBookmark } from "../services/bookmark";
 import { useToggleLike } from "../services/like";
+import { useToggleRepost } from "../services/post";
 import { useInfiniteVideoFeed } from "../services/videos";
 import { createCommonStyles } from "../styles/common";
 
@@ -157,22 +159,21 @@ export const useShotsViewModel = (
                     try {
                         currPlayer.replaceAsync({ uri: currUri, useCaching: true }).then(() => {
                             currPlayer.currentTime = 0;
+                            if (shouldPlay) {
+                                try {
+                                    currPlayer.play();
+                                } catch { }
+                            }
                         }).catch(() => { });
+                    } catch { }
+                } else if (!shouldPlay) {
+                    try {
+                        currPlayer.pause();
                     } catch { }
                 }
                 try {
                     currPlayer.muted = !isFocused;
                 } catch { }
-
-                if (shouldPlay) {
-                    try {
-                        currPlayer.play();
-                    } catch { }
-                } else {
-                    try {
-                        currPlayer.pause();
-                    } catch { }
-                }
             }
 
             if (nextUri && nextUri !== nextPlayerSource) {
@@ -193,12 +194,12 @@ export const useShotsViewModel = (
         setCurrentSources(updatedSources);
     }, [videos, players, isPaused, isFocused]);
 
-    // Initial update when videos first become available
+    // Update players when videos first become available OR when videos array changes (e.g., after refresh)
     useEffect(() => {
-        if (videos.length > 0 && !players) {
+        if (videos.length > 0) {
             updateVideoState(activeIndex);
         }
-    }, [videos.length, players, activeIndex, updateVideoState]);
+    }, [videos, activeIndex, updateVideoState]);
 
     // Focus & AppState listener to pause/resume active player
     useEffect(() => {
@@ -254,24 +255,72 @@ export const useShotsViewModel = (
         };
     }, [players]);
 
-    // ─── Like State (optimistic, per video) ─────────────────────
+    // ─── Like, Bookmark, Repost State (optimistic, per video) ────────────
     const [prevVideos, setPrevVideos] = useState<VideoItem[]>(videos);
+    
+    // Like
     const [likeMap, setLikeMap] = useState<Map<string, { isLiked: boolean; likeCount: number }>>(() => {
         const map = new Map<string, { isLiked: boolean; likeCount: number }>();
         for (const v of videos) {
-            map.set(v.id, { isLiked: v.is_liked ?? false, likeCount: v.like_count });
+            map.set(v.id, { isLiked: v.is_liked ?? false, likeCount: v.like_count ?? 0 });
+        }
+        return map;
+    });
+
+    // Bookmark
+    const [bookmarkMap, setBookmarkMap] = useState<Map<string, { isBookmarked: boolean; bookmarkCount: number }>>(() => {
+        const map = new Map<string, { isBookmarked: boolean; bookmarkCount: number }>();
+        for (const v of videos) {
+            map.set(v.id, { isBookmarked: v.is_bookmarked ?? false, bookmarkCount: v.bookmark_count ?? 0 });
+        }
+        return map;
+    });
+
+    // Repost
+    const [repostMap, setRepostMap] = useState<Map<string, { isReposted: boolean; repostCount: number }>>(() => {
+        const map = new Map<string, { isReposted: boolean; repostCount: number }>();
+        for (const v of videos) {
+            map.set(v.id, { isReposted: v.is_reposted ?? false, repostCount: v.repost_count ?? 0 });
         }
         return map;
     });
 
     if (videos !== prevVideos) {
         setPrevVideos(videos);
+        
+        // Update Like
         setLikeMap(prev => {
             let changed = false;
             const next = new Map(prev);
             for (const v of videos) {
                 if (!next.has(v.id)) {
-                    next.set(v.id, { isLiked: v.is_liked ?? false, likeCount: v.like_count });
+                    next.set(v.id, { isLiked: v.is_liked ?? false, likeCount: v.like_count ?? 0 });
+                    changed = true;
+                }
+            }
+            return changed ? next : prev;
+        });
+
+        // Update Bookmark
+        setBookmarkMap(prev => {
+            let changed = false;
+            const next = new Map(prev);
+            for (const v of videos) {
+                if (!next.has(v.id)) {
+                    next.set(v.id, { isBookmarked: v.is_bookmarked ?? false, bookmarkCount: v.bookmark_count ?? 0 });
+                    changed = true;
+                }
+            }
+            return changed ? next : prev;
+        });
+
+        // Update Repost
+        setRepostMap(prev => {
+            let changed = false;
+            const next = new Map(prev);
+            for (const v of videos) {
+                if (!next.has(v.id)) {
+                    next.set(v.id, { isReposted: v.is_reposted ?? false, repostCount: v.repost_count ?? 0 });
                     changed = true;
                 }
             }
@@ -279,8 +328,9 @@ export const useShotsViewModel = (
         });
     }
 
+    // Like Handlers
     const getLikeState = useCallback((video: VideoItem) => {
-        return likeMap.get(video.id) ?? { isLiked: false, likeCount: video.like_count };
+        return likeMap.get(video.id) ?? { isLiked: false, likeCount: video.like_count ?? 0 };
     }, [likeMap]);
 
     const toggleLikeMutation = useToggleLike();
@@ -291,19 +341,61 @@ export const useShotsViewModel = (
         const newIsLiked = !current.isLiked;
         const newCount = Math.max(0, current.likeCount + (newIsLiked ? 1 : -1));
 
-        // Optimistic local update
         setLikeMap(prev => new Map(prev).set(video.id, { isLiked: newIsLiked, likeCount: newCount }));
 
         toggleLikeMutation.mutate(
             { postId: video.post_id, isLiked: current.isLiked },
             {
-                onError: () => {
-                    // Rollback local state
-                    setLikeMap(prev => new Map(prev).set(video.id, current));
-                },
+                onError: () => setLikeMap(prev => new Map(prev).set(video.id, current)),
             }
         );
     }, [getLikeState, toggleLikeMutation]);
+
+    // Bookmark Handlers
+    const getBookmarkState = useCallback((video: VideoItem) => {
+        return bookmarkMap.get(video.id) ?? { isBookmarked: false, bookmarkCount: video.bookmark_count ?? 0 };
+    }, [bookmarkMap]);
+
+    const toggleBookmarkMutation = useToggleBookmark();
+
+    const handleBookmarkPress = useCallback((video: VideoItem) => {
+        if (!video.post_id) return;
+        const current = getBookmarkState(video);
+        const newIsBookmarked = !current.isBookmarked;
+        const newCount = Math.max(0, current.bookmarkCount + (newIsBookmarked ? 1 : -1));
+
+        setBookmarkMap(prev => new Map(prev).set(video.id, { isBookmarked: newIsBookmarked, bookmarkCount: newCount }));
+
+        toggleBookmarkMutation.mutate(
+            { postId: video.post_id, isBookmarked: current.isBookmarked },
+            {
+                onError: () => setBookmarkMap(prev => new Map(prev).set(video.id, current)),
+            }
+        );
+    }, [getBookmarkState, toggleBookmarkMutation]);
+
+    // Repost Handlers
+    const getRepostState = useCallback((video: VideoItem) => {
+        return repostMap.get(video.id) ?? { isReposted: false, repostCount: video.repost_count ?? 0 };
+    }, [repostMap]);
+
+    const toggleRepostMutation = useToggleRepost();
+
+    const handleRepostPress = useCallback((video: VideoItem) => {
+        if (!video.post_id) return;
+        const current = getRepostState(video);
+        const newIsReposted = !current.isReposted;
+        const newCount = Math.max(0, current.repostCount + (newIsReposted ? 1 : -1));
+
+        setRepostMap(prev => new Map(prev).set(video.id, { isReposted: newIsReposted, repostCount: newCount }));
+
+        toggleRepostMutation.mutate(
+            { postId: video.post_id, isReposted: current.isReposted },
+            {
+                onError: () => setRepostMap(prev => new Map(prev).set(video.id, current)),
+            }
+        );
+    }, [getRepostState, toggleRepostMutation]);
 
     // ─── Comments Sheet ──────────────────────────────────────────
     const commentsSheetRef = useRef<TrueSheet>(null);
@@ -333,6 +425,8 @@ export const useShotsViewModel = (
             readyIndicesRef.current = new Set();
             setReadyIndices(new Set());
             setLikeMap(new Map());
+            setBookmarkMap(new Map());
+            setRepostMap(new Map());
             setIsPaused(false);
             setIsBuffering(true);
             listRef.current?.scrollToOffset?.({ offset: 0, animated: false });
@@ -405,6 +499,8 @@ export const useShotsViewModel = (
             setActiveIndex(0);
             setReadyIndices(new Set());
             setLikeMap(new Map());
+            setBookmarkMap(new Map());
+            setRepostMap(new Map());
             setIsPaused(false);
             setIsBuffering(true);
         }
@@ -449,8 +545,19 @@ export const useShotsViewModel = (
         listRef,
 
         // Like
+        likeMap,
         getLikeState,
         handleLikePress,
+
+        // Bookmark
+        bookmarkMap,
+        getBookmarkState,
+        handleBookmarkPress,
+
+        // Repost
+        repostMap,
+        getRepostState,
+        handleRepostPress,
 
         // Comments
         commentsSheetRef,

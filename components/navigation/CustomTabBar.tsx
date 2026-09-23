@@ -294,9 +294,11 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                                 ? t("navigation.tabs.home")
                                 : route.name === "shots"
                                     ? t("navigation.tabs.shots")
-                                    : route.name === "chat"
-                                        ? t("navigation.tabs.create")
-                                        : t("navigation.tabs.profile");
+                                    : route.name === "mansory"
+                                        ? t("navigation.tabs.gallery")
+                                        : route.name === "chat"
+                                            ? t("navigation.tabs.create")
+                                            : t("navigation.tabs.profile");
 
                         const color = isFocused ? colors.secondary : colors.tabInactive;
                         const onPress = () => {

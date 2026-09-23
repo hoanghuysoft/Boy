@@ -48,6 +48,9 @@ export const postKeys = {
     detail: (profileId: string, postId: string) =>
         ['posts', profileId, postId] as const,
 
+    /** Single post detail by postId */
+    single: (postId: string) => ['posts', 'detail', postId] as const,
+
     /** Media associated with a profile */
     media: (profileId: string) => ['media', profileId] as const,
 };

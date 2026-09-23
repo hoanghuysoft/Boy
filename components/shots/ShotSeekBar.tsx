@@ -100,13 +100,13 @@ export const ShotSeekBar = React.memo(function ShotSeekBar({
             })
             .onUpdate((evt) => {
                 'worklet';
-                const progress = evt.x / screenWidth;
+                const progress = (evt.x - 12) / (screenWidth - 24);
                 const dur = durationSV.value;
                 seekProgressSV.value = clamp(progress * dur, 0, dur);
             })
             .onEnd((evt) => {
                 'worklet';
-                const progress = evt.x / screenWidth;
+                const progress = (evt.x - 12) / (screenWidth - 24);
                 const dur = durationSV.value;
                 const newTime = clamp(progress * dur, 0, dur);
                 seekProgressSV.value = newTime;
@@ -129,7 +129,7 @@ export const ShotSeekBar = React.memo(function ShotSeekBar({
     // Expanding track styles (1.5px default -> 4.5px when dragging)
     const trackStyle = useAnimatedStyle(() => {
         return {
-            height: interpolate(seekingAnimationSV.value, [0, 1], [1.5, 4.5]),
+            height: interpolate(seekingAnimationSV.value, [0, 1], [3, 6]), // Made slightly thicker for pill shape visibility
         };
     });
 
@@ -139,7 +139,7 @@ export const ShotSeekBar = React.memo(function ShotSeekBar({
         const pct = dur > 0 ? clamp((cur / dur) * 100, 0, 100) : 0;
         return {
             width: `${pct}%`,
-            height: interpolate(seekingAnimationSV.value, [0, 1], [1.5, 4.5]),
+            height: interpolate(seekingAnimationSV.value, [0, 1], [3, 6]),
             opacity: interpolate(seekingAnimationSV.value, [0, 1], [0.85, 1]),
         };
     });
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         paddingVertical: 14,
-        paddingHorizontal: 0,
+        paddingHorizontal: 12,
         zIndex: 1100,
         justifyContent: "center",
     },
@@ -195,18 +195,21 @@ const styles = StyleSheet.create({
         width: "100%",
         position: "relative",
         justifyContent: "center",
+        backgroundColor: "rgba(255, 255, 255, 0.15)", // Pill background for the whole track container
+        borderRadius: 999,
+        overflow: "hidden",
     },
     trackBg: {
         width: "100%",
-        backgroundColor: "rgba(255, 255, 255, 0.25)",
-        borderRadius: 2,
+        backgroundColor: "transparent",
+        borderRadius: 999,
     },
     trackFill: {
         position: "absolute",
         left: 0,
         top: 0,
         backgroundColor: "#ffffff",
-        borderRadius: 2,
+        borderRadius: 999,
     },
     timePreviewContainer: {
         position: "absolute",

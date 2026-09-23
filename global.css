@@ -2,6 +2,7 @@
 @import 'uniwind';
 
 @import 'heroui-native/styles';
+/* @import 'panelui-native/theme.css'; */
 
 /* Path to the heroui-native lib inside node_modules relative to global.css */
 /* Examples:
@@ -10,3 +11,4 @@
  *   - If global.css is in src/styles/: ../../node_modules/heroui-native/lib
  */
 @source './node_modules/heroui-native/lib';
+@source './node_modules/panelui-native/src';

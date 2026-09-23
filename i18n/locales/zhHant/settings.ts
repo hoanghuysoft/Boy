@@ -16,6 +16,8 @@ const settings = {
     adultFilterOn: '開啟',
     adultFilterOff: '關閉',
     curveBottomBar: '弧形底部導航欄',
+    switchToGlass: '切換至毛玻璃',
+    switchToGlassDescription: '使用自適應原生毛玻璃導航欄。',
     homeCarousel: '首頁輪播',
     homeCarouselDescription: '輪播中可能包含敏感媒體內容。',
     autoplay: '自動播放影片',

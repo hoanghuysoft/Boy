@@ -62,6 +62,7 @@ const SettingsScreen = () => {
         x02ApiKey, setX02ApiKey,
         socialAioClientId, setSocialAioClientId,
         makeBottomBarCurve, toggleMakeBottomBarCurve,
+        switchToGlass, toggleSwitchToGlass,
         disableAutoplay, toggleDisableAutoplay,
     } = useSettingsStore();
     const { appLockEnabled } = useAppLockStore();
@@ -268,6 +269,27 @@ const SettingsScreen = () => {
                                 <View style={{ flex: 1 }}>
                                     <FlexText style={common.body}>{t('settings.homeCarousel')}</FlexText>
                                     <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.homeCarouselDescription')}</FlexText>
+                                </View>
+                                <ControlField.Indicator />
+                            </ControlField>
+                        </CustomSurface>
+                    ),
+                },
+                {
+                    id: 'switchToGlass',
+                    title: t('settings.switchToGlass'),
+                    description: t('settings.switchToGlassDescription'),
+                    keywords: ['glass', 'tab', 'tab bar', 'navigation', 'bar', 'thanh điều hướng', 'kính'],
+                    render: (index: number, total: number) => (
+                        <CustomSurface index={index} total={total} style={styles.option}>
+                            <ControlField
+                                isSelected={switchToGlass}
+                                onSelectedChange={toggleSwitchToGlass}
+                                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                            >
+                                <View style={{ flex: 1 }}>
+                                    <FlexText style={common.body}>{t('settings.switchToGlass')}</FlexText>
+                                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.switchToGlassDescription')}</FlexText>
                                 </View>
                                 <ControlField.Indicator />
                             </ControlField>
