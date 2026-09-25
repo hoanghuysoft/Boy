@@ -15,7 +15,7 @@ import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { Image as ExpoImage } from "expo-image";
 import { Button } from "heroui-native";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, {
   forwardRef,
   memo,

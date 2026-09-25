@@ -1,3 +1,7 @@
+import CopyIcon from "@/assets/images/svg/copy.svg";
+import DeleteIcon from "@/assets/images/svg/delete.svg";
+import EditIcon from "@/assets/images/svg/edit-1.svg";
+import ShareIcon from "@/assets/images/svg/share-1.svg";
 import {
     checkPostDownloadStatus,
     DownloadedMediaRecord,
@@ -6,16 +10,12 @@ import {
     recordBatchDownloadedMedia,
     useDownloadedMediaStore,
 } from "@/services/downloadedMediaDatabase";
-import CopyIcon from "@/assets/images/svg/copy.svg";
-import DeleteIcon from "@/assets/images/svg/delete.svg";
-import EditIcon from "@/assets/images/svg/edit-1.svg";
-import ShareIcon from "@/assets/images/svg/share-1.svg";
-import { Directory, File, Paths } from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
-import { Album, Asset } from 'expo-media-library';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import * as Clipboard from "expo-clipboard";
+import { Directory, File, Paths } from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
+import { Album, Asset } from 'expo-media-library';
 import { router } from "expo-router";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
@@ -28,7 +28,6 @@ import { useThemeContext } from "../../context/ThemeContext";
 import { useCreatePost, useDeletePost, useSharePost } from "../../services/post";
 import { useAdminCheck, useProfile } from "../../services/userprofile";
 import { useLanguageStore } from "../../stores/language";
-import { useSettingsStore } from "../../stores/settings";
 import { useTranslationStore } from "../../stores/translation";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from "../../types/post";
@@ -298,7 +297,8 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
         const handleCopyLink = useCallback(async () => {
             dismissSheet();
             if (post) {
-                const serverUrl = process.env.EXPO_PUBLIC_SERVER_URL || "https://welove.com";
+                const rawServerUrl = process.env.EXPO_PUBLIC_SERVER_URL || "https://boy-server.vercel.app";
+                const serverUrl = rawServerUrl.replace(/\/+$/, '');
                 await Clipboard.setStringAsync(`${serverUrl}/posts/${post.id}`);
                 toast.show({ label: t('post.dialogs.copyLinkTitle'), description: t('post.dialogs.linkCopied'), variant: "success" });
             }
@@ -435,10 +435,10 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                         platform: post.device?.includes('Instagram')
                             ? 'instagram'
                             : post.device?.includes('Threads')
-                            ? 'threads'
-                            : post.device?.includes('X')
-                            ? 'fxtwitter'
-                            : 'other',
+                                ? 'threads'
+                                : post.device?.includes('X')
+                                    ? 'fxtwitter'
+                                    : 'other',
                         mediaType: isVideo ? 'video' : ext === 'gif' ? 'gif' : 'photo',
                         fileName,
                         downloadedAt: Date.now(),
@@ -549,8 +549,8 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                                             downloadStatus.isFullyDownloaded
                                                 ? t('post.optionsSheet.alreadySaved', 'Saved to Gallery')
                                                 : downloadStatus.isPartiallyDownloaded
-                                                ? t('post.optionsSheet.saveRemaining', `Save to Gallery (${downloadStatus.unDownloadedMedia.length} new)`)
-                                                : t('post.optionsSheet.saveToGallery', 'Save to Gallery')
+                                                    ? t('post.optionsSheet.saveRemaining', `Save to Gallery (${downloadStatus.unDownloadedMedia.length} new)`)
+                                                    : t('post.optionsSheet.saveToGallery', 'Save to Gallery')
                                         }
                                         onPress={() => handleSaveToGallery(false)}
                                         colors={colors}

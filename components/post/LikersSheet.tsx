@@ -1,7 +1,7 @@
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { Image as ExpoImage } from "expo-image";
-import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";

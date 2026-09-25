@@ -1,7 +1,8 @@
 import { FlexText } from "@/components/FlexText";
-import { Shimmer, ShimmerEffect } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
+import { ShimmerEffect } from "@/components/ui/molecules/Shimmer/Shimmer";
+import { useThemeContext } from "@/context/ThemeContext";
 import {
     useAiringTodayTVInfinite,
     useMovieRecommendationsInfinite, useMovieSimilarInfinite, useNowPlayingMoviesInfinite,
@@ -15,13 +16,14 @@ import {
     useTvSimilarInfinite,
     useUpcomingMoviesInfinite,
 } from "@/hooks/useMovies";
+import { createCommonStyles } from "@/styles/common";
 import { Movie } from "@/types/moviedb/movie";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList } from "@shopify/flash-list";
 import { Image as ExpoImage } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
     Pressable,
@@ -32,8 +34,6 @@ import {
     View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useThemeContext } from "@/context/ThemeContext";
-import { createCommonStyles } from "@/styles/common";
 
 type ListMode = "similar" | "recommendations" | "tv_similar" | "tv_recommendations" | "now_playing" | "upcoming" | "popular" | "top_rated" | "popular_people" | "tv_airing_today" | "tv_on_the_air" | "tv_popular" | "tv_top_rated" | "tv_season_episodes";
 

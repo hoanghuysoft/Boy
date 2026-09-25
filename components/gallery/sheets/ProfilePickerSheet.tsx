@@ -9,8 +9,8 @@ import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { FlashList } from "@shopify/flash-list";
 import { Image as ExpoImage } from "expo-image";
-import { Spinner } from "heroui-native/spinner";
 import { debounce, flatMap } from "lodash";
+import { Spinner } from "panelui-native";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

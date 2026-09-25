@@ -1,5 +1,5 @@
 import FontAwesome from "@react-native-vector-icons/fontawesome/static";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";

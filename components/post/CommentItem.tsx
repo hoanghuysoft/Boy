@@ -1,8 +1,8 @@
+import { useContentNavigation } from "@/hooks/useContentNavigation";
 import LikeIcon from "@/icons/like";
 import LikeSolidIcon from "@/icons/likedsolid";
 import VerifiedIcon from "@/icons/verified";
 import { guessLanguageAsync } from "@bsky.app/expo-guess-language";
-import { useContentNavigation } from "@/hooks/useContentNavigation";
 import { Galeria } from "@nandorojo/galeria";
 import { Image } from "expo-image";
 import { Spinner } from "heroui-native/spinner";
@@ -39,19 +39,19 @@ export interface CommentItemProps {
     onReply?: () => void;
 }
 
-export const CommentItem = memo(({ 
-    comment, 
-    colors, 
-    common, 
-    theme, 
-    isOwn, 
-    onPress, 
-    onDelete, 
+export const CommentItem = memo(({
+    comment,
+    colors,
+    common,
+    theme,
+    isOwn,
+    onPress,
+    onDelete,
     onEdit,
     onToggleLike,
-    formatTimeAgo, 
-    editLabel, 
-    deleteLabel, 
+    formatTimeAgo,
+    editLabel,
+    deleteLabel,
     replyLabel,
     isDeleting,
     isReply = false,

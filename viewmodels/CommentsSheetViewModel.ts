@@ -3,7 +3,9 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { RefObject, useCallback, useEffect, useMemo, useState } from "react";
+import { useToast } from "heroui-native/toast";
+import { RefObject, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, Keyboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
 import {
@@ -37,13 +39,15 @@ export const useCommentsSheetViewModel = (
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const router = useRouter();
+    const { toast } = useToast();
+    const { t } = useTranslation();
 
     const [filterSort, setFilterSort] = useState<CommentSortFilter>('recent');
     const [commentText, setCommentText] = useState("");
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [imageUrlInput, setImageUrlInput] = useState("");
     const [showUrlInput, setShowUrlInput] = useState(false);
-    
+
     const [editingComment, setEditingComment] = useState<Comment | null>(null);
     const [replyingToComment, setReplyingToComment] = useState<Comment | null>(null);
     const [isLocalSubmitting, setIsLocalSubmitting] = useState(false);
@@ -116,17 +120,30 @@ export const useCommentsSheetViewModel = (
 
     const handleToggleCommentLike = useCallback((comment: Comment) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        toggleLikeMutation.mutate(comment.id);
-    }, [toggleLikeMutation]);
+        toggleLikeMutation.mutate(comment.id, {
+            onError: (err: any) => {
+                const message = err?.status === 404
+                    ? t('post.commentsSheet.commentNotFound', 'This comment has been deleted or no longer exists.')
+                    : (err?.message || t('post.dialogs.errorTitle', 'Error'));
+                toast.show({
+                    label: t('post.dialogs.errorTitle', 'Error'),
+                    description: message,
+                    variant: 'danger',
+                });
+            }
+        });
+    }, [toggleLikeMutation, t, toast]);
 
     const handleSubmitComment = useCallback(() => {
         const trimmed = commentText.trim();
         const payloadContent = selectedImageUrl ? (trimmed ? trimmed + '\n' : '') + `[<img ${selectedImageUrl} />]` : trimmed;
         if (!payloadContent || !postId || isLocalSubmitting || createCommentMutation.isPending) return;
-
+        const targetParentId = replyingToComment
+            ? (replyingToComment.parent_id || replyingToComment.id)
+            : null;
         setIsLocalSubmitting(true);
         createCommentMutation.mutate(
-            { content: payloadContent, parent_id: replyingToComment?.id || null },
+            { content: payloadContent, parent_id: targetParentId },
             {
                 onSuccess: (res) => {
                     const newComment = res.data;
@@ -144,18 +161,28 @@ export const useCommentsSheetViewModel = (
                     }
                     onCommentSent?.(newComment);
                 },
-                onError: () => {
+                onError: (err: any) => {
                     setIsLocalSubmitting(false);
+                    const message = err?.status === 404
+                        ? t('post.commentsSheet.commentNotFound', 'This comment has been deleted or no longer exists.')
+                        : (err?.message || t('post.dialogs.errorTitle', 'Error'));
+                    if (replyingToComment) {
+                        setReplyingToComment(null);
+                    }
+                    toast.show({
+                        label: t('post.dialogs.errorTitle', 'Error'),
+                        description: message,
+                        variant: 'danger',
+                    });
                 }
             }
         );
-    }, [commentText, selectedImageUrl, postId, createCommentMutation, isLocalSubmitting, replyingToComment, onCommentSent]);
-
+    }, [commentText, selectedImageUrl, postId, createCommentMutation, isLocalSubmitting, replyingToComment, onCommentSent, t, toast]);
     const isSubmitting = createCommentMutation.isPending || isLocalSubmitting;
 
     const handleDeleteComment = useCallback((comment: Comment) => {
         if (deletingId === comment.id || deleteCommentMutation.isPending) return;
-        
+
         Alert.alert(
             "Delete Comment",
             "Are you sure you want to delete this comment?",
@@ -169,6 +196,16 @@ export const useCommentsSheetViewModel = (
                         deleteCommentMutation.mutate(
                             { commentId: comment.id, parentId: comment.parent_id },
                             {
+                                onError: (err: any) => {
+                                    const message = err?.status === 404
+                                        ? t('post.commentsSheet.commentNotFound', 'This comment has been deleted or no longer exists.')
+                                        : (err?.message || t('post.dialogs.deleteFailed', 'Failed to delete comment.'));
+                                    toast.show({
+                                        label: t('post.dialogs.errorTitle', 'Error'),
+                                        description: message,
+                                        variant: 'danger',
+                                    });
+                                },
                                 onSettled: () => {
                                     setDeletingId(null);
                                 }
@@ -178,7 +215,7 @@ export const useCommentsSheetViewModel = (
                 }
             ]
         );
-    }, [deleteCommentMutation, deletingId]);
+    }, [deleteCommentMutation, deletingId, t, toast]);
 
     // Start editing a comment — pre-fill the input with its current content
     const handleEditComment = useCallback((comment: Comment) => {
@@ -206,10 +243,10 @@ export const useCommentsSheetViewModel = (
         if (!payloadContent || !editingComment) return;
 
         updateCommentMutation.mutate(
-            { 
-                commentId: editingComment.id, 
-                data: { content: payloadContent }, 
-                parentId: editingComment.parent_id 
+            {
+                commentId: editingComment.id,
+                data: { content: payloadContent },
+                parentId: editingComment.parent_id
             },
             {
                 onSuccess: () => {
@@ -218,9 +255,22 @@ export const useCommentsSheetViewModel = (
                     setSelectedImageUrl(null);
                     Keyboard.dismiss();
                 },
+                onError: (err: any) => {
+                    const message = err?.status === 404
+                        ? t('post.commentsSheet.commentNotFound', 'This comment has been deleted or no longer exists.')
+                        : (err?.message || t('post.dialogs.errorTitle', 'Error'));
+                    setEditingComment(null);
+                    setCommentText("");
+                    setSelectedImageUrl(null);
+                    toast.show({
+                        label: t('post.dialogs.errorTitle', 'Error'),
+                        description: message,
+                        variant: 'danger',
+                    });
+                }
             }
         );
-    }, [commentText, selectedImageUrl, editingComment, updateCommentMutation]);
+    }, [commentText, selectedImageUrl, editingComment, updateCommentMutation, t, toast]);
 
     const handleAddImageUrl = useCallback(() => {
         if (imageUrlInput.trim()) {
@@ -234,7 +284,7 @@ export const useCommentsSheetViewModel = (
     const handleReplyToComment = useCallback((comment: Comment) => {
         setReplyingToComment(comment);
         setEditingComment(null); // Cancel editing when replying
-        
+
         const parentId = comment.parent_id || comment.id;
         setExpandedCommentIds(prev => ({
             ...prev,
@@ -257,7 +307,7 @@ export const useCommentsSheetViewModel = (
 
     const isEditing = editingComment !== null;
     const isSaving = updateCommentMutation.isPending;
-    
+
     // Unified Action Handlers (MVVM)
     const canSubmit = useMemo(() => {
         return commentText.trim().length > 0 || selectedImageUrl !== null;
@@ -307,7 +357,7 @@ export const useCommentsSheetViewModel = (
         setImageUrlInput,
         showUrlInput,
         setShowUrlInput,
-        
+
         // Computed & actions
         canSubmit,
         isActionLoading,

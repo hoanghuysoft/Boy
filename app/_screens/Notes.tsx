@@ -1,25 +1,5 @@
-import { PostLinkPreview } from "@/components/PostLinkPreview";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import { SquircleView } from "expo-squircle-view";
-import { Button } from "heroui-native/button";
-import { Dialog } from "heroui-native/dialog";
-import { Spinner } from "heroui-native/spinner";
-import React, { useCallback, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import {
-    Dimensions,
-    RefreshControl,
-    StyleSheet,
-    TouchableOpacity,
-    View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlexText } from "@/components/FlexText";
+import { PostLinkPreview } from "@/components/PostLinkPreview";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useDeleteNote, useNotes } from "@/services/note";
@@ -31,6 +11,26 @@ import {
     parseNoteTitleAndBody,
     stripMarkdown,
 } from "@/utils/noteMarkdown";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { Image } from "expo-image";
+import { useRouter } from "expo-router";
+import { SquircleView } from "expo-squircle-view";
+import { Button } from "heroui-native/button";
+import { Dialog } from "heroui-native/dialog";
+import { Spinner } from "panelui-native";
+import React, { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+    Dimensions,
+    RefreshControl,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 dayjs.extend(relativeTime);
 

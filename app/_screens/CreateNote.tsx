@@ -15,8 +15,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
-import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
+import { Spinner } from "panelui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

@@ -3,7 +3,7 @@ import { TMDBReview } from '@/types/moviedb/movie-entities';
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, { forwardRef, memo, useCallback } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import NitroInAppBrowser from 'react-native-nitro-in-app-browser';

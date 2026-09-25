@@ -1,6 +1,6 @@
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import CheckCircle from "@/assets/images/svg/check-circle.svg";
 import MusicIcon from "@/assets/images/svg/music-2.svg";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { SquircleView } from "expo-squircle-view";
 import { Spinner } from "heroui-native/spinner";
 import React, { memo } from "react";

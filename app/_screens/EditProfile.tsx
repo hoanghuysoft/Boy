@@ -11,11 +11,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
 import { Button } from "heroui-native/button";
 import { Chip } from "heroui-native/chip";
-import { Spinner } from "heroui-native/spinner";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
-import { useTranslation } from 'react-i18next';
+import { Spinner } from "panelui-native";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Alert,
     Keyboard,

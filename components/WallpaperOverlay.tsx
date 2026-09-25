@@ -1,11 +1,11 @@
 import { useThemeContext } from "@/context/ThemeContext";
+import { Image as ExpoImage } from "expo-image";
 import { SquircleView } from "expo-squircle-view";
+import { useToast } from "heroui-native/toast";
+import { Spinner } from "panelui-native";
 import React, { useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Image as ExpoImage } from "expo-image";
-import { Spinner } from "heroui-native/spinner";
-import { useToast } from "heroui-native/toast";
 import { WallpaperSet } from 'react-native-nitro-wallpaper';
 import { FlexText } from "./FlexText";
 

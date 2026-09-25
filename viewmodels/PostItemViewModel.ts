@@ -1,9 +1,9 @@
 import { Post } from "@/types/post";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from "expo-router";
 import { useToast } from "heroui-native/toast";
 import { useCallback, useMemo, useState } from "react";
-import { Clipboard } from "react-native";
 import { useThemeContext } from "../context/ThemeContext";
 import i18n from "../i18n";
 import { useToggleBookmark } from "../services/bookmark";
@@ -156,9 +156,10 @@ export const usePostItemViewModel = ({
     const [dialog, setDialog] = useState<DialogConfig | null>(null);
     const closeDialog = useCallback(() => setDialog(null), []);
 
-    const handleCopyLink = useCallback(() => {
-        const serverUrl = process.env.EXPO_PUBLIC_SERVER_URL || "https://welove.com";
-        Clipboard.setString(`${serverUrl}/posts/${post.id}`);
+    const handleCopyLink = useCallback(async () => {
+        const rawServerUrl = process.env.EXPO_PUBLIC_SERVER_URL || "https://boy-server.vercel.app";
+        const serverUrl = rawServerUrl.replace(/\/+$/, '');
+        await Clipboard.setStringAsync(`${serverUrl}/posts/${post.id}`);
     }, [post.id]);
 
     const handleDirectRepost = useCallback(async () => {

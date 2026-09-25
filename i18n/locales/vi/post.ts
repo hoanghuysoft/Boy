@@ -72,6 +72,7 @@ const post = {
         hideReplies: 'Ẩn phản hồi',
         loadMoreReplies: 'Tải thêm phản hồi',
         replyingTo: 'Đang phản hồi {{name}}',
+        commentNotFound: 'Bình luận này đã bị xóa hoặc không còn tồn tại.',
     },
 
     likersSheet: {

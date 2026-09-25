@@ -5,7 +5,7 @@ import { useShotsViewModel } from "@/viewmodels/ShotsViewModel";
 import { LegendList, LegendListRenderItemProps } from "@legendapp/list/react-native";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useIsFocused } from "expo-router/react-navigation";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -188,7 +188,7 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
         return (
             <View style={[styles.container, { backgroundColor: '#000' }]}>
                 <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-                <Spinner size="lg" color="white" style={{ flex: 1 }} />
+                <Spinner size="lg" color="white" />
             </View>
         );
     }

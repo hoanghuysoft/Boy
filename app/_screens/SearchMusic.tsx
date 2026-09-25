@@ -5,12 +5,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
-    Keyboard,
     Platform,
     Pressable,
     RefreshControl,
     StyleSheet,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -19,7 +17,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 
 import { FlexText } from "@/components/FlexText";
-import { SearchHistoryPills } from "@/components/search/SearchHistoryPills";
 import { useThemeContext } from "@/context/ThemeContext";
 import {
     FBMusicTrack,
@@ -31,10 +28,10 @@ import {
 import { useAudioStore } from "@/stores/audio";
 import {
     addSearchQueryToHistory,
-    getSearchQueryHistory,
-    removeSearchQueryFromHistory,
+    getSearchQueryHistory
 } from "@/stores/searchQueryHistory";
 import { createCommonStyles } from "@/styles/common";
+import { Input, KeyboardAvoider, SearchIcon, XIcon } from "panelui-native";
 
 const SEARCH_BAR_HEIGHT = 58;
 
@@ -200,11 +197,8 @@ const SearchMusicScreen = () => {
         }
     }, [playingTrack, isPlaying, playTrack, stopPlayback, currentAudioUrl]);
 
-    const inputRef = useRef<TextInput>(null);
     const [searchText, setSearchText] = useState("");
     const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
-    const [keyboardHeight, setKeyboardHeight] = useState(0);
-    const [isInputFocused, setIsInputFocused] = useState(false);
     const [recentQueries, setRecentQueries] = useState<string[]>(() =>
         getSearchQueryHistory("music")
     );
@@ -340,24 +334,6 @@ const SearchMusicScreen = () => {
         };
     }, [isFocused]);
 
-    // Keep the absolute search bar above the keyboard.
-    useEffect(() => {
-        const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-        const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-        const showSub = Keyboard.addListener(showEvent, (e) => {
-            setKeyboardHeight(e.endCoordinates?.height ?? 0);
-        });
-        const hideSub = Keyboard.addListener(hideEvent, () => {
-            setKeyboardHeight(0);
-        });
-
-        return () => {
-            showSub.remove();
-            hideSub.remove();
-        };
-    }, []);
-
     const performSearch = useCallback((query: string) => {
         const trimmed = query.trim();
         if (!trimmed) {
@@ -393,7 +369,6 @@ const SearchMusicScreen = () => {
     }, [searchText, performSearch]);
 
     const handleBlur = useCallback(() => {
-        setIsInputFocused(false);
         const q = searchText.trim();
         if (q) {
             addSearchQueryToHistory("music", q);
@@ -405,7 +380,6 @@ const SearchMusicScreen = () => {
         setSearchText("");
         setSubmittedQuery(null);
         setSearchResults([]);
-        inputRef.current?.clear();
     }, []);
 
     const handlePlay = useCallback(
@@ -435,7 +409,7 @@ const SearchMusicScreen = () => {
         [colors, currentlyPlayingId, handlePlay]
     );
 
-    const contentBottomPadding = insets.bottom + SEARCH_BAR_HEIGHT + 24 + keyboardHeight + (playingTrack ? 76 : 0);
+    const contentBottomPadding = insets.bottom + SEARCH_BAR_HEIGHT + 24 + (playingTrack ? 76 : 0);
 
     return (
         <KeyboardAvoidingView
@@ -521,75 +495,68 @@ const SearchMusicScreen = () => {
                 />
             )}
 
-            {/* Floating search bar */}
-            <View
-                style={[
-                    styles.searchBarContainer,
-                    {
-                        bottom: insets.bottom + 16 + keyboardHeight,
-                    },
-                ]}
-            >
-                {isInputFocused && recentQueries.length > 0 && (
-                    <SearchHistoryPills
-                        queries={recentQueries}
+            {/* Mini Player Bar if track is playing */}
+            {playingTrack && (
+                <View style={[styles.miniPlayerContainer, { bottom: insets.bottom + SEARCH_BAR_HEIGHT + 24 }]}>
+                    <MiniPlayerBar
                         colors={colors}
-                        onSelect={(q) => {
-                            setSearchText(q);
-                            performSearch(q);
-                            addSearchQueryToHistory("music", q);
-                            setRecentQueries(getSearchQueryHistory("music"));
-                        }}
-                        onRemove={(q) => {
-                            removeSearchQueryFromHistory("music", q);
-                            setRecentQueries(getSearchQueryHistory("music"));
-                        }}
+                        track={playingTrack}
+                        isPlaying={isPlaying}
+                        progress={progress}
+                        onToggle={handleMiniToggle}
                     />
-                )}
-                <View style={[styles.searchBar, { backgroundColor: colors.surfaceContainerHighest }]}>
-                    <TextInput
-                        ref={inputRef}
-                        style={[styles.searchInput, { color: colors.onSurface }]}
+                </View>
+            )}
+
+            {/* Floating search bar */}
+            <KeyboardAvoider
+                mode="dock"
+                bottomInset={insets.bottom}
+                className="absolute left-0 right-0 px-5"
+                style={{ bottom: insets.bottom + 16, zIndex: 1000 }}
+            >
+                <View
+                    className="flex-row items-center gap-2 rounded-full px-1"
+                    style={{ backgroundColor: colors.surfaceContainerHigh }}
+                >
+                    <Input
                         placeholder="Search songs, artists..."
-                        placeholderTextColor={colors.onSurfaceVariant}
+                        className="flex-1 border-0 bg-transparent px-0"
+                        containerClassName="flex-1"
+                        style={{ height: SEARCH_BAR_HEIGHT, color: colors.onSurface }}
                         value={searchText}
                         onChangeText={setSearchText}
                         onSubmitEditing={handleSubmitEditing}
-                        onFocus={() => {
-                            setIsInputFocused(true);
-                            setRecentQueries(getSearchQueryHistory("music"));
-                        }}
+                        onFocus={() => setRecentQueries(getSearchQueryHistory("music"))}
                         onBlur={handleBlur}
                         returnKeyType="search"
                         autoCorrect={false}
                         autoCapitalize="none"
+                        startContent={<SearchIcon size={18} color={colors.onSurfaceVariant} />}
+                        endContent={
+                            searchText.length > 0 ? (
+                                <TouchableOpacity
+                                    onPress={clearSearch}
+                                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                >
+                                    <View
+                                        style={{
+                                            width: 22,
+                                            height: 22,
+                                            borderRadius: 11,
+                                            backgroundColor: colors.onSurface + "22",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <XIcon size={13} color={colors.onSurface} />
+                                    </View>
+                                </TouchableOpacity>
+                            ) : undefined
+                        }
                     />
-                    {searchText.length > 0 && (
-                        <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-                            <View
-                                style={[
-                                    styles.clearButtonInner,
-                                    { backgroundColor: colors.onTertiaryContainer + "20" },
-                                ]}
-                            >
-                                <Ionicons
-                                    name="close"
-                                    size={16}
-                                    color={colors.onTertiaryContainer}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                    )}
                 </View>
-
-                {errorMsg && submittedQuery && (
-                    <View style={{ marginTop: 8 }}>
-                        <FlexText style={{ color: colors.error, fontWeight: "700" }}>
-                            {errorMsg}
-                        </FlexText>
-                    </View>
-                )}
-            </View>
+            </KeyboardAvoider>
 
             {/* Hidden WebView Bridge for FB Graphql API */}
             {isFocused && (
@@ -641,38 +608,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: 24,
         paddingTop: 100,
-    },
-    searchBarContainer: {
-        position: "absolute",
-        left: 8,
-        right: 8,
-        borderRadius: 16,
-        padding: 10,
-        zIndex: 1000,
-    },
-    searchBar: {
-        borderRadius: 999,
-        height: SEARCH_BAR_HEIGHT,
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 6,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: "500",
-        paddingVertical: 0,
-        paddingHorizontal: 6,
-    },
-    clearButton: {
-        padding: 6,
-    },
-    clearButtonInner: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        justifyContent: "center",
-        alignItems: "center",
     },
     retryBtn: {
         marginTop: 16,

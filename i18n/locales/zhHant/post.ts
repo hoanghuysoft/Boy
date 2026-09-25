@@ -72,6 +72,7 @@ const post = {
         hideReplies: '收起回覆',
         loadMoreReplies: '載入更多回覆',
         replyingTo: '正在回覆 {{name}}',
+        commentNotFound: '該評論已被刪除或不存在。',
     },
 
     likersSheet: {

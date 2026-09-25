@@ -15,7 +15,7 @@ import {
     ToggleCommentLikeResponse,
     UpdateCommentInput,
 } from '@/types/comment';
-import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { client } from './client';
 import { commentKeys, feedKeys, postKeys } from './queryKeys';
 
@@ -176,7 +176,6 @@ export const useComments = (postId: string | undefined, sort: CommentSortFilter 
         initialPageParam: undefined as string | undefined,
         enabled: !!postId,
         staleTime: 30 * 1000,
-        placeholderData: keepPreviousData,
     });
 };
 
@@ -251,11 +250,14 @@ export const useToggleCommentLike = (postId: string) => {
 
             return { previousQueries };
         },
-        onError: (_err, _commentId, context) => {
+        onError: (_err: any, _commentId, context) => {
             if (context?.previousQueries) {
                 for (const [key, data] of context.previousQueries) {
                     queryClient.setQueryData(key, data);
                 }
+            }
+            if (_err?.status === 404) {
+                queryClient.invalidateQueries({ queryKey: commentKeys.post(postId) });
             }
         },
     });
@@ -356,9 +358,9 @@ export const useCreateComment = (postId: string) => {
                         ...old,
                         pages: old.pages.map((page: any) => ({
                             ...page,
-                            data: page.data.map((c: any) => 
-                                String(c.id) === String(variables.parent_id) 
-                                    ? { ...c, reply_count: (c.reply_count || 0) + 1 } 
+                            data: page.data.map((c: any) =>
+                                String(c.id) === String(variables.parent_id)
+                                    ? { ...c, reply_count: (c.reply_count || 0) + 1 }
                                     : c
                             )
                         }))
@@ -403,7 +405,7 @@ export const useCreateComment = (postId: string) => {
                     ...old,
                     pages: old.pages.map((page: any) => ({
                         ...page,
-                        data: page.data.map((c: any) => 
+                        data: page.data.map((c: any) =>
                             c.id === context?.optimisticComment.id ? realComment : c
                         )
                     }))
@@ -413,12 +415,12 @@ export const useCreateComment = (postId: string) => {
             queryClient.setQueryData(commentKeys.list(postId, 'recent'), replaceInList);
             queryClient.setQueryData(commentKeys.list(postId, 'most_liked'), replaceInList);
 
-            if (variables.parent_id) {
-                const repliesKey = commentKeys.replies(postId, variables.parent_id);
-                queryClient.setQueryData(repliesKey, replaceInList);
+            const effectiveParentId = realComment.parent_id || variables.parent_id;
+            if (effectiveParentId) {
+                const repliesKey = commentKeys.replies(postId, effectiveParentId); queryClient.setQueryData(repliesKey, replaceInList);
             }
         },
-        onError: (_err, variables, context) => {
+        onError: (_err: any, variables, context) => {
             if (context?.previousListRecent) {
                 queryClient.setQueryData(commentKeys.list(postId, 'recent'), context.previousListRecent);
             }
@@ -429,13 +431,17 @@ export const useCreateComment = (postId: string) => {
                 queryClient.setQueryData(commentKeys.replies(postId, variables.parent_id), context.previousReplies);
             }
             patchCommentCountInFeedCaches(queryClient, postId, -1);
+            if (_err?.status === 404) {
+                queryClient.invalidateQueries({ queryKey: commentKeys.post(postId) });
+            }
         },
         onSettled: (_data, _err, variables) => {
             queryClient.invalidateQueries({ queryKey: commentKeys.list(postId, 'recent') });
             queryClient.invalidateQueries({ queryKey: commentKeys.list(postId, 'most_liked') });
             queryClient.invalidateQueries({ queryKey: postKeys.single(postId) });
-            if (variables.parent_id) {
-                queryClient.invalidateQueries({ queryKey: commentKeys.replies(postId, variables.parent_id) });
+            const effectiveParentId = _data?.data?.parent_id || variables.parent_id;
+            if (effectiveParentId) {
+                queryClient.invalidateQueries({ queryKey: commentKeys.replies(postId, effectiveParentId) });
             }
         },
     });
@@ -482,7 +488,7 @@ export const useUpdateComment = (postId: string) => {
 
             return { previousListRecent, previousListLiked, previousReplies };
         },
-        onError: (_err, variables, context) => {
+        onError: (_err: any, variables, context) => {
             if (context?.previousListRecent) {
                 queryClient.setQueryData(commentKeys.list(postId, 'recent'), context.previousListRecent);
             }
@@ -491,6 +497,9 @@ export const useUpdateComment = (postId: string) => {
             }
             if (variables.parentId && context?.previousReplies) {
                 queryClient.setQueryData(commentKeys.replies(postId, variables.parentId), context.previousReplies);
+            }
+            if (_err?.status === 404) {
+                queryClient.invalidateQueries({ queryKey: commentKeys.post(postId) });
             }
         },
         onSettled: (_data, _err, variables) => {
@@ -551,9 +560,9 @@ export const useDeleteComment = (postId: string) => {
                         ...old,
                         pages: old.pages.map((page: any) => ({
                             ...page,
-                            data: page.data.map((c: any) => 
-                                String(c.id) === String(parentId) 
-                                    ? { ...c, reply_count: Math.max(0, (c.reply_count || 0) - 1) } 
+                            data: page.data.map((c: any) =>
+                                String(c.id) === String(parentId)
+                                    ? { ...c, reply_count: Math.max(0, (c.reply_count || 0) - 1) }
                                     : c
                             )
                         }))
@@ -567,7 +576,7 @@ export const useDeleteComment = (postId: string) => {
 
             return { previousListRecent, previousListLiked, previousReplies };
         },
-        onError: (_err, variables, context) => {
+        onError: (_err: any, variables, context) => {
             if (context?.previousListRecent) {
                 queryClient.setQueryData(commentKeys.list(postId, 'recent'), context.previousListRecent);
             }
@@ -578,6 +587,9 @@ export const useDeleteComment = (postId: string) => {
                 queryClient.setQueryData(commentKeys.replies(postId, variables.parentId), context.previousReplies);
             }
             patchCommentCountInFeedCaches(queryClient, postId, +1);
+            if (_err?.status === 404) {
+                queryClient.invalidateQueries({ queryKey: commentKeys.post(postId) });
+            }
         },
         onSettled: (_data, _err, variables) => {
             queryClient.invalidateQueries({ queryKey: commentKeys.list(postId, 'recent') });

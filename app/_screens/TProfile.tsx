@@ -28,8 +28,8 @@ import { ProfileDetail } from "@/types/profiledetail";
 import { updateActiveVideoViewAsync } from "@bsky.app/video";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
+import { Spinner } from "panelui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

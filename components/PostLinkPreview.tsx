@@ -1,18 +1,17 @@
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { getPreviewData, PreviewData } from '@flyerhq/react-native-link-preview';
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from 'expo-image';
+import { Spinner } from "panelui-native";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Dimensions,
     Linking,
     Pressable,
     StyleSheet,
     Text,
-    View,
+    View
 } from 'react-native';
 import { ThemeColors } from '../context/ThemeContext';
-import { Spinner } from "heroui-native/spinner";
 
 // ─── Module-level cache ───────────────────────────────────────────────────────
 // Keyed by URL. Stores the settled PreviewData (or null on error/no-data).

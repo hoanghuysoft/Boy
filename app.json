@@ -2,7 +2,7 @@
   "expo": {
     "name": "WeLove",
     "slug": "Boy",
-    "version": "2657.2.0",
+    "version": "2657.2.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "boy",
@@ -10,6 +10,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.techfox.boy",
+      "associatedDomains": [
+        "applinks:boy-server.vercel.app"
+      ],
       "infoPlist": {
         "CFBundleLocalizations": [
           "en",
@@ -28,6 +31,41 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.techfox.boy",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "boy-server.vercel.app",
+              "pathPrefix": "/posts"
+            },
+            {
+              "scheme": "https",
+              "host": "boy-server.vercel.app",
+              "pathPrefix": "/post"
+            },
+            {
+              "scheme": "http",
+              "host": "boy-server.vercel.app",
+              "pathPrefix": "/posts"
+            },
+            {
+              "scheme": "http",
+              "host": "boy-server.vercel.app",
+              "pathPrefix": "/post"
+            },
+            {
+              "scheme": "boy"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",

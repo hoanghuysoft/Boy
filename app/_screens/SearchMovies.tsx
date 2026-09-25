@@ -15,7 +15,7 @@ import { createCommonStyles } from "@/styles/common";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
 import { useRouter } from "expo-router";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   FlatList,

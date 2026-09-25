@@ -12,8 +12,8 @@ import {
   extractInstagramProfileInfo,
   getCachedInstagramPost,
 } from "@/components/iprofile";
-import { PostOptionsSheet } from "@/components/post";
 import { List } from "@/components/list/List";
+import { PostOptionsSheet } from "@/components/post";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { useThemeContext } from "@/context/ThemeContext";
 import {
@@ -29,8 +29,8 @@ import { ProfileDetail } from "@/types/profiledetail";
 import { updateActiveVideoViewAsync } from "@bsky.app/video";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
+import { Spinner } from "panelui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

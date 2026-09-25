@@ -12,8 +12,8 @@ import { Post } from '@/types/post';
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
-import { Spinner } from "heroui-native/spinner";
 import { Tabs } from "heroui-native/tabs";
+import { Spinner } from "panelui-native";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {

@@ -1,11 +1,18 @@
+import { FlexText } from "@/components/FlexText";
+import { CommentsSheet, LikersSheet } from "@/components/post";
+import { PostItem } from "@/components/PostItem";
+import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
+import { useThemeContext } from "@/context/ThemeContext";
 import BookmarkIcon from "@/icons/bookmark";
 import { useBookmarks } from "@/services/bookmark";
+import { createCommonStyles } from "@/styles/common";
 import { BookmarkedPost } from "@/types/bookmarkedpost";
+import { Post } from "@/types/post";
+import type { LikersSheetHandle } from "@/types/sheetHandles";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { useRouter } from "expo-router";
-import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -16,13 +23,6 @@ import {
     View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlexText } from "@/components/FlexText";
-import { CommentsSheet, LikersSheet } from "@/components/post";
-import { PostItem } from "@/components/PostItem";
-import { useThemeContext } from "@/context/ThemeContext";
-import { createCommonStyles } from "@/styles/common";
-import { Post } from "@/types/post";
-import type { LikersSheetHandle } from "@/types/sheetHandles";
 
 const BookmarksScreen = () => {
     const router = useRouter();

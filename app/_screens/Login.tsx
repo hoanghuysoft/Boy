@@ -4,7 +4,7 @@ import { createCommonStyles } from "@/styles/common";
 import { useLoginViewModel } from "@/viewmodels/LoginViewModel";
 import { Image } from "expo-image";
 import { useObserve } from "expo-observe";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React from "react";
 import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

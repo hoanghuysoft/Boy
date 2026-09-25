@@ -8,7 +8,7 @@ import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { Image } from "expo-image";
 import { SquircleView } from "expo-squircle-view";
 import { Button } from "heroui-native/button";
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

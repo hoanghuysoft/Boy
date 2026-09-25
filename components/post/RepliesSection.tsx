@@ -1,4 +1,4 @@
-import { Spinner } from "heroui-native/spinner";
+import { Spinner } from "panelui-native";
 import React, { memo, useMemo } from "react";
 import {
     StyleSheet,

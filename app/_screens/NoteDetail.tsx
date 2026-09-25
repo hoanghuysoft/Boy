@@ -1,9 +1,19 @@
-import * as Clipboard from "expo-clipboard";
+import { FlexText } from "@/components/FlexText";
+import { useThemeContext } from "@/context/ThemeContext";
+import { useNote, useUpdateNote } from "@/services/note";
+import { createCommonStyles } from "@/styles/common";
+import {
+    getNoteMarkdownStyle,
+    legacyToMarkdown,
+    parseNoteTitleAndBody,
+    toggleTaskInMarkdown,
+} from "@/utils/noteMarkdown";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
-import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
+import { Spinner } from "panelui-native";
 import React, { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -17,16 +27,6 @@ import {
     type MarkdownStyle,
 } from "react-native-enriched-markdown";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlexText } from "@/components/FlexText";
-import { useThemeContext } from "@/context/ThemeContext";
-import { useNote, useUpdateNote } from "@/services/note";
-import { createCommonStyles } from "@/styles/common";
-import {
-    getNoteMarkdownStyle,
-    legacyToMarkdown,
-    parseNoteTitleAndBody,
-    toggleTaskInMarkdown,
-} from "@/utils/noteMarkdown";
 
 const NoteDetailScreen = () => {
     const { id } = useLocalSearchParams();

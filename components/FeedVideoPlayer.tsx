@@ -5,8 +5,9 @@ import SoundIcon from "@/assets/images/svg/sound.svg";
 import { useFeedVideoStore } from '@/stores/feedVideo';
 import { useSettingsStore } from '@/stores/settings';
 import { BlueskyVideoView } from '@bsky.app/video';
+import { Spinner } from "panelui-native";
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 const ASPECT_RATIO = 3 / 4;
 
@@ -177,7 +178,7 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
             {/* Loading spinner overlay — matches Bluesky's pattern */}
             {isActive && isLoading && (
                 <View style={styles.loadingOverlay} pointerEvents="none">
-                    <ActivityIndicator size="large" color="white" />
+                    <Spinner size="lg" color="white" />
                 </View>
             )}
 

@@ -72,6 +72,7 @@ const post = {
         hideReplies: 'Hide replies',
         loadMoreReplies: 'Load more replies',
         replyingTo: 'Replying to {{name}}',
+        commentNotFound: 'This comment has been deleted or no longer exists.',
     },
 
     likersSheet: {
