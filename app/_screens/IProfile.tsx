@@ -167,7 +167,18 @@ const IProfileScreen = () => {
       if (Array.isArray(page.items)) return page.items;
       return [];
     });
-    return rawList.map((item) => getCachedInstagramPost(item, instagramUser));
+    const seen = new Set<string>();
+    const uniquePosts: Post[] = [];
+    for (const item of rawList) {
+      const post = getCachedInstagramPost(item, instagramUser);
+      if (post && post.id) {
+        if (!seen.has(post.id)) {
+          seen.add(post.id);
+          uniquePosts.push(post);
+        }
+      }
+    }
+    return uniquePosts;
   }, [postsData?.pages, instagramUser]);
 
   const isRefetching = isProfileRefetching || isStoriesRefetching || isPostsRefetching;
@@ -233,14 +244,14 @@ const IProfileScreen = () => {
       showCrossPostAlertDialog(
         post,
         targetProfile?.name || "",
-        async (mode: CrossPostMode) => {
+        async (mode: CrossPostMode, isAdult?: boolean) => {
           toast.show({
             label: "Cross-posting...",
             description: "Publishing Instagram content to WeLove...",
           });
 
           try {
-            await executeCrossPost(targetProfileId, post, mode);
+            await executeCrossPost(targetProfileId, post, mode, undefined, isAdult);
             toast.show({
               label: "Cross-posted Successfully",
               description: `Post published as ${targetProfile?.name || "profile"}.`,

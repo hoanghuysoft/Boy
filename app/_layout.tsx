@@ -220,6 +220,8 @@ const RootContent = () => {
               <Stack.Screen name="webview" />
               <Stack.Screen name="bulletinboard" />
               <Stack.Screen name="fprofile" />
+              <Stack.Screen name="x_users" />
+              <Stack.Screen name="x_profile" />
               <Stack.Screen name="post/[id]" />
             </Stack>
           </GlassProvider>

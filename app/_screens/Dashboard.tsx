@@ -4,11 +4,11 @@ import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerShe
 import { CgvCard } from "@/components/tracker/CgvCard";
 import { CgvDetailSheet } from "@/components/tracker/sheets/CgvDetailSheet";
 import { useThemeContext } from "@/context/ThemeContext";
-import { useScrollStore } from "@/stores/scroll";
 import { useCgvMoviesQuery } from "@/services/cgv";
 import { useInfiniteMedia } from "@/services/media";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
 import { useWeather } from "@/services/weather";
+import { useScrollStore } from "@/stores/scroll";
 import { createCommonStyles } from "@/styles/common";
 import { Category, CgvMovie } from "@/types/cgv";
 import { Profile } from "@/types/profile";
@@ -345,19 +345,19 @@ const DashboardScreen = () => {
                             </TouchableOpacity>
                         </View>
                         <View style={{ marginTop: 10 }}>
-                             <FlexText style={{ fontSize: 34, fontWeight: "700", color: colors.text }}>
-                                 {weather?.temperatureC !== undefined ? `${weather.temperatureC}°C` : "--°C"}
-                             </FlexText>
-                             <FlexText style={{ fontSize: 14, color: colors.text, opacity: 0.82 }}>
-                                 {weather?.condition ?? (isWeatherFetching ? t('dashboard.weather.fetching', 'Fetching...') : t('dashboard.weather.unavailable', 'Weather data will be available soon.'))}
-                             </FlexText>
-                             <FlexText style={{ fontSize: 12, color: colors.text, opacity: 0.65, marginTop: 4 }}>
-                                 {weather?.windSpeedKmh !== undefined ? t('dashboard.weather.wind', { speed: weather.windSpeedKmh, defaultValue: `Wind ${weather.windSpeedKmh} km/h` }) : ""}
-                             </FlexText>
-                             <FlexText style={{ fontSize: 11, color: colors.text, opacity: 0.55, marginTop: 4 }}>
-                                 {weather?.updatedAt ? t('dashboard.weather.updated', { time: new Date(weather.updatedAt).toLocaleTimeString(), defaultValue: `Updated ${new Date(weather.updatedAt).toLocaleTimeString()}` }) : ""}
-                             </FlexText>
-                         </View>
+                            <FlexText style={{ fontSize: 34, fontWeight: "700", color: colors.text }}>
+                                {weather?.temperatureC !== undefined ? `${weather.temperatureC}°C` : "--°C"}
+                            </FlexText>
+                            <FlexText style={{ fontSize: 14, color: colors.text, opacity: 0.82 }}>
+                                {weather?.condition ?? (isWeatherFetching ? t('dashboard.weather.fetching', 'Fetching...') : t('dashboard.weather.unavailable', 'Weather data will be available soon.'))}
+                            </FlexText>
+                            <FlexText style={{ fontSize: 12, color: colors.text, opacity: 0.65, marginTop: 4 }}>
+                                {weather?.windSpeedKmh !== undefined ? t('dashboard.weather.wind', { speed: weather.windSpeedKmh, defaultValue: `Wind ${weather.windSpeedKmh} km/h` }) : ""}
+                            </FlexText>
+                            <FlexText style={{ fontSize: 11, color: colors.text, opacity: 0.55, marginTop: 4 }}>
+                                {weather?.updatedAt ? t('dashboard.weather.updated', { time: new Date(weather.updatedAt).toLocaleTimeString(), defaultValue: `Updated ${new Date(weather.updatedAt).toLocaleTimeString()}` }) : ""}
+                            </FlexText>
+                        </View>
                     </BlurView>
                 </SquircleView>
                 <SquircleView cornerSmoothing={100} borderRadius={32} style={{ marginTop: 50, overflow: 'hidden' }}>
@@ -410,6 +410,14 @@ const DashboardScreen = () => {
                                 </SquircleView>
                                 <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>{t('dashboard.services.movies', 'Movies')}</FlexText>
                             </TouchableOpacity>
+                            {isAdmin && (
+                                <TouchableOpacity onPress={() => router.push("/x_users")} style={{ width: '25%', alignItems: 'center', marginBottom: 12 }}>
+                                    <SquircleView cornerSmoothing={100} preserveSmoothing borderRadius={16} style={{ width: 54, height: 54, backgroundColor: '#0A0A0A', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                                        <Ionicons name="logo-twitter" size={26} color="#fff" />
+                                    </SquircleView>
+                                    <FlexText style={{ fontSize: 12, color: colors.text, textAlign: 'center', fontWeight: '500' }}>X/Twitter</FlexText>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </BlurView>
                 </SquircleView>

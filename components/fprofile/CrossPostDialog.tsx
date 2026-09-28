@@ -9,8 +9,9 @@ import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
 import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React, { memo, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { FALLBACK_AVATAR_URL } from "../profile/header/constants";
 import { CrossPostMode, executeCrossPost } from "./crossPostService";
 
@@ -36,6 +37,7 @@ export const CrossPostDialog = memo(
 
     const [isExecuting, setIsExecuting] = useState(false);
     const [progressStatus, setProgressStatus] = useState<string>("");
+    const [isAdult, setIsAdult] = useState(post?.is_adult ?? false);
 
     if (!post) return null;
 
@@ -61,7 +63,8 @@ export const CrossPostDialog = memo(
           mode,
           (progress) => {
             setProgressStatus(progress.statusText);
-          }
+          },
+          isAdult
         );
 
         toast.show({
@@ -130,6 +133,37 @@ export const CrossPostDialog = memo(
               </View>
             ) : (
               <View style={{ gap: 8 }}>
+                {/* Sensitive Content Toggle */}
+                <TouchableOpacity
+                  style={[
+                    styles.sensitiveToggleRow,
+                    {
+                      backgroundColor: isAdult ? colors.errorContainer : colors.surfaceContainer,
+                      borderColor: isAdult ? colors.error : colors.outlineVariant,
+                    },
+                  ]}
+                  onPress={() => setIsAdult(!isAdult)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={isAdult ? "checkbox" : "square-outline"}
+                    size={20}
+                    color={isAdult ? colors.error : colors.muted}
+                  />
+                  <FlexText
+                    style={[
+                      common.bodySmall,
+                      {
+                        color: isAdult ? colors.onErrorContainer : colors.text,
+                        fontWeight: "600",
+                        flex: 1,
+                      },
+                    ]}
+                  >
+                    Mark as Sensitive / Adult (18+)
+                  </FlexText>
+                </TouchableOpacity>
+
                 <Button
                   variant="primary"
                   onPress={() => handleSelectMode("x_url")}
@@ -170,5 +204,15 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
+  },
+  sensitiveToggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 4,
   },
 });

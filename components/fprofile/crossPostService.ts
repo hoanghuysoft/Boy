@@ -31,23 +31,45 @@ export interface CrossPostProgress {
 export function showCrossPostAlertDialog(
   post: Post,
   targetProfileName: string,
-  onSelectMode: (mode: CrossPostMode) => void
+  onSelectMode: (mode: CrossPostMode, isAdult?: boolean) => void
 ) {
+  const askSensitiveAndProceed = (mode: CrossPostMode) => {
+    Alert.alert(
+      "Sensitive Content",
+      "Do you want to mark this post as sensitive content (18+ / Adult)?",
+      [
+        {
+          text: "No (Normal)",
+          onPress: () => onSelectMode(mode, false),
+        },
+        {
+          text: "Yes (Mark 18+)",
+          onPress: () => onSelectMode(mode, true),
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   Alert.alert(
     "Cross-post",
     `Choose how to share this post to ${targetProfileName ? `@${targetProfileName}` : "WeLove"}:`,
     [
       {
         text: "Use media URL of X",
-        onPress: () => onSelectMode("x_url"),
+        onPress: () => askSensitiveAndProceed("x_url"),
       },
       {
         text: "Upload media to third party",
-        onPress: () => onSelectMode("third_party"),
+        onPress: () => askSensitiveAndProceed("third_party"),
       },
       {
         text: "Use WeLove Cloud",
-        onPress: () => onSelectMode("welove_cloud"),
+        onPress: () => askSensitiveAndProceed("welove_cloud"),
       },
       {
         text: "Cancel",
@@ -62,7 +84,8 @@ export async function executeCrossPost(
   myProfileId: string,
   post: Post,
   mode: CrossPostMode,
-  onProgress?: (progress: CrossPostProgress) => void
+  onProgress?: (progress: CrossPostProgress) => void,
+  isAdult?: boolean
 ): Promise<Post> {
   const mediaList = post.media || [];
   const mediaIds: string[] = [];
@@ -155,7 +178,7 @@ export async function executeCrossPost(
     location: typeof post.location === "string" ? post.location : post.location?.name,
     links: post.links && post.links.length > 0 ? post.links : undefined,
     is_ghost: false,
-    is_adult: post.is_adult,
+    is_adult: isAdult !== undefined ? isAdult : (post.is_adult ?? false),
     media_ids: mediaIds.length > 0 ? mediaIds : undefined,
     device: Platform.OS,
   };

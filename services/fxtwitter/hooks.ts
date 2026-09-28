@@ -61,7 +61,13 @@ export function useFxUserMedia(
         cursor: pageParam as string | undefined,
       }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.cursor?.bottom || undefined,
+    getNextPageParam: (lastPage) => {
+      const bottom = lastPage.cursor?.bottom;
+      if (!bottom || bottom === '-1' || bottom === '0' || (lastPage.results && lastPage.results.length === 0)) {
+        return undefined;
+      }
+      return bottom;
+    },
     enabled: isEnabled,
     staleTime: TIMELINE_STALE_TIME,
     gcTime: GC_TIME,
@@ -103,7 +109,13 @@ export function useFxUserStatuses(
         cursor: pageParam as string | undefined,
       }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.cursor?.bottom || undefined,
+    getNextPageParam: (lastPage) => {
+      const bottom = lastPage.cursor?.bottom;
+      if (!bottom || bottom === '-1' || bottom === '0' || (lastPage.results && lastPage.results.length === 0)) {
+        return undefined;
+      }
+      return bottom;
+    },
     enabled: isEnabled,
     staleTime: TIMELINE_STALE_TIME,
     gcTime: GC_TIME,
@@ -161,7 +173,13 @@ export function useFxUserFollowers(
         cursor: pageParam as string | undefined,
       }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.cursor?.bottom || undefined,
+    getNextPageParam: (lastPage) => {
+      const bottom = lastPage.cursor?.bottom;
+      if (!bottom || bottom === '-1' || bottom === '0' || (lastPage.results && lastPage.results.length === 0)) {
+        return undefined;
+      }
+      return bottom;
+    },
     enabled: isEnabled,
     staleTime: PROFILE_STALE_TIME,
     gcTime: GC_TIME,
@@ -189,7 +207,13 @@ export function useFxUserFollowing(
         cursor: pageParam as string | undefined,
       }),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.cursor?.bottom || undefined,
+    getNextPageParam: (lastPage) => {
+      const bottom = lastPage.cursor?.bottom;
+      if (!bottom || bottom === '-1' || bottom === '0' || (lastPage.results && lastPage.results.length === 0)) {
+        return undefined;
+      }
+      return bottom;
+    },
     enabled: isEnabled,
     staleTime: PROFILE_STALE_TIME,
     gcTime: GC_TIME,

@@ -123,7 +123,19 @@ const FProfileScreen = () => {
     const pages = statusesData?.pages;
     if (!pages) return [];
     const rawList = pages.flatMap((page) => page.results || []);
-    return rawList.map(getCachedFxTwitterPost);
+
+    // Deduplicate posts by ID to prevent duplicate key collisions in LegendList
+    const seen = new Set<string>();
+    const uniquePosts: Post[] = [];
+    for (const item of rawList) {
+      if (item && item.id) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          uniquePosts.push(getCachedFxTwitterPost(item));
+        }
+      }
+    }
+    return uniquePosts;
   }, [statusesData?.pages]);
 
   const isRefetching = isProfileRefetching || isStatusesRefetching;
@@ -178,14 +190,14 @@ const FProfileScreen = () => {
       showCrossPostAlertDialog(
         post,
         targetProfile?.name || "",
-        async (mode: CrossPostMode) => {
+        async (mode: CrossPostMode, isAdult?: boolean) => {
           toast.show({
             label: "Cross-posting...",
             description: "Publishing post to WeLove...",
           });
 
           try {
-            await executeCrossPost(targetProfileId, post, mode);
+            await executeCrossPost(targetProfileId, post, mode, undefined, isAdult);
             toast.show({
               label: "Cross-posted Successfully",
               description: `Post published as ${targetProfile?.name || "profile"}.`,
