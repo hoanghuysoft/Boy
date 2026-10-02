@@ -49,7 +49,7 @@ export const ReportFlowContent = ({ helpers, options }: ReportFlowContentProps) 
   const [selectedSubReason, setSelectedSubReason] = useState<ReportSubReason | null>(null);
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successInfo, setSuccessInfo] = useState<string | null>(null);
+  const [isAlreadyReported, setIsAlreadyReported] = useState(false);
 
   const handleSelectCategory = (category: ReportCategory) => {
     setSelectedCategory(category);
@@ -111,21 +111,11 @@ export const ReportFlowContent = ({ helpers, options }: ReportFlowContentProps) 
         onSuccess: (result) => {
           Keyboard.dismiss();
           if (result.alreadyReported) {
-            setSuccessInfo(
-              result.message ||
-                t("report.success.alreadyReportedMessage", {
-                  defaultValue: "You have already reported this content. It is under review.",
-                })
-            );
+            setIsAlreadyReported(true);
             setStep("success");
             options.onSuccess?.();
           } else if (result.success) {
-            setSuccessInfo(
-              result.message ||
-                t("report.success.defaultMessage", {
-                  defaultValue: "Thank you. Your report has been received and will be reviewed.",
-                })
-            );
+            setIsAlreadyReported(false);
             setStep("success");
             options.onSuccess?.();
           } else {
@@ -425,10 +415,14 @@ export const ReportFlowContent = ({ helpers, options }: ReportFlowContentProps) 
       </FlexText>
 
       <FlexText style={[styles.successSubtitle, { color: colors.onSurfaceVariant }]}>
-        {successInfo ||
-          t("report.success.defaultMessage", {
-            defaultValue: "Your report has been submitted. Our safety team will review it to ensure our community remains safe.",
-          })}
+        {isAlreadyReported
+          ? t("report.success.alreadyReportedMessage", {
+              defaultValue: "You have already reported this content. It is under review.",
+            })
+          : t("report.success.defaultMessage", {
+              defaultValue:
+                "Your report has been submitted. Our safety team will review it to ensure our community remains safe.",
+            })}
       </FlexText>
 
       <TouchableOpacity
