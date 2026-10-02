@@ -109,3 +109,10 @@ export { fxTwitterKeys } from './fxtwitter/queryKeys';
 // ─── Instagram ───────────────────────────────────────────────────────────────
 export { instagramKeys } from './instagram/queryKeys';
 
+// ─── Report ───────────────────────────────────────────────────────────────────
+export const reportKeys = {
+    all: ['reports'] as const,
+    catalog: (targetType?: string) => ['report-catalog-v2', targetType || 'all'] as const,
+    userReports: ['user-reports'] as const,
+};
+

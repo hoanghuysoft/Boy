@@ -76,7 +76,9 @@ export const XProfileTabList = memo(function XProfileTabList({
         if (content.links?.length) return "link";
         return "text";
       }}
-      drawDistance={500}
+      estimatedItemSize={380}
+      recycleItems={true}
+      drawDistance={400}
       headerOffset={headerHeight}
       progressBackgroundColor={colors.card}
       refreshing={isRefetching}

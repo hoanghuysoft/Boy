@@ -13,6 +13,7 @@ import notes from './en/notes';
 import onboarding from './en/onboarding';
 import post from './en/post';
 import profile from './en/profile';
+import report from './en/report';
 import search from './en/search';
 import settings from './en/settings';
 import shots from './en/shots';
@@ -34,6 +35,7 @@ const en = {
     onboarding,
     post,
     profile,
+    report,
     search,
     shots,
     themeSettings,

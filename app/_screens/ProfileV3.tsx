@@ -25,7 +25,8 @@ import {
   useWindowDimensions
 } from "react-native";
 import { Snackbar } from 'react-native-paper';
-import Reanimated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import * as Haptics from 'expo-haptics';
+import Reanimated, { interpolate, runOnUI, scrollTo, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { FlexText } from "@/components/FlexText";
@@ -41,6 +42,7 @@ import { BriefInfoSheet } from "@/components/profile/sheets/BriefInfoSheet";
 import { RelationshipSheet } from "@/components/profile/sheets/RelationshipSheet";
 import { TriviaSheet } from "@/components/profile/sheets/TriviaSheet";
 import { SpinningArtwork } from "@/components/profile/SpinningArtwork";
+import { useScrollStore } from "@/stores/scroll";
 import { BlurTargetView, BlurView } from "expo-blur";
 
 // ─── Static skeleton shown during navigation transition ────────────────────────
@@ -187,7 +189,6 @@ const ProfileContent = () => {
     handleCommentPress,
     handleCommentSheetDismiss,
     handleLikersSheetDismiss,
-    scrollToTop,
     dismissSnackbar,
     closeGallery,
     isMusicPlaying,
@@ -195,6 +196,47 @@ const ProfileContent = () => {
   } = useProfileViewModel();
   const { t } = useTranslation();
   const { height: windowHeight } = useWindowDimensions();
+
+  // ─── List refs & Scroll to Top ───────────────────────────────────
+  const feedListRef = useRef<any>(null);
+  const imagesListRef = useRef<any>(null);
+  const videosListRef = useRef<any>(null);
+
+  const scrollToTop = useCallback(() => {
+    let refOrInstance = feedListRef.current;
+    if (activeTab === "Images") {
+      refOrInstance = imagesListRef.current;
+    } else if (activeTab === "Videos") {
+      refOrInstance = videosListRef.current;
+    }
+
+    if (!refOrInstance) return;
+
+    // Resolve underlying list instance if a Ref object is held
+    const instance = refOrInstance.current !== undefined ? refOrInstance.current : refOrInstance;
+
+    if (instance && typeof instance.scrollToOffset === "function") {
+      instance.scrollToOffset({ offset: 0, animated: true });
+    } else if (instance && typeof instance.scrollTo === "function") {
+      instance.scrollTo({ y: 0, animated: true });
+    } else if (instance && typeof instance.scrollToIndex === "function") {
+      instance.scrollToIndex({ index: 0, animated: true });
+    } else {
+      try {
+        const animatedRef = refOrInstance.current !== undefined ? refOrInstance : { current: instance };
+        runOnUI(scrollTo)(animatedRef, 0, 0, true);
+      } catch (err) {
+        console.warn("Could not scroll to top:", err);
+      }
+    }
+  }, [activeTab]);
+
+  const scrollTrigger = useScrollStore((state) => state.triggers['profile']);
+  useEffect(() => {
+    if (scrollTrigger && scrollTrigger > 0) {
+      scrollToTop();
+    }
+  }, [scrollTrigger, scrollToTop]);
 
   // ─── Header avatar spring animation (native thread via Reanimated) ───
   const headerAvatarProgress = useSharedValue(0);
@@ -326,7 +368,14 @@ const ProfileContent = () => {
           value={activeTabVal}
           onValueChange={(val: any) => {
             const idx = tabKeys.indexOf(val);
-            if (idx !== -1) onSelect?.(idx);
+            if (idx !== -1) {
+              Haptics.selectionAsync();
+              if (idx === currentPage) {
+                scrollToTop();
+              } else {
+                onSelect?.(idx);
+              }
+            }
           }}
           style={{ paddingHorizontal: 0, marginBottom: 0 }}
         >
@@ -343,7 +392,7 @@ const ProfileContent = () => {
         </Tabs>
       </View>
     );
-  }, [tabKeys]);
+  }, [tabKeys, scrollToTop]);
 
   // ─── Empty component factory ──────────────────────────────────────
   const makeEmptyComponent = useCallback((tabKey: string) => {
@@ -395,6 +444,7 @@ const ProfileContent = () => {
 
   // ─── Feed tab renderer ────────────────────────────────────────────
   const renderFeedTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
+    feedListRef.current = scrollElRef;
     return (
       <List
         ref={scrollElRef as any}
@@ -431,6 +481,7 @@ const ProfileContent = () => {
 
   // ─── Images tab renderer ──────────────────────────────────────────
   const renderImagesTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
+    imagesListRef.current = scrollElRef;
     return (
       <List
         ref={scrollElRef as any}
@@ -459,6 +510,7 @@ const ProfileContent = () => {
 
   // ─── Videos tab renderer ──────────────────────────────────────────
   const renderVideosTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
+    videosListRef.current = scrollElRef;
     return (
       <MediaViewerWrapper items={videoMediaViewerItems}>
         <List

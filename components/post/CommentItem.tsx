@@ -19,6 +19,7 @@ import { Comment } from "../../types/comment";
 import { EMOJI_ASSETS } from "../../utils/emojiResolver";
 import { parseCommentContent } from "../../viewmodels/CommentsSheetViewModel";
 import { FlexText } from "../FlexText";
+import { openReportFlow } from "../report/ReportFlowSheet";
 
 export interface CommentItemProps {
     comment: Comment;
@@ -30,6 +31,7 @@ export interface CommentItemProps {
     onDelete: () => void;
     onEdit: () => void;
     onToggleLike?: () => void;
+    onReport?: () => void;
     formatTimeAgo: (dateString: string) => string;
     editLabel: string;
     deleteLabel: string;
@@ -49,6 +51,7 @@ export const CommentItem = memo(({
     onDelete,
     onEdit,
     onToggleLike,
+    onReport,
     formatTimeAgo,
     editLabel,
     deleteLabel,
@@ -323,6 +326,35 @@ export const CommentItem = memo(({
                                     {deleteLabel}
                                 </FlexText>
                             )}
+                        </TouchableOpacity>
+                    )}
+
+                    {!isOwner && (
+                        <TouchableOpacity
+                            onPress={() => {
+                                if (onReport) {
+                                    onReport();
+                                } else {
+                                    openReportFlow({
+                                        targetType: 'comment',
+                                        targetId: comment.id,
+                                        reportedUserId: comment.user_id,
+                                        targetTitle: text?.slice(0, 50),
+                                        contextSnapshot: {
+                                            textSnippet: text,
+                                            postId: comment.post_id,
+                                            authorUsername: comment.profile_username,
+                                            authorDisplayName: comment.profile_name,
+                                        },
+                                    });
+                                }
+                            }}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={styles.actionButton}
+                        >
+                            <FlexText style={{ color: colors.onSurfaceVariant, fontSize: 12, fontWeight: '600' }}>
+                                {t('post.optionsSheet.report', 'Report')}
+                            </FlexText>
                         </TouchableOpacity>
                     )}
                 </View>

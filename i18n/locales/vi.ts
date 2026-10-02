@@ -13,6 +13,7 @@ import notes from './vi/notes';
 import onboarding from './vi/onboarding';
 import post from './vi/post';
 import profile from './vi/profile';
+import report from './vi/report';
 import search from './vi/search';
 import serviceSettings from './vi/serviceSettings';
 import settings from './vi/settings';
@@ -35,6 +36,7 @@ const vi = {
     onboarding,
     post,
     profile,
+    report,
     search,
     shots,
     themeSettings,

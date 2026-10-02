@@ -191,11 +191,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
     );
 
     return (
-        <Pressable
-            onPress={isDetail ? undefined : handlePostPress}
-            disabled={isDetail}
-            style={{}}
-        >
+        <View style={{}}>
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
                 <TouchableOpacity activeOpacity={0.7} onPress={vm.handleProfilePress} disabled={metricsOnly} style={[vm.common.row, { gap: 12, flex: 1 }]}>
@@ -226,7 +222,11 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
             </View>
 
             {/* Captions Block (Supports standard caption and embedded quote repost layout) */}
-            <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+            <Pressable
+                onPress={isDetail ? undefined : handlePostPress}
+                disabled={isDetail}
+                style={{ paddingHorizontal: 16, marginBottom: 8 }}
+            >
                 {isRepost ? (
                     isRepostDeleted ? (
                         <View style={{ gap: 8 }}>
@@ -402,7 +402,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         )}
                     </View>
                 )}
-            </View>
+            </Pressable>
 
             {/* YouTube links detected in the caption — single player or carousel */}
             {isRepost && !isRepostDeleted && originalPost.content ? (
@@ -539,14 +539,19 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
             )}
 
             {displayPost.device && (
-                <FlexText
-                    style={[
-                        vm.common.label,
-                        { color: vm.colors.onSurfaceVariant, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 },
-                    ]}
+                <Pressable
+                    onPress={isDetail ? undefined : handlePostPress}
+                    disabled={isDetail}
                 >
-                    {t('post.createdOnDevice', { device: displayPost.device })}
-                </FlexText>
+                    <FlexText
+                        style={[
+                            vm.common.label,
+                            { color: vm.colors.onSurfaceVariant, fontSize: 13, marginBottom: 8, paddingHorizontal: 16 },
+                        ]}
+                    >
+                        {t('post.createdOnDevice', { device: displayPost.device })}
+                    </FlexText>
+                </Pressable>
             )}
 
             {/* Action Bar */}
@@ -690,7 +695,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </Dialog.Portal>
                 </Dialog>
             )}
-        </Pressable>
+        </View>
     );
 }, (prev, next) => {
     const prevRepost = prev.post.reposted_post;

@@ -32,6 +32,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useWindowDimensions, View } from "react-native";
 import {
   interpolate,
+  runOnUI,
+  scrollTo,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -351,6 +353,32 @@ export default function ProfileV3ForXScreen() {
     [insets.top, user, posts.length, mediaPosts.length, isSavedCustom, handleToggleSave]
   );
 
+  const postsListRef = useRef<any>(null);
+  const mediaListRef = useRef<any>(null);
+
+  const scrollToTop = useCallback(() => {
+    const refOrInstance = activeTab === "Posts" ? postsListRef.current : mediaListRef.current;
+    if (!refOrInstance) return;
+
+    // Resolve underlying list instance if a Ref object is held
+    const instance = refOrInstance.current !== undefined ? refOrInstance.current : refOrInstance;
+
+    if (instance && typeof instance.scrollToOffset === "function") {
+      instance.scrollToOffset({ offset: 0, animated: true });
+    } else if (instance && typeof instance.scrollTo === "function") {
+      instance.scrollTo({ y: 0, animated: true });
+    } else if (instance && typeof instance.scrollToIndex === "function") {
+      instance.scrollToIndex({ index: 0, animated: true });
+    } else {
+      try {
+        const animatedRef = refOrInstance.current !== undefined ? refOrInstance : { current: instance };
+        runOnUI(scrollTo)(animatedRef, 0, 0, true);
+      } catch (err) {
+        console.warn("Could not scroll to top:", err);
+      }
+    }
+  }, [activeTab]);
+
   const renderTabBar = useCallback(
     ({
       items,
@@ -370,8 +398,12 @@ export default function ProfileV3ForXScreen() {
               const idx = tabKeys.indexOf(val);
               if (idx !== -1) {
                 Haptics.selectionAsync();
-                handleTabChange(val as "Posts" | "Media");
-                onSelect?.(idx);
+                if (idx === currentPage) {
+                  scrollToTop();
+                } else {
+                  handleTabChange(val as "Posts" | "Media");
+                  onSelect?.(idx);
+                }
               }
             }}
             style={{ paddingHorizontal: 0, marginBottom: 0 }}
@@ -390,19 +422,20 @@ export default function ProfileV3ForXScreen() {
         </View>
       );
     },
-    [tabKeys]
+    [tabKeys, handleTabChange, scrollToTop]
   );
 
-  const postsListRef = useRef<any>(null);
-  const mediaListRef = useRef<any>(null);
-
-  const scrollToTop = useCallback(() => {
-    if (activeTab === "Posts") {
-      postsListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    } else {
-      mediaListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  const handleEndReachedStatuses = useCallback(() => {
+    if (hasNextStatuses && !isFetchingNextStatuses) {
+      fetchNextStatuses();
     }
-  }, [activeTab]);
+  }, [hasNextStatuses, isFetchingNextStatuses, fetchNextStatuses]);
+
+  const handleEndReachedMedia = useCallback(() => {
+    if (hasNextMedia && !isFetchingNextMedia) {
+      fetchNextMedia();
+    }
+  }, [hasNextMedia, isFetchingNextMedia, fetchNextMedia]);
 
   const renderPostsTab = useCallback(
     ({ headerHeight, scrollElRef }: PagerWithHeaderChildParams) => {
@@ -418,11 +451,7 @@ export default function ProfileV3ForXScreen() {
           isLoading={isStatusesLoading}
           isFetchingNextPage={isFetchingNextStatuses}
           onRefresh={handleRefresh}
-          onEndReached={() => {
-            if (hasNextStatuses && !isFetchingNextStatuses) {
-              fetchNextStatuses();
-            }
-          }}
+          onEndReached={handleEndReachedStatuses}
           onScrollY={handleScrollY}
           onCrossPostPress={handleCrossPostPress}
           onOptionsPress={handleOptionsPress}
@@ -440,8 +469,7 @@ export default function ProfileV3ForXScreen() {
       isStatusesLoading,
       isFetchingNextStatuses,
       handleRefresh,
-      hasNextStatuses,
-      fetchNextStatuses,
+      handleEndReachedStatuses,
       handleScrollY,
       handleCrossPostPress,
       handleOptionsPress,
@@ -463,11 +491,7 @@ export default function ProfileV3ForXScreen() {
           isLoading={isMediaLoading}
           isFetchingNextPage={isFetchingNextMedia}
           onRefresh={handleRefresh}
-          onEndReached={() => {
-            if (hasNextMedia && !isFetchingNextMedia) {
-              fetchNextMedia();
-            }
-          }}
+          onEndReached={handleEndReachedMedia}
           onScrollY={handleScrollY}
           onCrossPostPress={handleCrossPostPress}
           onOptionsPress={handleOptionsPress}
@@ -485,8 +509,7 @@ export default function ProfileV3ForXScreen() {
       isMediaLoading,
       isFetchingNextMedia,
       handleRefresh,
-      hasNextMedia,
-      fetchNextMedia,
+      handleEndReachedMedia,
       handleScrollY,
       handleCrossPostPress,
       handleOptionsPress,

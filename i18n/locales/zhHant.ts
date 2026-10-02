@@ -11,6 +11,7 @@ import notes from './zhHant/notes';
 import onboarding from './zhHant/onboarding';
 import post from './zhHant/post';
 import profile from './zhHant/profile';
+import report from './zhHant/report';
 import search from './zhHant/search';
 import settings from './zhHant/settings';
 import shots from './zhHant/shots';
@@ -33,6 +34,7 @@ const zhHant = {
     onboarding,
     post,
     profile,
+    report,
     search,
     shots,
     themeSettings,

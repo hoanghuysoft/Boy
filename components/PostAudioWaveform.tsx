@@ -1,9 +1,9 @@
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { SquircleView } from 'expo-squircle-view';
+import { Soundwave } from "panelui-native";
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSimpleAudio } from '../hooks/useSimpleAudio';
-import { FlexText } from './FlexText';
 
 interface PostAudioWaveformProps {
     postId: string;
@@ -55,22 +55,15 @@ export const PostAudioWaveform = React.memo(({
             </TouchableOpacity>
 
             {/* Waveform + Time */}
-            <View style={styles.waveWrapper}>
-                <View style={[styles.iosFallbackTrack, { backgroundColor: waveBackgroundColor }]}>
-                    <View
-                        style={[
-                            styles.iosFallbackFill,
-                            { width: `${progress * 100}%` as any, backgroundColor: waveProgressColor },
-                        ]}
-                    />
-                </View>
-
-                {/* Duration label */}
-                <FlexText style={[styles.timeLabel, { color: colors.muted }]}>
-                    {isPlaying && duration > 0
-                        ? `${formatDuration(currentTime)} / ${formatDuration(duration)}`
-                        : formatDuration(duration > 0 ? duration : 0)}
-                </FlexText>
+            <View className="flex-1">
+                <Soundwave
+                    variant="bars"
+                    levels={[]}
+                    progress={progress}
+                    bars={40}
+                    barWidth={2}
+                    height={28}
+                />
             </View>
         </SquircleView>
     );

@@ -13,6 +13,7 @@ import notes from './zh/notes';
 import onboarding from './zh/onboarding';
 import post from './zh/post';
 import profile from './zh/profile';
+import report from './zh/report';
 import search from './zh/search';
 import settings from './zh/settings';
 import shots from './zh/shots';
@@ -35,6 +36,7 @@ const zh = {
     onboarding,
     post,
     profile,
+    report,
     search,
     shots,
     themeSettings,

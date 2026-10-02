@@ -1,5 +1,6 @@
 import { AppLockOverlay } from "@/components/AppLockOverlay";
 import { GlobalAudioPlayer } from "@/components/GlobalAudioPlayer";
+import { GlobalTrueSheet } from "@/components/global core/truesheet";
 import { BanProvider } from "@/context/BanContext";
 import { SessionProvider } from "@/context/SessionContext";
 import { StatusBarProvider, useStatusBar } from "@/context/StatusBarContext";
@@ -227,6 +228,7 @@ const RootContent = () => {
           </GlassProvider>
           <GlobalAudioPlayer />
           <AppLockOverlay />
+          <GlobalTrueSheet />
         </View>
       </BanProvider>
     </SessionProvider>

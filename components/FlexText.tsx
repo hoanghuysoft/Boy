@@ -37,6 +37,41 @@ const FONT_MAP: Record<string, string> = {
   'bold': 'GoogleSansFlexBold',
 };
 
+function getFontFamily(
+  bold?: boolean,
+  medium?: boolean,
+  light?: boolean,
+  thin?: boolean,
+  extraLight?: boolean,
+  style?: StyleProp<TextStyle>
+): string {
+  if (bold) return 'GoogleSansFlexBold';
+  if (medium) return 'GoogleSansFlexMedium';
+  if (light) return 'GoogleSansFlexLight';
+  if (thin) return 'GoogleSansFlexThin';
+  if (extraLight) return 'GoogleSansFlexExtraLight';
+
+  if (!style) return 'GoogleSansFlexRegular';
+
+  // Fast path for single object style
+  if (!Array.isArray(style)) {
+    const fw = (style as TextStyle)?.fontWeight;
+    return fw ? (FONT_MAP[fw.toString()] || 'GoogleSansFlexRegular') : 'GoogleSansFlexRegular';
+  }
+
+  // Fast path for 1-element array style
+  if (style.length === 1 && style[0] && !Array.isArray(style[0])) {
+    const fw = (style[0] as TextStyle)?.fontWeight;
+    return fw ? (FONT_MAP[fw.toString()] || 'GoogleSansFlexRegular') : 'GoogleSansFlexRegular';
+  }
+
+  // General fallback for nested/multi-element array styles
+  const flattenedStyle = StyleSheet.flatten(style);
+  if (!flattenedStyle) return 'GoogleSansFlexRegular';
+  const weight = flattenedStyle.fontWeight?.toString() || 'normal';
+  return FONT_MAP[weight] || 'GoogleSansFlexRegular';
+}
+
 export function FlexText(props: FlexTextProps) {
   const {
     style,
@@ -62,18 +97,7 @@ export function FlexText(props: FlexTextProps) {
     ...rest
   } = props;
 
-  let selectedFont = '';
-  if (bold) selectedFont = 'GoogleSansFlexBold';
-  else if (medium) selectedFont = 'GoogleSansFlexMedium';
-  else if (light) selectedFont = 'GoogleSansFlexLight';
-  else if (thin) selectedFont = 'GoogleSansFlexThin';
-  else if (extraLight) selectedFont = 'GoogleSansFlexExtraLight';
-
-  if (!selectedFont) {
-    const flattenedStyle = StyleSheet.flatten(style) || {};
-    const weight = flattenedStyle.fontWeight?.toString() || 'normal';
-    selectedFont = FONT_MAP[weight] || 'GoogleSansFlexRegular';
-  }
+  const selectedFont = getFontFamily(bold, medium, light, thin, extraLight, style);
 
   if (isExpanded && typeof children === 'string') {
     return (

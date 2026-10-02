@@ -20,6 +20,7 @@ import { router } from "expo-router";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
 import { useToast } from "heroui-native/toast";
+import { openReportFlow } from "../report/ReportFlowSheet";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
@@ -128,7 +129,10 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
             post?.device?.includes('fxtwitter')
         );
 
-        const isOwner = post?.is_owner ?? (post?.profile_id === currentProfileId);
+        const isOwner = post?.is_owner ?? (
+            Boolean(currentProfileId && (post?.profile_id || (post as any)?.user_id)) &&
+            (post?.profile_id === currentProfileId || (post as any)?.user_id === currentProfileId)
+        );
         const { data: adminData } = useAdminCheck();
         const deletePostMutation = useDeletePost(currentProfileId || "");
         const { data: myProfile } = useProfile('me', true);
@@ -305,9 +309,22 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
         }, [dismissSheet, post, t, toast]);
 
         const handleReport = useCallback(() => {
+            if (!post) return;
             dismissSheet();
-            toast.show({ label: t('post.dialogs.reportTitle'), description: t('post.dialogs.reportComingSoon'), variant: "default" });
-        }, [dismissSheet, t, toast]);
+            setTimeout(() => {
+                openReportFlow({
+                    targetType: 'post',
+                    targetId: post.id,
+                    reportedUserId: post.profile_id || (post as any)?.user_id || (post as any)?.author_id,
+                    targetTitle: post.content?.slice(0, 50),
+                    contextSnapshot: {
+                        textSnippet: post.content,
+                        mediaUrls: post.media?.map((m: any) => m.url || m.uri),
+                        authorDisplayName: post.profile_name,
+                    },
+                });
+            }, 250);
+        }, [dismissSheet, post]);
 
         const downloadVersion = useDownloadedMediaStore((s) => s.version);
         const downloadStatus = useMemo(() => {
@@ -586,7 +603,7 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                                             />
                                         )}
 
-                                        {!isOwner && !isAdmin && (
+                                        {!isOwner && (
                                             <OptionItem
                                                 icon={Danger}
                                                 label={t('post.optionsSheet.report')}
