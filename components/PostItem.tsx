@@ -26,6 +26,7 @@ import i18n, { LANGUAGE_LABELS, SupportedLanguage } from "../i18n";
 import { useLanguageStore } from "../stores/language";
 import { useTranslationStore } from "../stores/translation";
 import { usePostItemViewModel } from "../viewmodels/PostItemViewModel";
+import { AbbreviatedSlidingNumber } from "./AbbreviatedSlidingNumber";
 import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
 import { PostAudioWaveform } from "./PostAudioWaveform";
@@ -115,21 +116,24 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
 
     // If server provides post.lang, check translation need synchronously without async promises
     const hasServerLang = post.lang !== undefined;
-    const [clientNeedsTranslation, setClientNeedsTranslation] = useState(false);
+    const cacheKey = `${post.id}:${translationLanguage}`;
+    const [clientNeedsTranslation, setClientNeedsTranslation] = useState(() => {
+        if (hasServerLang || !post.content) return false;
+        return languageDetectionCache.get(cacheKey) || false;
+    });
     const needsTranslation = hasServerLang
         ? Boolean(post.content && post.lang && post.lang.split('-')[0] !== translationLanguage.split('-')[0])
         : clientNeedsTranslation;
 
     useEffect(() => {
         if (hasServerLang || !post.content) {
-            setClientNeedsTranslation(false);
             return;
         }
 
         // Return cached result if we've already detected language for this post content
-        const cacheKey = `${post.id}:${translationLanguage}`;
         if (languageDetectionCache.has(cacheKey)) {
-            setClientNeedsTranslation(languageDetectionCache.get(cacheKey) || false);
+            const cached = languageDetectionCache.get(cacheKey) || false;
+            setClientNeedsTranslation(prev => prev !== cached ? cached : prev);
             return;
         }
 
@@ -137,9 +141,9 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
             const detected = guessed?.[0]?.language;
             const needs = !!(detected && detected.split('-')[0] !== translationLanguage.split('-')[0]);
             languageDetectionCache.set(cacheKey, needs);
-            setClientNeedsTranslation(needs);
+            setClientNeedsTranslation(prev => prev !== needs ? needs : prev);
         }).catch(() => { });
-    }, [hasServerLang, post.id, post.content, translationLanguage]);
+    }, [hasServerLang, cacheKey, post.content, translationLanguage]);
 
     const isRepost = !!post.reposted_post;
     const originalPost = post.reposted_post;
@@ -194,7 +198,11 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         <View style={{}}>
             {/* Header */}
             <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <TouchableOpacity activeOpacity={0.7} onPress={vm.handleProfilePress} disabled={metricsOnly} style={[vm.common.row, { gap: 12, flex: 1 }]}>
+                <Pressable
+                    onPress={vm.handleProfilePress}
+                    disabled={metricsOnly}
+                    style={({ pressed }) => [vm.common.row, { gap: 12, flex: 1, opacity: pressed ? 0.7 : 1 }]}
+                >
                     <ExpoImage
                         source={{ uri: post.profile_avatar }}
                         style={{ width: 40, height: 40, borderRadius: 20 }}
@@ -203,21 +211,29 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     />
                     <View>
                         <View style={[vm.common.row, { gap: 4 }]}>
-                            <FlexText lite={false} style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
+                            <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
                             {post.profile_is_verified && <VerifiedIcon size={16} />}
                         </View>
                         <PostMetaInfo post={post} />
                     </View>
-                </TouchableOpacity>
+                </Pressable>
                 {!isBookmarked && !isDetail && (!metricsOnly || !!onOptionsPress) && (
-                    <TouchableOpacity
+                    <Pressable
                         hitSlop={10}
-                        style={{ backgroundColor: vm.colors.surfaceContainerHigh, borderRadius: 999, alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}
+                        style={({ pressed }) => ({
+                            backgroundColor: vm.colors.surfaceContainerHigh,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 40,
+                            height: 40,
+                            opacity: pressed ? 0.7 : 1,
+                        })}
                         onPress={vm.handleOptionsPress}
                     >
                         <Ionicons name="ellipsis-horizontal" size={20} color={vm.colors.onSurface} />
                         <SavedPostBadge post={displayPost} borderColor={vm.colors.surface} />
-                    </TouchableOpacity>
+                    </Pressable>
                 )}
             </View>
 
@@ -593,63 +609,63 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 // Bookmarks screen: read-only stats, no bookmark button
                 (<View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 20 }]}>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                        <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikePress}>
+                        <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleLikePress}>
                             {vm.isLiked ? (
                                 <LikeSolidIcon size={24} color={vm.colors.onSurface} />
                             ) : (
                                 <LikeIcon size={24} color={vm.colors.onSurface} />
                             )}
-                        </TouchableOpacity>
-                        <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikeCountPress}>
-                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
-                        </TouchableOpacity>
+                        </Pressable>
+                        <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleLikeCountPress}>
+                            <AbbreviatedSlidingNumber value={vm.likeCount} digits={1} size={18} weight="bold" color={vm.colors.onSurface} />
+                        </Pressable>
                     </View>
-                    <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                    <Pressable hitSlop={10} style={({ pressed }) => [vm.common.row, { gap: 6, alignItems: 'center', opacity: pressed ? 0.7 : 1 }]} onPress={vm.handleCommentPress}>
                         <CommentIcon size={24} color={vm.colors.onSurface} />
-                        <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
-                    </TouchableOpacity>
-                    <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleBookmarkPress}>
+                        <AbbreviatedSlidingNumber value={post.comment_count} digits={1} size={18} weight="bold" color={vm.colors.onSurface} />
+                    </Pressable>
+                    <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
                             <BookmarkSolidIcon size={24} color={vm.colors.onSurface} />
                         ) : (
                             <BookmarkIcon size={24} color={vm.colors.onSurface} />
                         )}
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>)
             ) : (
                 // Feed: full interactive action bar with bookmark toggle
                 (<View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16 }]}>
                     <View style={[vm.common.row, { gap: 20 }]}>
                         <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                            <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikePress}>
+                            <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleLikePress}>
                                 {vm.isLiked ? (
                                     <LikeSolidIcon size={24} color={vm.colors.onSurface} />
                                 ) : (
                                     <LikeIcon size={24} color={vm.colors.onSurface} />
                                 )}
-                            </TouchableOpacity>
-                            <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleLikeCountPress}>
-                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{vm.likeCount}</FlexText>
-                            </TouchableOpacity>
+                            </Pressable>
+                            <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleLikeCountPress}>
+                                <AbbreviatedSlidingNumber value={vm.likeCount} digits={1} size={18} weight="bold" color={vm.colors.onSurface} />
+                            </Pressable>
                         </View>
-                        <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleCommentPress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                        <Pressable hitSlop={10} style={({ pressed }) => [vm.common.row, { gap: 6, alignItems: 'center', opacity: pressed ? 0.7 : 1 }]} onPress={vm.handleCommentPress}>
                             <CommentIcon size={24} color={vm.colors.onSurface} />
-                            <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.comment_count}</FlexText>
-                        </TouchableOpacity>
+                            <AbbreviatedSlidingNumber value={post.comment_count} digits={1} size={18} weight="bold" color={vm.colors.onSurface} />
+                        </Pressable>
                         {!isRepost && (
-                            <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleSharePress} style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
+                            <Pressable hitSlop={10} style={({ pressed }) => [vm.common.row, { gap: 6, alignItems: 'center', opacity: pressed ? 0.7 : 1 }]} onPress={vm.handleSharePress}>
                                 <ShareIcon size={24} color={vm.colors.onSurface} />
-                                <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '800' }]}>{post.share_count}</FlexText>
-                            </TouchableOpacity>
+                                <AbbreviatedSlidingNumber value={post.share_count} digits={1} size={18} weight="bold" color={vm.colors.onSurface} />
+                            </Pressable>
                         )}
                     </View>
-                    <TouchableOpacity hitSlop={10} activeOpacity={0.7} onPress={vm.handleBookmarkPress}>
+                    <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleBookmarkPress}>
                         {vm.isBookmarked ? (
                             <BookmarkSolidIcon size={24} color={vm.colors.onSurface} />
                         ) : (
                             <BookmarkIcon size={24} color={vm.colors.onSurface} />
                         )}
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>)
             )}
 

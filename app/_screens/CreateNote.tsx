@@ -1,4 +1,5 @@
 import { FlexText } from "@/components/FlexText";
+import SpinButton from "@/components/ui/micro-interactions/spin-button";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useCreateNote, useUpdateNote } from "@/services/note";
 import { createCommonStyles } from "@/styles/common";
@@ -16,7 +17,6 @@ import { SquircleView } from "expo-squircle-view";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
 import { useToast } from "heroui-native/toast";
-import { Spinner } from "panelui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -396,25 +396,38 @@ const CreateNoteScreen = () => {
                 </View>
 
                 {/* Save Button */}
-                <TouchableOpacity
+                <SpinButton
+                    idleText={t("notes.editor.save", "Save")}
+                    activeText={t("notes.editor.saving", "Saving...")}
+                    controlled
+                    isActive={isSubmitting}
+                    disabled={!canSubmit || isSubmitting}
                     onPress={handleSave}
-                    disabled={!canSubmit}
-                    style={[
-                        styles.saveButton,
-                        {
-                            backgroundColor: canSubmit ? colors.secondary : colors.surfaceContainerHighest,
-                            opacity: canSubmit ? 1 : 0.6,
+                    animationConfig={{
+                        spring: {
+                            damping: 50,
+                            stiffness: 250,
+                            mass: 1,
                         },
-                    ]}
-                >
-                    {isSubmitting ? (
-                        <Spinner size="sm" color="#ffffff" />
-                    ) : (
-                        <FlexText style={{ color: canSubmit ? "#ffffff" : colors.onSurfaceVariant, fontWeight: "bold", fontSize: 14 }}>
-                            {t("notes.editor.save")}
-                        </FlexText>
-                    )}
-                </TouchableOpacity>
+                    }}
+                    colors={{
+                        idle: {
+                            background: canSubmit ? colors.secondary : colors.surfaceContainerHighest,
+                            text: canSubmit ? "#ffffff" : colors.onSurfaceVariant,
+                        },
+                        active: {
+                            background: colors.secondary,
+                            text: "#ffffff",
+                        },
+                    }}
+                    spinnerConfig={{
+                        color: "#ffffff",
+                        containerBackground: colors.secondary,
+                    }}
+                    buttonStyle={{
+                        paddingHorizontal: 2,
+                    }}
+                />
             </SquircleView>
 
             {/* Content Area */}

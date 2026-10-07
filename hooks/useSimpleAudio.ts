@@ -104,13 +104,17 @@ export function useSimpleAudio(
     const play = useCallback(() => {
         if (!player) return;
         setActiveAudioId(audioId);
-        player.play();
+        try {
+            player.play();
+        } catch {}
         setIsPlaying(true);
     }, [player, audioId]);
 
     const pause = useCallback(() => {
         if (!player) return;
-        player.pause();
+        try {
+            player.pause();
+        } catch {}
         setIsPlaying(false);
         if (currentActiveAudioId === audioId) {
             setActiveAudioId(null);
@@ -128,7 +132,9 @@ export function useSimpleAudio(
     const seekTo = useCallback(
         (seconds: number) => {
             if (!player) return;
-            player.seekTo(seconds).catch(() => {});
+            try {
+                player.seekTo(seconds).catch(() => {});
+            } catch {}
             setCurrentTime(seconds);
         },
         [player]
@@ -136,8 +142,12 @@ export function useSimpleAudio(
 
     const stop = useCallback(() => {
         if (!player) return;
-        player.pause();
-        player.seekTo(0).catch(() => {});
+        try {
+            player.pause();
+        } catch {}
+        try {
+            player.seekTo(0).catch(() => {});
+        } catch {}
         setIsPlaying(false);
         setCurrentTime(0);
         if (currentActiveAudioId === audioId) {

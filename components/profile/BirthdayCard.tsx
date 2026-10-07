@@ -17,9 +17,11 @@ import { createCommonStyles } from '../../styles/common';
 
 interface BirthdayCardProps {
     birthday: string;
+    backgroundImageSource?: any;
+    backgroundImageUri?: string;
 }
 
-const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
+const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday, backgroundImageSource, backgroundImageUri }) => {
     const { colors, typography } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { t } = useTranslation();
@@ -75,7 +77,10 @@ const BirthdayCard: React.FC<BirthdayCardProps> = ({ birthday }) => {
     return (
         <SquircleView borderRadius={200} cornerSmoothing={60} style={styles.cardContainer}>
             <ExpoImage
-                source={require('@/assets/images/birthday.jpg')}
+                source={
+                    backgroundImageSource ||
+                    (backgroundImageUri ? { uri: backgroundImageUri } : require('@/assets/images/birthday.jpg'))
+                }
                 style={StyleSheet.absoluteFill}
                 contentFit="cover"
             />

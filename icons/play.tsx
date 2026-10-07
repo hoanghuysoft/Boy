@@ -6,7 +6,7 @@ interface PlayIconProps extends SvgProps {
     color?: string;
 }
 
-const PlayIcon = ({
+const PlayIcon = React.memo(({
     size = 24,
     color = "#000",
     ...props
@@ -20,6 +20,7 @@ const PlayIcon = ({
     >
         <Path d="M5 4.623V19.38a1.5 1.5 0 0 0 2.26 1.29L22 12 7.26 3.33A1.5 1.5 0 0 0 5 4.623Z" />
     </Svg>
-)
+));
+PlayIcon.displayName = "PlayIcon";
 
 export default PlayIcon;

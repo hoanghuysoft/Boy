@@ -18,6 +18,7 @@ import { useTranslationStore } from "../../stores/translation";
 import { Comment } from "../../types/comment";
 import { EMOJI_ASSETS } from "../../utils/emojiResolver";
 import { parseCommentContent } from "../../viewmodels/CommentsSheetViewModel";
+import { AbbreviatedSlidingNumber } from "../AbbreviatedSlidingNumber";
 import { FlexText } from "../FlexText";
 import { openReportFlow } from "../report/ReportFlowSheet";
 
@@ -139,7 +140,7 @@ export const CommentItem = memo(({
                     <View style={{ flex: 1 }}>
                         <View style={styles.commentHeader}>
                             <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.authorHeaderTouch}>
-                                <FlexText lite={false} style={[common.bodySmall, { color: colors.onSurface, fontSize: 13, fontWeight: '700' }]} numberOfLines={1}>
+                                <FlexText style={[common.bodySmall, { color: colors.onSurface, fontSize: 13, fontWeight: '700' }]} numberOfLines={1}>
                                     {comment.profile_name}
                                 </FlexText>
                                 {comment.profile_is_verified && <VerifiedIcon size={12} />}
@@ -157,12 +158,11 @@ export const CommentItem = memo(({
                         {text.length > 0 && (
                             <View>
                                 {!isShowingTranslation && comment.caption_parts && comment.caption_parts.length > 0 ? (
-                                    <FlexText lite={false} style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
+                                    <FlexText style={[common.body, { fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
                                         {comment.caption_parts.map((part, index) => {
                                             if (part.type === 'tag') {
                                                 return (
                                                     <FlexText
-                                                        lite={false}
                                                         key={index}
                                                         style={{ color: colors.primary, fontWeight: '600' }}
                                                         onPress={() => handleHashtagPress(part.text)}
@@ -174,7 +174,6 @@ export const CommentItem = memo(({
                                             if (part.type === 'mention') {
                                                 return (
                                                     <FlexText
-                                                        lite={false}
                                                         key={index}
                                                         style={{ color: colors.primary, fontWeight: '600' }}
                                                         onPress={() => handleMentionPress(part.text)}
@@ -250,21 +249,7 @@ export const CommentItem = memo(({
                             ) : (
                                 <LikeIcon size={16} color={colors.onSurfaceVariant} />
                             )}
-                            {(comment.like_count || 0) > 0 && (
-                                <FlexText
-                                    style={[
-                                        common.label,
-                                        {
-                                            fontSize: 11,
-                                            color: comment.is_liked ? colors.primary : colors.onSurfaceVariant,
-                                            fontWeight: '700',
-                                            marginTop: 2,
-                                        }
-                                    ]}
-                                >
-                                    {comment.like_count}
-                                </FlexText>
-                            )}
+                            <AbbreviatedSlidingNumber value={comment.like_count || 0} digits={1} size={14} weight="normal" color={colors.onSurface} />
                         </TouchableOpacity>
                     )}
                 </View>

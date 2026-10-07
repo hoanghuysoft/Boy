@@ -6,7 +6,7 @@ interface BookmarkSolidIconProps extends SvgProps {
     color?: string;
 }
 
-const BookmarkSolidIcon = ({
+const BookmarkSolidIcon = React.memo(({
     size = 24,
     color = "#000",
     ...props
@@ -20,6 +20,7 @@ const BookmarkSolidIcon = ({
     >
         <Path d="M19 2H5a2 2 0 0 0-2 2v16.887c0 1.266 1.382 2.048 2.469 1.399L12 18.366l6.531 3.919c1.087.652 2.469-.131 2.469-1.397V4a2 2 0 0 0-2-2Z" />
     </Svg>
-)
+));
+BookmarkSolidIcon.displayName = "BookmarkSolidIcon";
 
 export default BookmarkSolidIcon;

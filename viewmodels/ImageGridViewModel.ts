@@ -112,12 +112,12 @@ export const useImageGridViewModel = (options: UseImageGridViewModelOptions = {}
         let finalGridData = result.gridData;
 
         if (loading && mediaList.length === 0) {
-            finalGridData = Array.from({ length: NUM_COLUMNS * 2 }).map((_, index) => ({
+            finalGridData = Array.from({ length: NUM_COLUMNS * 7 }).map((_, index) => ({
                 type: 'shimmer' as const,
                 flatIndex: index,
             }));
         } else if (fetchingMore) {
-            const shimmerItems: GridItemType[] = Array.from({ length: NUM_COLUMNS }).map((_, i) => ({
+            const shimmerItems: GridItemType[] = Array.from({ length: NUM_COLUMNS * 2 }).map((_, i) => ({
                 type: 'shimmer' as const,
                 flatIndex: -(i + 1),
             }));

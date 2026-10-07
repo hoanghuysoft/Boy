@@ -1,7 +1,7 @@
+import ChatIcon from "@/assets/images/svg/chat-double.svg";
 import VerifiedIcon from '@/icons/verified';
 import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import ChatIcon from "@/assets/images/svg/chat-double.svg";
 import { Image } from 'expo-image';
 import { MediaViewer } from 'expo-media-viewer';
 import { useRouter } from 'expo-router';
@@ -228,6 +228,7 @@ export const HeaderInfoCard = ({
   onPress,
   backgroundColor,
   backgroundImageUri,
+  backgroundImageSource,
   showDimOverlay,
   showTintOverlay,
   leading,
@@ -239,6 +240,7 @@ export const HeaderInfoCard = ({
   onPress?: () => void;
   backgroundColor?: string;
   backgroundImageUri?: string;
+  backgroundImageSource?: any;
   showDimOverlay?: boolean;
   showTintOverlay?: string;
   leading?: React.ReactNode;
@@ -246,29 +248,32 @@ export const HeaderInfoCard = ({
   centerText?: boolean;
   labelStyle?: any;
   children: React.ReactNode;
-}) => (
-  <SquircleView cornerSmoothing={60} preserveSmoothing borderRadius={9999} style={headerStyles.infoCardOuter}>
-    <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={[headerStyles.infoCardInner, backgroundColor ? { backgroundColor } : null]}>
-      {backgroundImageUri && (
-        <Image source={{ uri: backgroundImageUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
-      )}
-      {showDimOverlay && <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />}
-      {showTintOverlay && <View style={[StyleSheet.absoluteFill, { backgroundColor: showTintOverlay, opacity: 0.1 }]} />}
-      {leading}
-      <FlexText
-        numberOfLines={2}
-        style={[
-          labelStyle,
-          headerStyles.infoCardLabel,
-          textColor ? { color: textColor } : null,
-          centerText ? { textAlign: 'center' } : null,
-        ]}
-      >
-        {children}
-      </FlexText>
-    </TouchableOpacity>
-  </SquircleView>
-);
+}) => {
+  const bgSource = backgroundImageSource || (backgroundImageUri ? (typeof backgroundImageUri === 'string' ? { uri: backgroundImageUri } : backgroundImageUri) : null);
+  return (
+    <SquircleView cornerSmoothing={60} preserveSmoothing borderRadius={9999} style={headerStyles.infoCardOuter}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={[headerStyles.infoCardInner, backgroundColor ? { backgroundColor } : null]}>
+        {bgSource && (
+          <Image source={bgSource} style={StyleSheet.absoluteFill} contentFit="cover" />
+        )}
+        {showDimOverlay && <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />}
+        {showTintOverlay && <View style={[StyleSheet.absoluteFill, { backgroundColor: showTintOverlay, opacity: 0.2 }]} />}
+        {leading}
+        <FlexText
+          numberOfLines={2}
+          style={[
+            labelStyle,
+            headerStyles.infoCardLabel,
+            textColor ? { color: textColor } : null,
+            centerText ? { textAlign: 'center' } : null,
+          ]}
+        >
+          {children}
+        </FlexText>
+      </TouchableOpacity>
+    </SquircleView>
+  );
+};
 
 export const HeaderTabBar = ({ vm, activeTab }: { vm: any; activeTab: string }) => {
   const pt = vm.colors.pillTab;

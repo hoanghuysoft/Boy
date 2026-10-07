@@ -8,9 +8,10 @@
       "args": ["-y", "@heroui/native-mcp@latest"]
     },
     "argent": {
-      "command": "node",
+      "command": "npx",
       "args": [
-        "node_modules/@swmansion/argent/dist/cli.js",
+        "-y",
+        "@swmansion/argent@latest",
         "mcp"
       ]
     }

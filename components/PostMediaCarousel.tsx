@@ -11,13 +11,13 @@ import { Media } from "@/types/post";
 import { buildFallbackUrls, chosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
 import { Image as ExpoImage } from "expo-image";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
     PixelRatio,
     Platform,
-    Pressable as RNPressable,
+    Pressable,
     StyleProp,
     StyleSheet,
     Text,
@@ -26,7 +26,7 @@ import {
     ViewToken,
     ViewabilityConfig,
 } from "react-native";
-import { FlatList, Pressable } from "react-native-gesture-handler";
+import { FlatList } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, {
     interpolate,
@@ -132,12 +132,12 @@ const VideoPresentationControls = React.memo(React.forwardRef<VideoPresentationC
     return (
         <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
             {/* Fullscreen tap area */}
-            <RNPressable
+            <Pressable
                 onPress={handleEnterFullscreen}
                 style={StyleSheet.absoluteFill}
             />
             {/* Play / Pause button */}
-            <RNPressable
+            <Pressable
                 onPress={handleTogglePlayback}
                 style={{
                     position: 'absolute',
@@ -158,7 +158,7 @@ const VideoPresentationControls = React.memo(React.forwardRef<VideoPresentationC
                 ) : (
                     <PlayIcon width={18} height={18} color="#ffffff" />
                 )}
-            </RNPressable>
+            </Pressable>
 
             {/* Time remaining */}
             <TimeIndicator
@@ -172,7 +172,7 @@ const VideoPresentationControls = React.memo(React.forwardRef<VideoPresentationC
             />
 
             {/* Mute / Unmute button */}
-            <RNPressable
+            <Pressable
                 onPress={handleToggleMuted}
                 style={{
                     position: 'absolute',
@@ -193,7 +193,7 @@ const VideoPresentationControls = React.memo(React.forwardRef<VideoPresentationC
                 ) : (
                     <SoundIcon width={16} height={16} color="#ffffff" />
                 )}
-            </RNPressable>
+            </Pressable>
         </View>
     );
 }));
@@ -331,7 +331,7 @@ const VideoCarouselItem = React.memo(({
                     />
 
                     {showOverlay && (
-                        <RNPressable
+                        <Pressable
                             onPress={() => videoRef.current?.togglePlayback()}
                             style={[
                                 StyleSheet.absoluteFill,
@@ -353,7 +353,7 @@ const VideoCarouselItem = React.memo(({
                                     <PlayIcon width={28} height={28} color="#ffffff" />
                                 </View>
                             )}
-                        </RNPressable>
+                        </Pressable>
                     )}
                 </View>
 

@@ -48,4 +48,5 @@ const Settings = ({
 );
 
 const SettingsIcon = memo(Settings);
+SettingsIcon.displayName = "SettingsIcon";
 export default SettingsIcon;

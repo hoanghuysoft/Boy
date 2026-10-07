@@ -27,7 +27,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // How many posts ahead to prefetch images for
-const PREFETCH_AHEAD = 3;
+const PREFETCH_AHEAD = 2;
 
 interface FeedTabProps {
     feedType: "latest" | "lucky" | "this_day";
@@ -169,8 +169,9 @@ const FeedTab: React.FC<FeedTabProps> = ({
                     prefetchedUrls.current.add(p.profile_avatar);
                     Image.prefetch(p.profile_avatar);
                 }
-                for (const m of p.media ?? []) {
-                    const url = m.type === 'video' ? m.thumbnail_url : m.url;
+                const firstMedia = p.media?.[0];
+                if (firstMedia) {
+                    const url = firstMedia.type === 'video' ? firstMedia.thumbnail_url : firstMedia.url;
                     if (url && !prefetchedUrls.current.has(url)) {
                         prefetchedUrls.current.add(url);
                         Image.prefetch(url);

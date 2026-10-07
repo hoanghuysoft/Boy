@@ -1,4 +1,5 @@
 import { FlexText } from '@/components/FlexText';
+import SpinButton from '@/components/ui/micro-interactions/spin-button';
 import { useThemeContext } from '@/context/ThemeContext';
 import { useProfile, useUpdateProfile } from '@/services/userprofile';
 import { createCommonStyles } from '@/styles/common';
@@ -9,7 +10,6 @@ import dayjs from 'dayjs';
 import { Image as ExpoImage } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
-import { Button } from "heroui-native/button";
 import { Chip } from "heroui-native/chip";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
@@ -809,10 +809,10 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
                     paddingHorizontal: 16,
                     backgroundColor: colors.background,
                     flexDirection: 'row',
-                    alignItems: 'flex-end',
+                    alignItems: 'center',
                     justifyContent: 'space-between',
                 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, marginRight: 12 }}>
                         <TouchableOpacity
                             onPress={() => router.back()}
                             style={{
@@ -826,33 +826,35 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
                         >
                             <Ionicons name="arrow-back" size={22} color={colors.text} />
                         </TouchableOpacity>
-                        <View>
-                            <FlexText style={[common.heading, { fontSize: 24 }]}>
+                        <View style={{ flex: 1 }}>
+                            <FlexText style={[common.heading, { fontSize: 24 }]} numberOfLines={1}>
                                 {t('profile.edit.title', 'Edit Profile')}
                             </FlexText>
-                            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 1 }]}>
+                            <FlexText style={[common.bodySmall, { color: colors.muted, marginTop: 1 }]} numberOfLines={1}>
                                 {t('profile.edit.subtitle', 'Update your personal info')}
                             </FlexText>
                         </View>
                     </View>
 
                     {/* Right: Save button */}
-                    {hasChanges && (
-                        <Button
-                            variant="primary"
-                            onPress={handleSave}
-                            isDisabled={isSaving}
-                            style={{ height: 36, paddingHorizontal: 18, borderRadius: 18, justifyContent: 'center', alignItems: 'center' }}
-                        >
-                            {isSaving ? (
-                                <Spinner color="#ffffff" size="sm" />
-                            ) : (
-                                <Button.Label style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>
-                                    {t('profile.edit.save', 'Save')}
-                                </Button.Label>
-                            )}
-                        </Button>
-                    )}
+                    {hasChanges && <SpinButton
+                        idleText={t('profile.edit.save', 'Save')}
+                        activeText={t('profile.edit.saving', 'Saving...')}
+                        controlled
+                        isActive={isSaving}
+                        disabled={!hasChanges || isSaving}
+                        onPress={handleSave}
+                        buttonStyle={{
+                            paddingHorizontal: 16,
+                        }}
+                        animationConfig={{
+                            spring: {
+                                damping: 50,
+                                stiffness: 250,
+                                mass: 1,
+                            },
+                        }}
+                    />}
                 </View>
 
                 <Tab.Navigator

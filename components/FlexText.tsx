@@ -23,6 +23,7 @@ export interface FlexTextProps extends TextProps {
   isMonospaced?: boolean;
   shortWidthCharacters?: string[];
   longWidthCharacters?: string[];
+  renderContent?: (text: string) => React.ReactNode;
 }
 
 const FONT_MAP: Record<string, string> = {
@@ -93,6 +94,7 @@ export function FlexText(props: FlexTextProps) {
     isMonospaced,
     shortWidthCharacters,
     longWidthCharacters,
+    renderContent,
     numberOfLines,
     ...rest
   } = props;
@@ -112,6 +114,8 @@ export function FlexText(props: FlexTextProps) {
         isMonospaced={isMonospaced}
         shortWidthCharacters={shortWidthCharacters}
         longWidthCharacters={longWidthCharacters}
+        parse={parse}
+        renderContent={renderContent}
         {...rest}
         style={[style, { fontFamily: selectedFont }]}
       >

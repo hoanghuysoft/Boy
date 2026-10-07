@@ -10,6 +10,7 @@ import {
   TextStyle,
   View,
 } from 'react-native';
+import ParsedText from 'react-native-parsed-text';
 import {
   balanceDiffHelper,
   calculateSlicePositionHelper,
@@ -30,6 +31,8 @@ export interface RNShowMoreTextProps extends Omit<TextProps, 'children'> {
   isMonospaced?: boolean;
   shortWidthCharacters?: string[];
   longWidthCharacters?: string[];
+  parse?: any[];
+  renderContent?: (text: string) => React.ReactNode;
 }
 
 export const RNShowMoreText = memo(({
@@ -44,6 +47,8 @@ export const RNShowMoreText = memo(({
   isMonospaced = false,
   shortWidthCharacters = [],
   longWidthCharacters = [],
+  parse,
+  renderContent,
   style,
   onTextLayout,
   ...rest
@@ -179,6 +184,27 @@ export const RNShowMoreText = memo(({
   const flattenedStyle = StyleSheet.flatten(style || {});
   const targetOpacity = flattenedStyle?.opacity ?? 1;
 
+  const renderTextContent = () => {
+    const currentText = fullTextRef.current;
+    if (renderContent) {
+      return renderContent(currentText);
+    }
+    return currentText;
+  };
+
+  const readMoreNode = calculated && isNeedReadMore ? (
+    <Text
+      style={[styles.readMoreText, readMoreStyle]}
+      suppressHighlighting
+      {...readMoreTextProps}
+      onPress={toggleExpansion}
+    >
+      {isShowingFullTextRef.current
+        ? ` ${readLessText || 'Read less'}`
+        : readMoreContent}
+    </Text>
+  ) : null;
+
   return (
     <View style={styles.container} onLayout={onContainerLayout}>
       {/* Visible rendered text */}
@@ -190,19 +216,13 @@ export const RNShowMoreText = memo(({
           { opacity: calculated ? targetOpacity : 0 },
         ]}
       >
-        {fullTextRef.current}
-        {calculated && isNeedReadMore ? (
-          <Text
-            style={[styles.readMoreText, readMoreStyle]}
-            suppressHighlighting
-            {...readMoreTextProps}
-            onPress={toggleExpansion}
-          >
-            {isShowingFullTextRef.current
-              ? ` ${readLessText || 'Read less'}`
-              : readMoreContent}
-          </Text>
-        ) : null}
+        {parse && parse.length > 0 && !renderContent ? (
+          // ParsedText only parses when its children is a single string
+          <ParsedText parse={parse}>{fullTextRef.current}</ParsedText>
+        ) : (
+          renderTextContent()
+        )}
+        {readMoreNode}
       </Text>
 
       {/* Hidden unconstrained text for line & width layout measurement */}
@@ -227,7 +247,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   readMoreText: {
-    fontWeight: 'bold',
+    fontFamily: 'GoogleSansFlexBold',
   },
   hiddenMeasure: {
     position: 'absolute',

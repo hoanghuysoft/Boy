@@ -1,10 +1,11 @@
 import LocationIcon from "@/assets/images/svg/location.svg";
 import StickyNoteIcon from "@/assets/images/svg/sticky-note.svg";
+import { checkAvailability, fourhands } from '@/experimental/theme';
 import VerifiedIcon from '@/icons/verified';
 import { useSettingsStore } from '@/stores/settings';
-import { MeshGradient } from '@kuss/react-native-mesh-gradient';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { SilkGradient } from '@rit3zh/gradients';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from 'expo-router';
@@ -24,6 +25,7 @@ import { ProfileMusic } from '../../types/profilemusic';
 import { Workplace } from '../../types/profileworplace';
 import type { TabType } from '../../viewmodels/ProfileHeaderViewModel';
 import { useProfileHeaderViewModel } from '../../viewmodels/ProfileHeaderViewModel';
+import { AbbreviatedSlidingNumber } from '../AbbreviatedSlidingNumber';
 import { FlexText } from '../FlexText';
 import { usePagerHeaderContext } from '../pager/PagerHeaderContext';
 import BirthdayCard from './BirthdayCard';
@@ -110,6 +112,11 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
         return extractThreadsProfileInfo(socialLinks, profile);
     }, [socialLinks, profile, socialAioClientId]);
 
+    const isExperimentalTheme = useMemo(
+        () => checkAvailability(profile?.username),
+        [profile?.username]
+    );
+
     const headerCtx = usePagerHeaderContext();
     const topInset = vm.insets.top;
     const animatedContentStyle = useAnimatedStyle(() => {
@@ -152,16 +159,17 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                         style={StyleSheet.absoluteFill}
                         contentFit="cover"
                     />
+                ) : isExperimentalTheme && fourhands.cover ? (
+                    <ExpoImage
+                        source={fourhands.cover}
+                        style={StyleSheet.absoluteFill}
+                        contentFit="cover"
+                    />
                 ) : (
                     vm.gradientColors.length === 4 && (
-                        <MeshGradient
-                            brightness={vm.meshGradientDefaults.brightness}
-                            contrast={vm.meshGradientDefaults.contrast}
-                            speed={vm.meshGradientDefaults.speed}
-                            colors={vm.gradientColors}
-                            frequency={vm.meshGradientDefaults.frequency}
-                            amplitude={vm.meshGradientDefaults.amplitude}
+                        <SilkGradient
                             style={StyleSheet.absoluteFill}
+                            colors={vm.gradientColors}
                         />
                     )
                 )}
@@ -176,14 +184,25 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
             {/* Top space pushing avatar below header controls */}
             <View pointerEvents="none" style={{ height: vm.insets.top + 110 }} />
             <View pointerEvents="box-none" style={styles.avatarRow}>
-                <ImageViewer>
-                    <ImageViewer.Trigger
-                        source={{ uri: profile?.avatar_url }}
-                        alt="Avatar"
-                        radius={999}
-                        className="h-18 w-18"
-                    />
-                </ImageViewer>
+                <View pointerEvents="box-none" style={styles.avatarWrapper}>
+                    <ImageViewer>
+                        <ImageViewer.Trigger
+                            source={{ uri: profile?.avatar_url }}
+                            alt="Avatar"
+                            radius={999}
+                            className="h-18 w-18"
+                        />
+                    </ImageViewer>
+                    {isExperimentalTheme ? (
+                        <View pointerEvents="none" style={styles.avatarFrameContainer}>
+                            <ExpoImage
+                                source={fourhands.avatar_frame}
+                                style={styles.avatarFrame}
+                                contentFit="contain"
+                            />
+                        </View>
+                    ) : null}
+                </View>
                 <View pointerEvents="box-none" className="flex-row gap-2">
                     <Button variant="secondary" isIconOnly onPress={() => onPresentSheet?.(briefSheetRef as React.RefObject<any>)}>
                         <ExpoImage source={require("@/assets/images/icons/info.png")} style={{ width: 36, height: 36 }} contentFit="contain"
@@ -210,10 +229,20 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
             </View>
             <View pointerEvents="none" className="flex-row items-center gap-2 mb-1">
                 <FlexText style={[vm.common.headline, { fontWeight: 'bold' }]}>{profile?.name}</FlexText>
-                {profile?.is_verified && <VerifiedIcon size={24} />}
+                {profile?.is_verified && <VerifiedIcon animated size={24} />}
             </View>
             {!!profile?.username && (
                 <View pointerEvents="none"><FlexText style={[vm.common.body, { color: vm.colors.muted, marginBottom: 8 }]}>@{profile.username}</FlexText></View>
+            )}
+            {isExperimentalTheme && (
+                <View pointerEvents="none" style={{ marginBottom: 10 }}>
+                    <ExpoImage
+                        source={fourhands.logo}
+                        style={{ width: 160, height: 50 }}
+                        contentFit="contain"
+                        tintColor={vm.colors.onSurface}
+                    />
+                </View>
             )}
             {!!profile?.bio && (
                 <View style={{ marginBottom: 8 }}>
@@ -278,7 +307,12 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                     style={headerStyles.cardsScroll}
                     contentContainerStyle={headerStyles.cardsScrollContent}
                 >
-                    {profile?.birthday && <BirthdayCard birthday={profile.birthday} />}
+                    {profile?.birthday && (
+                        <BirthdayCard
+                            birthday={profile.birthday}
+                            backgroundImageSource={isExperimentalTheme ? fourhands.card_assets[0] : undefined}
+                        />
+                    )}
 
                     {!!xLinkInfo && (
                         <HeaderInfoCard
@@ -364,7 +398,8 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                         <HeaderInfoCard
                             onPress={() => onPresentSheet?.(socialSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
-                            backgroundImageUri={SOCIAL_BG_URL}
+                            backgroundImageSource={isExperimentalTheme ? fourhands.card_assets[1] : undefined}
+                            backgroundImageUri={isExperimentalTheme ? undefined : SOCIAL_BG_URL}
                             showDimOverlay
                             textColor="white"
                             centerText
@@ -380,12 +415,13 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                         <HeaderInfoCard
                             onPress={() => onPresentSheet?.(addressSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
-                            backgroundImageUri={ADDRESS_COVER}
-                            // showTintOverlay={vm.colors.onSurface}
+                            backgroundImageSource={isExperimentalTheme ? fourhands.card_assets[5] : undefined}
+                            backgroundImageUri={isExperimentalTheme ? undefined : ADDRESS_COVER}
+                            showTintOverlay={vm.colors.surface}
                             labelStyle={vm.common.label}
                             leading={(
                                 <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>
-                                    <PointOnMap size={28} color={vm.colors.text} />
+                                    <PointOnMap size={28} color={vm.colors.onSurface} />
                                 </View>
                             )}
                         >
@@ -399,12 +435,13 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                         <HeaderInfoCard
                             onPress={() => onPresentSheet?.(workplaceSheetRef as React.RefObject<any>)}
                             backgroundColor={vm.colors.card}
-                            backgroundImageUri={WORK_COVER}
-                            // showTintOverlay={vm.colors.onSurface}
+                            backgroundImageSource={isExperimentalTheme ? fourhands.card_assets[10] : undefined}
+                            backgroundImageUri={isExperimentalTheme ? undefined : WORK_COVER}
+                            showTintOverlay={vm.colors.surface}
                             labelStyle={vm.common.label}
                             leading={(
-                                <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.card }]}>
-                                    <CaseMinimalistic size={28} color={vm.colors.text} />
+                                <View style={[headerStyles.iconBubble, { backgroundColor: vm.colors.surface }]}>
+                                    <CaseMinimalistic size={28} color={vm.colors.onSurface} />
                                 </View>
                             )}
                         >
@@ -416,10 +453,25 @@ const ProfileHeaderV3: React.FC<ProfileHeaderV3Props> = memo(({
                 </ScrollView>
             )}
 
-            <View pointerEvents="none" className="flex-row gap-2" style={{ marginBottom: 12 }}>
-                <FlexText style={{ color: vm.colors.text }}>{postCount} <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>{t("profile.header.countPosts", { count: postCount })}</FlexText></FlexText>
-                <FlexText style={{ color: vm.colors.text }}>{imageCount} <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>{t("profile.header.countImages", { count: imageCount })}</FlexText></FlexText>
-                <FlexText style={{ color: vm.colors.text }}>{videoCount} <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>{t("profile.header.countVideos", { count: videoCount })}</FlexText></FlexText>
+            <View pointerEvents="none" className="flex-row gap-3 items-center" style={{ marginBottom: 12 }}>
+                <View className="flex-row items-center gap-1">
+                    <AbbreviatedSlidingNumber value={postCount} digits={1} size={16} color={vm.colors.onSurface} weight="normal" />
+                    <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>
+                        {t("profile.header.countPosts", { count: postCount })}
+                    </FlexText>
+                </View>
+                <View className="flex-row items-center gap-1">
+                    <AbbreviatedSlidingNumber value={imageCount} digits={1} size={16} color={vm.colors.onSurface} weight="normal" />
+                    <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>
+                        {t("profile.header.countImages", { count: imageCount })}
+                    </FlexText>
+                </View>
+                <View className="flex-row items-center gap-1">
+                    <AbbreviatedSlidingNumber value={videoCount} digits={1} size={16} color={vm.colors.onSurface} weight="normal" />
+                    <FlexText style={{ fontWeight: 'bold', color: vm.colors.muted, textTransform: 'capitalize' }}>
+                        {t("profile.header.countVideos", { count: videoCount })}
+                    </FlexText>
+                </View>
             </View>
         </Reanimated.View>
     );
@@ -452,6 +504,26 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 10,
+    },
+    avatarWrapper: {
+        position: 'relative',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 72,
+        height: 72,
+    },
+    avatarFrameContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarFrame: {
+        width: 80,
+        height: 80,
     },
     editButton: {
         paddingHorizontal: 32,

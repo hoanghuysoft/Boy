@@ -3,8 +3,8 @@ import { createCommonStyles } from '@/styles/common';
 import { Post } from '@/types/post';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { StyleSheet, View, Text } from 'react-native';
 import Animated, {
     cancelAnimation,
     runOnJS,
@@ -22,10 +22,10 @@ interface PostMetaInfoProps {
 
 const ITEM_HEIGHT = 20; // Fixed height for a single line of text
 
-const MetaInfoCycler = ({ items, colors, common }: { items: string[], colors: any, common: any }) => {
+const MetaInfoCycler = React.memo(({ items, colors, common }: { items: string[], colors: any, common: any }) => {
     // 1. Create a "Carousel" list: [Item A, Item B, Item A]. 
     // The duplicate at the end allows us to loop seamlessly.
-    const carouselItems = [...items, items[0]];
+    const carouselItems = useMemo(() => [...items, items[0]], [items]);
     const translateY = useSharedValue(0);
 
     useEffect(() => {
@@ -60,7 +60,7 @@ const MetaInfoCycler = ({ items, colors, common }: { items: string[], colors: an
         runSequence(1);
 
         return () => cancelAnimation(translateY);
-    }, [items]); // Reset if the actual data changes
+    }, [carouselItems, translateY]);
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: translateY.value }]
@@ -74,9 +74,9 @@ const MetaInfoCycler = ({ items, colors, common }: { items: string[], colors: an
             */}
             <View style={styles.sizer}>
                 {items.map((t, i) => (
-                    <Animated.Text key={i} style={[common.label, { fontSize: 12, opacity: 0, height: 0 }]}>
+                    <Text key={i} style={[common.label, { fontSize: 12, opacity: 0, height: 0 }]}>
                         {t}
-                    </Animated.Text>
+                    </Text>
                 ))}
             </View>
 
@@ -88,54 +88,59 @@ const MetaInfoCycler = ({ items, colors, common }: { items: string[], colors: an
                 <Animated.View style={animatedStyle}>
                     {carouselItems.map((item, index) => (
                         <View key={index} style={{ height: ITEM_HEIGHT, justifyContent: 'center' }}>
-                            <Animated.Text
+                            <Text
                                 style={[common.label, { color: colors.muted, fontSize: 12 }]}
                                 numberOfLines={1}
                             >
                                 {item}
-                            </Animated.Text>
+                            </Text>
                         </View>
                     ))}
                 </Animated.View>
             </View>
         </View>
     );
-};
+});
+MetaInfoCycler.displayName = "MetaInfoCycler";
 
-export const PostMetaInfo = ({ post }: PostMetaInfoProps) => {
+export const PostMetaInfo = React.memo(({ post }: PostMetaInfoProps) => {
     const { colors, typography } = useThemeContext();
-    const common = createCommonStyles(colors, typography);
+    const common = useMemo(() => createCommonStyles(colors, typography), [colors, typography]);
 
-    const items: string[] = [];
+    const locationName = typeof post.location === 'string' ? post.location : post.location?.name;
+    const musicInfo = post.music?.title && post.music?.artist ? `${post.music.title} - ${post.music.artist}` : undefined;
 
-    // 1. Time
-    items.push(dayjs(post.created_at).fromNow());
-
-    // 2. Location
-    if (post.location) {
-        if (typeof post.location === 'string') items.push(post.location);
-        else if (post.location.name) items.push(post.location.name);
-    }
-
-    // 3. Music
-    if (post.music?.title && post.music?.artist) {
-        items.push(`${post.music.title} - ${post.music.artist}`);
-    }
+    const items = useMemo(() => {
+        const list: string[] = [dayjs(post.created_at).fromNow()];
+        if (locationName) list.push(locationName);
+        if (musicInfo) list.push(musicInfo);
+        return list;
+    }, [post.created_at, locationName, musicInfo]);
 
     if (items.length === 0) return null;
 
     if (items.length === 1) {
         return (
             <View>
-                <Animated.Text style={[common.label, { color: colors.muted, fontSize: 12 }]}>
+                <Text style={[common.label, { color: colors.muted, fontSize: 12 }]}>
                     {items[0]}
-                </Animated.Text>
+                </Text>
             </View>
         );
     }
 
     return <MetaInfoCycler items={items} colors={colors} common={common} />;
-};
+}, (prev, next) => {
+    const getLocationName = (loc: any) => typeof loc === 'string' ? loc : loc?.name;
+    return (
+        prev.post.id === next.post.id &&
+        prev.post.created_at === next.post.created_at &&
+        getLocationName(prev.post.location) === getLocationName(next.post.location) &&
+        prev.post.music?.title === next.post.music?.title &&
+        prev.post.music?.artist === next.post.music?.artist
+    );
+});
+PostMetaInfo.displayName = "PostMetaInfo";
 
 const styles = StyleSheet.create({
     container: {

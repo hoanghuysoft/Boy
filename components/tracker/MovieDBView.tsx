@@ -37,7 +37,7 @@ import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CgvCard } from "./CgvCard";
 import { getBestLogo, getLogoDimensions } from "./logoUtils";
-import { CgvDetailSheet } from "./sheets/CgvDetailSheet";
+import { CgvDetailSheet, CgvDetailSheetRef } from "./sheets/CgvDetailSheet";
 
 const CARD_WIDTH = 140;
 
@@ -280,7 +280,7 @@ export const MovieDBView = ({ headerScrollX, scrollY }: { headerScrollX: Animate
         return cgvMovies?.filter(m => m.category === Category.ComingSoon || m.category === "Phim Sắp Chiếu") ?? [];
     }, [cgvMovies]);
 
-    const cgvDetailSheetRef = useRef<TrueSheet>(null);
+    const cgvDetailSheetRef = useRef<CgvDetailSheetRef>(null);
     const [selectedCgvMovie, setSelectedCgvMovie] = useState<CgvMovie | null>(null);
 
     const handleCgvPress = useCallback((movie: CgvMovie) => {

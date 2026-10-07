@@ -1,14 +1,10 @@
 import { useContentNavigation } from "@/hooks/useContentNavigation";
 import { CaptionPart } from "@/types/post";
-import React, { memo, useCallback, useState } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Linking,
-  NativeSyntheticEvent,
   StyleSheet,
-  Text,
-  TextLayoutEventData,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { FlexText } from "./FlexText";
@@ -30,128 +26,122 @@ export const CaptionText = memo(({
 }: CaptionTextProps) => {
   const { t } = useTranslation();
   const { handleMentionPress, handleHashtagPress } = useContentNavigation();
-  const [expanded, setExpanded] = useState(false);
-  const [hasOverflow, setHasOverflow] = useState(false);
+
+  const primaryColor = colors?.primary || colors?.verify || '#2563EB';
+  const textColor = colors?.onSurface || colors?.text;
+  const hasParts = !!captionParts && captionParts.length > 0;
+
   const handleLinkPress = useCallback((url: string) => {
     const formattedUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
     Linking.openURL(formattedUrl).catch(() => { });
   }, []);
-  const handleTextLayout = useCallback((e: NativeSyntheticEvent<TextLayoutEventData>) => {
-    if (maxLines && e.nativeEvent.lines.length > maxLines) {
-      setHasOverflow(true);
+
+  const plainText = useMemo(
+    () => (hasParts ? captionParts!.map(p => p.text).join('') : caption),
+    [hasParts, captionParts, caption]
+  );
+
+  // Maps a visible prefix of `plainText` back onto the server-parsed parts.
+  const renderParts = useCallback((visible: string) => {
+    if (!captionParts) return visible;
+    // Truncation trims leading whitespace; skip the same amount in parts.
+    let skip = plainText.length - plainText.trimStart().length;
+    let remaining = visible.length;
+    const nodes: React.ReactNode[] = [];
+
+    for (let i = 0; i < captionParts.length && remaining > 0; i++) {
+      const part = captionParts[i];
+      let text = part.text;
+      if (skip > 0) {
+        const cut = Math.min(skip, text.length);
+        text = text.slice(cut);
+        skip -= cut;
+        if (!text) continue;
+      }
+      if (text.length > remaining) text = text.slice(0, remaining);
+      remaining -= text.length;
+
+      if (part.type === 'tag' || part.type === 'mention') {
+        const onPress = part.type === 'tag' ? handleHashtagPress : handleMentionPress;
+        nodes.push(
+          <FlexText
+            key={i}
+            medium
+            style={{ color: primaryColor }}
+            onPress={() => onPress(part.text)}
+            suppressHighlighting
+          >
+            {text}
+          </FlexText>
+        );
+      } else if (part.type === 'link') {
+        nodes.push(
+          <FlexText
+            key={i}
+            style={{ color: primaryColor, textDecorationLine: 'underline' }}
+            onPress={() => handleLinkPress(part.text)}
+            suppressHighlighting
+          >
+            {text}
+          </FlexText>
+        );
+      } else {
+        nodes.push(text);
+      }
     }
-  }, [maxLines]);
+    return nodes;
+  }, [captionParts, plainText, primaryColor, handleHashtagPress, handleMentionPress, handleLinkPress]);
 
-  if (!caption) return null;
+  // Client-side regex parsing only as a fallback when the server sent no parts.
+  const parseRules = useMemo(() => hasParts ? undefined : [
+    {
+      pattern: /#[^\s#@!$%^&*()+,.;?]+/gu,
+      style: { color: primaryColor, fontFamily: 'GoogleSansFlexMedium' },
+      onPress: handleHashtagPress,
+    },
+    {
+      pattern: /@[^\s#@!$%^&*()+,.;?]+/gu,
+      style: { color: primaryColor, fontFamily: 'GoogleSansFlexMedium' },
+      onPress: handleMentionPress,
+    },
+    {
+      type: 'url',
+      style: { color: primaryColor, textDecorationLine: 'underline' },
+      onPress: handleLinkPress,
+    },
+  ], [hasParts, primaryColor, handleHashtagPress, handleMentionPress, handleLinkPress]);
 
-  const textColor = colors?.onSurface || colors?.text;
-  const primaryColor = colors?.primary || colors?.verify || '#2563EB';
-  const effectiveMaxLines = maxLines ? (expanded ? undefined : maxLines) : undefined;
+  if (!plainText) return null;
+
+  const textStyle = [common?.body, { color: textColor, fontSize: 14, lineHeight: 20 }];
+
+  // No line limit (e.g. detail screen): render full content directly.
+  if (!maxLines) {
+    return (
+      <View style={styles.container}>
+        {hasParts ? (
+          <FlexText style={textStyle}>{renderParts(plainText)}</FlexText>
+        ) : (
+          <FlexText style={textStyle} parse={parseRules}>{plainText}</FlexText>
+        )}
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Hidden measurement view to determine if text exceeds maxLines */}
-      {!!maxLines && !hasOverflow && (
-        <View
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, opacity: 0 }}
-          pointerEvents="none"
-          aria-hidden
-        >
-          <FlexText
-            onTextLayout={handleTextLayout}
-            style={[common?.body, { color: colors?.text, fontSize: 14, lineHeight: 20 }]}
-          >
-            {caption}
-          </FlexText>
-        </View>
-      )}
-      {/* Visible caption text */}
-      {captionParts && captionParts.length > 0 ? (
-        <FlexText
-          numberOfLines={effectiveMaxLines}
-          style={[common?.body, { color: textColor, fontSize: 14, lineHeight: 20 }]}
-        >
-          {captionParts.map((part, index) => {
-            if (part.type === 'tag') {
-              return (
-                <Text
-                  key={index}
-                  style={{ color: primaryColor, fontWeight: '600' }}
-                  onPress={() => handleHashtagPress(part.text)}
-                  suppressHighlighting
-                >
-                  {part.text}
-                </Text>
-              );
-            }
-            if (part.type === 'mention') {
-              return (
-                <Text
-                  key={index}
-                  style={{ color: primaryColor, fontWeight: '600' }}
-                  onPress={() => handleMentionPress(part.text)}
-                  suppressHighlighting
-                >
-                  {part.text}
-                </Text>
-              );
-            }
-            if (part.type === 'link') {
-              return (
-                <Text
-                  key={index}
-                  style={{ color: primaryColor, textDecorationLine: 'underline' }}
-                  onPress={() => handleLinkPress(part.text)}
-                  suppressHighlighting
-                >
-                  {part.text}
-                </Text>
-              );
-            }
-            return part.text;
-          })}
-        </FlexText>
-      ) : (
-        <FlexText
-          numberOfLines={effectiveMaxLines}
-          style={[common?.body, { color: textColor, fontSize: 14, lineHeight: 20 }]}
-          parse={[
-            {
-              pattern: /#[^\s#@!$%^&*()+,.;?]+/gu,
-              style: { color: primaryColor, fontWeight: '600' },
-              onPress: handleHashtagPress,
-            },
-            {
-              pattern: /@[^\s#@!$%^&*()+,.;?]+/gu,
-              style: { color: primaryColor, fontWeight: '600' },
-              onPress: handleMentionPress,
-            },
-            {
-              type: 'url',
-              style: { color: primaryColor, textDecorationLine: 'underline' },
-              onPress: handleLinkPress,
-            }
-          ]}
-        >
-          {caption}
-        </FlexText>
-      )}
-      {/* Read more / Read less toggle button */}
-      {hasOverflow && (
-        <TouchableOpacity
-          onPress={() => setExpanded(prev => !prev)}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={styles.readMoreButton}
-        >
-          <FlexText
-            style={[styles.readMoreText, { color: primaryColor }]}
-            suppressHighlighting
-          >
-            {expanded ? t('post.readLess', 'Read less') : t('post.readMore', 'Read more')}
-          </FlexText>
-        </TouchableOpacity>
-      )}
+      <FlexText
+        isExpanded
+        numberOfLines={maxLines}
+        parse={parseRules}
+        renderContent={hasParts ? renderParts : undefined}
+        readMoreText={t('post.readMore', 'Read more')}
+        readLessText={t('post.readLess', 'Read less')}
+        readMoreStyle={[styles.readMoreText, { color: primaryColor }]}
+        style={textStyle}
+      >
+        {plainText}
+      </FlexText>
     </View>
   );
 });
@@ -162,12 +152,8 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 4,
   },
-  readMoreButton: {
-    marginTop: 4,
-    alignSelf: 'flex-start',
-  },
   readMoreText: {
-    fontWeight: '700',
+    fontFamily: 'GoogleSansFlexBold',
     fontSize: 13,
   },
 });

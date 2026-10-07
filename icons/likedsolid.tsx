@@ -6,7 +6,7 @@ interface LikeSolidIconProps extends SvgProps {
     color?: string;
 }
 
-const LikeSolidIcon = ({
+const LikeSolidIcon = React.memo(({
     size = 48,
     color = "#FFF",
     ...props
@@ -30,6 +30,7 @@ const LikeSolidIcon = ({
             />
         </G>
     </Svg>
-)
+));
+LikeSolidIcon.displayName = "LikeSolidIcon";
 
 export default LikeSolidIcon;

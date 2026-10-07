@@ -1,8 +1,8 @@
-import AssemblyText from "@/components/AssemblyText";
 import { FlexText } from "@/components/FlexText";
 import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerSheet";
 import { CgvCard } from "@/components/tracker/CgvCard";
-import { CgvDetailSheet } from "@/components/tracker/sheets/CgvDetailSheet";
+import { CgvDetailSheet, CgvDetailSheetRef } from "@/components/tracker/sheets/CgvDetailSheet";
+import { FadeText } from "@/components/ui/organisms/fade-text";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useCgvMoviesQuery } from "@/services/cgv";
 import { useInfiniteMedia } from "@/services/media";
@@ -14,6 +14,7 @@ import { Category, CgvMovie } from "@/types/cgv";
 import { Profile } from "@/types/profile";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import { ProgressiveBlurView } from 'expo-backdrop';
 import { BlurTargetView, BlurView } from "expo-blur";
 import { MINIMIZE_SPRING, useTabBarMinimized } from "expo-glass-tabs";
 import { Image } from "expo-image";
@@ -250,7 +251,7 @@ const DashboardScreen = () => {
         return result;
     }, [cgvMovies]);
 
-    const cgvDetailSheetRef = useRef<TrueSheet>(null);
+    const cgvDetailSheetRef = useRef<CgvDetailSheetRef>(null);
     const [selectedCgvMovie, setSelectedCgvMovie] = useState<CgvMovie | null>(null);
 
     const handleCgvPress = useCallback((movie: CgvMovie) => {
@@ -270,6 +271,11 @@ const DashboardScreen = () => {
     // );
     return (
         <View style={[common.screen, { gap: 4 }]}>
+            <ProgressiveBlurView
+                edge="top"
+                tintColor={colors.surface}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 120, pointerEvents: 'none', zIndex: 100 }}
+            />
             <View style={StyleSheet.absoluteFill}>
                 <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
                     <Image
@@ -304,26 +310,33 @@ const DashboardScreen = () => {
             )}
             <Animated.ScrollView ref={scrollRef} onScroll={scrollHandler} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 250 + insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 99 }}>
                 <Pressable onPress={() => activeProfile?.id && router.push(`/profile/${activeProfile.id}`)}>
-                    <AssemblyText
-                        text={activeProfile?.name ?? ""}
-                        fontSize={46}
+                    <FadeText
+                        key={`name-${activeProfile?.id}-${focusTrigger}`}
+                        inputs={[activeProfile?.name ?? ""]}
+                        fontSize={42}
                         fontWeight="bold"
                         color="white"
-                        delayOffset={200}
-                        trigger={focusTrigger}
+                        textAlign="left"
+                        wordDelay={120}
+                        delayOffset={100}
+                        duration={700}
+                        containerStyle={{ alignItems: "flex-start", paddingHorizontal: 0 }}
                     />
-                    <AssemblyText
-                        text={
+                    <FadeText
+                        key={`handle-${activeProfile?.id}-${focusTrigger}`}
+                        inputs={[
                             activeProfile?.username
                                 ? `@${activeProfile.username}`
                                 : activeProfile?.email || ""
-                        }
-
+                        ]}
                         fontSize={16}
                         fontWeight="normal"
                         color="white"
-                        delayOffset={600}
-                        trigger={focusTrigger}
+                        textAlign="left"
+                        wordDelay={80}
+                        delayOffset={350}
+                        duration={600}
+                        containerStyle={{ alignItems: "flex-start", paddingHorizontal: 0, marginTop: 4 }}
                     />
                 </Pressable>
                 <SquircleView cornerSmoothing={100} borderRadius={32} style={{ marginTop: 16, overflow: 'hidden' }}>

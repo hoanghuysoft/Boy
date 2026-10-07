@@ -14,6 +14,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
 import { Tabs } from "heroui-native/tabs";
 import { Spinner } from "panelui-native";
+import { useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -44,6 +45,8 @@ import { TriviaSheet } from "@/components/profile/sheets/TriviaSheet";
 import { SpinningArtwork } from "@/components/profile/SpinningArtwork";
 import { useScrollStore } from "@/stores/scroll";
 import { BlurTargetView, BlurView } from "expo-blur";
+import { ThemeOverlay } from '@/components/profile/ThemeOverlay';
+import { checkAvailability } from '@/experimental/theme';
 
 // ─── Static skeleton shown during navigation transition ────────────────────────
 const ProfileSkeletonInner = ({ insets }: { insets: any }) => {
@@ -196,6 +199,13 @@ const ProfileContent = () => {
   } = useProfileViewModel();
   const { t } = useTranslation();
   const { height: windowHeight } = useWindowDimensions();
+  const params = useLocalSearchParams();
+  const paramId = Array.isArray(params.id) ? params.id[0] : params.id;
+
+  const isExperimentalTheme = useMemo(
+    () => checkAvailability(profile?.username) || checkAvailability(paramId),
+    [profile?.username, paramId]
+  );
 
   // ─── List refs & Scroll to Top ───────────────────────────────────
   const feedListRef = useRef<any>(null);
@@ -486,6 +496,8 @@ const ProfileContent = () => {
       <List
         ref={scrollElRef as any}
         data={imageChunkedRows}
+        estimatedItemSize={imageEstimatedItemSize}
+        drawDistance={500}
         renderItem={({ item, index }: any) => renderImageChunkedRow({ item, index, separators: {} as any })}
         keyExtractor={(item: any, index: number) => imageChunkedKeyExtractor(item, index)}
         headerOffset={headerHeight}
@@ -506,7 +518,7 @@ const ProfileContent = () => {
         getItemType={() => 'image_row'}
       />
     );
-  }, [colors.card, imageChunkedRows, renderImageChunkedRow, imageChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, handleScrollY, windowHeight]);
+  }, [colors.card, imageChunkedRows, imageEstimatedItemSize, renderImageChunkedRow, imageChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, handleScrollY, windowHeight]);
 
   // ─── Videos tab renderer ──────────────────────────────────────────
   const renderVideosTab = useCallback(({ headerHeight, isFocused, scrollElRef }: PagerWithHeaderChildParams) => {
@@ -516,6 +528,8 @@ const ProfileContent = () => {
         <List
           ref={scrollElRef as any}
           data={videoChunkedRows}
+          estimatedItemSize={videoEstimatedItemSize}
+          drawDistance={500}
           renderItem={({ item, index }: any) => renderVideoChunkedRow({ item, index, separators: {} as any })}
           keyExtractor={(item: any, index: number) => videoChunkedKeyExtractor(item, index)}
           headerOffset={headerHeight}
@@ -537,7 +551,7 @@ const ProfileContent = () => {
         />
       </MediaViewerWrapper>
     );
-  }, [videoChunkedRows, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, handleScrollY, videoMediaViewerItems, windowHeight]);
+  }, [videoChunkedRows, videoEstimatedItemSize, renderVideoChunkedRow, videoChunkedKeyExtractor, isProfileRefetching, onRefresh, colors.text, inset, isMe, handleEndReached, activeTab, makeEmptyComponent, handleScrollY, videoMediaViewerItems, windowHeight]);
 
   // Loading / Error state
   if (!profile) {
@@ -568,6 +582,9 @@ const ProfileContent = () => {
           }}>
           {t("profile.errors.failedToLoadProfile")}
         </Snackbar>
+        {isExperimentalTheme && (
+          <ThemeOverlay />
+        )}
       </View>
     );
   }
@@ -789,6 +806,10 @@ const ProfileContent = () => {
           onDismiss={handleCommentSheetDismiss}
         />
         <TranslationLanguageSheet />
+
+        {isExperimentalTheme && (
+          <ThemeOverlay />
+        )}
 
       </View>
     </View>

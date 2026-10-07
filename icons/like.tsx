@@ -6,7 +6,7 @@ interface SvgComponentProps extends SvgProps {
     color?: string;
 }
 
-const LikeIcon = ({
+const LikeIcon = React.memo(({
     size = 48,
     color = "#FFF",
     ...props
@@ -30,6 +30,7 @@ const LikeIcon = ({
             />
         </G>
     </Svg>
-)
+));
+LikeIcon.displayName = "LikeIcon";
 
-export default LikeIcon
+export default LikeIcon;

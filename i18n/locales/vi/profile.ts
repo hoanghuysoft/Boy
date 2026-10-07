@@ -307,7 +307,7 @@ const profile = {
         },
     },
     edit: {
-        title: 'Chỉnh sửa trang cá nhân',
+        title: 'Chỉnh sửa',
         subtitle: 'Cập nhật thông tin cá nhân của bạn',
         save: 'Lưu',
         tabs: {

@@ -1,8 +1,7 @@
-import FontAwesome from "@react-native-vector-icons/fontawesome/static";
-import { Spinner } from "panelui-native";
+import SpinButton from "@/components/ui/micro-interactions/spin-button";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
 import { FlexText } from "../FlexText";
 import { createStyles } from "./styles";
@@ -53,31 +52,32 @@ export const CreateScreenHeader = memo(({
                 </FlexText>
             </View>
 
-            <TouchableOpacity
-                style={[
-                    createStyles.submitButton,
-                    {
-                        backgroundColor: buttonBgColor,
-                        flexShrink: 0,
-                    },
-                ]}
+            <SpinButton
+                idleText={t('create.action.post')}
+                activeText={t('create.action.posting', 'Posting...')}
+                controlled
+                isActive={isSubmitting}
+                disabled={!canSubmit || isSubmitting}
                 onPress={onSubmit}
-                disabled={!canSubmit}
-            >
-                {isSubmitting ? (
-                    <Spinner size="md" color={buttonTextColor} />
-                ) : (
-                    <>
-                        <FontAwesome name="send" size={16} color={buttonTextColor} />
-                        <FlexText
-                            style={[createStyles.submitButtonText, { color: buttonTextColor }]}
-                            numberOfLines={1}
-                        >
-                            {t('create.action.post')}
-                        </FlexText>
-                    </>
-                )}
-            </TouchableOpacity>
+                animationConfig={{
+                    spring: {
+                        damping: 50,
+                        stiffness: 250,
+                        mass: 1,
+                    },
+                }}
+                colors={{
+                    idle: { background: buttonBgColor, text: buttonTextColor },
+                    active: { background: colors.primary, text: colors.onPrimary },
+                }}
+                spinnerConfig={{
+                    color: colors.onPrimary,
+                    containerBackground: colors.primary,
+                }}
+                buttonStyle={{
+                    paddingHorizontal: 16,
+                }}
+            />
         </View>
     );
 });
