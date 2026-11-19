@@ -111,7 +111,7 @@ export async function signOut() {
     if (currentId) {
         await removeAccount(currentId);
     } else {
-        await supabase.auth.signOut().catch(() => { });
+        await supabase.auth.signOut({ scope: "local" }).catch(() => { });
         await RnGoogleSignin.signOut().catch(() => { });
         storage.clearAll();
     }

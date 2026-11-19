@@ -31,6 +31,7 @@ export const MIGRATION_VERSION_KEY = "storage_migration_version";
  * Universal prefixes that belong to app-wide shared cache instead of personal user partitions.
  */
 const SHARED_KEY_PREFIXES = [
+  "sb-",
   "dimension:",
   "weather:",
   "luminance:",

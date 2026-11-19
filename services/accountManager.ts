@@ -275,7 +275,7 @@ export async function removeAccount(
     } else {
       // No accounts left -> perform clean app sign out
       setActiveUserId(null);
-      await supabase.auth.signOut().catch(() => {});
+      await supabase.auth.signOut({ scope: "local" }).catch(() => {});
       try {
         const RnGoogleSignin = (await import("@novastera-oss/rn-google-signin")).default;
         await RnGoogleSignin.signOut().catch(() => {});
@@ -306,7 +306,7 @@ export async function signOutAllAccounts(): Promise<void> {
   setActiveUserId(null);
 
   try {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
   } catch {}
 
   try {

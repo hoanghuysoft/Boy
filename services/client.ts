@@ -58,6 +58,7 @@ export interface ClientConfig {
 export interface RequestConfig {
   params?: Record<string, any>;
   headers?: Record<string, string>;
+  timeout?: number;
 }
 
 export type RequestInterceptor = (config: {
@@ -128,8 +129,9 @@ export function createClient(config: ClientConfig): NitroClient {
 
     const controller = new AbortController();
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    if (config.timeout) {
-      timeoutId = setTimeout(() => controller.abort(), config.timeout);
+    const effectiveTimeout = reqConfig?.timeout ?? config.timeout;
+    if (effectiveTimeout) {
+      timeoutId = setTimeout(() => controller.abort(), effectiveTimeout);
       fetchInit.signal = controller.signal;
     }
 

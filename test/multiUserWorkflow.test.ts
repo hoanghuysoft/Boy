@@ -509,4 +509,98 @@ describe("Multi-User MMKV Storage & Account Workflow", () => {
     expect(secondRun.alreadyMigrated).toBe(true);
     expect(secondRun.migratedCount).toBe(0);
   });
+
+  test("Step 8: userStorage.addOnValueChangedListener rebinds across setActiveUserId transitions", async () => {
+    const { getUserStorage, setActiveUserId, userStorage } = await import("../services/storage");
+
+    setActiveUserId(null);
+
+    const changedEvents: { key: string; value: boolean | undefined }[] = [];
+    const listener = userStorage.addOnValueChangedListener((key) => {
+      if (key === "onboarding_has_profile") {
+        changedEvents.push({ key, value: userStorage.getBoolean(key) });
+      }
+    });
+
+    // Switch from guest/legacy to Alice (simulating first sign-in on login screen)
+    setActiveUserId("user_rebind_alice");
+    getUserStorage("user_rebind_alice").set("onboarding_has_profile", true);
+
+    expect(changedEvents.length).toBeGreaterThanOrEqual(1);
+    expect(changedEvents[changedEvents.length - 1]).toEqual({
+      key: "onboarding_has_profile",
+      value: true,
+    });
+
+    // Switch to Bob (simulating account switch / adding second account)
+    getUserStorage("user_rebind_bob").set("onboarding_has_profile", false);
+    setActiveUserId("user_rebind_bob");
+    expect(changedEvents[changedEvents.length - 1]).toEqual({
+      key: "onboarding_has_profile",
+      value: false,
+    });
+
+    // Write update inside Bob's partition -> listener must still fire on Bob's instance
+    getUserStorage("user_rebind_bob").set("onboarding_has_profile", true);
+    expect(changedEvents[changedEvents.length - 1]).toEqual({
+      key: "onboarding_has_profile",
+      value: true,
+    });
+
+    // Sign out back to guest -> listener detaches from Bob and notifies cleared value
+    setActiveUserId(null);
+    expect(changedEvents[changedEvents.length - 1]).toEqual({
+      key: "onboarding_has_profile",
+      value: undefined,
+    });
+
+    const countBeforeBobWrite = changedEvents.length;
+    getUserStorage("user_rebind_bob").set("onboarding_has_profile", false);
+    expect(changedEvents.length).toBe(countBeforeBobWrite);
+
+    listener.remove();
+  });
+
+  test("Step 9: mmkvSupabaseAdapter persists session across setActiveUserId transitions and cleans up on removeItem", async () => {
+    const { defaultLegacyStorage, getUserStorage, setActiveUserId, sharedStorage, userStorage } =
+      await import("../services/storage");
+    const { mmkvSupabaseAdapter } = await import("../services/supabase-storage-adapter");
+
+    const tokenKey = "sb-project-auth-token";
+    setActiveUserId(null);
+    sharedStorage.set("legacy_storage_migrated", true);
+
+    // 1. Supabase saves session BEFORE registerActiveSession switches activeUserId
+    const aliceSessionJson = JSON.stringify({ access_token: "alice-jwt", user: { id: "user_adapter_alice" } });
+    await mmkvSupabaseAdapter.setItem(tokenKey, aliceSessionJson);
+
+    // Switch active user to Alice -> session remains readable and Alice's partition stays clean
+    setActiveUserId("user_adapter_alice");
+    expect(await mmkvSupabaseAdapter.getItem(tokenKey)).toBe(aliceSessionJson);
+    expect(getUserStorage("user_adapter_alice").getString(tokenKey)).toBeUndefined();
+
+    // 2. Adding a second account saves Bob's session before switching to Bob
+    const bobSessionJson = JSON.stringify({ access_token: "bob-jwt", user: { id: "user_adapter_bob" } });
+    await mmkvSupabaseAdapter.setItem(tokenKey, bobSessionJson);
+    setActiveUserId("user_adapter_bob");
+    expect(await mmkvSupabaseAdapter.getItem(tokenKey)).toBe(bobSessionJson);
+    expect(getUserStorage("user_adapter_alice").getString(tokenKey)).toBeUndefined();
+    expect(getUserStorage("user_adapter_bob").getString(tokenKey)).toBeUndefined();
+
+    // 3. One-time fallback migration if a session was previously stored in userStorage
+    sharedStorage.remove(tokenKey);
+    userStorage.set(tokenKey, "legacy-user-session");
+    expect(await mmkvSupabaseAdapter.getItem(tokenKey)).toBe("legacy-user-session");
+    expect(sharedStorage.getString(tokenKey)).toBe("legacy-user-session");
+    expect(userStorage.getString(tokenKey)).toBeUndefined();
+
+    // 4. removeItem wipes sharedStorage, active userStorage, and defaultLegacyStorage
+    defaultLegacyStorage.set(tokenKey, "stale-default-session");
+    userStorage.set(tokenKey, "stale-user-session");
+    await mmkvSupabaseAdapter.removeItem(tokenKey);
+    expect(sharedStorage.getString(tokenKey)).toBeUndefined();
+    expect(userStorage.getString(tokenKey)).toBeUndefined();
+    expect(defaultLegacyStorage.getString(tokenKey)).toBeUndefined();
+    expect(await mmkvSupabaseAdapter.getItem(tokenKey)).toBeNull();
+  });
 });

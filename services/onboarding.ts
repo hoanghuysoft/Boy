@@ -48,7 +48,8 @@ export function setLocalHasProfile(value: boolean): void {
  */
 export async function checkProfileFromServer(): Promise<boolean> {
     const response = await client.get<{ hasProfile: boolean; profile: OnboardingProfile | null }>(
-        '/api/onboarding/profile'
+        '/api/onboarding/profile',
+        { timeout: 15000 }
     );
     const { hasProfile, profile } = response.data;
     setLocalHasProfile(hasProfile);

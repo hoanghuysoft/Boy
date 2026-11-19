@@ -4,7 +4,7 @@ import { focusManager } from '@tanstack/react-query';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Updates from 'expo-updates';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useMMKVBoolean } from 'react-native-mmkv';
 import { supabase } from '../services/login';
@@ -13,7 +13,9 @@ import {
     getLocalHasProfile,
     onboardingMmkv,
     PROFILE_KEY,
+    setLocalHasProfile,
 } from '../services/onboarding';
+import { getUserStorage } from '../services/storage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,8 +38,13 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
     const [session, setSession] = useState<any>(null);
     const [isSessionReady, setIsSessionReady] = useState(false);
 
-    // Reactively watch MMKV for changes so Onboarding form submission triggers an instant update
-    const [hasProfile, setHasProfile] = useMMKVBoolean(PROFILE_KEY, onboardingMmkv);
+    // Reactively watch MMKV for the active user's concrete storage instance
+    // (fallback to onboardingMmkv when signed out) so Onboarding submission updates immediately.
+    const activeProfileMmkv = useMemo(
+        () => (session?.user?.id ? getUserStorage(session.user.id) : onboardingMmkv),
+        [session?.user?.id]
+    );
+    const [hasProfile] = useMMKVBoolean(PROFILE_KEY, activeProfileMmkv);
 
     // Track if getSession() has resolved. This prevents reacting to the redundant
     // SIGNED_IN event that Supabase often fires right after getSession() on startup.
@@ -82,79 +89,121 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
 
     // ─── Session + profile check ───────────────────────────────────────────────
     useEffect(() => {
-        // App startup: restore session from AsyncStorage, then check profile.
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            setSession(session);
+        let isMounted = true;
 
-            if (session) {
-                try {
-                    const { registerActiveSession } = await import('@/services/accountManager');
-                    registerActiveSession(session);
-                } catch {}
+        // App startup: restore session, activate user partition, then resolve profile status.
+        const initSession = async () => {
+            try {
+                const { data: { session: initialSession } } = await supabase.auth.getSession();
 
-                // Read directly from MMKV here to avoid stale closure state
-                const local = getLocalHasProfile();
-
-                if (local !== undefined) {
-                    setHasProfile(local);
-                } else {
-                    try {
-                        const result = await checkProfileFromServer();
-                        setHasProfile(result);
-                    } catch {
-                        setHasProfile(true);
-                    }
-                }
-            }
-
-            // Important: Mark the initial startup check as done, even if NO session was found.
-            // This ensures that true future sign-ins aren't mistakenly ignored.
-            initialSessionCheckDoneRef.current = true;
-            setIsSessionReady(true);
-        });
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                setSession(session);
-
-                if (event === 'TOKEN_REFRESHED' && session) {
-                    try {
-                        const { updateAccountSession } = await import('@/services/accountManager');
-                        updateAccountSession(session.user.id, {
-                            access_token: session.access_token,
-                            refresh_token: session.refresh_token,
-                        });
-                    } catch {}
-                }
-
-                if (event === 'SIGNED_IN' && session) {
+                if (initialSession) {
                     try {
                         const { registerActiveSession } = await import('@/services/accountManager');
-                        registerActiveSession(session);
+                        registerActiveSession(initialSession);
                     } catch {}
 
-                    // Supabase fires SIGNED_IN both when manually logging in AND sometimes
-                    // implicitly alongside getSession on startup.
-                    if (!initialSessionCheckDoneRef.current) {
-                        return; // Ignore implicit event; getSession logic is handling it.
+                    // Read directly from MMKV after registerActiveSession switches to user-<userId>
+                    const local = getLocalHasProfile();
+
+                    if (local === undefined) {
+                        try {
+                            const result = await checkProfileFromServer();
+                            setLocalHasProfile(result);
+                        } catch {
+                            setLocalHasProfile(true);
+                        }
                     }
+                }
+
+                if (isMounted) {
+                    setSession(initialSession);
+                }
+            } catch (err) {
+                console.warn('Initial session check failed:', err);
+                if (isMounted) {
+                    setSession(null);
+                }
+            } finally {
+                // Important: Mark the initial startup check as done, even if NO session was found
+                // or an error occurred, so future sign-ins aren't mistakenly ignored.
+                initialSessionCheckDoneRef.current = true;
+                if (isMounted) {
+                    setIsSessionReady(true);
+                }
+            }
+        };
+
+        initSession();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, nextSession) => {
+                if (event === 'INITIAL_SESSION') {
+                    return;
+                }
+
+                if (event === 'TOKEN_REFRESHED' && nextSession) {
+                    try {
+                        const { updateAccountSession } = await import('@/services/accountManager');
+                        updateAccountSession(nextSession.user.id, {
+                            access_token: nextSession.access_token,
+                            refresh_token: nextSession.refresh_token,
+                        });
+                    } catch {}
+                    if (isMounted) {
+                        setSession(nextSession);
+                    }
+                    return;
+                }
+
+                if (event === 'SIGNED_IN' && nextSession) {
+                    // Supabase may emit SIGNED_IN implicitly alongside getSession on startup.
+                    if (!initialSessionCheckDoneRef.current) {
+                        return; // Ignore implicit event; initSession is handling it.
+                    }
+
+                    // Register user partition BEFORE checking profile or committing React session state
+                    // so hasProfile is read from and written to the new user's storage.
+                    try {
+                        const { registerActiveSession } = await import('@/services/accountManager');
+                        registerActiveSession(nextSession);
+                    } catch {}
 
                     // A new manually-triggered login: fetch from server to clear any stale MMKV
                     try {
                         const result = await checkProfileFromServer();
-                        setHasProfile(result);
+                        setLocalHasProfile(result);
                     } catch {
-                        setHasProfile(true);
+                        if (getLocalHasProfile() === undefined) {
+                            setLocalHasProfile(true);
+                        }
                     }
-                } else if (!session) {
+
+                    if (isMounted) {
+                        setSession(nextSession);
+                    }
+                    return;
+                }
+
+                if (!nextSession) {
                     // SIGNED_OUT or TOKEN_REFRESHED to null
                     onboardingMmkv.remove(PROFILE_KEY);
+                    if (isMounted) {
+                        setSession(null);
+                    }
+                    return;
+                }
+
+                if (isMounted) {
+                    setSession(nextSession);
                 }
             }
         );
 
-        return () => subscription.unsubscribe();
-    }, [setHasProfile]);
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
+    }, []);
 
     // ─── Route protection ──────────────────────────────────────────────────────
     useEffect(() => {
@@ -174,12 +223,9 @@ export const useRootLayoutViewModel = (): RootLayoutViewModel => {
     }, [isSessionReady, segments, session, hasProfile, router]);
 
     // ─── Splash screen ─────────────────────────────────────────────────────────
-    // Wait for both the session AND (when logged in) the profile flag before
-    // revealing the app, so the user never sees a flash of the wrong screen.
-    const isReady =
-        isSessionReady &&
-        fontsLoaded &&
-        (session ? hasProfile !== undefined : true);
+    // Keep splash visible only during initial boot until session + profile state are ready.
+    // Never revert to splash screen on subsequent sign-ins or account switches.
+    const isReady = isSessionReady && fontsLoaded;
 
     useEffect(() => {
         if (isReady) {
