@@ -215,7 +215,7 @@ const BookmarksScreen = () => {
                 refreshControl={
                     <RefreshControl
                         refreshing={isRefetching}
-                        onRefresh={refetch}
+                        onRefresh={() => { void refetch(); }}
                         tintColor={colors.text}
                         colors={[colors.text]}
                         progressBackgroundColor={colors.card}

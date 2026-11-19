@@ -18,12 +18,11 @@ import { ProgressiveBlurView } from 'expo-backdrop';
 import { BlurTargetView, BlurView } from "expo-blur";
 import { MINIMIZE_SPRING, useTabBarMinimized } from "expo-glass-tabs";
 import { Image } from "expo-image";
-import { router } from "expo-router";
-import { useFocusEffect } from "expo-router/react-navigation";
+import { router, useFocusEffect } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, TouchableOpacity, View, type ViewInstance } from "react-native";
 import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -115,7 +114,7 @@ const DashboardScreen = () => {
     const { data: myProfile } = useProfile("me", true);
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
-    const blurTargetRef = useRef<View | null>(null);
+    const blurTargetRef = useRef<ViewInstance | null>(null);
     const pickerSheetRef = useRef<TrueSheet>(null);
     const scrollRef = useRef<any>(null);
     const scrollTrigger = useScrollStore((state) => state.triggers["profile"]);

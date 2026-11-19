@@ -1,16 +1,17 @@
 import { FlexText } from "@/components/FlexText";
 import { useReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
-import { MaterialTopTabBarProps } from "expo-router/build/react-navigation/material-top-tabs";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import Reanimated, { useAnimatedStyle } from "react-native-reanimated";
+import type { NavigationState, Route, SceneRendererProps } from "react-native-tab-view";
 
-interface ShotsTopTabBarProps extends MaterialTopTabBarProps {
+type ShotsTopTabBarProps = SceneRendererProps & {
+    navigationState: NavigationState<Route>;
     insets: any;
     t: any;
-}
+};
 
-export const ShotsTopTabBar = ({ state, navigation, insets, t }: ShotsTopTabBarProps) => {
+export const ShotsTopTabBar = ({ navigationState, jumpTo, insets, t }: ShotsTopTabBarProps) => {
     const { height: screenHeight } = useWindowDimensions();
     // Hide the tab bar when comment sheet is open
     const { animatedPosition } = useReanimatedTrueSheet();
@@ -26,18 +27,13 @@ export const ShotsTopTabBar = ({ state, navigation, insets, t }: ShotsTopTabBarP
     return (
         <Reanimated.View style={[styles.topHeader, { paddingTop: insets.top + 16 }, tabBarStyle]}>
             <View style={styles.tabContainer}>
-                {state.routes.map((route: any, index: number) => {
-                    const isFocused = state.index === index;
-                    const title = route.name === 'random' ? t('shots.tabs.following') : t('shots.tabs.thisDay');
+                {navigationState.routes.map((route, index) => {
+                    const isFocused = navigationState.index === index;
+                    const title = route.key === 'random' ? t('shots.tabs.following') : t('shots.tabs.thisDay');
 
                     const onPress = () => {
-                        const event = navigation.emit({
-                            type: 'tabPress',
-                            target: route.key,
-                            canPreventDefault: true,
-                        });
-                        if (!isFocused && !event.defaultPrevented) {
-                            navigation.navigate(route.name);
+                        if (!isFocused) {
+                            jumpTo(route.key);
                         }
                     };
 

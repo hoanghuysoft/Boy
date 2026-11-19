@@ -30,6 +30,7 @@ import {
     TouchableOpacity,
     useWindowDimensions,
     View,
+    type ViewInstance,
 } from "react-native";
 import { Pressable as GesturePressable, Pressable } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
@@ -119,7 +120,7 @@ interface MovieDetailViewProps {
 
 export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
     const { colors } = useThemeContext();
-    const blurTargetRef = useRef<View | null>(null);
+    const blurTargetRef = useRef<ViewInstance | null>(null);
     const { width } = useWindowDimensions();
     const posterHeight = 500;
     const inset = useSafeAreaInsets();

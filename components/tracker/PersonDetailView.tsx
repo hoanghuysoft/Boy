@@ -23,6 +23,7 @@ import {
     TouchableOpacity,
     useWindowDimensions,
     View,
+    type ViewInstance,
 } from "react-native";
 import { Pressable as GesturePressable } from "react-native-gesture-handler";
 import { getColors } from "react-native-image-colors";
@@ -71,7 +72,7 @@ interface PersonDetailViewProps {
 
 export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
     const { colors } = useThemeContext();
-    const blurTargetRef = useRef<View | null>(null);
+    const blurTargetRef = useRef<ViewInstance | null>(null);
     const { width } = useWindowDimensions();
     const posterHeight = 500;
     const inset = useSafeAreaInsets();

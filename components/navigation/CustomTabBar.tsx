@@ -4,11 +4,11 @@ import MediaLibraryIcon from "@/assets/images/svg/libyt.svg";
 import TvIcon from "@/assets/images/svg/tv-2.svg";
 import UserIcon from "@/assets/images/svg/user-1.svg";
 import { LinearGradient } from "expo-linear-gradient";
-import { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs";
+import type { BottomTabBarProps } from "expo-router/tabs";
 import { SquircleView } from "expo-squircle-view";
 import React, { RefObject, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Animated, StyleSheet, TouchableOpacity, View, type ViewInstance } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
@@ -187,7 +187,7 @@ const AnimatedTabButton = ({
 /**
  * @deprecated Use `CurvedTabBar` from `@/components/navigation/tab-bar` instead.
  */
-export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: BottomTabBarProps & { blurTargetRef?: RefObject<View | null> }) => {
+export const CustomTabBar = ({ state, descriptors, emitter, navigateToTab, blurTargetRef }: BottomTabBarProps & { blurTargetRef?: RefObject<ViewInstance | null> }) => {
     const { colors, theme } = useThemeContext();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
@@ -302,7 +302,7 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
 
                         const color = isFocused ? colors.secondary : colors.tabInactive;
                         const onPress = () => {
-                            const event = navigation.emit({
+                            const event = emitter.emit({
                                 type: "tabPress",
                                 target: route.key,
                                 canPreventDefault: true,
@@ -313,12 +313,12 @@ export const CustomTabBar = ({ state, descriptors, navigation, blurTargetRef }: 
                             }
 
                             if (!isFocused && !event.defaultPrevented) {
-                                navigation.navigate(route.name);
+                                navigateToTab(route.key);
                             }
                         };
 
                         const onLongPress = () => {
-                            navigation.emit({
+                            emitter.emit({
                                 type: "tabLongPress",
                                 target: route.key,
                             });

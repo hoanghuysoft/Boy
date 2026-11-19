@@ -26,6 +26,7 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
+  type TextInputInstance,
   TouchableOpacity,
   View
 } from "react-native";
@@ -70,7 +71,7 @@ const SearchMoviesScreen = () => {
 
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const [searchText, setSearchText] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
   const [searchType, setSearchType] = useState<SearchType>("all");
@@ -426,7 +427,7 @@ const SearchMoviesScreen = () => {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={refetch}
+            onRefresh={() => { void refetch(); }}
             tintColor={colors.onSurface}
             colors={[colors.onSurface]}
             progressBackgroundColor={colors.surfaceContainerHigh}

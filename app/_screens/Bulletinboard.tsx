@@ -258,7 +258,7 @@ const Bulletinboard = () => {
                     refreshControl={
                         <RefreshControl
                             refreshing={isFetching && !isLoading}
-                            onRefresh={refetch}
+                            onRefresh={() => { void refetch(); }}
                             tintColor={colors.secondary}
                             colors={[colors.secondary]}
                         />

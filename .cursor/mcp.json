@@ -8,10 +8,8 @@
       "args": ["-y", "@heroui/native-mcp@latest"]
     },
     "argent": {
-      "command": "npx",
+      "command": "argent",
       "args": [
-        "-y",
-        "@swmansion/argent@latest",
         "mcp"
       ]
     }

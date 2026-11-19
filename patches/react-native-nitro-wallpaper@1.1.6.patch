@@ -1,0 +1,280 @@
+diff --git a/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp b/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp
+index 09003a733203b8ca373deabb6949bd8f26fbe246..7d77337c3f4883c56c97f78d4bc37f6f9f97366b 100644
+--- a/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp	
++++ b/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.cpp
+@@ -16,37 +16,31 @@
+ 
+ namespace margelo::nitro::reactnativenitrowallpaper {
+ 
+-  jni::local_ref<JHybridWallpaperSetSpec::jhybriddata> JHybridWallpaperSetSpec::initHybrid(jni::alias_ref<jhybridobject> jThis) {
+-    return makeCxxInstance(jThis);
+-  }
+-
+-  void JHybridWallpaperSetSpec::registerNatives() {
+-    registerHybrid({
+-      makeNativeMethod("initHybrid", JHybridWallpaperSetSpec::initHybrid),
+-    });
++  std::shared_ptr<JHybridWallpaperSetSpec> JHybridWallpaperSetSpec::JavaPart::getJHybridWallpaperSetSpec() {
++    auto hybridObject = JHybridObject::JavaPart::getJHybridObject();
++    auto castHybridObject = std::dynamic_pointer_cast<JHybridWallpaperSetSpec>(hybridObject);
++    if (castHybridObject == nullptr) [[unlikely]] {
++      throw std::runtime_error("Failed to downcast JHybridObject to JHybridWallpaperSetSpec!");
++    }
++    return castHybridObject;
+   }
+ 
+-  size_t JHybridWallpaperSetSpec::getExternalMemorySize() noexcept {
+-    static const auto method = javaClassStatic()->getMethod<jlong()>("getMemorySize");
+-    return method(_javaPart);
++  jni::local_ref<JHybridWallpaperSetSpec::CxxPart::jhybriddata> JHybridWallpaperSetSpec::CxxPart::initHybrid(jni::alias_ref<jhybridobject> jThis) {
++    return makeCxxInstance(jThis);
+   }
+ 
+-  bool JHybridWallpaperSetSpec::equals(const std::shared_ptr<HybridObject>& other) {
+-    if (auto otherCast = std::dynamic_pointer_cast<JHybridWallpaperSetSpec>(other)) {
+-      return _javaPart == otherCast->_javaPart;
++  std::shared_ptr<JHybridObject> JHybridWallpaperSetSpec::CxxPart::createHybridObject(const jni::local_ref<JHybridObject::JavaPart>& javaPart) {
++    auto castJavaPart = jni::dynamic_ref_cast<JHybridWallpaperSetSpec::JavaPart>(javaPart);
++    if (castJavaPart == nullptr) [[unlikely]] {
++      throw std::runtime_error("Failed to cast JHybridObject::JavaPart to JHybridWallpaperSetSpec::JavaPart!");
+     }
+-    return false;
+-  }
+-
+-  void JHybridWallpaperSetSpec::dispose() noexcept {
+-    static const auto method = javaClassStatic()->getMethod<void()>("dispose");
+-    method(_javaPart);
++    return std::make_shared<JHybridWallpaperSetSpec>(castJavaPart);
+   }
+ 
+-  std::string JHybridWallpaperSetSpec::toString() {
+-    static const auto method = javaClassStatic()->getMethod<jni::JString()>("toString");
+-    auto javaString = method(_javaPart);
+-    return javaString->toStdString();
++  void JHybridWallpaperSetSpec::CxxPart::registerNatives() {
++    registerHybrid({
++      makeNativeMethod("initHybrid", JHybridWallpaperSetSpec::CxxPart::initHybrid),
++    });
+   }
+ 
+   // Properties
+@@ -54,7 +48,7 @@ namespace margelo::nitro::reactnativenitrowallpaper {
+ 
+   // Methods
+   std::shared_ptr<Promise<void>> JHybridWallpaperSetSpec::setWallpaper(const std::string& image, double location) {
+-    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* image */, double /* location */)>("setWallpaper");
++    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* image */, double /* location */)>("setWallpaper");
+     auto __result = method(_javaPart, jni::make_jstring(image), location);
+     return [&]() {
+       auto __promise = Promise<void>::create();
+diff --git a/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp b/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp
+index 364d894ade8b8fbba2ecb2e3c56d70126bad1779..d6a1ae4c208e7beefc4846cbd602836114fb31bb 100644
+--- a/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp	
++++ b/nitrogen/generated/android/c++/JHybridWallpaperSetSpec.hpp
+@@ -18,34 +18,33 @@ namespace margelo::nitro::reactnativenitrowallpaper {
+ 
+   using namespace facebook;
+ 
+-  class JHybridWallpaperSetSpec: public jni::HybridClass<JHybridWallpaperSetSpec, JHybridObject>,
+-                                 public virtual HybridWallpaperSetSpec {
++  class JHybridWallpaperSetSpec: public virtual HybridWallpaperSetSpec, public virtual JHybridObject {
+   public:
+-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec;";
+-    static jni::local_ref<jhybriddata> initHybrid(jni::alias_ref<jhybridobject> jThis);
+-    static void registerNatives();
+-
+-  protected:
+-    // C++ constructor (called from Java via `initHybrid()`)
+-    explicit JHybridWallpaperSetSpec(jni::alias_ref<jhybridobject> jThis) :
+-      HybridObject(HybridWallpaperSetSpec::TAG),
+-      HybridBase(jThis),
+-      _javaPart(jni::make_global(jThis)) {}
++    struct JavaPart: public jni::JavaClass<JavaPart, JHybridObject::JavaPart> {
++      static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec;";
++      std::shared_ptr<JHybridWallpaperSetSpec> getJHybridWallpaperSetSpec();
++    };
++    struct CxxPart: public jni::HybridClass<CxxPart, JHybridObject::CxxPart> {
++      static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec$CxxPart;";
++      static jni::local_ref<jhybriddata> initHybrid(jni::alias_ref<jhybridobject> jThis);
++      static void registerNatives();
++      using HybridBase::HybridBase;
++    protected:
++      std::shared_ptr<JHybridObject> createHybridObject(const jni::local_ref<JHybridObject::JavaPart>& javaPart) override;
++    };
+ 
+   public:
++    explicit JHybridWallpaperSetSpec(const jni::local_ref<JHybridWallpaperSetSpec::JavaPart>& javaPart):
++      HybridObject(HybridWallpaperSetSpec::TAG),
++      JHybridObject(javaPart),
++      _javaPart(jni::make_global(javaPart)) {}
+     ~JHybridWallpaperSetSpec() override {
+       // Hermes GC can destroy JS objects on a non-JNI Thread.
+       jni::ThreadScope::WithClassLoader([&] { _javaPart.reset(); });
+     }
+ 
+   public:
+-    size_t getExternalMemorySize() noexcept override;
+-    bool equals(const std::shared_ptr<HybridObject>& other) override;
+-    void dispose() noexcept override;
+-    std::string toString() override;
+-
+-  public:
+-    inline const jni::global_ref<JHybridWallpaperSetSpec::javaobject>& getJavaPart() const noexcept {
++    inline const jni::global_ref<JHybridWallpaperSetSpec::JavaPart>& getJavaPart() const noexcept {
+       return _javaPart;
+     }
+ 
+@@ -58,9 +57,7 @@ namespace margelo::nitro::reactnativenitrowallpaper {
+     std::shared_ptr<Promise<void>> setWallpaper(const std::string& image, double location) override;
+ 
+   private:
+-    friend HybridBase;
+-    using HybridBase::HybridBase;
+-    jni::global_ref<JHybridWallpaperSetSpec::javaobject> _javaPart;
++    jni::global_ref<JHybridWallpaperSetSpec::JavaPart> _javaPart;
+   };
+ 
+ } // namespace margelo::nitro::reactnativenitrowallpaper
+diff --git a/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt b/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
+index 9a0a13df112ea9e5ec1d4c1ea696859e812cb6b8..f1570fc08628a2e4f6d8956f9cbb50ed741c4263 100644
+--- a/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt	
++++ b/nitrogen/generated/android/kotlin/com/margelo/nitro/reactnativenitrowallpaper/HybridWallpaperSetSpec.kt
+@@ -25,32 +25,29 @@ import com.margelo.nitro.core.HybridObject
+   "LocalVariableName", "PropertyName", "PrivatePropertyName", "FunctionName"
+ )
+ abstract class HybridWallpaperSetSpec: HybridObject() {
+-  @DoNotStrip
+-  private var mHybridData: HybridData = initHybrid()
++  // Properties
+ 
+-  init {
+-    super.updateNative(mHybridData)
+-  }
+ 
+-  override fun updateNative(hybridData: HybridData) {
+-    mHybridData = hybridData
+-    super.updateNative(hybridData)
+-  }
++  // Methods
++  @DoNotStrip
++  @Keep
++  abstract fun setWallpaper(image: String, location: Double): Promise<Unit>
+ 
+   // Default implementation of `HybridObject.toString()`
+   override fun toString(): String {
+     return "[HybridObject WallpaperSet]"
+   }
+ 
+-  // Properties
+-  
+-
+-  // Methods
++  // C++ backing class
+   @DoNotStrip
+   @Keep
+-  abstract fun setWallpaper(image: String, location: Double): Promise<Unit>
+-
+-  private external fun initHybrid(): HybridData
++  protected open class CxxPart(javaPart: HybridWallpaperSetSpec): HybridObject.CxxPart(javaPart) {
++    // C++ JHybridWallpaperSetSpec::CxxPart::initHybrid(...)
++    external override fun initHybrid(): HybridData
++  }
++  override fun createCxxPart(): CxxPart {
++    return CxxPart(this)
++  }
+ 
+   companion object {
+     protected const val TAG = "HybridWallpaperSetSpec"
+diff --git a/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp b/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp
+index 299dbfecc1ccecf1b581a54c64c55c6840ed3c23..7d2d0503d85e75dae5d8fc5c56eb71a3aec9b61c 100644
+--- a/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp	
++++ b/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.cpp
+@@ -21,24 +21,34 @@
+ namespace margelo::nitro::reactnativenitrowallpaper {
+ 
+ int initialize(JavaVM* vm) {
++  return facebook::jni::initialize(vm, []() {
++    ::margelo::nitro::reactnativenitrowallpaper::registerAllNatives();
++  });
++}
++
++struct JHybridWallpaperSetSpecImpl: public jni::JavaClass<JHybridWallpaperSetSpecImpl, JHybridWallpaperSetSpec::JavaPart> {
++  static constexpr auto kJavaDescriptor = "Lcom/margelo/nitro/reactnativenitrowallpaper/WallpaperSet;";
++  static std::shared_ptr<JHybridWallpaperSetSpec> create() {
++    static const auto constructorFn = javaClassStatic()->getConstructor<JHybridWallpaperSetSpecImpl::javaobject()>();
++    jni::local_ref<JHybridWallpaperSetSpec::JavaPart> javaPart = javaClassStatic()->newObject(constructorFn);
++    return javaPart->getJHybridWallpaperSetSpec();
++  }
++};
++
++void registerAllNatives() {
+   using namespace margelo::nitro;
+   using namespace margelo::nitro::reactnativenitrowallpaper;
+-  using namespace facebook;
+-
+-  return facebook::jni::initialize(vm, [] {
+-    // Register native JNI methods
+-    margelo::nitro::reactnativenitrowallpaper::JHybridWallpaperSetSpec::registerNatives();
+-
+-    // Register Nitro Hybrid Objects
+-    HybridObjectRegistry::registerHybridObjectConstructor(
+-      "WallpaperSet",
+-      []() -> std::shared_ptr<HybridObject> {
+-        static DefaultConstructableObject<JHybridWallpaperSetSpec::javaobject> object("com/margelo/nitro/reactnativenitrowallpaper/WallpaperSet");
+-        auto instance = object.create();
+-        return instance->cthis()->shared();
+-      }
+-    );
+-  });
++
++  // Register native JNI methods
++  margelo::nitro::reactnativenitrowallpaper::JHybridWallpaperSetSpec::CxxPart::registerNatives();
++
++  // Register Nitro Hybrid Objects
++  HybridObjectRegistry::registerHybridObjectConstructor(
++    "WallpaperSet",
++    []() -> std::shared_ptr<HybridObject> {
++      return JHybridWallpaperSetSpecImpl::create();
++    }
++  );
+ }
+ 
+ } // namespace margelo::nitro::reactnativenitrowallpaper
+diff --git a/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp b/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp
+index 5b6b12dad5b59f25daf57d67fe61737579edde70..f67a2eb506d499697ad1ec2088f240ca7e2df6b0 100644
+--- a/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp	
++++ b/nitrogen/generated/android/reactnativenitrowallpaperOnLoad.hpp
+@@ -6,20 +6,29 @@
+ ///
+ 
+ #include <jni.h>
++#include <functional>
+ #include <NitroModules/NitroDefines.hpp>
+ 
+ namespace margelo::nitro::reactnativenitrowallpaper {
+ 
++  [[deprecated("Use registerNatives() instead.")]]
++  int initialize(JavaVM* vm);
++
+   /**
+-   * Initializes the native (C++) part of reactnativenitrowallpaper, and autolinks all Hybrid Objects.
+-   * Call this in your `JNI_OnLoad` function (probably inside `cpp-adapter.cpp`).
++   * Register the native (C++) part of reactnativenitrowallpaper, and autolinks all Hybrid Objects.
++   * Call this in your `JNI_OnLoad` function (probably inside `cpp-adapter.cpp`),
++   * inside a `facebook::jni::initialize(vm, ...)` call.
+    * Example:
+    * ```cpp (cpp-adapter.cpp)
+    * JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
+-   *   return margelo::nitro::reactnativenitrowallpaper::initialize(vm);
++   *   return facebook::jni::initialize(vm, []() {
++   *     // register all reactnativenitrowallpaper HybridObjects
++   *     margelo::nitro::reactnativenitrowallpaper::registerNatives();
++   *     // any other custom registrations go here.
++   *   });
+    * }
+    * ```
+    */
+-  int initialize(JavaVM* vm);
++  void registerAllNatives();
+ 
+ } // namespace margelo::nitro::reactnativenitrowallpaper

@@ -4,7 +4,7 @@ import { chosenMediaPath } from "@/utils/imageurl";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, View } from "react-native";
+import { Animated, type ViewInstance } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BriefInfoSheetHandle } from "../components/profile/sheets/BriefInfoSheet";
 import type { TriviaSheetHandle } from "../components/profile/sheets/TriviaSheet";
@@ -34,7 +34,7 @@ export const useProfileViewModel = () => {
     const isMe = params.isMe === 'true' || id === 'me' || !id || (!!myProfile?.id && id === myProfile.id) || (!!myProfile?.username && cleanParamId === myProfile.username.toLowerCase());
     const isOwner = isMe || !!myProfile?.is_admin;
 
-    const blurTargetRef = useRef<View | null>(null);
+    const blurTargetRef = useRef<ViewInstance | null>(null);
 
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);

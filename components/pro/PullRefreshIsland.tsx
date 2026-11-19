@@ -218,18 +218,18 @@ export function PullRefreshIsland({
 
   // --- Progress ring: fills 0 -> 100% with the pull, drawn inside the drop ---
   const progressPath = useMemo(() => {
-    const path = Skia.Path.Make();
-    path.addArc(
-      {
-        x: -SPINNER_RADIUS,
-        y: -SPINNER_RADIUS,
-        width: SPINNER_RADIUS * 2,
-        height: SPINNER_RADIUS * 2,
-      },
-      -90,
-      359.9
-    );
-    return path;
+    return Skia.PathBuilder.Make()
+      .addArc(
+        {
+          x: -SPINNER_RADIUS,
+          y: -SPINNER_RADIUS,
+          width: SPINNER_RADIUS * 2,
+          height: SPINNER_RADIUS * 2,
+        },
+        -90,
+        359.9
+      )
+      .detach();
   }, []);
 
   const progressEnd = useDerivedValue(() =>
@@ -254,18 +254,18 @@ export function PullRefreshIsland({
 
   // --- Spinner: takes over from the progress ring while refreshing ---
   const spinnerPath = useMemo(() => {
-    const path = Skia.Path.Make();
-    path.addArc(
-      {
-        x: -SPINNER_RADIUS,
-        y: -SPINNER_RADIUS,
-        width: SPINNER_RADIUS * 2,
-        height: SPINNER_RADIUS * 2,
-      },
-      0,
-      270
-    );
-    return path;
+    return Skia.PathBuilder.Make()
+      .addArc(
+        {
+          x: -SPINNER_RADIUS,
+          y: -SPINNER_RADIUS,
+          width: SPINNER_RADIUS * 2,
+          height: SPINNER_RADIUS * 2,
+        },
+        0,
+        270
+      )
+      .detach();
   }, []);
 
   const spinnerTransform = useDerivedValue(() => [

@@ -22,7 +22,6 @@ import {
     ScrollView,
     StyleSheet,
     View,
-    type ViewToken,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 

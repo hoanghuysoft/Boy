@@ -15,6 +15,8 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
+    type FlatListProps,
+    type ListViewToken,
     PixelRatio,
     Platform,
     Pressable,
@@ -23,8 +25,6 @@ import {
     Text,
     View,
     ViewStyle,
-    ViewToken,
-    ViewabilityConfig,
 } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
 import type { SharedValue } from "react-native-reanimated";
@@ -621,7 +621,7 @@ const MultiMediaCarousel = React.memo(({
         openGallery(galleryImages, photoIndex);
     }, [openGallery, galleryImages]);
 
-    const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ListViewToken[] }) => {
         if (viewableItems.length > 0) {
             const idx = viewableItems[0].index ?? 0;
             setActiveIndex(idx);
@@ -631,7 +631,7 @@ const MultiMediaCarousel = React.memo(({
         }
     }).current;
 
-    const viewabilityConfig = useRef<ViewabilityConfig>({
+    const viewabilityConfig = useRef<NonNullable<FlatListProps<Media>["viewabilityConfig"]>>({
         itemVisiblePercentThreshold: 50,
     }).current;
 

@@ -478,7 +478,7 @@ const SearchMusicScreen = () => {
                                     {`No results for "${submittedQuery}"`}
                                 </FlexText>
                             </View>
-                        ) : null
+                        ) : undefined
                     }
                     refreshControl={
                         submittedQuery ? (

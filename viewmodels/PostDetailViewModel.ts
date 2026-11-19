@@ -8,7 +8,7 @@ import { LegendListRef } from "@legendapp/list/react-native";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LayoutChangeEvent, TextInput } from "react-native";
+import { LayoutChangeEvent, type TextInputInstance } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCommentsSheetViewModel } from "./CommentsSheetViewModel";
 
@@ -23,7 +23,7 @@ export const usePostDetailViewModel = (postId: string) => {
     const optionsSheetRef = useRef<TrueSheet>(null);
     const likersSheetRef = useRef<TrueSheet>(null);
     const emojiSheetRef = useRef<TrueSheet>(null);
-    const inputRef = useRef<TextInput>(null);
+    const inputRef = useRef<TextInputInstance>(null);
     const flatListRef = useRef<LegendListRef>(null);
     const commentsRef = useRef<Comment[]>([]);
     const headerHeightRef = useRef<number>(0);

@@ -220,7 +220,7 @@ export const InstagramStoryViewer: React.FC<InstagramStoryViewerProps> = ({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="light-content" />
       <View style={styles.container}>
         {/* Main Media View */}
         <TouchableWithoutFeedback

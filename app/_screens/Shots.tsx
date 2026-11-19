@@ -2,35 +2,47 @@ import { ShotsFeedTab, ShotsTopTabBar } from "@/components/shots";
 import {
     ReanimatedTrueSheetProvider,
 } from "@lodev09/react-native-true-sheet/reanimated";
-import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { TabView, type Route } from "react-native-tab-view";
 
 // ─── Navigator ──────────────────────────────────────────────────────
 
-const Tab = createMaterialTopTabNavigator();
-
-const RandomFeedScreen = () => <ShotsFeedTab feedType="random" />;
-const OnThisDayFeedScreen = () => <ShotsFeedTab feedType="on_this_day" />;
+type ShotTabRoute = Route & {
+    key: "on_this_day" | "random";
+};
 
 const ShotsInner = () => {
     const insets = useSafeAreaInsets();
+    const { width: screenWidth } = useWindowDimensions();
     const { t } = useTranslation();
+    const [index, setIndex] = useState(1);
+
+    const routes = useMemo<ShotTabRoute[]>(
+        () => [{ key: "on_this_day" }, { key: "random" }],
+        [],
+    );
 
     return (
-        <Tab.Navigator
-            initialRouteName="random"
-            backBehavior="none"
-            tabBar={(props: any) => <ShotsTopTabBar {...props} insets={insets} t={t} />}
-            screenOptions={{
-                lazy: true,
+        <TabView
+            navigationState={{ index, routes }}
+            onIndexChange={setIndex}
+            initialLayout={{ width: screenWidth }}
+            lazy
+            commonOptions={{
                 sceneStyle: { backgroundColor: '#000' },
             }}
-        >
-            <Tab.Screen name="on_this_day" component={OnThisDayFeedScreen} />
-            <Tab.Screen name="random" component={RandomFeedScreen} />
-        </Tab.Navigator>
+            renderTabBar={(props) => <ShotsTopTabBar {...props} insets={insets} t={t} />}
+            renderScene={({ route }) =>
+                route.key === "on_this_day" ? (
+                    <ShotsFeedTab feedType="on_this_day" isTabFocused={index === 0} />
+                ) : (
+                    <ShotsFeedTab feedType="random" isTabFocused={index === 1} />
+                )
+            }
+        />
     );
 };
 

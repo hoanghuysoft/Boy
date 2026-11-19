@@ -29,8 +29,8 @@ export const readJsonFileOrNull = async <T>(file: File): Promise<T | null> => {
     return JSON.parse(raw) as T;
 };
 
-export const writeJsonFile = (file: File, value: unknown) => {
-    file.write(JSON.stringify(value));
+export const writeJsonFile = async (file: File, value: unknown) => {
+    await file.write(JSON.stringify(value));
 };
 
 export const deleteFileIfExists = (uri: string) => {

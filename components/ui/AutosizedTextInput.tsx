@@ -4,6 +4,7 @@ import {
     StyleSheet,
     TextInput,
     type TextInputContentSizeChangeEvent,
+    type TextInputInstance,
     type TextInputProps,
     type TextStyle,
 } from 'react-native';
@@ -14,7 +15,7 @@ export interface AutosizedTextInputProps extends Omit<TextInputProps, 'multiline
     onUpdateHeight?: (height: number) => void;
 }
 
-export const AutosizedTextInput = forwardRef<TextInput, AutosizedTextInputProps>(
+export const AutosizedTextInput = forwardRef<TextInputInstance, AutosizedTextInputProps>(
     (
         {
             minRows = 1,

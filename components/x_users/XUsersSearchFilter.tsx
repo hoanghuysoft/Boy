@@ -9,6 +9,7 @@ import {
   FlatList,
   StyleSheet,
   TextInput,
+  type TextInputInstance,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -35,7 +36,7 @@ export const XUsersSearchFilter = memo(function XUsersSearchFilter({
 }: XUsersSearchFilterProps) {
   const { colors, theme } = useThemeContext();
   const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   const filterData: Array<{ id: FilterType; label: string }> = [
     { id: 'all', label: `All (${counts.all})` },

@@ -9,7 +9,6 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import dayjs from 'dayjs';
 import { Image as ExpoImage } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
 import { Chip } from "heroui-native/chip";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
@@ -23,12 +22,12 @@ import {
     StyleSheet,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const Tab = createMaterialTopTabNavigator();
+import { TabView, type Route } from 'react-native-tab-view';
 
 
 // ============================================================================
@@ -688,6 +687,8 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
     const common = createCommonStyles(colors, typography);
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
+    const { width: screenWidth } = useWindowDimensions();
+    const [tabIndex, setTabIndex] = useState(0);
 
     const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
 
@@ -706,6 +707,14 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const isAdmin = !!myProfile?.is_admin;
+
+    const routes = useMemo<(Route & { key: string; title: string })[]>(() => [
+        { key: "General", title: t('profile.edit.tabs.general', 'General') },
+        { key: "Media", title: t('profile.edit.tabs.media', 'Media') },
+        { key: "About", title: t('profile.edit.tabs.about', 'About') },
+        { key: "Physical", title: t('profile.edit.tabs.physical', 'Physical') },
+        ...(isAdmin ? [{ key: "System", title: t('profile.edit.tabs.system', 'System') }] : []),
+    ], [t, isAdmin]);
 
     const hasChanges = useMemo(() => {
         if (!formData || !initialFormData) return false;
@@ -857,25 +866,25 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
                     />}
                 </View>
 
-                <Tab.Navigator
-                    sceneContainerStyle={{ backgroundColor: colors.background }}
+                <TabView
+                    navigationState={{ index: Math.min(tabIndex, routes.length - 1), routes }}
+                    onIndexChange={setTabIndex}
+                    initialLayout={{ width: screenWidth }}
                     style={{ backgroundColor: colors.background }}
-                    tabBar={(props: any) => {
-                        const { state, navigation, descriptors } = props;
-                        const { routes, index } = state;
+                    commonOptions={{ sceneStyle: { backgroundColor: colors.background } }}
+                    renderTabBar={({ navigationState, jumpTo }) => {
+                        const { routes: tabRoutes, index } = navigationState;
                         return (
                             <Tabs
-                                value={routes[index].key}
-                                onValueChange={(val: string) => {
-                                    navigation.navigate(routes.find((r: any) => r.key === val)?.name);
-                                }}
+                                value={tabRoutes[index].key}
+                                onValueChange={(val: string) => jumpTo(val)}
                                 style={{ paddingHorizontal: 8 }}
                             >
                                 <Tabs.List>
                                     <Tabs.ScrollView scrollAlign="center">
                                         <Tabs.Indicator />
-                                        {routes.map((route: any) => {
-                                            const label = descriptors[route.key]?.options?.tabBarLabel ?? route.name;
+                                        {tabRoutes.map((route) => {
+                                            const label = route.title ?? route.key;
                                             return (
                                                 <Tabs.Trigger key={route.key} value={route.key}>
                                                     <Tabs.Label>{label}</Tabs.Label>
@@ -887,13 +896,23 @@ const EditProfileForm = ({ targetProfile, myProfile }: { targetProfile: any, myP
                             </Tabs>
                         );
                     }}
-                >
-                    <Tab.Screen name="General" component={BasicTab} options={{ tabBarLabel: t('profile.edit.tabs.general', 'General') }} />
-                    <Tab.Screen name="Media" component={MediaTab} options={{ tabBarLabel: t('profile.edit.tabs.media', 'Media') }} />
-                    <Tab.Screen name="About" component={AboutTab} options={{ tabBarLabel: t('profile.edit.tabs.about', 'About') }} />
-                    <Tab.Screen name="Physical" component={DetailsTab} options={{ tabBarLabel: t('profile.edit.tabs.physical', 'Physical') }} />
-                    {isAdmin && <Tab.Screen name="System" component={AdminSystemTab} options={{ tabBarLabel: t('profile.edit.tabs.system', 'System') }} />}
-                </Tab.Navigator>
+                    renderScene={({ route }) => {
+                        switch (route.key) {
+                            case "General":
+                                return <BasicTab />;
+                            case "Media":
+                                return <MediaTab />;
+                            case "About":
+                                return <AboutTab />;
+                            case "Physical":
+                                return <DetailsTab />;
+                            case "System":
+                                return <AdminSystemTab />;
+                            default:
+                                return null;
+                        }
+                    }}
+                />
             </View>
         </FormContext.Provider>
     );

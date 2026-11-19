@@ -140,7 +140,7 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
                                 <Ionicons name="chatbubbles-outline" size={48} color={colors.muted} />
                                 <FlexText style={{ color: colors.muted, marginTop: 12 }}>No reviews found for this movie.</FlexText>
                             </View>
-                        ) : null
+                        ) : undefined
                     }
                     contentContainerStyle={{ paddingBottom: 40 }}
                 />

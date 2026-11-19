@@ -17,7 +17,8 @@ import { TabBarSurface } from "./tab-bar-surface";
 
 const CurvedTabsRoot: ICurvedTabsRoot = ({
     state,
-    navigation,
+    emitter,
+    navigateToTab,
     insets,
     children,
 }): React.ReactNode & React.ReactElement => {
@@ -36,11 +37,11 @@ const CurvedTabsRoot: ICurvedTabsRoot = ({
     });
 
     const navigateToIndex = (index: number) => {
-        if (index !== state.index) navigation.navigate(routes[index].name);
+        if (index !== state.index) navigateToTab(routes[index].key);
     };
 
     const onPress = (route: ITabRoute, index: number) => {
-        const event = navigation.emit({
+        const event = emitter.emit({
             type: "tabPress",
             target: route.key,
             canPreventDefault: true,
@@ -48,7 +49,7 @@ const CurvedTabsRoot: ICurvedTabsRoot = ({
         if (state.index === index) {
             useScrollStore.getState().triggerScrollToTop(route.name);
         } else if (!event.defaultPrevented) {
-            navigation.navigate(route.name);
+            navigateToTab(route.key);
         }
     };
 

@@ -2,10 +2,10 @@ const path = require('path');
 const expoDir = path.dirname(require.resolve('expo/package.json'));
 const { withAppBuildGradle } = require(require.resolve('@expo/config-plugins', { paths: [expoDir] }));
 
-// expo-video 56.1.2 requires Media3 1.9.0.
+// expo-video 58.0.14 / expo-audio 58.0.12 require Media3 1.9.1.
 // expo-media-viewer hardcodes 1.5.1 which causes AbstractMethodError at runtime.
-// Force 1.9.0 across all configurations so the runtime interface matches what expo-video compiled against.
-const MEDIA3_VERSION = '1.9.0';
+// Force 1.9.1 across all configurations so the runtime interface matches what expo-video compiled against.
+const MEDIA3_VERSION = '1.9.1';
 
 module.exports = function withAndroidBuildFixes(config) {
   return withAppBuildGradle(config, (config) => {

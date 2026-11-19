@@ -218,7 +218,7 @@ const HashtagPostsScreen = ({ tag }: HashtagPostsScreenProps) => {
                 refreshControl={
                     <RefreshControl
                         refreshing={vm.isRefetching}
-                        onRefresh={vm.refetch}
+                        onRefresh={() => { void vm.refetch(); }}
                         tintColor={colors.text}
                         colors={[colors.text]}
                         progressBackgroundColor={colors.card}

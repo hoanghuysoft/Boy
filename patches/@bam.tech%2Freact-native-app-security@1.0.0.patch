@@ -1,0 +1,65 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 4598b7cf35de6ae754a4a69d83bf7553fe00160a..0ce3f5d437f869151cc422b09750b61abc55bda3 100644
+--- a/android/build.gradle	
++++ b/android/build.gradle
+@@ -1,6 +1,5 @@
+ apply plugin: 'com.android.library'
+ apply plugin: 'kotlin-android'
+-apply plugin: 'maven-publish'
+ 
+ group = 'tech.bam.rnas'
+ version = '0.1.0'
+@@ -35,23 +34,8 @@ buildscript {
+   }
+ }
+ 
+-afterEvaluate {
+-  publishing {
+-    publications {
+-      release(MavenPublication) {
+-        from components.release
+-      }
+-    }
+-    repositories {
+-      maven {
+-        url = mavenLocal().url
+-      }
+-    }
+-  }
+-}
+-
+ android {
+-  compileSdkVersion safeExtGet("compileSdkVersion", 34)
++  compileSdkVersion safeExtGet("compileSdkVersion", 35)
+ 
+   def agpVersion = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION
+   if (agpVersion.tokenize('.')[0].toInteger() < 8) {
+@@ -66,9 +50,15 @@ android {
+   }
+ 
+   namespace "tech.bam.rnas"
++  buildFeatures {
++    buildConfig true
++  }
++  buildFeatures {
++    buildConfig true
++  }
+   defaultConfig {
+     minSdkVersion safeExtGet("minSdkVersion", 21)
+-    targetSdkVersion safeExtGet("targetSdkVersion", 34)
++    targetSdkVersion safeExtGet("targetSdkVersion", 35)
+     versionCode 1
+     versionName "0.1.0"
+ 
+@@ -79,11 +69,6 @@ android {
+   lintOptions {
+     abortOnError false
+   }
+-  publishing {
+-    singleVariant("release") {
+-      withSourcesJar()
+-    }
+-  }
+ }
+ 
+ repositories {

@@ -1,11 +1,14 @@
-import { createMaterialTopTabNavigator } from "expo-router/build/react-navigation/material-top-tabs";
-import React, { createContext, useContext, useCallback } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
+import { TabView, type Route } from "react-native-tab-view";
 import CustomTopTabBar from "./CustomTopTabBar";
 import FeedTab from "./FeedTab";
 
-const Tab = createMaterialTopTabNavigator();
+type HomeTabRoute = Route & {
+    key: "Following" | "Lucky" | "This Day";
+    title: string;
+};
 
 // Define a context to pass the ViewModel down to the tab screens statically.
 // This prevents unmounting & remounting the tabs on every parent render caused by inline functions.
@@ -61,9 +64,37 @@ interface HomeTabsProps {
 
 const HomeTabs = ({ vm }: HomeTabsProps) => {
     const { t } = useTranslation();
+    const { width: screenWidth } = useWindowDimensions();
+    const [index, setIndex] = useState(0);
+
+    const routes = useMemo<HomeTabRoute[]>(() => [
+        { key: "Following", title: t('home.tabs.following') },
+        { key: "Lucky", title: t('home.tabs.lucky') },
+        { key: "This Day", title: t('home.tabs.thisDay') },
+    ], [t]);
+
+    const { handleTabStateChange } = vm;
+
+    const handleIndexChange = useCallback((newIndex: number) => {
+        setIndex(newIndex);
+        handleTabStateChange();
+    }, [handleTabStateChange]);
+
+    const renderScene = useCallback(({ route }: { route: HomeTabRoute }) => {
+        switch (route.key) {
+            case "Following":
+                return <FollowingTab />;
+            case "Lucky":
+                return <LuckyTab />;
+            case "This Day":
+                return <ThisDayTab />;
+            default:
+                return null;
+        }
+    }, []);
 
     // Memoize the custom tab bar render function to avoid recreating it on every render,
-    // which causes the MaterialTopTabNavigator to completely re-render its tab bar container.
+    // which causes the TabView to completely re-render its tab bar container.
     const renderTabBar = useCallback((props: any) => (
         <View style={{ position: 'absolute', top: vm.insets.top + vm.headerHeight, left: 0, right: 0, zIndex: 99 }}>
             <CustomTopTabBar
@@ -77,35 +108,19 @@ const HomeTabs = ({ vm }: HomeTabsProps) => {
 
     return (
         <HomeContext.Provider value={vm}>
-            <Tab.Navigator
-                sceneContainerStyle={{ backgroundColor: 'transparent' }}
-                tabBar={renderTabBar}
-                screenOptions={{
-                    swipeEnabled: true,
-                    lazy: true,
-                    lazyPreloadDistance: 0,
+            <TabView
+                navigationState={{ index, routes }}
+                onIndexChange={handleIndexChange}
+                initialLayout={{ width: screenWidth }}
+                renderTabBar={renderTabBar}
+                renderScene={renderScene}
+                swipeEnabled={true}
+                lazy={true}
+                lazyPreloadDistance={0}
+                commonOptions={{
                     sceneStyle: { backgroundColor: 'transparent' },
                 }}
-                screenListeners={{
-                    state: vm.handleTabStateChange,
-                }}
-            >
-                <Tab.Screen
-                    name="Following"
-                    component={FollowingTab}
-                    options={{ title: t('home.tabs.following') }}
-                />
-                <Tab.Screen
-                    name="Lucky"
-                    component={LuckyTab}
-                    options={{ title: t('home.tabs.lucky') }}
-                />
-                <Tab.Screen
-                    name="This Day"
-                    component={ThisDayTab}
-                    options={{ title: t('home.tabs.thisDay') }}
-                />
-            </Tab.Navigator>
+            />
         </HomeContext.Provider>
     );
 };

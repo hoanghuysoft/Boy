@@ -1,0 +1,695 @@
+# Advanced Patterns
+
+Deeper integration guides for Navigation, Reanimated, Web, Side sheets, Backgrounds, Liquid Glass, Jest, and Migration.
+
+## Table of Contents
+
+- [React Navigation](#react-navigation)
+- [Expo Router](#expo-router)
+- [Deep linking](#deep-linking)
+- [Reanimated](#reanimated)
+- [Web](#web)
+- [Side sheets](#side-sheets)
+- [Foldables (iOS 27.1+)](#foldables-ios-271)
+- [Backgrounds](#backgrounds)
+- [Liquid Glass (iOS 26+)](#liquid-glass-ios-26)
+- [Overlays on sheets](#overlays-on-sheets)
+- [Edge-to-edge (Android)](#edge-to-edge-android)
+- [Jest testing](#jest-testing)
+- [Migration v3 → v4](#migration-v3--v4)
+
+---
+
+## React Navigation
+
+Use `createTrueSheetNavigator()` to treat sheets as screens in your navigation tree. The first screen (or `initialRouteName`) is the base content; other screens present as sheets.
+
+### Requirements
+
+The navigator is built on `standard-navigation`, so one implementation works with both React Navigation and Expo Router. Install the optional peers:
+
+```sh
+yarn add @react-navigation/native@^7.3.0 standard-navigation
+```
+
+### Setup
+
+```tsx
+import { createTrueSheetNavigator } from '@lodev09/react-native-true-sheet/navigation'
+
+const Sheet = createTrueSheetNavigator()
+
+function App() {
+  return (
+    <NavigationContainer>
+      <Sheet.Navigator>
+        {/* First screen = base content behind the sheet */}
+        <Sheet.Screen name="Home" component={HomeScreen} />
+
+        {/* Other screens present as sheets */}
+        <Sheet.Screen
+          name="Details"
+          component={DetailsSheet}
+          options={{
+            detents: ['auto', 1],
+            cornerRadius: 16,
+            grabber: true,
+          }}
+        />
+      </Sheet.Navigator>
+    </NavigationContainer>
+  )
+}
+```
+
+To present sheets from anywhere, wrap your root stack: `<Sheet.Screen name="Root" component={RootStack} />` plus sheet screens as siblings.
+
+### Nesting navigators
+
+Nesting a native stack **works in the base screen** — the first screen (or `initialRouteName`) is a regular view, so `<Sheet.Screen name="Root" component={RootStack} />` is the normal way to wrap an app (see above).
+
+It **does not work inside a sheet screen**. On Android, a sheet screen whose component is a `createNativeStackNavigator` crashes with:
+
+```
+IllegalStateException: ScreenContainer is not attached under ReactRootView
+```
+
+For multi-step flows inside a sheet:
+
+- **Stack sheets (recommended)** — make each step its own sheet screen and `navigation.navigate()` between them. The presenting sheet stays visible underneath; `pop()`, `popTo()`, `popToTop()` walk back.
+- **Local state** — swap the sheet's content with React state when you don't need history or deep links.
+
+With Expo Router, keep each step as a sibling route under the `Sheet` layout — a sheet route must not have its own `_layout.tsx` with a `<Stack>`.
+
+### Static API
+
+React Navigation's [static configuration](https://reactnavigation.org/docs/static-configuration) is supported via `createTrueSheetScreen`:
+
+```tsx
+import {
+  createTrueSheetNavigator,
+  createTrueSheetScreen,
+} from '@lodev09/react-native-true-sheet/navigation'
+
+const Sheet = createTrueSheetNavigator({
+  screens: {
+    Main: MainScreen,
+    Details: createTrueSheetScreen({
+      screen: DetailsSheet,
+      options: { detents: ['auto', 1] },
+    }),
+  },
+})
+```
+
+### Screen options
+
+All TrueSheet props are available as screen `options`, plus:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `detentIndex` | `number` | Initial detent when the sheet presents (default: `0`) |
+| `reanimated` | `boolean` | Enable worklet-based position events for this screen |
+| `positionChangeHandler` | `function` | Callback for position change events. Must be a worklet when `reanimated: true` |
+
+The reanimated integration is lazy-loaded — screens without `reanimated: true` don't require `react-native-reanimated`.
+
+### `useTrueSheetNavigation()` hook
+
+```tsx
+const navigation = useTrueSheetNavigation()
+
+navigation.resize(1)         // resize to a detent
+navigation.goBack()          // dismiss current sheet
+
+// Dynamic options — any TrueSheet prop (header, footer, grabber, dismissible, ...)
+navigation.setOptions({
+  footer: <UpdatedFooter />,
+})
+```
+
+### Scrollable content in a sheet screen
+
+`scrollableRef` and `scrollableOptions` are screen options like any other prop. The ref lives inside the screen component, so set it with `setOptions`, and bound the scroll view with `style: { flex: 1 }` on the screen options:
+
+```tsx
+<Sheet.Screen
+  name="Details"
+  component={DetailsSheet}
+  options={{ detents: [0.5, 1], style: { flex: 1 } }}
+/>
+
+function DetailsSheet() {
+  const navigation = useTrueSheetNavigation()
+  const scrollableRef = useRef<ScrollView>(null)
+
+  useEffect(() => {
+    navigation.setOptions({ scrollableRef })
+  }, [navigation])
+
+  return <ScrollView ref={scrollableRef}>{/* ... */}</ScrollView>
+}
+```
+
+### Screen event listeners
+
+```tsx
+navigation.addListener('sheetDidPresent', (e) => {
+  console.log(e.data.index)
+})
+```
+
+Also available as `screenListeners` on the navigator or `listeners` on a screen. Events: `sheetWillPresent`, `sheetDidPresent`, `sheetWillDismiss`, `sheetDidDismiss`, `sheetDismissAttempt`, `sheetDetentChange`, `sheetDragBegin`, `sheetDragChange`, `sheetDragEnd`, `sheetPositionChange`.
+
+### Navigating from sheets
+
+Sheets remain visible when presenting screens on top — `navigation.navigate('SomeScreen')` works directly, no dismissing first. This requires a [patch to react-native-screens](https://github.com/lodev09/react-native-true-sheet/blob/main/.yarn/patches/react-native-screens-npm-4.26.2.patch) (see [PR #3415](https://github.com/software-mansion/react-native-screens/pull/3415)). On Expo SDK 56+ EAS builds the patch is silently dropped — see [Troubleshooting](./troubleshooting.md#patched-react-native-screens-not-applied-on-eas).
+
+### Web caveat
+
+Sheet visibility during navigation relies on `react-native-screens` detection, which isn't supported on web. Use `useFocusEffect` to present/dismiss manually when the screen gains/loses focus.
+
+---
+
+## Expo Router
+
+v4 ships a ready-to-use `Sheet` layout via the `/navigation/expo-router` entry point — no `withLayoutContext` wrapper and no `@react-navigation/*` install needed. Requires Expo SDK 57+ and the `standard-navigation` optional peer:
+
+```sh
+yarn add standard-navigation
+```
+
+```tsx
+// app/_layout.tsx
+import { Sheet } from '@lodev09/react-native-true-sheet/navigation/expo-router'
+
+export default function SheetLayout() {
+  return (
+    <Sheet>
+      <Sheet.Screen name="index" />
+      <Sheet.Screen
+        name="details"
+        options={{ detents: ['auto', 1], cornerRadius: 16 }}
+      />
+    </Sheet>
+  )
+}
+```
+
+On Expo SDK 58+, the base screen comes from the layout's `export const unstable_settings = { anchor: 'index' }` — the `initialRouteName` prop on `Sheet` is ignored.
+
+Inside sheet screens, import the hook from the **same entry point**:
+
+```tsx
+import { useTrueSheetNavigation } from '@lodev09/react-native-true-sheet/navigation/expo-router'
+```
+
+All navigator features (screen options, reanimated, dynamic header/footer and `scrollableRef` via `setOptions`, listeners) apply here too.
+
+A sheet route must not have its own `_layout.tsx` with a `<Stack>` — keep multi-step flows as sibling sheet screens under the `Sheet` layout (see [Nesting navigators](#nesting-navigators)):
+
+```
+app/
+├── _layout.tsx   # Sheet layout
+├── index.tsx     # Base content
+├── settings.tsx  # Sheet screen
+└── profile.tsx   # Sheet screen, pushed from settings via router.push('/profile')
+```
+
+---
+
+## Deep linking
+
+On iOS, a cold start deep link can open a modal or a sheet-navigator sheet over a screen whose sheet uses `initialDetentIndex`. That sheet then presents on top of the deep-linked screen, or not at all. Hold `initialDetentIndex` until the screen is focused:
+
+```tsx
+import { useFocusEffect } from '@react-navigation/native' // or 'expo-router'
+
+function HomeScreen() {
+  const [initialDetentIndex, setInitialDetentIndex] = useState(-1)
+
+  useFocusEffect(useCallback(() => setInitialDetentIndex(0), []))
+
+  return <TrueSheet initialDetentIndex={initialDetentIndex}>{/* ... */}</TrueSheet>
+}
+```
+
+A normal launch is focused on mount, so the sheet presents immediately; under a deep-linked screen it waits until that screen closes. Flip the prop — don't call `present()` on focus, which rejects behind a `fullScreenModal` ("No presenting view controller found").
+
+---
+
+## Reanimated
+
+Requires `react-native-reanimated` >=4 and `react-native-worklets` (mandatory dependency of Reanimated 4+). Both packages are optional TrueSheet peer dependencies — you only need them if you use TrueSheet's Reanimated features.
+
+### Provider setup
+
+```tsx
+import { ReanimatedTrueSheetProvider } from '@lodev09/react-native-true-sheet/reanimated'
+
+function App() {
+  return (
+    <ReanimatedTrueSheetProvider>
+      <YourApp />
+    </ReanimatedTrueSheetProvider>
+  )
+}
+```
+
+### Using `ReanimatedTrueSheet`
+
+```tsx
+import { ReanimatedTrueSheet } from '@lodev09/react-native-true-sheet/reanimated'
+
+<ReanimatedTrueSheet ref={sheetRef} detents={[0.3, 0.6, 1]}>
+  <Content />
+</ReanimatedTrueSheet>
+```
+
+Note: `onPositionChange` on `ReanimatedTrueSheet` runs on the UI thread — if you override it, add the `'worklet'` directive to your handler.
+
+### Animated values
+
+Access shared values from anywhere inside the provider:
+
+```tsx
+import { useReanimatedTrueSheet } from '@lodev09/react-native-true-sheet/reanimated'
+
+function AnimatedBackdrop() {
+  const { animatedPosition, animatedIndex, animatedDetent } = useReanimatedTrueSheet()
+
+  const style = useAnimatedStyle(() => ({
+    opacity: interpolate(animatedIndex.value, [0, 1], [0, 0.5], Extrapolation.CLAMP),
+  }))
+
+  return <Animated.View style={[StyleSheet.absoluteFill, style]} />
+}
+```
+
+| Value | Type | Description |
+|-------|------|-------------|
+| `animatedPosition` | `SharedValue<number>` | Y position relative to screen top |
+| `animatedIndex` | `SharedValue<number>` | Continuous float (0.5 = between detent 0 and 1) |
+| `animatedDetent` | `SharedValue<number>` | Current detent value (0–1) |
+
+---
+
+## Web
+
+### Installation
+
+Web needs the underlying dialog primitives, declared as optional peer dependencies:
+
+```sh
+yarn add @radix-ui/react-dialog @radix-ui/react-presence
+```
+
+### Provider (required on web, pass-through on native)
+
+```tsx
+import { TrueSheetProvider } from '@lodev09/react-native-true-sheet'
+
+function App() {
+  return (
+    <TrueSheetProvider>
+      <YourApp />
+    </TrueSheetProvider>
+  )
+}
+```
+
+### Control via hook
+
+Static methods (`TrueSheet.present`, etc.) don't work on web. Use refs, or the hook:
+
+```tsx
+const { present, dismiss, dismissAll, dismissStack, resize } = useTrueSheet()
+
+await present('my-sheet')
+await dismiss('my-sheet')
+```
+
+### Detached mode (floating card)
+
+```tsx
+<TrueSheet detached detachedOffset={24} detents={[0.5]}>
+  <CardContent />
+</TrueSheet>
+```
+
+---
+
+## Side sheets
+
+Place a sheet on the leading or trailing edge (follows layout direction). Useful for tablet layouts or navigation drawers.
+
+```tsx
+<TrueSheet
+  placement="leading"
+  detents={['auto', 1]}
+  maxContentWidth={400}
+  placementOffset={16}
+>
+  <SideMenu />
+</TrueSheet>
+```
+
+- Default `'automatic'` lets the system decide; `'center'` is explicit. They only differ on iOS 27+ (`preferredPlacement`) — elsewhere both center the sheet
+- On iOS, the system controls the side margins (`preferredPlacement` on iOS 27+, `sourceView` before)
+- On phones in portrait, placement is ignored — the sheet is always full-width
+- `placementOffset` applies on Android and Web only
+
+---
+
+## Foldables (iOS 27.1+)
+
+`foldOptions` acts in tabletop only (half-open, horizontal fold). No-op elsewhere.
+
+```tsx
+<TrueSheet
+  detents={['peek', 0.6, 1]}
+  foldOptions={{ hingeDetentIndex: 1, hingeBehavior: 'snap' }}
+>
+  <TrueSheetPeek><MiniPlayer /></TrueSheetPeek>
+  <PlayerControls />
+</TrueSheet>
+```
+
+- `hingeDetentIndex`: that detent rests on the hinge (fills the bottom panel); in other postures it keeps its value — the detent is its own fallback
+- `hingeBehavior: 'avoid'`: caps every detent at the hinge. Detents above it collapse onto it — keep one detent above the hinge
+- `hingeBehavior: 'snap'`: like `'avoid'`, and moves to `hingeDetentIndex` on fold, back to the previous detent on unfold (unless the user moved it off the hinge)
+- Detents keep their order around `hingeDetentIndex`: lower ones stay below it, higher ones above it
+- Book posture (vertical fold): iOS docks the sheet to one panel natively — pick it with `placement` (`'automatic'`/`'center'` → leading)
+- Navigator: `foldOptions` is a regular screen option
+- Test on the iPhone Duo simulator: unfold, rotate to a portrait UI, then half-fold
+
+---
+
+## Backgrounds
+
+Two layers:
+
+| Layer | Props | Renders |
+|-------|-------|---------|
+| Sheet background | `backgroundColor`, `backgroundBlur`, `detentBackgrounds` | Native effect or painted color |
+| Background wrapper | `background`, `backgroundStyle` | React view above the sheet background |
+
+The wrapper fills the sheet behind header/content/footer, ignores touches, applies across all detents, and never affects detent heights.
+
+```tsx
+<TrueSheet backgroundColor="#ffffff" />                   // color; replaces glass on supported iOS 26.1+
+<TrueSheet backgroundBlur="system-material" />            // iOS only; wins over backgroundColor
+<TrueSheet backgroundStyle={{ backgroundColor: 'rgba(0, 122, 255, 0.25)' }} /> // tint glass/blur
+<TrueSheet backgroundStyle={{ backgroundColor: '#18202b' }} /> // exact opaque color
+```
+
+- Default: Liquid Glass on iOS 26+, system-material blur before iOS 26, Material 3 `colorSurfaceContainerLow` on Android/Web.
+- Native color effects can shift dark, low-chroma colors over full-screen modals — use an opaque `backgroundStyle.backgroundColor` for an exact color.
+- `backgroundStyle` only applies `backgroundColor` and works without `background`.
+
+### Custom background
+
+Pass any `ReactNode` (gradient, image, blur) to `background`, sized with `StyleSheet.absoluteFill`:
+
+```tsx
+<TrueSheet
+  background={<Image source={require('./texture.png')} style={StyleSheet.absoluteFill} />}
+/>
+```
+
+### Custom blur
+
+For custom intensity or blur on Android/Web, use a third-party blur. The library controls platform support.
+
+```tsx
+import { BlurView } from 'expo-blur';
+
+<TrueSheet
+  backgroundColor="transparent"
+  background={<BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />}
+/>
+```
+
+On iOS 26.0 or devices without the effect setters, a transparent color cannot remove the system glass behind it.
+
+### Per-detent backgrounds
+
+```tsx
+<TrueSheet
+  detents={['peek', 'auto', 1]}
+  detentBackgrounds={[null, { blur: 'system-material' }, '#18202b']}
+/>
+```
+
+| Platform | Transition | Blur entries |
+|----------|------------|--------------|
+| iOS 26.1+ with native effect support | UIKit transitions as the sheet moves | Native blur effect |
+| Other iOS | Cross-fade past the midpoint between detents | Blur view at system intensity |
+| Android/Web | Color cross-fade past the midpoint | Inherit the sheet background |
+
+`null`/missing entries inherit `backgroundColor`/`backgroundBlur`. See [configuration](configuration.md#per-detent-backgrounds) for the type and rules.
+
+### iOS background effects
+
+Native effects need iOS 26.1+, the effect setters on the sheet and its detents, and no design compatibility mode (iOS 27+ ignores `UIDesignRequiresCompatibility` only in apps built with the iOS 27 SDK or later).
+
+| Input | Native effects | Fallback |
+|-------|----------------|----------|
+| `backgroundColor` | Color effect | Painted color |
+| `backgroundBlur` | Blur effect, replaces glass | Non-interactive blur view at system intensity |
+| Neither | Liquid Glass | Platform default; system-material blur before iOS 26 |
+| `backgroundStyle.backgroundColor` | Paint above the effect | Paint above the sheet background |
+| `background` | Custom node above the effect | Custom node above the sheet background |
+
+On iOS 26.0, the fallback color/blur sits above Liquid Glass, which TrueSheet cannot remove.
+
+---
+
+## Liquid Glass (iOS 26+)
+
+Liquid Glass is the frosted glass visual effect introduced in iOS 26. It's automatic — no configuration needed.
+
+**When it activates:** by default on iOS 26+. On supported iOS 26.1+, `backgroundColor` or `backgroundBlur` replaces it with an effect. With neither set, the default is Liquid Glass. See [Backgrounds](#backgrounds) for effects and fallbacks.
+
+**Tint it:** use `backgroundStyle.backgroundColor`:
+```tsx
+<TrueSheet backgroundStyle={{ backgroundColor: 'rgba(0, 122, 255, 0.25)' }}>
+```
+
+Tinted glass is not supported per detent. On iOS 26+, detents with a `detentBackgrounds` entry lose the glass touch response.
+
+**Disable per-sheet (supported iOS 26.1+):** use `backgroundColor="transparent"` for a clear effect, or set a color/blur effect:
+```tsx
+<TrueSheet backgroundColor="transparent">
+```
+
+**Disable app-wide on iOS 26 (Info.plist):**
+```xml
+<key>UIDesignRequiresCompatibility</key>
+<true/>
+```
+
+Or via Expo config: `expo.ios.infoPlist.UIDesignRequiresCompatibility: true`. This disables Liquid Glass for the entire app on iOS 26.
+iOS 27+ ignores this key in apps built with the iOS 27 SDK or later. Use `backgroundColor` or `backgroundBlur` for individual sheets.
+
+---
+
+## Overlays on sheets
+
+Sheets are presented natively above the React Native view hierarchy, so toasts, dialogs, and JS-portal content render behind them.
+
+**Solution:** Render the content in `TrueSheetOverlay` — a native layer above every presented sheet. Show/hide by conditionally rendering children (no `visible` prop). Mount it anywhere, including inside a sheet's content.
+
+```tsx
+import { TrueSheetOverlay } from '@lodev09/react-native-true-sheet'
+
+<TrueSheetOverlay>
+  {toast && <Toast message={toast} />}
+</TrueSheetOverlay>
+```
+
+- Fills the window; touches that miss its children pass through (the sheet stays draggable). For a blocking dialog, render an `absoluteFill` backdrop child.
+- Use `style` for flex/padding layout of children. The overlay itself never renders (no `backgroundColor`).
+- Fills the window, so children may sit under the status bar / navigation bar — inset them with `useSafeAreaInsets`.
+- Native modals presented afterwards (RN `Modal`, native-stack modal screens) and the keyboard still render above it.
+- `react-native-screens` containers (native stack, bottom tabs, drawer) are not supported inside the overlay — Android crashes with `ScreenContainer is not attached under ReactRootView`.
+- Supported on iOS, Android, and Web.
+
+---
+
+## Edge-to-edge (Android)
+
+TrueSheet auto-detects edge-to-edge when enabled. To enable:
+
+```properties
+# android/gradle.properties
+edgeToEdgeEnabled=true
+```
+
+Android 16+ will enable this automatically. No TrueSheet configuration needed.
+
+---
+
+## Jest testing
+
+### Mock setup
+
+```js
+// jest.setup.js
+jest.mock('@lodev09/react-native-true-sheet', () =>
+  require('@lodev09/react-native-true-sheet/mock')
+)
+
+jest.mock('@lodev09/react-native-true-sheet/navigation', () =>
+  require('@lodev09/react-native-true-sheet/navigation/mock')
+)
+
+jest.mock('@lodev09/react-native-true-sheet/navigation/expo-router', () =>
+  require('@lodev09/react-native-true-sheet/navigation/expo-router/mock')
+)
+
+jest.mock('@lodev09/react-native-true-sheet/reanimated', () =>
+  require('@lodev09/react-native-true-sheet/reanimated/mock')
+)
+```
+
+### Jest config
+
+```json
+{
+  "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
+  "transformIgnorePatterns": [
+    "node_modules/(?!(react-native|@react-native|@lodev09/react-native-true-sheet)/)"
+  ]
+}
+```
+
+`transformIgnorePatterns` is required because the mock files use ESM syntax.
+
+### Available mocks
+
+- `/mock`: `TrueSheet` (mocked `present`/`dismiss`/`resize`), `TrueSheetOverlay` (renders children in a View), `TrueSheetProvider`, `useTrueSheet`
+- `/navigation/mock`: `createTrueSheetNavigator`, `createTrueSheetScreen`, `TrueSheetActions`, `useTrueSheetNavigation`
+- `/navigation/expo-router/mock`: `Sheet` (pass-through with `Screen` and `Protected`), `TrueSheetActions`, `useTrueSheetNavigation`
+- `/reanimated/mock`: `ReanimatedTrueSheet`, `ReanimatedTrueSheetProvider`, `useReanimatedTrueSheet`, `useReanimatedPositionChangeHandler`
+
+Static methods are jest mocks, so you can assert on them:
+
+```tsx
+expect(TrueSheet.present).toHaveBeenCalledWith('my-sheet', 0)
+```
+
+All mocked methods return resolved Promises — `await` them in tests, and `jest.clearAllMocks()` between tests.
+
+---
+
+## Migration v3 → v4
+
+v4 rewrites the layout engine — the sheet lays out synchronously per detent with Yoga owning all frames. Upgrading from v2? Migrate to v3 first (prop renames: `sizes`→`detents`, `onPresent`→`onDidPresent`, `onSizeChange`→`onDetentChange`, `FooterComponent`→`footer`, percentage strings→fractions).
+
+### Requirements
+
+- React Native >= 0.82 (Expo SDK 55+), New Architecture enabled
+- Sheet Navigator: `@react-navigation/native` 7.3+ and `standard-navigation`
+- Expo Router: Expo SDK 57+ and `standard-navigation`
+
+### 1. `scrollable` → `scrollableRef`
+
+```tsx
+// ❌ v3
+<TrueSheet scrollable detents={[0.5, 1]}>
+  <ScrollView>{/* ... */}</ScrollView>
+</TrueSheet>
+
+// ✅ v4 — plug the scroll view, bound it with flex: 1
+<TrueSheet scrollableRef={scrollableRef} style={{ flex: 1 }} detents={[0.5, 1]}>
+  <ScrollView ref={scrollableRef}>{/* ... */}</ScrollView>
+</TrueSheet>
+
+// ✅ v4 — 'auto' now works with scrollables, no flex needed
+<TrueSheet scrollableRef={scrollableRef} detents={['auto']}>
+  <ScrollView ref={scrollableRef}>{/* ... */}</ScrollView>
+</TrueSheet>
+```
+
+### 2. Content lays out naturally
+
+Content wraps its children's height instead of filling the sheet. If your layout relied on filling (spacers, centered content, bounded scroll views), pass `flex: 1` via the sheet's `style` prop.
+
+### 3. Footer is relative by default
+
+The footer now takes space below the content (still pinned to the bottom edge) and counts toward the `'auto'` detent. To restore the v3 floating behavior:
+
+```tsx
+<TrueSheet footer={<MyFooter />} footerOptions={{ position: 'absolute' }}>
+```
+
+`footerOptions.keyboardOffset` only applies to absolute footers — a relative footer stays behind the keyboard.
+
+### 4. Safe-area padding is now native
+
+- The footer absorbs the bottom safe-area inset — remove manual `useSafeAreaInsets()` padding from footers.
+- A plugged scrollable gets the bottom inset natively while it can scroll, and is padded by an absolute footer's height — remove manual padding, or opt out with `scrollableOptions={{ contentInsetAdjustment: 'never' }}`.
+
+### 5. Navigation entry points
+
+- React Navigation: install `standard-navigation`, bump `@react-navigation/native` to 7.3+. API is unchanged. Static API now available via `createTrueSheetScreen`.
+- Expo Router: replace the `withLayoutContext` wrapper with the `Sheet` layout from `/navigation/expo-router`, and import `useTrueSheetNavigation` from that entry point.
+
+### 6. Background effects and removed `blurOptions`
+
+On supported iOS 26.1+, `backgroundColor` uses a color effect and `backgroundBlur` uses a blur effect.
+Blur takes precedence over color on iOS. Tint through the background wrapper:
+
+```tsx
+<TrueSheet
+  backgroundBlur="system-material"
+  backgroundStyle={{ backgroundColor: 'rgba(0, 122, 255, 0.25)' }}
+/>
+```
+
+Use `backgroundStyle.backgroundColor` for an exact opaque color or a translucent tint over glass/blur:
+
+```tsx
+<TrueSheet backgroundStyle={{ backgroundColor: '#18202b' }} />
+<TrueSheet backgroundStyle={{ backgroundColor: 'rgba(0, 122, 255, 0.25)' }} />
+```
+
+For a custom node, use `background` and size it with `StyleSheet.absoluteFill`.
+The wrapper fills the sheet behind header/content/footer, ignores touches, and does not affect detent heights.
+Only `backgroundColor` is supported in `backgroundStyle`. See [Custom blur](#custom-blur).
+
+Remove `blurOptions` and `BlurOptions`. For custom intensity, use a third-party blur in `background`.
+The built-in blur ignores touches, so the iOS 18 `interaction: false` workaround is no longer needed.
+Missing effect setters and design compatibility mode use the fallback. iOS 27+ ignores `UIDesignRequiresCompatibility` only in apps built with the iOS 27 SDK or later.
+On iOS 26.0, color/blur still sits above glass.
+
+### 7. `anchor` → `placement`
+
+`anchor`→`placement`, `anchorOffset`→`placementOffset`, `'left'`/`'right'`→`'leading'`/`'trailing'`. Names now match behavior — native side sheets already followed layout direction (RTL flips them). Web follows it too. New default `'automatic'` lets the system decide; only differs from `'center'` on iOS 27+.
+
+```tsx
+// ❌ v3
+<TrueSheet anchor="left" anchorOffset={24} maxContentWidth={400}>
+
+// ✅ v4
+<TrueSheet placement="leading" placementOffset={24} maxContentWidth={400}>
+```
+
+### New in v4
+
+- `detentBackgrounds` — color/blur entries by detent index. Native iOS 26.1+ transitions, midpoint cross-fades elsewhere. Android/Web inherit the sheet background for blur entries. See [configuration](configuration.md#per-detent-backgrounds).
+- `'auto'` detent works with scrollables
+- `headerOptions` (floating header)
+- `footerOptions={{ position: 'absolute', avoidKeyboard: false }}` keeps native absolute footers behind the keyboard. The default is `true`. With footer inset adjustment enabled, only the uncovered portion adds scroll padding and contributes to the expanded `'auto'` height.
+- `scrollableOptions.keyboardOffset` — adjust the scrollable's keyboard bottom inset; pass a negative value to cancel your own bottom padding
+- `onDismissAttempt` — fires when the user tries to dismiss a `dismissible={false}` sheet; confirm, then call `dismiss()`
+- `dimColor` / `dimOpacity` — customize the dim. On iOS they replace the system dim with a custom layer
+- `TrueSheetOverlay` — toasts/dialogs above sheets, replaces the `FullWindowOverlay`/`Modal` workaround
+- `foldOptions` — iOS 27.1+ foldables: rest the sheet on the hinge in tabletop. See [Foldables](#foldables-ios-271)
+- `background` / `backgroundStyle` — custom nodes, exact colors, and glass/blur tints on all platforms
+- `lazy={false}` — mount content before presenting so `'auto'` measures settled content
+- `autoFocus` on a `TextInput` raises the keyboard with the sheet — drop the v3 `onDidPresent` focus workaround. With `lazy={false}`, focus in `onWillPresent` to focus on every present
+- Synchronous per-detent layout — flex layouts track the sheet edge frame-by-frame while dragging
+- Element inspector works inside a presented sheet (dev builds, no setup) — header, content, and footer are inspectable
+- Android: a quick downward flick dismisses from the lowest detent, like iOS. `dismissThreshold="short"` (Android/Web) dismisses on a short drag or any fling, like Compose Material3

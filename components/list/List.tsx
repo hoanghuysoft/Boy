@@ -31,9 +31,9 @@ import {
 import type { LegendListRef } from '@legendapp/list/react-native'
 import { forwardRef, memo, useEffect, useMemo, useRef, type ReactElement } from 'react'
 import {
+  type ListViewToken,
   Platform,
   RefreshControl,
-  type ViewToken
 } from 'react-native'
 import {
   useAnimatedScrollHandler,
@@ -243,8 +243,8 @@ let List = forwardRef<ListMethods, ListProps>(
       }
       return [
         (info: {
-          viewableItems: ViewToken[]
-          changed: ViewToken[]
+          viewableItems: ListViewToken[]
+          changed: ListViewToken[]
         }) => {
           for (const token of info.changed) {
             if (token.isViewable) {

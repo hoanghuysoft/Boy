@@ -25,6 +25,7 @@ import {
     ScrollView,
     StyleSheet,
     TextInput,
+    type TextInputInstance,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -48,8 +49,8 @@ const CreateNoteScreen = () => {
     const updateNoteMutation = useUpdateNote();
     const createNoteMutation = useCreateNote();
 
-    const titleInputRef = useRef<TextInput>(null);
-    const inputRef = useRef<TextInput>(null);
+    const titleInputRef = useRef<TextInputInstance>(null);
+    const inputRef = useRef<TextInputInstance>(null);
 
     const initialParsed = useMemo(() => {
         return parseNoteTitleAndBody(initialContent || "");

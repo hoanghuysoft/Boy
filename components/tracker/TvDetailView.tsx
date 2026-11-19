@@ -9,7 +9,7 @@ import { BlurTargetView, BlurView } from "expo-blur";
 import { router } from "expo-router";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import React, { useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, type ViewInstance } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import WallpaperOverlay from "../WallpaperOverlay";
 import { TvInfoSection } from "./tv/TvInfoSection";
@@ -25,7 +25,7 @@ interface TvDetailViewProps {
 export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
     'use no memo';
     const inset = useSafeAreaInsets();
-    const blurTargetRef = useRef<View | null>(null);
+    const blurTargetRef = useRef<ViewInstance | null>(null);
     // Defer heavy rendering until after push animation
     const [isReady, setIsReady] = useState(false);
     useEffect(() => {

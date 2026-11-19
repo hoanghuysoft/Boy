@@ -1,11 +1,10 @@
 import React, { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  NativeSyntheticEvent,
   Platform,
   StyleProp,
   StyleSheet,
   Text,
-  TextLayoutEventData,
+  TextLayoutEvent,
   TextProps,
   TextStyle,
   View,
@@ -158,7 +157,7 @@ export const RNShowMoreText = memo(({
     }
   }, [calculateTruncated]);
 
-  const onMeasurementTextLayout = useCallback((e: NativeSyntheticEvent<TextLayoutEventData>) => {
+  const onMeasurementTextLayout = useCallback((e: TextLayoutEvent) => {
     onTextLayout?.(e);
     const lines = e.nativeEvent?.lines || [];
     if (lines.length > 0) {

@@ -126,8 +126,6 @@ const FakeSplashScreen = () => {
         contentFit="cover"
       />
       <StatusBar
-        translucent
-        backgroundColor="transparent"
         barStyle="light-content"
         animated
       />
@@ -183,8 +181,6 @@ const RootContent = () => {
           <StatusBar
             key={`${theme}-${isShots}`}
             animated={false}
-            translucent
-            backgroundColor="transparent"
             barStyle={
               isShots
                 ? "light-content"

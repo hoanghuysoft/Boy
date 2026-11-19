@@ -393,7 +393,7 @@ const NotesScreen = () => {
                 refreshControl={
                     <RefreshControl
                         refreshing={isRefetching}
-                        onRefresh={refetch}
+                        onRefresh={() => { void refetch(); }}
                         tintColor={colors.secondary}
                         colors={[colors.secondary]}
                         progressBackgroundColor={colors.surfaceContainer}

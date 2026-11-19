@@ -1,7 +1,7 @@
-import { ImageSourcePropType } from "react-native";
+import { ImageRequireSource } from "react-native";
 
 /** Map relationship label to circle avatar image. General/unknown uses AV17.png */
-export const getFamilyAvatarSource = (label: string): ImageSourcePropType => {
+export const getFamilyAvatarSource = (label: string): ImageRequireSource => {
     const l = label.toLowerCase();
     if (l.includes("father") || l.includes("dad")) return require("../assets/images/Father.png");
     if (l.includes("mother") || l.includes("mom")) return require("../assets/images/Mother.png");

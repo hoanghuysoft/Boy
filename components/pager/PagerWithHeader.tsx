@@ -21,6 +21,7 @@ import {
   type ScrollView,
   StyleSheet,
   View,
+  type ViewInstance,
 } from 'react-native'
 import Animated, {
   type AnimatedRef,
@@ -189,7 +190,6 @@ export function PagerWithHeader({
     (e: NativeScrollEvent) => {
       'worklet'
       const nextScrollY = e.contentOffset.y
-      // HACK from Bluesky: onScroll reports -headerHeight on load sometimes
       const isPossiblyInvalid =
         headerHeight > 0 && Math.round(nextScrollY * 2) / 2 === -headerHeight
       if (!isPossiblyInvalid) {
@@ -306,7 +306,7 @@ let PagerTabBar = ({
     }
   })
 
-  const headerRef = useRef<View>(null)
+  const headerRef = useRef<ViewInstance>(null)
   const fallbackHeaderOnlyHeight = useRef(0)
 
   return (

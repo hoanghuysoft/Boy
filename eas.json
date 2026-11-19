@@ -11,7 +11,8 @@
       "android": {
         "buildType": "apk"
       },
-      "node": "22.14.0"
+      "node": "22.14.0",
+      "bun": "1.4.2"
     },
     "preview": {
       "distribution": "internal",
@@ -26,7 +27,8 @@
         "buildType": "apk"
       },
       "channel": "production",
-      "node": "22.14.0"
+      "node": "22.14.0",
+      "bun": "1.4.2"
     }
   },
   "submit": {

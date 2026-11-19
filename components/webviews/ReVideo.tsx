@@ -1,8 +1,7 @@
 import { useThemeContext } from "@/context/ThemeContext";
 import { supabase } from "@/services/login";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { router, useLocalSearchParams } from "expo-router";
-import { useFocusEffect } from "expo-router/react-navigation";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Linking, StyleSheet, TouchableOpacity, View } from "react-native";

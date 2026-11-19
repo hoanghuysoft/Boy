@@ -13,6 +13,7 @@ import {
     Platform,
     StyleSheet,
     TextInput,
+    type TextInputInstance,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -33,8 +34,8 @@ const OnboardingScreen = () => {
     const { form, isSubmitting, submittingState, error, maxBirthday, setField, pickAvatar, handleSubmit } =
         useOnboardingViewModel();
 
-    const nameRef = useRef<TextInput>(null);
-    const bioRef = useRef<TextInput>(null);
+    const nameRef = useRef<TextInputInstance>(null);
+    const bioRef = useRef<TextInputInstance>(null);
     const [showAndroidPicker, setShowAndroidPicker] = useState(false);
 
     return (

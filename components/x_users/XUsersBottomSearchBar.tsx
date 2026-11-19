@@ -7,6 +7,7 @@ import {
   Keyboard,
   StyleSheet,
   TextInput,
+  type TextInputInstance,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -30,7 +31,7 @@ export const XUsersBottomSearchBar = memo(function XUsersBottomSearchBar({
 }: XUsersBottomSearchBarProps) {
   const { colors, theme } = useThemeContext();
   const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   // ─── Frame-by-frame UI Thread Keyboard Animation ───────────────────────────
   const { height: keyboardHeight, progress: keyboardProgress } =

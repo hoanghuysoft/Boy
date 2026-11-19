@@ -74,7 +74,7 @@ const saveManifest = async () => {
     if (!manifest) return;
     try {
         await ensureCacheDir();
-        writeJsonFile(MANIFEST_FILE, manifest);
+        await writeJsonFile(MANIFEST_FILE, manifest);
     } catch (e) {
         console.warn('[ImageCache] Failed to save manifest:', e);
     }

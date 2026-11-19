@@ -4,12 +4,13 @@ import { VideoFeedType, VideoItem } from "@/types/video";
 import { useShotsViewModel } from "@/viewmodels/ShotsViewModel";
 import { LegendList, LegendListRenderItemProps } from "@legendapp/list/react-native";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { useIsFocused } from "expo-router/react-navigation";
+import { useIsFocused } from "expo-router";
 import { Spinner } from "panelui-native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     LayoutChangeEvent,
+    type ListViewToken,
     Platform,
     RefreshControl,
     StatusBar,
@@ -17,7 +18,6 @@ import {
     TouchableOpacity,
     useWindowDimensions,
     View,
-    ViewToken
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -31,10 +31,11 @@ import {
 import { ShotItem } from "./ShotItem";
 
 // ─── Feed Tab (adopting reference VideoFeedList pattern with LegendList) ─
-export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
+export const ShotsFeedTab = ({ feedType, isTabFocused = true }: { feedType: VideoFeedType; isTabFocused?: boolean }) => {
     const { width: screenWidth } = useWindowDimensions();
     const insets = useSafeAreaInsets();
-    const isFocused = useIsFocused();
+    const isScreenFocused = useIsFocused();
+    const isFocused = isScreenFocused && isTabFocused;
     const vm = useShotsViewModel(feedType, isFocused);
     const { t } = useTranslation();
 
@@ -76,7 +77,7 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
 
     // ─── Viewable items changed handler (reference pattern) ──────────────
     const handleVideoChange = useCallback(
-        ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+        ({ viewableItems }: { viewableItems: ListViewToken[] }) => {
             const nextIndex = viewableItems[0]?.index ?? -1;
             if (nextIndex === -1 || vm.videos.length === 0) {
                 return;
@@ -187,7 +188,7 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
     if (vm.isLoading) {
         return (
             <View style={[styles.container, { backgroundColor: '#000' }]}>
-                <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+                <StatusBar barStyle="light-content" />
                 <Spinner size="lg" color="white" />
             </View>
         );
@@ -196,7 +197,7 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
     if (vm.videos.length === 0) {
         return (
             <View style={[styles.container, { backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }]}>
-                <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+                <StatusBar barStyle="light-content" />
                 <Ionicons name="videocam-off-outline" size={48} color="rgba(255,255,255,0.5)" />
                 <FlexText style={{ color: 'rgba(255,255,255,0.5)', fontSize: 16, marginTop: 12 }}>
                     {vm.isError ? t('shots.empty.error') : t('shots.empty.noVideos')}
@@ -213,7 +214,7 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
 
     return (
         <View style={[styles.container, { backgroundColor: '#000' }]} onLayout={handleContainerLayout}>
-            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            <StatusBar barStyle="light-content" />
 
             {listReady ? (
                 <LegendList
@@ -246,7 +247,7 @@ export const ShotsFeedTab = ({ feedType }: { feedType: VideoFeedType }) => {
                     refreshControl={
                         <RefreshControl
                             refreshing={vm.isRefetching}
-                            onRefresh={vm.refetch}
+                            onRefresh={() => { void vm.refetch(); }}
                             tintColor={vm.colors.text}
                             colors={[vm.colors.text]}
                             progressBackgroundColor={vm.colors.card}

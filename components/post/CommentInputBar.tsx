@@ -20,6 +20,7 @@ import {
     Platform,
     StyleSheet,
     TextInput,
+    type TextInputInstance,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -36,7 +37,7 @@ export interface CommentInputBarProps {
     common: any;
     theme: string;
     insets: EdgeInsets;
-    inputRef: React.RefObject<TextInput | null>;
+    inputRef: React.RefObject<TextInputInstance | null>;
     emojiSheetRef: React.RefObject<any>;
     onFocus?: () => void;
 }

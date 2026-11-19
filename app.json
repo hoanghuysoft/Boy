@@ -207,9 +207,10 @@
         {
           "android": {
             "buildArchs": [
-              "arm64-v8a",
-              "x86_64"
+              "arm64-v8a"
             ],
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
             "usePrecompiledHeaders": true,
             "extraProguardRules": "-keep class androidx.media3.** { *; }\n-keep class expo.modules.video.** { *; }"
           }
@@ -257,7 +258,7 @@
       "expo-status-bar",
       "@react-native-vector-icons/ionicons",
       "@react-native-vector-icons/material-icons",
-      "@react-native-vector-icons/fontawesome"
+      "@react-native-vector-icons/fontawesome",
     ],
     "experiments": {
       "typedRoutes": true,

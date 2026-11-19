@@ -1,8 +1,6 @@
 import RnGoogleSignin from "@novastera-oss/rn-google-signin";
 import { mmkvSupabaseAdapter } from "./supabase-storage-adapter";
 // import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { useMovieTrackerStore } from "@/stores/movieTracker";
-import { useSearchHistoryStore } from "@/stores/searchHistory";
 import { createClient } from "@supabase/supabase-js";
 import "react-native-url-polyfill/auto";
 import { storage } from "./storage";
@@ -34,17 +32,17 @@ export async function getCurrentSession() {
 }
 
 
-export async function signInWithGoogle(options?: { isAddingAccount?: boolean }) {
+export async function signInWithGoogle(options?: { isAddingAccount?: boolean; oneTap?: boolean }) {
     try {
         if (options?.isAddingAccount) {
             // Sign out of the Google Sign-In SDK so the native account picker appears
             try {
                 await RnGoogleSignin.signOut();
-            } catch {}
+            } catch { }
         }
 
         await RnGoogleSignin.hasPlayServices({});
-        const userInfo = await RnGoogleSignin.signIn({});
+        const userInfo = await RnGoogleSignin.signIn(options?.oneTap ? { oneTap: true } : {});
 
         if (userInfo.idToken) {
             const { data, error } = await supabase.auth.signInWithIdToken({
@@ -113,8 +111,8 @@ export async function signOut() {
     if (currentId) {
         await removeAccount(currentId);
     } else {
-        await supabase.auth.signOut().catch(() => {});
-        await RnGoogleSignin.signOut().catch(() => {});
+        await supabase.auth.signOut().catch(() => { });
+        await RnGoogleSignin.signOut().catch(() => { });
         storage.clearAll();
     }
 }
@@ -123,7 +121,7 @@ export async function signOutAll() {
     try {
         const { useAudioStore } = await import("@/stores/audio");
         useAudioStore.getState().stopPlayback();
-    } catch {}
+    } catch { }
 
     const { signOutAllAccounts } = await import("./accountManager");
     await signOutAllAccounts();

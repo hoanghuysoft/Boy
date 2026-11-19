@@ -1,5 +1,5 @@
 import { useThemeContext } from '@/context/ThemeContext';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 
 export default function AppTabs() {
   const { colors } = useThemeContext();

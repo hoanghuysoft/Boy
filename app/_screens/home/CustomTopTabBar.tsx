@@ -1,20 +1,20 @@
 import { FlexText } from "@/components/FlexText";
-import { MaterialTopTabBarProps } from "expo-router/build/react-navigation/material-top-tabs";
 import React, { useEffect, useMemo } from "react";
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import type { NavigationState, Route, SceneRendererProps } from "react-native-tab-view";
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 
-interface CustomTopTabBarProps extends MaterialTopTabBarProps {
+type CustomTopTabBarProps = SceneRendererProps & {
+    navigationState: NavigationState<Route>;
     tabBgOpacity: Animated.AnimatedInterpolation<string | number>; // Animated background opacity (inverse of carousel visibility)
     tabOpacity: Animated.Value;
     iconColor?: string; // Static color for labels (black/white or theme color)
-}
+};
 
 const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
-    state,
-    descriptors,
-    navigation,
+    navigationState,
+    jumpTo,
     tabBgOpacity,
     tabOpacity,
     iconColor,
@@ -24,15 +24,15 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
 
     // Create animated values for each tab indicator
     const indicatorAnims = useMemo(
-        () => state.routes.map((_: any, index: number) => new Animated.Value(state.index === index ? 1 : 0)),
-        [state.routes.length]
+        () => navigationState.routes.map((_: Route, index: number) => new Animated.Value(navigationState.index === index ? 1 : 0)),
+        [navigationState.routes.length]
     );
 
     useEffect(() => {
         // Animate all indicators
-        const animations = state.routes.map((_: any, index: number) =>
+        const animations = navigationState.routes.map((_: Route, index: number) =>
             Animated.spring(indicatorAnims[index], {
-                toValue: state.index === index ? 1 : 0,
+                toValue: navigationState.index === index ? 1 : 0,
                 useNativeDriver: true,
                 friction: 8,
                 tension: 100,
@@ -40,7 +40,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
         );
 
         Animated.parallel(animations).start();
-    }, [state.index, indicatorAnims, state.routes]);
+    }, [navigationState.index, indicatorAnims, navigationState.routes]);
 
     return (
         <Animated.View style={{
@@ -67,25 +67,13 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                     style={{ flexGrow: 0 }}
                     contentContainerStyle={{ padding: 12 }}
                 >
-                    {state.routes.map((route: any, index: number) => {
-                        const { options } = descriptors[route.key];
-                        const label = options.tabBarLabel !== undefined
-                            ? options.tabBarLabel
-                            : options.title !== undefined
-                                ? options.title
-                                : route.name;
-
-                        const isFocused = state.index === index;
+                    {navigationState.routes.map((route, index) => {
+                        const label = route.title ?? route.key;
+                        const isFocused = navigationState.index === index;
 
                         const onPress = () => {
-                            const event = navigation.emit({
-                                type: 'tabPress',
-                                target: route.key,
-                                canPreventDefault: true,
-                            });
-
-                            if (!isFocused && !event.defaultPrevented) {
-                                navigation.navigate(route.name);
+                            if (!isFocused) {
+                                jumpTo(route.key);
                             }
                         };
 
@@ -111,7 +99,7 @@ const CustomTopTabBar: React.FC<CustomTopTabBarProps> = ({
                                         },
                                     ]}
                                 >
-                                    {typeof label === 'string' ? label : route.name}
+                                    {label}
                                 </FlexText>
                                 <Animated.View
                                     style={[

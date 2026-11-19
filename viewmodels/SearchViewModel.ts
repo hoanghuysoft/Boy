@@ -12,7 +12,7 @@ import { Profile } from "@/types/profile";
 import { useRouter } from "expo-router";
 import { debounce, flatMap } from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Keyboard, TextInput, View } from "react-native";
+import { Keyboard, type TextInputInstance, type ViewInstance } from "react-native";
 import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import { useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -35,8 +35,8 @@ export const useSearchViewModel = () => {
     const [recentQueries, setRecentQueries] = useState<string[]>(() =>
         getSearchQueryHistory("people"),
     );
-    const blurTargetRef = useRef<View | null>(null);
-    const inputRef = useRef<TextInput>(null);
+    const blurTargetRef = useRef<ViewInstance | null>(null);
+    const inputRef = useRef<TextInputInstance>(null);
     const listRef = useRef<any>(null);
 
     // ─── Auth / Admin Check ─────────────────────────────────────────

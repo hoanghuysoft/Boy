@@ -96,3 +96,33 @@ back to:
 | Android API | Legacy Sign-In | Credential Manager |
 | `isSignedIn()` Android | Works silently | May trigger credential picker UI |
 | Custom scopes Android | Supported | Not supported |
+
+---
+
+## Migrating to 3.0.0
+
+The package was upgraded from `^2.0.2` to `^3.0.0`. Key notes and impact on this project:
+
+1. **Android `user.id` now returns Google account ID (`sub`) instead of email:**
+   - Matches iOS behavior.
+   - **App Impact:** None. In this app, `userInfo.idToken` is forwarded directly to Supabase (`supabase.auth.signInWithIdToken`), and account identity is managed through Supabase's user UUID. We never stored or relied on Google's `userInfo.user.id`.
+
+2. **Android `signIn()` opens the account chooser by default:**
+   - In 3.0.0, `signIn({})` opens the full account chooser including "Add another account".
+   - To use the previous One Tap bottom sheet instead, pass `{ oneTap: true }`.
+   - `signInWithGoogle({ oneTap?: boolean })` in `services/login.ts` now supports toggling this option.
+
+3. **Android `hasPlayServices({})`:**
+   - No longer throws when `showPlayServicesUpdateDialog` is omitted. Safe with `await RnGoogleSignin.hasPlayServices({})`.
+
+4. **Android `play-services-auth` 22.0.0:**
+   - Removed legacy `GoogleSignIn` / `GoogleSignInClient` APIs. This app only uses `@novastera-oss/rn-google-signin`, so there are no conflicts.
+
+5. **iOS GoogleSignIn 10.1 & Dependencies:**
+   - Requires iOS 15.0+ (the project targets iOS 16+ on Expo SDK 57).
+   - Removed unused `GoogleSignInSwiftSupport` pod dependency.
+   - Run `pod update GoogleSignIn` or let Expo prebuild/EAS install during native builds.
+
+6. **iOS `getTokens()`:**
+   - Rejects with `sign_in_required` when the refresh token has expired (not used directly; Supabase handles session refresh via `autoRefreshToken: true`).
+

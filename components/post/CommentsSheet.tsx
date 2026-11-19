@@ -16,6 +16,7 @@ import {
     Keyboard,
     StyleSheet,
     TextInput,
+    type TextInputInstance,
     TouchableOpacity,
     View
 } from "react-native";
@@ -56,7 +57,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         const emojiSheetRef = useRef<TrueSheet>(null);
         const isPresentedRef = useRef(false);
         const [hasEverOpened, setHasEverOpened] = useState(false);
-        const inputRef = useRef<TextInput>(null);
+        const inputRef = useRef<TextInputInstance>(null);
 
         useImperativeHandle(ref, () => ({
             present: () => {

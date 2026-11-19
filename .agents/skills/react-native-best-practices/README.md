@@ -8,10 +8,10 @@ Add this skill to give your AI coding agent accurate, current guidance for Softw
 
 | Sub-skill | Covers | Status |
 |-----------|--------|--------|
-| [Animations](./references/animations/) | Reanimated 4, CSS transitions, CSS animations, shared values, canvas animations (Skia), GPU shader animations (WebGPU, TypeGPU), layout animations, scroll-driven animations, SVG animations, 120fps, performance flags | Complete |
+| [Animations](./references/animations/) | Reanimated 4, CSS transitions, CSS animations, CSS pseudo-selectors and callbacks, shared values, canvas animations (Skia), GPU shader animations (WebGPU, TypeGPU), layout animations, scroll-driven animations, SVG animations, 120fps, performance flags | Complete |
 | [Gestures](./references/gestures/) | Gesture Handler: tap, pan, pinch, rotation, fling, hover, long press, Pressable, RectButton, Swipeable, Touchable, DrawerLayout, gesture composition, testing | Complete |
 | [SVG](./references/svg/) | React Native SVG: when to use vs expo-image/Skia/Lottie/Rive/fonts/WebView, installation, loading (URI/XML/file), touch events, filters, FilterImage, performance pitfalls, iOS memory leaks | Complete |
-| [On-device AI](./references/on-device-ai/) | React Native ExecuTorch: LLMs (chat, tool calling, structured output, vision-language models), computer vision (classification, object detection, OCR, semantic/instance segmentation, style transfer, embeddings, text-to-image), speech (STT, TTS, VAD), VisionCamera real-time frame processing, model loading, resource management, error handling, custom models | Complete |
+| [On-device AI](./references/on-device-ai/) | Routes to the standalone `react-native-executorch` skill for setup, ready-made models and hooks, custom models and pipelines, and troubleshooting | Complete |
 | [Rich Text](./references/rich-text/) | Rich text editing with react-native-enriched, Markdown rendering with react-native-enriched-markdown | Complete |
 | [Multithreading](./references/multithreading/) | react-native-worklets: Worker Runtimes, scheduling APIs, shared memory, Serializable, Synchronizable | Complete |
 | [Enable Worklets Bundle Mode](./references/enable-worklets-bundle-mode/) | Step-by-step Bundle Mode enablement for react-native-worklets (Expo, RN CLI, brownfield): babel plugin options, metro config helpers, mandatory metro + metro-runtime patches for every package manager (Yarn berry, npm/Yarn classic, bun, pnpm), verification, uniwind/NativeWind resolver workaround | Complete |
@@ -28,6 +28,7 @@ react-native-best-practices/
     ├── animations/
     │   ├── SKILL.md                      # When to use, what references to read
     │   ├── animations.md                 # Decision tree, CSS transitions/animations, shared values
+    │   ├── css-pseudo-selectors.md       # :hover/:active/:focus without React state
     │   ├── animation-functions.md        # Core hooks, withSpring, withTiming, withDecay, composition
     │   ├── layout-animations.md          # Entering/exiting, transitions, keyframes
     │   ├── scroll-and-events.md          # Scroll-driven animations, useAnimatedReaction, useFrameCallback
@@ -49,11 +50,7 @@ react-native-best-practices/
     │   ├── when-to-use.md               # Choosing between svg, expo-image, icons, Skia, Lottie
     │   └── svg.md                        # Installation, loading (URI/XML/file), touch events, filters, FilterImage, performance
     ├── on-device-ai/
-    │   ├── SKILL.md                      # Decision tree, critical rules, references routing
-    │   ├── llm.md                        # LLM chat (functional/managed), tool calling, structured output, token batching
-    │   ├── vision.md                     # Classification, object detection, OCR, segmentation, style transfer, embeddings, VisionCamera
-    │   ├── speech.md                     # Speech-to-text (batch/streaming), text-to-speech (batch/streaming), VAD
-    │   └── setup.md                      # Installation, resource fetcher, model loading, error handling, custom models
+    │   └── SKILL.md                      # Routes to the standalone react-native-executorch skill
     ├── rich-text/
     │   └── SKILL.md                      # Editor and renderer patterns, style customization
     ├── multithreading/
