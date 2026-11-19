@@ -1,68 +1,424 @@
 diff --git a/build/glass-tab-bar.d.ts b/build/glass-tab-bar.d.ts
-index c6195ea..74b9340 100644
---- a/build/glass-tab-bar.d.ts
+index 1ff17b735de13c8c7f3dc13fe5af2520405040a6..50a060b0b156abc44999426014f5591835b24b0a 100644
+--- a/build/glass-tab-bar.d.ts	
 +++ b/build/glass-tab-bar.d.ts
-@@ -28,6 +28,8 @@ export type GlassTabBarProps = TabListProps & {
+@@ -22,19 +22,38 @@ export type GlassTabItem = {
+         size: number;
+     }) => ReactNode;
+ };
++export type GlassTabAction = {
++    /** Identifier / name of the action button (e.g. "search"). */
++    name?: string;
++    /** Accessibility label announced by screen readers. */
++    accessibilityLabel?: string;
++    /** Optional testID override. */
++    testID?: string;
++    /** Called when the circular button is pressed. */
++    onPress: () => void;
++    /** Custom glyph rendered centered inside the circular glass button. */
++    renderIcon: (props: {
++        tint: string;
++        size: number;
++    }) => ReactNode;
++};
+ export type GlassTabBarProps = TabListProps & {
+     /** Called when a tab is chosen by tap or scrub release. */
+     onIndexSelected?: (index: number) => void;
      theme?: Partial<GlassTabBarTheme>;
      /** Haptic tick while the scrub crosses tab boundaries (iOS). */
      haptics?: boolean;
 +    /** Disable the progressive blur dark overlay under the bar. */
 +    disableOverlay?: boolean;
++    /** Optional circular glass button rendered to the right of the tab pill. */
++    rightAction?: GlassTabAction;
  };
  /**
   * Floating liquid-glass tab bar with Revolut-style minimize-on-scroll,
-@@ -34,6 +36,6 @@ export type GlassTabBarProps = TabListProps & {
+  * a sliding highlight, and finger scrubbing. Use via `TabList asChild`
   * with expo-router's headless tabs.
   */
 -export declare function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics, ...props }: GlassTabBarProps): import("react").JSX.Element;
-+export declare function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics, disableOverlay, ...props }: GlassTabBarProps): import("react").JSX.Element;
++export declare function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, disableOverlay, haptics, rightAction, ...props }: GlassTabBarProps): import("react").JSX.Element;
  /** One tab trigger: icon + label that fades when minimized. */
  export declare function GlassTabButton({ item, index, isFocused, onPress, ...props }: TabTriggerSlotProps & {
      item: GlassTabItem;
 diff --git a/build/glass-tab-bar.js b/build/glass-tab-bar.js
-index 474a005..f442f49 100644
---- a/build/glass-tab-bar.js
+index 420cb04242abe5c71811088fd76bb91090558c5f..8e0d7faa8b81ad2b0cb1015486f793bd7b003aaa 100644
+--- a/build/glass-tab-bar.js	
 +++ b/build/glass-tab-bar.js
-@@ -49,7 +49,7 @@ const BarContext = createContext(null);
+@@ -12,6 +12,12 @@ import { ProgressiveBlur } from './progressive-blur';
+ const AnimatedGlassView = Animated.createAnimatedComponent(GlassView);
+ const EXPANDED_HEIGHT = 58;
+ const MINIMIZED_HEIGHT = 44;
++/** Gap between the tab pill and the trailing circular action button. */
++const ACTION_GAP = 10;
++/** Default icon size inside the trailing circular action button. */
++const ACTION_ICON_SIZE = 24;
++/** Press feedback spring for the trailing circular action button. */
++const ACTION_PRESS_SPRING = { duration: 220, dampingRatio: 0.9 };
+ /** Extra horizontal inset applied to the pill when minimized (per side). */
+ const MINIMIZED_INSET = 34;
+ /** Outer margin between the pill and the screen edges (per side). */
+@@ -49,7 +55,7 @@ const BarContext = createContext(null);
   * a sliding highlight, and finger scrubbing. Use via `TabList asChild`
   * with expo-router's headless tabs.
   */
 -export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics = true, ...props }) {
-+export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, haptics = true, disableOverlay = false, ...props }) {
++export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides, disableOverlay = false, haptics = true, rightAction, ...props }) {
      const insets = useSafeAreaInsets();
      const { width: windowWidth } = useWindowDimensions();
      const minimized = useMinimizeState();
-@@ -160,7 +160,7 @@ export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides,
+@@ -58,6 +64,7 @@ export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides,
+     const isDragging = useSharedValue(false);
+     const lastTicked = useSharedValue(-1);
+     const tabCount = Math.max(Children.count(children), 1);
++    const hasRightAction = Boolean(rightAction);
+     const theme = useMemo(() => ({ ...DEFAULT_THEME, ...themeOverrides }), [themeOverrides]);
+     // Picker-style tick while the highlight crosses tab boundaries mid-drag.
+     const tick = useCallback(() => {
+@@ -77,7 +84,9 @@ export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides,
+         const indexAtX = (x, minimizedValue) => {
+             'worklet';
+             const sideInset = interpolate(minimizedValue, [0, 1], [0, MINIMIZED_INSET], Extrapolation.CLAMP);
+-            const barWidth = windowWidth - BAR_MARGIN * 2 - sideInset * 2;
++            const barHeight = interpolate(minimizedValue, [0, 1], [EXPANDED_HEIGHT, MINIMIZED_HEIGHT], Extrapolation.CLAMP);
++            const trailingSpace = hasRightAction ? barHeight + ACTION_GAP : 0;
++            const barWidth = windowWidth - BAR_MARGIN * 2 - sideInset * 2 - trailingSpace;
+             const itemWidth = (barWidth - ROW_PAD_H * 2) / tabCount;
+             const raw = (x - ROW_PAD_H) / itemWidth - 0.5;
+             return Math.min(Math.max(raw, 0), tabCount - 1);
+@@ -126,14 +135,25 @@ export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides,
+             runOnJS(selectIndex)(index);
+         });
+         return Gesture.Race(pan, tap);
+-    }, [windowWidth, tabCount, selectIndex, tick, isDragging, lastTicked, slideIndex, minimized, progress]);
++    }, [
++        windowWidth,
++        tabCount,
++        hasRightAction,
++        selectIndex,
++        tick,
++        isDragging,
++        lastTicked,
++        slideIndex,
++        minimized,
++        progress,
++    ]);
++    const rowStyle = useAnimatedStyle(() => ({
++        // Revolut-style: the row shrinks horizontally alongside the pill height.
++        marginHorizontal: BAR_MARGIN + interpolate(progress.value, [0, 1], [0, MINIMIZED_INSET], Extrapolation.CLAMP),
++    }));
+     const barStyle = useAnimatedStyle(() => {
+         const height = interpolate(progress.value, [0, 1], [EXPANDED_HEIGHT, MINIMIZED_HEIGHT], Extrapolation.CLAMP);
+-        return {
+-            height,
+-            // Revolut-style: the pill shrinks in both dimensions.
+-            marginHorizontal: interpolate(progress.value, [0, 1], [0, MINIMIZED_INSET], Extrapolation.CLAMP),
+-        };
++        return { height };
      });
-     const bottomOffset = Math.max(insets.bottom - 16, 12);
+     // The capsule shape lives on the glass view itself: iOS 26 glass renders
+     // its own native corner configuration (true squircle + rim lighting).
+@@ -148,7 +168,8 @@ export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides,
+         const barHeight = interpolate(progress.value, [0, 1], [EXPANDED_HEIGHT, MINIMIZED_HEIGHT], Extrapolation.CLAMP);
+         const height = interpolate(progress.value, [0, 1], [HIGHLIGHT_EXPANDED, HIGHLIGHT_MINIMIZED], Extrapolation.CLAMP);
+         const sideInset = interpolate(progress.value, [0, 1], [0, MINIMIZED_INSET], Extrapolation.CLAMP);
+-        const barWidth = windowWidth - BAR_MARGIN * 2 - sideInset * 2;
++        const trailingSpace = hasRightAction ? barHeight + ACTION_GAP : 0;
++        const barWidth = windowWidth - BAR_MARGIN * 2 - sideInset * 2 - trailingSpace;
+         const itemWidth = (barWidth - ROW_PAD_H * 2) / tabCount;
+         return {
+             height,
+@@ -158,36 +179,101 @@ export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides,
+             transform: [{ translateX: ROW_PAD_H + itemWidth * slideIndex.value }],
+         };
+     });
+-    const bottomOffset = Math.max(insets.bottom - 16, 12);
++    const bottomOffset = Math.max(insets.bottom + 8, 12);
      const barContext = useMemo(() => ({ slideIndex, isDragging, theme }), [slideIndex, isDragging, theme]);
 -    return (_jsxs(View, { ...props, pointerEvents: "box-none", style: { position: 'absolute', left: 0, right: 0, bottom: 0 }, children: [_jsx(ProgressiveBlur, { direction: "bottom", style: {
-+    return (_jsxs(View, { ...props, pointerEvents: "box-none", style: { position: 'absolute', left: 0, right: 0, bottom: 0 }, children: [!disableOverlay && _jsx(ProgressiveBlur, { direction: "bottom", style: {
++    return (_jsxs(View, { ...props, pointerEvents: "box-none", style: { position: 'absolute', left: 0, right: 0, bottom: 0 }, children: [!disableOverlay && (_jsx(ProgressiveBlur, { direction: "bottom", style: {
                      position: 'absolute',
                      left: 0,
                      right: 0,
+                     bottom: 0,
+                     height: bottomOffset + EXPANDED_HEIGHT + BLUR_BLEED,
+-                } }), _jsx(View, { pointerEvents: "box-none", style: { marginHorizontal: BAR_MARGIN, marginBottom: bottomOffset }, children: _jsx(GestureDetector, { gesture: gesture, children: _jsxs(Animated.View, { style: barStyle, children: [isLiquidGlassAvailable() ? (_jsx(AnimatedGlassView, { glassEffectStyle: "regular", style: [
+-                                    StyleSheet.absoluteFill,
+-                                    { backgroundColor: theme.glassTint, borderCurve: 'continuous' },
+-                                    shapeStyle,
+-                                ] })) : (_jsx(Animated.View, { style: [
+-                                    StyleSheet.absoluteFill,
+-                                    { backgroundColor: theme.solidFallback, borderCurve: 'continuous' },
+-                                    shapeStyle,
+-                                ] })), _jsx(Animated.View, { style: [
+-                                    {
+-                                        position: 'absolute',
+-                                        left: 0,
+-                                        backgroundColor: theme.highlight,
+-                                        borderCurve: 'continuous',
+-                                    },
+-                                    highlightStyle,
+-                                ] }), _jsx(View, { style: {
+-                                    flex: 1,
+-                                    flexDirection: 'row',
+-                                    alignItems: 'center',
+-                                    paddingHorizontal: ROW_PAD_H,
+-                                }, children: _jsx(BarContext.Provider, { value: barContext, children: children }) })] }) }) })] }));
++                } })), _jsxs(Animated.View, { pointerEvents: "box-none", style: [
++                    {
++                        marginBottom: bottomOffset,
++                        flexDirection: 'row',
++                        alignItems: 'center',
++                    },
++                    rowStyle,
++                ], children: [_jsx(GestureDetector, { gesture: gesture, children: _jsxs(Animated.View, { style: [{ flex: 1 }, barStyle], children: [isLiquidGlassAvailable() ? (_jsx(AnimatedGlassView, { glassEffectStyle: "regular", style: [
++                                            StyleSheet.absoluteFill,
++                                            { backgroundColor: theme.glassTint, borderCurve: 'continuous' },
++                                            shapeStyle,
++                                        ] })) : (_jsx(Animated.View, { style: [
++                                            StyleSheet.absoluteFill,
++                                            { backgroundColor: theme.solidFallback, borderCurve: 'continuous' },
++                                            shapeStyle,
++                                        ] })), _jsx(Animated.View, { style: [
++                                            {
++                                                position: 'absolute',
++                                                left: 0,
++                                                backgroundColor: theme.highlight,
++                                                borderCurve: 'continuous',
++                                            },
++                                            highlightStyle,
++                                        ] }), _jsx(View, { style: {
++                                            flex: 1,
++                                            flexDirection: 'row',
++                                            alignItems: 'center',
++                                            paddingHorizontal: ROW_PAD_H,
++                                        }, children: _jsx(BarContext.Provider, { value: barContext, children: children }) })] }) }), rightAction && (_jsx(GlassTabActionCircle, { action: rightAction, progress: progress, theme: theme, haptics: haptics, minimized: minimized }))] })] }));
++}
++/** Trailing circular glass action button (e.g. search) aligned with the tab pill. */
++function GlassTabActionCircle({ action, progress, theme, haptics, minimized, }) {
++    const pressScale = useSharedValue(1);
++    const pressOverlay = useSharedValue(0);
++    const containerStyle = useAnimatedStyle(() => {
++        const size = interpolate(progress.value, [0, 1], [EXPANDED_HEIGHT, MINIMIZED_HEIGHT], Extrapolation.CLAMP);
++        return {
++            width: size,
++            height: size,
++            marginLeft: ACTION_GAP,
++            transform: [{ scale: pressScale.value }],
++        };
++    });
++    const circleShapeStyle = useAnimatedStyle(() => {
++        const size = interpolate(progress.value, [0, 1], [EXPANDED_HEIGHT, MINIMIZED_HEIGHT], Extrapolation.CLAMP);
++        return { borderRadius: size / 2 };
++    });
++    const overlayStyle = useAnimatedStyle(() => {
++        const size = interpolate(progress.value, [0, 1], [EXPANDED_HEIGHT, MINIMIZED_HEIGHT], Extrapolation.CLAMP);
++        return {
++            borderRadius: size / 2,
++            opacity: pressOverlay.value,
++        };
++    });
++    const handlePressIn = useCallback(() => {
++        pressScale.value = withSpring(0.92, ACTION_PRESS_SPRING);
++        pressOverlay.value = withSpring(1, ACTION_PRESS_SPRING);
++    }, [pressScale, pressOverlay]);
++    const handlePressOut = useCallback(() => {
++        pressScale.value = withSpring(1, ACTION_PRESS_SPRING);
++        pressOverlay.value = withSpring(0, ACTION_PRESS_SPRING);
++    }, [pressScale, pressOverlay]);
++    const handlePress = useCallback(() => {
++        if (haptics && Platform.OS === 'ios') {
++            Haptics.selectionAsync();
++        }
++        setMinimized(minimized, 0);
++        action.onPress();
++    }, [haptics, minimized, action]);
++    return (_jsxs(Animated.View, { style: containerStyle, children: [isLiquidGlassAvailable() ? (_jsx(AnimatedGlassView, { glassEffectStyle: "regular", style: [
++                    StyleSheet.absoluteFill,
++                    { backgroundColor: theme.glassTint, borderCurve: 'continuous' },
++                    circleShapeStyle,
++                ] })) : (_jsx(Animated.View, { style: [
++                    StyleSheet.absoluteFill,
++                    { backgroundColor: theme.solidFallback, borderCurve: 'continuous' },
++                    circleShapeStyle,
++                ] })), _jsx(Animated.View, { pointerEvents: "none", style: [
++                    StyleSheet.absoluteFill,
++                    { backgroundColor: theme.highlight, borderCurve: 'continuous' },
++                    overlayStyle,
++                ] }), _jsx(Pressable, { accessibilityRole: "button", accessibilityLabel: action.accessibilityLabel ?? action.name, testID: action.testID ?? (action.name ? `glass-tab-action-${action.name}` : undefined), onPressIn: handlePressIn, onPressOut: handlePressOut, onPress: handlePress, style: {
++                    flex: 1,
++                    alignSelf: 'stretch',
++                    alignItems: 'center',
++                    justifyContent: 'center',
++                }, children: action.renderIcon({ tint: theme.activeTint, size: ACTION_ICON_SIZE }) })] }));
+ }
+ /** Icon rendered at a fixed tint (used twice for the crossfade layers). */
+ function TabGlyph({ item, tint }) {
+diff --git a/build/index.d.ts b/build/index.d.ts
+index ab4a877c77512c816a8717c1c9ba55e61ad289fd..dec2cfc6966753fff30a0cc4120de32214cbe3dd 100644
+--- a/build/index.d.ts	
++++ b/build/index.d.ts
+@@ -1,4 +1,4 @@
+-export { GlassTabBar, GlassTabButton, type GlassTabBarProps, type GlassTabBarTheme, type GlassTabItem, } from './glass-tab-bar';
++export { GlassTabBar, GlassTabButton, type GlassTabAction, type GlassTabBarProps, type GlassTabBarTheme, type GlassTabItem, } from './glass-tab-bar';
+ export { TabBarMinimizeProvider, useMinimizeOnScroll, useTabBarMinimized, MINIMIZE_SPRING, } from './minimize-context';
+ export { ProgressiveBlur } from './progressive-blur';
+ export { renderFadingTabScreen } from './fading-tab-slot';
 diff --git a/src/glass-tab-bar.tsx b/src/glass-tab-bar.tsx
-index dc9056d..f80f1d0 100644
---- a/src/glass-tab-bar.tsx
+index c0f798ba35d9722d523f0cbe57ea11c8b8773f5c..d2741eb7067d5e55fb1aead5910117e6a1b1de5d 100644
+--- a/src/glass-tab-bar.tsx	
 +++ b/src/glass-tab-bar.tsx
-@@ -100,6 +100,8 @@ export type GlassTabBarProps = TabListProps & {
+@@ -25,13 +25,24 @@ import Animated, {
+ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ import type { TabListProps, TabTriggerSlotProps } from 'expo-router/ui';
+ 
+-import { MINIMIZE_SPRING, setMinimized, useMinimizeState } from './minimize-context';
++import {
++  MINIMIZE_SPRING,
++  setMinimized,
++  useMinimizeState,
++  type MinimizeState,
++} from './minimize-context';
+ import { ProgressiveBlur } from './progressive-blur';
+ 
+ const AnimatedGlassView = Animated.createAnimatedComponent(GlassView);
+ 
+ const EXPANDED_HEIGHT = 58;
+ const MINIMIZED_HEIGHT = 44;
++/** Gap between the tab pill and the trailing circular action button. */
++const ACTION_GAP = 10;
++/** Default icon size inside the trailing circular action button. */
++const ACTION_ICON_SIZE = 24;
++/** Press feedback spring for the trailing circular action button. */
++const ACTION_PRESS_SPRING = { duration: 220, dampingRatio: 0.9 };
+ /** Extra horizontal inset applied to the pill when minimized (per side). */
+ const MINIMIZED_INSET = 34;
+ /** Outer margin between the pill and the screen edges (per side). */
+@@ -94,12 +105,29 @@ type BarContextValue = {
+ 
+ const BarContext = createContext<BarContextValue | null>(null);
+ 
++export type GlassTabAction = {
++  /** Identifier / name of the action button (e.g. "search"). */
++  name?: string;
++  /** Accessibility label announced by screen readers. */
++  accessibilityLabel?: string;
++  /** Optional testID override. */
++  testID?: string;
++  /** Called when the circular button is pressed. */
++  onPress: () => void;
++  /** Custom glyph rendered centered inside the circular glass button. */
++  renderIcon: (props: { tint: string; size: number }) => ReactNode;
++};
++
+ export type GlassTabBarProps = TabListProps & {
+   /** Called when a tab is chosen by tap or scrub release. */
+   onIndexSelected?: (index: number) => void;
    theme?: Partial<GlassTabBarTheme>;
    /** Haptic tick while the scrub crosses tab boundaries (iOS). */
    haptics?: boolean;
 +  /** Disable the progressive blur dark overlay under the bar. */
 +  disableOverlay?: boolean;
++  /** Optional circular glass button rendered to the right of the tab pill. */
++  rightAction?: GlassTabAction;
  };
  
  /**
-@@ -111,6 +113,7 @@ export function GlassTabBar({
+@@ -111,7 +139,9 @@ export function GlassTabBar({
+   children,
    onIndexSelected,
    theme: themeOverrides,
-   haptics = true,
 +  disableOverlay = false,
+   haptics = true,
++  rightAction,
    ...props
  }: GlassTabBarProps) {
    const insets = useSafeAreaInsets();
-@@ -273,16 +276,18 @@ export function GlassTabBar({
+@@ -122,6 +152,7 @@ export function GlassTabBar({
+   const isDragging = useSharedValue(false);
+   const lastTicked = useSharedValue(-1);
+   const tabCount = Math.max(Children.count(children), 1);
++  const hasRightAction = Boolean(rightAction);
+   const theme = useMemo(() => ({ ...DEFAULT_THEME, ...themeOverrides }), [themeOverrides]);
+ 
+   // Picker-style tick while the highlight crosses tab boundaries mid-drag.
+@@ -149,7 +180,14 @@ export function GlassTabBar({
+         [0, MINIMIZED_INSET],
+         Extrapolation.CLAMP,
+       );
+-      const barWidth = windowWidth - BAR_MARGIN * 2 - sideInset * 2;
++      const barHeight = interpolate(
++        minimizedValue,
++        [0, 1],
++        [EXPANDED_HEIGHT, MINIMIZED_HEIGHT],
++        Extrapolation.CLAMP,
++      );
++      const trailingSpace = hasRightAction ? barHeight + ACTION_GAP : 0;
++      const barWidth = windowWidth - BAR_MARGIN * 2 - sideInset * 2 - trailingSpace;
+       const itemWidth = (barWidth - ROW_PAD_H * 2) / tabCount;
+       const raw = (x - ROW_PAD_H) / itemWidth - 0.5;
+       return Math.min(Math.max(raw, 0), tabCount - 1);
+@@ -202,7 +240,25 @@ export function GlassTabBar({
+       });
+ 
+     return Gesture.Race(pan, tap);
+-  }, [windowWidth, tabCount, selectIndex, tick, isDragging, lastTicked, slideIndex, minimized, progress]);
++  }, [
++    windowWidth,
++    tabCount,
++    hasRightAction,
++    selectIndex,
++    tick,
++    isDragging,
++    lastTicked,
++    slideIndex,
++    minimized,
++    progress,
++  ]);
++
++  const rowStyle = useAnimatedStyle(() => ({
++    // Revolut-style: the row shrinks horizontally alongside the pill height.
++    marginHorizontal:
++      BAR_MARGIN +
++      interpolate(progress.value, [0, 1], [0, MINIMIZED_INSET], Extrapolation.CLAMP),
++  }));
+ 
+   const barStyle = useAnimatedStyle(() => {
+     const height = interpolate(
+@@ -211,11 +267,7 @@ export function GlassTabBar({
+       [EXPANDED_HEIGHT, MINIMIZED_HEIGHT],
+       Extrapolation.CLAMP,
+     );
+-    return {
+-      height,
+-      // Revolut-style: the pill shrinks in both dimensions.
+-      marginHorizontal: interpolate(progress.value, [0, 1], [0, MINIMIZED_INSET], Extrapolation.CLAMP),
+-    };
++    return { height };
+   });
+ 
+   // The capsule shape lives on the glass view itself: iOS 26 glass renders
+@@ -247,7 +299,8 @@ export function GlassTabBar({
+       Extrapolation.CLAMP,
+     );
+     const sideInset = interpolate(progress.value, [0, 1], [0, MINIMIZED_INSET], Extrapolation.CLAMP);
+-    const barWidth = windowWidth - BAR_MARGIN * 2 - sideInset * 2;
++    const trailingSpace = hasRightAction ? barHeight + ACTION_GAP : 0;
++    const barWidth = windowWidth - BAR_MARGIN * 2 - sideInset * 2 - trailingSpace;
+     const itemWidth = (barWidth - ROW_PAD_H * 2) / tabCount;
+     return {
+       height,
+@@ -258,7 +311,7 @@ export function GlassTabBar({
+     };
+   });
+ 
+-  const bottomOffset = Math.max(insets.bottom - 16, 12);
++  const bottomOffset = Math.max(insets.bottom + 8, 12);
+   const barContext = useMemo(
+     () => ({ slideIndex, isDragging, theme }),
+     [slideIndex, isDragging, theme],
+@@ -270,21 +323,30 @@ export function GlassTabBar({
        pointerEvents="box-none"
        style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
        {/* Progressive blur rising from the screen's bottom edge behind the pill. */}
@@ -76,6 +432,7 @@ index dc9056d..f80f1d0 100644
 -          height: bottomOffset + EXPANDED_HEIGHT + BLUR_BLEED,
 -        }}
 -      />
+-      <View
 +      {!disableOverlay && (
 +        <ProgressiveBlur
 +          direction="bottom"
@@ -88,6 +445,174 @@ index dc9056d..f80f1d0 100644
 +          }}
 +        />
 +      )}
-       <View
++      <Animated.View
          pointerEvents="box-none"
-         style={{ marginHorizontal: BAR_MARGIN, marginBottom: bottomOffset }}>
+-        style={{ marginHorizontal: BAR_MARGIN, marginBottom: bottomOffset }}>
++        style={[
++          {
++            marginBottom: bottomOffset,
++            flexDirection: 'row',
++            alignItems: 'center',
++          },
++          rowStyle,
++        ]}>
+         <GestureDetector gesture={gesture}>
+-          <Animated.View style={barStyle}>
++          <Animated.View style={[{ flex: 1 }, barStyle]}>
+             {isLiquidGlassAvailable() ? (
+               <AnimatedGlassView
+                 glassEffectStyle="regular"
+@@ -325,11 +387,140 @@ export function GlassTabBar({
+             </View>
+           </Animated.View>
+         </GestureDetector>
+-      </View>
++        {rightAction && (
++          <GlassTabActionCircle
++            action={rightAction}
++            progress={progress}
++            theme={theme}
++            haptics={haptics}
++            minimized={minimized}
++          />
++        )}
++      </Animated.View>
+     </View>
+   );
+ }
+ 
++/** Trailing circular glass action button (e.g. search) aligned with the tab pill. */
++function GlassTabActionCircle({
++  action,
++  progress,
++  theme,
++  haptics,
++  minimized,
++}: {
++  action: GlassTabAction;
++  progress: SharedValue<number>;
++  theme: GlassTabBarTheme;
++  haptics: boolean;
++  minimized: MinimizeState;
++}) {
++  const pressScale = useSharedValue(1);
++  const pressOverlay = useSharedValue(0);
++
++  const containerStyle = useAnimatedStyle(() => {
++    const size = interpolate(
++      progress.value,
++      [0, 1],
++      [EXPANDED_HEIGHT, MINIMIZED_HEIGHT],
++      Extrapolation.CLAMP,
++    );
++    return {
++      width: size,
++      height: size,
++      marginLeft: ACTION_GAP,
++      transform: [{ scale: pressScale.value }],
++    };
++  });
++
++  const circleShapeStyle = useAnimatedStyle(() => {
++    const size = interpolate(
++      progress.value,
++      [0, 1],
++      [EXPANDED_HEIGHT, MINIMIZED_HEIGHT],
++      Extrapolation.CLAMP,
++    );
++    return { borderRadius: size / 2 };
++  });
++
++  const overlayStyle = useAnimatedStyle(() => {
++    const size = interpolate(
++      progress.value,
++      [0, 1],
++      [EXPANDED_HEIGHT, MINIMIZED_HEIGHT],
++      Extrapolation.CLAMP,
++    );
++    return {
++      borderRadius: size / 2,
++      opacity: pressOverlay.value,
++    };
++  });
++
++  const handlePressIn = useCallback(() => {
++    pressScale.value = withSpring(0.92, ACTION_PRESS_SPRING);
++    pressOverlay.value = withSpring(1, ACTION_PRESS_SPRING);
++  }, [pressScale, pressOverlay]);
++
++  const handlePressOut = useCallback(() => {
++    pressScale.value = withSpring(1, ACTION_PRESS_SPRING);
++    pressOverlay.value = withSpring(0, ACTION_PRESS_SPRING);
++  }, [pressScale, pressOverlay]);
++
++  const handlePress = useCallback(() => {
++    if (haptics && Platform.OS === 'ios') {
++      Haptics.selectionAsync();
++    }
++    setMinimized(minimized, 0);
++    action.onPress();
++  }, [haptics, minimized, action]);
++
++  return (
++    <Animated.View style={containerStyle}>
++      {isLiquidGlassAvailable() ? (
++        <AnimatedGlassView
++          glassEffectStyle="regular"
++          style={[
++            StyleSheet.absoluteFill,
++            { backgroundColor: theme.glassTint, borderCurve: 'continuous' },
++            circleShapeStyle,
++          ]}
++        />
++      ) : (
++        <Animated.View
++          style={[
++            StyleSheet.absoluteFill,
++            { backgroundColor: theme.solidFallback, borderCurve: 'continuous' },
++            circleShapeStyle,
++          ]}
++        />
++      )}
++      <Animated.View
++        pointerEvents="none"
++        style={[
++          StyleSheet.absoluteFill,
++          { backgroundColor: theme.highlight, borderCurve: 'continuous' },
++          overlayStyle,
++        ]}
++      />
++      <Pressable
++        accessibilityRole="button"
++        accessibilityLabel={action.accessibilityLabel ?? action.name}
++        testID={action.testID ?? (action.name ? `glass-tab-action-${action.name}` : undefined)}
++        onPressIn={handlePressIn}
++        onPressOut={handlePressOut}
++        onPress={handlePress}
++        style={{
++          flex: 1,
++          alignSelf: 'stretch',
++          alignItems: 'center',
++          justifyContent: 'center',
++        }}>
++        {action.renderIcon({ tint: theme.activeTint, size: ACTION_ICON_SIZE })}
++      </Pressable>
++    </Animated.View>
++  );
++}
++
+ /** Icon rendered at a fixed tint (used twice for the crossfade layers). */
+ function TabGlyph({ item, tint }: { item: GlassTabItem; tint: string }) {
+   if (item.renderIcon) {
+diff --git a/src/index.ts b/src/index.ts
+index 4c84b0ae6684158a7d810e142a38a97e770a42bf..242cc3e5fcf0d923432d94bef74abc7da9103c96 100644
+--- a/src/index.ts	
++++ b/src/index.ts
+@@ -1,6 +1,7 @@
+ export {
+   GlassTabBar,
+   GlassTabButton,
++  type GlassTabAction,
+   type GlassTabBarProps,
+   type GlassTabBarTheme,
+   type GlassTabItem,

@@ -125,6 +125,3 @@ export function extractXProfileInfo(
   };
 }
 
-export { extractInstagramProfileInfo, isInstagramPlatform } from '@/components/iprofile/utils';
-export { extractThreadsProfileInfo, isThreadsPlatform } from '@/components/tprofile/utils';
-

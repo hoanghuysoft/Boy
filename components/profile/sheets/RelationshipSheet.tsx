@@ -1,13 +1,11 @@
 import { FlexText } from "@/components/FlexText";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import React, { forwardRef, memo } from "react";
+import React, { forwardRef, memo, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 import { FlatList, Image, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { getFamilyAvatarSource } from "../../../utils/familyAvatar";
-import { useSheetBackHandler } from "./useSheetBackHandler";
 
 interface LovedOne {
     name: string;
@@ -45,15 +43,15 @@ export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetPro
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { t } = useTranslation();
-    const inset = useSafeAreaInsets();
-    const backHandler = useSheetBackHandler(ref);
+    const listRef = useRef<FlatList>(null);
 
     if (!data || data.length === 0) return null;
 
     return (
         <TrueSheet
             ref={ref}
-            scrollable={true}
+            scrollableRef={listRef}
+            style={{ flex: 1 }}
             backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
             grabberOptions={{
                 color: colors.muted || "#C4C4C4",
@@ -62,8 +60,6 @@ export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetPro
             }}
             cornerRadius={32}
             detents={[0.7, 1]}
-            onDidPresent={backHandler.onDidPresent}
-            onDidDismiss={backHandler.onDidDismiss}
         >
             <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
 
@@ -76,13 +72,13 @@ export const RelationshipSheet = memo(forwardRef<TrueSheet, RelationshipSheetPro
                 </View>
 
                 <FlatList
-                    nestedScrollEnabled
+                    ref={listRef}
                     data={data}
                     keyExtractor={(item, index) => `${item.name}-${index}`}
                     renderItem={({ item }) => (
                         <RelationshipItem item={item} colors={colors} common={common} />
                     )}
-                    contentContainerStyle={{ paddingBottom: 20 + inset.bottom }}
+                    contentContainerStyle={{ paddingBottom: 20 }}
                 />
             </View>
         </TrueSheet>

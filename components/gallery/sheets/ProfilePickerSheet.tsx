@@ -1,5 +1,4 @@
 import { FlexText } from "@/components/FlexText";
-import { useSheetBackHandler } from "@/components/profile/sheets/useSheetBackHandler";
 import { useThemeContext } from "@/context/ThemeContext";
 import VerifiedIcon from "@/icons/verified";
 import { ProfilesResponse, useInfiniteProfiles } from "@/services/userprofile";
@@ -7,11 +6,11 @@ import { createCommonStyles } from "@/styles/common";
 import { Profile } from "@/types/profile";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Image as ExpoImage } from "expo-image";
 import { debounce, flatMap } from "lodash";
 import { Spinner } from "panelui-native";
-import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     StyleSheet,
@@ -98,7 +97,7 @@ export const ProfilePickerSheet = memo(
         const { colors, typography, theme } = useThemeContext();
         const common = createCommonStyles(colors, typography);
         const { t } = useTranslation();
-        const backHandler = useSheetBackHandler(ref);
+        const listRef = useRef<FlashListRef<Profile>>(null);
 
         const [searchQuery, setSearchQuery] = useState("");
         const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -180,7 +179,8 @@ export const ProfilePickerSheet = memo(
         return (
             <TrueSheet
                 ref={ref}
-                scrollable={true}
+                scrollableRef={listRef}
+                style={{ flex: 1 }}
                 backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
                 grabberOptions={{
                     color: colors.muted || '#C4C4C4',
@@ -188,8 +188,6 @@ export const ProfilePickerSheet = memo(
                     width: 40,
                 }}
                 cornerRadius={32}
-                onDidPresent={backHandler.onDidPresent}
-                onDidDismiss={backHandler.onDidDismiss}
             >
                 <View style={styles.container}>
                     {/* Header */}
@@ -231,7 +229,7 @@ export const ProfilePickerSheet = memo(
                     </View>
 
                     <FlashList
-                        nestedScrollEnabled
+                        ref={listRef}
                         data={profiles}
                         keyExtractor={(item) => item.id}
                         renderItem={renderItem}

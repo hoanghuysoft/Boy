@@ -10,13 +10,11 @@ import { Chip } from "heroui-native/chip";
 import { Spinner } from "heroui-native/spinner";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Keyboard, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, Keyboard, ScrollView, type ScrollViewInstance, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileLink } from '../../../types/profilelink';
-import { useSheetBackHandler } from "./useSheetBackHandler";
 
 const Earth = ({ size, ...props }: any) => <EarthIcon width={size} height={size} {...props} />;
 
@@ -332,8 +330,8 @@ const AddEditSocialSheet = memo(
         const { t } = useTranslation();
 
         const sheetRef = useRef<TrueSheet>(null);
+        const scrollRef = useRef<ScrollViewInstance>(null);
         const isPresented = useRef(false);
-        const backHandler = useSheetBackHandler(sheetRef);
 
         const [linkToEdit, setLinkToEdit] = useState<ProfileLink | null>(null);
         const [platform, setPlatform] = useState('Facebook');
@@ -454,21 +452,26 @@ const AddEditSocialSheet = memo(
         return (
             <TrueSheet
                 ref={sheetRef}
-                scrollable
+                scrollableRef={scrollRef}
+                style={{ flex: 1 }}
                 detents={[0.92]}
                 cornerRadius={32}
                 backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
                 grabberOptions={{ color: colors.muted || '#C4C4C4', height: 5, width: 40 }}
                 onDidPresent={() => {
                     isPresented.current = true;
-                    backHandler.onDidPresent();
                 }}
                 onDidDismiss={() => {
                     isPresented.current = false;
-                    backHandler.onDidDismiss();
                 }}
             >
-                <ScrollView style={formStyles.container}>
+                <ScrollView
+                    ref={scrollRef}
+                    style={{ flex: 1 }}
+                    contentContainerStyle={formStyles.container}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
                     {/* Header */}
                     <View style={formStyles.header}>
                         <View>
@@ -657,13 +660,11 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
         const { colors, typography, theme } = useThemeContext();
         const common = createCommonStyles(colors, typography);
         const { t } = useTranslation();
-        const inset = useSafeAreaInsets();
 
         const sheetRef = useRef<TrueSheet>(null);
+        const listRef = useRef<FlatList>(null);
         const isPresented = useRef(false);
-        const [hasPresented, setHasPresented] = useState(false);
         const [hasOpenedAddEdit, setHasOpenedAddEdit] = useState(false);
-        const backHandler = useSheetBackHandler(sheetRef);
 
         const addEditSheetRef = useRef<TrueSheet>(null);
 
@@ -671,7 +672,6 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
 
         useImperativeHandle(ref, () => ({
             present: (index?: number, animated?: boolean) => {
-                setHasPresented(true);
                 if (isPresented.current) return Promise.resolve();
                 isPresented.current = true;
                 return sheetRef.current?.present(index, animated) || Promise.resolve();
@@ -743,7 +743,8 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
             <>
                 <TrueSheet
                     ref={sheetRef}
-                    scrollable={true}
+                    scrollableRef={listRef}
+                    style={{ flex: 1 }}
                     backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
                     grabberOptions={{
                         color: colors.muted || "#C4C4C4",
@@ -753,48 +754,43 @@ export const SocialSheet = memo(forwardRef<TrueSheet, SocialSheetProps>(
                     cornerRadius={32}
                     detents={[0.7, 1]}
                     onDidPresent={() => {
-                        setHasPresented(true);
                         isPresented.current = true;
-                        backHandler.onDidPresent();
                     }}
                     onDidDismiss={() => {
                         isPresented.current = false;
-                        backHandler.onDidDismiss();
                     }}
                 >
-                    {hasPresented ? (
-                        <FlatList
-                            nestedScrollEnabled
-                            showsVerticalScrollIndicator={false}
-                            onEndReached={onEndReached}
-                            onEndReachedThreshold={0.5}
-                            data={data}
-                            keyExtractor={(item) => item.id}
-                            ListHeaderComponent={listHeader}
-                            ListEmptyComponent={
-                                <View style={styles.emptyState}>
-                                    <Ionicons name="link-outline" size={48} color={colors.muted} />
-                                    <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
-                                        {t('profile.sheets.social.emptyList', 'No social links connected')}
-                                    </FlexText>
-                                </View>
-                            }
-                            renderItem={({ item }) => (
-                                <View style={{ paddingHorizontal: 24 }}>
-                                    <SocialLinkItem
-                                        item={item}
-                                        colors={colors}
-                                        common={common}
-                                        theme={theme}
-                                        isOwner={isOwner}
-                                        onEdit={isOwner ? () => handleOpenAddEditSheet(item) : undefined}
-                                        onDelete={isOwner ? () => handleDelete(item.id) : undefined}
-                                    />
-                                </View>
-                            )}
-                            contentContainerStyle={{ paddingBottom: 40 + inset.bottom }}
-                        />
-                    ) : null}
+                    <FlatList
+                        ref={listRef}
+                        showsVerticalScrollIndicator={false}
+                        onEndReached={onEndReached}
+                        onEndReachedThreshold={0.5}
+                        data={data}
+                        keyExtractor={(item) => item.id}
+                        ListHeaderComponent={listHeader}
+                        ListEmptyComponent={
+                            <View style={styles.emptyState}>
+                                <Ionicons name="link-outline" size={48} color={colors.muted} />
+                                <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
+                                    {t('profile.sheets.social.emptyList', 'No social links connected')}
+                                </FlexText>
+                            </View>
+                        }
+                        renderItem={({ item }) => (
+                            <View style={{ paddingHorizontal: 24 }}>
+                                <SocialLinkItem
+                                    item={item}
+                                    colors={colors}
+                                    common={common}
+                                    theme={theme}
+                                    isOwner={isOwner}
+                                    onEdit={isOwner ? () => handleOpenAddEditSheet(item) : undefined}
+                                    onDelete={isOwner ? () => handleDelete(item.id) : undefined}
+                                />
+                            </View>
+                        )}
+                        contentContainerStyle={{ paddingBottom: 24 }}
+                    />
                 </TrueSheet>
 
                 {/* Stacked Add/Edit Social Link Sheet */}

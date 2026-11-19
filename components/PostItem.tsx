@@ -52,12 +52,7 @@ export interface PostItemProps {
 const SavedPostBadge = React.memo(({ post, borderColor }: { post: Post; borderColor: string }) => {
     const isExternalPost = React.useMemo(() => {
         return (
-            post.device === 'Instagram for Mobile' ||
-            post.device === 'Instagram Story' ||
-            post.device === 'Threads for Mobile' ||
             post.device === 'X for Mobile' ||
-            post.device?.includes('Instagram') ||
-            post.device?.includes('Threads') ||
             post.device?.includes('Twitter') ||
             post.device?.includes('fxtwitter')
         );

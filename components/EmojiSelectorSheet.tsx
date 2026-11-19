@@ -1,7 +1,7 @@
-import { LegendList } from "@legendapp/list/react-native";
+import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import { Image } from 'expo-image';
-import React, { forwardRef, useCallback } from 'react';
+import React, { forwardRef, useCallback, useRef } from 'react';
 import { StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { EMOJI_ASSETS, EMOJI_NAMES } from '../utils/emojiResolver';
 import { FlexText } from './FlexText';
@@ -38,6 +38,7 @@ EmojiCell.displayName = 'EmojiCell';
 export const EmojiSelectorSheet = forwardRef<TrueSheet, EmojiSelectorSheetProps>(
     ({ onSelect, theme, colors, onDismiss }, ref) => {
         const { width: windowWidth } = useWindowDimensions();
+        const listRef = useRef<LegendListRef>(null);
         // Left & right edge spacing: 16. Total edge spacing = 32.
         // Between items: 12. Total gaps (2 gaps for 3 columns) = 24.
         // Total horizontal space for layout details = 32 + 24 = 56.
@@ -56,7 +57,8 @@ export const EmojiSelectorSheet = forwardRef<TrueSheet, EmojiSelectorSheetProps>
         return (
             <TrueSheet
                 ref={ref}
-                scrollable
+                scrollableRef={listRef}
+                style={{ flex: 1 }}
                 detents={[0.8]}
                 cornerRadius={32}
                 backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
@@ -67,6 +69,8 @@ export const EmojiSelectorSheet = forwardRef<TrueSheet, EmojiSelectorSheetProps>
                     <FlexText style={[{ fontSize: 20, color: colors.text, fontWeight: 'bold' }]}>月薪喵</FlexText>
                 </View>
                 <LegendList
+                    ref={listRef}
+                    style={{ flex: 1 }}
                     data={EMOJI_NAMES}
                     keyExtractor={(item) => item}
                     renderItem={renderItem}

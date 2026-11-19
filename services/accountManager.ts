@@ -153,7 +153,7 @@ export async function rehydrateUserStores(): Promise<void> {
       if (currentSettingsRaw) {
         try {
           const parsed = JSON.parse(currentSettingsRaw);
-          hasKeys = !!(parsed?.state?.imgbbApiKey || parsed?.state?.x02ApiKey || parsed?.state?.socialAioClientId);
+          hasKeys = !!(parsed?.state?.imgbbApiKey || parsed?.state?.x02ApiKey);
         } catch {}
       }
 

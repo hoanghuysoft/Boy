@@ -1,3 +1,4 @@
+import Magnifier from "@/assets/images/svg/ai-search.svg";
 import { useSession } from "@/context/SessionContext";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useScrollStore } from "@/stores/scroll";
@@ -8,12 +9,13 @@ import {
     GlassTabButton,
     TabBarMinimizeProvider,
     renderFadingTabScreen,
+    type GlassTabAction,
     type GlassTabItem,
 } from "expo-glass-tabs";
 import { Image } from "expo-image";
 import { Redirect, Tabs as RouterTabs, usePathname, useRouter, useSegments } from "expo-router";
 import { TabList, TabSlot, TabTrigger, Tabs as UITabs } from "expo-router/ui";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 
@@ -201,6 +203,22 @@ function LegacyGlassTabLayout() {
         [segments, pathname, router]
     );
 
+    const handleSearchPress = useCallback(() => {
+        router.push("/search");
+    }, [router]);
+
+    const searchAction = useMemo<GlassTabAction>(
+        () => ({
+            name: "search",
+            accessibilityLabel: t("search.header.title", { defaultValue: "Search" }),
+            onPress: handleSearchPress,
+            renderIcon: ({ tint, size }) => (
+                <Magnifier width={size} height={size} color={tint} />
+            ),
+        }),
+        [t, handleSearchPress]
+    );
+
     return (
         <TabBarMinimizeProvider>
             <View style={{ flex: 1, backgroundColor: colors.surface, paddingBottom: 0 }}>
@@ -211,6 +229,7 @@ function LegacyGlassTabLayout() {
                             disableOverlay
                             theme={tabTheme}
                             onIndexSelected={handleIndexSelected}
+                            rightAction={searchAction}
                         >
                             {ITEMS.map(({ href, ...item }, index) => (
                                 <TabTrigger key={item.name} name={item.name} href={href} asChild>
@@ -235,10 +254,6 @@ export default function TabLayout() {
 
     if (hasProfile === false) {
         return <Redirect href="/onboarding" />;
-    }
-
-    if (switchToGlass) {
-        return <AdaptiveGlassTabLayout />;
     }
 
     return <LegacyGlassTabLayout />;

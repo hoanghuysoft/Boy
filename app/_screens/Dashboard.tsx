@@ -14,7 +14,6 @@ import { Category, CgvMovie } from "@/types/cgv";
 import { Profile } from "@/types/profile";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import { ProgressiveBlurView } from 'expo-backdrop';
 import { BlurTargetView, BlurView } from "expo-blur";
 import { MINIMIZE_SPRING, useTabBarMinimized } from "expo-glass-tabs";
 import { Image } from "expo-image";
@@ -270,11 +269,11 @@ const DashboardScreen = () => {
     // );
     return (
         <View style={[common.screen, { gap: 4 }]}>
-            <ProgressiveBlurView
+            {/* <ProgressiveBlurView
                 edge="top"
                 tintColor={colors.surface}
                 style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 120, pointerEvents: 'none', zIndex: 100 }}
-            />
+            /> */}
             <View style={StyleSheet.absoluteFill}>
                 <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
                     <Image

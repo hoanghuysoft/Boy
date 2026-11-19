@@ -67,8 +67,7 @@ export function restoreLegacySettingsIfNeeded(userId?: string): boolean {
         const parsed = JSON.parse(currentUserSettings);
         if (
           parsed?.state?.imgbbApiKey ||
-          parsed?.state?.x02ApiKey ||
-          parsed?.state?.socialAioClientId
+          parsed?.state?.x02ApiKey
         ) {
           hasKeys = true;
         }
@@ -98,8 +97,7 @@ export function restoreLegacySettingsIfNeeded(userId?: string): boolean {
               const uParsed = JSON.parse(otherSettings);
               if (
                 uParsed?.state?.imgbbApiKey ||
-                uParsed?.state?.x02ApiKey ||
-                uParsed?.state?.socialAioClientId
+                uParsed?.state?.x02ApiKey
               ) {
                 userMMKV.set("settings-storage", otherSettings);
                 return true;

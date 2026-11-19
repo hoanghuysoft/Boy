@@ -5,7 +5,6 @@ import { CommentBlock } from "@/components/post/CommentBlock";
 import { CommentInputBar } from "@/components/post/CommentInputBar";
 import { LikersSheet } from "@/components/post/LikersSheet";
 import { PostOptionsSheet } from "@/components/post/PostOptionsSheet";
-import { TranslationLanguageSheet } from "@/components/post/TranslationLanguageSheet";
 import { PostItem } from "@/components/PostItem";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { Comment, CommentSortFilter } from "@/types/comment";
@@ -418,7 +417,6 @@ export const PostDetailScreen = ({ postId }: PostDetailScreenProps) => {
                 }}
             />
 
-            <TranslationLanguageSheet />
             <GalleryModal />
         </View>
     );

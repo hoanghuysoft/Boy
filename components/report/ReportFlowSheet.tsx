@@ -10,12 +10,13 @@ import {
   useSubmitReport,
 } from "@/services/report";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Keyboard,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -50,6 +51,16 @@ export const ReportFlowContent = ({ helpers, options }: ReportFlowContentProps) 
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAlreadyReported, setIsAlreadyReported] = useState(false);
+  const scrollRef = useRef<ScrollViewInstance>(null);
+
+  useEffect(() => {
+    helpers.updateConfig({
+      scrollableRef: step === "success" ? undefined : scrollRef,
+    });
+    if (step !== "success") {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }
+  }, [helpers, step]);
 
   const handleSelectCategory = (category: ReportCategory) => {
     setSelectedCategory(category);
@@ -153,30 +164,108 @@ export const ReportFlowContent = ({ helpers, options }: ReportFlowContentProps) 
               : "Content",
   });
 
-  // ─── STEP 1: SELECT CATEGORY ──────────────────────────────────────────────
-  if (step === "category") {
+  // ─── STEP 4: SUCCESS ──────────────────────────────────────────────────────
+  if (step === "success") {
     return (
-      <View style={[styles.container, { backgroundColor: colors.surfaceContainerLow }]}>
-        <View style={styles.headerRow}>
-          <View style={{ flex: 1 }}>
-            <FlexText style={[styles.title, { color: colors.onSurface }]}>
-              {t("report.title", { target: targetLabel, defaultValue: `Report ${targetLabel}` })}
-            </FlexText>
-            <FlexText style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
-              {t("report.subtitle", {
-                defaultValue: "Select a category that best describes the issue. Your report is confidential.",
-              })}
-            </FlexText>
-          </View>
+      <View style={[styles.container, styles.successContainer, { backgroundColor: colors.surfaceContainerLow }]}>
+        <View style={[styles.successIconCircle, { backgroundColor: "#10B98122" }]}>
+          <Ionicons name="checkmark-circle" size={52} color="#10B981" />
         </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          nestedScrollEnabled={true}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 32 }}
+        <FlexText style={[styles.successTitle, { color: colors.onSurface }]}>
+          {t("report.success.title", { defaultValue: "Thank You for Reporting" })}
+        </FlexText>
+
+        <FlexText style={[styles.successSubtitle, { color: colors.onSurfaceVariant }]}>
+          {isAlreadyReported
+            ? t("report.success.alreadyReportedMessage", {
+                defaultValue: "You have already reported this content. It is under review.",
+              })
+            : t("report.success.defaultMessage", {
+                defaultValue:
+                  "Your report has been submitted. Our safety team will review it to ensure our community remains safe.",
+              })}
+        </FlexText>
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => {
+            Keyboard.dismiss();
+            helpers.dismiss();
+          }}
+          style={[styles.doneButton, { backgroundColor: colors.primary }]}
         >
-          {categories.map((cat, idx) => {
+          <FlexText style={[styles.doneButtonText, { color: colors.onPrimary || "#FFF" }]}>
+            {t("report.success.done", { defaultValue: "Done" })}
+          </FlexText>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const categoryTitle = selectedCategory
+    ? t(`report.categories.${selectedCategory.id}.title`, {
+        defaultValue: selectedCategory.title,
+      })
+    : "";
+  const subReasonTitle = selectedSubReason
+    ? t(`report.subReasons.${selectedSubReason.id}.title`, {
+        defaultValue: selectedSubReason.title,
+      })
+    : "";
+  const subReasonsList = selectedCategory?.subReasons || [];
+
+  // ─── STEPS 1–3: SHARED SCROLLABLE CONTAINER ───────────────────────────────
+  return (
+    <View style={[styles.container, { backgroundColor: colors.surfaceContainerLow }]}>
+      <View style={styles.headerRow}>
+        {step === "sub_reason" && (
+          <TouchableOpacity
+            onPress={handleBackToCategories}
+            style={[styles.actionButton, { backgroundColor: colors.surfaceContainerHigh }]}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.onSurface} />
+          </TouchableOpacity>
+        )}
+        {step === "details" && (
+          <TouchableOpacity
+            onPress={handleBackToSubReasons}
+            style={[styles.actionButton, { backgroundColor: colors.surfaceContainerHigh }]}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.onSurface} />
+          </TouchableOpacity>
+        )}
+        <View style={[{ flex: 1 }, step !== "category" && { marginLeft: 12 }]}>
+          <FlexText style={[styles.title, { color: colors.onSurface }]}>
+            {step === "category"
+              ? t("report.title", { target: targetLabel, defaultValue: `Report ${targetLabel}` })
+              : step === "sub_reason"
+                ? categoryTitle
+                : t("report.details.title", { defaultValue: "Additional Details" })}
+          </FlexText>
+          <FlexText style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
+            {step === "category"
+              ? t("report.subtitle", {
+                  defaultValue: "Select a category that best describes the issue. Your report is confidential.",
+                })
+              : step === "sub_reason"
+                ? t("report.subReasonTitle", { defaultValue: "Choose the specific violation:" })
+                : t("report.details.subtitle", { defaultValue: "Help us understand the issue" })}
+          </FlexText>
+        </View>
+      </View>
+
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {step === "category" &&
+          categories.map((cat, idx) => {
             const catTitle = t(`report.categories.${cat.id}.title`, { defaultValue: cat.title });
             const catDesc = t(`report.categories.${cat.id}.description`, { defaultValue: cat.description });
             return (
@@ -208,44 +297,9 @@ export const ReportFlowContent = ({ helpers, options }: ReportFlowContentProps) 
               </CustomSurface>
             );
           })}
-        </ScrollView>
-      </View>
-    );
-  }
 
-  // ─── STEP 2: SELECT SUB-REASON ────────────────────────────────────────────
-  if (step === "sub_reason" && selectedCategory) {
-    const subReasonsList = selectedCategory.subReasons || [];
-    const categoryTitle = t(`report.categories.${selectedCategory.id}.title`, {
-      defaultValue: selectedCategory.title,
-    });
-    return (
-      <View style={[styles.container, { backgroundColor: colors.surfaceContainerLow }]}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            onPress={handleBackToCategories}
-            style={[styles.actionButton, { backgroundColor: colors.surfaceContainerHigh }]}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="arrow-back" size={20} color={colors.onSurface} />
-          </TouchableOpacity>
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <FlexText style={[styles.title, { color: colors.onSurface }]}>
-              {categoryTitle}
-            </FlexText>
-            <FlexText style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
-              {t("report.subReasonTitle", { defaultValue: "Choose the specific violation:" })}
-            </FlexText>
-          </View>
-        </View>
-
-        <ScrollView
-          style={styles.scrollView}
-          nestedScrollEnabled={true}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 32 }}
-        >
-          {subReasonsList.map((sub, idx) => {
+        {step === "sub_reason" &&
+          subReasonsList.map((sub, idx) => {
             const subTitle = t(`report.subReasons.${sub.id}.title`, { defaultValue: sub.title });
             const subDesc = t(`report.subReasons.${sub.id}.description`, { defaultValue: sub.description });
             return (
@@ -272,46 +326,8 @@ export const ReportFlowContent = ({ helpers, options }: ReportFlowContentProps) 
               </CustomSurface>
             );
           })}
-        </ScrollView>
-      </View>
-    );
-  }
 
-  // ─── STEP 3: DETAILS & SUBMIT ─────────────────────────────────────────────
-  if (step === "details" && selectedCategory && selectedSubReason) {
-    const categoryTitle = t(`report.categories.${selectedCategory.id}.title`, {
-      defaultValue: selectedCategory.title,
-    });
-    const subReasonTitle = t(`report.subReasons.${selectedSubReason.id}.title`, {
-      defaultValue: selectedSubReason.title,
-    });
-    return (
-      <View style={[styles.container, { backgroundColor: colors.surfaceContainerLow }]}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            onPress={handleBackToSubReasons}
-            style={[styles.actionButton, { backgroundColor: colors.surfaceContainerHigh }]}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="arrow-back" size={20} color={colors.onSurface} />
-          </TouchableOpacity>
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <FlexText style={[styles.title, { color: colors.onSurface }]}>
-              {t("report.details.title", { defaultValue: "Additional Details" })}
-            </FlexText>
-            <FlexText style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
-              {t("report.details.subtitle", { defaultValue: "Help us understand the issue" })}
-            </FlexText>
-          </View>
-        </View>
-
-        <ScrollView
-          style={styles.scrollView}
-          nestedScrollEnabled={true}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 32 }}
-          keyboardShouldPersistTaps="handled"
-        >
+        {step === "details" && selectedCategory && selectedSubReason && (
           <View style={styles.detailsBody}>
             <CustomSurface
               position="single"
@@ -398,45 +414,8 @@ export const ReportFlowContent = ({ helpers, options }: ReportFlowContentProps) 
               )}
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </View>
-    );
-  }
-
-  // ─── STEP 4: SUCCESS ──────────────────────────────────────────────────────
-  return (
-    <View style={[styles.container, styles.successContainer, { backgroundColor: colors.surfaceContainerLow }]}>
-      <View style={[styles.successIconCircle, { backgroundColor: "#10B98122" }]}>
-        <Ionicons name="checkmark-circle" size={52} color="#10B981" />
-      </View>
-
-      <FlexText style={[styles.successTitle, { color: colors.onSurface }]}>
-        {t("report.success.title", { defaultValue: "Thank You for Reporting" })}
-      </FlexText>
-
-      <FlexText style={[styles.successSubtitle, { color: colors.onSurfaceVariant }]}>
-        {isAlreadyReported
-          ? t("report.success.alreadyReportedMessage", {
-              defaultValue: "You have already reported this content. It is under review.",
-            })
-          : t("report.success.defaultMessage", {
-              defaultValue:
-                "Your report has been submitted. Our safety team will review it to ensure our community remains safe.",
-            })}
-      </FlexText>
-
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => {
-          Keyboard.dismiss();
-          helpers.dismiss();
-        }}
-        style={[styles.doneButton, { backgroundColor: colors.primary }]}
-      >
-        <FlexText style={[styles.doneButtonText, { color: colors.onPrimary || "#FFF" }]}>
-          {t("report.success.done", { defaultValue: "Done" })}
-        </FlexText>
-      </TouchableOpacity>
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -447,7 +426,7 @@ export const ReportFlowContent = ({ helpers, options }: ReportFlowContentProps) 
 export function openReportFlow(options: OpenReportFlowOptions) {
   globalTrueSheet.open({
     detents: [1],
-    scrollable: true,
+    style: { flex: 1 },
     content: (helpers) => <ReportFlowContent helpers={helpers} options={options} />,
   });
 }

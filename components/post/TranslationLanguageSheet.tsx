@@ -3,7 +3,6 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { LANGUAGE_LABELS } from "../../i18n";
 import { LANGUAGES } from "../../i18n/languages";
@@ -47,9 +46,9 @@ export const TranslationLanguageSheet = memo(forwardRef<TranslationLanguageSheet
         const { colors, typography } = useThemeContext();
         const common = createCommonStyles(colors, typography);
         const { t } = useTranslation();
-        const insets = useSafeAreaInsets();
 
         const sheetRef = useRef<TrueSheet>(null);
+        const listRef = useRef<FlatList>(null);
         const translationLangs = React.useMemo(() => getTranslationLanguages(), []);
 
         const { translationLanguage } = useLanguageStore();
@@ -80,7 +79,8 @@ export const TranslationLanguageSheet = memo(forwardRef<TranslationLanguageSheet
             <TrueSheet
                 ref={sheetRef}
                 name="translation-language-sheet"
-                scrollable={true}
+                scrollableRef={listRef}
+                style={{ flex: 1 }}
                 backgroundColor={colors.surfaceContainer}
                 grabberOptions={{
                     color: colors.onSurfaceVariant || "#C4C4C4",
@@ -93,10 +93,10 @@ export const TranslationLanguageSheet = memo(forwardRef<TranslationLanguageSheet
                 <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 24 }}>
                     <FlexText style={[common.heading, { marginBottom: 12 }]}>{t('post.selectLanguage', 'Select Translation Language')}</FlexText>
                     <FlatList
-                        nestedScrollEnabled={true}
+                        ref={listRef}
                         data={translationLangs}
                         keyExtractor={(item) => item.code}
-                        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+                        contentContainerStyle={{ paddingBottom: 20 }}
                         renderItem={({ item }) => {
                             const isSelected = currentTargetLanguage === item.code;
                             return (

@@ -1,13 +1,12 @@
 import AddCircle from "@/assets/images/svg/add-circle.svg";
-import Magnifier from "@/assets/images/svg/ai-search.svg";
 import Collection from "@/assets/images/svg/collection.svg";
 import { GalleryModal } from "@/components/gallery/GalleryModal";
 import HomeCarousel from "@/components/HomeCarousel";
 import OptionModal from "@/components/HomeOptionModal";
-import { CommentsSheet, LikersSheet, PostOptionsSheet, TranslationLanguageSheet } from "@/components/post";
+import { CommentsSheet, LikersSheet, PostOptionsSheet } from "@/components/post";
 import { AccountSwitcherSheet } from "@/components/sheets/AccountSwitcherSheet";
-import type { AccountSwitcherSheetHandle } from "@/types/sheetHandles";
 import SettingsIcon from "@/icons/settings";
+import type { AccountSwitcherSheetHandle } from "@/types/sheetHandles";
 import { useHomeViewModel } from "@/viewmodels/HomeViewModel";
 import { Image as ExpoImage } from "expo-image";
 import { useObserve } from "expo-observe";
@@ -172,9 +171,9 @@ const HomeScreen = () => {
                   opacity: pillBgOpacity,
                 }}
               />
-              <TouchableOpacity onPress={navigateToSearch}>
+              {/* <TouchableOpacity onPress={navigateToSearch}>
                 <Magnifier width={24} height={24} color={iconColor} />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <TouchableOpacity onPress={navigateToCreate}>
                 <AddCircle width={26} height={26} color={iconColor} />
               </TouchableOpacity>
@@ -204,7 +203,6 @@ const HomeScreen = () => {
         postId={selectedCommentPostId}
         onDismiss={handleCommentSheetDismiss}
       />
-      <TranslationLanguageSheet />
       <AccountSwitcherSheet ref={accountSwitcherRef} />
     </>
   );

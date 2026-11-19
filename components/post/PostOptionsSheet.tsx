@@ -24,7 +24,6 @@ import { openReportFlow } from "../report/ReportFlowSheet";
 import React, { forwardRef, memo, useCallback, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeContext } from "../../context/ThemeContext";
 import { useCreatePost, useDeletePost, useSharePost } from "../../services/post";
 import { useAdminCheck, useProfile } from "../../services/userprofile";
@@ -33,7 +32,6 @@ import { useTranslationStore } from "../../stores/translation";
 import { createCommonStyles } from "../../styles/common";
 import { Post } from "../../types/post";
 import { FlexText } from "../FlexText";
-import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
 
 const Share = ({ size, ...props }: any) => <ShareIcon width={size} height={size} {...props} />;
 const Copy = ({ size, ...props }: any) => <CopyIcon width={size} height={size} {...props} />;
@@ -119,12 +117,7 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
         const { toast } = useToast();
 
         const isExternalPost = isExternal ?? (
-            post?.device === 'Instagram for Mobile' ||
-            post?.device === 'Instagram Story' ||
-            post?.device === 'Threads for Mobile' ||
             post?.device === 'X for Mobile' ||
-            post?.device?.includes('Instagram') ||
-            post?.device?.includes('Threads') ||
             post?.device?.includes('Twitter') ||
             post?.device?.includes('fxtwitter')
         );
@@ -138,7 +131,6 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
         const { data: myProfile } = useProfile('me', true);
         const sharePostMutation = useSharePost();
         const createPostMutation = useCreatePost(myProfile?.id || "");
-        const insets = useSafeAreaInsets();
         const isAdmin = !!(adminData?.isAdmin ?? adminData?.is_admin ?? myProfile?.is_admin);
 
 
@@ -163,8 +155,6 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
 
         const sheetRef = useRef<TrueSheet>(null);
         const isPresented = useRef(false);
-        const [hasEverOpened, setHasEverOpened] = useState(false);
-        const backHandler = useSheetBackHandler(sheetRef);
 
         const { translations, translate, clearTranslation } = useTranslationStore();
         const { translationLanguage } = useLanguageStore();
@@ -178,7 +168,6 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
 
         useImperativeHandle(ref, () => ({
             present: () => {
-                setHasEverOpened(true);
                 isPresented.current = true;
                 sheetRef.current?.present();
             },
@@ -449,13 +438,9 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                         mediaId: media.id,
                         url: mediaUrl,
                         assetId: asset.id,
-                        platform: post.device?.includes('Instagram')
-                            ? 'instagram'
-                            : post.device?.includes('Threads')
-                                ? 'threads'
-                                : post.device?.includes('X')
-                                    ? 'fxtwitter'
-                                    : 'other',
+                        platform: post.device?.includes('X')
+                            ? 'fxtwitter'
+                            : 'other',
                         mediaType: isVideo ? 'video' : ext === 'gif' ? 'gif' : 'photo',
                         fileName,
                         downloadedAt: Date.now(),
@@ -526,7 +511,6 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
             <>
                 <TrueSheet
                     ref={sheetRef}
-                    scrollable={false}
                     backgroundColor={colors.surfaceContainer}
                     grabberOptions={{
                         color: colors.onSurfaceVariant || "#C4C4C4",
@@ -537,16 +521,13 @@ export const PostOptionsSheet = memo(forwardRef<any, PostOptionsSheetProps>(
                     detents={['auto']}
                     onDidPresent={() => {
                         isPresented.current = true;
-                        setHasEverOpened(true);
-                        backHandler.onDidPresent();
                     }}
                     onDidDismiss={() => {
                         isPresented.current = false;
-                        backHandler.onDidDismiss();
                     }}
                 >
-                    {hasEverOpened && post ? (
-                        <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 20 }}>
+                    {post ? (
+                        <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}>
                             {/* Header */}
                             <View className="mb-4">
                                 <FlexText style={[common.heading]}>

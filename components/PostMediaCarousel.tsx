@@ -47,6 +47,7 @@ interface PostMediaCarouselProps {
 }
 
 const ASPECT_RATIO = 3 / 4;
+const MEDIA_BORDER_RADIUS = 28;
 
 // Defined outside component so it's never recreated
 const PLACEHOLDER_IMAGE_VIDEO = 'https://placehold.net/3-600x800.png';
@@ -263,7 +264,7 @@ const VideoCarouselItem = React.memo(({
         status === 'pending';
 
     return (
-        <View style={{ width: screenWidth, height: mediaHeight, overflow: 'hidden' }}>
+        <View style={{ width: screenWidth, height: mediaHeight, borderRadius: MEDIA_BORDER_RADIUS, overflow: 'hidden' }}>
             <View style={{ width: '100%', height: '100%', position: 'relative' }}>
                 {videoUrl ? (
                     <BlueskyVideoView
@@ -271,7 +272,7 @@ const VideoCarouselItem = React.memo(({
                         url={videoUrl}
                         autoplay={!disableAutoplay && isItemActive}
                         beginMuted={isMuted}
-                        style={{ width: '100%', height: '100%' }}
+                        style={{ width: '100%', height: '100%', borderRadius: MEDIA_BORDER_RADIUS }}
                         onActiveChange={e => {
                             const active = e.nativeEvent.isActive;
                             setIsActive(active);
@@ -312,7 +313,7 @@ const VideoCarouselItem = React.memo(({
                                 android: { display: showOverlay ? 'flex' : 'none' },
                                 ios: { zIndex: showOverlay ? 1 : -1 },
                             }),
-                        },
+                        }
                     ]}
                     pointerEvents={showOverlay ? 'auto' : 'none'}
                 >
@@ -323,7 +324,7 @@ const VideoCarouselItem = React.memo(({
                             height: targetHeight,
                         }}
                         recyclingKey={fallbackUrls[prev]}
-                        style={{ width: '100%', height: '100%' }}
+                        style={{ width: '100%', height: '100%', borderRadius: MEDIA_BORDER_RADIUS }}
                         contentFit="cover"
                         onError={handleThumbnailError}
                         placeholder={{ blurhash: placeholderBlurhash }}
@@ -339,6 +340,7 @@ const VideoCarouselItem = React.memo(({
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     backgroundColor: 'rgba(0,0,0,0.15)',
+                                    borderRadius: MEDIA_BORDER_RADIUS,
                                 },
                             ]}
                         >
@@ -406,27 +408,36 @@ const PhotoCarouselItem = React.memo(({
     );
 
     return (
-        <View style={{ width: screenWidth, height: mediaHeight }}>
-            <Pressable android_ripple={{ color: colors.divider, foreground: true }} onPress={onPress}>
-                <View style={{
-                    width: screenWidth,
-                    height: mediaHeight,
-                    backgroundColor: colors.divider,
-                    overflow: 'hidden',
-                }}>
-                    <ExpoImage
-                        source={{
-                            uri: imageUri,
-                            width: targetWidth,
-                            height: targetHeight,
-                        }}
-                        recyclingKey={imageUri}
-                        contentFit="cover"
-                        style={{ width: '100%', height: '100%' }}
-                        placeholder={{ blurhash: placeholderBlurhash }}
-                        cachePolicy="memory-disk"
-                    />
-                </View>
+        <View
+            style={{
+                width: screenWidth,
+                height: mediaHeight,
+                borderRadius: MEDIA_BORDER_RADIUS,
+                overflow: 'hidden',
+            }}
+        >
+            <Pressable
+                android_ripple={{ color: colors.divider, foreground: true }}
+                onPress={onPress}
+                style={{ width: '100%', height: '100%' }}
+            >
+                <ExpoImage
+                    source={{
+                        uri: imageUri,
+                        width: targetWidth,
+                        height: targetHeight,
+                    }}
+                    recyclingKey={imageUri}
+                    contentFit="cover"
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: MEDIA_BORDER_RADIUS,
+                        backgroundColor: colors.divider,
+                    }}
+                    placeholder={{ blurhash: placeholderBlurhash }}
+                    cachePolicy="memory-disk"
+                />
             </Pressable>
         </View>
     );
@@ -527,7 +538,7 @@ interface AnimatedMediaWrapperProps {
 const AnimatedMediaWrapper = React.memo(({ pressAnim, children }: AnimatedMediaWrapperProps) => {
     const animStyle = useAnimatedStyle(() => {
         const scale = interpolate(pressAnim.value, [0, 1], [1, 0.9]);
-        const borderRadius = interpolate(pressAnim.value, [0, 1], [0, 30]);
+        const borderRadius = interpolate(pressAnim.value, [0, 1], [MEDIA_BORDER_RADIUS, 30]);
         return { transform: [{ scale }], borderRadius };
     }, []);
 

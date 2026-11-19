@@ -2,7 +2,7 @@
  * downloadedMediaDatabase.ts
  *
  * Local database to track and deduplicate downloaded media from external posts
- * (FxTwitter, Instagram, Threads) using high-performance C++ MMKV storage.
+ * (FxTwitter) using high-performance C++ MMKV storage.
  *
  * Prevents redundant re-downloads, tracks asset IDs and timestamps, and provides
  * reactive status updates for the UI.
@@ -20,7 +20,7 @@ export interface DownloadedMediaRecord {
     mediaId?: string;
     url: string;
     assetId?: string;
-    platform?: "fxtwitter" | "instagram" | "threads" | "other";
+    platform?: "fxtwitter" | "other";
     mediaType: "photo" | "video" | "gif";
     fileName: string;
     downloadedAt: number;
@@ -81,13 +81,6 @@ export function getMediaDownloadKey(
             // Twitter / X photo or video path (e.g. /media/G12345)
             if (parsed.hostname.includes("twimg.com")) {
                 return `tw:${parsed.pathname}`;
-            }
-            // Instagram / Threads media path
-            if (
-                parsed.hostname.includes("cdninstagram.com") ||
-                parsed.hostname.includes("fbcdn.net")
-            ) {
-                return `meta:${parsed.pathname}`;
             }
             return `url:${parsed.origin}${parsed.pathname}`;
         } catch {

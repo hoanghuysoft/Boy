@@ -4,12 +4,11 @@ import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image } from "expo-image";
 import { Spinner } from "panelui-native";
-import React, { forwardRef, memo, useCallback } from "react";
+import React, { forwardRef, memo, useCallback, useRef } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import NitroInAppBrowser from 'react-native-nitro-in-app-browser';
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
-import { useSheetBackHandler } from "../../profile/sheets/useSheetBackHandler";
 
 interface ReviewsSheetProps {
     data: TMDBReview[];
@@ -88,7 +87,7 @@ ReviewItem.displayName = "ReviewItem";
 export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ data, onEndReached, isLoadingItems }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
-    const backHandler = useSheetBackHandler(ref);
+    const listRef = useRef<FlatList>(null);
 
     const renderFooter = useCallback(() => {
         if (!isLoadingItems) return null;
@@ -102,7 +101,8 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
     return (
         <TrueSheet
             ref={ref}
-            scrollable={true}
+            scrollableRef={listRef}
+            style={{ flex: 1 }}
             backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
             grabberOptions={{
                 color: colors.muted || "#C4C4C4",
@@ -110,8 +110,6 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
                 width: 40,
             }}
             cornerRadius={36}
-            onDidPresent={backHandler.onDidPresent}
-            onDidDismiss={backHandler.onDidDismiss}
         >
             <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 24 }}>
 
@@ -125,7 +123,7 @@ export const ReviewsSheet = memo(forwardRef<TrueSheet, ReviewsSheetProps>(({ dat
 
                 {/* List */}
                 <FlatList
-                    nestedScrollEnabled
+                    ref={listRef}
                     onEndReached={onEndReached}
                     onEndReachedThreshold={0.5}
                     data={data}

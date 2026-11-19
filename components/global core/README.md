@@ -40,19 +40,22 @@ export function ExampleButton() {
 
 ### 1. Multi-Stop & Scrollable Lists
 
-For sheets with long scrollable lists, use fractional detents (`0` to `1`) and set `scrollable: true`:
+For sheets with scrollable lists, pass a ref to the scrollable via `scrollableRef`. For fixed detents, pass `style: { flex: 1 }` so the content fills the sheet's visible height per detent (`'auto'` detents also work natively with `scrollableRef` without `flex: 1`):
 
 ```tsx
+const scrollRef = useRef<ScrollView>(null);
+
 globalTrueSheet.open({
   detents: [0.5, 0.9],
-  scrollable: true,
+  style: { flex: 1 },
+  scrollableRef: scrollRef,
   header: (
     <View style={{ padding: 16, borderBottomWidth: 1, borderColor: '#eee' }}>
       <Text style={{ fontSize: 16, fontWeight: '600' }}>Select Item</Text>
     </View>
   ),
   content: ({ dismiss }) => (
-    <ScrollView style={{ padding: 16 }}>
+    <ScrollView ref={scrollRef} style={{ flex: 1, padding: 16 }}>
       {items.map((item) => (
         <TouchableOpacity
           key={item.id}
@@ -70,26 +73,26 @@ globalTrueSheet.open({
 });
 ```
 
-> [!WARNING]
-> **Never combine `'auto'` with `scrollable: true`.**
-> Content auto-measuring and scrolling containers are fundamentally incompatible in bottom sheets. If you set `scrollable: true`, provide fractional detents like `[0.6, 1]`. The system automatically handles fallback if `'auto'` is accidentally passed.
+> [!NOTE]
+> In TrueSheet v4, `'auto'` detents work with `scrollableRef` — no fallback is needed, and the bottom safe-area inset is handled natively.
 
 ---
 
 ### 2. Fixed Native Header and Footer
 
-Use the `header` and `footer` props — they render in dedicated native container slots with automatic layout and keyboard handling:
+Use `header` and `footer` — they render in dedicated native containers. By default both use `position: 'relative'` (taking space above/below content and included in `'auto'` height), and the footer absorbs the bottom safe-area inset natively. Use `footerOptions={{ position: 'absolute' }}` when you want the footer to float over content and rise above the keyboard:
 
 ```tsx
 globalTrueSheet.open({
   detents: [0.6, 1],
+  style: { flex: 1 },
   header: (
     <View style={{ padding: 16, backgroundColor: '#f9f9f9' }}>
       <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Fixed Top Header</Text>
     </View>
   ),
   content: ({ resize }) => (
-    <View style={{ padding: 16 }}>
+    <View style={{ flex: 1, padding: 16 }}>
       <Text>Scrollable or static body content...</Text>
       <Button title="Expand to Full Height" onPress={() => resize(1)} />
     </View>
@@ -99,6 +102,7 @@ globalTrueSheet.open({
       <Button title="Confirm Action" onPress={() => dismiss()} />
     </View>
   ),
+  footerOptions: { position: 'relative' },
 });
 ```
 
@@ -219,32 +223,32 @@ content: ({
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `detents` | `(number \| 'auto')[]` | `['auto']` | Up to 3 height stops. Sorted smallest to largest. |
-| `cornerRadius` | `number` | `24` | Top corner radius in pt. |
+| `detents` | `SheetDetent[]` | `['auto']` | Up to 3 height stops (`'auto'`, `'peek'`, or `0`–`1`), sorted smallest to largest. |
+| `cornerRadius` | `number` | `36` | Top corner radius in pt. |
 | `grabber` | `boolean` | `true` | Whether to show the top drag pill. |
 | `grabberOptions`| `GrabberOptions` | `{ color }` | Custom grabber color, width, height, or margin. |
 | `dimmed` | `boolean` | `true` | Dim backdrop behind sheet. |
 | `dimmedDetentIndex` | `number` | `undefined` | Only dim backdrop above a specific detent index. |
 | `dismissible` | `boolean` | `true` | Allows user dismissal by swiping down or tapping backdrop. |
 | `draggable` | `boolean` | `true` | Allows user dragging between detents. |
-| `scrollable` | `boolean` | `false` | Enables nested native scrolling. |
+| `scrollableRef` | `RefObject<...>` | `undefined` | Ref to the inner `ScrollView` / `FlatList` / `FlashList` / `LegendList`. |
+| `scrollableOptions` | `ScrollableOptions` | `undefined` | Fine-tune scroll expansion, keyboard offset, and content inset adjustment. |
+| `headerOptions` | `HeaderOptions` | `{ position: 'relative' }` | Header layout position (`'relative'` or `'absolute'`). |
+| `footerOptions` | `FooterOptions` | `{ position: 'relative' }` | Footer layout position and keyboard avoidance. |
 | `backgroundBlur`| `string` | `undefined` | iOS blur material (e.g. `'system-material'`). |
-| `backgroundColor`| `string` | Theme default | Custom sheet background color. |
-| `initialDetentIndex`| `number` | `0` | Starting detent index on present. |
-| `style` | `StyleProp<ViewStyle>` | `undefined` | Custom styling for the native sheet wrapper. |
-| `contentContainerStyle`| `StyleProp<ViewStyle>` | `undefined` | Custom styling for the content inner container. |
+| `backgroundColor`| `ColorValue` | Theme default | Custom sheet background color. |
+| `backgroundStyle` | `StyleProp<Pick<ViewStyle, 'backgroundColor'>>` | `undefined` | Exact color or glass/blur tint above sheet effects. |
+| `insetAdjustment` | `'automatic' \| 'never'` | `'automatic'` | Native bottom safe-area inset adjustment. |
+| `initialDetentIndex`| `number` | `undefined` | Starting detent index on initial mount. |
+| `style` | `StyleProp<ViewStyle>` | `undefined` | Content container style (`{ flex: 1 }` required to fill fixed detents). |
+| `contentContainerStyle`| `StyleProp<ViewStyle>` | `undefined` | Custom styling for an optional inner wrapper View. |
 
 ---
 
 ## 🎯 Best Practices Checklist
 
-1. **Detents Limit**: Maximum of **3 detents** per sheet.
+1. **Detents Limit**: Maximum of **3 detents** per sheet, sorted smallest to largest.
 2. **`resize()` takes an index**: `resize(1)` means *"go to detent index 1"*, not a pixel or percentage.
-3. **TextInput Handling**: Do not use `autoFocus` on inputs inside sheets. Instead, focus the input in `onDidPresent`:
-   ```tsx
-   globalTrueSheet.open({
-     content: <Input autoFocus={false} />,
-     onDidPresent: () => inputRef.current?.focus()
-   });
-   ```
-4. **Theme Integration**: `GlobalTrueSheet` automatically consumes `useThemeContext()` for surface backgrounds and grabber outlines unless custom colors are supplied.
+3. **Content Layout & Safe Areas**: v4 content wraps naturally by default — pass `style: { flex: 1 }` for fixed-detent scrollables or `flex: 1` children. Do not add manual `insets.bottom` padding inside `footer` or `scrollableRef` scroll content (v4 applies safe-area insets natively).
+4. **TextInput Handling**: `autoFocus` on a `TextInput` raises the keyboard natively with the sheet when lazy-mounted (default). With `lazy: false`, focus inside `onWillPresent` or `onDidPresent`.
+5. **Theme Integration**: `GlobalTrueSheet` automatically consumes `useThemeContext()` for surface backgrounds and grabber outlines unless custom colors are supplied.

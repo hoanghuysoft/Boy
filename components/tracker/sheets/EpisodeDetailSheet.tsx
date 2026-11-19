@@ -1,5 +1,4 @@
 import { FlexText } from '@/components/FlexText';
-import { GalleryModal } from '@/components/gallery/GalleryModal';
 import { ShimmerEffect } from '@/components/ui/molecules/Shimmer/Shimmer';
 import { useThemeContext } from '@/context/ThemeContext';
 import { useTvEpisodeDetails } from '@/hooks/useMovies';
@@ -12,11 +11,10 @@ import { FlashList } from '@shopify/flash-list';
 import { Image } from "expo-image";
 import { router } from 'expo-router';
 import * as WebBrowser from "expo-web-browser";
-import React, { forwardRef, memo, useCallback, useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { forwardRef, memo, useCallback, useMemo, useRef } from "react";
+import { Pressable, ScrollView, type ScrollViewInstance, StyleSheet, Text, View } from "react-native";
 import { Pressable as GesturePressable } from 'react-native-gesture-handler';
 import { createCommonStyles } from "../../../styles/common";
-import { useSheetBackHandler } from "../../profile/sheets/useSheetBackHandler";
 
 const getImageUrl = (path: string | null | undefined, size: number = 500) => {
     if (!path) return `https://via.placeholder.com/${size}x750?text=No+Image`;
@@ -99,7 +97,7 @@ EpisodeVideoItem.displayName = "EpisodeVideoItem";
 export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetProps>(({ tvId, seasonNumber, episodeNumber }, ref) => {
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
-    const backHandler = useSheetBackHandler(ref);
+    const scrollRef = useRef<ScrollViewInstance>(null);
     const openGallery = useGalleryStore((s) => s.openGallery);
 
     const { data: episode, isLoading } = useTvEpisodeDetails(
@@ -143,7 +141,8 @@ export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetP
     return (
         <TrueSheet
             ref={ref}
-            scrollable={true}
+            scrollableRef={scrollRef}
+            style={{ flex: 1 }}
             backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
             grabberOptions={{
                 color: colors.muted || "#C4C4C4",
@@ -151,24 +150,24 @@ export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetP
                 width: 40,
             }}
             cornerRadius={36}
-            onDidPresent={backHandler.onDidPresent}
-            onDidDismiss={backHandler.onDidDismiss}
         >
             <View style={{ flex: 1, paddingTop: 16 }}>
-                {isLoading || !episode ? (
-                    <View style={{ paddingHorizontal: 16, gap: 16, paddingTop: 16 }}>
-                        <ShimmerEffect style={{ height: 200, width: "100%", borderRadius: 16 }} />
-                        <ShimmerEffect style={{ height: 24, width: "60%", borderRadius: 8 }} />
-                        <ShimmerEffect style={{ height: 14, width: "100%", borderRadius: 8 }} />
-                        <ShimmerEffect style={{ height: 14, width: "80%", borderRadius: 8 }} />
-                        <ShimmerEffect style={{ height: 80, width: "100%", borderRadius: 12 }} />
-                    </View>
-                ) : (
-                    <ScrollView
-                        nestedScrollEnabled
-                        contentContainerStyle={{ gap: 20, paddingBottom: 40 }}
-                        showsVerticalScrollIndicator={false}
-                    >
+                <ScrollView
+                    ref={scrollRef}
+                    scrollEnabled={!isLoading && !!episode}
+                    contentContainerStyle={{ gap: 20, paddingBottom: 40 }}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {isLoading || !episode ? (
+                        <View style={{ paddingHorizontal: 16, gap: 16, paddingTop: 16 }}>
+                            <ShimmerEffect style={{ height: 200, width: "100%", borderRadius: 16 }} />
+                            <ShimmerEffect style={{ height: 24, width: "60%", borderRadius: 8 }} />
+                            <ShimmerEffect style={{ height: 14, width: "100%", borderRadius: 8 }} />
+                            <ShimmerEffect style={{ height: 14, width: "80%", borderRadius: 8 }} />
+                            <ShimmerEffect style={{ height: 80, width: "100%", borderRadius: 12 }} />
+                        </View>
+                    ) : (
+                        <>
                         {/* Episode Still Image */}
                         {episode.still_path && (
                             <Pressable
@@ -390,12 +389,10 @@ export const EpisodeDetailSheet = memo(forwardRef<TrueSheet, EpisodeDetailSheetP
                                 </View>
                             ) : null}
                         </View>
-                    </ScrollView>
-                )}
+                        </>
+                    )}
+                </ScrollView>
             </View>
-
-            {/* Gallery overlay inside the sheet */}
-            <GalleryModal />
         </TrueSheet>
     );
 }));

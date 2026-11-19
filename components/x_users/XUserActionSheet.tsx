@@ -1,5 +1,4 @@
 import { FlexText } from '@/components/FlexText';
-import { useSheetBackHandler } from '@/components/profile/sheets/useSheetBackHandler';
 import { useThemeContext } from '@/context/ThemeContext';
 import type { XStoredUser } from '@/stores/xUsers';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
@@ -22,7 +21,7 @@ interface XUserActionSheetProps {
   isOpen: boolean;
   onClose: () => void;
   user: XStoredUser | null;
-  bottomInset: number;
+  bottomInset?: number;
   onOpenProfile: (user: XStoredUser) => void;
   onToggleUnfollow: (screen_name: string) => void;
   onRemoveUser: (screen_name: string) => void;
@@ -32,7 +31,6 @@ export const XUserActionSheet = memo(function XUserActionSheet({
   isOpen,
   onClose,
   user,
-  bottomInset,
   onOpenProfile,
   onToggleUnfollow,
   onRemoveUser,
@@ -43,7 +41,6 @@ export const XUserActionSheet = memo(function XUserActionSheet({
   const sheetRef = useRef<TrueSheet>(null);
   const isPresented = useRef(false);
   const cachedUser = useRef<XStoredUser | null>(user);
-  const backHandler = useSheetBackHandler(sheetRef);
 
   if (user) {
     cachedUser.current = user;
@@ -70,7 +67,6 @@ export const XUserActionSheet = memo(function XUserActionSheet({
       ref={sheetRef}
       detents={['auto']}
       cornerRadius={24}
-      scrollable={false}
       backgroundColor={colors.surfaceContainerHigh}
       grabber
       grabberOptions={{
@@ -80,11 +76,9 @@ export const XUserActionSheet = memo(function XUserActionSheet({
       }}
       onDidPresent={() => {
         isPresented.current = true;
-        backHandler.onDidPresent();
       }}
       onDidDismiss={() => {
         isPresented.current = false;
-        backHandler.onDidDismiss();
         onClose();
       }}
     >
@@ -93,7 +87,7 @@ export const XUserActionSheet = memo(function XUserActionSheet({
           style={[
             styles.actionSheet,
             {
-              paddingBottom: Math.max(bottomInset, 16) + 16,
+              paddingBottom: 20,
             },
           ]}
         >

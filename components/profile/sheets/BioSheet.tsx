@@ -1,12 +1,10 @@
 import { FlexText } from "@/components/FlexText";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
-import React, { forwardRef, memo, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, memo, useImperativeHandle, useRef } from "react";
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, type ScrollViewInstance, View } from "react-native";
 import { useThemeContext } from "../../../context/ThemeContext";
 import { createCommonStyles } from "../../../styles/common";
-import { useSheetBackHandler } from "./useSheetBackHandler";
 
 interface BioSheetProps {
     bio?: string | null;
@@ -16,14 +14,11 @@ export const BioSheet = memo(forwardRef<TrueSheet, BioSheetProps>(({ bio }, ref)
     const { colors, typography, theme } = useThemeContext();
     const common = createCommonStyles(colors, typography);
     const { t } = useTranslation();
-    const inset = useSafeAreaInsets();
     const sheetRef = useRef<TrueSheet>(null);
-    const [hasPresented, setHasPresented] = useState(false);
-    const backHandler = useSheetBackHandler(sheetRef);
+    const scrollRef = useRef<ScrollViewInstance>(null);
 
     useImperativeHandle(ref, () => ({
         present: (index?: number, animated?: boolean) => {
-            setHasPresented(true);
             return sheetRef.current?.present(index, animated) || Promise.resolve();
         },
         dismiss: (animated?: boolean) => {
@@ -42,7 +37,8 @@ export const BioSheet = memo(forwardRef<TrueSheet, BioSheetProps>(({ bio }, ref)
     return (
         <TrueSheet
             ref={sheetRef}
-            scrollable={true}
+            scrollableRef={scrollRef}
+            style={{ flex: 1 }}
             backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
             grabberOptions={{
                 color: colors.muted || "#C4C4C4",
@@ -51,28 +47,21 @@ export const BioSheet = memo(forwardRef<TrueSheet, BioSheetProps>(({ bio }, ref)
             }}
             cornerRadius={32}
             detents={[0.5, 0.9]}
-            onDidPresent={() => {
-                setHasPresented(true);
-                backHandler.onDidPresent();
-            }}
-            onDidDismiss={backHandler.onDidDismiss}
         >
-            {hasPresented ? (
-                <ScrollView
-                    nestedScrollEnabled
-                    contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 + inset.bottom }}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <View style={{ marginBottom: 16 }}>
-                        <FlexText style={[common.heading, { fontSize: 22 }]}>
-                            {t('profile.sheets.bio.title', 'Bio')}
-                        </FlexText>
-                    </View>
-                    <FlexText style={[common.body, { color: colors.text, fontSize: 16, lineHeight: 24 }]}>
-                        {bio}
+            <ScrollView
+                ref={scrollRef}
+                contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24 }}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={{ marginBottom: 16 }}>
+                    <FlexText style={[common.heading, { fontSize: 22 }]}>
+                        {t('profile.sheets.bio.title', 'Bio')}
                     </FlexText>
-                </ScrollView>
-            ) : null}
+                </View>
+                <FlexText style={[common.body, { color: colors.text, fontSize: 16, lineHeight: 24 }]}>
+                    {bio}
+                </FlexText>
+            </ScrollView>
         </TrueSheet>
     );
 }));

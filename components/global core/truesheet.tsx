@@ -1,7 +1,10 @@
 import { useThemeContext } from "@/context/ThemeContext";
 import {
+  FooterOptions,
   GrabberOptions,
+  HeaderOptions,
   ScrollableOptions,
+  SheetDetent,
   TrueSheet,
   TrueSheetProps,
 } from "@lodev09/react-native-true-sheet";
@@ -53,22 +56,37 @@ export type GlobalTrueSheetContent =
 
 export interface GlobalTrueSheetConfig {
   /**
-   * Detents defining sheet heights. Up to 3 detents (e.g. ['auto'] or [0.5, 1]).
-   * IMPORTANT: Never combine 'auto' with scrollable = true.
+   * Detents defining sheet heights. Up to 3 detents, sorted smallest to largest (e.g. ['auto'] or [0.5, 1]).
    */
-  detents?: (number | "auto")[];
+  detents?: SheetDetent[];
   cornerRadius?: number;
+  maxContentHeight?: TrueSheetProps["maxContentHeight"];
+  maxContentWidth?: TrueSheetProps["maxContentWidth"];
   grabber?: boolean;
   grabberOptions?: GrabberOptions;
   dimmed?: boolean;
+  dimColor?: TrueSheetProps["dimColor"];
+  dimOpacity?: TrueSheetProps["dimOpacity"];
+  dimBlur?: TrueSheetProps["dimBlur"];
   dimmedDetentIndex?: number;
   dismissible?: boolean;
+  dismissThreshold?: TrueSheetProps["dismissThreshold"];
   draggable?: boolean;
-  scrollable?: boolean;
+  scrollableRef?: TrueSheetProps["scrollableRef"];
   scrollableOptions?: ScrollableOptions;
   backgroundBlur?: TrueSheetProps["backgroundBlur"];
-  blurOptions?: TrueSheetProps["blurOptions"];
-  backgroundColor?: string;
+  backgroundColor?: TrueSheetProps["backgroundColor"];
+  background?: TrueSheetProps["background"];
+  backgroundStyle?: TrueSheetProps["backgroundStyle"];
+  detentBackgrounds?: TrueSheetProps["detentBackgrounds"];
+  insetAdjustment?: TrueSheetProps["insetAdjustment"];
+  lazy?: TrueSheetProps["lazy"];
+  placement?: TrueSheetProps["placement"];
+  placementOffset?: TrueSheetProps["placementOffset"];
+  headerStyle?: TrueSheetProps["headerStyle"];
+  headerOptions?: HeaderOptions;
+  footerStyle?: TrueSheetProps["footerStyle"];
+  footerOptions?: FooterOptions;
   initialDetentIndex?: number;
   initialDetentAnimated?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -135,12 +153,11 @@ interface GlobalTrueSheetState {
 // Default standard sheet configuration
 const DEFAULT_CONFIG: GlobalTrueSheetConfig = {
   detents: ["auto"],
-  cornerRadius: 24,
+  cornerRadius: 36,
   grabber: true,
   dimmed: true,
   dismissible: true,
   draggable: true,
-  scrollable: false,
 };
 
 let sheetIdCounter = 0;
@@ -149,17 +166,10 @@ function generateSheetId(): string {
 }
 
 function sanitizeConfig(configOverrides: Partial<GlobalTrueSheetConfig>): GlobalTrueSheetConfig {
-  const finalDetents = configOverrides.detents || DEFAULT_CONFIG.detents || ["auto"];
-  const isScrollable = !!configOverrides.scrollable;
-  const sanitizedDetents =
-    isScrollable && finalDetents.includes("auto")
-      ? [0.6, 1] // Fallback to safe fractional detents if scrollable is requested
-      : finalDetents;
-
   return {
     ...DEFAULT_CONFIG,
     ...configOverrides,
-    detents: sanitizedDetents,
+    detents: configOverrides.detents || DEFAULT_CONFIG.detents || ["auto"],
   };
 }
 
@@ -579,26 +589,42 @@ const GlobalTrueSheetInstance = memo(({ item, stackIndex }: GlobalTrueSheetInsta
       ref={sheetRef}
       name={`global-${item.id}`}
       detents={config.detents || ["auto"]}
-      cornerRadius={36}
+      cornerRadius={config.cornerRadius ?? 36}
+      maxContentHeight={config.maxContentHeight}
+      maxContentWidth={config.maxContentWidth}
       grabber={config.grabber ?? true}
       grabberOptions={{
         color: effectiveGrabberColor,
         ...config.grabberOptions,
       }}
       dimmed={config.dimmed ?? true}
+      dimColor={config.dimColor}
+      dimOpacity={config.dimOpacity}
+      dimBlur={config.dimBlur}
       dimmedDetentIndex={config.dimmedDetentIndex}
       dismissible={config.dismissible ?? true}
+      dismissThreshold={config.dismissThreshold}
       draggable={config.draggable ?? true}
-      scrollable={config.scrollable ?? false}
+      scrollableRef={config.scrollableRef}
       scrollableOptions={config.scrollableOptions}
       backgroundBlur={config.backgroundBlur}
-      blurOptions={config.blurOptions}
       backgroundColor={effectiveBackgroundColor}
+      background={config.background}
+      backgroundStyle={config.backgroundStyle}
+      detentBackgrounds={config.detentBackgrounds}
+      insetAdjustment={config.insetAdjustment}
+      lazy={config.lazy}
+      placement={config.placement}
+      placementOffset={config.placementOffset}
       initialDetentIndex={config.initialDetentIndex}
       initialDetentAnimated={config.initialDetentAnimated}
       style={config.style}
       header={renderedHeader}
+      headerStyle={config.headerStyle}
+      headerOptions={config.headerOptions}
       footer={renderedFooter}
+      footerStyle={config.footerStyle}
+      footerOptions={config.footerOptions}
       onDidPresent={handleDidPresent}
       onDidDismiss={handleDidDismiss}
       onDetentChange={handleDetentChange}

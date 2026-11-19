@@ -21,7 +21,6 @@ import { useThemeContext } from "../../../context/ThemeContext";
 import { useAudioStore } from '../../../stores/audio';
 import { createCommonStyles } from "../../../styles/common";
 import { ProfileMusic } from '../../../types/profilemusic';
-import { useSheetBackHandler } from "./useSheetBackHandler";
 
 // ============================================================================
 // Props
@@ -51,13 +50,11 @@ const AddMusicSheet = memo(
         const { stopPlayback } = useAudioStore();
 
         const sheetRef = useRef<TrueSheet>(null);
+        const listRef = useRef<FlatList>(null);
         const isPresented = useRef(false);
-        const [hasEverOpened, setHasEverOpened] = useState(false);
-        const backHandler = useSheetBackHandler(sheetRef);
 
         useImperativeHandle(ref, () => ({
             present: (index?: number, animated?: boolean) => {
-                setHasEverOpened(true);
                 if (isPresented.current) return Promise.resolve();
                 isPresented.current = true;
                 return sheetRef.current?.present(index, animated) || Promise.resolve();
@@ -192,39 +189,33 @@ const AddMusicSheet = memo(
         return (
             <TrueSheet
                 ref={sheetRef}
-                scrollable
+                scrollableRef={listRef}
+                style={{ flex: 1 }}
                 detents={[0.92]}
                 cornerRadius={32}
                 backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
                 grabberOptions={{ color: colors.muted || '#C4C4C4', height: 5, width: 40 }}
                 onDidPresent={() => {
                     isPresented.current = true;
-                    setHasEverOpened(true);
-                    backHandler.onDidPresent();
                 }}
                 onDidDismiss={() => {
                     isPresented.current = false;
-                    backHandler.onDidDismiss();
                     stopPlayback();
                     setQuery('');
                     setDebouncedQuery('');
                 }}
             >
-                {hasEverOpened ? (
-                    <FlatList
-                        nestedScrollEnabled
-                        data={tracks}
-                        keyExtractor={(item) => item.deezer_id}
-                        ListHeaderComponent={listHeader}
-                        contentContainerStyle={{ paddingBottom: 40 }}
-                        keyboardShouldPersistTaps="handled"
-                        keyboardDismissMode="on-drag"
-                        showsVerticalScrollIndicator={false}
-                        renderItem={renderItem}
-                    />
-                ) : (
-                    <View style={{ minHeight: 200 }} />
-                )}
+                <FlatList
+                    ref={listRef}
+                    data={tracks}
+                    keyExtractor={(item) => item.deezer_id}
+                    ListHeaderComponent={listHeader}
+                    contentContainerStyle={{ paddingBottom: 40 }}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
+                    showsVerticalScrollIndicator={false}
+                    renderItem={renderItem}
+                />
             </TrueSheet>
         );
     })
@@ -446,14 +437,12 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(
         const { stopPlayback } = useAudioStore();
 
         const sheetRef = useRef<TrueSheet>(null);
+        const listRef = useRef<FlatList>(null);
         const isPresented = useRef(false);
-        const [hasEverOpened, setHasEverOpened] = useState(false);
         const [hasEverOpenedAdd, setHasEverOpenedAdd] = useState(false);
-        const backHandler = useSheetBackHandler(sheetRef);
 
         useImperativeHandle(ref, () => ({
             present: (index?: number, animated?: boolean) => {
-                setHasEverOpened(true);
                 if (isPresented.current) return Promise.resolve();
                 isPresented.current = true;
                 return sheetRef.current?.present(index, animated) || Promise.resolve();
@@ -552,7 +541,8 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(
             <>
                 <TrueSheet
                     ref={sheetRef}
-                    scrollable
+                    scrollableRef={listRef}
+                    style={{ flex: 1 }}
                     backgroundColor={theme === 'dark' ? colors.containerContent : '#ffffff'}
                     grabberOptions={{
                         color: colors.muted || '#C4C4C4',
@@ -563,40 +553,33 @@ export const MusicSheet = memo(forwardRef<TrueSheet, MusicSheetProps>(
                     detents={[0.7, 1]}
                     onDidPresent={() => {
                         isPresented.current = true;
-                        setHasEverOpened(true);
-                        backHandler.onDidPresent();
                     }}
                     onDidDismiss={() => {
                         isPresented.current = false;
-                        backHandler.onDidDismiss();
                         stopPlayback();
                     }}
                 >
-                    {hasEverOpened ? (
-                        <FlatList
-                            nestedScrollEnabled
-                            showsVerticalScrollIndicator={false}
-                            onEndReached={onEndReached}
-                            onEndReachedThreshold={0.5}
-                            data={data}
-                            keyExtractor={(item) => item.id}
-                            ListHeaderComponent={listHeader}
-                            ListEmptyComponent={
-                                <View style={addStyles.emptyState}>
-                                    <Ionicons name="musical-notes-outline" size={48} color={colors.muted} />
-                                    <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
-                                        {t('profile.sheets.music.emptyList', 'No tracks added yet')}
-                                    </FlexText>
-                                </View>
-                            }
-                            renderItem={renderItem}
-                            contentContainerStyle={{ paddingBottom: 40 }}
-                            keyboardShouldPersistTaps="handled"
-                            keyboardDismissMode="on-drag"
-                        />
-                    ) : (
-                        <View style={{ minHeight: 200 }} />
-                    )}
+                    <FlatList
+                        ref={listRef}
+                        showsVerticalScrollIndicator={false}
+                        onEndReached={onEndReached}
+                        onEndReachedThreshold={0.5}
+                        data={data}
+                        keyExtractor={(item) => item.id}
+                        ListHeaderComponent={listHeader}
+                        ListEmptyComponent={
+                            <View style={addStyles.emptyState}>
+                                <Ionicons name="musical-notes-outline" size={48} color={colors.muted} />
+                                <FlexText style={[common.body, { color: colors.muted, marginTop: 12, textAlign: 'center' }]}>
+                                    {t('profile.sheets.music.emptyList', 'No tracks added yet')}
+                                </FlexText>
+                            </View>
+                        }
+                        renderItem={renderItem}
+                        contentContainerStyle={{ paddingBottom: 40 }}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode="on-drag"
+                    />
                 </TrueSheet>
 
                 {/* Stacked: Add Music Sheet */}

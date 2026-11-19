@@ -1,7 +1,6 @@
 import CheckCircle from "@/assets/images/svg/check-circle.svg";
 import { CustomSurface } from "@/components/CustomSurface";
 import { FlexText } from "@/components/FlexText";
-import { TranslationLanguageSheet } from "@/components/post/TranslationLanguageSheet";
 import { ThemeColors, useThemeContext } from "@/context/ThemeContext";
 import { LANGUAGE_LABELS, SUPPORTED_LANGUAGES, SupportedLanguage } from "@/i18n";
 import { LanguageMode, useLanguageStore } from "@/stores/language";
@@ -184,7 +183,6 @@ const LanguageSettingsScreen = () => {
                     <Ionicons name="chevron-forward" size={24} color={colors.text} />
                 </CustomSurface>
             </View>
-            <TranslationLanguageSheet />
         </ScrollView>
     );
 };

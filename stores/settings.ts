@@ -50,8 +50,6 @@ interface SettingsStore {
     setImgbbApiKey: (key: string) => void;
     x02ApiKey: string;
     setX02ApiKey: (key: string) => void;
-    socialAioClientId: string;
-    setSocialAioClientId: (clientId: string) => void;
     reset: () => void;
 }
 
@@ -61,7 +59,7 @@ const mmkvZustandStorage = createJSONStorage(() => ({
         if (val) {
             try {
                 const parsed = JSON.parse(val);
-                if (parsed?.state?.imgbbApiKey || parsed?.state?.x02ApiKey || parsed?.state?.socialAioClientId) {
+                if (parsed?.state?.imgbbApiKey || parsed?.state?.x02ApiKey) {
                     return val;
                 }
             } catch {}
@@ -72,7 +70,7 @@ const mmkvZustandStorage = createJSONStorage(() => ({
         if (legacyVal) {
             try {
                 const parsedLegacy = JSON.parse(legacyVal);
-                if (parsedLegacy?.state?.imgbbApiKey || parsedLegacy?.state?.x02ApiKey || parsedLegacy?.state?.socialAioClientId) {
+                if (parsedLegacy?.state?.imgbbApiKey || parsedLegacy?.state?.x02ApiKey) {
                     mmkv.set(name, legacyVal);
                     return legacyVal;
                 }
@@ -129,8 +127,6 @@ export const useSettingsStore = create<SettingsStore>()(
             setImgbbApiKey: (key) => set({ imgbbApiKey: key }),
             x02ApiKey: '',
             setX02ApiKey: (key) => set({ x02ApiKey: key }),
-            socialAioClientId: '',
-            setSocialAioClientId: (clientId) => set({ socialAioClientId: clientId }),
             reset: () => set({
                 showSensitiveContent: false,
                 showCarousel: true,
@@ -142,7 +138,6 @@ export const useSettingsStore = create<SettingsStore>()(
                 disableAutoplay: false,
                 imgbbApiKey: '',
                 x02ApiKey: '',
-                socialAioClientId: '',
             }),
         }),
         {

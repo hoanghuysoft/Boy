@@ -60,7 +60,6 @@ const SettingsScreen = () => {
         videoCacheSizeLimit, setVideoCacheSizeLimit,
         imgbbApiKey, setImgbbApiKey,
         x02ApiKey, setX02ApiKey,
-        socialAioClientId, setSocialAioClientId,
         makeBottomBarCurve, toggleMakeBottomBarCurve,
         switchToGlass, toggleSwitchToGlass,
         disableAutoplay, toggleDisableAutoplay,
@@ -275,27 +274,27 @@ const SettingsScreen = () => {
                         </CustomSurface>
                     ),
                 },
-                {
-                    id: 'switchToGlass',
-                    title: t('settings.switchToGlass'),
-                    description: t('settings.switchToGlassDescription'),
-                    keywords: ['glass', 'tab', 'tab bar', 'navigation', 'bar', 'thanh điều hướng', 'kính'],
-                    render: (index: number, total: number) => (
-                        <CustomSurface index={index} total={total} style={styles.option}>
-                            <ControlField
-                                isSelected={switchToGlass}
-                                onSelectedChange={toggleSwitchToGlass}
-                                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-                            >
-                                <View style={{ flex: 1 }}>
-                                    <FlexText style={common.body}>{t('settings.switchToGlass')}</FlexText>
-                                    <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.switchToGlassDescription')}</FlexText>
-                                </View>
-                                <ControlField.Indicator />
-                            </ControlField>
-                        </CustomSurface>
-                    ),
-                },
+                // {
+                //     id: 'switchToGlass',
+                //     title: t('settings.switchToGlass'),
+                //     description: t('settings.switchToGlassDescription'),
+                //     keywords: ['glass', 'tab', 'tab bar', 'navigation', 'bar', 'thanh điều hướng', 'kính'],
+                //     render: (index: number, total: number) => (
+                //         <CustomSurface index={index} total={total} style={styles.option}>
+                //             <ControlField
+                //                 isSelected={switchToGlass}
+                //                 onSelectedChange={toggleSwitchToGlass}
+                //                 style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                //             >
+                //                 <View style={{ flex: 1 }}>
+                //                     <FlexText style={common.body}>{t('settings.switchToGlass')}</FlexText>
+                //                     <FlexText style={[common.bodySmall, { color: colors.muted }]}>{t('settings.switchToGlassDescription')}</FlexText>
+                //                 </View>
+                //                 <ControlField.Indicator />
+                //             </ControlField>
+                //         </CustomSurface>
+                //     ),
+                // },
                 {
                     id: 'autoplay',
                     title: t('settings.autoplay'),
@@ -703,7 +702,7 @@ const SettingsScreen = () => {
                 }}
                 cornerRadius={32}
             >
-                <View style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: inset.bottom + 24, gap: 16 }}>
+                <View style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24, gap: 16 }}>
                     <FlexText style={[common.title]}>{t('settings.thirdPartyStorage', 'Third-Party Cloud')}</FlexText>
 
                     {/* ImgBB API Key Input */}
@@ -746,27 +745,6 @@ const SettingsScreen = () => {
                     </TextField>
                     <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: -8 }]}>
                         Optional for video uploads. Used for file deletion hooks.
-                    </FlexText>
-
-                    {/* Social AIO Client ID Input */}
-                    <TextField>
-                        <FlexText style={[common.body, { marginBottom: 8 }]}>Social AIO (FB AIO) Client ID</FlexText>
-                        <Input
-                            value={socialAioClientId}
-                            onChangeText={setSocialAioClientId}
-                            variant="secondary"
-                            placeholder="Enter Social AIO Client ID"
-                            placeholderTextColor={colors.onSurfaceVariant}
-                            style={{
-                                backgroundColor: colors.surfaceContainerHighest,
-                                color: colors.onSurface,
-                                fontSize: 14,
-                                paddingHorizontal: 16,
-                            }}
-                        />
-                    </TextField>
-                    <FlexText style={[common.caption, { color: colors.onSurfaceVariant, marginTop: -8 }]}>
-                        Required for Instagram & social relay APIs. Get from Social AIO extension.
                     </FlexText>
 
                     <Button

@@ -3,7 +3,8 @@ import ImageAddIcon from "@/assets/images/svg/image-add.svg";
 import SendIcon from "@/assets/images/svg/send.svg";
 import { Shimmer, ShimmerGroup } from "@/components/ui/molecules/Shimmer/Shimmer";
 import { GiphyDialog, GiphyRating, GiphyThemePreset } from "@giphy/react-native-sdk";
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import { type SheetDetent, TrueSheet, type TrueSheetProps } from "@lodev09/react-native-true-sheet";
+import { ReanimatedTrueSheet } from "@lodev09/react-native-true-sheet/reanimated";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import { Image } from "expo-image";
 import { SquircleView } from "expo-squircle-view";
@@ -20,13 +21,11 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Comment } from "../../types/comment";
 import { EMOJI_ASSETS } from "../../utils/emojiResolver";
 import { useCommentsSheetViewModel } from "../../viewmodels/CommentsSheetViewModel";
 import { EmojiSelectorSheet } from "../EmojiSelectorSheet";
 import { FlexText } from "../FlexText";
-import { useSheetBackHandler } from "../profile/sheets/useSheetBackHandler";
 import { CommentBlock } from "./CommentBlock";
 
 const Plain2 = ({ size, ...props }: any) => <SendIcon width={size} height={size} {...props} />;
@@ -42,8 +41,8 @@ interface CommentsSheetProps {
     onDismiss?: () => void;
     /** Use ReanimatedTrueSheet so animatedPosition is available via useReanimatedTrueSheet() */
     useReanimated?: boolean;
-    /** Override sheet detents (default: [0.7]) */
-    detents?: (number | 'auto')[];
+    /** Override sheet detents (default: [0.7, 1]) */
+    detents?: SheetDetent[];
 }
 
 // ============================================================================
@@ -51,8 +50,7 @@ interface CommentsSheetProps {
 // ============================================================================
 
 export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
-    ({ postId, onDismiss, useReanimated = false, detents = [0.7, 'auto'] }, ref) => {
-        const insets = useSafeAreaInsets();
+    ({ postId, onDismiss, useReanimated = false, detents = [0.7, 1] }, ref) => {
         const sheetRef = useRef<TrueSheet>(null);
         const emojiSheetRef = useRef<TrueSheet>(null);
         const isPresentedRef = useRef(false);
@@ -141,8 +139,6 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
         useEffect(() => {
             commentsRef.current = vm.comments;
         }, [vm.comments]);
-
-        const backHandler = useSheetBackHandler(sheetRef);
 
         const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -257,8 +253,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             <View style={[
                 styles.footerContainer,
                 {
-                    backgroundColor: vm.colors.surfaceContainerLow,
-                    paddingBottom: isKeyboardVisible ? 8 : Math.max(insets.bottom, 22),
+                    paddingBottom: isKeyboardVisible ? 8 : 12,
                 }
             ]}>
                 {/* Edit mode banner */}
@@ -426,10 +421,13 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             </View>
         );
 
-        const sharedProps = {
+        const sharedProps: TrueSheetProps & { ref: React.RefObject<TrueSheet | null> } = {
             ref: sheetRef,
-            scrollable: true,
+            scrollableRef: flatListRef,
+            style: { flex: 1 },
             backgroundColor: vm.colors.surfaceContainerLow,
+            footerStyle: { backgroundColor: vm.colors.surfaceContainerLow },
+            footerOptions: { position: 'absolute' },
             grabberOptions: {
                 color: vm.colors.onSurfaceVariant || "#C4C4C4",
                 height: 5,
@@ -437,15 +435,13 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
             },
             cornerRadius: 32,
             detents,
-            footer: hasEverOpened ? commentInputFooter : undefined,
+            footer: commentInputFooter,
             onDidPresent: () => {
                 isPresentedRef.current = true;
                 setHasEverOpened(true);
-                backHandler.onDidPresent();
             },
             onDidDismiss: () => {
                 isPresentedRef.current = false;
-                backHandler.onDidDismiss();
                 onDismiss?.();
             },
         };
@@ -522,7 +518,7 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
                 {/* Comments List */}
                 <FlatList
                     ref={flatListRef}
-                    nestedScrollEnabled
+                    style={{ flex: 1 }}
                     data={vm.comments}
                     extraData={vm.expandedCommentIds}
                     keyExtractor={(item) => item.id}
@@ -545,9 +541,15 @@ export const CommentsSheet = memo(forwardRef<TrueSheet, CommentsSheetProps>(
 
         return (
             <>
-                <TrueSheet {...sharedProps}>
-                    {hasEverOpened ? sheetContent : <View style={{ minHeight: 80 }} />}
-                </TrueSheet>
+                {useReanimated ? (
+                    <ReanimatedTrueSheet {...sharedProps}>
+                        {sheetContent}
+                    </ReanimatedTrueSheet>
+                ) : (
+                    <TrueSheet {...sharedProps}>
+                        {sheetContent}
+                    </TrueSheet>
+                )}
                 {hasEverOpened && (
                     <EmojiSelectorSheet
                         ref={emojiSheetRef}
@@ -606,7 +608,7 @@ const styles = StyleSheet.create({
         elevation: 1,
     },
     listContent: {
-        paddingBottom: 100,
+        paddingBottom: 16,
         paddingHorizontal: 20,
     },
     commentItem: {
