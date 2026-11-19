@@ -209,8 +209,6 @@
             "buildArchs": [
               "arm64-v8a"
             ],
-            "enableMinifyInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true,
             "usePrecompiledHeaders": true,
             "extraProguardRules": "-keep class androidx.media3.** { *; }\n-keep class expo.modules.video.** { *; }"
           }
