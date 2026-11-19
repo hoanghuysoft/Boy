@@ -255,10 +255,7 @@
           "supportsPictureInPicture": true
         }
       ],
-      "expo-status-bar",
-      "@react-native-vector-icons/ionicons",
-      "@react-native-vector-icons/material-icons",
-      "@react-native-vector-icons/fontawesome",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,

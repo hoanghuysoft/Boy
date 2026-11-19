@@ -17,7 +17,7 @@ on:
         default: ""
 
 env:
-  GRADLE_OPTS: -Xmx4g -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8
+  GRADLE_OPTS: -Xmx512m -Dfile.encoding=UTF-8
 
 jobs:
   build-android:
@@ -35,7 +35,16 @@ jobs:
           haskell: true
           large-packages: true
           docker-images: true
-          swap-storage: true
+          swap-storage: false
+
+      - name: Configure swap space
+        run: |
+          sudo fallocate -l 4G /swapfile-extra
+          sudo chmod 600 /swapfile-extra
+          sudo mkswap /swapfile-extra
+          sudo swapon /swapfile-extra
+          free -h
+          df -h
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,7 +72,13 @@ jobs:
       - name: Configure Gradle JVM heap
         run: |
           mkdir -p ~/.gradle
-          printf 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8\norg.gradle.parallel=true\norg.gradle.workers.max=2\norg.gradle.daemon=true\n' > ~/.gradle/gradle.properties
+          cat <<'EOF' > ~/.gradle/gradle.properties
+          org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+          org.gradle.parallel=false
+          org.gradle.workers.max=2
+          org.gradle.daemon=false
+          kotlin.daemon.jvmargs=-Xmx1536m
+          EOF
 
       - name: Install Bun dependencies
         run: bun install
@@ -94,12 +109,8 @@ jobs:
       - name: Build Android APK
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          CMAKE_BUILD_PARALLEL_LEVEL: "2"
         run: |
-          export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError"
-          mkdir -p android
-          echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
-          mkdir -p Boy/android
-          echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m" >> Boy/android/gradle.properties
           bunx eas build --local --profile ${{ inputs.profile }} --platform android --non-interactive
 
       - name: Upload APK artifact
