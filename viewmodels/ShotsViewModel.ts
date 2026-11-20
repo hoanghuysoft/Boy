@@ -1,3 +1,7 @@
+import {
+    buildCachedVideoSource,
+    registerCachePlayerPool,
+} from "@/services/videoCache";
 import { useScrollStore } from "@/stores/scroll";
 import { VideoFeedType, VideoItem } from "@/types/video";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
@@ -17,40 +21,39 @@ const VIEWABILITY_CONFIG = {
     itemVisiblePercentThreshold: 50,
 };
 
+// Configured per expo-video BufferOptions docs so active & preloaded players
+// buffer enough data into the persistent native disk cache without premature 4MB cutoff.
 const BUFFER_OPTIONS: BufferOptions = {
-    preferredForwardBufferDuration: 6,
-    minBufferForPlayback: 0.5,
-    maxBufferBytes: 4 * 1024 * 1024, // 4MB buffer limit per player on Android (12MB total across all 3 players)
-    prioritizeTimeOverSizeThreshold: false,
+    preferredForwardBufferDuration: Platform.OS === "ios" ? 0 : 15,
+    minBufferForPlayback: 1,
+    maxBufferBytes: 0,
+    prioritizeTimeOverSizeThreshold: true,
 };
 
 function createThreeVideoPlayers(
-    sources?: [string, string, string],
+    sources?: [string | null, string | null, string | null],
+    activeSlot: number = 0,
 ): [VideoPlayer, VideoPlayer, VideoPlayer] {
     const eventInterval = Platform.select({
         ios: 0.2,
         android: 0.25,
         default: 0.2,
     });
-    const p1 = createVideoPlayer(sources?.[0] ? { uri: sources[0], useCaching: true } : '');
-    p1.loop = true;
-    p1.muted = false;
-    p1.timeUpdateEventInterval = eventInterval;
-    p1.bufferOptions = BUFFER_OPTIONS;
 
-    const p2 = createVideoPlayer(sources?.[1] ? { uri: sources[1], useCaching: true } : '');
-    p2.loop = true;
-    p2.muted = false;
-    p2.timeUpdateEventInterval = eventInterval;
-    p2.bufferOptions = BUFFER_OPTIONS;
+    const createSlotPlayer = (uri: string | null | undefined, slot: number) => {
+        const player = createVideoPlayer(buildCachedVideoSource(uri));
+        player.loop = true;
+        player.muted = slot !== activeSlot;
+        player.timeUpdateEventInterval = eventInterval;
+        player.bufferOptions = BUFFER_OPTIONS;
+        return player;
+    };
 
-    const p3 = createVideoPlayer(sources?.[2] ? { uri: sources[2], useCaching: true } : '');
-    p3.loop = true;
-    p3.muted = false;
-    p3.timeUpdateEventInterval = eventInterval;
-    p3.bufferOptions = BUFFER_OPTIONS;
-
-    return [p1, p2, p3];
+    return [
+        createSlotPlayer(sources?.[0], 0),
+        createSlotPlayer(sources?.[1], 1),
+        createSlotPlayer(sources?.[2], 2),
+    ];
 }
 
 /**
@@ -96,115 +99,176 @@ export const useShotsViewModel = (
 
     // ─── 3-Player Pool State ─────────────────────────────────────
     const [players, setPlayers] = useState<[VideoPlayer, VideoPlayer, VideoPlayer] | null>(null);
-    const [currentSources, setCurrentSources] = useState<[string | null, string | null, string | null]>([null, null, null]);
-    const currentSourcesRef = useRef(currentSources);
-    currentSourcesRef.current = currentSources;
+    const playersRef = useRef<[VideoPlayer, VideoPlayer, VideoPlayer] | null>(null);
+    const [, setCurrentSources] = useState<[string | null, string | null, string | null]>([null, null, null]);
+    const currentSourcesRef = useRef<[string | null, string | null, string | null]>([null, null, null]);
 
     const [activeIndex, setActiveIndex] = useState(0);
+    const activeIndexRef = useRef(0);
+    activeIndexRef.current = activeIndex;
+
     const [isPaused, setIsPaused] = useState(false);
+    const isPausedRef = useRef(false);
+    isPausedRef.current = isPaused;
+
+    const isFocusedRef = useRef(isFocused);
+    isFocusedRef.current = isFocused;
+
+    const videosRef = useRef<VideoItem[]>(videos);
+    videosRef.current = videos;
+
     const [isBuffering, setIsBuffering] = useState(false);
 
     const [, setReadyIndices] = useState<Set<number>>(new Set());
     const readyIndicesRef = useRef<Set<number>>(new Set());
 
+    const releasePlayerPool = useCallback(() => {
+        const currentPool = playersRef.current;
+        if (!currentPool) return;
+        playersRef.current = null;
+        currentSourcesRef.current = [null, null, null];
+        setCurrentSources([null, null, null]);
+        setPlayers(null);
+        currentPool.forEach(p => {
+            try {
+                p.release();
+            } catch { }
+        });
+    }, []);
+
     // ─── Update 3-Player Pool State ─────────────────────────────
-    const updateVideoState = useCallback(async (index: number) => {
-        if (!videos.length) return;
+    const updateVideoState = useCallback((index: number) => {
+        const currentVideos = videosRef.current;
+        if (!currentVideos.length) return;
 
-        const prevUri = videos[index - 1]?.media_url ?? null;
-        const currUri = videos[index]?.media_url ?? null;
-        const nextUri = videos[index + 1]?.media_url ?? null;
+        // Avoid allocating a 3-player pool for an unfocused tab until it becomes focused
+        if (!playersRef.current && !isFocusedRef.current) {
+            return;
+        }
 
-        const prevPlayerSource = currentSourcesRef.current[(index + 2) % 3];
-        const currPlayerSource = currentSourcesRef.current[index % 3];
-        const nextPlayerSource = currentSourcesRef.current[(index + 1) % 3];
+        const prevUri = currentVideos[index - 1]?.media_url ?? null;
+        const currUri = currentVideos[index]?.media_url ?? null;
+        const nextUri = currentVideos[index + 1]?.media_url ?? null;
 
-        const shouldPlay = isFocused && !isPaused && AppState.currentState === 'active';
+        const prevSlot = (index + 2) % 3;
+        const currSlot = index % 3;
+        const nextSlot = (index + 1) % 3;
 
-        if (!players) {
-            const args: [string, string, string] = ['', '', ''];
-            if (prevUri) args[(index + 2) % 3] = prevUri;
-            if (currUri) args[index % 3] = currUri;
-            if (nextUri) args[(index + 1) % 3] = nextUri;
+        const prevPlayerSource = currentSourcesRef.current[prevSlot];
+        const currPlayerSource = currentSourcesRef.current[currSlot];
+        const nextPlayerSource = currentSourcesRef.current[nextSlot];
 
-            const newPlayers = createThreeVideoPlayers(args);
+        const shouldPlay = isFocusedRef.current && !isPausedRef.current && AppState.currentState === 'active';
+
+        // Synchronously record target sources before async operations to prevent duplicate replaceAsync calls
+        const updatedSources: [string | null, string | null, string | null] = [...currentSourcesRef.current];
+        if (prevUri) updatedSources[prevSlot] = prevUri;
+        if (currUri) updatedSources[currSlot] = currUri;
+        if (nextUri) updatedSources[nextSlot] = nextUri;
+        currentSourcesRef.current = updatedSources;
+        setCurrentSources(updatedSources);
+
+        if (!playersRef.current) {
+            const args: [string | null, string | null, string | null] = [null, null, null];
+            if (prevUri) args[prevSlot] = prevUri;
+            if (currUri) args[currSlot] = currUri;
+            if (nextUri) args[nextSlot] = nextUri;
+
+            const newPlayers = createThreeVideoPlayers(args, currSlot);
+            playersRef.current = newPlayers;
             setPlayers(newPlayers);
 
             if (currUri) {
-                const currPlayer = newPlayers[index % 3];
+                const currPlayer = newPlayers[currSlot];
                 if (shouldPlay) {
                     try {
+                        currPlayer.muted = false;
                         currPlayer.play();
                     } catch { }
                 }
             }
         } else {
-            const [player1, player2, player3] = players;
-            const prevPlayer = [player1, player2, player3][(index + 2) % 3];
-            const currPlayer = [player1, player2, player3][index % 3];
-            const nextPlayer = [player1, player2, player3][(index + 1) % 3];
+            const pool = playersRef.current;
+            const prevPlayer = pool[prevSlot];
+            const currPlayer = pool[currSlot];
+            const nextPlayer = pool[nextSlot];
 
-            if (prevUri && prevUri !== prevPlayerSource) {
-                try {
-                    prevPlayer.replaceAsync({ uri: prevUri, useCaching: true }).catch(() => { });
-                } catch { }
-            }
             try {
                 prevPlayer.muted = true;
                 prevPlayer.pause();
             } catch { }
+            if (prevUri && prevUri !== prevPlayerSource) {
+                try {
+                    prevPlayer.replaceAsync(buildCachedVideoSource(prevUri)).catch(() => { });
+                } catch { }
+            }
 
             if (currUri) {
+                try {
+                    currPlayer.muted = !isFocusedRef.current;
+                } catch { }
+
                 if (currUri !== currPlayerSource) {
                     try {
-                        currPlayer.replaceAsync({ uri: currUri, useCaching: true }).then(() => {
-                            currPlayer.currentTime = 0;
-                            if (shouldPlay) {
-                                try {
+                        currPlayer.replaceAsync(buildCachedVideoSource(currUri)).then(() => {
+                            if (activeIndexRef.current !== index) return;
+                            try {
+                                currPlayer.currentTime = 0;
+                                if (isFocusedRef.current && !isPausedRef.current && AppState.currentState === 'active') {
+                                    currPlayer.muted = false;
                                     currPlayer.play();
-                                } catch { }
-                            }
+                                }
+                            } catch { }
                         }).catch(() => { });
                     } catch { }
-                } else if (!shouldPlay) {
+                } else {
                     try {
-                        currPlayer.pause();
+                        currPlayer.currentTime = 0;
+                        if (shouldPlay) {
+                            currPlayer.play();
+                        } else {
+                            currPlayer.pause();
+                        }
                     } catch { }
                 }
-                try {
-                    currPlayer.muted = !isFocused;
-                } catch { }
             }
 
-            if (nextUri && nextUri !== nextPlayerSource) {
-                try {
-                    nextPlayer.replaceAsync({ uri: nextUri, useCaching: true }).catch(() => { });
-                } catch { }
-            }
             try {
                 nextPlayer.muted = true;
                 nextPlayer.pause();
             } catch { }
+            if (nextUri && nextUri !== nextPlayerSource) {
+                try {
+                    nextPlayer.replaceAsync(buildCachedVideoSource(nextUri)).catch(() => { });
+                } catch { }
+            }
         }
+    }, []);
 
-        const updatedSources: [string | null, string | null, string | null] = [...currentSourcesRef.current];
-        if (prevUri) updatedSources[(index + 2) % 3] = prevUri;
-        if (currUri) updatedSources[index % 3] = currUri;
-        if (nextUri) updatedSources[(index + 1) % 3] = nextUri;
-        setCurrentSources(updatedSources);
-    }, [videos, players, isPaused, isFocused]);
-
-    // Update players when videos first become available OR when videos array changes (e.g., after refresh)
+    // Update players when videos first load, when new pages append adjacent to activeIndex, or when tab becomes focused
     useEffect(() => {
-        if (videos.length > 0) {
-            updateVideoState(activeIndex);
+        if (videos.length > 0 && isFocused) {
+            const index = activeIndexRef.current;
+            const currUri = videos[index]?.media_url ?? null;
+            const nextUri = videos[index + 1]?.media_url ?? null;
+            const currSlot = index % 3;
+            const nextSlot = (index + 1) % 3;
+
+            const needsInit = !playersRef.current;
+            const needsCurrUpdate = currUri !== null && currentSourcesRef.current[currSlot] !== currUri;
+            const needsNextUpdate = nextUri !== null && currentSourcesRef.current[nextSlot] !== nextUri;
+
+            if (needsInit || needsCurrUpdate || needsNextUpdate) {
+                updateVideoState(index);
+            }
         }
-    }, [videos, activeIndex, updateVideoState]);
+    }, [videos, isFocused, updateVideoState]);
 
-    // Focus & AppState listener to pause/resume active player
+    // Focus & pause state listener to pause/resume active player
     useEffect(() => {
-        if (!players) return;
-        const currPlayer = players[activeIndex % 3];
+        const pool = playersRef.current;
+        if (!pool) return;
+        const currPlayer = pool[activeIndex % 3];
         if (!currPlayer) return;
 
         if (isFocused && !isPaused && AppState.currentState === 'active') {
@@ -223,11 +287,12 @@ export const useShotsViewModel = (
     // AppState listener
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (state) => {
-            if (!players) return;
-            const currPlayer = players[activeIndex % 3];
+            const pool = playersRef.current;
+            if (!pool) return;
+            const currPlayer = pool[activeIndexRef.current % 3];
             if (!currPlayer) return;
 
-            if (isFocused && state === 'active' && !isPaused) {
+            if (isFocusedRef.current && state === 'active' && !isPausedRef.current) {
                 try {
                     currPlayer.muted = false;
                     currPlayer.play();
@@ -240,20 +305,26 @@ export const useShotsViewModel = (
             }
         });
         return () => subscription.remove();
-    }, [players, activeIndex, isPaused, isFocused]);
+    }, []);
 
-    // Release 3 players on unmount
+    // Register with videoCache so Settings can clear or resize cache even after visiting Shots
     useEffect(() => {
+        const unregister = registerCachePlayerPool({
+            releasePlayersForCacheOp: () => {
+                releasePlayerPool();
+            },
+            restorePlayersAfterCacheOp: () => {
+                if (isFocusedRef.current && videosRef.current.length > 0) {
+                    updateVideoState(activeIndexRef.current);
+                }
+            },
+        });
+
         return () => {
-            if (players) {
-                players.forEach(p => {
-                    try {
-                        p.release();
-                    } catch { }
-                });
-            }
+            unregister();
+            releasePlayerPool();
         };
-    }, [players]);
+    }, [releasePlayerPool, updateVideoState]);
 
     // ─── Like, Bookmark, Repost State (optimistic, per video) ────────────
     const [prevVideos, setPrevVideos] = useState<VideoItem[]>(videos);
@@ -453,6 +524,8 @@ export const useShotsViewModel = (
     const onViewableItemsChanged = useCallback(({ viewableItems }: any) => {
         if (viewableItems?.length > 0) {
             const newIndex = viewableItems[0].index ?? 0;
+            activeIndexRef.current = newIndex;
+            isPausedRef.current = false;
             setActiveIndex(newIndex);
             setIsPaused(false);
             setIsBuffering(!readyIndicesRef.current.has(newIndex));

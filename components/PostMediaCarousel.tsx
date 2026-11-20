@@ -4,14 +4,17 @@ import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
 import SoundIcon from "@/assets/images/svg/sound.svg";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { useThrottledValue } from "@/hooks/useThrottledValue";
+import { buildCachedVideoSource } from "@/services/videoCache";
 import { useFeedVideoStore } from "@/stores/feedVideo";
 import { type GallerySourceRect, useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, chosenMediaPath } from "@/utils/imageurl";
 import { BlueskyVideoView, updateActiveVideoViewAsync } from "@bsky.app/video";
+import { useEventListener } from "expo";
 import { Image as ExpoImage } from "expo-image";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import { type BufferOptions, useVideoPlayer, VideoView } from "expo-video";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
@@ -95,12 +98,18 @@ const TimeIndicator = React.memo(({ time, style }: TimeIndicatorProps) => {
 TimeIndicator.displayName = "TimeIndicator";
 
 // ─── VideoPresentationControls ────────────────────────────────────────────────
+export interface FeedVideoControllerHandle {
+    togglePlayback: () => void;
+    toggleMuted: () => void;
+    enterFullscreen: (keepDisplayOn?: boolean) => void;
+}
+
 export interface VideoPresentationControlsHandle {
     setTimeRemaining: (time: number) => void;
 }
 
 interface VideoPresentationControlsProps {
-    videoRef: React.RefObject<BlueskyVideoView | null>;
+    videoRef: React.RefObject<FeedVideoControllerHandle | null>;
     isPlaying: boolean;
     isMuted: boolean;
 }
@@ -200,6 +209,154 @@ const VideoPresentationControls = React.memo(React.forwardRef<VideoPresentationC
 }));
 VideoPresentationControls.displayName = "VideoPresentationControls";
 
+// ─── ActiveCachedFeedVideo (expo-video with persistent disk caching) ─────────
+const FEED_VIDEO_BUFFER_OPTIONS: BufferOptions = {
+    preferredForwardBufferDuration: Platform.OS === 'ios' ? 0 : 15,
+    minBufferForPlayback: 1,
+    maxBufferBytes: 0,
+    prioritizeTimeOverSizeThreshold: true,
+};
+
+interface ActiveCachedFeedVideoProps {
+    videoUrl: string;
+    isMuted: boolean;
+    onLoadingChange: (isLoading: boolean) => void;
+    onStatusChange: (status: 'playing' | 'paused') => void;
+    onTimeRemainingChange: (timeRemaining: number) => void;
+    onFirstFrame: () => void;
+    onError: (message: string) => void;
+}
+
+const ActiveCachedFeedVideo = React.memo(
+    React.forwardRef<FeedVideoControllerHandle, ActiveCachedFeedVideoProps>(
+        (
+            {
+                videoUrl,
+                isMuted,
+                onLoadingChange,
+                onStatusChange,
+                onTimeRemainingChange,
+                onFirstFrame,
+                onError,
+            },
+            ref,
+        ) => {
+            const expoVideoViewRef = useRef<VideoView>(null);
+            const enteredFullscreenMutedRef = useRef(isMuted);
+
+            const videoSource = useMemo(
+                () => buildCachedVideoSource(videoUrl),
+                [videoUrl],
+            );
+
+            const player = useVideoPlayer(videoSource, (p) => {
+                p.loop = true;
+                p.muted = isMuted;
+                p.timeUpdateEventInterval = 0.5;
+                p.bufferOptions = FEED_VIDEO_BUFFER_OPTIONS;
+                p.play();
+            });
+
+            useEffect(() => {
+                try {
+                    player.muted = isMuted;
+                } catch { }
+            }, [player, isMuted]);
+
+            useEventListener(player, 'statusChange', ({ status, error }) => {
+                if (status === 'loading') {
+                    onLoadingChange(true);
+                } else if (status === 'readyToPlay') {
+                    onLoadingChange(false);
+                    const dur = player.duration ?? 0;
+                    const curr = player.currentTime ?? 0;
+                    if (dur > 0) {
+                        onTimeRemainingChange(Math.max(0, Math.round(dur - curr)));
+                    }
+                } else if (status === 'error') {
+                    onLoadingChange(false);
+                    if (error?.message) {
+                        onError(error.message);
+                    }
+                }
+            });
+
+            useEventListener(player, 'playingChange', ({ isPlaying }) => {
+                onStatusChange(isPlaying ? 'playing' : 'paused');
+                if (isPlaying) {
+                    onLoadingChange(false);
+                }
+            });
+
+            useEventListener(player, 'mutedChange', ({ muted }) => {
+                useFeedVideoStore.getState().setMuted(muted);
+            });
+
+            useEventListener(player, 'timeUpdate', ({ currentTime }) => {
+                const dur = player.duration ?? 0;
+                if (dur > 0) {
+                    onTimeRemainingChange(Math.max(0, Math.round(dur - currentTime)));
+                }
+            });
+
+            React.useImperativeHandle(
+                ref,
+                () => ({
+                    togglePlayback: () => {
+                        try {
+                            if (player.playing) {
+                                player.pause();
+                            } else {
+                                player.play();
+                            }
+                        } catch { }
+                    },
+                    toggleMuted: () => {
+                        try {
+                            const nextMuted = !player.muted;
+                            player.muted = nextMuted;
+                            useFeedVideoStore.getState().setMuted(nextMuted);
+                        } catch { }
+                    },
+                    enterFullscreen: () => {
+                        try {
+                            enteredFullscreenMutedRef.current = player.muted;
+                            player.muted = false;
+                            useFeedVideoStore.getState().setMuted(false);
+                            if (!player.playing) {
+                                player.play();
+                            }
+                            expoVideoViewRef.current?.enterFullscreen();
+                        } catch { }
+                    },
+                }),
+                [player],
+            );
+
+            return (
+                <VideoView
+                    ref={expoVideoViewRef}
+                    player={player}
+                    style={{ width: '100%', height: '100%', borderRadius: MEDIA_BORDER_RADIUS }}
+                    contentFit="cover"
+                    nativeControls={false}
+                    surfaceType={Platform.OS === 'android' ? 'textureView' : 'surfaceView'}
+                    onFirstFrameRender={onFirstFrame}
+                    onFullscreenExit={() => {
+                        try {
+                            if (enteredFullscreenMutedRef.current) {
+                                player.muted = true;
+                                useFeedVideoStore.getState().setMuted(true);
+                            }
+                        } catch { }
+                    }}
+                />
+            );
+        },
+    ),
+);
+ActiveCachedFeedVideo.displayName = 'ActiveCachedFeedVideo';
+
 // ─── VideoCarouselItem ────────────────────────────────────────────────────────
 interface VideoCarouselItemProps {
     item: Media;
@@ -224,19 +381,20 @@ const VideoCarouselItem = React.memo(({
     screenWidth,
     isItemActive = true,
 }: VideoCarouselItemProps) => {
-    const videoRef = useRef<BlueskyVideoView>(null);
+    const activePlayerRef = useRef<FeedVideoControllerHandle | null>(null);
     const controlsRef = useRef<VideoPresentationControlsHandle>(null);
     const isMuted = useFeedVideoStore(s => s.isMuted);
     const disableAutoplay = useSettingsStore(s => s.disableAutoplay);
 
-    const isStoreActive = useFeedVideoStore(s => s.activePostId === postId && (s.activeMediaId === item.id || !s.activeMediaId));
-
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [isActive, setIsActive] = useState(false);
+    const [isViewportActive, setIsViewportActive] = useState(false);
+    const [isManualActive, setIsManualActive] = useState(false);
+    const [hasFirstFrame, setHasFirstFrame] = useState(false);
     const [status, setStatus] = useState<'playing' | 'paused' | 'pending'>('pending');
 
-    const showSpinner = useThrottledValue(isActive && isLoading, 100);
+    const isActive = isItemActive && ((isViewportActive && !disableAutoplay) || isManualActive);
+    const showSpinner = useThrottledValue(isActive && (isLoading || !hasFirstFrame), 100);
 
     const videoUrl = chosenMediaPath(item);
     const fallbackUrls = useMemo(() => buildFallbackUrls(item, placeholderImageVideo), [item, placeholderImageVideo]);
@@ -253,57 +411,98 @@ const VideoCarouselItem = React.memo(({
         setPrev(p => (p < fallbackUrls.length - 1 ? p + 1 : p));
     }, [fallbackUrls.length]);
 
-    if (!isActive && status !== 'pending') {
-        setStatus('pending');
+    const controllerBridgeRef = useRef<FeedVideoControllerHandle>({
+        togglePlayback: () => {
+            if (activePlayerRef.current) {
+                activePlayerRef.current.togglePlayback();
+            } else {
+                setIsLoading(true);
+                setHasFirstFrame(false);
+                setIsManualActive(true);
+                if (videoUrl) {
+                    useFeedVideoStore.getState().setActiveVideo(postId, item.id, videoUrl);
+                }
+            }
+        },
+        toggleMuted: () => {
+            if (activePlayerRef.current) {
+                activePlayerRef.current.toggleMuted();
+            } else {
+                useFeedVideoStore.getState().toggleMute();
+            }
+        },
+        enterFullscreen: () => {
+            activePlayerRef.current?.enterFullscreen(true);
+        },
+    });
+
+    if (!isActive && (status !== 'pending' || hasFirstFrame || isPlaying)) {
+        if (status !== 'pending') setStatus('pending');
+        if (hasFirstFrame) setHasFirstFrame(false);
+        if (isPlaying) setIsPlaying(false);
     }
 
     const showOverlay =
         !isActive ||
         isLoading ||
-        (status === 'paused' && !isActive) ||
+        !hasFirstFrame ||
         status === 'pending';
 
     return (
         <View style={{ width: screenWidth, height: mediaHeight, borderRadius: MEDIA_BORDER_RADIUS, overflow: 'hidden' }}>
             <View style={{ width: '100%', height: '100%', position: 'relative' }}>
                 {videoUrl ? (
-                    <BlueskyVideoView
-                        ref={videoRef}
-                        url={videoUrl}
-                        autoplay={!disableAutoplay && isItemActive}
-                        beginMuted={isMuted}
-                        style={{ width: '100%', height: '100%', borderRadius: MEDIA_BORDER_RADIUS }}
-                        onActiveChange={e => {
-                            const active = e.nativeEvent.isActive;
-                            setIsActive(active);
-                            if (active) {
-                                useFeedVideoStore.getState().setActiveVideo(postId, item.id, videoUrl);
-                            } else if (useFeedVideoStore.getState().activeMediaId === item.id) {
-                                useFeedVideoStore.getState().clearActiveVideo();
-                            }
-                        }}
-                        onLoadingChange={e => {
-                            setIsLoading(e.nativeEvent.isLoading);
-                        }}
-                        onMutedChange={e => {
-                            useFeedVideoStore.getState().setMuted(e.nativeEvent.isMuted);
-                        }}
-                        onStatusChange={e => {
-                            setStatus(e.nativeEvent.status);
-                            setIsPlaying(e.nativeEvent.status === 'playing');
-                        }}
-                        onTimeRemainingChange={e => {
-                            controlsRef.current?.setTimeRemaining(e.nativeEvent.timeRemaining);
-                        }}
-                        onError={e => {
-                            console.warn('[VideoCarousel] Error:', e.nativeEvent.error);
-                        }}
-                        accessibilityLabel="Video"
-                        accessibilityHint=""
-                    />
+                    <>
+                        {/* Lightweight native viewport visibility sensor (autoplay=false prevents uncached Bluesky ExoPlayer/AVPlayer from spawning) */}
+                        <BlueskyVideoView
+                            url={videoUrl}
+                            autoplay={false}
+                            beginMuted={isMuted}
+                            style={StyleSheet.absoluteFill}
+                            onActiveChange={e => {
+                                const active = e.nativeEvent.isActive;
+                                setIsViewportActive(active);
+                                if (!active) {
+                                    setIsManualActive(false);
+                                }
+                                if (active && !disableAutoplay && isItemActive) {
+                                    setIsLoading(true);
+                                    useFeedVideoStore.getState().setActiveVideo(postId, item.id, videoUrl);
+                                } else if (!active && useFeedVideoStore.getState().activeMediaId === item.id) {
+                                    useFeedVideoStore.getState().clearActiveVideo();
+                                }
+                            }}
+                            accessibilityLabel="Video"
+                            accessibilityHint=""
+                        />
+
+                        {/* Active cached expo-video player */}
+                        {isActive && (
+                            <ActiveCachedFeedVideo
+                                ref={activePlayerRef}
+                                videoUrl={videoUrl}
+                                isMuted={isMuted}
+                                onLoadingChange={setIsLoading}
+                                onStatusChange={nextStatus => {
+                                    setStatus(nextStatus);
+                                    setIsPlaying(nextStatus === 'playing');
+                                }}
+                                onTimeRemainingChange={time => {
+                                    controlsRef.current?.setTimeRemaining(time);
+                                }}
+                                onFirstFrame={() => {
+                                    setHasFirstFrame(true);
+                                    setIsLoading(false);
+                                }}
+                                onError={err => {
+                                    console.warn('[VideoCarousel] Error:', err);
+                                }}
+                            />
+                        )}
+                    </>
                 ) : null}
 
-                {/* Thumbnail overlay: visible when video is inactive, loading, or pending */}
+                {/* Thumbnail overlay: visible when video is inactive, loading, or pending first frame */}
                 <View
                     style={[
                         StyleSheet.absoluteFill,
@@ -333,7 +532,7 @@ const VideoCarouselItem = React.memo(({
 
                     {showOverlay && (
                         <Pressable
-                            onPress={() => videoRef.current?.togglePlayback()}
+                            onPress={() => controllerBridgeRef.current.togglePlayback()}
                             style={[
                                 StyleSheet.absoluteFill,
                                 {
@@ -359,11 +558,11 @@ const VideoCarouselItem = React.memo(({
                     )}
                 </View>
 
-                {/* Presentation Controls: active & not loading */}
-                {isActive && !isLoading && (
+                {/* Presentation Controls: active & first frame ready */}
+                {isActive && hasFirstFrame && !isLoading && (
                     <VideoPresentationControls
                         ref={controlsRef}
-                        videoRef={videoRef}
+                        videoRef={controllerBridgeRef}
                         isPlaying={isPlaying}
                         isMuted={isMuted}
                     />

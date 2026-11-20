@@ -3,7 +3,7 @@ import { cn } from 'heroui-native/utils';
 import { useThemeColor } from 'heroui-native/hooks';
 import { Spinner } from 'heroui-native/spinner';
 import { Toast, type ToastComponentProps } from 'heroui-native/toast';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import { LinearTransition } from 'react-native-reanimated';
 import { withUniwind } from 'uniwind';
@@ -12,21 +12,31 @@ import { useSharedState } from './use-shared-state';
 const StyledIonicons = withUniwind(Ionicons);
 
 const LOADING_STATE_KEY = 'loading-toast-state';
+export type LoadingToastStatus = 'idle' | 'loading' | 'success' | 'error';
 
 /**
  * Hook to access and update shared loading state
  * Can be used in both parent component and toast component
  *
- * When setIsLoading is called, all components using this hook will re-render
- * with the new loading state, even if they're memoized or rendered separately
+ * Uses a tri-state status ('idle' | 'loading' | 'success' | 'error') so that
+ * failed or cancelled operations never flash the green "Post created successfully!" state.
  */
 export const useLoadingState = () => {
-  const { state: isLoading, setState: setIsLoading } = useSharedState<boolean>(
+  const { state: status, setState: setLoadingStatus } = useSharedState<LoadingToastStatus>(
     LOADING_STATE_KEY,
-    false
+    'idle'
   );
 
-  return { isLoading, setIsLoading };
+  const isLoading = status === 'loading';
+
+  const setIsLoading = useCallback(
+    (loading: boolean) => {
+      setLoadingStatus(loading ? 'loading' : 'success');
+    },
+    [setLoadingStatus]
+  );
+
+  return { isLoading, status, setIsLoading, setLoadingStatus };
 };
 
 export interface LoadingToastProps extends ToastComponentProps {
@@ -36,22 +46,32 @@ export interface LoadingToastProps extends ToastComponentProps {
 
 /**
  * Loading toast component that shows "Loading..." initially
- * and switches to "Loaded successfully" after loading completes
- * Uses shared loading state from useLoadingState hook
+ * and switches to "Loaded successfully" only when status transitions to 'success'.
  */
 export const LoadingToast = (props: LoadingToastProps) => {
   const { id, hide, loadingText = 'Loading...', successText = 'Loaded successfully' } = props;
-  const { isLoading } = useLoadingState();
+  const { status } = useLoadingState();
+  const isLoading = status === 'loading';
+  const isSuccess = status === 'success';
 
   const themeColorMuted = useThemeColor('muted');
 
   useEffect(() => {
-    if (!isLoading) {
-      setTimeout(() => {
+    if (status === 'success') {
+      const timer = setTimeout(() => {
         hide(id);
       }, 750);
+      return () => clearTimeout(timer);
     }
-  }, [isLoading, hide, id]);
+    if (status === 'error' || status === 'idle') {
+      hide(id);
+    }
+    return undefined;
+  }, [status, hide, id]);
+
+  if (status === 'error' || status === 'idle') {
+    return null;
+  }
 
   return (
     <Toast
@@ -72,9 +92,9 @@ export const LoadingToast = (props: LoadingToastProps) => {
         >
           {isLoading ? (
             <Spinner size="sm" color={themeColorMuted} />
-          ) : (
+          ) : isSuccess ? (
             <StyledIonicons name="checkmark" size={18} className="text-success" />
-          )}
+          ) : null}
         </View>
         <Toast.Title
           className={cn(
@@ -83,7 +103,7 @@ export const LoadingToast = (props: LoadingToastProps) => {
           )}
           maxFontSizeMultiplier={1}
         >
-          {isLoading ? loadingText : successText}
+          {isLoading ? loadingText : isSuccess ? successText : ''}
         </Toast.Title>
       </View>
     </Toast>

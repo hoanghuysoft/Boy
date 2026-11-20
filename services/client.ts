@@ -59,6 +59,7 @@ export interface RequestConfig {
   params?: Record<string, any>;
   headers?: Record<string, string>;
   timeout?: number;
+  signal?: AbortSignal;
 }
 
 export type RequestInterceptor = (config: {
@@ -130,6 +131,18 @@ export function createClient(config: ClientConfig): NitroClient {
     const controller = new AbortController();
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const effectiveTimeout = reqConfig?.timeout ?? config.timeout;
+    const externalSignal = reqConfig?.signal;
+    const onExternalAbort = () => controller.abort();
+
+    if (externalSignal) {
+      if (externalSignal.aborted) {
+        controller.abort();
+      } else {
+        externalSignal.addEventListener("abort", onExternalAbort, { once: true });
+      }
+      fetchInit.signal = controller.signal;
+    }
+
     if (effectiveTimeout) {
       timeoutId = setTimeout(() => controller.abort(), effectiveTimeout);
       fetchInit.signal = controller.signal;
@@ -152,6 +165,9 @@ export function createClient(config: ClientConfig): NitroClient {
       return { data };
     } finally {
       if (timeoutId !== undefined) clearTimeout(timeoutId);
+      if (externalSignal) {
+        externalSignal.removeEventListener("abort", onExternalAbort);
+      }
     }
   }
 

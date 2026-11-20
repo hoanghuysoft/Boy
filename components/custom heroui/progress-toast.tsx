@@ -1,6 +1,6 @@
 import { Toast, type ToastComponentProps } from 'heroui-native/toast';
 import { useCallback, useEffect } from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import Animated, {
     LinearTransition,
     useAnimatedStyle,
@@ -56,12 +56,17 @@ export const useProgressState = (initialProgress = 0) => {
     return { progress, setProgress, resetProgress };
 };
 
+export interface ProgressToastProps extends ToastComponentProps {
+    onCancel?: () => void;
+    cancelText?: string;
+}
+
 /**
  * Progress toast component that shows a progress bar at the bottom
  * Progress value ranges from 0 to 100
  */
-export const ProgressToast = (props: ToastComponentProps) => {
-    const { id, hide } = props;
+export const ProgressToast = (props: ProgressToastProps) => {
+    const { id, hide, onCancel, cancelText = 'Cancel' } = props;
     const { progress } = useProgressState();
 
     /**
@@ -112,11 +117,24 @@ export const ProgressToast = (props: ToastComponentProps) => {
             {...props}
         >
             <View className="flex-col gap-2 px-4 py-3">
-                <Toast.Title className="text-sm mb-2">
-                    {progress < 100
-                        ? `Uploading... ${Math.round(progress)}%`
-                        : 'Upload complete!'}
-                </Toast.Title>
+                <View className="flex-row items-center justify-between mb-1">
+                    <Toast.Title className="text-sm">
+                        {progress < 100
+                            ? `Uploading... ${Math.round(progress)}%`
+                            : 'Upload complete!'}
+                    </Toast.Title>
+                    {progress < 100 && onCancel && (
+                        <TouchableOpacity
+                            onPress={onCancel}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            className="px-2.5 py-1 rounded-full bg-danger/15"
+                        >
+                            <Toast.Title className="text-xs font-semibold text-danger">
+                                {cancelText}
+                            </Toast.Title>
+                        </TouchableOpacity>
+                    )}
+                </View>
                 <View className="h-1 w-full overflow-hidden rounded-full bg-muted/20">
                     <StyleAnimatedView
                         className="h-full bg-accent rounded-full"

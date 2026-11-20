@@ -43,8 +43,16 @@ import { ProfilePickerSheet } from "@/components/gallery/sheets/ProfilePickerShe
 // Context & Services
 import { useThemeContext } from "@/context/ThemeContext";
 import { DeezerTrack, useDeezerSearch } from "@/services/deezer";
-import { FileAsset, useUploadMultipleMedia } from "@/services/mediaUpload";
+import {
+    cleanupOrphanDraftMediaForFile,
+    FileAsset,
+    findReusableUploadedMedia,
+    isUploadAbortError,
+    markMediaAttachedToPost,
+    smartUpload,
+} from "@/services/mediaUpload";
 import { CreatePostInput, sharePost, useCreatePost, useUpdatePost } from "@/services/post";
+import { smartThirdPartyUpload } from "@/services/thirdPartyUpload";
 import { useAdminCheck, useProfile } from "@/services/userprofile";
 import { useScrollStore } from "@/stores/scroll";
 import { createCommonStyles } from "@/styles/common";
@@ -78,10 +86,15 @@ const CreateScreen = () => {
     const trigger = useScrollStore((state) => state.triggers['chat']);
 
     const { toast } = useToast();
-    const { setIsLoading } = useLoadingState();
+    const { setLoadingStatus } = useLoadingState();
     const { setProgress, resetProgress } = useProgressState();
     const LOADING_TOAST_ID = 'loading-toast';
     const PROGRESS_TOAST_ID = 'progress-toast';
+
+    // Track per-thumbnail progress, already-uploaded URIs, and active AbortController
+    const [itemUploadProgress, setItemUploadProgress] = useState<Record<number, number>>({});
+    const [uploadedUris, setUploadedUris] = useState<Record<string, boolean>>({});
+    const uploadAbortControllerRef = useRef<AbortController | null>(null);
     const params = useLocalSearchParams<{
         repost_author?: string;
         repost_content?: string;
@@ -121,7 +134,16 @@ const CreateScreen = () => {
     // Mutations
     const createPostMutation = useCreatePost(profileId);
     const updatePostMutation = useUpdatePost(profileId);
-    const uploadMediaMutation = useUploadMultipleMedia(profileId);
+
+    const parsedEditLinks = React.useMemo<Link[]>(() => {
+        if (!params.edit_links) return [];
+        try {
+            const parsed = JSON.parse(params.edit_links);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }, [params.edit_links]);
 
     // Parse initial music if any
     const initialTrack = React.useMemo(() => {
@@ -183,13 +205,33 @@ const CreateScreen = () => {
     const { data: musicResults, isLoading: isMusicLoading } = useDeezerSearch(musicSearchQuery, 10);
 
     // UI State
-    const [showLinkInput, setShowLinkInput] = useState(!!params.edit_links && JSON.parse(params.edit_links).length > 0);
+    const [showLinkInput, setShowLinkInput] = useState(parsedEditLinks.length > 0);
     const [showLocationInput, setShowLocationInput] = useState(!!params.edit_location);
     const [showActionBar, setShowActionBar] = useState(true);
 
     // Scroll tracking
     const scrollContentHeight = useRef(0);
     const scrollViewHeight = useRef(0);
+
+    const handleCancelUpload = useCallback(() => {
+        if (uploadAbortControllerRef.current) {
+            uploadAbortControllerRef.current.abort();
+            uploadAbortControllerRef.current = null;
+        }
+        setLoadingStatus('error');
+        toast.hide(PROGRESS_TOAST_ID);
+        toast.hide(LOADING_TOAST_ID);
+    }, [setLoadingStatus, toast]);
+
+    // Cleanup any active upload & persistent toasts if screen unmounts
+    useEffect(() => {
+        return () => {
+            if (uploadAbortControllerRef.current) {
+                uploadAbortControllerRef.current.abort();
+                uploadAbortControllerRef.current = null;
+            }
+        };
+    }, []);
 
     // ============================================================================
     // Formik Setup
@@ -201,7 +243,7 @@ const CreateScreen = () => {
             content: params.edit_content || "",
             location: params.edit_location || "",
             selectedMedia: [],
-            links: params.edit_links ? JSON.parse(params.edit_links) : [],
+            links: parsedEditLinks,
             isGhost: params.edit_is_ghost === "true",
             isAdult: params.edit_is_adult === "true",
             selectedTrack: initialTrack,
@@ -220,6 +262,10 @@ const CreateScreen = () => {
                 return;
             }
 
+            const abortController = new AbortController();
+            uploadAbortControllerRef.current = abortController;
+            const { signal } = abortController;
+
             const isEditing = !!params.edit_post_id;
             const hasMedia = values.selectedMedia.length > 0;
             const loadingText = isEditing
@@ -231,13 +277,20 @@ const CreateScreen = () => {
 
             if (hasMedia && !isEditing) {
                 resetProgress();
+                setItemUploadProgress({});
                 toast.show({
                     id: PROGRESS_TOAST_ID,
                     duration: 'persistent',
-                    component: (props) => <ProgressToast {...props} />,
+                    component: (props) => (
+                        <ProgressToast
+                            {...props}
+                            onCancel={handleCancelUpload}
+                            cancelText={t('settings.cancel', 'Cancel')}
+                        />
+                    ),
                 });
             } else {
-                setIsLoading(true);
+                setLoadingStatus('loading');
                 toast.show({
                     id: LOADING_TOAST_ID,
                     duration: 'persistent',
@@ -256,68 +309,74 @@ const CreateScreen = () => {
 
                 // Upload media first if any (only when not editing)
                 if (!params.edit_post_id && values.selectedMedia.length > 0) {
-                    if (values.useThirdPartyUpload) {
-                        const { uploadToThirdParty } = await import("../../services/thirdPartyUpload");
-                        const { createMediaRecord } = await import("../../services/mediaUpload");
+                    const totalFiles = values.selectedMedia.length;
 
-                        mediaIds = [];
-                        for (let index = 0; index < values.selectedMedia.length; index++) {
-                            const media = values.selectedMedia[index];
-                            const files: FileAsset = {
-                                uri: media.uri,
-                                name: media.name,
-                                type: media.type,
-                                fileSize: media.fileSize,
-                                width: media.width,
-                                height: media.height,
-                                blurhash: media.blurhash,
-                            };
-
-                            const uploadResult = await uploadToThirdParty(files, ({ bytesSent, totalBytes }) => {
-                                const fileProgress = (bytesSent / totalBytes) * 100;
-                                const overallProgress = ((index * 100) + fileProgress) / values.selectedMedia.length;
-                                setProgress(overallProgress);
-                            });
-                            const mediaType = media.isVideo ? 'video' : 'photo';
-                            const createdRecord = await createMediaRecord(profileId, uploadResult.url, mediaType, {
-                                thumbnail_url: uploadResult.thumbnailUrl,
-                                width: uploadResult.width,
-                                height: uploadResult.height,
-                                blurhash: uploadResult.blurhash,
-                            });
-                            mediaIds.push(createdRecord.data.id);
+                    for (let index = 0; index < totalFiles; index++) {
+                        if (signal.aborted) {
+                            const abortErr = new Error('Upload cancelled');
+                            abortErr.name = 'AbortError';
+                            throw abortErr;
                         }
-                    } else {
-                        const { smartUpload } = await import("../../services/mediaUpload");
-                        mediaIds = [];
-                        for (let index = 0; index < values.selectedMedia.length; index++) {
-                            const media = values.selectedMedia[index];
-                            const file: FileAsset = {
-                                uri: media.uri,
-                                name: media.name,
-                                type: media.type,
-                                fileSize: media.fileSize,
-                                width: media.width,
-                                height: media.height,
-                            };
 
-                            const result = await smartUpload(profileId, file, {}, ({ bytesSent, totalBytes }) => {
-                                const fileProgress = (bytesSent / totalBytes) * 100;
-                                const overallProgress = ((index * 100) + fileProgress) / values.selectedMedia.length;
-                                setProgress(overallProgress);
-                            });
-                            mediaIds.push(result.data.id);
-                        }
+                        const media = values.selectedMedia[index];
+                        const fileAsset: FileAsset = {
+                            uri: media.uri,
+                            name: media.name,
+                            type: media.type,
+                            fileSize: media.fileSize,
+                            width: media.width,
+                            height: media.height,
+                            blurhash: media.blurhash,
+                        };
+
+                        const reportItemProgress = ({ bytesSent, totalBytes }: { bytesSent: number; totalBytes: number }) => {
+                            if (signal.aborted) return;
+                            const safeFileProgress =
+                                totalBytes > 0
+                                    ? Math.max(0, Math.min(100, (bytesSent / totalBytes) * 100))
+                                    : 0;
+                            const overallProgress = ((index * 100) + safeFileProgress) / totalFiles;
+                            setProgress(overallProgress);
+                            setItemUploadProgress(prev => ({
+                                ...prev,
+                                [index]: Math.round(safeFileProgress),
+                            }));
+                        };
+
+                        const result = values.useThirdPartyUpload
+                            ? await smartThirdPartyUpload(
+                                  profileId,
+                                  fileAsset,
+                                  media.isVideo,
+                                  reportItemProgress,
+                                  signal,
+                              )
+                            : await smartUpload(
+                                  profileId,
+                                  fileAsset,
+                                  { signal },
+                                  reportItemProgress,
+                              );
+
+                        mediaIds.push(result.data.id);
+                        setItemUploadProgress(prev => ({ ...prev, [index]: 100 }));
+                        setUploadedUris(prev => ({ ...prev, [media.uri]: true }));
+                        setProgress(((index + 1) * 100) / totalFiles);
                     }
 
                     // Complete progress bar animation
                     setProgress(100);
-                    // Give it a brief moment to show 100% complete
-                    await new Promise((resolve) => setTimeout(resolve, 300));
+                    await new Promise((resolve) => setTimeout(resolve, 250));
                     toast.hide(PROGRESS_TOAST_ID);
 
+                    if (signal.aborted) {
+                        const abortErr = new Error('Upload cancelled');
+                        abortErr.name = 'AbortError';
+                        throw abortErr;
+                    }
+
                     // Switch to LoadingToast to publish post
-                    setIsLoading(true);
+                    setLoadingStatus('loading');
                     toast.show({
                         id: LOADING_TOAST_ID,
                         duration: 'persistent',
@@ -349,12 +408,17 @@ const CreateScreen = () => {
                     postData.media_ids = mediaIds.length > 0 ? mediaIds : undefined;
                     await createPostMutation.mutateAsync(postData);
 
+                    if (mediaIds.length > 0) {
+                        markMediaAttachedToPost(mediaIds);
+                    }
+
                     if (params.repost_id) {
                         sharePost(params.repost_id).catch(err => console.error("Failed to log share count", err));
                     }
                 }
 
-                setIsLoading(false);
+                uploadAbortControllerRef.current = null;
+                setLoadingStatus('success');
                 // Wait for loading toast success transition/auto-hide before navigating
                 await new Promise((resolve) => setTimeout(resolve, 800));
 
@@ -366,10 +430,25 @@ const CreateScreen = () => {
                     router.replace("/");
                 }
             } catch (error: any) {
-                console.error("Error creating/editing post:", error);
-                setIsLoading(false);
+                uploadAbortControllerRef.current = null;
+                // Set status to 'error' so LoadingToast hides immediately and NEVER shows "Post created successfully!"
+                setLoadingStatus('error');
                 toast.hide(PROGRESS_TOAST_ID);
                 toast.hide(LOADING_TOAST_ID);
+
+                if (isUploadAbortError(error) || signal.aborted) {
+                    // User cancelled the upload — clear in-progress percentages for unfinished items
+                    setItemUploadProgress(prev => {
+                        const next: Record<number, number> = {};
+                        for (const [k, v] of Object.entries(prev)) {
+                            if (v === 100) next[Number(k)] = 100;
+                        }
+                        return next;
+                    });
+                    return;
+                }
+
+                console.error("Error creating/editing post:", error);
                 setDialog({
                     visible: true,
                     title: t("create.dialog.errorTitle"),
@@ -392,6 +471,8 @@ const CreateScreen = () => {
         setShowLocationInput(false);
         setShowActionBar(true);
         setSelectedProfile(null);
+        setItemUploadProgress({});
+        setUploadedUris({});
     }, []);
 
     const handlePickProfile = useCallback((picked: Profile | null) => {
@@ -531,9 +612,44 @@ const CreateScreen = () => {
         }
     }, [values.selectedMedia, setFieldValue, t]);
 
+    // Detect any already-uploaded media in the current draft (e.g. if user re-picks a previously uploaded file)
+    useEffect(() => {
+        if (!profileId || values.selectedMedia.length === 0) return;
+        let cancelled = false;
+        const provider = values.useThirdPartyUpload ? 'thirdparty' : 'welove';
+
+        (async () => {
+            const matches: Record<string, boolean> = {};
+            for (const m of values.selectedMedia) {
+                const existing = await findReusableUploadedMedia(profileId, m, provider);
+                if (existing) {
+                    matches[m.uri] = true;
+                }
+            }
+            if (!cancelled) {
+                setUploadedUris(matches);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [profileId, values.selectedMedia, values.useThirdPartyUpload]);
+
     const removeMedia = useCallback((index: number) => {
+        const removed = values.selectedMedia[index];
+        if (removed && profileId) {
+            // Best-effort cleanup of unattached server media & cloud storage if user removes it from draft
+            void cleanupOrphanDraftMediaForFile(profileId, removed);
+            setUploadedUris(prev => {
+                const next = { ...prev };
+                delete next[removed.uri];
+                return next;
+            });
+        }
+        setItemUploadProgress({});
         setFieldValue('selectedMedia', values.selectedMedia.filter((_: SelectedMedia, i: number) => i !== index));
-    }, [values.selectedMedia, setFieldValue]);
+    }, [values.selectedMedia, profileId, setFieldValue]);
 
     const addLink = useCallback(() => {
         setFieldValue('links', [...values.links, { label: "", url: "" }]);
@@ -573,7 +689,12 @@ const CreateScreen = () => {
             <View style={createStyles.container}>
                 <View style={{ position: 'absolute', top: insets.top + 16, left: 12, zIndex: 1000 }}>
                     <TouchableOpacity
-                        onPress={() => router.back()}
+                        onPress={() => {
+                            if (isSubmitting) {
+                                handleCancelUpload();
+                            }
+                            router.back();
+                        }}
                         style={{
                             backgroundColor: colors.surfaceContainerHigh,
                             borderRadius: 999,
@@ -617,6 +738,7 @@ const CreateScreen = () => {
                     canSubmit={canSubmit}
                     isSubmitting={isSubmitting}
                     onSubmit={onSubmitPress}
+                    onCancel={handleCancelUpload}
                 />
 
                 <KeyboardAwareScrollView
@@ -760,6 +882,9 @@ const CreateScreen = () => {
                     {!params.repost_id && (
                         <MediaSection
                             selectedMedia={values.selectedMedia}
+                            uploadProgress={itemUploadProgress}
+                            uploadedUris={uploadedUris}
+                            isUploading={isSubmitting}
                             colors={colors}
                             common={common}
                             onRemoveMedia={removeMedia}

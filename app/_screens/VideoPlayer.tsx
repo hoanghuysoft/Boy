@@ -10,13 +10,14 @@ import { useStatusBar } from "@/context/StatusBarContext";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useCachedVideoUri } from "@/hooks/useCachedVideoUri";
 import { useVideoResume, VIDEO_RESUME_MIN_DURATION } from "@/hooks/useVideoResume";
+import { buildCachedVideoSource } from "@/services/videoCache";
 import { createCommonStyles } from "@/styles/common";
 import { useEventListener } from "expo";
 import * as IntentLauncher from "expo-intent-launcher";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useVideoPlayer, VideoView } from "expo-video";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   BackHandler,
@@ -77,8 +78,13 @@ const VideoPlayer = () => {
   const [bottomBarTranslateY] = useState(() => new Animated.Value(50));
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ─── expo-video player ───────────────────────────────────────────────────────
-  const player = useVideoPlayer(resolvedVideoUrl || videoUrl || "", (p) => {
+  // ─── expo-video player (with persistent native caching enabled) ──────────────
+  const videoSource = useMemo(
+    () => buildCachedVideoSource(resolvedVideoUrl || videoUrl || ""),
+    [resolvedVideoUrl, videoUrl],
+  );
+
+  const player = useVideoPlayer(videoSource, (p) => {
     p.play();
     p.loop = false;
     p.muted = false;

@@ -365,6 +365,7 @@ export const PostDetailScreen = ({ postId }: PostDetailScreenProps) => {
                         onEndReachedThreshold={0.5}
                         keyboardShouldPersistTaps="handled"
                         keyboardDismissMode="on-drag"
+                        automaticallyAdjustKeyboardInsets={false}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={[
                             styles.listContent,
@@ -385,7 +386,6 @@ export const PostDetailScreen = ({ postId }: PostDetailScreenProps) => {
                         insets={vm.insets}
                         inputRef={vm.inputRef}
                         emojiSheetRef={vm.emojiSheetRef}
-                        onFocus={vm.handleInputFocus}
                     />
                 </View>
             )}

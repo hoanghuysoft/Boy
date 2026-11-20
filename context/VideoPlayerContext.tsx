@@ -1,41 +1,64 @@
 /**
  * VideoPlayerContext
  *
- * Maintains a single VideoPlayer instance for the whole app lifetime.
- * Screens that navigate into video_detail just call replaceAsync() instead of
- * creating a brand-new player, which avoids the resource spike that happens
- * when every screen mount instantiates its own player.
+ * Lazily provides a shared VideoPlayer instance only when requested, and
+ * registers with videoCache so that clearVideoCacheAsync / setVideoCacheSizeAsync
+ * are never blocked by an idle global VideoPlayer instance.
  */
+import { registerCachePlayerPool } from "@/services/videoCache";
 import { createVideoPlayer, VideoPlayer } from "expo-video";
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
-  useState,
 } from "react";
 
 interface VideoPlayerContextValue {
-  player: VideoPlayer;
+  getPlayer: () => VideoPlayer;
   activeOwnerIdRef: React.RefObject<string | null>;
 }
 
 const VideoPlayerContext = createContext<VideoPlayerContextValue | null>(null);
 
 export const VideoPlayerProvider = ({ children }: { children: React.ReactNode }) => {
-  // createVideoPlayer: lifecycle managed manually — we release on unmount (app close).
-  const [player] = useState(() => createVideoPlayer(null));
+  const playerRef = useRef<VideoPlayer | null>(null);
   const activeOwnerIdRef = useRef<string | null>(null);
 
+  const getPlayer = useCallback((): VideoPlayer => {
+    if (!playerRef.current) {
+      playerRef.current = createVideoPlayer(null);
+    }
+    return playerRef.current;
+  }, []);
+
   useEffect(() => {
+    const unregister = registerCachePlayerPool({
+      releasePlayersForCacheOp: () => {
+        if (playerRef.current) {
+          try {
+            playerRef.current.release();
+          } catch { }
+          playerRef.current = null;
+          activeOwnerIdRef.current = null;
+        }
+      },
+    });
+
     return () => {
-      // Release only when the provider (app root) unmounts.
-      player.release();
+      unregister();
+      if (playerRef.current) {
+        try {
+          playerRef.current.release();
+        } catch { }
+        playerRef.current = null;
+      }
     };
-  }, [player]);
+  }, []);
 
   return (
-    <VideoPlayerContext.Provider value={{ player, activeOwnerIdRef }}>
+    <VideoPlayerContext.Provider value={{ getPlayer, activeOwnerIdRef }}>
       {children}
     </VideoPlayerContext.Provider>
   );
@@ -44,7 +67,7 @@ export const VideoPlayerProvider = ({ children }: { children: React.ReactNode })
 export const useGlobalVideoPlayer = (): VideoPlayer => {
   const ctx = useContext(VideoPlayerContext);
   if (!ctx) throw new Error("useGlobalVideoPlayer must be inside VideoPlayerProvider");
-  return ctx.player;
+  return ctx.getPlayer();
 };
 
 export const useGlobalVideoPlayerOwner = (): React.RefObject<string | null> => {

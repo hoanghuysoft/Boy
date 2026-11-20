@@ -681,7 +681,7 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                 // Metrics-only mode with interactive Share button for Cross-posting
                 <View style={[vm.common.row, { justifyContent: 'flex-start', paddingHorizontal: 16, marginBottom: 16, gap: 24 }]}>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
-                        <LikeIcon size={22} color={vm.colors.onSurfaceVariant} />
+                        <LikeIcon size={26} color={vm.colors.onSurfaceVariant} />
                         <FlexText style={[vm.common.label, { color: vm.colors.onSurface, fontWeight: '700' }]}>{post.like_count || 0}</FlexText>
                     </View>
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
@@ -717,9 +717,9 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                         <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleLikePress}>
                             {vm.isLiked ? (
-                                <LikeSolidIcon size={24} color={vm.colors.onSurface} />
+                                <LikeSolidIcon size={26} color={vm.colors.onSurface} />
                             ) : (
-                                <LikeIcon size={24} color={vm.colors.onSurface} />
+                                <LikeIcon size={26} color={vm.colors.onSurface} />
                             )}
                         </Pressable>
                         <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleLikeCountPress}>
@@ -745,9 +745,9 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                         <View style={[vm.common.row, { gap: 6, alignItems: 'center' }]}>
                             <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleLikePress}>
                                 {vm.isLiked ? (
-                                    <LikeSolidIcon size={24} color={vm.colors.onSurface} />
+                                    <LikeSolidIcon size={26} color={vm.colors.onSurface} />
                                 ) : (
-                                    <LikeIcon size={24} color={vm.colors.onSurface} />
+                                    <LikeIcon size={26} color={vm.colors.onSurface} />
                                 )}
                             </Pressable>
                             <Pressable hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })} onPress={vm.handleLikeCountPress}>

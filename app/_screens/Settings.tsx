@@ -15,7 +15,7 @@ import type { AccountSwitcherSheetHandle } from "@/types/sheetHandles";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { LinearGradient } from 'expo-linear-gradient';
-import { Href, router } from "expo-router";
+import { Href, router, useFocusEffect } from "expo-router";
 import { Button } from "heroui-native/button";
 import { ControlField } from "heroui-native/control-field";
 import { Dialog } from "heroui-native/dialog";
@@ -116,12 +116,14 @@ const SettingsScreen = () => {
         'material-you': t('themeSettings.options.material-you.label')
     };
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            refreshCacheInfo();
-        }, 0);
-        return () => clearTimeout(timer);
-    }, [refreshCacheInfo]);
+    useFocusEffect(
+        useCallback(() => {
+            const timer = setTimeout(() => {
+                refreshCacheInfo();
+            }, 0);
+            return () => clearTimeout(timer);
+        }, [refreshCacheInfo])
+    );
 
 
 

@@ -1,7 +1,4 @@
-import GalleryIcon from "@/assets/images/svg/image-add.svg";
-import LinkIcon from "@/assets/images/svg/link.svg";
-import LocationIcon from "@/assets/images/svg/location.svg";
-import MusicLibraryIcon from "@/assets/images/svg/music-rectangle-add.svg";
+import { Image, ImageSource } from "expo-image";
 import React, { memo, useEffect, useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "../../context/ThemeContext";
@@ -12,7 +9,7 @@ import { DeezerTrack } from "../../services/deezer";
 // ============================================================================
 
 interface ActionButtonProps {
-    icon: React.ComponentType<any>;
+    icon: ImageSource;
     isActive: boolean;
     onPress: () => void;
     disabled?: boolean;
@@ -20,7 +17,7 @@ interface ActionButtonProps {
 }
 
 const ActionButton = memo(({
-    icon: Icon,
+    icon,
     isActive,
     onPress,
     disabled = false,
@@ -37,10 +34,13 @@ const ActionButton = memo(({
         disabled={disabled}
         activeOpacity={0.7}
     >
-        <Icon
-            width={24}
-            height={24}
-            color={isActive ? colors.onPrimaryContainer : colors.onSurface}
+        <Image
+            source={icon}
+            style={{
+                width: 24, height: 24,
+                tintColor: isActive ? colors.onPrimaryContainer : colors.onSurface
+            }}
+            contentFit="contain"
         />
     </TouchableOpacity>
 ));
@@ -130,7 +130,7 @@ export const CreateActionBar = memo(({
             >
                 {!hideMediaOption && (
                     <ActionButton
-                        icon={GalleryIcon}
+                        icon={require("@/assets/images/icons/media-add.png")}
                         isActive={selectedMediaCount > 0}
                         onPress={onPickMedia}
                         disabled={selectedMediaCount >= 10}
@@ -138,19 +138,19 @@ export const CreateActionBar = memo(({
                     />
                 )}
                 <ActionButton
-                    icon={LocationIcon}
+                    icon={require("@/assets/images/icons/location.png")}
                     isActive={showLocationInput || hasLocation}
                     onPress={onToggleLocation}
                     colors={colors}
                 />
                 <ActionButton
-                    icon={MusicLibraryIcon}
+                    icon={require("@/assets/images/icons/music.png")}
                     isActive={showMusicSearch || selectedTrack !== null}
                     onPress={onToggleMusic}
                     colors={colors}
                 />
                 <ActionButton
-                    icon={LinkIcon}
+                    icon={require("@/assets/images/icons/link.png")}
                     isActive={linksCount > 0}
                     onPress={onAddLink}
                     colors={colors}

@@ -9,8 +9,10 @@ import { ThemeProvider, useThemeContext } from "@/context/ThemeContext";
 import { VideoPlayerProvider } from "@/context/VideoPlayerContext";
 import '@/i18n';
 import { clientPersister, queryClient } from "@/services/client";
+import { setMaxCacheSize } from "@/services/videoCache";
 import { useAppLockStore } from "@/stores/appLock";
 import { useAutoLanguageSync } from "@/stores/language";
+import { useSettingsStore } from "@/stores/settings";
 import { useRootLayoutViewModel } from "@/viewmodels/RootLayoutViewModel";
 import { GiphySDK } from '@giphy/react-native-sdk';
 import { GlassProvider } from '@rbayuokt/expo-adaptive-glass';
@@ -143,10 +145,18 @@ const RootContent = () => {
   useAutoLanguageSync();
 
   const { appLockEnabled, setLocked, setLastBackgroundTime } = useAppLockStore();
+  const videoCacheSizeLimit = useSettingsStore((s) => s.videoCacheSizeLimit);
 
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
+
+  // Apply persisted video cache size limit before any VideoPlayer instances are created
+  useEffect(() => {
+    if (videoCacheSizeLimit > 0) {
+      void setMaxCacheSize(videoCacheSizeLimit);
+    }
+  }, [videoCacheSizeLimit]);
 
   useEffect(() => {
     if (!appLockEnabled) return;

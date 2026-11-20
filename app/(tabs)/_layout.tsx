@@ -1,4 +1,3 @@
-import Magnifier from "@/assets/images/svg/ai-search.svg";
 import { useSession } from "@/context/SessionContext";
 import { useThemeContext } from "@/context/ThemeContext";
 import { useScrollStore } from "@/stores/scroll";
@@ -213,7 +212,11 @@ function LegacyGlassTabLayout() {
             accessibilityLabel: t("search.header.title", { defaultValue: "Search" }),
             onPress: handleSearchPress,
             renderIcon: ({ tint, size }) => (
-                <Magnifier width={size} height={size} color={tint} />
+                <Image
+                    source={require("@/assets/images/icons/search-ai.png")}
+                    style={{ width: size, height: size, tintColor: tint }}
+                    contentFit="contain"
+                />
             ),
         }),
         [t, handleSearchPress]

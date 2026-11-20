@@ -16,8 +16,6 @@ import { useTranslation } from "react-i18next";
 import {
     Easing,
     Keyboard,
-    LayoutAnimation,
-    Platform,
     StyleSheet,
     TextInput,
     type TextInputInstance,
@@ -25,7 +23,30 @@ import {
     View,
 } from "react-native";
 import { easeGradient } from "react-native-easing-gradient";
+import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
+import Animated, {
+    FadeIn,
+    FadeOut,
+    interpolate,
+    LinearTransition,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+} from "react-native-reanimated";
 import { EdgeInsets } from "react-native-safe-area-context";
+
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
+
+const MORPH_SPRING_CONFIG = {
+    damping: 24,
+    stiffness: 260,
+    mass: 0.8,
+};
+
+const MORPH_LAYOUT_TRANSITION = LinearTransition.springify()
+    .damping(24)
+    .stiffness(260)
+    .mass(0.8);
 
 const Plain2 = ({ size, ...props }: any) => <SendIcon width={size} height={size} {...props} />;
 const PenNewRound = ({ size, ...props }: any) => <EditIcon width={size} height={size} {...props} />;
@@ -54,23 +75,16 @@ export const CommentInputBar = memo(({
 }: CommentInputBarProps) => {
     const { t } = useTranslation();
     const [isFocused, setIsFocused] = useState(false);
-    const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-    // Track keyboard height smoothly for floating positioning
+    // Frame-by-frame UI-thread keyboard animation
+    const { height: keyboardHeight, progress: keyboardProgress } =
+        useReanimatedKeyboardAnimation();
+
     useEffect(() => {
-        const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-        const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-        const showSub = Keyboard.addListener(showEvent, (e) => {
-            setKeyboardHeight(e.endCoordinates?.height ?? 0);
-        });
-        const hideSub = Keyboard.addListener(hideEvent, () => {
-            setKeyboardHeight(0);
+        const hideSub = Keyboard.addListener("keyboardDidHide", () => {
             vm.setShowUrlInput(false);
         });
-
         return () => {
-            showSub.remove();
             hideSub.remove();
         };
     }, [vm.setShowUrlInput]);
@@ -98,7 +112,6 @@ export const CommentInputBar = memo(({
 
     useEffect(() => {
         if (vm.replyingToComment) {
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setIsFocused(true);
             inputRef.current?.focus();
         }
@@ -106,7 +119,6 @@ export const CommentInputBar = memo(({
 
     useEffect(() => {
         if (vm.isEditing) {
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setIsFocused(true);
             inputRef.current?.focus();
         }
@@ -129,16 +141,61 @@ export const CommentInputBar = memo(({
         extraColorStopsPerTransition: 16,
     }), [colors.surface]);
 
-    const isExpanded = isFocused || vm.commentText.length > 0 || !!vm.selectedImageUrl || vm.isEditing || !!vm.replyingToComment || vm.showUrlInput;
+    const isExpanded =
+        isFocused ||
+        vm.commentText.length > 0 ||
+        !!vm.selectedImageUrl ||
+        vm.isEditing ||
+        !!vm.replyingToComment ||
+        vm.showUrlInput;
+
+    const expandProgress = useSharedValue(isExpanded ? 1 : 0);
+
+    useEffect(() => {
+        expandProgress.value = withSpring(isExpanded ? 1 : 0, MORPH_SPRING_CONFIG);
+    }, [isExpanded, expandProgress]);
+
+    const baseBottomOffset = insets.bottom + 12;
+
+    const animatedFloatingStyle = useAnimatedStyle(() => {
+        "worklet";
+        // keyboardHeight.value is negative when keyboard is open
+        const kbOffset = Math.min(0, keyboardHeight.value);
+        const insetCompensation = keyboardProgress.value * Math.max(0, insets.bottom - 4);
+        return {
+            transform: [
+                {
+                    translateY: kbOffset + insetCompensation,
+                },
+            ],
+        };
+    });
+
+    const animatedGradientStyle = useAnimatedStyle(() => {
+        "worklet";
+        const kbHeight = Math.abs(keyboardHeight.value);
+        const morphExtraHeight = interpolate(expandProgress.value, [0, 1], [48, 150]);
+        return {
+            height: insets.bottom + 16 + kbHeight + morphExtraHeight + 24,
+        };
+    });
+
+    const animatedMorphCardStyle = useAnimatedStyle(() => {
+        "worklet";
+        return {
+            borderRadius: interpolate(expandProgress.value, [0, 1], [25, 22]),
+            paddingHorizontal: interpolate(expandProgress.value, [0, 1], [16, 12]),
+            paddingTop: interpolate(expandProgress.value, [0, 1], [1, 12]),
+            paddingBottom: interpolate(expandProgress.value, [0, 1], [1, 12]),
+        };
+    });
 
     const handleFocus = () => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setIsFocused(true);
         onFocus?.();
     };
 
     const handleBlur = () => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setIsFocused(false);
     };
 
@@ -150,43 +207,53 @@ export const CommentInputBar = memo(({
     return (
         <>
             {/* Fade overlay from solid at the bottom to transparent at the top */}
-            <LinearGradient
+            <AnimatedLinearGradient
                 colors={fadeColors as [string, string, ...string[]]}
                 locations={fadeLocations as [number, number, ...number[]]}
-                style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: insets.bottom + 16 + (isFocused ? keyboardHeight : 0) + (isExpanded ? 160 : 48) + 24,
-                    zIndex: 999,
-                }}
+                style={[
+                    {
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 999,
+                    },
+                    animatedGradientStyle,
+                ]}
                 start={{ x: 0, y: 1 }}
                 end={{ x: 0, y: 0 }}
                 pointerEvents="none"
             />
 
             {/* Floating Morphing Comment Input Bar */}
-            <View
+            <Animated.View
                 style={[
                     styles.floatingContainer,
                     {
-                        bottom: insets.bottom + 16 + (isFocused ? keyboardHeight : 0),
+                        bottom: baseBottomOffset,
                     },
+                    animatedFloatingStyle,
                 ]}
             >
-                <View
+                <Animated.View
+                    layout={MORPH_LAYOUT_TRANSITION}
                     style={[
-                        isExpanded ? styles.expandedCard : styles.collapsedPill,
+                        styles.morphContainer,
+                        !isExpanded && styles.collapsedHeight,
                         {
                             backgroundColor: colors.surfaceContainerHigh,
                             borderColor: colors.outlineVariant,
                         },
+                        animatedMorphCardStyle,
                     ]}
                 >
                     {/* Banners & Previews (Rendered when expanded) */}
                     {isExpanded && (
-                        <>
+                        <Animated.View
+                            entering={FadeIn.duration(160)}
+                            exiting={FadeOut.duration(110)}
+                            layout={MORPH_LAYOUT_TRANSITION}
+                        >
                             {/* Edit mode banner */}
                             {vm.isEditing && (
                                 <View
@@ -212,7 +279,6 @@ export const CommentInputBar = memo(({
                                     </FlexText>
                                     <TouchableOpacity
                                         onPress={() => {
-                                            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                                             vm.handleCancelEdit();
                                         }}
                                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -252,7 +318,6 @@ export const CommentInputBar = memo(({
                                     </FlexText>
                                     <TouchableOpacity
                                         onPress={() => {
-                                            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                                             vm.handleCancelReply();
                                         }}
                                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -321,11 +386,14 @@ export const CommentInputBar = memo(({
                                     </TouchableOpacity>
                                 </View>
                             )}
-                        </>
+                        </Animated.View>
                     )}
 
                     {/* Main Input Row (TextInput is ALWAYS mounted) */}
-                    <View style={isExpanded ? styles.expandedInputWrapper : styles.collapsedInputWrapper}>
+                    <Animated.View
+                        layout={MORPH_LAYOUT_TRANSITION}
+                        style={isExpanded ? styles.expandedInputWrapper : styles.collapsedInputWrapper}
+                    >
                         <TextInput
                             ref={inputRef}
                             style={[
@@ -352,21 +420,29 @@ export const CommentInputBar = memo(({
 
                         {/* Collapsed Placeholder Overlay (Taps pass through via pointerEvents="none") */}
                         {!isExpanded && !vm.commentText && (
-                            <View style={styles.placeholderContainer} pointerEvents="none">
+                            <Animated.View
+                                entering={FadeIn.duration(150)}
+                                exiting={FadeOut.duration(90)}
+                                style={styles.placeholderContainer}
+                                pointerEvents="none"
+                            >
                                 <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.onSurfaceVariant} />
                                 <FlexText style={[common.body, { color: colors.onSurfaceVariant, marginLeft: 8, fontSize: 14 }]}>
                                     {t("post.commentsSheet.placeholderAdd", "Thêm bình luận...")}
                                 </FlexText>
-                            </View>
+                            </Animated.View>
                         )}
 
                         {/* Collapsed Quick Actions on the Right */}
                         {!isExpanded && (
-                            <View style={styles.collapsedRightActions}>
+                            <Animated.View
+                                entering={FadeIn.duration(150)}
+                                exiting={FadeOut.duration(90)}
+                                style={styles.collapsedRightActions}
+                            >
                                 <TouchableOpacity
                                     hitSlop={8}
                                     onPress={() => {
-                                        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                                         setIsFocused(true);
                                         vm.setShowUrlInput(true);
                                         inputRef.current?.focus();
@@ -382,13 +458,18 @@ export const CommentInputBar = memo(({
                                 >
                                     <MaterialIcons name="emoji-emotions" size={20} color={colors.onSurfaceVariant} />
                                 </TouchableOpacity>
-                            </View>
+                            </Animated.View>
                         )}
-                    </View>
+                    </Animated.View>
 
                     {/* Expanded Bottom Action Bar (inside the card under the text area) */}
                     {isExpanded && (
-                        <View style={styles.cardBottomBar}>
+                        <Animated.View
+                            entering={FadeIn.duration(180)}
+                            exiting={FadeOut.duration(100)}
+                            layout={MORPH_LAYOUT_TRANSITION}
+                            style={styles.cardBottomBar}
+                        >
                             <View style={styles.mediaActions}>
                                 <TouchableOpacity
                                     style={[
@@ -463,10 +544,10 @@ export const CommentInputBar = memo(({
                                     </Button>
                                 )}
                             </View>
-                        </View>
+                        </Animated.View>
                     )}
-                </View>
-            </View>
+                </Animated.View>
+            </Animated.View>
         </>
     );
 }, (prev, next) => {
@@ -495,25 +576,21 @@ const styles = StyleSheet.create({
         right: 16,
         zIndex: 1000,
     },
-    collapsedPill: {
+    morphContainer: {
         minHeight: 50,
-        height: 50,
-        borderRadius: 9999,
         justifyContent: "center",
-        paddingHorizontal: 16,
         borderWidth: StyleSheet.hairlineWidth,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
-        elevation: 4,
+        overflow: "hidden",
+    },
+    collapsedHeight: {
+        height: 50,
     },
     collapsedInputWrapper: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         position: "relative",
-        height: "100%",
+        height: 48,
     },
     collapsedTextInput: {
         flex: 1,
@@ -534,16 +611,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 14,
-    },
-    expandedCard: {
-        borderRadius: 22,
-        padding: 12,
-        borderWidth: StyleSheet.hairlineWidth,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.18,
-        shadowRadius: 8,
-        elevation: 6,
     },
     expandedInputWrapper: {
         width: "100%",

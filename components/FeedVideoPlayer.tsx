@@ -2,32 +2,141 @@ import PauseIcon from "@/assets/images/svg/pause.svg";
 import PlayIcon from "@/assets/images/svg/play.svg";
 import SoundMuteIcon from "@/assets/images/svg/sound-mute-1.svg";
 import SoundIcon from "@/assets/images/svg/sound.svg";
+import { buildCachedVideoSource } from "@/services/videoCache";
 import { useFeedVideoStore } from '@/stores/feedVideo';
 import { useSettingsStore } from '@/stores/settings';
 import { BlueskyVideoView } from '@bsky.app/video';
+import { useEventListener } from "expo";
+import { type BufferOptions, useVideoPlayer, VideoView } from "expo-video";
 import { Spinner } from "panelui-native";
-import React, { useCallback, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 const ASPECT_RATIO = 3 / 4;
 
-/**
- * FeedVideoPlayer — Uses Bluesky's native video component (@bsky.app/video).
- *
- * Unlike the old react-native-video approach, BlueskyVideoView handles:
- *   - Native-level autoplay tied to scroll position (via updateActiveVideoViewAsync)
- *   - HLS streaming with automatic quality adaptation
- *   - Efficient memory management (only one video active at a time, natively)
- *   - Fullscreen transitions
- *
- * The `autoplay` prop + `updateActiveVideoViewAsync` (called from List.tsx on
- * scroll settle) work together: the native module tracks all mounted
- * BlueskyVideoView instances and activates the one most visible on screen.
- */
+const FEED_BUFFER_OPTIONS: BufferOptions = {
+    preferredForwardBufferDuration: Platform.OS === 'ios' ? 0 : 15,
+    minBufferForPlayback: 1,
+    maxBufferBytes: 0,
+    prioritizeTimeOverSizeThreshold: true,
+};
 
 interface FeedVideoPlayerProps {
     videoUrl: string;
 }
+
+interface ActivePlayerHandle {
+    togglePlayback: () => void;
+    toggleMuted: () => void;
+    enterFullscreen: () => void;
+}
+
+interface ActiveFeedVideoProps {
+    videoUrl: string;
+    isMuted: boolean;
+    onLoadingChange: (loading: boolean) => void;
+    onPlayingChange: (playing: boolean) => void;
+    onTimeRemainingChange: (remaining: number) => void;
+    onError: (err: string) => void;
+}
+
+const ActiveFeedVideo = React.memo(
+    React.forwardRef<ActivePlayerHandle, ActiveFeedVideoProps>(
+        ({ videoUrl, isMuted, onLoadingChange, onPlayingChange, onTimeRemainingChange, onError }, ref) => {
+            const videoViewRef = useRef<VideoView>(null);
+            const enteredFullscreenMutedRef = useRef(isMuted);
+
+            const videoSource = useMemo(() => buildCachedVideoSource(videoUrl), [videoUrl]);
+
+            const player = useVideoPlayer(videoSource, (p) => {
+                p.loop = true;
+                p.muted = isMuted;
+                p.timeUpdateEventInterval = 0.5;
+                p.bufferOptions = FEED_BUFFER_OPTIONS;
+                p.play();
+            });
+
+            useEffect(() => {
+                try {
+                    player.muted = isMuted;
+                } catch { }
+            }, [player, isMuted]);
+
+            useEventListener(player, 'statusChange', ({ status, error }) => {
+                if (status === 'loading') {
+                    onLoadingChange(true);
+                } else if (status === 'readyToPlay') {
+                    onLoadingChange(false);
+                } else if (status === 'error') {
+                    onLoadingChange(false);
+                    if (error?.message) onError(error.message);
+                }
+            });
+
+            useEventListener(player, 'playingChange', ({ isPlaying }) => {
+                onPlayingChange(isPlaying);
+                if (isPlaying) onLoadingChange(false);
+            });
+
+            useEventListener(player, 'mutedChange', ({ muted }) => {
+                useFeedVideoStore.getState().setMuted(muted);
+            });
+
+            useEventListener(player, 'timeUpdate', ({ currentTime }) => {
+                const dur = player.duration ?? 0;
+                if (dur > 0) {
+                    onTimeRemainingChange(Math.max(0, Math.round(dur - currentTime)));
+                }
+            });
+
+            React.useImperativeHandle(ref, () => ({
+                togglePlayback: () => {
+                    try {
+                        if (player.playing) player.pause();
+                        else player.play();
+                    } catch { }
+                },
+                toggleMuted: () => {
+                    try {
+                        const next = !player.muted;
+                        player.muted = next;
+                        useFeedVideoStore.getState().setMuted(next);
+                    } catch { }
+                },
+                enterFullscreen: () => {
+                    try {
+                        enteredFullscreenMutedRef.current = player.muted;
+                        player.muted = false;
+                        useFeedVideoStore.getState().setMuted(false);
+                        if (!player.playing) player.play();
+                        videoViewRef.current?.enterFullscreen();
+                    } catch { }
+                },
+            }), [player]);
+
+            return (
+                <VideoView
+                    ref={videoViewRef}
+                    player={player}
+                    style={styles.video}
+                    contentFit="cover"
+                    nativeControls={false}
+                    surfaceType={Platform.OS === 'android' ? 'textureView' : 'surfaceView'}
+                    onFirstFrameRender={() => onLoadingChange(false)}
+                    onFullscreenExit={() => {
+                        try {
+                            if (enteredFullscreenMutedRef.current) {
+                                player.muted = true;
+                                useFeedVideoStore.getState().setMuted(true);
+                            }
+                        } catch { }
+                    }}
+                />
+            );
+        },
+    ),
+);
+ActiveFeedVideo.displayName = 'ActiveFeedVideo';
 
 export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ videoUrl }) => {
     const { width: screenWidth } = useWindowDimensions();
@@ -35,19 +144,27 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
     const isMuted = useFeedVideoStore(s => s.isMuted);
     const setEnded = useFeedVideoStore(s => s.setEnded);
     const disableAutoplay = useSettingsStore(s => s.disableAutoplay);
-    const videoRef = useRef<BlueskyVideoView>(null);
+    const activeVideoRef = useRef<ActivePlayerHandle>(null);
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [isActive, setIsActive] = useState(false);
+    const [isViewportActive, setIsViewportActive] = useState(false);
+    const [isManualActive, setIsManualActive] = useState(false);
     const [timeRemaining, setTimeRemaining] = useState(0);
 
+    const isActive = (isViewportActive && !disableAutoplay) || isManualActive;
+
     const handleTogglePlayback = useCallback(() => {
-        videoRef.current?.togglePlayback();
+        if (activeVideoRef.current) {
+            activeVideoRef.current.togglePlayback();
+        } else {
+            setIsLoading(true);
+            setIsManualActive(true);
+        }
     }, []);
 
     const handleEnterFullscreen = useCallback(() => {
-        videoRef.current?.enterFullscreen(true);
+        activeVideoRef.current?.enterFullscreen();
     }, []);
 
     const formattedTime = React.useMemo(() => {
@@ -64,35 +181,36 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
     return (
         <View style={[styles.container, { width: screenWidth, height: videoHeight }]}>
             <BlueskyVideoView
-                ref={videoRef}
                 url={videoUrl}
-                autoplay={!disableAutoplay}
+                autoplay={false}
                 beginMuted={isMuted}
-                style={styles.video}
+                style={StyleSheet.absoluteFill}
                 onActiveChange={e => {
-                    setIsActive(e.nativeEvent.isActive);
-                }}
-                onLoadingChange={e => {
-                    setIsLoading(e.nativeEvent.isLoading);
-                }}
-                onMutedChange={e => {
-                    useFeedVideoStore.getState().setMuted(e.nativeEvent.isMuted);
-                }}
-                onStatusChange={e => {
-                    setIsPlaying(e.nativeEvent.status === 'playing');
-                    if (e.nativeEvent.status === 'paused' && !isActive) {
+                    const active = e.nativeEvent.isActive;
+                    setIsViewportActive(active);
+                    if (!active) {
+                        setIsManualActive(false);
+                        setIsPlaying(false);
                         setEnded(true);
+                    } else if (!disableAutoplay) {
+                        setIsLoading(true);
                     }
-                }}
-                onTimeRemainingChange={e => {
-                    setTimeRemaining(e.nativeEvent.timeRemaining);
-                }}
-                onError={e => {
-                    console.warn('[FeedVideoPlayer] Error:', e.nativeEvent.error);
                 }}
                 accessibilityLabel="Video"
                 accessibilityHint=""
             />
+
+            {isActive && (
+                <ActiveFeedVideo
+                    ref={activeVideoRef}
+                    videoUrl={videoUrl}
+                    isMuted={isMuted}
+                    onLoadingChange={setIsLoading}
+                    onPlayingChange={setIsPlaying}
+                    onTimeRemainingChange={setTimeRemaining}
+                    onError={err => console.warn('[FeedVideoPlayer] Error:', err)}
+                />
+            )}
 
             {/* Controls overlay: visible when video is active and not loading. */}
             {isActive && !isLoading && (
@@ -152,7 +270,7 @@ export const FeedVideoPlayer: React.FC<FeedVideoPlayerProps> = React.memo(({ vid
                     </View>
                     {/* Mute/Unmute Button */}
                     <Pressable
-                        onPress={() => videoRef.current?.toggleMuted()}
+                        onPress={() => activeVideoRef.current?.toggleMuted()}
                         style={{
                             position: 'absolute',
                             right: 12,

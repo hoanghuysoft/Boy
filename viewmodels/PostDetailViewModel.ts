@@ -144,10 +144,8 @@ export const usePostDetailViewModel = (postId: string) => {
     }, [scrollToCommentsHeader]);
 
     const handleInputFocus = useCallback(() => {
-        if (headerHeightRef.current > 300) {
-            scrollToCommentsHeader();
-        }
-    }, [scrollToCommentsHeader]);
+        // Keep current scroll position unchanged when focusing the comment input
+    }, []);
 
     return {
         // Theme & styles
