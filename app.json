@@ -209,8 +209,10 @@
             "buildArchs": [
               "arm64-v8a"
             ],
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
             "usePrecompiledHeaders": true,
-            "extraProguardRules": "-keep class androidx.media3.** { *; }\n-keep class expo.modules.video.** { *; }"
+            "extraProguardRules": "-keep class androidx.media3.** { *; }\n-keep class expo.modules.video.** { *; }\n-keep class * extends com.margelo.nitro.core.HybridObject { *; }\n-keep class com.margelo.nitro.** { *; }\n-keep class com.nitroinappbrowser.** { *; }\n-keep class com.haptics.** { *; }"
           }
         }
       ],
