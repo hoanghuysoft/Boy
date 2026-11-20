@@ -1,5 +1,5 @@
 import type { ITabIcon } from "@/interfaces/tab-icon.interface";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -32,7 +32,7 @@ const TabIcon: React.FC<ITabIcon> = ({
         },
       ],
     };
-  }, [x, slotWidth]);
+  }, Platform.OS === "web" ? [x, slotWidth] : undefined);
 
   const idleStyle = useAnimatedStyle(() => {
     const d = Math.abs(pillCenter.value - x);
@@ -44,7 +44,7 @@ const TabIcon: React.FC<ITabIcon> = ({
         Extrapolation.CLAMP,
       ),
     };
-  }, [x, slotWidth]);
+  }, Platform.OS === "web" ? [x, slotWidth] : undefined);
 
   return (
     <View style={styles.iconStack}>

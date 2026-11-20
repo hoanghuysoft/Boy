@@ -18,11 +18,12 @@ dayjs.extend(relativeTime);
 
 interface PostMetaInfoProps {
     post: Post;
+    textColor?: string;
 }
 
 const ITEM_HEIGHT = 20; // Fixed height for a single line of text
 
-const MetaInfoCycler = React.memo(({ items, colors, common }: { items: string[], colors: any, common: any }) => {
+const MetaInfoCycler = React.memo(({ items, textColor, common }: { items: string[], textColor: string, common: any }) => {
     // 1. Create a "Carousel" list: [Item A, Item B, Item A]. 
     // The duplicate at the end allows us to loop seamlessly.
     const carouselItems = useMemo(() => [...items, items[0]], [items]);
@@ -89,7 +90,7 @@ const MetaInfoCycler = React.memo(({ items, colors, common }: { items: string[],
                     {carouselItems.map((item, index) => (
                         <View key={index} style={{ height: ITEM_HEIGHT, justifyContent: 'center' }}>
                             <Text
-                                style={[common.label, { color: colors.muted, fontSize: 12 }]}
+                                style={[common.label, { color: textColor, fontSize: 12 }]}
                                 numberOfLines={1}
                             >
                                 {item}
@@ -103,9 +104,10 @@ const MetaInfoCycler = React.memo(({ items, colors, common }: { items: string[],
 });
 MetaInfoCycler.displayName = "MetaInfoCycler";
 
-export const PostMetaInfo = React.memo(({ post }: PostMetaInfoProps) => {
+export const PostMetaInfo = React.memo(({ post, textColor }: PostMetaInfoProps) => {
     const { colors, typography } = useThemeContext();
     const common = useMemo(() => createCommonStyles(colors, typography), [colors, typography]);
+    const resolvedColor = textColor ?? colors.muted;
 
     const locationName = typeof post.location === 'string' ? post.location : post.location?.name;
     const musicInfo = post.music?.title && post.music?.artist ? `${post.music.title} - ${post.music.artist}` : undefined;
@@ -122,14 +124,14 @@ export const PostMetaInfo = React.memo(({ post }: PostMetaInfoProps) => {
     if (items.length === 1) {
         return (
             <View>
-                <Text style={[common.label, { color: colors.muted, fontSize: 12 }]}>
+                <Text style={[common.label, { color: resolvedColor, fontSize: 12 }]}>
                     {items[0]}
                 </Text>
             </View>
         );
     }
 
-    return <MetaInfoCycler items={items} colors={colors} common={common} />;
+    return <MetaInfoCycler items={items} textColor={resolvedColor} common={common} />;
 }, (prev, next) => {
     const getLocationName = (loc: any) => typeof loc === 'string' ? loc : loc?.name;
     return (
@@ -137,7 +139,8 @@ export const PostMetaInfo = React.memo(({ post }: PostMetaInfoProps) => {
         prev.post.created_at === next.post.created_at &&
         getLocationName(prev.post.location) === getLocationName(next.post.location) &&
         prev.post.music?.title === next.post.music?.title &&
-        prev.post.music?.artist === next.post.music?.artist
+        prev.post.music?.artist === next.post.music?.artist &&
+        prev.textColor === next.textColor
     );
 });
 PostMetaInfo.displayName = "PostMetaInfo";

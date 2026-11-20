@@ -14,13 +14,15 @@ import { guessLanguageAsync } from "@bsky.app/expo-guess-language";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Image as ExpoImage } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { SquircleView } from "expo-squircle-view";
 import { Button } from "heroui-native/button";
 import { Dialog } from "heroui-native/dialog";
 import { Spinner } from "panelui-native";
 import React, { useCallback, useEffect, useState } from "react";
-import { Dimensions, Pressable, TouchableOpacity, View } from "react-native";
+import { Dimensions, Easing, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { easeGradient } from "react-native-easing-gradient";
 import { ScrollView } from 'react-native-gesture-handler';
 import i18n, { LANGUAGE_LABELS, SupportedLanguage } from "../i18n";
 import { useLanguageStore } from "../stores/language";
@@ -31,9 +33,18 @@ import CaptionText from "./CaptionText";
 import { FlexText } from "./FlexText";
 import { PostAudioWaveform } from "./PostAudioWaveform";
 import { LINK_CARD_WIDTH, PostLinkPreview } from "./PostLinkPreview";
-import { PostMediaCarousel } from "./PostMediaCarousel";
+import { MEDIA_BORDER_RADIUS, PostMediaCarousel } from "./PostMediaCarousel";
 import { PostMetaInfo } from "./PostMetaInfo";
 import { YouTubePostPlayer } from "./YouTubePostPlayer";
+
+const videoHeaderScrim = easeGradient({
+    colorStops: {
+        0: { color: 'rgba(0, 0, 0, 0.68)' },
+        0.55: { color: 'rgba(0, 0, 0, 0.30)', easing: Easing.out(Easing.cubic) },
+        1: { color: 'rgba(0, 0, 0, 0)' },
+    },
+    extraColorStopsPerTransition: 6,
+});
 
 const languageDetectionCache = new Map<string, boolean>();
 
@@ -189,246 +200,340 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
         [originalPost?.profile_id]
     );
 
-    return (
-        <View style={{}}>
-            {/* Header */}
-            <View style={[vm.common.row, { justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 }]}>
-                <Pressable
-                    onPress={vm.handleProfilePress}
-                    disabled={metricsOnly}
-                    style={({ pressed }) => [vm.common.row, { gap: 12, flex: 1, opacity: pressed ? 0.7 : 1 }]}
-                >
-                    <ExpoImage
-                        source={{ uri: post.profile_avatar }}
-                        style={{ width: 40, height: 40, borderRadius: 20 }}
-                        contentFit="cover"
-                        cachePolicy="memory-disk"
-                    />
-                    <View>
-                        <View style={[vm.common.row, { gap: 4 }]}>
-                            <FlexText style={[vm.common.heading, { fontSize: 16 }]}>{post.profile_name}</FlexText>
-                            {post.profile_is_verified && <VerifiedIcon size={16} />}
-                        </View>
-                        <PostMetaInfo post={post} />
-                    </View>
-                </Pressable>
-                {!isBookmarked && !isDetail && (!metricsOnly || !!onOptionsPress) && (
-                    <Pressable
-                        hitSlop={10}
-                        style={({ pressed }) => ({
-                            backgroundColor: vm.colors.surfaceContainerHigh,
-                            borderRadius: 999,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 40,
-                            height: 40,
-                            opacity: pressed ? 0.7 : 1,
-                        })}
-                        onPress={vm.handleOptionsPress}
-                    >
-                        <Ionicons name="ellipsis-horizontal" size={20} color={vm.colors.onSurface} />
-                        <SavedPostBadge post={displayPost} borderColor={vm.colors.surface} />
-                    </Pressable>
-                )}
-            </View>
+    const isSingleVideo =
+        displayPost.media?.length === 1 &&
+        displayPost.media[0]?.type === 'video';
 
-            {/* Captions Block (Supports standard caption and embedded quote repost layout) */}
+    const hasCaptionContent = Boolean(
+        isRepost ||
+        captionWithoutYouTube ||
+        (needsTranslation && !translation) ||
+        translation
+    );
+
+    const renderHeaderRow = (overlaid: boolean) => (
+        <View
+            pointerEvents={overlaid ? 'box-none' : 'auto'}
+            style={[
+                vm.common.row,
+                {
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 16,
+                    ...(overlaid
+                        ? { paddingTop: 14, paddingBottom: 22 }
+                        : { marginBottom: 8 }),
+                },
+            ]}
+        >
             <Pressable
-                onPress={isDetail ? undefined : handlePostPress}
-                disabled={isDetail}
-                style={{ paddingHorizontal: 16, marginBottom: 8 }}
+                onPress={vm.handleProfilePress}
+                disabled={metricsOnly}
+                style={({ pressed }) => [vm.common.row, { gap: 12, flex: 1, opacity: pressed ? 0.7 : 1 }]}
             >
-                {isRepost ? (
-                    isRepostDeleted ? (
-                        <View style={{ gap: 8 }}>
-                            {!!captionWithoutYouTube && (
-                                <CaptionText maxLines={isDetail ? undefined : 3} caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />)}
-                            <View style={[vm.common.row, {
-                                borderLeftWidth: 3,
-                                borderLeftColor: vm.colors.error,
-                                paddingLeft: 12,
-                                paddingVertical: 4,
-                                gap: 8,
-                                alignItems: 'center'
-                            }]}>
-                                <Ionicons name="alert-circle-outline" size={16} color={vm.colors.onSurfaceVariant} />
-                                <FlexText lite={false} style={[vm.common.bodySmall, { color: vm.colors.onSurfaceVariant, fontStyle: 'italic' }]}>
-                                    {originalPost.text || t('post.dialogs.repostFailed')}
-                                </FlexText>
-                            </View>
-                        </View>
-                    ) : (
-                        <View style={{ gap: 8 }}>
-                            {/* Reposter's quote caption (if it exists) */}
-                            {!!captionWithoutYouTube && (
-                                <CaptionText maxLines={isDetail ? undefined : 3} caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
-                            )}
-
-                            {/* Quoted Original Post with author info right under it */}
-                            <View style={{
-                                borderLeftWidth: 3,
-                                borderLeftColor: vm.colors.primary,
-                                paddingLeft: 12,
-                                paddingVertical: 2,
-                            }}>
-                                {!!originalPost.content && (
-                                    <CaptionText
-                                        maxLines={isDetail ? undefined : 4}
-                                        caption={originalPost.clean_content || originalPost.content}
-                                        captionParts={originalPost.caption_parts}
-                                        colors={vm.colors}
-                                        common={vm.common}
-                                    />
-                                )}
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        router.push({
-                                            pathname: '/profile/[id]',
-                                            params: { id: originalPost.profile_id },
-                                        });
-                                    }}
-                                    style={[vm.common.row, { gap: 6, alignItems: 'center', marginTop: 4 }]}
-                                >
-                                    <ExpoImage
-                                        source={{ uri: originalPost.profile_avatar }}
-                                        style={{ width: 18, height: 18, borderRadius: 9999 }}
-                                        contentFit="cover"
-                                        placeholder={{ blurhash: originalAvatarPlaceholder }}
-                                    />
-                                    <FlexText lite={false} style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11, fontWeight: '600' }]}>
-                                        Reposted from {originalPost.profile_name}
-                                    </FlexText>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    )
-                ) : (
-                    captionWithoutYouTube ? (
-                        <CaptionText maxLines={isDetail ? undefined : 3} caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
-                    ) : null
-                )}
-
-                {/* Translation Link / Translation Results */}
-                {needsTranslation && !translation && (
-                    <TouchableOpacity
-                        onPress={() => translate(post.id, post.content, translationLanguage)}
-                        style={{ marginTop: 4, alignSelf: 'flex-start' }}
-                    >
-                        <FlexText style={[vm.common.bodySmall, { color: vm.colors.primary, fontWeight: '600' }]}>
-                            {t('post.translate', 'Translate')}
+                <ExpoImage
+                    source={{ uri: post.profile_avatar }}
+                    style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        ...(overlaid ? { borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' } : {}),
+                    }}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                />
+                <View>
+                    <View style={[vm.common.row, { gap: 4 }]}>
+                        <FlexText
+                            style={[
+                                vm.common.heading,
+                                { fontSize: 16 },
+                                overlaid && {
+                                    color: '#FFFFFF',
+                                    textShadowColor: 'rgba(0,0,0,0.45)',
+                                    textShadowOffset: { width: 0, height: 1 },
+                                    textShadowRadius: 3,
+                                },
+                            ]}
+                        >
+                            {post.profile_name}
                         </FlexText>
-                    </TouchableOpacity>
-                )}
+                        {post.profile_is_verified && <VerifiedIcon size={16} />}
+                    </View>
+                    <PostMetaInfo
+                        post={post}
+                        textColor={overlaid ? 'rgba(255,255,255,0.82)' : undefined}
+                    />
+                </View>
+            </Pressable>
+            {!isBookmarked && !isDetail && (!metricsOnly || !!onOptionsPress) && (
+                <Pressable
+                    hitSlop={10}
+                    style={({ pressed }) => ({
+                        backgroundColor: overlaid ? 'rgba(0,0,0,0.42)' : vm.colors.surfaceContainerHigh,
+                        borderRadius: 999,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 40,
+                        height: 40,
+                        opacity: pressed ? 0.7 : 1,
+                    })}
+                    onPress={vm.handleOptionsPress}
+                >
+                    <Ionicons
+                        name="ellipsis-horizontal"
+                        size={20}
+                        color={overlaid ? '#FFFFFF' : vm.colors.onSurface}
+                    />
+                    <SavedPostBadge
+                        post={displayPost}
+                        borderColor={overlaid ? 'rgba(0,0,0,0.6)' : vm.colors.surface}
+                    />
+                </Pressable>
+            )}
+        </View>
+    );
 
-                {translation && (
-                    <View style={{ marginTop: 8 }}>
-                        {translation.isTranslating && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
-                                <Spinner size="sm" color={vm.colors.primary} />
-                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted }]}>
-                                    {t('post.translating', 'Translating...')}
-                                </FlexText>
-                            </View>
+    const renderOverlaidHeader = () => (
+        <View
+            pointerEvents="box-none"
+            style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                borderTopLeftRadius: MEDIA_BORDER_RADIUS,
+                borderTopRightRadius: MEDIA_BORDER_RADIUS,
+                overflow: 'hidden',
+                zIndex: 20,
+            }}
+        >
+            <LinearGradient
+                pointerEvents="none"
+                colors={videoHeaderScrim.colors as [string, string, ...string[]]}
+                locations={videoHeaderScrim.locations as [number, number, ...number[]]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={StyleSheet.absoluteFill}
+            />
+            {renderHeaderRow(true)}
+        </View>
+    );
+
+    const renderCaptionsBlock = (belowVideo: boolean) => (
+        <Pressable
+            onPress={isDetail ? undefined : handlePostPress}
+            disabled={isDetail}
+            style={{
+                paddingHorizontal: 16,
+                ...(belowVideo ? { marginTop: -4, marginBottom: 12 } : { marginBottom: 8 }),
+            }}
+        >
+            {isRepost ? (
+                isRepostDeleted ? (
+                    <View style={{ gap: 8 }}>
+                        {!!captionWithoutYouTube && (
+                            <CaptionText maxLines={isDetail ? undefined : 3} caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />)}
+                        <View style={[vm.common.row, {
+                            borderLeftWidth: 3,
+                            borderLeftColor: vm.colors.error,
+                            paddingLeft: 12,
+                            paddingVertical: 4,
+                            gap: 8,
+                            alignItems: 'center'
+                        }]}>
+                            <Ionicons name="alert-circle-outline" size={16} color={vm.colors.onSurfaceVariant} />
+                            <FlexText lite={false} style={[vm.common.bodySmall, { color: vm.colors.onSurfaceVariant, fontStyle: 'italic' }]}>
+                                {originalPost.text || t('post.dialogs.repostFailed')}
+                            </FlexText>
+                        </View>
+                    </View>
+                ) : (
+                    <View style={{ gap: 8 }}>
+                        {/* Reposter's quote caption (if it exists) */}
+                        {!!captionWithoutYouTube && (
+                            <CaptionText maxLines={isDetail ? undefined : 3} caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
                         )}
 
-                        {translation.translatedText && !translation.isTranslating && (
-                            <SquircleView cornerSmoothing={100} preserveSmoothing style={{
-                                padding: 12,
-                                marginTop: 6,
-                                borderWidth: 1,
-                                borderColor: vm.colors.outlineVariant,
-                                borderRadius: 16,
-                                gap: 6,
-                                position: 'relative',
-                            }}>
-                                <View style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    flexWrap: 'wrap',
-                                    paddingRight: 24, // Leave space for close button
-                                }}>
-                                    {translation.detectedLanguage ? (
-                                        <>
-                                            <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11 }]}>
-                                                {LANGUAGE_LABELS[translation.detectedLanguage as SupportedLanguage] || translation.detectedLanguage.toUpperCase()}
-                                            </FlexText>
-                                            <Ionicons name="arrow-forward" size={10} color={vm.colors.onSurfaceVariant} style={{ marginHorizontal: 4 }} />
-                                            <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11 }]}>
-                                                {LANGUAGE_LABELS[translation.targetLanguage as SupportedLanguage] || translation.targetLanguage.toUpperCase()}
-                                            </FlexText>
-                                        </>
-                                    ) : (
-                                        <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11 }]}>
-                                            {t('post.translated', 'Translated')}
-                                        </FlexText>
-                                    )}
-
-                                    <FlexText style={{ color: vm.colors.onSurfaceVariant, fontSize: 11, marginHorizontal: 4 }}>
-                                        &middot;
-                                    </FlexText>
-
-                                    <TouchableOpacity onPress={() => {
-                                        setActivePost(post.id, post.content);
-                                        TrueSheet.present('translation-language-sheet');
-                                    }}>
-                                        <FlexText style={[vm.common.label, { color: vm.colors.primary, fontSize: 11, fontWeight: '600' }]}>
-                                            {t('post.changeLanguage', 'Change')}
-                                        </FlexText>
-                                    </TouchableOpacity>
-                                </View>
-                                <FlexText lite={false} selectable style={[vm.common.body, { fontSize: 14, color: vm.colors.onSurface, marginTop: 2 }]}>
-                                    {translation.translatedText}
+                        {/* Quoted Original Post with author info right under it */}
+                        <View style={{
+                            borderLeftWidth: 3,
+                            borderLeftColor: vm.colors.primary,
+                            paddingLeft: 12,
+                            paddingVertical: 2,
+                        }}>
+                            {!!originalPost.content && (
+                                <CaptionText
+                                    maxLines={isDetail ? undefined : 4}
+                                    caption={originalPost.clean_content || originalPost.content}
+                                    captionParts={originalPost.caption_parts}
+                                    colors={vm.colors}
+                                    common={vm.common}
+                                />
+                            )}
+                            <TouchableOpacity
+                                onPress={() => {
+                                    router.push({
+                                        pathname: '/profile/[id]',
+                                        params: { id: originalPost.profile_id },
+                                    });
+                                }}
+                                style={[vm.common.row, { gap: 6, alignItems: 'center', marginTop: 4 }]}
+                            >
+                                <ExpoImage
+                                    source={{ uri: originalPost.profile_avatar }}
+                                    style={{ width: 18, height: 18, borderRadius: 9999 }}
+                                    contentFit="cover"
+                                    placeholder={{ blurhash: originalAvatarPlaceholder }}
+                                />
+                                <FlexText lite={false} style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11, fontWeight: '600' }]}>
+                                    Reposted from {originalPost.profile_name}
                                 </FlexText>
-                                <TouchableOpacity
-                                    onPress={() => clearTranslation(post.id)}
-                                    style={{
-                                        position: 'absolute',
-                                        top: 10,
-                                        right: 10,
-                                        padding: 4,
-                                    }}
-                                >
-                                    <Ionicons name="close" size={16} color={vm.colors.onSurfaceVariant} />
-                                </TouchableOpacity>
-                            </SquircleView>
-                        )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )
+            ) : (
+                captionWithoutYouTube ? (
+                    <CaptionText maxLines={isDetail ? undefined : 3} caption={captionWithoutYouTube} captionParts={post.caption_parts} colors={vm.colors} common={vm.common} />
+                ) : null
+            )}
 
-                        {translation.translationError && !translation.isTranslating && (
+            {/* Translation Link / Translation Results */}
+            {needsTranslation && !translation && (
+                <TouchableOpacity
+                    onPress={() => translate(post.id, post.content, translationLanguage)}
+                    style={{ marginTop: 4, alignSelf: 'flex-start' }}
+                >
+                    <FlexText style={[vm.common.bodySmall, { color: vm.colors.primary, fontWeight: '600' }]}>
+                        {t('post.translate', 'Translate')}
+                    </FlexText>
+                </TouchableOpacity>
+            )}
+
+            {translation && (
+                <View style={{ marginTop: 8 }}>
+                    {translation.isTranslating && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 }}>
+                            <Spinner size="sm" color={vm.colors.primary} />
+                            <FlexText style={[vm.common.bodySmall, { color: vm.colors.muted }]}>
+                                {t('post.translating', 'Translating...')}
+                            </FlexText>
+                        </View>
+                    )}
+
+                    {translation.translatedText && !translation.isTranslating && (
+                        <SquircleView cornerSmoothing={100} preserveSmoothing style={{
+                            padding: 12,
+                            marginTop: 6,
+                            borderWidth: 1,
+                            borderColor: vm.colors.outlineVariant,
+                            borderRadius: 16,
+                            gap: 6,
+                            position: 'relative',
+                        }}>
                             <View style={{
-                                padding: 10,
-                                backgroundColor: vm.colors.errorContainer,
-                                borderRadius: 12,
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                gap: 6,
+                                flexWrap: 'wrap',
+                                paddingRight: 24, // Leave space for close button
                             }}>
-                                <Ionicons name="alert-circle" size={16} color={vm.colors.onErrorContainer} />
-                                <FlexText style={[vm.common.bodySmall, { color: vm.colors.onErrorContainer, flex: 1, fontSize: 12 }]}>
-                                    {translation.translationError}
+                                {translation.detectedLanguage ? (
+                                    <>
+                                        <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11 }]}>
+                                            {LANGUAGE_LABELS[translation.detectedLanguage as SupportedLanguage] || translation.detectedLanguage.toUpperCase()}
+                                        </FlexText>
+                                        <Ionicons name="arrow-forward" size={10} color={vm.colors.onSurfaceVariant} style={{ marginHorizontal: 4 }} />
+                                        <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11 }]}>
+                                            {LANGUAGE_LABELS[translation.targetLanguage as SupportedLanguage] || translation.targetLanguage.toUpperCase()}
+                                        </FlexText>
+                                    </>
+                                ) : (
+                                    <FlexText style={[vm.common.label, { color: vm.colors.onSurfaceVariant, fontSize: 11 }]}>
+                                        {t('post.translated', 'Translated')}
+                                    </FlexText>
+                                )}
+
+                                <FlexText style={{ color: vm.colors.onSurfaceVariant, fontSize: 11, marginHorizontal: 4 }}>
+                                    &middot;
                                 </FlexText>
-                                <TouchableOpacity onPress={() => clearTranslation(post.id)}>
-                                    <Ionicons name="close" size={14} color={vm.colors.onErrorContainer} />
+
+                                <TouchableOpacity onPress={() => {
+                                    setActivePost(post.id, post.content);
+                                    TrueSheet.present('translation-language-sheet');
+                                }}>
+                                    <FlexText style={[vm.common.label, { color: vm.colors.primary, fontSize: 11, fontWeight: '600' }]}>
+                                        {t('post.changeLanguage', 'Change')}
+                                    </FlexText>
                                 </TouchableOpacity>
                             </View>
-                        )}
-                    </View>
-                )}
-            </Pressable>
+                            <FlexText lite={false} selectable style={[vm.common.body, { fontSize: 14, color: vm.colors.onSurface, marginTop: 2 }]}>
+                                {translation.translatedText}
+                            </FlexText>
+                            <TouchableOpacity
+                                onPress={() => clearTranslation(post.id)}
+                                style={{
+                                    position: 'absolute',
+                                    top: 10,
+                                    right: 10,
+                                    padding: 4,
+                                }}
+                            >
+                                <Ionicons name="close" size={16} color={vm.colors.onSurfaceVariant} />
+                            </TouchableOpacity>
+                        </SquircleView>
+                    )}
 
-            {/* YouTube links detected in the caption — single player or carousel */}
-            {isRepost && !isRepostDeleted && originalPost.content ? (
+                    {translation.translationError && !translation.isTranslating && (
+                        <View style={{
+                            padding: 10,
+                            backgroundColor: vm.colors.errorContainer,
+                            borderRadius: 12,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                        }}>
+                            <Ionicons name="alert-circle" size={16} color={vm.colors.onErrorContainer} />
+                            <FlexText style={[vm.common.bodySmall, { color: vm.colors.onErrorContainer, flex: 1, fontSize: 12 }]}>
+                                {translation.translationError}
+                            </FlexText>
+                            <TouchableOpacity onPress={() => clearTranslation(post.id)}>
+                                <Ionicons name="close" size={14} color={vm.colors.onErrorContainer} />
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+            )}
+        </Pressable>
+    );
+
+    const renderYouTubePlayer = () => {
+        if (isRepost && !isRepostDeleted && originalPost.content) {
+            return (
                 <YouTubePostPlayer
                     postId={originalPost.id}
                     caption={originalPost.content}
                     videoIds={originalPost.youtube_ids}
                 />
-            ) : (post.content ? (
+            );
+        }
+        if (post.content) {
+            return (
                 <YouTubePostPlayer
                     postId={post.id}
                     caption={post.content}
                     videoIds={post.youtube_ids}
                 />
-            ) : null)}
+            );
+        }
+        return null;
+    };
+
+    return (
+        <View style={{}}>
+            {/* Standard Header & Captions (non-single-video posts) */}
+            {!isSingleVideo && renderHeaderRow(false)}
+            {!isSingleVideo && renderCaptionsBlock(false)}
+            {!isSingleVideo && renderYouTubePlayer()}
 
             {/* Media & Audio Overlay */}
             <View>
@@ -443,6 +548,8 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     musicUrl={displayPost.music?.preview_url}
                     musicTitle={displayPost.music ? `${displayPost.music.artist} - ${displayPost.music.title}` : undefined}
                 />
+
+                {isSingleVideo && renderOverlaidHeader()}
 
                 {/* Music icon */}
                 {vm.hasMedia && vm.hasMusic && (
@@ -467,6 +574,10 @@ export const PostItem = React.memo(({ post, onOptionsPress, onLikeCountPress, on
                     </TouchableOpacity>
                 )}
             </View>
+
+            {/* Captions & YouTube Player below single-video card */}
+            {isSingleVideo && hasCaptionContent && renderCaptionsBlock(true)}
+            {isSingleVideo && renderYouTubePlayer()}
 
             {/* Audio Waveform — shown when post has a direct audio_url */}
             {!!displayPost.audio_url && (

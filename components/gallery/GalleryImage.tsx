@@ -1,22 +1,29 @@
 import { Image as ExpoImage } from 'expo-image';
 import React, { useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
-import { fitContainer } from 'react-native-zoom-toolkit';
+import { fitContainer } from './ZoomableGallery';
 import { getCachedImageDimension, setCachedImageDimension } from './imageDimensionCache';
 
 type GalleryImageProps = {
     uri: string;
     index: number;
     blurhash?: string | null;
+    fallbackAspectRatio?: number;
 };
 
-const GalleryImage: React.FC<GalleryImageProps> = ({ uri }) => {
+const GalleryImage: React.FC<GalleryImageProps> = ({
+    uri,
+    blurhash,
+    fallbackAspectRatio,
+}) => {
     const { width, height } = useWindowDimensions();
 
-    // Seed the resolution from MMKV cache so the layout is correct on first render.
+    // Seed the resolution from MMKV cache (or source aspect ratio) so the layout is accurate on frame 0.
     const cachedResolution = getCachedImageDimension(uri);
+    const fallbackWidth =
+        fallbackAspectRatio && fallbackAspectRatio > 0 ? fallbackAspectRatio : 1;
     const [resolution, setResolution] = useState<{ width: number; height: number }>(
-        cachedResolution ?? { width: 1, height: 1 }
+        cachedResolution ?? { width: fallbackWidth, height: 1 }
     );
 
     const size = fitContainer(resolution.width / resolution.height, { width, height });
@@ -27,6 +34,10 @@ const GalleryImage: React.FC<GalleryImageProps> = ({ uri }) => {
                 source={{ uri }}
                 recyclingKey={uri}
                 contentFit="contain"
+                placeholder={blurhash ? { blurhash } : undefined}
+                cachePolicy="memory-disk"
+                priority="high"
+                transition={0}
                 style={{ width: '100%', height: '100%' }}
                 onLoad={(event) => {
                     const { width: imgWidth, height: imgHeight } = event.source;

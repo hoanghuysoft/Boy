@@ -16,7 +16,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import PagerView, {
   type PagerViewOnPageScrollEventData,
   type PagerViewOnPageSelectedEventData,
@@ -161,7 +161,7 @@ function usePagerHandlers(
   },
   dependencies: unknown[],
 ) {
-  const { doDependenciesDiffer } = useHandler(handlers as any, dependencies)
+  const { doDependenciesDiffer } = useHandler(handlers as any, Platform.OS === 'web' ? dependencies : undefined)
   const subscribeForEvents = [
     'onPageScroll',
     'onPageScrollStateChanged',

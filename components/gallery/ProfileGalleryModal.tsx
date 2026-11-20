@@ -3,16 +3,16 @@ import WallpaperOverlay from '@/components/WallpaperOverlay';
 import { getOrDownloadFile } from '@/services/fileCacheUtils';
 import { Media } from '@/types/media';
 import { ProfileMusic } from '@/types/profilemusic';
+import { openInGoogleLens } from '@/utils/openInGoogleLens';
 import { Directory, Paths } from 'expo-file-system';
-import { Image as ExpoImage } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { useToast } from "heroui-native/toast";
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, StatusBar, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Modal, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { scheduleOnRN } from 'react-native-worklets';
-import { Gallery, stackTransition, type GalleryRefType } from 'react-native-zoom-toolkit';
+import { GalleryBackdrop } from './GalleryBackdrop';
+import { ZoomableGallery, type ZoomableGalleryRef } from './ZoomableGallery';
 import { resolveBlurhash } from './fallbackBlurhash';
 import GalleryImage from './GalleryImage';
 
@@ -36,7 +36,7 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
     profileName,
     isVerified,
 }) => {
-    const ref = useRef<GalleryRefType>(null);
+    const ref = useRef<ZoomableGalleryRef>(null);
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [debouncedIndex, setDebouncedIndex] = useState(initialIndex);
     const [isWallpaperVisible, setIsWallpaperVisible] = useState(false);
@@ -116,6 +116,16 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
         }
     };
 
+    const handleGoogleLens = async (imageUrl: string) => {
+        try {
+            const localFile = await getOrDownloadFile(imageUrl, destination, 'image.jpg');
+            await openInGoogleLens(localFile.uri, imageUrl);
+        } catch (error) {
+            console.error('Error opening in Google Lens:', error);
+            toast.show({ label: 'Unavailable', description: 'Could not open Google Lens on this device.', variant: 'warning' });
+        }
+    };
+
     const bgPhoto = photos[debouncedIndex];
     const bgImageUri = imagesUrl[debouncedIndex];
     const bgBlurhash = resolveBlurhash(bgPhoto?.blurhash, bgPhoto?.id);
@@ -123,18 +133,8 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
     return (
         <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000' }}>
             <StatusBar hidden />
-            {bgImageUri && (
-                <View style={StyleSheet.absoluteFill}>
-                    <ExpoImage
-                        source={{ blurhash: bgBlurhash }}
-                        style={StyleSheet.absoluteFill}
-                        contentFit="cover"
-                        transition={200}
-                    />
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.55)' }]} />
-                </View>
-            )}
-            <Gallery
+            {bgImageUri && <GalleryBackdrop blurhash={bgBlurhash} transition={200} />}
+            <ZoomableGallery
                 ref={ref}
                 data={imagesUrl}
                 renderItem={renderItem}
@@ -143,12 +143,8 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
                 onIndexChange={onIndexChange}
                 onTap={onTap}
                 maxScale={3}
-                customTransition={stackTransition}
                 zoomEnabled={true}
-                onVerticalPull={() => {
-                    'worklet';
-                    scheduleOnRN(onClose);
-                }}
+                onDismiss={onClose}
             />
             <GalleryOverlay
                 currentIndex={currentIndex}
@@ -167,6 +163,11 @@ const ProfileGalleryModalContent: React.FC<ProfileGalleryModalContentProps> = ({
                 onDownload={() => {
                     if (currentPhoto?.url) {
                         saveRemoteImage(currentPhoto.url);
+                    }
+                }}
+                onGoogleLens={() => {
+                    if (currentPhoto?.url) {
+                        handleGoogleLens(currentPhoto.url);
                     }
                 }}
                 isVerified={isVerified}
@@ -200,7 +201,7 @@ export const ProfileGalleryModal: React.FC<ProfileGalleryModalProps> = ({
     profileName,
     isVerified,
 }) => {
-    const imagesUrl = photos.map(p => p.url);
+    const imagesUrl = useMemo(() => photos.map(p => p.url), [photos]);
     const isOpen = visible && photos.length > 0;
 
     return (

@@ -5,7 +5,7 @@ import SoundIcon from "@/assets/images/svg/sound.svg";
 import { resolveBlurhash } from "@/components/gallery/fallbackBlurhash";
 import { useThrottledValue } from "@/hooks/useThrottledValue";
 import { useFeedVideoStore } from "@/stores/feedVideo";
-import { useGalleryStore } from "@/stores/gallery";
+import { type GallerySourceRect, useGalleryStore } from "@/stores/gallery";
 import { useSettingsStore } from "@/stores/settings";
 import { Media } from "@/types/post";
 import { buildFallbackUrls, chosenMediaPath } from "@/utils/imageurl";
@@ -47,7 +47,7 @@ interface PostMediaCarouselProps {
 }
 
 const ASPECT_RATIO = 3 / 4;
-const MEDIA_BORDER_RADIUS = 28;
+export const MEDIA_BORDER_RADIUS = 28;
 
 // Defined outside component so it's never recreated
 const PLACEHOLDER_IMAGE_VIDEO = 'https://placehold.net/3-600x800.png';
@@ -385,6 +385,7 @@ VideoCarouselItem.displayName = "VideoCarouselItem";
 // ─── PhotoCarouselItem ────────────────────────────────────────────────────────
 interface PhotoCarouselItemProps {
     item: Media;
+    postId: string;
     photoIndex: number;
     colors: any;
     mediaHeight: number;
@@ -394,12 +395,15 @@ interface PhotoCarouselItemProps {
 
 const PhotoCarouselItem = React.memo(({
     item,
+    postId,
     colors,
     mediaHeight,
     screenWidth,
     onPress,
 }: PhotoCarouselItemProps) => {
     const imageUri = chosenMediaPath(item);
+    const sourceKey = `${postId}:${item.id}`;
+    const isHidden = useGalleryStore(state => state.hiddenSourceKey === sourceKey);
     const targetWidth = useMemo(() => Math.round(screenWidth * PixelRatio.get()), [screenWidth]);
     const targetHeight = useMemo(() => Math.round(mediaHeight * PixelRatio.get()), [mediaHeight]);
     const placeholderBlurhash = useMemo(
@@ -414,6 +418,7 @@ const PhotoCarouselItem = React.memo(({
                 height: mediaHeight,
                 borderRadius: MEDIA_BORDER_RADIUS,
                 overflow: 'hidden',
+                opacity: isHidden ? 0 : 1,
             }}
         >
             <Pressable
@@ -443,6 +448,7 @@ const PhotoCarouselItem = React.memo(({
     );
 }, (prev, next) =>
     prev.item.id === next.item.id &&
+    prev.postId === next.postId &&
     prev.photoIndex === next.photoIndex &&
     prev.mediaHeight === next.mediaHeight &&
     prev.screenWidth === next.screenWidth &&
@@ -509,6 +515,7 @@ const MediaCarouselItem = React.memo(({
     return (
         <PhotoCarouselItem
             item={item}
+            postId={postId}
             photoIndex={photoIndex}
             colors={colors}
             mediaHeight={mediaHeight}
@@ -540,7 +547,7 @@ const AnimatedMediaWrapper = React.memo(({ pressAnim, children }: AnimatedMediaW
         const scale = interpolate(pressAnim.value, [0, 1], [1, 0.9]);
         const borderRadius = interpolate(pressAnim.value, [0, 1], [MEDIA_BORDER_RADIUS, 30]);
         return { transform: [{ scale }], borderRadius };
-    }, []);
+    });
 
     return (
         <Animated.View style={[{ flex: 1, overflow: "hidden" }, animStyle]}>
@@ -557,6 +564,7 @@ const SingleMediaView = React.memo(({
 }: PostMediaCarouselProps) => {
     const screenWidth = Dimensions.get('window').width;
     const mediaHeight = screenWidth / ASPECT_RATIO;
+    const containerRef = useRef<React.ComponentRef<typeof View>>(null);
     const openGallery = useGalleryStore(state => state.openGallery);
 
     const galleryImages = useMemo(() =>
@@ -568,15 +576,35 @@ const SingleMediaView = React.memo(({
             musicUrl,
             musicTitle,
             blurhash: m.blurhash,
+            sourceKey: `${postId}:${m.id}`,
         })),
-        [media, content, profileName, isVerified, musicUrl, musicTitle]);
+        [media, postId, content, profileName, isVerified, musicUrl, musicTitle]);
 
     const handlePhotoPress = useCallback((photoIndex: number) => {
-        openGallery(galleryImages, photoIndex);
-    }, [openGallery, galleryImages]);
+        if (useGalleryStore.getState().isVisible) return;
+
+        if (containerRef.current?.measureInWindow) {
+            containerRef.current.measureInWindow((x, y, width, height) => {
+                const sourceRect: GallerySourceRect | null =
+                    width > 0 && height > 0
+                        ? { x, y, width, height, borderRadius: MEDIA_BORDER_RADIUS }
+                        : null;
+                openGallery(galleryImages, photoIndex, {
+                    sourceRect,
+                    sourcePostId: postId,
+                });
+            });
+        } else {
+            openGallery(galleryImages, photoIndex);
+        }
+    }, [openGallery, galleryImages, postId]);
 
     return (
-        <View style={{ marginBottom: 16, width: screenWidth, height: mediaHeight }}>
+        <View
+            ref={containerRef}
+            collapsable={false}
+            style={{ marginBottom: 16, width: screenWidth, height: mediaHeight }}
+        >
             <MediaCarouselItem
                 item={media[0]}
                 index={0}
@@ -614,7 +642,20 @@ const MultiMediaCarousel = React.memo(({
     const pressAnim = useSharedValue<number>(0);
     const [activeIndex, setActiveIndex] = useState(0);
     const currentIndexRef = useRef(0);
+    const containerRef = useRef<React.ComponentRef<typeof View>>(null);
+    const flatListRef = useRef<FlatList<Media>>(null);
     const openGallery = useGalleryStore(state => state.openGallery);
+    const isCarouselHidden = useGalleryStore(state => state.hiddenSourcePostId === postId);
+
+    const photoMediaIndices = useMemo(() => {
+        const indices: number[] = [];
+        media.forEach((m, i) => {
+            if (m.type === 'photo') {
+                indices.push(i);
+            }
+        });
+        return indices;
+    }, [media]);
 
     const galleryImages = useMemo(() =>
         media.filter(m => m.type === 'photo').map(m => ({
@@ -625,12 +666,40 @@ const MultiMediaCarousel = React.memo(({
             musicUrl,
             musicTitle,
             blurhash: m.blurhash,
+            sourceKey: `${postId}:${m.id}`,
         })),
-        [media, content, profileName, isVerified, musicUrl, musicTitle]);
+        [media, postId, content, profileName, isVerified, musicUrl, musicTitle]);
 
     const handlePhotoPress = useCallback((photoIndex: number) => {
-        openGallery(galleryImages, photoIndex);
-    }, [openGallery, galleryImages]);
+        if (useGalleryStore.getState().isVisible) return;
+
+        const onIndexSync = (newPhotoIndex: number) => {
+            const mediaIdx = photoMediaIndices[newPhotoIndex];
+            if (mediaIdx !== undefined && mediaIdx !== currentIndexRef.current) {
+                currentIndexRef.current = mediaIdx;
+                setActiveIndex(mediaIdx);
+                try {
+                    flatListRef.current?.scrollToIndex({ index: mediaIdx, animated: false });
+                } catch { }
+            }
+        };
+
+        if (containerRef.current?.measureInWindow) {
+            containerRef.current.measureInWindow((x, y, width, height) => {
+                const sourceRect: GallerySourceRect | null =
+                    width > 0 && height > 0
+                        ? { x, y, width, height, borderRadius: MEDIA_BORDER_RADIUS }
+                        : null;
+                openGallery(galleryImages, photoIndex, {
+                    sourceRect,
+                    sourcePostId: postId,
+                    onIndexSync,
+                });
+            });
+        } else {
+            openGallery(galleryImages, photoIndex, { onIndexSync });
+        }
+    }, [openGallery, galleryImages, photoMediaIndices, postId]);
 
     const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ListViewToken[] }) => {
         if (viewableItems.length > 0) {
@@ -669,26 +738,43 @@ const MultiMediaCarousel = React.memo(({
 
     return (
         <View style={{ marginBottom: 16 }}>
-            <FlatList
-                data={media}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={keyExtractor}
-                viewabilityConfig={viewabilityConfig}
-                onViewableItemsChanged={onViewableItemsChanged}
-                renderItem={renderMediaItem}
-                initialNumToRender={1}
-                maxToRenderPerBatch={2}
-                windowSize={3}
-                getItemLayout={(_data, index) => ({
-                    length: screenWidth,
-                    offset: screenWidth * index,
-                    index,
-                })}
-            />
+            <View
+                ref={containerRef}
+                collapsable={false}
+                style={{ width: screenWidth, height: mediaHeight }}
+            >
+                <FlatList
+                    ref={flatListRef}
+                    data={media}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={keyExtractor}
+                    viewabilityConfig={viewabilityConfig}
+                    onViewableItemsChanged={onViewableItemsChanged}
+                    renderItem={renderMediaItem}
+                    initialNumToRender={1}
+                    maxToRenderPerBatch={2}
+                    windowSize={3}
+                    getItemLayout={(_data, index) => ({
+                        length: screenWidth,
+                        offset: screenWidth * index,
+                        index,
+                    })}
+                />
+            </View>
 
-            <View style={{ position: 'absolute', bottom: 12, flexDirection: 'row', width: '100%', justifyContent: 'center', gap: 6 }}>
+            <View
+                style={{
+                    position: 'absolute',
+                    bottom: 12,
+                    flexDirection: 'row',
+                    width: '100%',
+                    justifyContent: 'center',
+                    gap: 6,
+                    opacity: isCarouselHidden ? 0 : 1,
+                }}
+            >
                 {media.map((_, i) => (
                     <View
                         key={i}

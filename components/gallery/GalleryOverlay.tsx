@@ -4,10 +4,13 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import ShareIcon from "@/assets/images/svg/share-1.svg";
 import DownloadIcon from "@/assets/images/svg/download.svg";
+import { Image as ExpoImage } from 'expo-image';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlexText } from '../FlexText';
+
+const GOOGLE_LENS_ICON = require('@/assets/images/icons/google_lens.png');
 
 
 export interface GalleryOverlayProps {
@@ -31,6 +34,8 @@ export interface GalleryOverlayProps {
     onDownload?: () => void;
     /** Callback when poster button is pressed */
     onPoster?: () => void;
+    /** Callback when Google Lens button is pressed */
+    onGoogleLens?: () => void;
     /** Whether the profile is verified */
     isVerified?: boolean;
 }
@@ -46,6 +51,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
     onShare,
     onDownload,
     onPoster,
+    onGoogleLens,
     isVerified,
 }) => {
     const inset = useSafeAreaInsets();
@@ -55,12 +61,36 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
         <View style={styles.galleryOverlay} pointerEvents="box-none">
             {/* Top Bar */}
             <View style={[styles.galleryTopBar, { paddingTop: inset.top + 8 }]}>
-                <TouchableOpacity
-                    onPress={onClose}
-                    style={[styles.galleryButton, styles.galleryButtonBg]}
-                >
-                    <Ionicons name="close" size={24} color="white" />
-                </TouchableOpacity>
+                {onGoogleLens ? (
+                    <View style={styles.topLeftPill}>
+                        <TouchableOpacity
+                            onPress={onClose}
+                            style={styles.pillButton}
+                            accessibilityLabel="Close"
+                        >
+                            <Ionicons name="close" size={22} color="white" />
+                        </TouchableOpacity>
+                        <View style={styles.pillDivider} />
+                        <TouchableOpacity
+                            onPress={onGoogleLens}
+                            style={styles.pillButton}
+                            accessibilityLabel="Search with Google Lens"
+                        >
+                            <ExpoImage
+                                source={GOOGLE_LENS_ICON}
+                                style={styles.googleLensIcon}
+                                contentFit="contain"
+                            />
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <TouchableOpacity
+                        onPress={onClose}
+                        style={[styles.galleryButton, styles.galleryButtonBg]}
+                    >
+                        <Ionicons name="close" size={24} color="white" />
+                    </TouchableOpacity>
+                )}
 
                 {totalCount <= 8 ? (
                     <View style={styles.galleryDotsContainer}>
@@ -83,7 +113,7 @@ export const GalleryOverlay: React.FC<GalleryOverlayProps> = ({
                 )}
 
                 {/* Empty view to balance the top bar layout and center the pagination */}
-                <View style={{ width: 40 }} />
+                <View style={{ width: onGoogleLens ? 85 : 40 }} />
             </View>
 
             {/* Bottom Bar */}
@@ -162,6 +192,31 @@ const styles = StyleSheet.create({
     },
     galleryButtonBg: {
         backgroundColor: 'rgba(255,255,255,0.15)',
+    },
+    topLeftPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.12)',
+        overflow: 'hidden',
+    },
+    pillButton: {
+        width: 42,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    pillDivider: {
+        width: 1,
+        height: 18,
+        backgroundColor: 'rgba(255,255,255,0.22)',
+    },
+    googleLensIcon: {
+        width: 20,
+        height: 20,
     },
     actionButtons: {
         flexDirection: 'row',

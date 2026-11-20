@@ -9,7 +9,7 @@ import type {
   IUsePillAnimationArgs,
 } from "@/interfaces/pill-animation.interface";
 import { useEffect, useRef } from "react";
-import type { ViewStyle } from "react-native";
+import { Platform, type ViewStyle } from "react-native";
 import {
   Extrapolation,
   interpolate,
@@ -76,7 +76,7 @@ function usePillAnimation({
       width: w,
       transform: [{ rotate: `${tilt}rad` }, { scaleY }],
     };
-  }, [width, pillWidth, centerX, centerY, radius, halfSpan]);
+  }, Platform.OS === "web" ? [width, pillWidth, centerX, centerY, radius, halfSpan] : undefined);
 
   return { pillLeft, pillRight, pillCenter, pillStyle: animatedPillStylez };
 }

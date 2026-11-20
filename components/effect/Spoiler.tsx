@@ -6,7 +6,7 @@ import {
     vec
 } from '@shopify/react-native-skia';
 import React, { useState } from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
+import { LayoutChangeEvent, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
     runOnJS,
     useDerivedValue,
@@ -109,7 +109,7 @@ export const Spoiler = ({ children, style }: SpoilerProps) => {
             u_time: clock.value / 1000, // Convert ms to seconds
             u_resolution: vec(dimensions.width, dimensions.height),
         };
-    }, [dimensions]);
+    }, Platform.OS === 'web' ? [dimensions] : undefined);
 
     const handleLayout = (event: LayoutChangeEvent) => {
         const { width, height } = event.nativeEvent.layout;
