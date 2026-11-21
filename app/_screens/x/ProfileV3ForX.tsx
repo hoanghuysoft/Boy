@@ -1,4 +1,3 @@
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { PagerWithHeader, type PagerWithHeaderChildParams } from "@/components/pager/PagerWithHeader";
 import { PostOptionsSheet } from "@/components/post";
 import {
@@ -561,7 +560,6 @@ export default function ProfileV3ForXScreen() {
           post={selectedPost}
           isExternal={true}
         />
-        <GalleryModal />
       </View>
     </View>
   );

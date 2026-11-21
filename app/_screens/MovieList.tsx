@@ -1,5 +1,4 @@
 import { FlexText } from "@/components/FlexText";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
 import { ShimmerEffect } from "@/components/ui/molecules/Shimmer/Shimmer";
@@ -358,7 +357,6 @@ const MovieListScreen = () => {
                         episodeNumber={selectedEpisodeNumber}
                     />
                 )}
-                <GalleryModal />
             </View>
         );
     }

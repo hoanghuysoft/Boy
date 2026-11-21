@@ -7,7 +7,6 @@ import {
   showCrossPostAlertDialog,
 } from "@/components/fprofile/crossPostService";
 import { getCachedFxTwitterPost } from "@/components/fprofile/transformFxPost";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { List } from "@/components/list/List";
 import { PostOptionsSheet } from "@/components/post";
 import { extractXProfileInfo } from "@/components/profile/header/utils";
@@ -405,8 +404,6 @@ const FProfileScreen = () => {
         post={selectedPost}
         isExternal={true}
       />
-
-      <GalleryModal />
     </View>
   );
 };

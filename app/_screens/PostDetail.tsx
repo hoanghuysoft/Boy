@@ -1,6 +1,5 @@
 import { EmojiSelectorSheet } from "@/components/EmojiSelectorSheet";
 import { FlexText } from "@/components/FlexText";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { CommentBlock } from "@/components/post/CommentBlock";
 import { CommentInputBar } from "@/components/post/CommentInputBar";
 import { LikersSheet } from "@/components/post/LikersSheet";
@@ -416,8 +415,6 @@ export const PostDetailScreen = ({ postId }: PostDetailScreenProps) => {
                     vm.inputRef.current?.focus();
                 }}
             />
-
-            <GalleryModal />
         </View>
     );
 };

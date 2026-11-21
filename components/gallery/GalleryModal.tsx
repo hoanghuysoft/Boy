@@ -304,6 +304,10 @@ export const GalleryModal: React.FC = () => {
         }
     }, [closeGallery]);
 
+    if (!isVisible) {
+        return null;
+    }
+
     return (
         <Modal
             visible={isVisible}
@@ -313,21 +317,19 @@ export const GalleryModal: React.FC = () => {
             animationType="none"
             onRequestClose={handleRequestClose}
         >
-            {isVisible && (
-                <GalleryModalContent
-                    galleryRef={galleryRef}
-                    wallpaperOpenRef={wallpaperOpenRef}
-                    imagesUrl={imagesUrl}
-                    galleryImages={images}
-                    initialIndex={initialIndex}
-                    sourceRect={sourceRect}
-                    sourcePostId={sourcePostId}
-                    onIndexSync={onIndexSync}
-                    setHiddenSource={setHiddenSource}
-                    onClose={closeGallery}
-                    showDownload={true}
-                />
-            )}
+            <GalleryModalContent
+                galleryRef={galleryRef}
+                wallpaperOpenRef={wallpaperOpenRef}
+                imagesUrl={imagesUrl}
+                galleryImages={images}
+                initialIndex={initialIndex}
+                sourceRect={sourceRect}
+                sourcePostId={sourcePostId}
+                onIndexSync={onIndexSync}
+                setHiddenSource={setHiddenSource}
+                onClose={closeGallery}
+                showDownload={true}
+            />
         </Modal>
     );
 };

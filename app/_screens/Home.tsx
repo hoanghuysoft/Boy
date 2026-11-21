@@ -1,6 +1,5 @@
 import AddCircle from "@/assets/images/svg/add-circle.svg";
 import Collection from "@/assets/images/svg/collection.svg";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import HomeCarousel from "@/components/HomeCarousel";
 import OptionModal from "@/components/HomeOptionModal";
 import { CommentsSheet, LikersSheet, PostOptionsSheet } from "@/components/post";
@@ -190,7 +189,6 @@ const HomeScreen = () => {
         {/* Material Top Tabs */}
         <HomeTabs vm={vm} />
       </View>
-      <GalleryModal />
       <PostOptionsSheet
         ref={optionsSheetRef}
         post={selectedPost}

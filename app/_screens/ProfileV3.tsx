@@ -31,7 +31,6 @@ import Reanimated, { interpolate, runOnUI, scrollTo, useAnimatedStyle, useShared
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { FlexText } from "@/components/FlexText";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { ProfileGalleryModal } from "@/components/gallery/ProfileGalleryModal";
 import { List } from "@/components/list";
 import { PagerWithHeader, type PagerWithHeaderChildParams } from "@/components/pager/PagerWithHeader";
@@ -604,7 +603,6 @@ const ProfileContent = () => {
             profileName={profile?.name}
             isVerified={profile?.is_verified}
           />
-          <GalleryModal />
 
           {/* ─── PagerWithHeader: the collapsible header + tab architecture ─── */}
           <PagerWithHeader

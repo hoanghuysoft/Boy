@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/preserve-manual-memoization */
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { useThemeContext } from "@/context/ThemeContext";
 import { usePersonDetails } from "@/hooks/useMovies";
@@ -429,7 +428,6 @@ export const PersonDetailView = ({ personId }: PersonDetailViewProps) => {
                     )}
                 </ScrollView>
             </BlurTargetView>
-            <GalleryModal />
 
             {/* Float Back Button over everything */}
             <View

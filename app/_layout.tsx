@@ -1,4 +1,5 @@
 import { AppLockOverlay } from "@/components/AppLockOverlay";
+import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { GlobalAudioPlayer } from "@/components/GlobalAudioPlayer";
 import { GlobalTrueSheet } from "@/components/global core/truesheet";
 import { TranslationLanguageSheet } from "@/components/post/TranslationLanguageSheet";
@@ -234,6 +235,7 @@ const RootContent = () => {
             </Stack>
           </GlassProvider>
           <GlobalAudioPlayer />
+          <GalleryModal />
           <AppLockOverlay />
           <GlobalTrueSheet />
           <TranslationLanguageSheet />

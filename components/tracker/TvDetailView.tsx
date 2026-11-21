@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/refs */
 import DialogIcon from "@/assets/images/svg/chat-double.svg";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { EpisodeDetailSheet } from "@/components/tracker/sheets/EpisodeDetailSheet";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
@@ -177,8 +176,6 @@ export const TvDetailView = ({ tvId }: TvDetailViewProps) => {
             </View>
 
             {/* ─── Overlays & Sheets ─── */}
-            <GalleryModal />
-
             <WallpaperOverlay
                 isVisible={vm.showWallpaper}
                 onClose={() => vm.setShowWallpaper(false)}

@@ -1,7 +1,6 @@
 import DialogIcon from "@/assets/images/svg/chat-double.svg";
 import { BlurMask } from "@/components/blur mask/BlurMask";
 import { FlexText } from "@/components/FlexText";
-import { GalleryModal } from "@/components/gallery/GalleryModal";
 import { IMDbBadge } from "@/components/tracker/MovieDBView";
 import { ReviewsSheet } from "@/components/tracker/sheets/ReviewsSheet";
 import { useThemeContext } from "@/context/ThemeContext";
@@ -651,9 +650,6 @@ export const MovieDetailView = ({ movieId }: MovieDetailViewProps) => {
                     </BlurView>}
                 </View>
             </View>
-
-            {/* GalleryModal overlay — exact same as ShowDetailScreen */}
-            <GalleryModal />
 
             <WallpaperOverlay
                 isVisible={showWallpaper}
